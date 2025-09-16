@@ -102,7 +102,14 @@ export function FireTVLanguageSelector() {
     { code: 'de-DE', name: 'Deutsch', flag: '🇩🇪' },
     { code: 'fr-FR', name: 'Français', flag: '🇫🇷' },
     { code: 'es-ES', name: 'Español', flag: '🇪🇸' },
+    { code: 'it-IT', name: 'Italiano', flag: '🇮🇹' },
+    { code: 'pt-BR', name: 'Português', flag: '🇧🇷' },
     { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
+    { code: 'zh-CN', name: '中文', flag: '🇨🇳' },
+    { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
+    { code: 'ar-SA', name: 'العربية', flag: '🇸🇦' },
+    { code: 'hi-IN', name: 'हिन्दी', flag: '🇮🇳' },
+    { code: 'ru-RU', name: 'Русский', flag: '🇷🇺' },
   ];
 
   return (
