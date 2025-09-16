@@ -1,0 +1,93 @@
+{
+  "amazonAppstore": {
+    "packageName": "com.bespokemarketing.trucknav.pro",
+    "appTitle": "TruckNav Pro",
+    "description": "Professional truck navigation for HGVs with height restrictions, facility finder, and live traffic updates. Patent-protected technology by Bespoke Marketing.Ai Ltd.",
+    "category": "NAVIGATION",
+    "subcategory": "MAPS_AND_NAVIGATION",
+    "contentRating": "Everyone",
+    "supportedDevices": [
+      "Fire Tablet",
+      "Fire TV",
+      "Fire TV Stick", 
+      "Android Devices"
+    ],
+    "features": {
+      "required": [],
+      "optional": [
+        "android.hardware.location",
+        "android.hardware.location.gps",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "fireTV": {
+      "compatible": true,
+      "navigation": "directional",
+      "inputMethods": ["remote", "voice", "touch"],
+      "tenFootUI": true,
+      "leanbackMode": true
+    },
+    "fireTablet": {
+      "compatible": true,
+      "orientations": ["portrait", "landscape"],
+      "inputMethods": ["touch", "voice"]
+    },
+    "silkBrowser": {
+      "accelerated": true,
+      "webGL": true,
+      "html5": true
+    },
+    "appImages": {
+      "icon": "/apple-touch-icon.png",
+      "smallIcon": "/favicon-32x32.png",
+      "featureGraphic": "/feature-graphic.png",
+      "screenshots": {
+        "phone": [],
+        "tablet": [],
+        "tv": []
+      }
+    },
+    "legal": {
+      "privacyPolicy": "https://trucknav.replit.app/privacy",
+      "termsOfService": "https://trucknav.replit.app/terms",
+      "copyright": "© 2025 Bespoke Marketing.Ai Ltd. All rights reserved.",
+      "trademark": "TruckNav Pro is a trademark of Bespoke Marketing.Ai Ltd",
+      "patent": "Patent-protected technology owned by Bespoke Marketing.Ai Ltd"
+    },
+    "contact": {
+      "developer": "Bespoke Marketing.Ai Ltd",
+      "email": "support@bespokemarketing.ai",
+      "website": "https://trucknav.replit.app"
+    },
+    "pricing": {
+      "model": "freemium",
+      "subscriptions": [
+        {
+          "id": "3month",
+          "price": "£25.99",
+          "duration": "3 months"
+        },
+        {
+          "id": "6month", 
+          "price": "£49.99",
+          "duration": "6 months"
+        },
+        {
+          "id": "12month",
+          "price": "£99.99", 
+          "duration": "12 months"
+        },
+        {
+          "id": "lifetime",
+          "price": "£200.00",
+          "duration": "lifetime"
+        }
+      ]
+    },
+    "version": {
+      "code": 1,
+      "name": "1.0.0"
+    }
+  }
+}

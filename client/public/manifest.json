@@ -76,5 +76,21 @@
   "custom": {
     "legal_notice": "TruckNav Pro is patent-protected intellectual property owned by Bespoke Marketing.Ai Ltd. Any replication of truck navigation features requires compensation.",
     "trademark": "TruckNav Pro and Professional Navigation are trademarks of Bespoke Marketing.Ai Ltd"
+  },
+  
+  "amazon": {
+    "app_id": "com.bespokemarketing.trucknav.pro",
+    "store_ready": true,
+    "fire_tv_compatible": true,
+    "fire_tablet_compatible": true,
+    "silk_accelerated": true,
+    "content_rating": "Everyone",
+    "tv_navigation": "directional",
+    "input_support": ["remote", "voice", "touch"],
+    "categories": ["navigation", "productivity", "travel", "business"],
+    "required_features": [],
+    "optional_features": ["location", "internet"],
+    "privacy_policy": "https://trucknav.replit.app/privacy",
+    "terms_of_service": "https://trucknav.replit.app/terms"
   }
 }

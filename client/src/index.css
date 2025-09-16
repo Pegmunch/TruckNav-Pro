@@ -101,3 +101,114 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
+
+/* Amazon Fire TV and 10-foot UI Optimizations */
+@media (orientation: landscape) and (min-width: 1280px) and (min-height: 720px) {
+  /* Fire TV specific styles for TruckNav Pro */
+  body {
+    padding: 40px;
+    font-size: 18px;
+  }
+  
+  /* Focus management for TV remote navigation */
+  button:focus,
+  [tabindex]:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 3px solid hsl(210, 83%, 53%);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px hsla(210, 83%, 53%, 0.3);
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+  }
+  
+  /* Larger touch targets for TV navigation */
+  button {
+    min-height: 48px;
+    min-width: 120px;
+    font-size: 16px;
+    padding: 12px 24px;
+  }
+}
+
+/* Amazon Silk Browser Optimizations */
+@supports (-webkit-appearance: none) {
+  /* Silk-specific optimizations for TruckNav Pro */
+  body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Hardware acceleration for smooth scrolling */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+  }
+  
+  /* Optimize rendering for Silk */
+  button,
+  .card {
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+}
+
+/* Fire Tablet Portrait Mode */
+@media (orientation: portrait) and (max-width: 768px) {
+  /* Tablet-specific navigation for TruckNav Pro */
+  .navigation-header {
+    padding: 16px;
+    font-size: 20px;
+  }
+  
+  /* Touch-friendly spacing */
+  .facility-card,
+  .route-card {
+    padding: 20px;
+    margin: 12px 0;
+  }
+  
+  /* Optimized map size for tablets */
+  .map-container {
+    min-height: 400px;
+    border-radius: 8px;
+  }
+}
+
+/* Amazon-specific legal notices positioning */
+.amazon-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 16px;
+  background: hsl(210, 40%, 96%);
+  border-top: 1px solid hsl(214, 32%, 91%);
+  font-size: 12px;
+  text-align: center;
+  z-index: 1000;
+}
+
+.dark .amazon-footer {
+  background: hsl(224, 71%, 4%);
+  border-top: 1px solid hsl(216, 34%, 17%);
+}
+
+/* Fire TV voice command indicators */
+.voice-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: hsl(120, 61%, 34%);
+  border-radius: 50%;
+  animation: amazonPulse 2s infinite;
+}
+
+@keyframes amazonPulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
