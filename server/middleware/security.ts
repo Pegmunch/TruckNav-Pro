@@ -319,26 +319,43 @@ export const intrusionDetection = (req: express.Request, res: express.Response, 
   const ip = req.ip;
   const now = Date.now();
   
-  // Check for rapid successive requests (potential DDoS)
-  const ipActivity = suspiciousActivity.get(ip) || { count: 0, firstRequest: now };
-  ipActivity.count++;
-  
-  if (now - ipActivity.firstRequest < 10000 && ipActivity.count > 50) { // 50 requests in 10 seconds
-    console.error(`[SECURITY] Potential DDoS attack detected from IP: ${ip}`);
-    return res.status(429).json({
-      error: 'Rate limit exceeded - potential abuse detected',
-      code: 'ABUSE_DETECTED',
-      timestamp: new Date().toISOString()
-    });
+  // Skip DDoS detection for development module requests  
+  const isDevelopmentRequest = req.url.includes('/.vite/') || 
+                               req.url.includes('/@fs/') || 
+                               req.url.includes('/@vite/') || 
+                               req.url.includes('/@react-refresh') ||
+                               req.url.includes('/node_modules/') ||
+                               req.url.includes('.js?v=') ||
+                               req.url.includes('.css?v=') ||
+                               req.url.includes('.json?import');
+
+  if (!isDevelopmentRequest) {
+    // Check for rapid successive requests (potential DDoS)
+    const ipActivity = suspiciousActivity.get(ip) || { count: 0, firstRequest: now };
+    ipActivity.count++;
+    
+    if (now - ipActivity.firstRequest < 30000 && ipActivity.count > 100) { // 100 requests in 30 seconds for production
+      console.error(`[SECURITY] Potential DDoS attack detected from IP: ${ip}`);
+      return res.status(429).json({
+        error: 'Rate limit exceeded - potential abuse detected',
+        code: 'ABUSE_DETECTED',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Update activity tracking
+    suspiciousActivity.set(ip, ipActivity);
   }
   
-  // Reset counter every minute
-  if (now - ipActivity.firstRequest > 60000) {
-    ipActivity.count = 1;
-    ipActivity.firstRequest = now;
+  // Reset counter every 2 minutes for non-development requests
+  if (!isDevelopmentRequest) {
+    const ipActivity = suspiciousActivity.get(ip);
+    if (ipActivity && now - ipActivity.firstRequest > 120000) {
+      ipActivity.count = 1;
+      ipActivity.firstRequest = now;
+      suspiciousActivity.set(ip, ipActivity);
+    }
   }
-  
-  suspiciousActivity.set(ip, ipActivity);
   
   next();
 };

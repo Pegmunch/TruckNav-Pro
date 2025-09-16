@@ -207,6 +207,100 @@ export default function TermsOfService() {
 
               <Separator />
 
+              {/* Liability Disclaimer */}
+              <section>
+                <h3 className="text-lg font-semibold mb-3 text-red-700 dark:text-red-400">
+                  ⚠️ CRITICAL LIABILITY DISCLAIMER & NON-LIABILITY CLAUSE
+                </h3>
+                <div className="bg-red-50 dark:bg-red-950/20 border-2 border-red-300 dark:border-red-700 rounded-lg p-6">
+                  <div className="space-y-4">
+                    <div className="bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-600 rounded-lg p-4">
+                      <p className="text-sm font-bold text-red-900 dark:text-red-100 text-center">
+                        🚨 CRITICAL SAFETY NOTICE - READ CAREFULLY 🚨
+                      </p>
+                      <p className="text-xs text-red-800 dark:text-red-200 text-center mt-2">
+                        By using TruckNav Pro, you acknowledge and accept full responsibility for all driving decisions
+                      </p>
+                    </div>
+
+                    <div className="text-sm text-red-800 dark:text-red-200 space-y-3">
+                      <p className="font-bold text-base mb-3">
+                        COMPLETE NON-LIABILITY FOR ACCIDENTS AND INCIDENTS:
+                      </p>
+                      
+                      <p>
+                        <strong>Bespoke Marketing.Ai Ltd</strong> and <strong>TruckNav Pro</strong> expressly disclaim all liability 
+                        and responsibility for any and all accidents, incidents, damages, injuries, losses, or claims arising 
+                        from or related to the use of this navigation application.
+                      </p>
+
+                      <div className="bg-red-200 dark:bg-red-800/30 p-3 rounded">
+                        <p className="font-semibold mb-2">YOU ACKNOWLEDGE AND AGREE THAT:</p>
+                        <ul className="space-y-1 text-xs">
+                          <li>• <strong>Navigation Guidance Only:</strong> TruckNav Pro provides navigational suggestions only and does not replace professional driving judgment</li>
+                          <li>• <strong>Driver Responsibility:</strong> You are solely responsible for safe operation of your vehicle at all times</li>
+                          <li>• <strong>Real-Time Conditions:</strong> Road conditions, restrictions, and traffic patterns change constantly and may not be reflected in real-time</li>
+                          <li>• <strong>Vehicle Compliance:</strong> You must verify that your vehicle complies with all local regulations and restrictions</li>
+                          <li>• <strong>Professional Verification:</strong> Always verify route suitability through official sources and local authorities</li>
+                        </ul>
+                      </div>
+
+                      <p className="font-bold">
+                        SPECIFICALLY, WE ARE NOT LIABLE FOR:
+                      </p>
+                      <ul className="ml-4 space-y-1 text-xs">
+                        <li>• Vehicle accidents, collisions, or traffic incidents of any nature</li>
+                        <li>• Damage to vehicles, cargo, or property</li>
+                        <li>• Personal injury, death, or bodily harm to drivers, passengers, or third parties</li>
+                        <li>• Violations of traffic laws, weight restrictions, or vehicle regulations</li>
+                        <li>• Bridge strikes, clearance violations, or infrastructure damage</li>
+                        <li>• Route delays, fuel costs, or operational expenses</li>
+                        <li>• Lost business, missed deliveries, or contractual penalties</li>
+                        <li>• Environmental damage or hazardous material incidents</li>
+                        <li>• Legal fines, penalties, or enforcement actions</li>
+                        <li>• Any consequential, indirect, or punitive damages whatsoever</li>
+                      </ul>
+
+                      <div className="bg-red-300 dark:bg-red-700/40 p-3 rounded border border-red-500">
+                        <p className="font-bold text-center text-red-900 dark:text-red-100">
+                          MAXIMUM LIABILITY LIMITATION
+                        </p>
+                        <p className="text-xs text-center mt-1">
+                          In no event shall Bespoke Marketing.Ai Ltd's total liability exceed the amount paid by you for 
+                          TruckNav Pro services in the 12 months preceding any claim. This limitation applies regardless 
+                          of the legal theory of liability.
+                        </p>
+                      </div>
+
+                      <p className="font-bold text-center">
+                        USE AT YOUR OWN RISK - NO WARRANTIES PROVIDED
+                      </p>
+                      <p className="text-xs text-center">
+                        TruckNav Pro is provided "AS IS" without warranties of any kind. We disclaim all warranties, 
+                        express or implied, including merchantability, fitness for a particular purpose, and accuracy.
+                      </p>
+
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-400 dark:border-yellow-600 p-3 rounded">
+                        <p className="font-bold text-yellow-800 dark:text-yellow-200 text-center mb-2">
+                          ⚠️ PROFESSIONAL DRIVER RESPONSIBILITY ⚠️
+                        </p>
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200 text-center">
+                          As a professional driver, you maintain ultimate responsibility for route planning, vehicle safety, 
+                          legal compliance, and safe operation. TruckNav Pro is a supplementary tool only.
+                        </p>
+                      </div>
+
+                      <p className="font-bold text-center mt-4">
+                        BY USING TRUCKNAV PRO, YOU VOLUNTARILY ASSUME ALL RISKS AND WAIVE ALL CLAIMS 
+                        AGAINST BESPOKE MARKETING.AI LTD FOR ANY DAMAGES OR LOSSES
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <Separator />
+
               {/* Legal Disclaimer */}
               <section>
                 <h3 className="text-lg font-semibold mb-3">Legal Disclaimer</h3>

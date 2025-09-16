@@ -17,12 +17,13 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [acknowledgePatents, setAcknowledgePatents] = useState(false);
   const [acknowledgeTrademarks, setAcknowledgeTrademarks] = useState(false);
+  const [acknowledgeLiability, setAcknowledgeLiability] = useState(false);
   const [acknowledgeReplication, setAcknowledgeReplication] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showFullTerms, setShowFullTerms] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const canAccept = hasReadTerms && acknowledgePatents && acknowledgeTrademarks && acknowledgeReplication && acceptTerms;
+  const canAccept = hasReadTerms && acknowledgePatents && acknowledgeTrademarks && acknowledgeLiability && acknowledgeReplication && acceptTerms;
 
   const handleAccept = () => {
     if (canAccept) {
@@ -261,6 +262,19 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
               />
               <label htmlFor="acknowledge-trademarks" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 I acknowledge the trademark protection of "TruckNav Pro" and related branding
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <Checkbox 
+                id="acknowledge-liability"
+                checked={acknowledgeLiability}
+                onCheckedChange={(checked) => setAcknowledgeLiability(checked === true)}
+                data-testid="checkbox-acknowledge-liability"
+              />
+              <label htmlFor="acknowledge-liability" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <span className="text-red-600 font-semibold">I understand and accept that Bespoke Marketing.Ai Ltd is not liable for any accidents, incidents, or damages resulting from using TruckNav Pro</span>
                 <span className="text-red-500 ml-1">*</span>
               </label>
             </div>
