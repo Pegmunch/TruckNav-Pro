@@ -10,6 +10,16 @@ import esES from './locales/es-ES.json';
 import frFR from './locales/fr-FR.json';
 import deDE from './locales/de-DE.json';
 import jaJP from './locales/ja-JP.json';
+import itIT from './locales/it-IT.json';
+import ptBR from './locales/pt-BR.json';
+import nlNL from './locales/nl-NL.json';
+import zhCN from './locales/zh-CN.json';
+import koKR from './locales/ko-KR.json';
+import arSA from './locales/ar-SA.json';
+import hiIN from './locales/hi-IN.json';
+import ruRU from './locales/ru-RU.json';
+import plPL from './locales/pl-PL.json';
+import trTR from './locales/tr-TR.json';
 
 // Amazon region to language mapping
 export const amazonRegions = {
@@ -32,6 +42,9 @@ export const amazonRegions = {
   'ae': ['ar-AE', 'en-US'], // UAE
   'sa': ['ar-SA'], // Saudi Arabia
   'sg': ['en-US', 'zh-CN', 'ms-MY'], // Singapore
+  'cn': ['zh-CN'], // China
+  'kr': ['ko-KR'], // South Korea
+  'ru': ['ru-RU'], // Russia (not official Amazon but for completeness)
 };
 
 // TruckNav Pro Translation Configuration
@@ -43,6 +56,16 @@ const resources = {
   'fr-FR': { translation: frFR },
   'de-DE': { translation: deDE },
   'ja-JP': { translation: jaJP },
+  'it-IT': { translation: itIT },
+  'pt-BR': { translation: ptBR },
+  'nl-NL': { translation: nlNL },
+  'zh-CN': { translation: zhCN },
+  'ko-KR': { translation: koKR },
+  'ar-SA': { translation: arSA },
+  'hi-IN': { translation: hiIN },
+  'ru-RU': { translation: ruRU },
+  'pl-PL': { translation: plPL },
+  'tr-TR': { translation: trTR },
 };
 
 i18n

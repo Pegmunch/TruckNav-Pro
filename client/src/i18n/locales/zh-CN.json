@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "专业卡车导航",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "路线规划",
+    "vehicle_setup": "车辆设置", 
+    "facility_search": "设施搜索",
+    "live_traffic": "实时交通",
+    "restrictions": "限制",
+    "settings": "设置"
+  },
+  "vehicle": {
+    "profile": "车辆配置",
+    "name": "车辆名称",
+    "height": "高度",
+    "width": "宽度", 
+    "length": "长度",
+    "weight": "重量",
+    "axles": "车轴",
+    "hazmat": "危险品",
+    "feet": "英尺",
+    "inches": "英寸",
+    "tons": "吨",
+    "save": "保存配置"
+  },
+  "route": {
+    "plan": "规划路线",
+    "from": "起点",
+    "to": "终点",
+    "calculate": "计算路线",
+    "distance": "距离",
+    "duration": "时长",
+    "restrictions": "发现限制",
+    "alternative": "替代路线"
+  },
+  "facilities": {
+    "search": "搜索设施",
+    "truck_stop": "卡车停车场",
+    "fuel": "加油站",
+    "parking": "停车场",
+    "restaurant": "餐厅",
+    "hotel": "酒店",
+    "restrooms": "洗手间",
+    "showers": "淋浴",
+    "near_me": "附近"
+  },
+  "legal": {
+    "title": "需要法律协议 - TruckNav Pro",
+    "description": "您必须接受这些法律条款才能使用TruckNav Pro",
+    "patent_notice": "TruckNav Pro包含Bespoke Marketing.Ai Ltd拥有的专利技术",
+    "trademark_notice": "TruckNav Pro和Professional Navigation是注册商标",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. 保留所有权利",
+    "accept": "我接受这些条款",
+    "decline": "我不接受",
+    "terms_of_service": "服务条款",
+    "privacy_policy": "隐私政策"
+  },
+  "subscription": {
+    "plans": "订阅计划",
+    "3month": "3个月计划",
+    "6month": "6个月计划", 
+    "12month": "12个月计划",
+    "lifetime": "终身使用",
+    "price_3m": "¥199",
+    "price_6m": "¥399",
+    "price_12m": "¥799",
+    "price_lifetime": "¥1599",
+    "features": "包含功能",
+    "subscribe": "立即订阅"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "continue": "继续",
+    "back": "返回",
+    "next": "下一步",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "search": "搜索",
+    "filter": "筛选",
+    "language": "语言"
+  },
+  "amazon": {
+    "fire_tv": "为Fire TV优化",
+    "fire_tablet": "为Fire平板优化",
+    "silk_browser": "为Silk浏览器增强",
+    "voice_support": "支持语音导航",
+    "remote_navigation": "遥控器导航"
+  }
+}

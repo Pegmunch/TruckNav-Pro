@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Professionele Vrachtwagen Navigatie",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Route Planning",
+    "vehicle_setup": "Voertuig Instelling", 
+    "facility_search": "Faciliteit Zoeken",
+    "live_traffic": "Live Verkeer",
+    "restrictions": "Beperkingen",
+    "settings": "Instellingen"
+  },
+  "vehicle": {
+    "profile": "Voertuig Profiel",
+    "name": "Voertuig Naam",
+    "height": "Hoogte",
+    "width": "Breedte", 
+    "length": "Lengte",
+    "weight": "Gewicht",
+    "axles": "Assen",
+    "hazmat": "Gevaarlijke Stoffen",
+    "feet": "voet",
+    "inches": "inch",
+    "tons": "ton",
+    "save": "Profiel Opslaan"
+  },
+  "route": {
+    "plan": "Route Plannen",
+    "from": "Van",
+    "to": "Naar",
+    "calculate": "Route Berekenen",
+    "distance": "Afstand",
+    "duration": "Duur",
+    "restrictions": "Beperkingen Gevonden",
+    "alternative": "Alternatieve Route"
+  },
+  "facilities": {
+    "search": "Faciliteiten Zoeken",
+    "truck_stop": "Vrachtwagen Stop",
+    "fuel": "Tankstation",
+    "parking": "Parkeren",
+    "restaurant": "Restaurant",
+    "hotel": "Hotel",
+    "restrooms": "Toiletten",
+    "showers": "Douches",
+    "near_me": "Bij Mij in de Buurt"
+  },
+  "legal": {
+    "title": "Juridische Overeenkomst Vereist - TruckNav Pro",
+    "description": "U moet deze juridische voorwaarden accepteren om TruckNav Pro te gebruiken",
+    "patent_notice": "TruckNav Pro bevat gepatenteerde technologie eigendom van Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro en Professional Navigation zijn geregistreerde handelsmerken",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Alle rechten voorbehouden",
+    "accept": "Ik Accepteer Deze Voorwaarden",
+    "decline": "Ik Accepteer Niet",
+    "terms_of_service": "Servicevoorwaarden",
+    "privacy_policy": "Privacybeleid"
+  },
+  "subscription": {
+    "plans": "Abonnement Plannen",
+    "3month": "3 Maanden Plan",
+    "6month": "6 Maanden Plan", 
+    "12month": "12 Maanden Plan",
+    "lifetime": "Levenslange Toegang",
+    "price_3m": "€25,99",
+    "price_6m": "€49,99",
+    "price_12m": "€99,99",
+    "price_lifetime": "€200,00",
+    "features": "Inbegrepen Functies",
+    "subscribe": "Nu Abonneren"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "cancel": "Annuleren",
+    "continue": "Doorgaan",
+    "back": "Terug",
+    "next": "Volgende",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "close": "Sluiten",
+    "search": "Zoeken",
+    "filter": "Filter",
+    "language": "Taal"
+  },
+  "amazon": {
+    "fire_tv": "Geoptimaliseerd voor Fire TV",
+    "fire_tablet": "Geoptimaliseerd voor Fire Tablet",
+    "silk_browser": "Verbeterd voor Silk Browser",
+    "voice_support": "Spraaknavigatie Ondersteund",
+    "remote_navigation": "Afstandsbediening Navigatie"
+  }
+}

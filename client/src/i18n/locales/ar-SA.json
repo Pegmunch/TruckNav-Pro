@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "الملاحة المهنية للشاحنات",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "تخطيط الطريق",
+    "vehicle_setup": "إعداد المركبة", 
+    "facility_search": "البحث عن المرافق",
+    "live_traffic": "حركة المرور المباشرة",
+    "restrictions": "القيود",
+    "settings": "الإعدادات"
+  },
+  "vehicle": {
+    "profile": "ملف المركبة",
+    "name": "اسم المركبة",
+    "height": "الارتفاع",
+    "width": "العرض", 
+    "length": "الطول",
+    "weight": "الوزن",
+    "axles": "المحاور",
+    "hazmat": "المواد الخطرة",
+    "feet": "قدم",
+    "inches": "بوصة",
+    "tons": "طن",
+    "save": "حفظ الملف"
+  },
+  "route": {
+    "plan": "تخطيط الطريق",
+    "from": "من",
+    "to": "إلى",
+    "calculate": "حساب الطريق",
+    "distance": "المسافة",
+    "duration": "المدة",
+    "restrictions": "تم العثور على قيود",
+    "alternative": "طريق بديل"
+  },
+  "facilities": {
+    "search": "البحث عن المرافق",
+    "truck_stop": "محطة الشاحنات",
+    "fuel": "محطة الوقود",
+    "parking": "موقف السيارات",
+    "restaurant": "مطعم",
+    "hotel": "فندق",
+    "restrooms": "دورات المياه",
+    "showers": "حمامات",
+    "near_me": "قريب مني"
+  },
+  "legal": {
+    "title": "اتفاقية قانونية مطلوبة - TruckNav Pro",
+    "description": "يجب عليك قبول هذه الشروط القانونية لاستخدام TruckNav Pro",
+    "patent_notice": "يحتوي TruckNav Pro على تقنية مُبرأة ملكية Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro و Professional Navigation علامات تجارية مسجلة",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. جميع الحقوق محفوظة",
+    "accept": "أوافق على هذه الشروط",
+    "decline": "لا أوافق",
+    "terms_of_service": "شروط الخدمة",
+    "privacy_policy": "سياسة الخصوصية"
+  },
+  "subscription": {
+    "plans": "خطط الاشتراك",
+    "3month": "خطة 3 أشهر",
+    "6month": "خطة 6 أشهر", 
+    "12month": "خطة 12 شهر",
+    "lifetime": "وصول مدى الحياة",
+    "price_3m": "97 ريال",
+    "price_6m": "187 ريال",
+    "price_12m": "375 ريال",
+    "price_lifetime": "750 ريال",
+    "features": "الميزات المتضمنة",
+    "subscribe": "اشترك الآن"
+  },
+  "common": {
+    "loading": "تحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "cancel": "إلغاء",
+    "continue": "متابعة",
+    "back": "رجوع",
+    "next": "التالي",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تحرير",
+    "close": "إغلاق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "language": "اللغة"
+  },
+  "amazon": {
+    "fire_tv": "محسن لـ Fire TV",
+    "fire_tablet": "محسن لـ Fire Tablet",
+    "silk_browser": "محسن لمتصفح Silk",
+    "voice_support": "الملاحة الصوتية مدعومة",
+    "remote_navigation": "ملاحة جهاز التحكم عن بُعد"
+  }
+}

@@ -18,7 +18,17 @@ export default function LanguageSelector({ variant = 'dropdown', className = '' 
     { code: 'de-DE', name: 'Deutsch', flag: '🇩🇪', amazonRegion: 'de' },
     { code: 'fr-FR', name: 'Français', flag: '🇫🇷', amazonRegion: 'fr' },
     { code: 'es-ES', name: 'Español', flag: '🇪🇸', amazonRegion: 'es' },
+    { code: 'it-IT', name: 'Italiano', flag: '🇮🇹', amazonRegion: 'it' },
+    { code: 'pt-BR', name: 'Português (BR)', flag: '🇧🇷', amazonRegion: 'com.br' },
+    { code: 'nl-NL', name: 'Nederlands', flag: '🇳🇱', amazonRegion: 'nl' },
     { code: 'ja-JP', name: '日本語', flag: '🇯🇵', amazonRegion: 'co.jp' },
+    { code: 'zh-CN', name: '中文', flag: '🇨🇳', amazonRegion: 'cn' },
+    { code: 'ko-KR', name: '한국어', flag: '🇰🇷', amazonRegion: 'kr' },
+    { code: 'ar-SA', name: 'العربية', flag: '🇸🇦', amazonRegion: 'sa' },
+    { code: 'hi-IN', name: 'हिन्दी', flag: '🇮🇳', amazonRegion: 'in' },
+    { code: 'ru-RU', name: 'Русский', flag: '🇷🇺', amazonRegion: 'ru' },
+    { code: 'pl-PL', name: 'Polski', flag: '🇵🇱', amazonRegion: 'pl' },
+    { code: 'tr-TR', name: 'Türkçe', flag: '🇹🇷', amazonRegion: 'com.tr' },
   ];
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
