@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -42,15 +42,20 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
   if (showFullTerms) {
     return (
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="max-w-6xl max-h-[90vh]">
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
               Complete Terms of Service
             </DialogTitle>
+            <DialogDescription>
+              Full legal terms and conditions for TruckNav Pro usage, including patent protections and intellectual property rights owned by Bespoke Marketing.Ai Ltd.
+            </DialogDescription>
           </DialogHeader>
-          <TermsOfService />
-          <div className="flex justify-between mt-4">
+          <ScrollArea className="flex-1 max-h-[70vh] pr-4">
+            <TermsOfService />
+          </ScrollArea>
+          <div className="flex justify-between mt-4 pt-4 border-t">
             <Button variant="outline" onClick={() => setShowFullTerms(false)} data-testid="button-back-summary">
               Back to Summary
             </Button>
@@ -77,6 +82,9 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
             <Shield className="w-6 h-6 text-primary" />
             Legal Agreement Required - TruckNav Pro
           </DialogTitle>
+          <DialogDescription>
+            You must accept these legal terms to use TruckNav Pro. This includes acknowledgment of patent protections, trademarks, and intellectual property rights owned by Bespoke Marketing.Ai Ltd.
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">
