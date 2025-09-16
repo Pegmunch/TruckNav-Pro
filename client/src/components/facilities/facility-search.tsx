@@ -1,0 +1,163 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  MapPin, 
+  Star, 
+  Fuel, 
+  ParkingMeter, 
+  Utensils, 
+  Bed, 
+  ShowerHead,
+  Wifi,
+  Phone
+} from "lucide-react";
+import { type Facility } from "@shared/schema";
+
+interface FacilitySearchProps {
+  coordinates?: { lat: number; lng: number };
+  onSelectFacility?: (facility: Facility) => void;
+}
+
+export default function FacilitySearch({ coordinates, onSelectFacility }: FacilitySearchProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [facilityType, setFacilityType] = useState<string>("");
+
+  const { data: facilities = [], isLoading } = useQuery<Facility[]>({
+    queryKey: ["/api/facilities", { 
+      ...(coordinates && { lat: coordinates.lat, lng: coordinates.lng, radius: 25 }),
+      ...(facilityType && { type: facilityType }),
+    }],
+  });
+
+  const filteredFacilities = facilities.filter((facility: Facility) =>
+    facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    facility.address?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const facilityTypes = [
+    { value: "", label: "All", icon: Search },
+    { value: "truck_stop", label: "Truck Stops", icon: Fuel },
+    { value: "fuel", label: "Fuel", icon: Fuel },
+    { value: "parking", label: "ParkingMeter", icon: ParkingMeter },
+    { value: "restaurant", label: "Food", icon: Utensils },
+    { value: "hotel", label: "Hotels", icon: Bed },
+  ];
+
+  const getAmenityIcon = (amenity: string) => {
+    switch (amenity) {
+      case 'fuel': return <Fuel className="w-3 h-3" />;
+      case 'parking': return <ParkingMeter className="w-3 h-3" />;
+      case 'restaurant': return <Utensils className="w-3 h-3" />;
+      case 'restrooms': return <MapPin className="w-3 h-3" />;
+      case 'showers': return <ShowerHead className="w-3 h-3" />;
+      case 'wifi': return <Wifi className="w-3 h-3" />;
+      case 'phone': return <Phone className="w-3 h-3" />;
+      default: return <MapPin className="w-3 h-3" />;
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Search Controls */}
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search facilities..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+            data-testid="input-facility-search"
+          />
+        </div>
+
+        <div className="flex space-x-2 overflow-x-auto pb-2">
+          {facilityTypes.map((type) => (
+            <Button
+              key={type.value}
+              variant={facilityType === type.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFacilityType(type.value)}
+              className="whitespace-nowrap"
+              data-testid={`button-filter-${type.value || 'all'}`}
+            >
+              <type.icon className="w-4 h-4 mr-1" />
+              {type.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Results */}
+      <div className="space-y-3">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-2">Searching facilities...</p>
+          </div>
+        ) : filteredFacilities.length === 0 ? (
+          <div className="text-center py-8">
+            <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground">No facilities found</p>
+          </div>
+        ) : (
+          filteredFacilities.map((facility: Facility) => (
+            <Card 
+              key={facility.id} 
+              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => onSelectFacility?.(facility)}
+              data-testid={`facility-card-${facility.id}`}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-semibold text-foreground">{facility.name}</h3>
+                  <p className="text-sm text-muted-foreground">{facility.address}</p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center space-x-1">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span className="font-medium">{facility.rating}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{facility.reviewCount} reviews</p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 mb-3">
+                <Badge variant={facility.truckParking ? "default" : "secondary"}>
+                  {facility.truckParking ? "Truck ParkingMeter" : "Limited ParkingMeter"}
+                </Badge>
+                <Badge variant="outline" className="capitalize">
+                  {facility.type.replace('_', ' ')}
+                </Badge>
+              </div>
+
+              {facility.amenities && Array.isArray(facility.amenities) && (
+                <div className="flex flex-wrap gap-2">
+                  {(facility.amenities as string[]).slice(0, 5).map((amenity: string) => (
+                    <div 
+                      key={amenity} 
+                      className="flex items-center space-x-1 text-xs text-muted-foreground bg-muted rounded px-2 py-1"
+                    >
+                      {getAmenityIcon(amenity)}
+                      <span className="capitalize">{amenity}</span>
+                    </div>
+                  ))}
+                  {(facility.amenities as string[]).length > 5 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{(facility.amenities as string[]).length - 5} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
