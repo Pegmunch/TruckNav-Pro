@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Vehicle Profiles
@@ -155,6 +155,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(route);
     } catch (error) {
       res.status(500).json({ message: "Failed to update route" });
+    }
+  });
+
+  // Traffic Incidents
+  app.get("/api/traffic-incidents", async (req, res) => {
+    try {
+      const { north, south, east, west, active } = req.query;
+      
+      if (north && south && east && west) {
+        // Get incidents by area
+        const bounds = {
+          north: parseFloat(north as string),
+          south: parseFloat(south as string),
+          east: parseFloat(east as string),
+          west: parseFloat(west as string),
+        };
+        const incidents = await storage.getTrafficIncidentsByArea(bounds);
+        res.json(incidents);
+      } else if (active === 'true') {
+        // Get all active incidents
+        const incidents = await storage.getActiveTrafficIncidents();
+        res.json(incidents);
+      } else {
+        res.status(400).json({ message: "Either provide bounds parameters (north, south, east, west) or set active=true" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get traffic incidents" });
+    }
+  });
+
+  app.post("/api/traffic-incidents", async (req, res) => {
+    try {
+      const result = insertTrafficIncidentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid traffic incident data", errors: result.error.errors });
+      }
+      
+      const incident = await storage.createTrafficIncident(result.data);
+      res.json(incident);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create traffic incident" });
+    }
+  });
+
+  app.get("/api/traffic-incidents/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const incident = await storage.getTrafficIncident(id);
+      
+      if (!incident) {
+        return res.status(404).json({ message: "Traffic incident not found" });
+      }
+      
+      res.json(incident);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get traffic incident" });
+    }
+  });
+
+  app.patch("/api/traffic-incidents/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const incident = await storage.updateTrafficIncident(id, updates);
+      if (!incident) {
+        return res.status(404).json({ message: "Traffic incident not found" });
+      }
+      
+      res.json(incident);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update traffic incident" });
+    }
+  });
+
+  app.patch("/api/traffic-incidents/:id/resolve", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const incident = await storage.resolveTrafficIncident(id);
+      if (!incident) {
+        return res.status(404).json({ message: "Traffic incident not found" });
+      }
+      
+      res.json(incident);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to resolve traffic incident" });
+    }
+  });
+
+  app.patch("/api/traffic-incidents/:id/verify", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const incident = await storage.verifyTrafficIncident(id);
+      if (!incident) {
+        return res.status(404).json({ message: "Traffic incident not found" });
+      }
+      
+      res.json(incident);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to verify traffic incident" });
     }
   });
 

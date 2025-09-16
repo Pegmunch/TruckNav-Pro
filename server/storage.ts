@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -22,6 +22,15 @@ export interface IStorage {
   createRoute(route: InsertRoute): Promise<Route>;
   getFavoriteRoutes(): Promise<Route[]>;
   updateRoute(id: string, updates: Partial<Route>): Promise<Route | undefined>;
+
+  // Traffic Incidents
+  getTrafficIncident(id: string): Promise<TrafficIncident | undefined>;
+  createTrafficIncident(incident: InsertTrafficIncident): Promise<TrafficIncident>;
+  getTrafficIncidentsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<TrafficIncident[]>;
+  getActiveTrafficIncidents(): Promise<TrafficIncident[]>;
+  updateTrafficIncident(id: string, updates: Partial<TrafficIncident>): Promise<TrafficIncident | undefined>;
+  resolveTrafficIncident(id: string): Promise<TrafficIncident | undefined>;
+  verifyTrafficIncident(id: string): Promise<TrafficIncident | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -29,12 +38,14 @@ export class MemStorage implements IStorage {
   private restrictions: Map<string, Restriction>;
   private facilities: Map<string, Facility>;
   private routes: Map<string, Route>;
+  private trafficIncidents: Map<string, TrafficIncident>;
 
   constructor() {
     this.vehicleProfiles = new Map();
     this.restrictions = new Map();
     this.facilities = new Map();
     this.routes = new Map();
+    this.trafficIncidents = new Map();
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -120,6 +131,83 @@ export class MemStorage implements IStorage {
 
     sampleFacilities.forEach(facility => {
       this.facilities.set(facility.id, facility);
+    });
+
+    // Sample traffic incidents
+    const sampleIncidents: TrafficIncident[] = [
+      {
+        id: "incident-1",
+        type: "accident",
+        severity: "high",
+        title: "Multi-Vehicle Accident",
+        description: "3-vehicle collision blocking 2 lanes on M25 clockwise",
+        coordinates: { lat: 51.5074, lng: -0.1278 },
+        roadName: "M25",
+        direction: "clockwise",
+        reportedBy: "traffic_authority",
+        reporterName: "Highways England",
+        isVerified: true,
+        isActive: true,
+        reportedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+        resolvedAt: null,
+        estimatedClearTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+        affectedLanes: 2,
+        totalLanes: 4,
+        truckWarnings: ["Avoid if carrying hazmat", "Long delays expected"],
+        trafficDelay: 45,
+        alternativeRoute: { suggested: "M40 via A40", additionalTime: 20 },
+        country: "UK",
+      },
+      {
+        id: "incident-2",
+        type: "construction",
+        severity: "medium",
+        title: "Road Works",
+        description: "Lane closure for bridge maintenance work",
+        coordinates: { lat: 52.4862, lng: -1.8904 },
+        roadName: "M6",
+        direction: "northbound",
+        reportedBy: "system",
+        reporterName: null,
+        isVerified: true,
+        isActive: true,
+        reportedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        resolvedAt: null,
+        estimatedClearTime: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours from now
+        affectedLanes: 1,
+        totalLanes: 3,
+        truckWarnings: ["Width restriction 2.5m", "Speed limit 40mph"],
+        trafficDelay: 15,
+        alternativeRoute: null,
+        country: "UK",
+      },
+      {
+        id: "incident-3",
+        type: "police",
+        severity: "low",
+        title: "Police Activity",
+        description: "Police vehicle on hard shoulder - no lanes affected",
+        coordinates: { lat: 53.4808, lng: -2.2426 },
+        roadName: "M62",
+        direction: "eastbound",
+        reportedBy: "user",
+        reporterName: "John D.",
+        isVerified: false,
+        isActive: true,
+        reportedAt: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
+        resolvedAt: null,
+        estimatedClearTime: null,
+        affectedLanes: 0,
+        totalLanes: 3,
+        truckWarnings: [],
+        trafficDelay: 0,
+        alternativeRoute: null,
+        country: "UK",
+      },
+    ];
+
+    sampleIncidents.forEach(incident => {
+      this.trafficIncidents.set(incident.id, incident);
     });
   }
 
@@ -268,6 +356,84 @@ export class MemStorage implements IStorage {
 
   private toRad(value: number): number {
     return value * Math.PI / 180;
+  }
+
+  // Traffic Incidents
+  async getTrafficIncident(id: string): Promise<TrafficIncident | undefined> {
+    return this.trafficIncidents.get(id);
+  }
+
+  async createTrafficIncident(insertIncident: InsertTrafficIncident): Promise<TrafficIncident> {
+    const id = randomUUID();
+    const incident: TrafficIncident = {
+      ...insertIncident,
+      id,
+      reportedAt: new Date(),
+      description: insertIncident.description ?? null,
+      roadName: insertIncident.roadName ?? null,
+      direction: insertIncident.direction ?? null,
+      reportedBy: insertIncident.reportedBy ?? null,
+      reporterName: insertIncident.reporterName ?? null,
+      isVerified: insertIncident.isVerified ?? null,
+      isActive: insertIncident.isActive ?? null,
+      resolvedAt: insertIncident.resolvedAt ?? null,
+      estimatedClearTime: insertIncident.estimatedClearTime ?? null,
+      affectedLanes: insertIncident.affectedLanes ?? null,
+      totalLanes: insertIncident.totalLanes ?? null,
+      truckWarnings: insertIncident.truckWarnings ?? null,
+      trafficDelay: insertIncident.trafficDelay ?? null,
+      alternativeRoute: insertIncident.alternativeRoute ?? null,
+      country: insertIncident.country ?? null,
+    };
+    this.trafficIncidents.set(id, incident);
+    return incident;
+  }
+
+  async getTrafficIncidentsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<TrafficIncident[]> {
+    return Array.from(this.trafficIncidents.values()).filter(incident => {
+      if (!incident.coordinates || !incident.isActive) return false;
+      const coords = incident.coordinates as { lat: number; lng: number };
+      return coords.lat <= bounds.north && coords.lat >= bounds.south &&
+             coords.lng <= bounds.east && coords.lng >= bounds.west;
+    });
+  }
+
+  async getActiveTrafficIncidents(): Promise<TrafficIncident[]> {
+    return Array.from(this.trafficIncidents.values()).filter(incident => incident.isActive);
+  }
+
+  async updateTrafficIncident(id: string, updates: Partial<TrafficIncident>): Promise<TrafficIncident | undefined> {
+    const incident = this.trafficIncidents.get(id);
+    if (!incident) return undefined;
+
+    const updatedIncident = { ...incident, ...updates };
+    this.trafficIncidents.set(id, updatedIncident);
+    return updatedIncident;
+  }
+
+  async resolveTrafficIncident(id: string): Promise<TrafficIncident | undefined> {
+    const incident = this.trafficIncidents.get(id);
+    if (!incident) return undefined;
+
+    const resolvedIncident = {
+      ...incident,
+      isActive: false,
+      resolvedAt: new Date(),
+    };
+    this.trafficIncidents.set(id, resolvedIncident);
+    return resolvedIncident;
+  }
+
+  async verifyTrafficIncident(id: string): Promise<TrafficIncident | undefined> {
+    const incident = this.trafficIncidents.get(id);
+    if (!incident) return undefined;
+
+    const verifiedIncident = {
+      ...incident,
+      isVerified: true,
+    };
+    this.trafficIncidents.set(id, verifiedIncident);
+    return verifiedIncident;
   }
 }
 

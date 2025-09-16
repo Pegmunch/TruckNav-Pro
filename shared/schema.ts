@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, real, integer, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, real, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -58,6 +58,30 @@ export const routes = pgTable("routes", {
   isFavorite: boolean("is_favorite").default(false),
 });
 
+export const trafficIncidents = pgTable("traffic_incidents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type").notNull(), // 'police', 'accident', 'road_closure', 'construction', 'heavy_traffic', 'obstacle', 'hazmat_spill'
+  severity: text("severity").notNull(), // 'low', 'medium', 'high', 'critical'
+  title: text("title").notNull(),
+  description: text("description"),
+  coordinates: jsonb("coordinates").notNull(), // { lat: number, lng: number }
+  roadName: text("road_name"),
+  direction: text("direction"), // 'northbound', 'southbound', 'eastbound', 'westbound', 'both_directions'
+  reportedBy: text("reported_by").default('user'), // 'user', 'system', 'traffic_authority'
+  reporterName: text("reporter_name"),
+  isVerified: boolean("is_verified").default(false),
+  isActive: boolean("is_active").default(true),
+  reportedAt: timestamp("reported_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  estimatedClearTime: timestamp("estimated_clear_time"),
+  affectedLanes: integer("affected_lanes"),
+  totalLanes: integer("total_lanes"),
+  truckWarnings: jsonb("truck_warnings"), // array of truck-specific warnings
+  trafficDelay: integer("traffic_delay"), // delay in minutes
+  alternativeRoute: jsonb("alternative_route"), // suggested alternative route data
+  country: text("country").default('UK'),
+});
+
 export const insertVehicleProfileSchema = createInsertSchema(vehicleProfiles).omit({
   id: true,
 });
@@ -74,6 +98,11 @@ export const insertRouteSchema = createInsertSchema(routes).omit({
   id: true,
 });
 
+export const insertTrafficIncidentSchema = createInsertSchema(trafficIncidents).omit({
+  id: true,
+  reportedAt: true,
+});
+
 export type VehicleProfile = typeof vehicleProfiles.$inferSelect;
 export type InsertVehicleProfile = z.infer<typeof insertVehicleProfileSchema>;
 
@@ -85,3 +114,6 @@ export type InsertFacility = z.infer<typeof insertFacilitySchema>;
 
 export type Route = typeof routes.$inferSelect;
 export type InsertRoute = z.infer<typeof insertRouteSchema>;
+
+export type TrafficIncident = typeof trafficIncidents.$inferSelect;
+export type InsertTrafficIncident = z.infer<typeof insertTrafficIncidentSchema>;
