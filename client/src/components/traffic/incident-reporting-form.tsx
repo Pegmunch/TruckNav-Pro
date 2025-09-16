@@ -266,6 +266,7 @@ export default function IncidentReportingForm({
                         placeholder="Provide more details about the incident..."
                         className="min-h-[80px]"
                         {...field}
+                        value={field.value || ""}
                         data-testid="textarea-description"
                       />
                     </FormControl>
@@ -289,6 +290,7 @@ export default function IncidentReportingForm({
                         <Input 
                           placeholder="e.g., M25, A1, B4040" 
                           {...field} 
+                          value={field.value || ""}
                           data-testid="input-road-name"
                         />
                       </FormControl>
@@ -304,7 +306,7 @@ export default function IncidentReportingForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Direction</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-direction">
+                      <Select onValueChange={field.onChange} defaultValue={field.value || ""} data-testid="select-direction">
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select direction" />
@@ -338,6 +340,7 @@ export default function IncidentReportingForm({
                           min="0"
                           placeholder="0"
                           {...field}
+                          value={field.value || ""}
                           onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                           data-testid="input-affected-lanes"
                         />
@@ -360,6 +363,7 @@ export default function IncidentReportingForm({
                           min="1"
                           placeholder="3"
                           {...field}
+                          value={field.value || ""}
                           onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                           data-testid="input-total-lanes"
                         />
@@ -440,6 +444,7 @@ export default function IncidentReportingForm({
                       <Input 
                         placeholder="Optional - for verification purposes"
                         {...field}
+                        value={field.value || ""}
                         data-testid="input-reporter-name"
                       />
                     </FormControl>
