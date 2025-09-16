@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, AlertTriangle, FileText, Scale } from "lucide-react";
+import { Shield, AlertTriangle, FileText, Scale, ChevronDown } from "lucide-react";
 import TermsOfService from "./terms-of-service";
 
 interface UserAgreementProps {
@@ -20,6 +20,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
   const [acknowledgeReplication, setAcknowledgeReplication] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [showFullTerms, setShowFullTerms] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const canAccept = hasReadTerms && acknowledgePatents && acknowledgeTrademarks && acknowledgeReplication && acceptTerms;
 
@@ -37,6 +38,18 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
   const handleDecline = () => {
     localStorage.removeItem('trucknav_terms_accepted');
     onDecline();
+  };
+
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTo({
+          top: scrollElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }
   };
 
   if (showFullTerms) {
@@ -87,8 +100,9 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="space-y-6">
+        <div className="relative">
+          <ScrollArea ref={scrollAreaRef} className="max-h-[60vh] pr-4">
+            <div className="space-y-6">
             
             {/* Critical Notice */}
             <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
@@ -189,8 +203,23 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                 </div>
               </CardContent>
             </Card>
+            </div>
+          </ScrollArea>
+          
+          {/* Scroll to Bottom Button */}
+          <div className="absolute bottom-2 right-4">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={scrollToBottom}
+              className="shadow-lg bg-primary/90 hover:bg-primary text-primary-foreground"
+              data-testid="button-scroll-bottom"
+            >
+              <ChevronDown className="w-4 h-4 mr-1" />
+              Scroll to Accept
+            </Button>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Agreement Checkboxes */}
         <div className="space-y-4 border-t pt-4">
