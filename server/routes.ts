@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema } from "@shared/schema";
+import { z } from "zod";
+import Stripe from "stripe";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Vehicle Profiles
@@ -257,6 +259,265 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(incident);
     } catch (error) {
       res.status(500).json({ message: "Failed to verify traffic incident" });
+    }
+  });
+
+  // Initialize Stripe (will be available when user provides API keys)
+  let stripe: Stripe | null = null;
+  if (process.env.STRIPE_SECRET_KEY) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+
+  // Subscription Plans
+  app.get("/api/subscription/plans", async (req, res) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get subscription plans" });
+    }
+  });
+
+  // Zod schema for checkout request
+  const checkoutSchema = z.object({
+    planId: z.string().min(1, "Plan ID is required"),
+    userEmail: z.string().email("Valid email is required"),
+  });
+
+  // Stripe Checkout Session Creation
+  app.post("/api/stripe/checkout", async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ message: "Stripe not configured. Please add STRIPE_SECRET_KEY environment variable." });
+    }
+
+    try {
+      const result = checkoutSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid request data", errors: result.error.errors });
+      }
+      
+      const { planId, userEmail } = result.data;
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+
+      // Find or create user
+      let user = await storage.getUserByEmail(userEmail);
+      if (!user) {
+        user = await storage.createUser({ email: userEmail });
+      }
+
+      // Create Stripe Checkout Session
+      const sessionOptions: Stripe.Checkout.SessionCreateParams = {
+        customer_email: userEmail,
+        line_items: [
+          {
+            price: plan.stripePriceId,
+            quantity: 1,
+          },
+        ],
+        mode: plan.isLifetime ? 'payment' : 'subscription',
+        success_url: `${process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : (req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5000')}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : (req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5000')}/subscription/plans`,
+        metadata: {
+          planId: plan.id,
+          userId: user.id,
+        },
+      };
+
+      const session = await stripe.checkout.sessions.create(sessionOptions);
+      
+      res.json({ 
+        sessionId: session.id,
+        url: session.url 
+      });
+    } catch (error: any) {
+      console.error('Stripe checkout error:', error);
+      res.status(500).json({ message: "Failed to create checkout session", error: error.message });
+    }
+  });
+
+  // Stripe Webhook Handler
+  app.post("/api/stripe/webhook", async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ message: "Stripe not configured" });
+    }
+
+    try {
+      const sig = req.headers['stripe-signature'];
+      let event: Stripe.Event;
+
+      if (process.env.STRIPE_WEBHOOK_SECRET) {
+        // Verify webhook signature using raw body
+        event = stripe.webhooks.constructEvent(req.body, sig as string, process.env.STRIPE_WEBHOOK_SECRET);
+      } else if (process.env.NODE_ENV === 'development') {
+        // Only allow unverified webhooks in development
+        event = JSON.parse(req.body.toString());
+      } else {
+        return res.status(400).json({ message: "Webhook signature verification required. Please configure STRIPE_WEBHOOK_SECRET." });
+      }
+
+      // Check for duplicate events (idempotency)
+      const eventId = event.id;
+      // In production, you'd store processed event IDs in database to prevent reprocessing
+      
+      // Handle the event
+      switch (event.type) {
+        case 'checkout.session.completed':
+          const session = event.data.object as Stripe.Checkout.Session;
+          const { planId, userId } = session.metadata || {};
+          
+          if (planId && userId) {
+            const plan = await storage.getSubscriptionPlan(planId);
+            if (plan) {
+              // Check if subscription already exists to avoid duplicates
+              const existingSub = await storage.getUserSubscriptionByUserId(userId);
+              if (!existingSub) {
+                await storage.createUserSubscription({
+                  userId,
+                  planId,
+                  stripeSubscriptionId: session.subscription as string || session.id,
+                  status: 'active',
+                  currentPeriodStart: new Date(),
+                  currentPeriodEnd: plan.isLifetime ? null : new Date(Date.now() + (plan.durationMonths! * 30 * 24 * 60 * 60 * 1000)),
+                });
+              }
+            }
+          }
+          break;
+
+        case 'payment_intent.succeeded':
+          // Handle successful one-time payments (lifetime plans)
+          const paymentIntent = event.data.object as Stripe.PaymentIntent;
+          if (paymentIntent.metadata?.planId && paymentIntent.metadata?.userId) {
+            const plan = await storage.getSubscriptionPlan(paymentIntent.metadata.planId);
+            if (plan?.isLifetime) {
+              const existingSub = await storage.getUserSubscriptionByUserId(paymentIntent.metadata.userId);
+              if (!existingSub) {
+                await storage.createUserSubscription({
+                  userId: paymentIntent.metadata.userId,
+                  planId: paymentIntent.metadata.planId,
+                  stripeSubscriptionId: paymentIntent.id,
+                  status: 'active',
+                  currentPeriodStart: new Date(),
+                  currentPeriodEnd: null, // Lifetime has no end
+                });
+              }
+            }
+          }
+          break;
+
+        case 'invoice.paid':
+          // Handle successful subscription renewals
+          const paidInvoice = event.data.object as Stripe.Invoice;
+          if (paidInvoice.subscription) {
+            const userSub = await storage.getUserSubscriptionByStripeId(paidInvoice.subscription as string);
+            if (userSub) {
+              await storage.updateUserSubscription(userSub.id, {
+                status: 'active',
+                currentPeriodStart: new Date((paidInvoice as any).period_start * 1000),
+                currentPeriodEnd: new Date((paidInvoice as any).period_end * 1000),
+              });
+            }
+          }
+          break;
+
+        case 'invoice.payment_failed':
+          // Handle failed payments
+          const failedInvoice = event.data.object as Stripe.Invoice;
+          if (failedInvoice.subscription) {
+            const userSub = await storage.getUserSubscriptionByStripeId(failedInvoice.subscription as string);
+            if (userSub) {
+              await storage.updateUserSubscription(userSub.id, {
+                status: 'past_due',
+              });
+            }
+          }
+          break;
+
+        case 'customer.subscription.updated':
+          const updatedSubscription = event.data.object as Stripe.Subscription;
+          const userSubUpdated = await storage.getUserSubscriptionByStripeId(updatedSubscription.id);
+          
+          if (userSubUpdated) {
+            const status = updatedSubscription.status === 'active' ? 'active' : 
+                          updatedSubscription.status === 'canceled' ? 'canceled' : 
+                          updatedSubscription.status === 'past_due' ? 'past_due' : 'inactive';
+            
+            await storage.updateUserSubscription(userSubUpdated.id, {
+              status,
+              currentPeriodStart: (updatedSubscription as any).current_period_start ? new Date((updatedSubscription as any).current_period_start * 1000) : null,
+              currentPeriodEnd: (updatedSubscription as any).current_period_end ? new Date((updatedSubscription as any).current_period_end * 1000) : null,
+              cancelAt: (updatedSubscription as any).cancel_at ? new Date((updatedSubscription as any).cancel_at * 1000) : null,
+              canceledAt: (updatedSubscription as any).canceled_at ? new Date((updatedSubscription as any).canceled_at * 1000) : null,
+            });
+          }
+          break;
+
+        case 'customer.subscription.deleted':
+          const deletedSubscription = event.data.object as Stripe.Subscription;
+          const userSubDeleted = await storage.getUserSubscriptionByStripeId(deletedSubscription.id);
+          
+          if (userSubDeleted) {
+            await storage.updateUserSubscription(userSubDeleted.id, {
+              status: 'canceled',
+              canceledAt: new Date(),
+            });
+          }
+          break;
+
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error('Webhook error:', error);
+      res.status(400).json({ message: "Webhook error", error: error.message });
+    }
+  });
+
+  // User Subscription Status
+  app.get("/api/subscription/status", async (req, res) => {
+    try {
+      const { userId, email } = req.query;
+      
+      let user = null;
+      if (userId) {
+        user = await storage.getUser(userId as string);
+      } else if (email) {
+        user = await storage.getUserByEmail(email as string);
+      } else {
+        return res.status(400).json({ message: "userId or email parameter required" });
+      }
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const subscription = await storage.getUserSubscriptionByUserId(user.id);
+      let subscriptionWithPlan = null;
+      
+      if (subscription) {
+        const plan = await storage.getSubscriptionPlan(subscription.planId);
+        subscriptionWithPlan = {
+          ...subscription,
+          plan: plan || null,
+        };
+      }
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+        subscription: subscriptionWithPlan,
+        hasActiveSubscription: subscription?.status === 'active',
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get subscription status" });
     }
   });
 

@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -31,6 +31,26 @@ export interface IStorage {
   updateTrafficIncident(id: string, updates: Partial<TrafficIncident>): Promise<TrafficIncident | undefined>;
   resolveTrafficIncident(id: string): Promise<TrafficIncident | undefined>;
   verifyTrafficIncident(id: string): Promise<TrafficIncident | undefined>;
+
+  // Users
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+
+  // Subscription Plans
+  getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined>;
+  getSubscriptionPlanByStripeId(stripePriceId: string): Promise<SubscriptionPlan | undefined>;
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+
+  // User Subscriptions
+  getUserSubscription(id: string): Promise<UserSubscription | undefined>;
+  getUserSubscriptionByUserId(userId: string): Promise<UserSubscription | undefined>;
+  getUserSubscriptionByStripeId(stripeSubscriptionId: string): Promise<UserSubscription | undefined>;
+  createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
+  updateUserSubscription(id: string, updates: Partial<UserSubscription>): Promise<UserSubscription | undefined>;
+  cancelUserSubscription(id: string): Promise<UserSubscription | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -39,6 +59,9 @@ export class MemStorage implements IStorage {
   private facilities: Map<string, Facility>;
   private routes: Map<string, Route>;
   private trafficIncidents: Map<string, TrafficIncident>;
+  private users: Map<string, User>;
+  private subscriptionPlans: Map<string, SubscriptionPlan>;
+  private userSubscriptions: Map<string, UserSubscription>;
 
   constructor() {
     this.vehicleProfiles = new Map();
@@ -46,6 +69,9 @@ export class MemStorage implements IStorage {
     this.facilities = new Map();
     this.routes = new Map();
     this.trafficIncidents = new Map();
+    this.users = new Map();
+    this.subscriptionPlans = new Map();
+    this.userSubscriptions = new Map();
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -208,6 +234,58 @@ export class MemStorage implements IStorage {
 
     sampleIncidents.forEach(incident => {
       this.trafficIncidents.set(incident.id, incident);
+    });
+
+    // Subscription Plans - your exact pricing tiers
+    const subscriptionPlans: SubscriptionPlan[] = [
+      {
+        id: "plan-3month",
+        name: "3 Months",
+        stripePriceId: "price_3month_trucknav", // Will be replaced with actual Stripe price ID
+        priceGBP: "25.99",
+        durationMonths: 3,
+        isLifetime: false,
+        features: ["Real-time traffic data", "Voice navigation", "Route optimization", "Truck stops finder"],
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "plan-6month",
+        name: "6 Months",
+        stripePriceId: "price_6month_trucknav", // Will be replaced with actual Stripe price ID
+        priceGBP: "49.99",
+        durationMonths: 6,
+        isLifetime: false,
+        features: ["Real-time traffic data", "Voice navigation", "Route optimization", "Truck stops finder", "Priority support"],
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "plan-12month",
+        name: "12 Months",
+        stripePriceId: "price_12month_trucknav", // Will be replaced with actual Stripe price ID
+        priceGBP: "99.00",
+        durationMonths: 12,
+        isLifetime: false,
+        features: ["Real-time traffic data", "Voice navigation", "Route optimization", "Truck stops finder", "Priority support", "Advanced reporting"],
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "plan-lifetime",
+        name: "Lifetime",
+        stripePriceId: "price_lifetime_trucknav", // Will be replaced with actual Stripe price ID
+        priceGBP: "200.00",
+        durationMonths: null,
+        isLifetime: true,
+        features: ["Real-time traffic data", "Voice navigation", "Route optimization", "Truck stops finder", "Priority support", "Advanced reporting", "Future feature access"],
+        isActive: true,
+        createdAt: new Date(),
+      },
+    ];
+
+    subscriptionPlans.forEach(plan => {
+      this.subscriptionPlans.set(plan.id, plan);
     });
   }
 
@@ -434,6 +512,119 @@ export class MemStorage implements IStorage {
     };
     this.trafficIncidents.set(id, verifiedIncident);
     return verifiedIncident;
+  }
+
+  // Users
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const user: User = {
+      ...insertUser,
+      id,
+      username: insertUser.username ?? null,
+      stripeCustomerId: insertUser.stripeCustomerId ?? null,
+      stripeSubscriptionId: insertUser.stripeSubscriptionId ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    const updatedUser = { ...user, ...updates, updatedAt: new Date() };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  // Subscription Plans
+  async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
+    return this.subscriptionPlans.get(id);
+  }
+
+  async getSubscriptionPlanByStripeId(stripePriceId: string): Promise<SubscriptionPlan | undefined> {
+    return Array.from(this.subscriptionPlans.values()).find(plan => plan.stripePriceId === stripePriceId);
+  }
+
+  async getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return Array.from(this.subscriptionPlans.values()).filter(plan => plan.isActive);
+  }
+
+  async createSubscriptionPlan(insertPlan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const id = randomUUID();
+    const plan: SubscriptionPlan = {
+      ...insertPlan,
+      id,
+      durationMonths: insertPlan.durationMonths ?? null,
+      isLifetime: insertPlan.isLifetime ?? null,
+      features: insertPlan.features ?? null,
+      isActive: insertPlan.isActive ?? null,
+      createdAt: new Date(),
+    };
+    this.subscriptionPlans.set(id, plan);
+    return plan;
+  }
+
+  // User Subscriptions
+  async getUserSubscription(id: string): Promise<UserSubscription | undefined> {
+    return this.userSubscriptions.get(id);
+  }
+
+  async getUserSubscriptionByUserId(userId: string): Promise<UserSubscription | undefined> {
+    return Array.from(this.userSubscriptions.values()).find(sub => sub.userId === userId && sub.status === 'active');
+  }
+
+  async getUserSubscriptionByStripeId(stripeSubscriptionId: string): Promise<UserSubscription | undefined> {
+    return Array.from(this.userSubscriptions.values()).find(sub => sub.stripeSubscriptionId === stripeSubscriptionId);
+  }
+
+  async createUserSubscription(insertSubscription: InsertUserSubscription): Promise<UserSubscription> {
+    const id = randomUUID();
+    const subscription: UserSubscription = {
+      ...insertSubscription,
+      id,
+      currentPeriodStart: insertSubscription.currentPeriodStart ?? null,
+      currentPeriodEnd: insertSubscription.currentPeriodEnd ?? null,
+      cancelAt: insertSubscription.cancelAt ?? null,
+      canceledAt: insertSubscription.canceledAt ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userSubscriptions.set(id, subscription);
+    return subscription;
+  }
+
+  async updateUserSubscription(id: string, updates: Partial<UserSubscription>): Promise<UserSubscription | undefined> {
+    const subscription = this.userSubscriptions.get(id);
+    if (!subscription) return undefined;
+
+    const updatedSubscription = { ...subscription, ...updates, updatedAt: new Date() };
+    this.userSubscriptions.set(id, updatedSubscription);
+    return updatedSubscription;
+  }
+
+  async cancelUserSubscription(id: string): Promise<UserSubscription | undefined> {
+    const subscription = this.userSubscriptions.get(id);
+    if (!subscription) return undefined;
+
+    const canceledSubscription = {
+      ...subscription,
+      status: 'canceled' as const,
+      canceledAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userSubscriptions.set(id, canceledSubscription);
+    return canceledSubscription;
   }
 }
 
