@@ -9,7 +9,7 @@
   "background_color": "#ffffff",
   "scope": "/",
   "categories": ["navigation", "travel", "productivity", "business"],
-  "lang": "en-GB",
+  "lang": "en",
   
   "icons": [
     {
@@ -91,6 +91,16 @@
     "required_features": [],
     "optional_features": ["location", "internet"],
     "privacy_policy": "https://trucknav.replit.app/privacy",
-    "terms_of_service": "https://trucknav.replit.app/terms"
+    "terms_of_service": "https://trucknav.replit.app/terms",
+    "supported_languages": [
+      "en-US", "en-GB", "de-DE", "fr-FR", "es-ES", "ja-JP",
+      "it-IT", "pt-BR", "nl-NL", "sv-SE", "pl-PL", "tr-TR",
+      "ar-SA", "ar-AE", "hi-IN", "zh-CN", "ko-KR", "th-TH"
+    ],
+    "localization": {
+      "default_language": "en-US",
+      "auto_detect": true,
+      "fallback_language": "en-US"
+    }
   }
 }

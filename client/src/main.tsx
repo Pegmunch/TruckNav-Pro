@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "./i18n/config";
 
 // Register Service Worker for PWA functionality
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd

@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Professional Lorry Navigation",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Route Planning",
+    "vehicle_setup": "Vehicle Setup", 
+    "facility_search": "Facility Search",
+    "live_traffic": "Live Traffic",
+    "restrictions": "Restrictions",
+    "settings": "Settings"
+  },
+  "vehicle": {
+    "profile": "Vehicle Profile",
+    "name": "Vehicle Name",
+    "height": "Height",
+    "width": "Width", 
+    "length": "Length",
+    "weight": "Weight",
+    "axles": "Axles",
+    "hazmat": "Hazmat",
+    "feet": "ft",
+    "inches": "in",
+    "tonnes": "tonnes",
+    "save": "Save Profile"
+  },
+  "route": {
+    "plan": "Plan Route",
+    "from": "From",
+    "to": "To",
+    "calculate": "Calculate Route",
+    "distance": "Distance",
+    "duration": "Duration",
+    "restrictions": "Restrictions Found",
+    "alternative": "Alternative Route"
+  },
+  "facilities": {
+    "search": "Find Facilities",
+    "truck_stop": "Lorry Park",
+    "fuel": "Petrol Station",
+    "parking": "Parking",
+    "restaurant": "Restaurant",
+    "hotel": "Hotel",
+    "restrooms": "Toilets",
+    "showers": "Showers",
+    "near_me": "Near Me"
+  },
+  "legal": {
+    "title": "Legal Agreement Required - TruckNav Pro",
+    "description": "You must accept these legal terms to use TruckNav Pro",
+    "patent_notice": "TruckNav Pro contains patented technology owned by Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro and Professional Navigation are registered trademarks",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. All rights reserved",
+    "accept": "I Accept These Terms",
+    "decline": "I Do Not Accept",
+    "terms_of_service": "Terms of Service",
+    "privacy_policy": "Privacy Policy"
+  },
+  "subscription": {
+    "plans": "Subscription Plans",
+    "3month": "3 Month Plan",
+    "6month": "6 Month Plan", 
+    "12month": "12 Month Plan",
+    "lifetime": "Lifetime Access",
+    "price_3m": "£25.99",
+    "price_6m": "£49.99",
+    "price_12m": "£99.99",
+    "price_lifetime": "£200.00",
+    "features": "Features Included",
+    "subscribe": "Subscribe Now"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "language": "Language"
+  },
+  "amazon": {
+    "fire_tv": "Optimised for Fire TV",
+    "fire_tablet": "Optimised for Fire Tablet",
+    "silk_browser": "Enhanced for Silk Browser",
+    "voice_support": "Voice Navigation Supported",
+    "remote_navigation": "Remote Control Navigation"
+  }
+}

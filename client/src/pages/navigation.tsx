@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Plus, Minus, Crosshair } from "lucide-react";
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '@/components/language/language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
@@ -14,6 +16,7 @@ import { type VehicleProfile, type Route } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function NavigationPage() {
+  const { t } = useTranslation();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
@@ -79,11 +82,12 @@ export default function NavigationPage() {
               <Truck className="text-primary-foreground text-lg" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">TruckNav Pro</h1>
-              <p className="text-sm text-muted-foreground">Professional Navigation</p>
+              <h1 className="text-lg font-bold text-foreground">{t('app.name')}</h1>
+              <p className="text-sm text-muted-foreground">{t('app.tagline')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <LanguageSelector variant="button" />
             {selectedProfile && (
               <div className="bg-muted rounded-lg px-3 py-2 text-xs" data-testid="vehicle-profile-display">
                 <span className="font-medium text-foreground">

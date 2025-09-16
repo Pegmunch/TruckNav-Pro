@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Navigation Professionnelle de Camions",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Planification d'Itinéraire",
+    "vehicle_setup": "Configuration du Véhicule", 
+    "facility_search": "Recherche d'Installations",
+    "live_traffic": "Trafic en Temps Réel",
+    "restrictions": "Restrictions",
+    "settings": "Paramètres"
+  },
+  "vehicle": {
+    "profile": "Profil du Véhicule",
+    "name": "Nom du Véhicule",
+    "height": "Hauteur",
+    "width": "Largeur", 
+    "length": "Longueur",
+    "weight": "Poids",
+    "axles": "Essieux",
+    "hazmat": "Matières Dangereuses",
+    "feet": "pieds",
+    "inches": "pouces",
+    "tons": "tonnes",
+    "save": "Sauvegarder le Profil"
+  },
+  "route": {
+    "plan": "Planifier l'Itinéraire",
+    "from": "De",
+    "to": "À",
+    "calculate": "Calculer l'Itinéraire",
+    "distance": "Distance",
+    "duration": "Durée",
+    "restrictions": "Restrictions Trouvées",
+    "alternative": "Itinéraire Alternatif"
+  },
+  "facilities": {
+    "search": "Rechercher des Installations",
+    "truck_stop": "Arrêt de Camion",
+    "fuel": "Station-Service",
+    "parking": "Parking",
+    "restaurant": "Restaurant",
+    "hotel": "Hôtel",
+    "restrooms": "Toilettes",
+    "showers": "Douches",
+    "near_me": "Près de Moi"
+  },
+  "legal": {
+    "title": "Accord Juridique Requis - TruckNav Pro",
+    "description": "Vous devez accepter ces conditions légales pour utiliser TruckNav Pro",
+    "patent_notice": "TruckNav Pro contient une technologie brevetée appartenant à Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro et Professional Navigation sont des marques déposées",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Tous droits réservés",
+    "accept": "J'Accepte Ces Conditions",
+    "decline": "Je N'Accepte Pas",
+    "terms_of_service": "Conditions de Service",
+    "privacy_policy": "Politique de Confidentialité"
+  },
+  "subscription": {
+    "plans": "Plans d'Abonnement",
+    "3month": "Plan 3 Mois",
+    "6month": "Plan 6 Mois", 
+    "12month": "Plan 12 Mois",
+    "lifetime": "Accès à Vie",
+    "price_3m": "25,99 €",
+    "price_6m": "49,99 €",
+    "price_12m": "99,99 €",
+    "price_lifetime": "200,00 €",
+    "features": "Fonctionnalités Incluses",
+    "subscribe": "S'Abonner Maintenant"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "continue": "Continuer",
+    "back": "Retour",
+    "next": "Suivant",
+    "save": "Sauvegarder",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "language": "Langue"
+  },
+  "amazon": {
+    "fire_tv": "Optimisé pour Fire TV",
+    "fire_tablet": "Optimisé pour Fire Tablet",
+    "silk_browser": "Amélioré pour Silk Browser",
+    "voice_support": "Navigation Vocale Supportée",
+    "remote_navigation": "Navigation avec Télécommande"
+  }
+}
