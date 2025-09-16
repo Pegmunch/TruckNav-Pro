@@ -1,12 +1,17 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { applySecurityMiddleware, authRateLimit, apiRateLimit } from "./middleware/security";
+import { sessionConfig } from "./middleware/session-security";
 
 const app = express();
 
 // Apply comprehensive anti-hacking security features first
 applySecurityMiddleware(app);
+
+// Enhanced session security with PostgreSQL store
+app.use(session(sessionConfig));
 
 // Handle Stripe webhooks with raw body before JSON parsing
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
