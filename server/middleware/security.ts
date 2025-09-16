@@ -197,7 +197,7 @@ export const preventSQLInjection = (req: express.Request, res: express.Response,
 
   if (req.body && checkForSQLInjection(req.body)) {
     console.warn(`[SECURITY] SQL injection attempt detected from IP: ${req.ip}`, {
-      body: req.body,
+      method: req.method,
       url: req.url,
       userAgent: req.get('User-Agent'),
       timestamp: new Date().toISOString()
@@ -218,8 +218,8 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.warn(`[SECURITY] Request validation failed from IP: ${req.ip}`, {
-      errors: errors.array(),
-      body: req.body,
+      errorTypes: errors.array().map(e => e.type),
+      method: req.method,
       url: req.url,
       timestamp: new Date().toISOString()
     });
