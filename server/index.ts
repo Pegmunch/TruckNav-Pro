@@ -7,11 +7,11 @@ import { sessionConfig } from "./middleware/session-security";
 
 const app = express();
 
-// Apply comprehensive anti-hacking security features first
-applySecurityMiddleware(app);
-
-// Enhanced session security with PostgreSQL store
+// Enhanced session security with PostgreSQL store (must be before CSRF)
 app.use(session(sessionConfig));
+
+// Apply comprehensive anti-hacking security features after session
+applySecurityMiddleware(app);
 
 // Handle Stripe webhooks with raw body before JSON parsing
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
@@ -21,26 +21,12 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
+      // Log API requests without sensitive response data
+      const logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       log(logLine);
     }
   });

@@ -8,17 +8,23 @@ import crypto from 'crypto';
 
 const PostgresStore = connectPgSimple(session);
 
+// Ensure database connection exists for session store
+if (!process.env.DATABASE_URL) {
+  throw new Error('[SESSION] DATABASE_URL is required for secure session storage');
+}
+
 // Create database connection for session store
 let sql: any;
 try {
   sql = neon(process.env.DATABASE_URL!);
 } catch (error) {
-  console.warn('[SESSION] Database connection failed, using memory store');
+  console.error('[SESSION] Database connection failed:', error);
+  throw new Error('[SESSION] Failed to connect to database for session storage');
 }
 
 // Enhanced session configuration with maximum security
 export const sessionConfig = {
-  store: sql ? new PostgresStore({
+  store: new PostgresStore({
     conString: process.env.DATABASE_URL!,
     createTableIfMissing: true,
     tableName: 'user_sessions',
@@ -26,7 +32,7 @@ export const sessionConfig = {
     pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
     ttl: 60 * 60 * 24, // Session TTL of 24 hours
     schemaName: 'public',
-  }) : undefined,
+  }),
   
   secret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
   

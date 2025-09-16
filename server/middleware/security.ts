@@ -20,12 +20,13 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Block immediately on suspicious activity
+    // Allow OPTIONS requests for CORS but count everything else
     skip: (req) => {
-      // Allow OPTIONS requests for CORS
-      if (req.method === 'OPTIONS') return true;
-      
-      // Check for suspicious patterns
+      return req.method === 'OPTIONS';
+    },
+    
+    // Handle suspicious activity with immediate blocking
+    handler: (req, res) => {
       const suspiciousPatterns = [
         /(\<script|\<iframe|\<object|\<embed)/i,
         /(union\s+select|drop\s+table|insert\s+into)/i,
@@ -33,8 +34,28 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
         /(eval\(|document\.cookie|window\.location)/i,
       ];
       
-      const requestString = JSON.stringify(req.body) + req.url + JSON.stringify(req.headers);
-      return !suspiciousPatterns.some(pattern => pattern.test(requestString));
+      const requestString = JSON.stringify(req.body || {}) + req.url + JSON.stringify(req.headers);
+      const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(requestString));
+      
+      if (isSuspicious) {
+        console.warn(`[SECURITY] Suspicious request blocked from IP: ${req.ip}`, {
+          url: req.url,
+          method: req.method,
+          timestamp: new Date().toISOString()
+        });
+        return res.status(429).json({
+          error: 'Request blocked due to suspicious patterns',
+          code: 'SUSPICIOUS_ACTIVITY',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Default rate limit response
+      return res.status(429).json({
+        error: message,
+        code: 'RATE_LIMIT_EXCEEDED',
+        timestamp: new Date().toISOString(),
+      });
     }
   });
 };
@@ -63,7 +84,9 @@ export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+      scriptSrc: process.env.NODE_ENV === 'production' 
+        ? ["'self'", "https://js.stripe.com"]
+        : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
@@ -111,7 +134,7 @@ export const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-CSRF-Token'],
   maxAge: 86400, // 24 hours
 };
 
@@ -254,18 +277,18 @@ export const generateCSRFToken = (req: express.Request & { session?: any }, res:
   next();
 };
 
-// Security monitoring and logging
+// Security monitoring and logging (with sensitive data protection)
 export const securityLogger = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const startTime = Date.now();
   
-  // Log suspicious requests
+  // Log suspicious requests (without sensitive headers)
   const suspiciousIndicators = [
     req.url.includes('..'),
     req.url.includes('/etc/'),
     req.url.includes('/proc/'),
     req.url.includes('cmd='),
     req.url.includes('exec='),
-    JSON.stringify(req.headers).includes('<script'),
+    req.get('User-Agent')?.includes('<script'),
     req.get('User-Agent')?.includes('sqlmap'),
     req.get('User-Agent')?.includes('nikto'),
   ];
@@ -275,12 +298,11 @@ export const securityLogger = (req: express.Request, res: express.Response, next
       method: req.method,
       url: req.url,
       userAgent: req.get('User-Agent'),
-      headers: req.headers,
       timestamp: new Date().toISOString()
     });
   }
 
-  // Enhanced logging for all requests
+  // Enhanced logging for all requests (no sensitive response data)
   res.on('finish', () => {
     const duration = Date.now() - startTime;
     console.log(`[ACCESS] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms - IP: ${req.ip}`);
@@ -289,14 +311,13 @@ export const securityLogger = (req: express.Request, res: express.Response, next
   next();
 };
 
+// Persistent intrusion detection tracking
+const suspiciousActivity = new Map<string, { count: number; firstRequest: number }>();
+
 // Intrusion detection system
 export const intrusionDetection = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const ip = req.ip;
   const now = Date.now();
-  
-  // Simple in-memory store for tracking suspicious activity
-  // In production, this should be replaced with Redis or similar
-  const suspiciousActivity = new Map();
   
   // Check for rapid successive requests (potential DDoS)
   const ipActivity = suspiciousActivity.get(ip) || { count: 0, firstRequest: now };
