@@ -94,6 +94,7 @@ export const corsOptions = {
     // Allow localhost and replit.dev domains for development
     const allowedOrigins = [
       /^https?:\/\/localhost(:\d+)?$/,
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
       /^https?:\/\/.*\.replit\.dev$/,
       /^https?:\/\/.*\.replit\.app$/,
       /^https?:\/\/.*\.repl\.co$/,

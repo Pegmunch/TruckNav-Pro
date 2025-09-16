@@ -4,8 +4,29 @@ import { storage } from "./storage";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
+import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
+import { 
+  validateVehicleProfile, 
+  validateRoute, 
+  validateTrafficIncident, 
+  validateFacilitySearch, 
+  validateSubscription, 
+  validateId,
+  validateCoordinates
+} from "./middleware/validation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply API rate limiting to all API routes
+  app.use("/api", apiRateLimit);
+  
+  // Apply CSRF protection to all state-changing operations
+  app.use("/api", (req: any, res: any, next: any) => {
+    if (req.method !== 'GET' && req.method !== 'OPTIONS') {
+      return csrfProtection(req, res, next);
+    }
+    next();
+  });
+
   // Vehicle Profiles
   app.get("/api/vehicle-profiles", async (req, res) => {
     try {
@@ -16,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/vehicle-profiles", async (req, res) => {
+  app.post("/api/vehicle-profiles", validateVehicleProfile, validateRequest, async (req: any, res: any) => {
     try {
       const result = insertVehicleProfileSchema.safeParse(req.body);
       if (!result.success) {
@@ -51,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/restrictions", async (req, res) => {
+  app.post("/api/restrictions", validateCoordinates, validateRequest, async (req: any, res: any) => {
     try {
       const result = insertRestrictionSchema.safeParse(req.body);
       if (!result.success) {
@@ -66,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Facilities
-  app.get("/api/facilities", async (req, res) => {
+  app.get("/api/facilities", validateFacilitySearch, validateRequest, async (req, res) => {
     try {
       const { type, lat, lng, radius } = req.query;
       const params: any = {};
@@ -87,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/facilities", async (req, res) => {
+  app.post("/api/facilities", validateCoordinates, validateRequest, async (req, res) => {
     try {
       const result = insertFacilitySchema.safeParse(req.body);
       if (!result.success) {
@@ -102,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Routes
-  app.post("/api/routes/calculate", async (req, res) => {
+  app.post("/api/routes/calculate", validateRoute, validateRequest, async (req, res) => {
     try {
       const { startLocation, endLocation, vehicleProfileId } = req.body;
       
@@ -144,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/routes/:id/favorite", async (req, res) => {
+  app.patch("/api/routes/:id/favorite", validateId, validateRequest, async (req, res) => {
     try {
       const { id } = req.params;
       const { isFavorite } = req.body;
@@ -187,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/traffic-incidents", async (req, res) => {
+  app.post("/api/traffic-incidents", validateTrafficIncident, validateRequest, async (req, res) => {
     try {
       const result = insertTrafficIncidentSchema.safeParse(req.body);
       if (!result.success) {
