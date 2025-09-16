@@ -73,9 +73,9 @@ export default function NavigationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background scroll-smooth no-scroll-lock">
       {/* Header */}
-      <header className="bg-card shadow-sm border-b border-border">
+      <header className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -111,25 +111,29 @@ export default function NavigationPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex h-[calc(100vh-73px)]">
+      <div className="flex min-h-[calc(100vh-73px)] touch-scroll">
         {/* Route Planning Panel */}
-        <RoutePlanningPanel
-          fromLocation={fromLocation}
-          toLocation={toLocation}
-          onFromLocationChange={setFromLocation}
-          onToLocationChange={setToLocation}
-          onPlanRoute={handlePlanRoute}
-          onStartNavigation={handleStartNavigation}
-          currentRoute={currentRoute}
-          isCalculating={calculateRouteMutation.isPending}
-          selectedProfile={selectedProfile}
-        />
+        <div className="flex-shrink-0 overflow-y-auto touch-scroll">
+          <RoutePlanningPanel
+            fromLocation={fromLocation}
+            toLocation={toLocation}
+            onFromLocationChange={setFromLocation}
+            onToLocationChange={setToLocation}
+            onPlanRoute={handlePlanRoute}
+            onStartNavigation={handleStartNavigation}
+            currentRoute={currentRoute}
+            isCalculating={calculateRouteMutation.isPending}
+            selectedProfile={selectedProfile}
+          />
+        </div>
 
         {/* Map */}
-        <InteractiveMap
-          currentRoute={currentRoute}
-          selectedProfile={selectedProfile}
-        />
+        <div className="flex-1 overflow-hidden">
+          <InteractiveMap
+            currentRoute={currentRoute}
+            selectedProfile={selectedProfile}
+          />
+        </div>
       </div>
 
       {/* Vehicle Profile Setup Modal */}

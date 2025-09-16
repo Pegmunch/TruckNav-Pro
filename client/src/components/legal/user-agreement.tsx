@@ -55,7 +55,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
   if (showFullTerms) {
     return (
       <Dialog open={isOpen} onOpenChange={() => {}}>
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col scroll-smooth">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
@@ -65,7 +65,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
               Full legal terms and conditions for TruckNav Pro usage, including patent protections and intellectual property rights owned by Bespoke Marketing.Ai Ltd.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 max-h-[70vh] pr-4">
+          <ScrollArea className="flex-1 max-h-[70vh] pr-4 scroll-smooth touch-scroll">
             <TermsOfService />
           </ScrollArea>
           <div className="flex justify-between mt-4 pt-4 border-t">
@@ -89,7 +89,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-4xl max-h-[90vh]" data-testid="dialog-user-agreement">
+      <DialogContent className="max-w-4xl max-h-[90vh] scroll-smooth" data-testid="dialog-user-agreement">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Shield className="w-6 h-6 text-primary" />
@@ -101,7 +101,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
         </DialogHeader>
 
         <div className="relative">
-          <ScrollArea ref={scrollAreaRef} className="max-h-[60vh] pr-4">
+          <ScrollArea ref={scrollAreaRef} className="max-h-[60vh] pr-4 scroll-smooth touch-scroll">
             <div className="space-y-6">
             
             {/* Critical Notice */}

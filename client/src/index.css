@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scrolling behavior */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix scroll issues on mobile */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Smooth scrolling for all scroll areas */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Prevent scroll locks */
+.no-scroll-lock {
+  overflow: auto !important;
+}
+
+/* Better touch scrolling */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 :root {
   --background: hsl(210, 40%, 96%);
   --foreground: hsl(222, 84%, 5%);

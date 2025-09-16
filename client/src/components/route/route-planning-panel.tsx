@@ -80,7 +80,7 @@ export default function RoutePlanningPanel({
   };
 
   return (
-    <div className="w-80 bg-card border-r border-border flex flex-col overflow-hidden">
+    <div className="w-80 bg-card border-r border-border flex flex-col min-h-full overflow-y-auto touch-scroll">
       {/* Route Input Section */}
       <div className="p-4 border-b border-border">
         <div className="space-y-3">
