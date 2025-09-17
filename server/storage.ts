@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type LaneSegment, type LaneOption } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -51,6 +51,11 @@ export interface IStorage {
   createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
   updateUserSubscription(id: string, updates: Partial<UserSubscription>): Promise<UserSubscription | undefined>;
   cancelUserSubscription(id: string): Promise<UserSubscription | undefined>;
+
+  // Lane Guidance
+  getLaneGuidance(routeId: string): Promise<LaneSegment[] | null>;
+  setLaneSelection(routeId: string, selections: Record<number, number>): Promise<void>;
+  generateLaneGuidance(route: Route, vehicleProfile: VehicleProfile): Promise<LaneSegment[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -287,6 +292,34 @@ export class MemStorage implements IStorage {
     subscriptionPlans.forEach(plan => {
       this.subscriptionPlans.set(plan.id, plan);
     });
+
+    // Sample routes for testing
+    const sampleRoutes: Route[] = [
+      {
+        id: "550e8400-e29b-41d4-a716-446655440001",
+        name: "Manchester to Birmingham",
+        startLocation: "Manchester",
+        endLocation: "Birmingham",
+        startCoordinates: { lat: 53.4808, lng: -2.2426 },
+        endCoordinates: { lat: 52.4862, lng: -1.8904 },
+        distance: 186,
+        duration: 222, // 3h 42m in minutes
+        vehicleProfileId: "default-profile",
+        routePath: [
+          { lat: 53.4808, lng: -2.2426 },
+          { lat: 52.9569, lng: -2.0642 },
+          { lat: 52.4862, lng: -1.8904 }
+        ],
+        restrictionsAvoided: ["rest-1"],
+        facilitiesNearby: ["facility-1"],
+        laneGuidance: null,
+        isFavorite: false,
+      },
+    ];
+
+    sampleRoutes.forEach(route => {
+      this.routes.set(route.id, route);
+    });
   }
 
   // Vehicle Profiles
@@ -400,6 +433,7 @@ export class MemStorage implements IStorage {
       routePath: insertRoute.routePath ?? null,
       restrictionsAvoided: insertRoute.restrictionsAvoided ?? null,
       facilitiesNearby: insertRoute.facilitiesNearby ?? null,
+      laneGuidance: insertRoute.laneGuidance ?? null,
       isFavorite: insertRoute.isFavorite ?? null
     };
     this.routes.set(id, route);
@@ -625,6 +659,168 @@ export class MemStorage implements IStorage {
     };
     this.userSubscriptions.set(id, canceledSubscription);
     return canceledSubscription;
+  }
+
+  // Lane Guidance
+  private laneSelections: Map<string, Record<number, number>> = new Map();
+
+  async getLaneGuidance(routeId: string): Promise<LaneSegment[] | null> {
+    const route = this.routes.get(routeId);
+    if (!route) return null;
+
+    // Check if lane guidance already exists in the route
+    if (route.laneGuidance && Array.isArray(route.laneGuidance)) {
+      return route.laneGuidance as LaneSegment[];
+    }
+
+    // If no existing lane guidance, generate it
+    const vehicleProfile = route.vehicleProfileId 
+      ? this.vehicleProfiles.get(route.vehicleProfileId)
+      : this.vehicleProfiles.get("default-profile");
+    
+    if (!vehicleProfile) return null;
+
+    const laneGuidance = await this.generateLaneGuidance(route, vehicleProfile);
+    
+    // Save the generated lane guidance to the route
+    const updatedRoute = { ...route, laneGuidance };
+    this.routes.set(routeId, updatedRoute);
+    
+    return laneGuidance;
+  }
+
+  async setLaneSelection(routeId: string, selections: Record<number, number>): Promise<void> {
+    this.laneSelections.set(routeId, selections);
+  }
+
+  async generateLaneGuidance(route: Route, vehicleProfile: VehicleProfile): Promise<LaneSegment[]> {
+    // Generate realistic lane guidance based on route and vehicle profile
+    const laneSegments: LaneSegment[] = [];
+    
+    // Mock route segments based on distance and typical UK motorway/A-road structure
+    const totalDistance = route.distance || 186; // miles
+    const segmentCount = Math.min(Math.max(Math.floor(totalDistance / 20), 3), 8); // 3-8 segments
+    
+    for (let i = 0; i < segmentCount; i++) {
+      const segmentDistance = totalDistance / segmentCount * (i + 1);
+      const isLastSegment = i === segmentCount - 1;
+      const isFirstSegment = i === 0;
+      
+      // Determine maneuver type based on position
+      let maneuverType: LaneSegment['maneuverType'];
+      let totalLanes: number;
+      let roadName: string;
+      
+      if (isFirstSegment) {
+        maneuverType = 'enter';
+        totalLanes = 2;
+        roadName = 'A-road';
+      } else if (isLastSegment) {
+        maneuverType = 'exit';
+        totalLanes = 3;
+        roadName = route.endLocation.includes('M') ? route.endLocation.split(' ')[0] : 'A-road';
+      } else if (i === 1) {
+        maneuverType = 'merge';
+        totalLanes = 4;
+        roadName = 'M25'; // Common UK motorway
+      } else if (i === segmentCount - 2) {
+        // Randomly choose between turn-left and turn-right for more realistic guidance
+        maneuverType = Math.random() > 0.5 ? 'turn-right' : 'turn-left';
+        totalLanes = 3;
+        roadName = 'A40';
+      } else {
+        maneuverType = 'straight';
+        totalLanes = 3;
+        roadName = 'M6';
+      }
+
+      // Generate lane options based on vehicle profile and restrictions
+      const laneOptions: LaneOption[] = [];
+      
+      for (let laneIndex = 0; laneIndex < totalLanes; laneIndex++) {
+        const isLeftLane = laneIndex === 0;
+        const isRightLane = laneIndex === totalLanes - 1;
+        const isMiddleLane = !isLeftLane && !isRightLane;
+        
+        let direction: LaneOption['direction'];
+        let restrictions: string[] = [];
+        let recommended = false;
+        
+        // Determine lane direction and restrictions
+        if (maneuverType === 'exit' && isRightLane) {
+          direction = 'exit';
+          recommended = true;
+        } else if (maneuverType === 'turn-right' && isRightLane) {
+          direction = 'right';
+          recommended = true;
+        } else if (maneuverType === 'turn-left' && isLeftLane) {
+          direction = 'left';
+          recommended = true;
+        } else if (maneuverType === 'merge' && isMiddleLane) {
+          direction = 'straight';
+          recommended = true;
+        } else {
+          direction = 'straight';
+          recommended = isMiddleLane; // Middle lanes generally recommended for trucks
+        }
+        
+        // Add vehicle-specific restrictions
+        if (vehicleProfile.height && vehicleProfile.height > 15) {
+          if (Math.random() > 0.8) { // 20% chance of height restriction
+            restrictions.push('height-restriction-15ft');
+            recommended = false;
+          }
+        }
+        
+        if (vehicleProfile.isHazmat) {
+          if (isLeftLane && Math.random() > 0.7) { // 30% chance hazmat restriction in left lane
+            restrictions.push('no-hazmat');
+            recommended = false;
+          }
+        }
+        
+        if (vehicleProfile.weight && vehicleProfile.weight > 40) {
+          if (isRightLane && Math.random() > 0.85) { // 15% chance weight restriction
+            restrictions.push('weight-limit-40t');
+            recommended = false;
+          }
+        }
+
+        laneOptions.push({
+          index: laneIndex,
+          direction,
+          restrictions: restrictions.length > 0 ? restrictions : undefined,
+          allowedVehicles: undefined,
+          recommended,
+        });
+      }
+
+      // Generate advisory message
+      let advisory: string | undefined;
+      if (maneuverType === 'merge') {
+        advisory = 'Prepare to merge - check mirrors and signal early';
+      } else if (maneuverType === 'exit') {
+        advisory = 'Exit approaching - move to exit lane';
+      } else if (maneuverType === 'turn-right') {
+        advisory = 'Right turn ahead - use right lane';
+      } else if (vehicleProfile.height && vehicleProfile.height > 15) {
+        advisory = 'Low bridge ahead - check height clearance';
+      } else if (vehicleProfile.isHazmat) {
+        advisory = 'Hazmat restrictions may apply - check lane signs';
+      }
+
+      laneSegments.push({
+        stepIndex: i,
+        roadName,
+        maneuverType,
+        distance: Math.round(segmentDistance * 10) / 10, // Round to 1 decimal
+        totalLanes,
+        laneOptions,
+        advisory,
+      });
+    }
+    
+    return laneSegments;
   }
 }
 

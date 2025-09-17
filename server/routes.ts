@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema } from "@shared/schema";
@@ -87,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Facilities
-  app.get("/api/facilities", validateFacilitySearch, validateRequest, async (req, res) => {
+  app.get("/api/facilities", validateFacilitySearch, validateRequest, async (req: Request, res: Response) => {
     try {
       const { type, lat, lng, radius } = req.query;
       const params: any = {};
@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/facilities", validateCoordinates, validateRequest, async (req, res) => {
+  app.post("/api/facilities", validateCoordinates, validateRequest, async (req: Request, res: Response) => {
     try {
       const result = insertFacilitySchema.safeParse(req.body);
       if (!result.success) {
@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Routes
-  app.post("/api/routes/calculate", validateRoute, validateRequest, async (req, res) => {
+  app.post("/api/routes/calculate", validateRoute, validateRequest, async (req: Request, res: Response) => {
     try {
       const { startLocation, endLocation, vehicleProfileId } = req.body;
       
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/routes/:id/favorite", validateId, validateRequest, async (req, res) => {
+  app.patch("/api/routes/:id/favorite", validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isFavorite } = req.body;
@@ -178,6 +178,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(route);
     } catch (error) {
       res.status(500).json({ message: "Failed to update route" });
+    }
+  });
+
+  // Lane Guidance
+  app.get("/api/routes/:id/lanes", validateId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const laneGuidance = await storage.getLaneGuidance(id);
+      if (laneGuidance === null) {
+        return res.status(404).json({ message: "Route not found or lane guidance unavailable" });
+      }
+      
+      res.json(laneGuidance);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get lane guidance" });
+    }
+  });
+
+  // Zod schema for lane selection request
+  const laneSelectionSchema = z.object({
+    selections: z.record(z.string(), z.number()).refine(
+      (selections) => {
+        const stepIndices = Object.keys(selections).map(Number);
+        const laneIndices = Object.values(selections);
+        return stepIndices.every(step => step >= 0) && laneIndices.every(lane => lane >= 0);
+      },
+      { message: "Step indices and lane indices must be non-negative numbers" }
+    ),
+  });
+
+  app.patch("/api/routes/:id/lanes/select", validateId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const result = laneSelectionSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid lane selection data", errors: result.error.errors });
+      }
+      
+      // Convert string keys back to numbers for the selections record
+      const selections: Record<number, number> = {};
+      Object.entries(result.data.selections).forEach(([step, lane]) => {
+        selections[parseInt(step)] = lane;
+      });
+      
+      await storage.setLaneSelection(id, selections);
+      res.json({ message: "Lane selections saved successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save lane selections" });
     }
   });
 
@@ -208,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/traffic-incidents", validateTrafficIncident, validateRequest, async (req, res) => {
+  app.post("/api/traffic-incidents", validateTrafficIncident, validateRequest, async (req: Request, res: Response) => {
     try {
       const result = insertTrafficIncidentSchema.safeParse(req.body);
       if (!result.success) {
@@ -433,8 +483,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'invoice.paid':
           // Handle successful subscription renewals
           const paidInvoice = event.data.object as Stripe.Invoice;
-          if (paidInvoice.subscription) {
-            const userSub = await storage.getUserSubscriptionByStripeId(paidInvoice.subscription as string);
+          const paidSubscriptionId = (paidInvoice as any).subscription;
+          if (paidSubscriptionId) {
+            const userSub = await storage.getUserSubscriptionByStripeId(paidSubscriptionId);
             if (userSub) {
               await storage.updateUserSubscription(userSub.id, {
                 status: 'active',
@@ -448,8 +499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'invoice.payment_failed':
           // Handle failed payments
           const failedInvoice = event.data.object as Stripe.Invoice;
-          if (failedInvoice.subscription) {
-            const userSub = await storage.getUserSubscriptionByStripeId(failedInvoice.subscription as string);
+          const failedSubscriptionId = (failedInvoice as any).subscription;
+          if (failedSubscriptionId) {
+            const userSub = await storage.getUserSubscriptionByStripeId(failedSubscriptionId);
             if (userSub) {
               await storage.updateUserSubscription(userSub.id, {
                 status: 'past_due',
