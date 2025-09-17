@@ -16,6 +16,8 @@ import { useWindowSync } from "@/hooks/use-window-sync";
 import { isMapWindowOpen, focusMapWindow } from "@/lib/window-manager";
 import { useToast } from "@/hooks/use-toast";
 import { useLiveNotifications } from "@/hooks/use-live-notifications";
+import { MobileNotificationStack } from "@/components/notifications/mobile-notification-cards";
+import { DNDControls } from "@/components/notifications/dnd-controls";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -29,8 +31,8 @@ export default function NavigationPage() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
-  // Mobile vs Desktop state management
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  // Mobile vs Desktop state management - initialize after isMobile is available
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Mobile drawer state (replaces sidebar on mobile)
@@ -45,13 +47,32 @@ export default function NavigationPage() {
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
 
-  // Live notifications system
-  const { triggerLiveNotification, isActive: notificationsActive } = useLiveNotifications({
+  // Initialize sidebar state based on mobile status
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  // Live notifications system with mobile enhancements - with error handling
+  const liveNotifications = useLiveNotifications({
     currentRoute,
     selectedProfile,
     isNavigating,
     enabled: true, // Always enabled for live updates
   });
+  
+  // Safely destructure with fallbacks to prevent crashes
+  const {
+    triggerLiveNotification = () => console.warn('triggerLiveNotification not available'),
+    isActive: notificationsActive = false,
+    activeNotifications = [],
+    dismissNotification = () => console.warn('dismissNotification not available'),
+    dndState = { enabled: false, allowCritical: true, allowSafety: true, autoEnableOnNavigation: true },
+    updateDndState = () => console.warn('updateDndState not available'),
+    voiceEnabled = false,
+    setVoiceEnabled = () => console.warn('setVoiceEnabled not available'),
+    queueLength = 0,
+    getNotificationIcon = () => null,
+  } = liveNotifications || {};
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
@@ -205,7 +226,9 @@ export default function NavigationPage() {
         if (isMapWindowOpen()) {
           // Focus the map window and let it handle auto-expansion
           focusMapWindow();
-          console.log('Route calculated: focusing map window for auto-expansion');
+          if (import.meta.env.DEV) {
+            console.log('Route calculated: focusing map window for auto-expansion');
+          }
         } else {
           if (isMobile) {
             // On mobile, close drawer to show full map
@@ -224,7 +247,9 @@ export default function NavigationPage() {
       setTimeout(handleMapExpansion, 200);
     },
     onError: (error) => {
-      console.error('Failed to calculate route:', error);
+      if (import.meta.env.DEV) {
+        console.error('Failed to calculate route:', error);
+      }
       // Clear any existing route on error
       setCurrentRoute(null);
       // Show user-friendly error message
@@ -373,7 +398,19 @@ export default function NavigationPage() {
               <DrawerHeader>
                 <DrawerTitle className="mobile-text-xl">Route Planning</DrawerTitle>
               </DrawerHeader>
-              <div className="drawer-content">
+              <div className="drawer-content space-y-4">
+                {/* Notification Controls */}
+                <DNDControls
+                  dndState={dndState}
+                  onUpdateDndState={updateDndState}
+                  voiceEnabled={voiceEnabled}
+                  onVoiceEnabledChange={setVoiceEnabled}
+                  isNavigating={isNavigating}
+                  notificationCount={queueLength}
+                  onTestNotification={() => triggerLiveNotification()}
+                />
+                
+                {/* Navigation Sidebar */}
                 <NavigationSidebar
                   // Route planning props
                   fromLocation={fromLocation}
@@ -549,6 +586,18 @@ export default function NavigationPage() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      {/* Mobile Notification Stack - Overlay for all layouts with error boundary */}
+      {Array.isArray(activeNotifications) && activeNotifications.length > 0 ? (
+        <MobileNotificationStack
+          notifications={activeNotifications}
+          onDismiss={dismissNotification}
+          getIcon={getNotificationIcon}
+          dndEnabled={dndState?.enabled || false}
+          isNavigating={isNavigating}
+          hasNavigationGuidance={isNavigating && currentRoute !== null}
+        />
+      ) : null}
     </div>
   );
 }

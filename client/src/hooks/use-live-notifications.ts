@@ -1,7 +1,9 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { type Route, type TrafficIncident, type VehicleProfile } from "@shared/schema";
+import { useMobileNotificationSystem, type MobileNotificationData } from "@/components/notifications/mobile-notification-system";
 
 interface LiveNotificationOptions {
   currentRoute: Route | null;
@@ -26,8 +28,17 @@ export function useLiveNotifications({
   enabled = true
 }: LiveNotificationOptions) {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const lastNotificationRef = useRef<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use mobile notification system for enhanced features
+  const mobileNotificationSystem = useMobileNotificationSystem({
+    currentRoute,
+    selectedProfile,
+    isNavigating,
+    enabled,
+  });
 
   // Get current traffic incidents for comparison
   const { data: currentIncidents = [] } = useQuery<TrafficIncident[]>({
@@ -88,8 +99,43 @@ export function useLiveNotifications({
     return notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
   }, [currentRoute, enabled]);
 
-  // Show live notification with 5-second auto-dismiss
+  // Show live notification - uses mobile system on mobile, fallback to toast on desktop
   const showLiveNotification = useCallback((notification: NotificationData) => {
+    // Convert legacy NotificationData to MobileNotificationData format
+    const convertToMobileNotification = (oldNotification: NotificationData): MobileNotificationData => {
+      const { category, priority } = mobileNotificationSystem.classifyNotification(oldNotification.type);
+      
+      // Convert severity to priority if needed
+      let convertedPriority = priority;
+      if (oldNotification.severity === 'critical') convertedPriority = 'critical';
+      else if (oldNotification.severity === 'warning') convertedPriority = 'high';
+      else if (oldNotification.severity === 'info') convertedPriority = 'medium';
+
+      return {
+        id: oldNotification.id,
+        type: oldNotification.type,
+        category,
+        priority: convertedPriority,
+        title: oldNotification.title,
+        description: oldNotification.description,
+        timestamp: oldNotification.timestamp,
+        ttl: 8000, // 8 seconds for live notifications
+        soundEnabled: true,
+        voiceAnnouncement: convertedPriority === 'critical' || convertedPriority === 'high' 
+          ? `${oldNotification.title}. ${oldNotification.description}` 
+          : undefined,
+      };
+    };
+
+    // Use mobile notification system on mobile devices
+    if (isMobile && mobileNotificationSystem) {
+      const mobileNotification = convertToMobileNotification(notification);
+      mobileNotificationSystem.queueNotification(mobileNotification);
+      console.log(`[LiveNotifications] Queued mobile notification: ${notification.title}`);
+      return;
+    }
+
+    // Fallback to toast system for desktop
     const getIcon = () => {
       switch (notification.type) {
         case 'traffic_update': return '⏰';
@@ -110,21 +156,20 @@ export function useLiveNotifications({
       }
     };
 
-    // Create toast with 5-second auto-dismiss
+    // Create toast with 5-second auto-dismiss (desktop only)
     const toastInstance = toast({
       title: `${getIcon()} ${notification.title}`,
       description: notification.description,
       variant: getVariant(),
-      duration: 5000, // 5 seconds
+      duration: 5000,
     });
 
-    // Auto dismiss after 5 seconds
     setTimeout(() => {
       toastInstance.dismiss();
     }, 5000);
 
-    console.log(`[LiveNotifications] Shown: ${notification.title} - ${notification.description}`);
-  }, [toast]);
+    console.log(`[LiveNotifications] Shown desktop toast: ${notification.title} - ${notification.description}`);
+  }, [toast, isMobile, mobileNotificationSystem]);
 
   // Start live notification interval
   const startLiveNotifications = useCallback(() => {
@@ -134,15 +179,15 @@ export function useLiveNotifications({
       if (enabled && (isNavigating || currentRoute)) {
         const notification = generateLiveNotification();
         if (notification) {
-          // Throttle notifications - don't show more than one every 10 seconds
+          // Throttle notifications - don't show more than one every 15 seconds
           const now = Date.now();
-          if (now - lastNotificationRef.current >= 10000) {
+          if (now - lastNotificationRef.current >= 15000) {
             showLiveNotification(notification);
             lastNotificationRef.current = now;
           }
         }
       }
-    }, 15000); // Check every 15 seconds, but throttled to max one notification per 10 seconds
+    }, 20000); // Check every 20 seconds, but throttled to max one notification per 15 seconds
 
     console.log('[LiveNotifications] Started live notification system');
   }, [enabled, isNavigating, currentRoute, generateLiveNotification, showLiveNotification]);
@@ -202,9 +247,23 @@ export function useLiveNotifications({
   }, [currentIncidents, enabled, currentRoute, showLiveNotification]);
 
   return {
+    // Legacy API compatibility
     startLiveNotifications,
     stopLiveNotifications,
     triggerLiveNotification,
     isActive: !!intervalRef.current,
+    
+    // Mobile notification system integration
+    mobileNotificationSystem,
+    
+    // Direct access to mobile features
+    activeNotifications: mobileNotificationSystem.activeNotifications,
+    dismissNotification: mobileNotificationSystem.dismissNotification,
+    dndState: mobileNotificationSystem.dndState,
+    updateDndState: mobileNotificationSystem.updateDndState,
+    voiceEnabled: mobileNotificationSystem.voiceEnabled,
+    setVoiceEnabled: mobileNotificationSystem.setVoiceEnabled,
+    queueLength: mobileNotificationSystem.queueLength,
+    getNotificationIcon: mobileNotificationSystem.getNotificationIcon,
   };
 }
