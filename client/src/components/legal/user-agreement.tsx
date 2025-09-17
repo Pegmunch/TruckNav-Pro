@@ -42,14 +42,13 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
   };
 
   const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTo({
-          top: scrollElement.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+    // Scroll the dialog content to show the accept area
+    const dialogContent = document.querySelector('[data-testid="dialog-user-agreement"] [data-radix-dialog-content]');
+    if (dialogContent) {
+      dialogContent.scrollTo({
+        top: dialogContent.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -90,7 +89,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="w-[95vw] max-w-4xl h-[95vh] max-h-[95vh] flex flex-col p-4 scroll-smooth" data-testid="dialog-user-agreement">
+      <DialogContent className="w-[95vw] max-w-4xl h-[95vh] max-h-[95vh] flex flex-col p-4 overflow-y-auto scroll-smooth" data-testid="dialog-user-agreement">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
             <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
@@ -102,7 +101,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
         </DialogHeader>
 
         <div className="flex-1 flex flex-col min-h-0">
-          <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4 scroll-smooth touch-scroll" style={{height: 'calc(100% - 120px)'}}>
+          <div className="flex-1 pr-4 overflow-y-auto scroll-smooth" style={{maxHeight: 'calc(100% - 240px)'}}>
             <div className="space-y-6">
             
             {/* Critical Notice */}
@@ -205,10 +204,10 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
               </CardContent>
             </Card>
             </div>
-          </ScrollArea>
+          </div>
           
           {/* Scroll to Bottom Button */}
-          <div className="absolute bottom-2 right-4">
+          <div className="flex justify-center mt-2">
             <Button 
               variant="secondary" 
               size="sm"
