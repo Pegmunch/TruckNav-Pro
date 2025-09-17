@@ -1072,12 +1072,13 @@ export class MemStorage implements IStorage {
     const journey: Journey = {
       id,
       routeId,
-      status: 'planned',
+      status: 'planned', // CRITICAL: Always start with 'planned' status for route planning phase
       startedAt: new Date(),
       completedAt: null,
     };
     
     this.journeys.set(id, journey);
+    console.log(`[JOURNEY] Created journey ${id} with status 'planned' for route ${routeId}`);
     return journey;
   }
 

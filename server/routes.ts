@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
+import { randomBytes } from "crypto";
 import { storage } from "./storage";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
@@ -12,12 +13,33 @@ import {
   validateFacilitySearch, 
   validateSubscription, 
   validateId,
-  validateCoordinates
+  validateCoordinates,
+  validateLocation,
+  validateJourney,
+  validateNumericId,
+  validatePagination
 } from "./middleware/validation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply API rate limiting to all API routes
   app.use("/api", apiRateLimit);
+  
+  // CSRF token endpoint (must come before CSRF protection middleware)
+  app.get("/api/csrf-token", (req: any, res: any) => {
+    // Ensure the session has a CSRF token
+    if (!req.session?.csrfToken) {
+      if (req.session) {
+        req.session.csrfToken = randomBytes(32).toString('hex');
+      }
+    }
+    
+    // Set CSRF token in response header for frontend to extract
+    if (req.session?.csrfToken) {
+      res.setHeader('X-CSRF-Token', req.session.csrfToken);
+    }
+    
+    res.json({ success: true });
+  });
   
   // Apply CSRF protection to all state-changing operations
   app.use("/api", (req: any, res: any, next: any) => {
@@ -150,7 +172,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const route = await storage.createRoute(mockRoute);
-      res.json(route);
+      
+      // Create a planned journey entry for immediate "Last Journey" availability
+      // Explicitly ensure we create a 'planned' journey for route planning phase
+      const plannedJourney = await storage.startJourney(route.id);
+      
+      // Verify the journey was created with 'planned' status as expected
+      if (plannedJourney.status !== 'planned') {
+        throw new Error(`Journey created with unexpected status: ${plannedJourney.status}, expected: planned`);
+      }
+      
+      // Return the route with journey information
+      res.json({
+        ...route,
+        plannedJourney: plannedJourney
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to calculate route" });
     }
@@ -330,6 +366,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(incident);
     } catch (error) {
       res.status(500).json({ message: "Failed to verify traffic incident" });
+    }
+  });
+
+  // Location Management
+  app.get("/api/locations", validatePagination, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { favorites } = req.query;
+      const options: { favorites?: boolean } = {};
+      
+      if (favorites === 'true') {
+        options.favorites = true;
+      }
+      
+      const locations = await storage.getLocations(options);
+      res.json(locations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get locations" });
+    }
+  });
+
+  app.post("/api/locations", validateLocation, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertLocationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid location data", errors: result.error.errors });
+      }
+      
+      const location = await storage.createLocation(result.data);
+      res.json(location);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create location" });
+    }
+  });
+
+  app.patch("/api/locations/:id", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Validate the updates if provided
+      if (Object.keys(updates).length > 0) {
+        const partialSchema = insertLocationSchema.partial();
+        const result = partialSchema.safeParse(updates);
+        if (!result.success) {
+          return res.status(400).json({ message: "Invalid location update data", errors: result.error.errors });
+        }
+      }
+      
+      const location = await storage.updateLocation(parseInt(id), updates);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      
+      res.json(location);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update location" });
+    }
+  });
+
+  app.post("/api/locations/:id/use", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const location = await storage.markLocationUsed(parseInt(id));
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      
+      res.json(location);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to mark location as used" });
+    }
+  });
+
+  // Journey Management
+  app.get("/api/journeys", validatePagination, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { limit, offset } = req.query;
+      const parsedLimit = limit ? parseInt(limit as string) : undefined;
+      const parsedOffset = offset ? parseInt(offset as string) : undefined;
+      
+      const journeys = await storage.getJourneyHistory(parsedLimit, parsedOffset);
+      res.json(journeys);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get journey history" });
+    }
+  });
+
+  app.get("/api/journeys/last", async (req: Request, res: Response) => {
+    try {
+      const journey = await storage.getLastJourney();
+      if (!journey) {
+        return res.status(404).json({ message: "No journeys found" });
+      }
+      
+      res.json(journey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get last journey" });
+    }
+  });
+
+  app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { routeId } = req.body;
+      
+      // Validate that the route exists
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+      
+      const journey = await storage.startJourney(routeId);
+      res.json(journey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start journey" });
+    }
+  });
+
+  app.patch("/api/journeys/:id/complete", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const journey = await storage.completeJourney(parseInt(id));
+      if (!journey) {
+        return res.status(404).json({ message: "Journey not found" });
+      }
+      
+      res.json(journey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to complete journey" });
     }
   });
 

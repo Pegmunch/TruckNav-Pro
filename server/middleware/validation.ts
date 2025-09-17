@@ -186,11 +186,66 @@ export const validateId = [
 
 // Coordinates validation for general use
 export const validateCoordinates = [
-  body('lat')
+  body('coordinates.lat')
     .isFloat({ min: 49.5, max: 61.0 })
     .withMessage('Latitude must be within UK/Europe bounds'),
   
-  body('lng')
+  body('coordinates.lng')
     .isFloat({ min: -11.0, max: 3.0 })
     .withMessage('Longitude must be within UK/Europe bounds')
+];
+
+// Location validation
+export const validateLocation = [
+  body('label')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Location label must be between 1 and 100 characters')
+    .matches(/^[a-zA-Z0-9\s\-_\.,\/]+$/)
+    .withMessage('Location label contains invalid characters'),
+  
+  body('coordinates.lat')
+    .isFloat({ min: 49.5, max: 61.0 })
+    .withMessage('Latitude must be within UK/Europe bounds'),
+  
+  body('coordinates.lng')
+    .isFloat({ min: -11.0, max: 3.0 })
+    .withMessage('Longitude must be within UK/Europe bounds'),
+  
+  body('isFavorite')
+    .optional()
+    .isBoolean()
+    .withMessage('isFavorite must be a boolean')
+];
+
+// Journey validation
+export const validateJourney = [
+  body('routeId')
+    .isUUID()
+    .withMessage('Route ID must be a valid UUID'),
+  
+  body('status')
+    .optional()
+    .isIn(['planned', 'active', 'completed'])
+    .withMessage('Invalid journey status')
+];
+
+// Numeric ID validation (for locations and journeys)
+export const validateNumericId = [
+  param('id')
+    .isInt({ min: 1 })
+    .withMessage('ID must be a positive integer')
+];
+
+// Pagination validation
+export const validatePagination = [
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+  
+  query('offset')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Offset must be a non-negative integer')
 ];
