@@ -8,16 +8,20 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Truck, Save, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Truck, Save, X, Globe } from "lucide-react";
 import { insertVehicleProfileSchema, type VehicleProfile } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { remoteTrackingService } from "@/lib/remote-tracking";
 
 const vehicleSetupSchema = insertVehicleProfileSchema.extend({
   name: z.string().min(1, "Vehicle name is required"),
-  height: z.coerce.number().min(10).max(20, "Height must be between 10-20 feet"),
-  width: z.coerce.number().min(6).max(12, "Width must be between 6-12 feet"),
+  height: z.coerce.number().min(2).max(6.5, "Height must be between 2-6.5 meters (6.6-21.3 feet)"),
+  width: z.coerce.number().min(1.8).max(3.7, "Width must be between 1.8-3.7 meters (5.9-12.1 feet)"),
   weight: z.coerce.number().min(1).max(80, "Weight must be between 1-80 tonnes"),
+  region: z.enum(['UK', 'EU'], { required_error: 'Please select your operating region' }),
+  enableRemoteTracking: z.boolean().default(false),
 });
 
 type VehicleSetupForm = z.infer<typeof vehicleSetupSchema>;
@@ -30,17 +34,20 @@ interface VehicleProfileSetupProps {
 
 export default function VehicleProfileSetup({ onClose, onProfileCreated, currentProfile }: VehicleProfileSetupProps) {
   const { toast } = useToast();
+  const [units, setUnits] = useState<'metric' | 'imperial'>('metric'); // Default to metric for Europe
   
   const form = useForm<VehicleSetupForm>({
     resolver: zodResolver(vehicleSetupSchema),
     defaultValues: {
-      name: currentProfile?.name || "My Truck",
-      height: currentProfile?.height || 15.75, // 15'9"
-      width: currentProfile?.width || 8.5, // 8'6"
-      length: currentProfile?.length || 53,
-      weight: currentProfile?.weight || 44,
-      axles: currentProfile?.axles || 4,
+      name: currentProfile?.name || "My Lorry",
+      height: currentProfile?.height ? (units === 'metric' ? currentProfile.height * 0.3048 : currentProfile.height) : 4.0, // 4m default (13.1 feet)
+      width: currentProfile?.width ? (units === 'metric' ? currentProfile.width * 0.3048 : currentProfile.width) : 2.55, // 2.55m default (8.37 feet)
+      length: currentProfile?.length ? (units === 'metric' ? currentProfile.length * 0.3048 : currentProfile.length) : 16.5, // 16.5m default (54.1 feet)
+      weight: currentProfile?.weight || 40, // 40 tonnes default for Europe
+      axles: currentProfile?.axles || 5, // 5 axles standard for articulated lorries
       isHazmat: currentProfile?.isHazmat || false,
+      region: (currentProfile as any)?.region || 'EU',
+      enableRemoteTracking: (currentProfile as any)?.enableRemoteTracking || false,
     },
   });
 
@@ -65,8 +72,25 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
     },
   });
 
-  const onSubmit = (data: VehicleSetupForm) => {
-    createProfileMutation.mutate(data);
+  const onSubmit = async (data: VehicleSetupForm) => {
+    // Convert to feet for storage (internal format)
+    const convertedData = {
+      ...data,
+      height: units === 'metric' ? data.height / 0.3048 : data.height,
+      width: units === 'metric' ? data.width / 0.3048 : data.width,
+      length: data.length ? (units === 'metric' ? data.length / 0.3048 : data.length) : undefined,
+    };
+    
+    createProfileMutation.mutate(convertedData);
+    
+    // Register with remote tracking if enabled
+    if ((data as any).enableRemoteTracking) {
+      remoteTrackingService.registerVehicle({
+        id: `vehicle-${Date.now()}`,
+        name: data.name,
+        profileId: 'pending' // Will be updated after profile creation
+      });
+    }
   };
 
   const formatFeetAndInches = (feet: number) => {
@@ -90,6 +114,46 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Unit and Region Selection */}
+            <div className="grid grid-cols-2 gap-4 p-3 bg-muted rounded-lg">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Units</label>
+                <Select value={units} onValueChange={(value: 'metric' | 'imperial') => setUnits(value)}>
+                  <SelectTrigger data-testid="select-units">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="metric">Metric (EU Standard)</SelectItem>
+                    <SelectItem value="imperial">Imperial (UK/US)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <FormField
+                control={form.control}
+                name="region"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Globe className="w-4 h-4" />
+                      Operating Region
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-region">
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="UK">United Kingdom</SelectItem>
+                        <SelectItem value="EU">European Union</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -97,46 +161,53 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                 <FormItem>
                   <FormLabel>Vehicle Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., My Truck" {...field} data-testid="input-vehicle-name" />
+                    <Input placeholder={units === 'metric' ? "e.g., My Lorry" : "e.g., My Truck"} {...field} data-testid="input-vehicle-name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="height"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Height (feet)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.25"
-                        placeholder="15.75" 
-                        {...field} 
-                        data-testid="input-vehicle-height"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      {field.value ? formatFeetAndInches(Number(field.value)) : "15'9\""}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Vehicle Dimensions */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-sm text-muted-foreground">Vehicle Dimensions</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="height"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Height ({units === 'metric' ? 'meters' : 'feet'})</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step={units === 'metric' ? '0.1' : '0.25'}
+                          placeholder={units === 'metric' ? '4.0' : '15.75'} 
+                          {...field} 
+                          data-testid="input-vehicle-height"
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        {field.value ? (
+                          units === 'metric' ? 
+                            `${Number(field.value).toFixed(1)}m (${formatFeetAndInches(Number(field.value) / 0.3048)})` : 
+                            `${formatFeetAndInches(Number(field.value))} (${(Number(field.value) * 0.3048).toFixed(1)}m)`
+                        ) : (units === 'metric' ? '4.0m (13\'1")' : '15\'9" (4.8m)')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="width"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Width (feet)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
+                <FormField
+                  control={form.control}
+                  name="width"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Width ({units === 'metric' ? 'meters' : 'feet'})</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
                         step="0.25"
                         placeholder="8.5" 
                         {...field} 
@@ -191,6 +262,7 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                   </FormItem>
                 )}
               />
+            </div>
             </div>
 
             <FormField

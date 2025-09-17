@@ -9,6 +9,18 @@ export interface NavigationRoute {
     limit: number;
     location: string;
   }>;
+  instructions?: Array<{
+    text: string;
+    distance: number; // miles
+    time: number; // seconds
+    sign: number;
+  }>;
+  bbox?: {
+    minLat: number;
+    minLng: number;
+    maxLat: number;
+    maxLng: number;
+  };
 }
 
 export interface VehicleDimensions {
@@ -31,7 +43,7 @@ export class TruckNavigationService {
   }
 
   /**
-   * Calculate route avoiding restrictions based on vehicle dimensions
+   * Calculate route avoiding restrictions based on vehicle dimensions using GraphHopper
    */
   async calculateSafeRoute(
     start: { lat: number; lng: number },
@@ -39,23 +51,111 @@ export class TruckNavigationService {
     vehicle: VehicleDimensions
   ): Promise<NavigationRoute | null> {
     try {
-      // In a real implementation, this would integrate with a routing service
-      // like HERE Maps, Google Maps, or OpenStreetMap with truck routing
-      
-      const mockRoute: NavigationRoute = {
-        id: `route-${Date.now()}`,
-        name: `Safe route for ${vehicle.height}'H truck`,
-        distance: this.calculateDistance(start, end),
-        duration: Math.round(this.calculateDistance(start, end) * 1.2), // rough estimate
-        coordinates: [start, end],
-        restrictions: [],
-      };
+      const apiKey = import.meta.env.VITE_GRAPHHOPPER_API_KEY || 'GRAPHHOPPER_API_KEY';
+      if (!apiKey || apiKey === 'GRAPHHOPPER_API_KEY') {
+        console.error('GraphHopper API key not found');
+        return this.createFallbackRoute(start, end, vehicle);
+      }
 
-      return mockRoute;
+      // Convert feet to meters for GraphHopper API (UK uses feet internally, but API expects meters)
+      const heightMeters = (vehicle.height * 0.3048); // feet to meters
+      const widthMeters = (vehicle.width * 0.3048); // feet to meters
+      const weightKg = (vehicle.weight * 1000); // tonnes to kg
+      const lengthMeters = (vehicle.length * 0.3048); // feet to meters
+
+      const params = new URLSearchParams({
+        point: `${start.lat},${start.lng}`,
+        'point[1]': `${end.lat},${end.lng}`,
+        vehicle: 'truck',
+        'vehicle.height': heightMeters.toString(),
+        'vehicle.width': widthMeters.toString(),
+        'vehicle.weight': weightKg.toString(),
+        'vehicle.length': lengthMeters.toString(),
+        'vehicle.axle_load': '11500', // Standard EU axle load limit in kg
+        locale: 'en-GB',
+        instructions: 'true',
+        calc_points: 'true',
+        debug: 'false',
+        elevation: 'false',
+        points_encoded: 'false',
+        type: 'json',
+        key: apiKey
+      });
+
+      // Add hazmat routing if vehicle carries hazardous materials
+      if (vehicle.isHazmat) {
+        params.append('vehicle.hazmat', 'true');
+      }
+
+      const response = await fetch(`https://graphhopper.com/api/1/route?${params}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.error('GraphHopper API error:', response.status, response.statusText);
+        return this.createFallbackRoute(start, end, vehicle);
+      }
+
+      const data = await response.json();
+      
+      if (data.paths && data.paths.length > 0) {
+        const path = data.paths[0];
+        
+        return {
+          id: `route-${Date.now()}`,
+          name: `Truck route for ${vehicle.height}ft (${heightMeters.toFixed(1)}m) height vehicle`,
+          distance: Math.round(path.distance / 1609.34 * 100) / 100, // meters to miles, rounded
+          duration: Math.round(path.time / 60000), // milliseconds to minutes
+          coordinates: path.points.coordinates.map((coord: number[]) => ({ 
+            lat: coord[1], 
+            lng: coord[0] 
+          })),
+          restrictions: [], // GraphHopper handles restrictions internally
+          instructions: path.instructions?.map((inst: any) => ({
+            text: inst.text,
+            distance: Math.round(inst.distance / 1609.34 * 100) / 100, // meters to miles
+            time: Math.round(inst.time / 1000), // milliseconds to seconds
+            sign: inst.sign
+          })) || [],
+          bbox: path.bbox ? {
+            minLat: path.bbox[1],
+            minLng: path.bbox[0], 
+            maxLat: path.bbox[3],
+            maxLng: path.bbox[2]
+          } : undefined
+        };
+      } else {
+        console.error('No route found from GraphHopper');
+        return this.createFallbackRoute(start, end, vehicle);
+      }
     } catch (error) {
       console.error('Error calculating route:', error);
-      return null;
+      return this.createFallbackRoute(start, end, vehicle);
     }
+  }
+
+  /**
+   * Create a fallback route when API is unavailable
+   */
+  private createFallbackRoute(
+    start: { lat: number; lng: number },
+    end: { lat: number; lng: number },
+    vehicle: VehicleDimensions
+  ): NavigationRoute {
+    return {
+      id: `fallback-route-${Date.now()}`,
+      name: `Direct route for ${vehicle.height}ft height truck (offline mode)`,
+      distance: this.calculateDistance(start, end),
+      duration: Math.round(this.calculateDistance(start, end) * 1.5), // rough estimate with truck speeds
+      coordinates: [start, end],
+      restrictions: [],
+      instructions: [
+        { text: `Head towards destination (${this.calculateDistance(start, end).toFixed(1)} miles)`, distance: this.calculateDistance(start, end), time: Math.round(this.calculateDistance(start, end) * 1.5 * 60), sign: 0 }
+      ]
+    };
   }
 
   /**
