@@ -195,8 +195,9 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
         key={country.code}
         value={`${country.code} ${country.name} ${country.nativeName}`}
         onSelect={() => handleCountrySelect(country)}
-        className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-accent/50"
+        className="flag-country-item flex items-center justify-between gap-2 group"
         data-testid={`country-item-${country.code.toLowerCase()}`}
+        data-selected={isSelected ? "true" : "false"}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <DropdownFlagIcon country={country} />
@@ -281,13 +282,13 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
         </Button>
       </PopoverTrigger>
       
-      <PopoverContent className="w-[320px] p-0" align="start">
+      <PopoverContent className="w-[320px] p-0 flag-dropdown-frame" align="start">
         <Command>
           <CommandInput 
             placeholder={t('common.searchCountries', 'Search countries...')}
             value={search}
             onValueChange={setSearch}
-            className="h-9"
+            className="h-9 flag-dropdown-search"
             data-testid="country-search"
           />
           
@@ -306,7 +307,7 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
               <>
                 <CommandGroup 
                   heading={
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <div className="flag-country-group-header flex items-center gap-2">
                       <Clock className="w-3 h-3" />
                       {t('common.recent', 'Recent')}
                     </div>
@@ -323,7 +324,7 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
               <>
                 <CommandGroup 
                   heading={
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <div className="flag-country-group-header flex items-center gap-2">
                       <Star className="w-3 h-3" />
                       {t('common.favorites', 'Favorites')}
                     </div>
@@ -340,7 +341,7 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
               <>
                 <CommandGroup 
                   heading={
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <div className="flag-country-group-header flex items-center gap-2">
                       <MapPin className="w-3 h-3" />
                       {t('common.majorTruckingMarkets', 'Major Trucking Markets')}
                     </div>
@@ -354,7 +355,7 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
 
             {/* Grouped Countries */}
             {Object.entries(groupedCountries).map(([groupName, groupCountries], index) => (
-              <CommandGroup key={groupName} heading={groupName}>
+              <CommandGroup key={groupName} heading={<div className="flag-country-group-header">{groupName}</div>}>
                 {groupCountries.map(country => renderCountryItem(country))}
               </CommandGroup>
             ))}

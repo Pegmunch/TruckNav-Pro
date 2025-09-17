@@ -81,7 +81,7 @@ export const DropdownFlagIcon = memo(function DropdownFlagIcon({
     <FlagIcon
       country={country}
       size="sm"
-      className={cn('flex-shrink-0', className)}
+      className={cn('flex-shrink-0 flag-enhanced', className)}
       showTooltip={false}
     />
   );
