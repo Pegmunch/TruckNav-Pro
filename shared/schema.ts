@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, real, integer, boolean, jsonb, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, real, integer, boolean, jsonb, timestamp, decimal, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -141,6 +141,25 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Location bookmarks and history
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  label: text("label").notNull(),
+  coordinates: jsonb("coordinates").notNull(), // { lat: number, lng: number }
+  isFavorite: boolean("is_favorite").default(false),
+  useCount: integer("use_count").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+});
+
+// Journey history tracking
+export const journeys = pgTable("journeys", {
+  id: serial("id").primaryKey(),
+  routeId: varchar("route_id").notNull(), // references routes table (UUID)
+  status: text("status").notNull(), // 'planned', 'active', 'completed'
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
 export const insertVehicleProfileSchema = createInsertSchema(vehicleProfiles).omit({
   id: true,
 });
@@ -179,6 +198,17 @@ export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions
   updatedAt: true,
 });
 
+export const insertLocationSchema = createInsertSchema(locations).omit({
+  id: true,
+});
+
+export const insertJourneySchema = createInsertSchema(journeys).omit({
+  id: true,
+  startedAt: true, // auto-generated with defaultNow()
+}).extend({
+  status: z.enum(['planned', 'active', 'completed']), // enforce valid journey statuses
+});
+
 export type VehicleProfile = typeof vehicleProfiles.$inferSelect;
 export type InsertVehicleProfile = z.infer<typeof insertVehicleProfileSchema>;
 
@@ -202,6 +232,12 @@ export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema
 
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+
+export type Location = typeof locations.$inferSelect;
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
+
+export type Journey = typeof journeys.$inferSelect;
+export type InsertJourney = z.infer<typeof insertJourneySchema>;
 
 export type LaneOption = z.infer<typeof laneOptionSchema>;
 export type LaneSegment = z.infer<typeof laneSegmentSchema>;

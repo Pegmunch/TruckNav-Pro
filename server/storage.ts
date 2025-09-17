@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type LaneSegment, type LaneOption } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -56,6 +56,19 @@ export interface IStorage {
   getLaneGuidance(routeId: string): Promise<LaneSegment[] | null>;
   setLaneSelection(routeId: string, selections: Record<number, number>): Promise<void>;
   generateLaneGuidance(route: Route, vehicleProfile: VehicleProfile): Promise<LaneSegment[]>;
+
+  // Location Management
+  getLocations(options?: { favorites?: boolean }): Promise<Location[]>;
+  createLocation(location: InsertLocation): Promise<Location>;
+  updateLocation(id: number, updates: Partial<Location>): Promise<Location | undefined>;
+  markLocationUsed(id: number): Promise<Location | undefined>;
+  upsertByLabelOrCoords(location: InsertLocation): Promise<Location>;
+
+  // Journey Management
+  startJourney(routeId: string): Promise<Journey>;
+  completeJourney(id: number): Promise<Journey | undefined>;
+  getLastJourney(): Promise<Journey | undefined>;
+  getJourneyHistory(limit?: number, offset?: number): Promise<Journey[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -67,6 +80,10 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private subscriptionPlans: Map<string, SubscriptionPlan>;
   private userSubscriptions: Map<string, UserSubscription>;
+  private locations: Map<number, Location>;
+  private journeys: Map<number, Journey>;
+  private locationIdCounter: number;
+  private journeyIdCounter: number;
 
   constructor() {
     this.vehicleProfiles = new Map();
@@ -77,6 +94,10 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.subscriptionPlans = new Map();
     this.userSubscriptions = new Map();
+    this.locations = new Map();
+    this.journeys = new Map();
+    this.locationIdCounter = 1;
+    this.journeyIdCounter = 1;
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -320,6 +341,83 @@ export class MemStorage implements IStorage {
     sampleRoutes.forEach(route => {
       this.routes.set(route.id, route);
     });
+
+    // Sample locations
+    const sampleLocations: Location[] = [
+      {
+        id: this.locationIdCounter++,
+        label: "Manchester Distribution Center",
+        coordinates: { lat: 53.4808, lng: -2.2426 },
+        isFavorite: true,
+        useCount: 15,
+        lastUsedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      },
+      {
+        id: this.locationIdCounter++,
+        label: "Birmingham Warehouse",
+        coordinates: { lat: 52.4862, lng: -1.8904 },
+        isFavorite: true,
+        useCount: 12,
+        lastUsedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      {
+        id: this.locationIdCounter++,
+        label: "London Depot",
+        coordinates: { lat: 51.5074, lng: -0.1278 },
+        isFavorite: false,
+        useCount: 8,
+        lastUsedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      },
+      {
+        id: this.locationIdCounter++,
+        label: "Oxford Services",
+        coordinates: { lat: 51.7520, lng: -1.2577 },
+        isFavorite: false,
+        useCount: 3,
+        lastUsedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+      },
+      {
+        id: this.locationIdCounter++,
+        label: "Leeds Industrial Park",
+        coordinates: { lat: 53.8008, lng: -1.5491 },
+        isFavorite: true,
+        useCount: 6,
+        lastUsedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      },
+    ];
+
+    sampleLocations.forEach(location => {
+      this.locations.set(location.id, location);
+    });
+
+    // Sample journeys
+    const sampleJourneys: Journey[] = [
+      {
+        id: this.journeyIdCounter++,
+        routeId: "550e8400-e29b-41d4-a716-446655440001", // Manchester to Birmingham route
+        status: 'completed',
+        startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+        completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // completed 3 hours later
+      },
+      {
+        id: this.journeyIdCounter++,
+        routeId: "550e8400-e29b-41d4-a716-446655440001",
+        status: 'completed',
+        startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000), // completed 4 hours later
+      },
+      {
+        id: this.journeyIdCounter++,
+        routeId: "550e8400-e29b-41d4-a716-446655440001",
+        status: 'planned',
+        startedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+        completedAt: null,
+      },
+    ];
+
+    sampleJourneys.forEach(journey => {
+      this.journeys.set(journey.id, journey);
+    });
   }
 
   // Vehicle Profiles
@@ -464,6 +562,19 @@ export class MemStorage implements IStorage {
             Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+  }
+
+  private haversineDistance(coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }): number {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = this.toRad(coord2.lat - coord1.lat);
+    const dLon = this.toRad(coord2.lng - coord1.lng);
+    const lat1 = this.toRad(coord1.lat);
+    const lat2 = this.toRad(coord2.lat);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Returns distance in meters
   }
 
   private toRad(value: number): number {
@@ -821,6 +932,196 @@ export class MemStorage implements IStorage {
     }
     
     return laneSegments;
+  }
+
+  // Location Management
+  async getLocations(options?: { favorites?: boolean }): Promise<Location[]> {
+    let locations = Array.from(this.locations.values());
+    
+    if (options?.favorites !== undefined) {
+      locations = locations.filter(loc => loc.isFavorite === options.favorites);
+    }
+    
+    // Sort by lastUsedAt desc, then useCount desc
+    locations.sort((a, b) => {
+      // First sort by lastUsedAt (most recent first)
+      if (a.lastUsedAt && b.lastUsedAt) {
+        const timeCompare = new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime();
+        if (timeCompare !== 0) return timeCompare;
+      } else if (a.lastUsedAt && !b.lastUsedAt) {
+        return -1;
+      } else if (!a.lastUsedAt && b.lastUsedAt) {
+        return 1;
+      }
+      
+      // Then sort by useCount (highest first)
+      const useCountA = a.useCount || 0;
+      const useCountB = b.useCount || 0;
+      return useCountB - useCountA;
+    });
+    
+    return locations;
+  }
+
+  async createLocation(insertLocation: InsertLocation): Promise<Location> {
+    const id = this.locationIdCounter++;
+    const location: Location = {
+      ...insertLocation,
+      id,
+      isFavorite: insertLocation.isFavorite ?? false,
+      useCount: insertLocation.useCount ?? 0,
+      lastUsedAt: insertLocation.lastUsedAt ?? new Date(),
+    };
+    
+    this.locations.set(id, location);
+    this.trimLocationHistory();
+    return location;
+  }
+
+  async updateLocation(id: number, updates: Partial<Location>): Promise<Location | undefined> {
+    const location = this.locations.get(id);
+    if (!location) return undefined;
+    
+    const updatedLocation = { ...location, ...updates };
+    this.locations.set(id, updatedLocation);
+    return updatedLocation;
+  }
+
+  async markLocationUsed(id: number): Promise<Location | undefined> {
+    const location = this.locations.get(id);
+    if (!location) return undefined;
+    
+    const updatedLocation = {
+      ...location,
+      useCount: (location.useCount || 0) + 1,
+      lastUsedAt: new Date(),
+    };
+    
+    this.locations.set(id, updatedLocation);
+    return updatedLocation;
+  }
+
+  async upsertByLabelOrCoords(insertLocation: InsertLocation): Promise<Location> {
+    // Try to find existing location by label first
+    let existing = Array.from(this.locations.values()).find(loc => 
+      loc.label === insertLocation.label
+    );
+    
+    // If no match by label, try by coordinates (within 100m tolerance)
+    if (!existing && insertLocation.coordinates) {
+      const coords = insertLocation.coordinates as { lat: number; lng: number };
+      existing = Array.from(this.locations.values()).find(loc => {
+        const locCoords = loc.coordinates as { lat: number; lng: number };
+        if (!locCoords) return false;
+        
+        // Use precise haversine distance calculation for 100m tolerance
+        const distance = this.haversineDistance(coords, locCoords);
+        return distance <= 100; // 100 meters tolerance
+      });
+    }
+    
+    if (existing) {
+      // Update existing location
+      const updatedLocation = await this.updateLocation(existing.id, {
+        ...insertLocation,
+        useCount: (existing.useCount || 0) + 1,
+        lastUsedAt: new Date(),
+      });
+      return updatedLocation!;
+    } else {
+      // Create new location
+      return await this.createLocation(insertLocation);
+    }
+  }
+
+  private trimLocationHistory(): void {
+    const locations = Array.from(this.locations.values());
+    if (locations.length <= 50) return;
+    
+    // Sort by lastUsedAt ascending (oldest first) to remove oldest entries
+    locations.sort((a, b) => {
+      if (a.lastUsedAt && b.lastUsedAt) {
+        return new Date(a.lastUsedAt).getTime() - new Date(b.lastUsedAt).getTime();
+      }
+      return 0;
+    });
+    
+    // Keep only favorites and the 50 most recent non-favorites
+    const favorites = locations.filter(loc => loc.isFavorite);
+    const nonFavorites = locations.filter(loc => !loc.isFavorite);
+    
+    const keepLocations = [
+      ...favorites,
+      ...nonFavorites.slice(-50) // Keep last 50 non-favorites
+    ];
+    
+    // Clear and repopulate map
+    this.locations.clear();
+    keepLocations.forEach(loc => this.locations.set(loc.id, loc));
+  }
+
+  // Journey Management
+  async startJourney(routeId: string): Promise<Journey> {
+    // Validate that the route exists before creating a journey
+    const route = this.routes.get(routeId);
+    if (!route) {
+      throw new Error(`Route with ID ${routeId} not found`);
+    }
+    
+    const id = this.journeyIdCounter++;
+    const journey: Journey = {
+      id,
+      routeId,
+      status: 'planned',
+      startedAt: new Date(),
+      completedAt: null,
+    };
+    
+    this.journeys.set(id, journey);
+    return journey;
+  }
+
+  async completeJourney(id: number): Promise<Journey | undefined> {
+    const journey = this.journeys.get(id);
+    if (!journey) return undefined;
+    
+    // Prevent repeated completion - if already completed, return as-is
+    if (journey.status === 'completed') {
+      return journey;
+    }
+    
+    // Only allow completion from 'planned' or 'active' states
+    if (journey.status !== 'planned' && journey.status !== 'active') {
+      throw new Error(`Cannot complete journey from status: ${journey.status}`);
+    }
+    
+    const completedJourney = {
+      ...journey,
+      status: 'completed' as const,
+      completedAt: new Date(),
+    };
+    
+    this.journeys.set(id, completedJourney);
+    return completedJourney;
+  }
+
+  async getLastJourney(): Promise<Journey | undefined> {
+    const journeys = Array.from(this.journeys.values());
+    if (journeys.length === 0) return undefined;
+    
+    // Sort by startedAt descending and return the most recent
+    journeys.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    return journeys[0];
+  }
+
+  async getJourneyHistory(limit: number = 20, offset: number = 0): Promise<Journey[]> {
+    const journeys = Array.from(this.journeys.values());
+    
+    // Sort by startedAt descending (most recent first)
+    journeys.sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+    
+    // Apply pagination
+    return journeys.slice(offset, offset + limit);
   }
 }
 
