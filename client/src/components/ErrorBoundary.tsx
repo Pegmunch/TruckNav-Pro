@@ -33,13 +33,13 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex justify-center">
               <AlertTriangle className="w-16 h-16 text-destructive" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Application Error</h1>
+            <h1 className="mobile-text-2xl font-bold text-foreground">Application Error</h1>
             <p className="text-muted-foreground">
               TruckNav Pro encountered an unexpected error. Please try reloading the page.
             </p>
-            <details className="text-left text-sm text-muted-foreground bg-muted p-3 rounded">
+            <details className="text-left mobile-text-sm text-muted-foreground bg-muted p-3 rounded">
               <summary className="cursor-pointer font-medium mb-2">Error Details</summary>
-              <pre className="whitespace-pre-wrap overflow-auto text-xs">
+              <pre className="whitespace-pre-wrap overflow-auto mobile-text-xs">
                 {this.state.error?.message}
                 {'\n'}
                 {this.state.error?.stack}

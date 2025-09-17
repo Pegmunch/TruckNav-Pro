@@ -3,7 +3,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Truck, X } from "lucide-react";
+import { Truck, X, Menu, MapPin } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
@@ -20,6 +21,7 @@ export default function NavigationPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("Manchester M1 Industrial Estate");
@@ -27,14 +29,17 @@ export default function NavigationPage() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
-  // Sidebar state management
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Mobile vs Desktop state management
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Mobile drawer state (replaces sidebar on mobile)
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   
-  // Swipe/drawer state for navigation transitions
+  // Legacy drawer state for navigation transitions
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   // Window sync for cross-window communication
@@ -202,11 +207,15 @@ export default function NavigationPage() {
           focusMapWindow();
           console.log('Route calculated: focusing map window for auto-expansion');
         } else {
-          // Use existing in-page expansion logic
-          setIsMapExpanded(true);
-          // On mobile, also close sidebar to give more space
-          if (window.innerWidth < 1024) {
-            setIsSidebarOpen(false);
+          if (isMobile) {
+            // On mobile, close drawer to show full map
+            setIsMobileDrawerOpen(false);
+          } else {
+            // Use existing in-page expansion logic for desktop
+            setIsMapExpanded(true);
+            if (window.innerWidth < 1024) {
+              setIsSidebarOpen(false);
+            }
           }
         }
       };
@@ -237,12 +246,14 @@ export default function NavigationPage() {
 
   // Enhanced auto-expand map logic - works with both in-page and window modes
   useEffect(() => {
-    if (currentRoute && !isMapExpanded) {
-      // Only auto-expand in-page map if no map window is open
-      if (!isMapWindowOpen()) {
+    if (currentRoute && !isMapWindowOpen()) {
+      if (isMobile) {
+        // On mobile, close drawer to show full map
+        setIsMobileDrawerOpen(false);
+      } else if (!isMapExpanded) {
+        // Desktop: expand map temporarily
         const timer = setTimeout(() => {
           setIsMapExpanded(true);
-          // On mobile, also close sidebar to give more space
           if (window.innerWidth < 1024) {
             setIsSidebarOpen(false);
           }
@@ -250,7 +261,7 @@ export default function NavigationPage() {
         return () => clearTimeout(timer);
       }
     }
-  }, [currentRoute, isMapExpanded]);
+  }, [currentRoute, isMapExpanded, isMobile]);
 
   const handleStartNavigation = () => {
     if (currentRoute) {
@@ -323,67 +334,148 @@ export default function NavigationPage() {
 
   return (
     <div className="bg-background">
-      {/* Sidebar-Based Layout */}
-      <div className={cn(
-        "flex h-screen overflow-hidden",
-        "automotive-layout"
-      )}>
-        
-        {/* Navigation Sidebar */}
-        <NavigationSidebar
-          // Route planning props
-          fromLocation={fromLocation}
-          toLocation={toLocation}
-          onFromLocationChange={setFromLocation}
-          onToLocationChange={setToLocation}
-          onPlanRoute={handlePlanRoute}
-          onStartNavigation={handleStartNavigation}
-          onStopNavigation={handleStopNavigation}
-          onOpenLaneSelection={handleOpenLaneSelection}
-          currentRoute={currentRoute}
-          isCalculating={calculateRouteMutation.isPending}
-          
-          // Vehicle profile props
-          selectedProfile={selectedProfile}
-          onProfileSelect={(profile) => {
-            setSelectedProfile(profile);
-            queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
-          }}
-          activeJourney={activeJourney}
-          isNavigating={isNavigating}
-          isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-          isCompletingJourney={completeJourneyMutation.isPending}
-          
-          // Sidebar state
-          isOpen={isSidebarOpen}
-          onToggle={handleSidebarToggle}
-          isCollapsed={isSidebarCollapsed}
-          onCollapseToggle={handleSidebarCollapseToggle}
-        />
+      {/* Mobile-First Layout */}
+      {isMobile ? (
+        <div className="mobile-layout">
+          {/* Mobile Header with Menu Button */}
+          <div className="mobile-nav-header flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Truck className="w-6 h-6 text-primary" />
+              <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="automotive-touch-target"
+              data-testid="button-open-mobile-menu"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </div>
 
-        {/* Main Map Area */}
-        <div className={cn(
-          "flex-1 relative transition-all duration-300 ease-in-out",
-          isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
-        )}>
-          <InteractiveMap
-            currentRoute={currentRoute}
-            selectedProfile={selectedProfile}
-            onOpenLaneSelection={handleOpenLaneSelection}
-            isFullscreen={isMapExpanded}
-            onToggleFullscreen={handleToggleMapExpansion}
-            // Auto-expansion props
-            autoExpanded={isMapExpanded}
-            onCollapseMap={() => {
-              setIsMapExpanded(false);
-              setIsDrawerOpen(false);
-              if (!isSidebarOpen) {
-                setIsSidebarOpen(true);
-              }
-            }}
-          />
+          {/* Mobile Fullscreen Map */}
+          <div className="mobile-map-container">
+            <InteractiveMap
+              currentRoute={currentRoute}
+              selectedProfile={selectedProfile}
+              onOpenLaneSelection={handleOpenLaneSelection}
+              isFullscreen={true}
+              onToggleFullscreen={() => {}} // No-op for mobile
+              autoExpanded={true}
+              onCollapseMap={() => {}} // No-op for mobile
+            />
+          </div>
+
+          {/* Mobile Route Planning Drawer */}
+          <Drawer open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle className="mobile-text-xl">Route Planning</DrawerTitle>
+              </DrawerHeader>
+              <div className="drawer-content">
+                <NavigationSidebar
+                  // Route planning props
+                  fromLocation={fromLocation}
+                  toLocation={toLocation}
+                  onFromLocationChange={setFromLocation}
+                  onToLocationChange={setToLocation}
+                  onPlanRoute={() => {
+                    handlePlanRoute();
+                    setIsMobileDrawerOpen(false); // Close drawer after planning
+                  }}
+                  onStartNavigation={() => {
+                    handleStartNavigation();
+                    setIsMobileDrawerOpen(false); // Close drawer when starting
+                  }}
+                  onStopNavigation={handleStopNavigation}
+                  onOpenLaneSelection={handleOpenLaneSelection}
+                  currentRoute={currentRoute}
+                  isCalculating={calculateRouteMutation.isPending}
+                  
+                  // Vehicle profile props
+                  selectedProfile={selectedProfile}
+                  onProfileSelect={(profile) => {
+                    setSelectedProfile(profile);
+                    queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+                  }}
+                  activeJourney={activeJourney}
+                  isNavigating={isNavigating}
+                  isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+                  isCompletingJourney={completeJourneyMutation.isPending}
+                  
+                  // Sidebar state (always open in mobile drawer)
+                  isOpen={true}
+                  onToggle={() => {}}
+                  isCollapsed={false}
+                  onCollapseToggle={() => {}}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
-      </div>
+      ) : (
+        /* Desktop Layout - Keep existing sidebar layout */
+        <div className={cn(
+          "flex h-screen overflow-hidden",
+          "automotive-layout desktop-sidebar"
+        )}>
+          
+          {/* Desktop Navigation Sidebar */}
+          <NavigationSidebar
+            // Route planning props
+            fromLocation={fromLocation}
+            toLocation={toLocation}
+            onFromLocationChange={setFromLocation}
+            onToLocationChange={setToLocation}
+            onPlanRoute={handlePlanRoute}
+            onStartNavigation={handleStartNavigation}
+            onStopNavigation={handleStopNavigation}
+            onOpenLaneSelection={handleOpenLaneSelection}
+            currentRoute={currentRoute}
+            isCalculating={calculateRouteMutation.isPending}
+            
+            // Vehicle profile props
+            selectedProfile={selectedProfile}
+            onProfileSelect={(profile) => {
+              setSelectedProfile(profile);
+              queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+            }}
+            activeJourney={activeJourney}
+            isNavigating={isNavigating}
+            isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+            isCompletingJourney={completeJourneyMutation.isPending}
+            
+            // Sidebar state
+            isOpen={isSidebarOpen}
+            onToggle={handleSidebarToggle}
+            isCollapsed={isSidebarCollapsed}
+            onCollapseToggle={handleSidebarCollapseToggle}
+          />
+
+          {/* Desktop Map Area */}
+          <div className={cn(
+            "flex-1 relative transition-all duration-300 ease-in-out",
+            isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
+          )}>
+            <InteractiveMap
+              currentRoute={currentRoute}
+              selectedProfile={selectedProfile}
+              onOpenLaneSelection={handleOpenLaneSelection}
+              isFullscreen={isMapExpanded}
+              onToggleFullscreen={handleToggleMapExpansion}
+              autoExpanded={isMapExpanded}
+              onCollapseMap={() => {
+                setIsMapExpanded(false);
+                setIsDrawerOpen(false);
+                if (!isSidebarOpen) {
+                  setIsSidebarOpen(true);
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Swipeable Navigation Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>

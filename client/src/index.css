@@ -8,6 +8,8 @@ html {
   overflow-x: hidden;
   /* Force white background for automotive displays */
   background-color: white;
+  /* Safe area handling is managed at component level to prevent double spacing */
+  box-sizing: border-box;
 }
 
 body {
@@ -782,4 +784,368 @@ select:focus-visible,
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* ==================================================
+   MOBILE-FIRST NAVIGATION SHELL ENHANCEMENTS
+   ================================================== */
+
+/* Mobile-first safe area variables */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  
+  /* Mobile-first responsive typography using clamp() */
+  --text-xs: clamp(0.75rem, 0.5vw + 0.6rem, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.5vw + 0.7rem, 1rem);
+  --text-base: clamp(1rem, 1vw + 0.8rem, 1.125rem);
+  --text-lg: clamp(1.125rem, 1.2vw + 0.9rem, 1.375rem);
+  --text-xl: clamp(1.25rem, 1.5vw + 1rem, 1.625rem);
+  --text-2xl: clamp(1.5rem, 2vw + 1.2rem, 2rem);
+  --text-3xl: clamp(1.875rem, 3vw + 1.4rem, 2.5rem);
+  
+  /* Mobile spacing variables */
+  --mobile-padding: clamp(1rem, 4vw, 2rem);
+  --mobile-margin: clamp(0.5rem, 2vw, 1rem);
+  --touch-target-min: 44px;
+  --drawer-height: clamp(60vh, 70vh, 80vh);
+}
+
+/* Mobile-first base layout */
+.mobile-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Mobile fullscreen map container */
+.mobile-map-container {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  background: var(--map-background, #f8fafc);
+  overflow: hidden;
+}
+
+/* Mobile drawer overlay - Enhanced with fallback visibility */
+.mobile-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  /* Default visible for fallback, controlled by data-state */
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 40;
+}
+
+/* Use data-state if available, otherwise keep default visibility */
+.mobile-drawer-overlay[data-state='closed'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mobile-drawer-overlay[data-state='open'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Mobile drawer container with enhanced swipe support */
+.mobile-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--background);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(100%);
+  transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+  max-height: var(--drawer-height);
+  /* Remove double safe-area padding - handled in drawer-content */
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.mobile-drawer[data-state='open'] {
+  transform: translateY(0);
+}
+
+/* Drawer handle for swipe indicator */
+.drawer-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--muted-foreground);
+  border-radius: 2px;
+  margin: 12px auto 16px;
+  opacity: 0.6;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.drawer-handle:active {
+  cursor: grabbing;
+}
+
+/* Drawer content scrollable area */
+.drawer-content {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--mobile-padding);
+  /* Safe area padding handled by component prop now */
+}
+
+/* Mobile navigation header */
+.mobile-nav-header {
+  position: sticky;
+  top: 0;
+  background: var(--background);
+  z-index: 10;
+  padding: var(--mobile-padding);
+  padding-top: calc(var(--safe-area-inset-top) + var(--mobile-padding));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Touch-friendly button classes */
+.touch-button {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: clamp(0.75rem, 2vw, 1rem) clamp(1rem, 3vw, 1.5rem);
+  font-size: var(--text-base);
+  border-radius: 12px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: all 150ms ease-in-out;
+}
+
+.touch-button:active {
+  transform: scale(0.98);
+}
+
+/* Mobile touch targets are now handled by automotive-touch-target class for consistency */
+
+/* Mobile-first responsive grid */
+.mobile-grid {
+  display: grid;
+  gap: var(--mobile-margin);
+  padding: var(--mobile-padding);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .mobile-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+/* Mobile cards with enhanced touch feedback */
+.mobile-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: var(--mobile-padding);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Mobile typography classes using clamp() */
+.mobile-text-xs { font-size: var(--text-xs); }
+.mobile-text-sm { font-size: var(--text-sm); }
+.mobile-text-base { font-size: var(--text-base); }
+.mobile-text-lg { font-size: var(--text-lg); }
+.mobile-text-xl { font-size: var(--text-xl); }
+.mobile-text-2xl { font-size: var(--text-2xl); }
+.mobile-text-3xl { font-size: var(--text-3xl); }
+
+/* Mobile-safe spacing utilities */
+.mobile-safe-top {
+  padding-top: calc(var(--safe-area-inset-top) + 1rem);
+}
+
+.mobile-safe-bottom {
+  padding-bottom: calc(var(--safe-area-inset-bottom) + 1rem);
+}
+
+.mobile-safe-left {
+  padding-left: calc(var(--safe-area-inset-left) + 1rem);
+}
+
+.mobile-safe-right {
+  padding-right: calc(var(--safe-area-inset-right) + 1rem);
+}
+
+/* Mobile breakpoint-specific styles */
+@media (max-width: 768px) {
+  /* Hide desktop sidebar on mobile */
+  .desktop-sidebar {
+    display: none;
+  }
+  
+  /* Full viewport map on mobile */
+  .navigation-layout {
+    flex-direction: column;
+  }
+  
+  .map-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  
+  /* Enhance button sizes for mobile */
+  button, .btn {
+    min-height: var(--touch-target-min);
+    padding: 12px 16px;
+    font-size: var(--text-base);
+  }
+  
+  /* Mobile-friendly form inputs */
+  input, select, textarea {
+    min-height: var(--touch-target-min);
+    padding: 12px 16px;
+    font-size: var(--text-base);
+    border-radius: 12px;
+  }
+}
+
+/* Tablet landscape optimization */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+  .mobile-drawer {
+    left: 50%;
+    right: 0;
+    border-top-left-radius: 20px;
+  }
+  
+  .mobile-map-container {
+    width: 50%;
+  }
+}
+
+/* Large mobile devices (6.7" and above) */
+@media (min-width: 414px) and (max-width: 768px) {
+  :root {
+    --drawer-height: 75vh;
+    --touch-target-min: 48px;
+  }
+}
+
+/* Small mobile devices optimization */
+@media (max-width: 414px) {
+  :root {
+    --drawer-height: 65vh;
+    --mobile-padding: 1rem;
+    --mobile-margin: 0.75rem;
+  }
+  
+  .mobile-card {
+    border-radius: 12px;
+    padding: 1rem;
+  }
+  
+  .drawer-content {
+    padding: 0 1rem;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+  :root {
+    --drawer-height: 85vh;
+  }
+  
+  .mobile-nav-header {
+    padding-top: calc(var(--safe-area-inset-top) + 0.5rem);
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .mobile-layout {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  .mobile-drawer {
+    bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Enhanced accessibility for mobile */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-drawer {
+    transition: transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-drawer {
+    transition: none;
+  }
+  
+  .mobile-card:active,
+  .touch-button:active {
+    transform: none;
+  }
+}
+
+/* Dark mode mobile enhancements */
+.dark .mobile-drawer {
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark .mobile-nav-header {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+/* High contrast mode mobile support */
+@media (prefers-contrast: high) {
+  .mobile-card {
+    border-width: 2px;
+  }
+  
+  .drawer-handle {
+    height: 6px;
+    background: var(--foreground);
+    opacity: 1;
+  }
+}
+
+/* Mobile focus indicators */
+@media (max-width: 768px) {
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px hsla(214, 100%, 50%, 0.2);
+  }
 }

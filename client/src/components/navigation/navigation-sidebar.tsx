@@ -360,11 +360,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Truck className="text-primary-foreground text-lg" />
+                <Truck className="text-primary-foreground mobile-text-lg" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">{t('app.name')}</h1>
-                <p className="text-sm text-muted-foreground">{t('app.tagline')}</p>
+                <h1 className="mobile-text-lg font-bold text-foreground">{t('app.name')}</h1>
+                <p className="mobile-text-sm text-muted-foreground">{t('app.tagline')}</p>
               </div>
             </div>
           )}
@@ -397,7 +397,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {/* Quick Status Bar */}
         {!isCollapsed && (
           <div className="px-4 py-2 bg-muted/50 border-b border-border">
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between mobile-text-xs">
               <div className="flex items-center space-x-2">
                 <LanguageSelector variant="country-first" />
                 <MeasurementSelector variant="compact" />
@@ -450,7 +450,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     {section.badge && (
                       <Badge 
                         variant={activeSection === section.id ? "secondary" : "outline"} 
-                        className="ml-2 text-xs"
+                        className="ml-2 mobile-text-xs"
                       >
                         {section.badge}
                       </Badge>
