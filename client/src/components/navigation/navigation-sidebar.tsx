@@ -23,7 +23,11 @@ import {
   History,
   ExternalLink,
   Eye,
-  EyeOff
+  EyeOff,
+  Scale,
+  Play,
+  ArrowRight,
+  Zap
 } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
@@ -37,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { openMapWindow, closeMapWindow, isMapWindowOpen, TruckNavWindowManager, windowManager } from "@/lib/window-manager";
 import { useWindowSync } from "@/hooks/use-window-sync";
 import { useToast } from "@/hooks/use-toast";
+import { LegalPopupManager } from "@/lib/legal-popup-manager";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -66,6 +71,24 @@ interface NavigationSidebarProps {
   onCollapseToggle: () => void;
 }
 
+// Helper functions for formatting
+const formatDuration = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+};
+
+const formatDistance = (meters: number): string => {
+  const km = meters / 1000;
+  if (km >= 1) {
+    return `${km.toFixed(1)} km`;
+  }
+  return `${meters.toFixed(0)} m`;
+};
+
 // Memoized sidebar component for automotive performance
 const NavigationSidebar = memo(function NavigationSidebar({
   fromLocation,
@@ -94,6 +117,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const { formatHeight, formatWeight } = useMeasurement();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('route');
+  const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   
   // Window sync state
   const windowSync = useWindowSync();
@@ -209,6 +233,92 @@ const NavigationSidebar = memo(function NavigationSidebar({
       toast({
         title: "Map window not available",
         description: "The map window is not currently open.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Legal popup management handlers
+  const handleOpenLegalDisclaimer = () => {
+    try {
+      if (LegalPopupManager.isLegalDisclaimerOpen()) {
+        LegalPopupManager.focusLegalDisclaimer();
+      } else {
+        const popup = LegalPopupManager.openLegalDisclaimer({
+          width: 1200,
+          height: 900,
+          centered: true,
+          resizable: true,
+          scrollbars: true,
+        });
+
+        if (popup) {
+          setIsLegalPopupOpen(true);
+          toast({
+            title: "Legal disclaimer opened",
+            description: "The legal disclaimer has been opened in a separate window.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to open legal disclaimer popup:', error);
+      toast({
+        title: "Failed to open legal disclaimer",
+        description: "There was an error opening the legal disclaimer. Please check popup settings.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Go button functionality
+  const isReadyToGo = fromLocation && toLocation && selectedProfile;
+  const canStartNavigation = isReadyToGo && currentRoute && !isNavigating;
+
+  const handleGoNavigation = async () => {
+    if (!canStartNavigation) {
+      if (!selectedProfile) {
+        toast({
+          title: "Vehicle profile required",
+          description: "Please set up your vehicle profile before starting navigation.",
+          variant: "destructive",
+        });
+        setActiveSection('vehicle');
+        return;
+      }
+      
+      if (!fromLocation || !toLocation) {
+        toast({
+          title: "Locations required",
+          description: "Please set both starting point and destination.",
+          variant: "destructive",
+        });
+        setActiveSection('route');
+        return;
+      }
+      
+      if (!currentRoute) {
+        // Try to plan route first
+        onPlanRoute();
+        return;
+      }
+    }
+
+    try {
+      // Start navigation
+      onStartNavigation();
+      
+      // Open map window automatically
+      await handleOpenMapWindow();
+      
+      toast({
+        title: "Navigation started",
+        description: "TruckNav Pro is now guiding your journey.",
+      });
+    } catch (error) {
+      console.error('Failed to start navigation:', error);
+      toast({
+        title: "Failed to start navigation",
+        description: "There was an error starting navigation. Please try again.",
         variant: "destructive",
       });
     }
@@ -372,6 +482,55 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     isCompletingJourney={isCompletingJourney}
                   />
                   
+                  {/* Enhanced Go Button */}
+                  {isReadyToGo && (
+                    <div className="p-4 border-t-2 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+                      <Card className="border-primary/30 bg-primary/5">
+                        <CardContent className="p-4">
+                          <div className="text-center space-y-3">
+                            <div className="text-sm font-medium text-primary">
+                              Ready to Navigate
+                            </div>
+                            <Button
+                              onClick={handleGoNavigation}
+                              disabled={!canStartNavigation || isNavigating}
+                              size="lg"
+                              className={cn(
+                                "w-full automotive-button min-h-16 text-lg font-bold",
+                                "bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90",
+                                "transform transition-all duration-200 hover:scale-105 active:scale-95",
+                                "shadow-lg hover:shadow-xl border-2 border-primary/20"
+                              )}
+                              data-testid="button-go-navigation"
+                            >
+                              {isNavigating ? (
+                                <>
+                                  <Navigation className="w-6 h-6 mr-3 animate-pulse" />
+                                  Navigating...
+                                </>
+                              ) : !currentRoute ? (
+                                <>
+                                  <Zap className="w-6 h-6 mr-3" />
+                                  Plan & Go
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-6 h-6 mr-3" />
+                                  START NAVIGATION
+                                </>
+                              )}
+                            </Button>
+                            {currentRoute && (
+                              <div className="text-xs text-muted-foreground">
+                                Route planned • {formatDuration(currentRoute.estimatedTime || 0)} • {formatDistance(currentRoute.distance || 0)}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
                   {/* Map Window Controls */}
                   <div className="p-4 border-t border-border">
                     <Card className="bg-card">

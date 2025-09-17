@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Truck } from "lucide-react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Truck, X } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
@@ -29,6 +30,9 @@ export default function NavigationPage() {
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  
+  // Swipe/drawer state for navigation transitions
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
@@ -242,6 +246,9 @@ export default function NavigationPage() {
 
   const handleStartNavigation = () => {
     if (currentRoute) {
+      // Open swipe drawer for smooth transition
+      setIsDrawerOpen(true);
+      
       // If we already have a planned journey from route calculation, activate it
       if (activeJourney && activeJourney.status === 'planned') {
         // Activate the existing planned journey to 'active' status
@@ -250,6 +257,15 @@ export default function NavigationPage() {
         // Create a new journey for this route if none exists (will auto-activate)
         startJourneyMutation.mutate(currentRoute.id);
       }
+      
+      // Auto-expand map after a short delay for smooth transition
+      setTimeout(() => {
+        setIsMapExpanded(true);
+        // On mobile, close sidebar to give more space for map
+        if (window.innerWidth < 1024) {
+          setIsSidebarOpen(false);
+        }
+      }, 300);
     }
   };
 
@@ -352,6 +368,7 @@ export default function NavigationPage() {
             autoExpanded={isMapExpanded}
             onCollapseMap={() => {
               setIsMapExpanded(false);
+              setIsDrawerOpen(false);
               if (!isSidebarOpen) {
                 setIsSidebarOpen(true);
               }
@@ -359,6 +376,79 @@ export default function NavigationPage() {
           />
         </div>
       </div>
+
+      {/* Swipeable Navigation Drawer */}
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerContent className="automotive-drawer">
+          <DrawerHeader className="flex items-center justify-between">
+            <DrawerTitle className="automotive-text-lg">
+              {isNavigating ? 'Navigation Active' : 'Starting Navigation...'}
+            </DrawerTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setIsMapExpanded(false);
+                if (!isSidebarOpen) {
+                  setIsSidebarOpen(true);
+                }
+              }}
+              className="automotive-touch-target"
+              data-testid="button-close-drawer"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </DrawerHeader>
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="automotive-text-base text-muted-foreground mb-2">
+                  Route: {fromLocation} → {toLocation}
+                </div>
+                {currentRoute && (
+                  <div className="text-sm text-muted-foreground">
+                    Distance: {Math.round((currentRoute.distance || 0) / 1000)} km • 
+                    Duration: {Math.round((currentRoute.duration || 0) / 60)} min
+                  </div>
+                )}
+              </div>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={() => {
+                    setIsMapExpanded(true);
+                    setIsDrawerOpen(false);
+                    if (window.innerWidth < 1024) {
+                      setIsSidebarOpen(false);
+                    }
+                  }}
+                  className="flex-1 automotive-button automotive-text-base"
+                  data-testid="button-expand-map"
+                >
+                  View Full Map
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    setIsMapExpanded(false);
+                    if (!isSidebarOpen) {
+                      setIsSidebarOpen(true);
+                    }
+                  }}
+                  className="flex-1 automotive-button automotive-text-base"
+                  data-testid="button-back-to-planning"
+                >
+                  Back to Planning
+                </Button>
+              </div>
+              <div className="text-center text-xs text-muted-foreground">
+                Swipe down to dismiss or tap outside
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

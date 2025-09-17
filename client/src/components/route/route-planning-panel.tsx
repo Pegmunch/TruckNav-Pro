@@ -303,26 +303,8 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
           />
         </div>
         
-        {/* Route Options */}
-        <div className="flex space-x-2 mt-4">
-          <Button 
-            onClick={onPlanRoute}
-            disabled={isCalculating || !fromLocation || !toLocation}
-            className="flex-1"
-            data-testid="button-plan-route"
-          >
-            {isCalculating ? (
-              <>
-                <Clock className="w-4 h-4 mr-2 animate-spin" />
-                Planning...
-              </>
-            ) : (
-              <>
-                <Route className="w-4 h-4 mr-2" />
-                Plan Route
-              </>
-            )}
-          </Button>
+        {/* Route Options - Removed primary button, keeping utility buttons */}
+        <div className="flex justify-end mt-4">
           <Button variant="outline" size="icon" data-testid="button-location-picker">
             <MapPin className="w-4 h-4" />
           </Button>
@@ -689,26 +671,32 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
         </div>
       )}
 
-      {/* Bottom Action Bar */}
-      <div className="p-4 border-t border-border bg-card">
-        <div className="space-y-2">
+      {/* Bottom Action Bar - Main Go Button Area */}
+      <div className="p-4 border-t border-border bg-accent/10">
+        <div className="space-y-3">
+          {/* Primary Go Button */}
           <div className="flex space-x-2">
             {!isNavigating ? (
               <Button 
-                onClick={onStartNavigation}
-                disabled={!currentRoute || isStartingJourney}
-                className="flex-1 bg-accent hover:bg-accent/90"
-                data-testid="button-start-navigation"
+                onClick={currentRoute ? onStartNavigation : onPlanRoute}
+                disabled={(!fromLocation || !toLocation) || isStartingJourney || isCalculating}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold automotive-button"
+                data-testid="button-go-navigation"
               >
-                {isStartingJourney ? (
+                {isStartingJourney || isCalculating ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Starting...
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    {isCalculating ? "Planning Route..." : "Starting..."}
+                  </>
+                ) : currentRoute ? (
+                  <>
+                    <Navigation className="w-5 h-5 mr-3" />
+                    GO - Start Navigation
                   </>
                 ) : (
                   <>
-                    <Navigation className="w-4 h-4 mr-2" />
-                    Start Navigation
+                    <Route className="w-5 h-5 mr-3" />
+                    GO - Plan Route
                   </>
                 )}
               </Button>

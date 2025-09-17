@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 import { 
   MapPin, 
   Bookmark, 
@@ -18,7 +19,8 @@ import {
   ChevronDown,
   Check,
   Mail,
-  Globe
+  Globe,
+  Keyboard
 } from "lucide-react";
 import { type Location } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -51,6 +53,7 @@ const LocationDropdown = memo(function LocationDropdown({
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveLabel, setSaveLabel] = useState("");
   const [isPostcodeMode, setIsPostcodeMode] = useState(false);
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [postcodeValidation, setPostcodeValidation] = useState<{
     isValid: boolean;
     country: PostcodeCountry | null;
@@ -84,6 +87,32 @@ const LocationDropdown = memo(function LocationDropdown({
       setPostcodeValidation({ isValid: false, country: null, formatted: "" });
     }
   }, [searchValue, isPostcodeMode, onChange]);
+
+  // Virtual keyboard handlers
+  const handleKeyboardSearch = useCallback((searchTerm: string) => {
+    if (searchTerm.trim()) {
+      setSearchValue(searchTerm);
+      onChange(searchTerm);
+      setOpen(true); // Open dropdown to show results
+      setShowVirtualKeyboard(false);
+    }
+  }, [onChange]);
+
+  const handleKeyboardEnter = useCallback(() => {
+    if (searchValue.trim()) {
+      onChange(searchValue);
+      setOpen(true); // Open dropdown to show results
+      setShowVirtualKeyboard(false);
+    }
+  }, [searchValue, onChange]);
+
+  const handleToggleKeyboard = useCallback(() => {
+    setShowVirtualKeyboard(!showVirtualKeyboard);
+    // Close dropdown when opening keyboard
+    if (!showVirtualKeyboard) {
+      setOpen(false);
+    }
+  }, [showVirtualKeyboard]);
 
   // Fetch location history and favorites
   const { data: allLocations = [], isLoading: isLoadingAll } = useQuery<Location[]>({
@@ -578,6 +607,16 @@ const LocationDropdown = memo(function LocationDropdown({
         <Button
           variant="outline"
           size="icon"
+          onClick={handleToggleKeyboard}
+          className={`shrink-0 ${showVirtualKeyboard ? 'bg-primary text-primary-foreground' : ''}`}
+          data-testid={`button-toggle-keyboard-${icon}`}
+        >
+          <Keyboard className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => {
             setSaveLabel(value);
             setShowSaveDialog(true);
@@ -630,6 +669,28 @@ const LocationDropdown = memo(function LocationDropdown({
           </div>
         </div>
       )}
+
+      {/* Virtual Keyboard */}
+      <VirtualKeyboard
+        value={searchValue}
+        onChange={setSearchValue}
+        onEnter={handleKeyboardEnter}
+        onSearch={handleKeyboardSearch}
+        placeholder={`Enter ${icon === 'start' ? 'starting location' : 'destination'}...`}
+        isVisible={showVirtualKeyboard}
+        onToggleKeyboard={handleToggleKeyboard}
+        keyboardLayout="qwerty"
+        showSuggestions={true}
+        suggestions={favoriteLocations.map(loc => loc.label).slice(0, 5)}
+        onSuggestionClick={(suggestion) => {
+          setSearchValue(suggestion);
+          onChange(suggestion);
+          setShowVirtualKeyboard(false);
+        }}
+        compact={false}
+        className="mt-4"
+        testId={`virtual-keyboard-${icon}`}
+      />
     </div>
   );
 });
