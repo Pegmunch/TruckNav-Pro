@@ -241,3 +241,136 @@ export type InsertJourney = z.infer<typeof insertJourneySchema>;
 
 export type LaneOption = z.infer<typeof laneOptionSchema>;
 export type LaneSegment = z.infer<typeof laneSegmentSchema>;
+
+// Traffic re-routing system schemas
+export const trafficConditionSchema = z.object({
+  segmentId: z.string(), // unique identifier for road segment
+  roadName: z.string(),
+  coordinates: z.object({
+    start: z.object({ lat: z.number(), lng: z.number() }),
+    end: z.object({ lat: z.number(), lng: z.number() })
+  }),
+  speedLimit: z.number(), // mph or km/h based on region
+  currentSpeed: z.number(), // actual traffic speed
+  flowLevel: z.enum(['free', 'light', 'moderate', 'heavy', 'standstill']),
+  delayMinutes: z.number(), // estimated delay compared to free-flow
+  confidence: z.number().min(0).max(1), // confidence level 0-1
+  lastUpdated: z.date(),
+  incidents: z.array(z.string()).optional(), // related incident IDs
+});
+
+export const alternativeRouteSchema = z.object({
+  id: z.string(),
+  originalRouteId: z.string(), // references routes table
+  routePath: z.array(z.object({ lat: z.number(), lng: z.number() })),
+  distance: z.number(), // in miles
+  duration: z.number(), // in minutes with current traffic
+  durationWithoutTraffic: z.number(), // baseline duration
+  timeSavingsMinutes: z.number(), // compared to original route
+  confidenceLevel: z.number().min(0).max(1), // reliability of time estimate
+  trafficConditions: z.array(trafficConditionSchema),
+  restrictionsAvoided: z.array(z.string()), // restriction IDs avoided
+  viabilityScore: z.number(), // overall route quality score
+  reasonForSuggestion: z.enum(['traffic_incident', 'heavy_congestion', 'road_closure', 'faster_alternative']),
+  calculatedAt: z.date(),
+});
+
+export const reRoutingEventSchema = z.object({
+  id: z.string(),
+  originalRouteId: z.string(),
+  alternativeRouteId: z.string(),
+  journeyId: z.number(), // references journeys table
+  triggerReason: z.enum(['traffic_incident', 'congestion_detected', 'user_requested', 'automatic_optimization']),
+  timeSavingsOffered: z.number(), // minutes saved
+  userResponse: z.enum(['accepted', 'declined', 'ignored']).optional(),
+  appliedAt: z.date().optional(), // when user accepted the re-route
+  effectiveness: z.object({
+    predictedSavings: z.number(),
+    actualSavings: z.number().optional(), // measured after completion
+    accuracy: z.number().optional(), // how accurate was the prediction
+  }).optional(),
+  metadata: z.object({
+    trafficConditionsSnapshot: z.array(trafficConditionSchema).optional(),
+    vehicleProfileId: z.string().optional(),
+    userPreferences: z.record(z.any()).optional(),
+  }).optional(),
+});
+
+// Database tables for traffic re-routing
+export const routeMonitoring = pgTable("route_monitoring", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  routeId: varchar("route_id").notNull(), // references routes table
+  journeyId: integer("journey_id"), // references journeys table, null for planned routes
+  isActive: boolean("is_active").default(true),
+  vehicleProfileId: varchar("vehicle_profile_id"), // for truck-specific routing
+  monitoringStarted: timestamp("monitoring_started").defaultNow(),
+  monitoringEnded: timestamp("monitoring_ended"),
+  checkInterval: integer("check_interval").default(300), // seconds between checks (5 minutes default)
+  lastTrafficCheck: timestamp("last_traffic_check"),
+  currentTrafficConditions: jsonb("current_traffic_conditions"), // TrafficCondition array
+  alertThreshold: integer("alert_threshold").default(5), // minimum minutes saved to trigger alert
+  userPreferences: jsonb("user_preferences"), // auto-apply, notify-only, etc.
+});
+
+export const alternativeRoutes = pgTable("alternative_routes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  originalRouteId: varchar("original_route_id").notNull(),
+  routePath: jsonb("route_path").notNull(), // array of coordinate points
+  distance: real("distance").notNull(), // in miles
+  duration: integer("duration").notNull(), // in minutes with current traffic
+  durationWithoutTraffic: integer("duration_without_traffic").notNull(),
+  timeSavingsMinutes: integer("time_savings_minutes").notNull(),
+  confidenceLevel: real("confidence_level").notNull(),
+  trafficConditions: jsonb("traffic_conditions"), // TrafficCondition array
+  restrictionsAvoided: jsonb("restrictions_avoided"), // array of restriction IDs
+  viabilityScore: real("viability_score"), // 0-1 score for route quality
+  reasonForSuggestion: text("reason_for_suggestion").notNull(),
+  calculatedAt: timestamp("calculated_at").defaultNow(),
+  isActive: boolean("is_active").default(true), // false when traffic conditions change
+  expiresAt: timestamp("expires_at"), // when this alternative becomes stale
+});
+
+export const reRoutingEvents = pgTable("rerouting_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  originalRouteId: varchar("original_route_id").notNull(),
+  alternativeRouteId: varchar("alternative_route_id"),
+  journeyId: integer("journey_id"), // references journeys table
+  triggerReason: text("trigger_reason").notNull(),
+  timeSavingsOffered: integer("time_savings_offered"), // minutes
+  userResponse: text("user_response"), // 'accepted', 'declined', 'ignored'
+  responseTime: integer("response_time"), // seconds taken to respond
+  appliedAt: timestamp("applied_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  effectiveness: jsonb("effectiveness"), // predicted vs actual savings
+  metadata: jsonb("metadata"), // additional context data
+});
+
+// Insert schemas for new tables
+export const insertRouteMonitoringSchema = createInsertSchema(routeMonitoring).omit({
+  id: true,
+  monitoringStarted: true,
+});
+
+export const insertAlternativeRouteSchema = createInsertSchema(alternativeRoutes).omit({
+  id: true,
+  calculatedAt: true,
+});
+
+export const insertReRoutingEventSchema = createInsertSchema(reRoutingEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Type exports for new schemas
+export type TrafficCondition = z.infer<typeof trafficConditionSchema>;
+export type AlternativeRoute = z.infer<typeof alternativeRouteSchema>;
+export type ReRoutingEvent = z.infer<typeof reRoutingEventSchema>;
+
+export type RouteMonitoring = typeof routeMonitoring.$inferSelect;
+export type InsertRouteMonitoring = z.infer<typeof insertRouteMonitoringSchema>;
+
+export type AlternativeRouteDB = typeof alternativeRoutes.$inferSelect;
+export type InsertAlternativeRouteDB = z.infer<typeof insertAlternativeRouteSchema>;
+
+export type ReRoutingEventDB = typeof reRoutingEvents.$inferSelect;
+export type InsertReRoutingEventDB = z.infer<typeof insertReRoutingEventSchema>;

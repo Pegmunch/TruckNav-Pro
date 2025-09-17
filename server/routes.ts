@@ -2,7 +2,9 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema } from "@shared/schema";
+import { trafficService } from "./services/traffic-service";
+import { routeMonitorService } from "./services/route-monitor";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
@@ -823,6 +825,362 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get subscription status" });
     }
   });
+
+  // =============================================================================
+  // TRAFFIC RE-ROUTING SYSTEM API ENDPOINTS
+  // =============================================================================
+
+  // Traffic Conditions
+  app.get("/api/traffic/current-conditions/:routeId", async (req: Request, res: Response) => {
+    try {
+      const { routeId } = req.params;
+      const route = await storage.getRoute(routeId);
+      
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+
+      const routePath = route.routePath as Array<{ lat: number; lng: number }>;
+      const vehicleProfile = route.vehicleProfileId 
+        ? await storage.getVehicleProfile(route.vehicleProfileId)
+        : undefined;
+
+      const conditions = await trafficService.getTrafficConditions(routePath, vehicleProfile);
+      
+      // Store conditions for analysis
+      await storage.storeTrafficConditions(routeId, conditions);
+
+      res.json({ routeId, conditions });
+    } catch (error) {
+      console.error('Error getting traffic conditions:', error);
+      res.status(500).json({ message: "Failed to get traffic conditions" });
+    }
+  });
+
+  app.get("/api/traffic/history/:routeId", async (req: Request, res: Response) => {
+    try {
+      const { routeId } = req.params;
+      const hours = parseInt(req.query.hours as string) || 24;
+      
+      const history = await storage.getTrafficHistory(routeId, hours);
+      res.json({ routeId, history });
+    } catch (error) {
+      console.error('Error getting traffic history:', error);
+      res.status(500).json({ message: "Failed to get traffic history" });
+    }
+  });
+
+  // Alternative Routes
+  app.post("/api/traffic/alternatives", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { routeId, vehicleProfileId, forceRecalculate = false } = req.body;
+      
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+
+      const vehicleProfile = await storage.getVehicleProfile(vehicleProfileId || route.vehicleProfileId!);
+      if (!vehicleProfile) {
+        return res.status(404).json({ message: "Vehicle profile not found" });
+      }
+
+      // Check for existing active alternatives first (unless forcing recalculation)
+      if (!forceRecalculate) {
+        const existingAlternatives = await storage.getActiveAlternativeRoutes(routeId);
+        if (existingAlternatives.length > 0) {
+          return res.json({ 
+            routeId, 
+            alternatives: existingAlternatives,
+            cached: true,
+            calculatedAt: existingAlternatives[0].calculatedAt,
+          });
+        }
+      }
+
+      // Calculate new alternatives
+      const routePath = route.routePath as Array<{ lat: number; lng: number }>;
+      const request = {
+        start: routePath[0],
+        end: routePath[routePath.length - 1],
+        vehicleProfile,
+        currentTime: new Date(),
+      };
+
+      const result = await trafficService.calculateAlternativeRoutes(request);
+      
+      // Store alternatives in database
+      const storedAlternatives = await Promise.all(
+        result.alternatives.map(async (alt) => {
+          return await storage.createAlternativeRoute({
+            originalRouteId: routeId,
+            routePath: alt.routePath,
+            distance: alt.distance,
+            duration: alt.duration,
+            durationWithoutTraffic: alt.durationWithoutTraffic,
+            timeSavingsMinutes: alt.timeSavingsMinutes,
+            confidenceLevel: alt.confidenceLevel,
+            trafficConditions: alt.trafficConditions,
+            restrictionsAvoided: alt.restrictionsAvoided,
+            viabilityScore: alt.viabilityScore,
+            reasonForSuggestion: alt.reasonForSuggestion,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+          });
+        })
+      );
+
+      res.json({
+        routeId,
+        alternatives: storedAlternatives,
+        originalConditions: result.originalRouteConditions,
+        calculationTime: result.calculationTime,
+        confidence: result.confidence,
+        cached: false,
+      });
+    } catch (error) {
+      console.error('Error calculating alternatives:', error);
+      res.status(500).json({ message: "Failed to calculate alternative routes" });
+    }
+  });
+
+  // Route Monitoring
+  app.post("/api/traffic/monitor/start", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { routeId, journeyId, checkInterval, alertThreshold, autoApply = false } = req.body;
+      
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+
+      const vehicleProfile = route.vehicleProfileId 
+        ? await storage.getVehicleProfile(route.vehicleProfileId)
+        : await storage.getVehicleProfile("default-profile");
+
+      if (!vehicleProfile) {
+        return res.status(404).json({ message: "Vehicle profile not found" });
+      }
+
+      // Check if monitoring already exists for this route/journey
+      const existingMonitoring = journeyId 
+        ? await storage.getRouteMonitoringByJourney(journeyId)
+        : await storage.getRouteMonitoringByRoute(routeId);
+
+      if (existingMonitoring) {
+        return res.json({ 
+          message: "Monitoring already active", 
+          monitoringId: existingMonitoring.id 
+        });
+      }
+
+      // Create route monitoring entry
+      const monitoring = await storage.createRouteMonitoring({
+        routeId,
+        journeyId: journeyId || null,
+        vehicleProfileId: vehicleProfile.id,
+        checkInterval: checkInterval || 300, // 5 minutes default
+        alertThreshold: alertThreshold || 5,
+        userPreferences: {
+          autoApply,
+          minTimeSavings: alertThreshold || 5,
+        },
+      });
+
+      // Start monitoring with route monitor service
+      let journey = undefined;
+      if (journeyId) {
+        journey = await storage.getJourney ? await storage.getJourney(journeyId) : undefined;
+      }
+
+      const monitoringId = await routeMonitorService.startMonitoring(
+        route,
+        vehicleProfile,
+        journey,
+        {
+          checkInterval: (checkInterval || 300) * 1000, // Convert to milliseconds
+          alertThreshold: alertThreshold || 5,
+          autoApply,
+          minTimeSavings: alertThreshold || 5,
+        }
+      );
+
+      res.json({ 
+        message: "Route monitoring started", 
+        monitoringId: monitoring.id,
+        serviceMonitoringId: monitoringId,
+      });
+    } catch (error) {
+      console.error('Error starting route monitoring:', error);
+      res.status(500).json({ message: "Failed to start route monitoring" });
+    }
+  });
+
+  app.post("/api/traffic/monitor/stop/:monitoringId", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { monitoringId } = req.params;
+      
+      // Stop monitoring in storage
+      const stopped = await storage.stopRouteMonitoring(monitoringId);
+      if (!stopped) {
+        return res.status(404).json({ message: "Monitoring session not found" });
+      }
+
+      // Stop monitoring in service
+      routeMonitorService.stopMonitoring(monitoringId);
+
+      res.json({ message: "Route monitoring stopped", monitoringId });
+    } catch (error) {
+      console.error('Error stopping route monitoring:', error);
+      res.status(500).json({ message: "Failed to stop route monitoring" });
+    }
+  });
+
+  app.get("/api/traffic/monitor/status", async (req: Request, res: Response) => {
+    try {
+      const sessions = routeMonitorService.getMonitoringStatus();
+      res.json({ sessions });
+    } catch (error) {
+      console.error('Error getting monitoring status:', error);
+      res.status(500).json({ message: "Failed to get monitoring status" });
+    }
+  });
+
+  // Re-routing
+  app.post("/api/traffic/reroute/apply", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { monitoringId, alternativeRouteId, journeyId } = req.body;
+      
+      if (!monitoringId || !alternativeRouteId) {
+        return res.status(400).json({ message: "monitoringId and alternativeRouteId are required" });
+      }
+
+      // Get the alternative route
+      const alternativeRoute = await storage.getAlternativeRoute(alternativeRouteId);
+      if (!alternativeRoute || !alternativeRoute.isActive) {
+        return res.status(404).json({ message: "Alternative route not found or expired" });
+      }
+
+      // Apply the re-route through the monitoring service
+      const result = await routeMonitorService.acceptReRoute(monitoringId, alternativeRouteId);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.error || "Failed to apply re-route" });
+      }
+
+      // Log the re-routing event
+      await storage.createReRoutingEvent({
+        originalRouteId: alternativeRoute.originalRouteId,
+        alternativeRouteId,
+        journeyId: journeyId || null,
+        triggerReason: "user_requested",
+        timeSavingsOffered: alternativeRoute.timeSavingsMinutes,
+        userResponse: "accepted",
+        appliedAt: new Date(),
+      });
+
+      res.json({ 
+        message: "Re-route applied successfully", 
+        newRoute: result.newRoute,
+        timeSavings: alternativeRoute.timeSavingsMinutes,
+      });
+    } catch (error) {
+      console.error('Error applying re-route:', error);
+      res.status(500).json({ message: "Failed to apply re-route" });
+    }
+  });
+
+  app.post("/api/traffic/reroute/decline", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { monitoringId, alternativeRouteId, journeyId } = req.body;
+      
+      if (!monitoringId || !alternativeRouteId) {
+        return res.status(400).json({ message: "monitoringId and alternativeRouteId are required" });
+      }
+
+      // Get the alternative route
+      const alternativeRoute = await storage.getAlternativeRoute(alternativeRouteId);
+      if (!alternativeRoute) {
+        return res.status(404).json({ message: "Alternative route not found" });
+      }
+
+      // Decline the re-route
+      routeMonitorService.declineReRoute(monitoringId, alternativeRouteId);
+
+      // Log the declined event
+      await storage.createReRoutingEvent({
+        originalRouteId: alternativeRoute.originalRouteId,
+        alternativeRouteId,
+        journeyId: journeyId || null,
+        triggerReason: "user_requested",
+        timeSavingsOffered: alternativeRoute.timeSavingsMinutes,
+        userResponse: "declined",
+        appliedAt: null,
+      });
+
+      res.json({ message: "Re-route declined" });
+    } catch (error) {
+      console.error('Error declining re-route:', error);
+      res.status(500).json({ message: "Failed to decline re-route" });
+    }
+  });
+
+  // Statistics and Analytics
+  app.get("/api/traffic/stats", async (req: Request, res: Response) => {
+    try {
+      const { routeId, timeframe = 'week' } = req.query;
+      
+      const stats = await storage.getReRoutingStats(
+        routeId as string | undefined,
+        timeframe as 'day' | 'week' | 'month'
+      );
+
+      res.json({ stats, timeframe, routeId });
+    } catch (error) {
+      console.error('Error getting traffic stats:', error);
+      res.status(500).json({ message: "Failed to get traffic statistics" });
+    }
+  });
+
+  app.get("/api/traffic/incidents/:routeId", async (req: Request, res: Response) => {
+    try {
+      const { routeId } = req.params;
+      const { radiusKm = 5 } = req.query;
+      
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+
+      const routePath = route.routePath as Array<{ lat: number; lng: number }>;
+      const incidents = await trafficService.getTrafficIncidents(routePath, Number(radiusKm));
+
+      res.json({ routeId, incidents, radiusKm: Number(radiusKm) });
+    } catch (error) {
+      console.error('Error getting traffic incidents:', error);
+      res.status(500).json({ message: "Failed to get traffic incidents" });
+    }
+  });
+
+  // Cleanup and maintenance endpoints
+  app.post("/api/traffic/cleanup", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const expiredAlternatives = await storage.cleanupExpiredAlternatives();
+      const cleanedHistory = await storage.cleanupTrafficHistory(48); // Keep 48 hours
+      
+      res.json({ 
+        message: "Cleanup completed",
+        expiredAlternatives,
+        cleanedHistoryEntries: cleanedHistory,
+      });
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+      res.status(500).json({ message: "Failed to perform cleanup" });
+    }
+  });
+
+  // =============================================================================
+  // END TRAFFIC RE-ROUTING SYSTEM
+  // =============================================================================
 
   const httpServer = createServer(app);
   return httpServer;

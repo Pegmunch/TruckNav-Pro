@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 // Postcode search result type for storage layer
@@ -89,6 +89,50 @@ export interface IStorage {
   // Postcode/Geocoding
   searchPostcode(postcode: string, country?: string): Promise<PostcodeResult[]>;
   geocodePostcode(postcode: string, country?: string): Promise<PostcodeResult | null>;
+
+  // Traffic Re-routing System
+  
+  // Route Monitoring
+  createRouteMonitoring(monitoring: InsertRouteMonitoring): Promise<RouteMonitoring>;
+  getRouteMonitoring(id: string): Promise<RouteMonitoring | undefined>;
+  getActiveRouteMonitoring(): Promise<RouteMonitoring[]>;
+  getRouteMonitoringByRoute(routeId: string): Promise<RouteMonitoring | undefined>;
+  getRouteMonitoringByJourney(journeyId: number): Promise<RouteMonitoring | undefined>;
+  updateRouteMonitoring(id: string, updates: Partial<RouteMonitoring>): Promise<RouteMonitoring | undefined>;
+  stopRouteMonitoring(id: string): Promise<boolean>;
+
+  // Alternative Routes  
+  createAlternativeRoute(route: InsertAlternativeRouteDB): Promise<AlternativeRouteDB>;
+  getAlternativeRoute(id: string): Promise<AlternativeRouteDB | undefined>;
+  getAlternativeRoutesByOriginal(originalRouteId: string): Promise<AlternativeRouteDB[]>;
+  getActiveAlternativeRoutes(originalRouteId: string): Promise<AlternativeRouteDB[]>;
+  updateAlternativeRoute(id: string, updates: Partial<AlternativeRouteDB>): Promise<AlternativeRouteDB | undefined>;
+  deactivateAlternativeRoute(id: string): Promise<boolean>;
+  cleanupExpiredAlternatives(): Promise<number>; // returns count of cleaned up routes
+
+  // Re-routing Events
+  createReRoutingEvent(event: InsertReRoutingEventDB): Promise<ReRoutingEventDB>;
+  getReRoutingEvent(id: string): Promise<ReRoutingEventDB | undefined>;
+  getReRoutingEventsByJourney(journeyId: number): Promise<ReRoutingEventDB[]>;
+  getReRoutingEventsByRoute(routeId: string): Promise<ReRoutingEventDB[]>;
+  updateReRoutingEvent(id: string, updates: Partial<ReRoutingEventDB>): Promise<ReRoutingEventDB | undefined>;
+  getReRoutingStats(routeId?: string, timeframe?: 'day' | 'week' | 'month'): Promise<{
+    totalEvents: number;
+    acceptedEvents: number;
+    declinedEvents: number;
+    averageTimeSavings: number;
+    effectivenessScore: number;
+  }>;
+
+  // Traffic Conditions (cached/stored for analysis)
+  storeTrafficConditions(routeId: string, conditions: TrafficCondition[]): Promise<void>;
+  getTrafficConditions(routeId: string): Promise<TrafficCondition[]>;
+  getTrafficHistory(routeId: string, hours: number): Promise<Array<{
+    timestamp: Date;
+    conditions: TrafficCondition[];
+    averageDelay: number;
+  }>>;
+  cleanupTrafficHistory(hoursToKeep: number): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -105,6 +149,16 @@ export class MemStorage implements IStorage {
   private locationIdCounter: number;
   private journeyIdCounter: number;
   private postcodeDatabase: Map<string, PostcodeResult>;
+  
+  // Traffic re-routing system storage
+  private routeMonitoring: Map<string, RouteMonitoring>;
+  private alternativeRoutes: Map<string, AlternativeRouteDB>;
+  private reRoutingEvents: Map<string, ReRoutingEventDB>;
+  private trafficHistory: Map<string, Array<{
+    timestamp: Date;
+    conditions: TrafficCondition[];
+    averageDelay: number;
+  }>>;
 
   constructor() {
     this.vehicleProfiles = new Map();
@@ -120,6 +174,12 @@ export class MemStorage implements IStorage {
     this.locationIdCounter = 1;
     this.journeyIdCounter = 1;
     this.postcodeDatabase = new Map();
+    
+    // Initialize traffic re-routing system storage
+    this.routeMonitoring = new Map();
+    this.alternativeRoutes = new Map();
+    this.reRoutingEvents = new Map();
+    this.trafficHistory = new Map();
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -1465,6 +1525,292 @@ export class MemStorage implements IStorage {
       postcodeData.city?.toLowerCase().includes(searchLower) ||
       postcodeData.region?.toLowerCase().includes(searchLower)
     );
+  }
+
+  // Traffic Re-routing System Implementation
+
+  // Route Monitoring
+  async createRouteMonitoring(insertMonitoring: InsertRouteMonitoring): Promise<RouteMonitoring> {
+    const id = randomUUID();
+    const monitoring: RouteMonitoring = {
+      ...insertMonitoring,
+      id,
+      monitoringStarted: new Date(),
+      monitoringEnded: null,
+      lastTrafficCheck: null,
+      currentTrafficConditions: null,
+      userPreferences: insertMonitoring.userPreferences || { autoApply: false, minTimeSavings: 5 },
+    };
+
+    this.routeMonitoring.set(id, monitoring);
+    return monitoring;
+  }
+
+  async getRouteMonitoring(id: string): Promise<RouteMonitoring | undefined> {
+    return this.routeMonitoring.get(id);
+  }
+
+  async getActiveRouteMonitoring(): Promise<RouteMonitoring[]> {
+    return Array.from(this.routeMonitoring.values()).filter(m => m.isActive);
+  }
+
+  async getRouteMonitoringByRoute(routeId: string): Promise<RouteMonitoring | undefined> {
+    return Array.from(this.routeMonitoring.values()).find(m => m.routeId === routeId && m.isActive);
+  }
+
+  async getRouteMonitoringByJourney(journeyId: number): Promise<RouteMonitoring | undefined> {
+    return Array.from(this.routeMonitoring.values()).find(m => m.journeyId === journeyId && m.isActive);
+  }
+
+  async updateRouteMonitoring(id: string, updates: Partial<RouteMonitoring>): Promise<RouteMonitoring | undefined> {
+    const monitoring = this.routeMonitoring.get(id);
+    if (!monitoring) return undefined;
+
+    const updatedMonitoring = { ...monitoring, ...updates };
+    this.routeMonitoring.set(id, updatedMonitoring);
+    return updatedMonitoring;
+  }
+
+  async stopRouteMonitoring(id: string): Promise<boolean> {
+    const monitoring = this.routeMonitoring.get(id);
+    if (!monitoring) return false;
+
+    const stoppedMonitoring = {
+      ...monitoring,
+      isActive: false,
+      monitoringEnded: new Date(),
+    };
+
+    this.routeMonitoring.set(id, stoppedMonitoring);
+    return true;
+  }
+
+  // Alternative Routes
+  async createAlternativeRoute(insertRoute: InsertAlternativeRouteDB): Promise<AlternativeRouteDB> {
+    const id = randomUUID();
+    const alternativeRoute: AlternativeRouteDB = {
+      ...insertRoute,
+      id,
+      calculatedAt: new Date(),
+      isActive: insertRoute.isActive ?? true,
+      expiresAt: insertRoute.expiresAt || new Date(Date.now() + 30 * 60 * 1000), // 30 minutes default
+    };
+
+    this.alternativeRoutes.set(id, alternativeRoute);
+    return alternativeRoute;
+  }
+
+  async getAlternativeRoute(id: string): Promise<AlternativeRouteDB | undefined> {
+    return this.alternativeRoutes.get(id);
+  }
+
+  async getAlternativeRoutesByOriginal(originalRouteId: string): Promise<AlternativeRouteDB[]> {
+    return Array.from(this.alternativeRoutes.values())
+      .filter(route => route.originalRouteId === originalRouteId);
+  }
+
+  async getActiveAlternativeRoutes(originalRouteId: string): Promise<AlternativeRouteDB[]> {
+    const now = new Date();
+    return Array.from(this.alternativeRoutes.values())
+      .filter(route => 
+        route.originalRouteId === originalRouteId && 
+        route.isActive && 
+        (!route.expiresAt || route.expiresAt > now)
+      );
+  }
+
+  async updateAlternativeRoute(id: string, updates: Partial<AlternativeRouteDB>): Promise<AlternativeRouteDB | undefined> {
+    const route = this.alternativeRoutes.get(id);
+    if (!route) return undefined;
+
+    const updatedRoute = { ...route, ...updates };
+    this.alternativeRoutes.set(id, updatedRoute);
+    return updatedRoute;
+  }
+
+  async deactivateAlternativeRoute(id: string): Promise<boolean> {
+    const route = this.alternativeRoutes.get(id);
+    if (!route) return false;
+
+    const deactivatedRoute = { ...route, isActive: false };
+    this.alternativeRoutes.set(id, deactivatedRoute);
+    return true;
+  }
+
+  async cleanupExpiredAlternatives(): Promise<number> {
+    const now = new Date();
+    let cleanedCount = 0;
+
+    for (const [id, route] of this.alternativeRoutes.entries()) {
+      if (route.expiresAt && route.expiresAt <= now) {
+        this.alternativeRoutes.delete(id);
+        cleanedCount++;
+      }
+    }
+
+    return cleanedCount;
+  }
+
+  // Re-routing Events
+  async createReRoutingEvent(insertEvent: InsertReRoutingEventDB): Promise<ReRoutingEventDB> {
+    const id = randomUUID();
+    const event: ReRoutingEventDB = {
+      ...insertEvent,
+      id,
+      createdAt: new Date(),
+    };
+
+    this.reRoutingEvents.set(id, event);
+    return event;
+  }
+
+  async getReRoutingEvent(id: string): Promise<ReRoutingEventDB | undefined> {
+    return this.reRoutingEvents.get(id);
+  }
+
+  async getReRoutingEventsByJourney(journeyId: number): Promise<ReRoutingEventDB[]> {
+    return Array.from(this.reRoutingEvents.values())
+      .filter(event => event.journeyId === journeyId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getReRoutingEventsByRoute(routeId: string): Promise<ReRoutingEventDB[]> {
+    return Array.from(this.reRoutingEvents.values())
+      .filter(event => event.originalRouteId === routeId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async updateReRoutingEvent(id: string, updates: Partial<ReRoutingEventDB>): Promise<ReRoutingEventDB | undefined> {
+    const event = this.reRoutingEvents.get(id);
+    if (!event) return undefined;
+
+    const updatedEvent = { ...event, ...updates };
+    this.reRoutingEvents.set(id, updatedEvent);
+    return updatedEvent;
+  }
+
+  async getReRoutingStats(routeId?: string, timeframe: 'day' | 'week' | 'month' = 'week'): Promise<{
+    totalEvents: number;
+    acceptedEvents: number;
+    declinedEvents: number;
+    averageTimeSavings: number;
+    effectivenessScore: number;
+  }> {
+    const timeframeDays = timeframe === 'day' ? 1 : timeframe === 'week' ? 7 : 30;
+    const cutoffDate = new Date(Date.now() - timeframeDays * 24 * 60 * 60 * 1000);
+
+    let events = Array.from(this.reRoutingEvents.values())
+      .filter(event => event.createdAt >= cutoffDate);
+
+    if (routeId) {
+      events = events.filter(event => event.originalRouteId === routeId);
+    }
+
+    const totalEvents = events.length;
+    const acceptedEvents = events.filter(event => event.userResponse === 'accepted').length;
+    const declinedEvents = events.filter(event => event.userResponse === 'declined').length;
+
+    const timeSavingsValues = events
+      .filter(event => event.timeSavingsOffered !== null && event.timeSavingsOffered !== undefined)
+      .map(event => event.timeSavingsOffered!);
+
+    const averageTimeSavings = timeSavingsValues.length > 0
+      ? timeSavingsValues.reduce((sum, savings) => sum + savings, 0) / timeSavingsValues.length
+      : 0;
+
+    // Calculate effectiveness as the ratio of accepted to total events (excluding ignored)
+    const respondedEvents = acceptedEvents + declinedEvents;
+    const effectivenessScore = respondedEvents > 0 ? (acceptedEvents / respondedEvents) : 0;
+
+    return {
+      totalEvents,
+      acceptedEvents,
+      declinedEvents,
+      averageTimeSavings: Math.round(averageTimeSavings * 100) / 100,
+      effectivenessScore: Math.round(effectivenessScore * 100) / 100,
+    };
+  }
+
+  // Traffic Conditions
+  async storeTrafficConditions(routeId: string, conditions: TrafficCondition[]): Promise<void> {
+    const averageDelay = conditions.length > 0
+      ? conditions.reduce((sum, condition) => sum + condition.delayMinutes, 0) / conditions.length
+      : 0;
+
+    const entry = {
+      timestamp: new Date(),
+      conditions,
+      averageDelay,
+    };
+
+    const existingHistory = this.trafficHistory.get(routeId) || [];
+    existingHistory.push(entry);
+
+    // Keep only last 48 hours of history
+    const cutoffTime = Date.now() - (48 * 60 * 60 * 1000);
+    const filteredHistory = existingHistory.filter(
+      entry => entry.timestamp.getTime() > cutoffTime
+    );
+
+    this.trafficHistory.set(routeId, filteredHistory);
+  }
+
+  async getTrafficConditions(routeId: string): Promise<TrafficCondition[]> {
+    const history = this.trafficHistory.get(routeId);
+    if (!history || history.length === 0) return [];
+
+    // Return the most recent conditions
+    const latest = history[history.length - 1];
+    return latest.conditions;
+  }
+
+  async getTrafficHistory(routeId: string, hours: number): Promise<Array<{
+    timestamp: Date;
+    conditions: TrafficCondition[];
+    averageDelay: number;
+  }>> {
+    const history = this.trafficHistory.get(routeId) || [];
+    const cutoffTime = Date.now() - (hours * 60 * 60 * 1000);
+
+    return history.filter(entry => entry.timestamp.getTime() > cutoffTime);
+  }
+
+  async cleanupTrafficHistory(hoursToKeep: number): Promise<number> {
+    const cutoffTime = Date.now() - (hoursToKeep * 60 * 60 * 1000);
+    let cleanedCount = 0;
+
+    for (const [routeId, history] of this.trafficHistory.entries()) {
+      const originalLength = history.length;
+      const filteredHistory = history.filter(
+        entry => entry.timestamp.getTime() > cutoffTime
+      );
+
+      if (filteredHistory.length === 0) {
+        this.trafficHistory.delete(routeId);
+      } else {
+        this.trafficHistory.set(routeId, filteredHistory);
+      }
+
+      cleanedCount += originalLength - filteredHistory.length;
+    }
+
+    return cleanedCount;
+  }
+
+  // Utility method for distance calculations
+  private haversineDistance(coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }): number {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = coord1.lat * Math.PI / 180;
+    const φ2 = coord2.lat * Math.PI / 180;
+    const Δφ = (coord2.lat - coord1.lat) * Math.PI / 180;
+    const Δλ = (coord2.lng - coord1.lng) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // Distance in meters
   }
 }
 
