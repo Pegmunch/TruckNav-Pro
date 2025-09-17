@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Plus, Minus, Crosshair, TestTube, CheckCircle, AlertTriangle } from "lucide-react";
+import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Plus, Minus, Crosshair, TestTube, CheckCircle, AlertTriangle, Route as RouteIcon } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -23,10 +23,12 @@ import { MeasurementSelector } from "@/components/measurement/measurement-select
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { type VehicleProfile, type Route } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
   const { formatHeight, formatWeight } = useMeasurement();
+  const [, setLocation] = useLocation();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
@@ -70,6 +72,15 @@ export default function NavigationPage() {
     if (currentRoute) {
       // In a real implementation, this would start GPS navigation
       console.log("Starting navigation for route:", currentRoute.id);
+    }
+  };
+
+  const handleOpenLaneSelection = () => {
+    if (currentRoute) {
+      setLocation(`/lane-selection/${currentRoute.id}`);
+    } else {
+      // Navigate to lane selection with demo route if no current route
+      setLocation("/lane-selection");
     }
   };
 
@@ -143,6 +154,7 @@ export default function NavigationPage() {
               onToLocationChange={setToLocation}
               onPlanRoute={handlePlanRoute}
               onStartNavigation={handleStartNavigation}
+              onOpenLaneSelection={handleOpenLaneSelection}
               currentRoute={currentRoute}
               isCalculating={calculateRouteMutation.isPending}
               selectedProfile={selectedProfile}
@@ -224,6 +236,7 @@ export default function NavigationPage() {
                     onToLocationChange={setToLocation}
                     onPlanRoute={handlePlanRoute}
                     onStartNavigation={handleStartNavigation}
+                    onOpenLaneSelection={handleOpenLaneSelection}
                     currentRoute={currentRoute}
                     isCalculating={calculateRouteMutation.isPending}
                     selectedProfile={selectedProfile}

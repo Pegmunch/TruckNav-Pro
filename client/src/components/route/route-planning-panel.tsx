@@ -18,7 +18,8 @@ import {
   CornerLeftUp,
   ParkingMeter,
   Bed,
-  Star
+  Star,
+  Route as RouteIcon
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
@@ -30,6 +31,7 @@ interface RoutePlanningPanelProps {
   onToLocationChange: (value: string) => void;
   onPlanRoute: () => void;
   onStartNavigation: () => void;
+  onOpenLaneSelection?: () => void;
   currentRoute: RouteType | null;
   isCalculating: boolean;
   selectedProfile: VehicleProfile | null;
@@ -43,6 +45,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   onToLocationChange,
   onPlanRoute,
   onStartNavigation,
+  onOpenLaneSelection,
   currentRoute,
   isCalculating,
   selectedProfile,
@@ -288,25 +291,38 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
 
       {/* Bottom Action Bar */}
       <div className="p-4 border-t border-border bg-card">
-        <div className="flex space-x-2">
-          <Button 
-            onClick={onStartNavigation}
-            disabled={!currentRoute}
-            className="flex-1 bg-accent hover:bg-accent/90"
-            data-testid="button-start-navigation"
-          >
-            <Navigation className="w-4 h-4 mr-2" />
-            Start Navigation
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => setIsFavorite(!isFavorite)}
-            className={isFavorite ? "text-red-500" : ""}
-            data-testid="button-favorite"
-          >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-          </Button>
+        <div className="space-y-2">
+          <div className="flex space-x-2">
+            <Button 
+              onClick={onStartNavigation}
+              disabled={!currentRoute}
+              className="flex-1 bg-accent hover:bg-accent/90"
+              data-testid="button-start-navigation"
+            >
+              <Navigation className="w-4 h-4 mr-2" />
+              Start Navigation
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className={isFavorite ? "text-red-500" : ""}
+              data-testid="button-favorite"
+            >
+              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+            </Button>
+          </div>
+          {currentRoute && onOpenLaneSelection && (
+            <Button 
+              variant="outline"
+              onClick={onOpenLaneSelection}
+              className="w-full"
+              data-testid="button-lane-selection"
+            >
+              <RouteIcon className="w-4 h-4 mr-2" />
+              Lane Selection
+            </Button>
+          )}
         </div>
       </div>
     </div>
