@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useWindowSync } from "@/hooks/use-window-sync";
 import { isMapWindowOpen, focusMapWindow } from "@/lib/window-manager";
 import { useToast } from "@/hooks/use-toast";
+import { useLiveNotifications } from "@/hooks/use-live-notifications";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -38,6 +39,14 @@ export default function NavigationPage() {
   
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
+
+  // Live notifications system
+  const { triggerLiveNotification, isActive: notificationsActive } = useLiveNotifications({
+    currentRoute,
+    selectedProfile,
+    isNavigating,
+    enabled: true, // Always enabled for live updates
+  });
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
@@ -170,6 +179,11 @@ export default function NavigationPage() {
       return response.json();
     },
     onSuccess: (route) => {
+      // Trigger live notification for new route
+      if (route && route !== currentRoute) {
+        triggerLiveNotification('route_change');
+      }
+      
       setCurrentRoute(route);
       // Update window sync with new route
       windowSync.updateRoute(route);

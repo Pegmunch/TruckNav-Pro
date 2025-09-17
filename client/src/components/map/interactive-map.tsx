@@ -62,6 +62,7 @@ const InteractiveMap = memo(function InteractiveMap({
   onCollapseMap
 }: InteractiveMapProps) {
   const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
+  const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>('roads'); // Map view mode
   
   // Get restrictions for the current view
   const { data: restrictions = [] } = useQuery<Restriction[]>({
@@ -112,8 +113,17 @@ const InteractiveMap = memo(function InteractiveMap({
     <div className={cn(
       "flex-1 relative map-container",
       (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
-      autoExpanded && "automotive-map-expanded" // Additional class for auto-expansion styling
+      autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
+      mapViewMode === 'satellite' && "satellite-view" // Satellite view styling
     )}>
+      {/* Satellite View Background */}
+      {mapViewMode === 'satellite' && (
+        <div className="absolute inset-0 bg-gradient-to-br from-green-800 via-green-700 to-green-900 opacity-90">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzY2Nzc2NyIgZmlsbC1vcGFjaXR5PSIwLjMiLz4KPC9zdmc+')] opacity-30"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
+        </div>
+      )}
+      
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-10 space-y-2">
         {/* Enhanced Automotive Fullscreen/Expansion Toggle */}
@@ -162,12 +172,27 @@ const InteractiveMap = memo(function InteractiveMap({
         
         {/* Layer Controls */}
         <Card className="p-2 space-y-1">
-          <Button variant="ghost" size="sm" className="w-full justify-start" data-testid="button-layer-roads">
+          <Button 
+            variant={mapViewMode === 'roads' ? "default" : "ghost"}
+            size="sm" 
+            className="w-full justify-start" 
+            onClick={() => setMapViewMode('roads')}
+            data-testid="button-layer-roads"
+          >
             <MapPin className="w-4 h-4 mr-2 text-primary" />
             Roads
           </Button>
-          <Button variant="ghost" size="sm" className="w-full justify-start" data-testid="button-layer-satellite">
-            <div className="w-4 h-4 mr-2 bg-muted rounded"></div>
+          <Button 
+            variant={mapViewMode === 'satellite' ? "default" : "ghost"}
+            size="sm" 
+            className="w-full justify-start" 
+            onClick={() => setMapViewMode('satellite')}
+            data-testid="button-layer-satellite"
+          >
+            <div className={cn(
+              "w-4 h-4 mr-2 rounded",
+              mapViewMode === 'satellite' ? "bg-green-600" : "bg-muted"
+            )}></div>
             Satellite
           </Button>
           <Button variant="default" size="sm" className="w-full justify-start bg-accent/10 text-accent hover:bg-accent/20" data-testid="button-layer-truck">
