@@ -102,45 +102,15 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "auto",
+  defaultTheme = "day",
   storageKey = "theme-mode",
   grayStorageKey = "theme-grayL",
 }: ThemeProviderProps) {
-  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
-    // Prevent initial theme flicker by checking localStorage first
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(storageKey) as ThemeMode | null;
-        if (stored && ["day", "night", "auto"].includes(stored)) {
-          return stored;
-        }
-      } catch (error) {
-        console.warn("Failed to load theme from localStorage:", error);
-      }
-    }
-    return defaultTheme;
-  });
+  // Automotive mode: Always use day theme for CarPlay/Android Auto compatibility
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>("day");
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>("day");
-  const [grayL, setGrayLState] = useState<number | null>(() => {
-    // Load grayscale setting from localStorage
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(grayStorageKey);
-        if (stored === null || stored === "null") {
-          return null;
-        }
-        const parsed = parseInt(stored, 10);
-        if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
-          return parsed;
-        }
-      } catch (error) {
-        console.warn("Failed to load grayscale setting from localStorage:", error);
-      }
-    }
-    return null;
-  });
-
-  // Enhanced auto-theme state
+  // Automotive mode: Disabled grayscale and auto-theme for simplicity
+  const [grayL, setGrayLState] = useState<number | null>(null);
   const [autoThemeConfig, setAutoThemeConfigState] = useState<AutoThemeConfig>(() => loadAutoThemeConfig());
   const [timeInfo, setTimeInfo] = useState<TimeInfo | null>(null);
   const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -169,22 +139,10 @@ export function ThemeProvider({
     saveAutoThemeConfig(config);
   }, []);
 
-  // Enhanced theme calculation using new utilities
+  // Automotive mode: Always use day theme for optimal visibility
   const calculateEffectiveTheme = useCallback((mode: ThemeMode): EffectiveTheme => {
-    switch (mode) {
-      case "day":
-        return "day";
-      case "night":
-        return "night";
-      case "auto":
-        // Use enhanced auto-theme utilities
-        const currentTimeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
-        setTimeInfo(currentTimeInfo);
-        return currentTimeInfo.currentTheme;
-      default:
-        return "day";
-    }
-  }, [autoThemeConfig, coordinates]);
+    return "day"; // Force day theme for automotive safety
+  }, []);
 
   // Legacy compatibility methods (for existing components)
   const isNightTime = useCallback((): boolean => {
@@ -317,11 +275,12 @@ export function ThemeProvider({
     }
   }, [grayStorageKey]);
 
-  // Set theme and persist to localStorage
+  // Automotive mode: Always keep day theme
   const setTheme = useCallback((theme: ThemeMode) => {
-    setCurrentTheme(theme);
+    // In automotive mode, ignore theme changes and force day theme
+    setCurrentTheme("day");
     if (typeof window !== "undefined") {
-      localStorage.setItem(storageKey, theme);
+      localStorage.setItem(storageKey, "day");
     }
   }, [storageKey]);
   

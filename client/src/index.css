@@ -2,23 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Simplified smooth scrolling behavior */
+/* Automotive-optimized styling for CarPlay/Android Auto */
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* Force white background for automotive displays */
+  background-color: white;
 }
 
 body {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Automotive-friendly white background */
+  background-color: white !important;
+  /* Larger base font size for automotive visibility */
+  font-size: 16px;
 }
 
-/* Mobile-optimized touch scrolling */
+/* Automotive-optimized touch scrolling */
 .touch-scroll {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* Automotive button sizing - minimum 44px touch targets */
+.automotive-button {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 16px;
+  padding: 12px 16px;
+}
+
+/* Automotive text sizing for dashboard visibility */
+.automotive-text-sm {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.automotive-text-base {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.automotive-text-lg {
+  font-size: 18px;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.automotive-text-xl {
+  font-size: 20px;
+  line-height: 1.8;
+  font-weight: 600;
+}
+
+/* Automotive card spacing for easier interaction */
+.automotive-card {
+  padding: 16px 20px;
+  margin: 8px;
+  border-radius: 12px;
+}
+
+/* Automotive input styling */
+.automotive-input {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 12px 16px;
+  border-width: 2px;
+}
+
+/* Automotive responsive breakpoints */
+@media (orientation: landscape) and (min-width: 640px) {
+  .automotive-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 16px;
+    height: 100vh;
+  }
+}
+
+/* CarPlay/Android Auto specific optimizations */
+@media (max-height: 480px) and (orientation: landscape) {
+  .automotive-compact {
+    padding: 8px 12px;
+  }
+  
+  .automotive-text-compact {
+    font-size: 14px;
+    line-height: 1.4;
+  }
 }
 
 :root {

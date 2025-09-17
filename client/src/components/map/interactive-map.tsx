@@ -16,7 +16,9 @@ import {
   Eye,
   EyeOff,
   Route as RouteIcon,
-  Clock
+  Clock,
+  Maximize,
+  Minimize
 } from "lucide-react";
 import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
 import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
@@ -34,6 +36,9 @@ interface InteractiveMapProps {
   onIncidentClick?: (incident: TrafficIncident) => void;
   onToggleTrafficLayer?: () => void;
   onToggleIncidents?: () => void;
+  // Automotive fullscreen functionality
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
@@ -47,7 +52,9 @@ const InteractiveMap = memo(function InteractiveMap({
   onOpenLaneSelection,
   onIncidentClick,
   onToggleTrafficLayer,
-  onToggleIncidents
+  onToggleIncidents,
+  isFullscreen = false,
+  onToggleFullscreen
 }: InteractiveMapProps) {
   const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
   
@@ -97,29 +104,47 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   return (
-    <div className="flex-1 relative map-container">
+    <div className={cn(
+      "flex-1 relative map-container",
+      isFullscreen && "fixed inset-0 z-50 bg-white" // Automotive fullscreen with white background
+    )}>
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-10 space-y-2">
+        {/* Automotive Fullscreen Toggle */}
+        {onToggleFullscreen && (
+          <Card className="overflow-hidden">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="automotive-button" 
+              data-testid="button-fullscreen-toggle"
+              onClick={onToggleFullscreen}
+            >
+              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+            </Button>
+          </Card>
+        )}
+        
         <Card className="overflow-hidden">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-none border-b" 
+            className="rounded-none border-b automotive-button" 
             data-testid="button-zoom-in"
             onClick={handleZoomIn}
             disabled={zoomLevel >= 18}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-none" 
+            className="rounded-none automotive-button" 
             data-testid="button-zoom-out"
             onClick={handleZoomOut}
             disabled={zoomLevel <= 1}
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="w-5 h-5" />
           </Button>
         </Card>
         
