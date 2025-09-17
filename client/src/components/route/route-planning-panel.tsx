@@ -2,7 +2,6 @@ import { useState, memo, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +22,7 @@ import {
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
+import LocationDropdown from "./location-dropdown";
 
 interface RoutePlanningPanelProps {
   fromLocation: string;
@@ -108,32 +108,22 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
       <div className="p-4 border-b border-border">
         <div className="space-y-3">
           {/* From Location */}
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <div className="w-3 h-3 bg-accent rounded-full"></div>
-            </div>
-            <Input
-              placeholder="Starting location"
-              value={fromLocation}
-              onChange={(e) => onFromLocationChange(e.target.value)}
-              className="pl-10"
-              data-testid="input-from-location"
-            />
-          </div>
+          <LocationDropdown
+            value={fromLocation}
+            onChange={onFromLocationChange}
+            placeholder="Starting location"
+            testId="input-from-location"
+            icon="start"
+          />
           
           {/* To Location */}
-          <div className="relative">
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <div className="w-3 h-3 bg-destructive rounded-full"></div>
-            </div>
-            <Input
-              placeholder="Destination"
-              value={toLocation}
-              onChange={(e) => onToLocationChange(e.target.value)}
-              className="pl-10"
-              data-testid="input-to-location"
-            />
-          </div>
+          <LocationDropdown
+            value={toLocation}
+            onChange={onToLocationChange}
+            placeholder="Destination"
+            testId="input-to-location"
+            icon="destination"
+          />
         </div>
         
         {/* Route Options */}
