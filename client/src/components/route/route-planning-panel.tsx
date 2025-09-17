@@ -32,7 +32,9 @@ import {
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility, type Journey } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
+import { useTrafficState } from "@/hooks/use-traffic";
 import LocationDropdown from "./location-dropdown";
+import TrafficConditionsDisplay from "@/components/traffic/traffic-conditions-display";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -78,6 +80,20 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   const [routeName, setRouteName] = useState("");
   const { formatDistance, formatHeight, system, convertDistance } = useMeasurement();
   const { toast } = useToast();
+
+  // Get traffic state for current route
+  const {
+    trafficConditions,
+    isLoadingConditions,
+    shouldReroute,
+    timeSavingsAvailable,
+    bestAlternative,
+    rerouteReason,
+    alternatives,
+    isLoadingAlternatives,
+    isMonitoring,
+    error: trafficError,
+  } = useTrafficState(currentRoute?.id || null, selectedProfile);
 
   // Get restrictions that would be avoided
   const { data: restrictions = [] } = useQuery<Restriction[]>({

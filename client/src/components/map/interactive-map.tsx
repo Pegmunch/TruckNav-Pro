@@ -11,19 +11,44 @@ import {
   AlertTriangle,
   ParkingMeter,
   Fuel,
-  Navigation
+  Navigation,
+  Activity,
+  Eye,
+  EyeOff,
+  Route as RouteIcon,
+  Clock
 } from "lucide-react";
-import { type Route, type VehicleProfile, type Restriction, type Facility } from "@shared/schema";
+import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
+import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
 import NextManeuverGuidance from "@/components/route/next-maneuver-guidance";
+import { cn } from "@/lib/utils";
 
 interface InteractiveMapProps {
   currentRoute: Route | null;
   selectedProfile: VehicleProfile | null;
+  alternativeRoutes?: AlternativeRoute[];
+  previewRoute?: AlternativeRoute | null;
+  showTrafficLayer?: boolean;
+  showIncidents?: boolean;
   onOpenLaneSelection?: () => void;
+  onIncidentClick?: (incident: TrafficIncident) => void;
+  onToggleTrafficLayer?: () => void;
+  onToggleIncidents?: () => void;
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
-const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProfile, onOpenLaneSelection }: InteractiveMapProps) {
+const InteractiveMap = memo(function InteractiveMap({ 
+  currentRoute, 
+  selectedProfile, 
+  alternativeRoutes = [],
+  previewRoute = null,
+  showTrafficLayer = true,
+  showIncidents = true,
+  onOpenLaneSelection,
+  onIncidentClick,
+  onToggleTrafficLayer,
+  onToggleIncidents
+}: InteractiveMapProps) {
   const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
   
   // Get restrictions for the current view
@@ -36,6 +61,18 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
   const { data: facilities = [] } = useQuery<Facility[]>({
     queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
+
+  // Get traffic conditions for current route
+  const { data: trafficConditions = [] } = useCurrentTrafficConditions(
+    currentRoute?.id || null,
+    showTrafficLayer && !!currentRoute
+  );
+
+  // Get traffic incidents in the current map bounds
+  const { data: trafficIncidents = [] } = useTrafficIncidents(
+    { north: 54, south: 50, east: 2, west: -6 },
+    showIncidents
+  );
 
   const handleZoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 1, 18)); // Max zoom level 18
@@ -100,6 +137,42 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
             <Navigation className="w-4 h-4 mr-2" />
             Truck Routes
           </Button>
+          <Button 
+            variant={showTrafficLayer ? "default" : "ghost"} 
+            size="sm" 
+            className={cn(
+              "w-full justify-start",
+              showTrafficLayer && "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
+            )}
+            onClick={onToggleTrafficLayer}
+            data-testid="button-layer-traffic"
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            Traffic
+            {trafficConditions.length > 0 && (
+              <Badge variant="outline" className="ml-auto text-xs">
+                {trafficConditions.length}
+              </Badge>
+            )}
+          </Button>
+          <Button 
+            variant={showIncidents ? "default" : "ghost"} 
+            size="sm" 
+            className={cn(
+              "w-full justify-start",
+              showIncidents && "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-300"
+            )}
+            onClick={onToggleIncidents}
+            data-testid="button-layer-incidents"
+          >
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Incidents
+            {trafficIncidents.length > 0 && (
+              <Badge variant="outline" className="ml-auto text-xs">
+                {trafficIncidents.length}
+              </Badge>
+            )}
+          </Button>
         </Card>
       </div>
 
@@ -122,9 +195,9 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
       {/* Mock Map Elements */}
       {currentRoute && (
         <>
-          {/* Route Line */}
+          {/* Main Route Line with Traffic Colors */}
           <div 
-            className="route-line" 
+            className={cn("route-line", showTrafficLayer && trafficConditions.length > 0 && "traffic-overlay")} 
             style={{ 
               top: '35%', 
               left: '20%', 
@@ -132,7 +205,51 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
               transform: 'rotate(15deg)' 
             }}
             data-testid="route-line"
-          ></div>
+          >
+            {/* Traffic Segments */}
+            {showTrafficLayer && trafficConditions.slice(0, 3).map((condition, index) => (
+              <div
+                key={condition.segmentId}
+                className={cn("traffic-segment absolute", {
+                  'bg-green-500': condition.flowLevel === 'free',
+                  'bg-green-400': condition.flowLevel === 'light',
+                  'bg-yellow-500': condition.flowLevel === 'moderate',
+                  'bg-orange-500': condition.flowLevel === 'heavy',
+                  'bg-red-500': condition.flowLevel === 'standstill',
+                })}
+                style={{
+                  left: `${index * 33}%`,
+                  width: '33%',
+                  height: '100%',
+                  opacity: 0.7,
+                }}
+                title={`${condition.roadName}: ${condition.flowLevel} traffic`}
+              />
+            ))}
+          </div>
+
+          {/* Alternative Route Previews */}
+          {alternativeRoutes.slice(0, 2).map((altRoute, index) => (
+            <div
+              key={altRoute.id}
+              className={cn(
+                "alternative-route-line",
+                previewRoute?.id === altRoute.id ? "preview-active" : ""
+              )}
+              style={{
+                top: `${40 + index * 3}%`,
+                left: '18%',
+                width: '65%',
+                transform: `rotate(${20 + index * 5}deg)`,
+                opacity: previewRoute?.id === altRoute.id ? 1 : 0.6,
+              }}
+              data-testid={`alternative-route-${index}`}
+            >
+              <div className="text-xs absolute -top-6 left-0 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded whitespace-nowrap">
+                Alternative {index + 1}: Save {Math.max(0, (currentRoute.duration || 0) - altRoute.duration)} min
+              </div>
+            </div>
+          ))}
           
           {/* Starting Point */}
           <div className="absolute" style={{ top: '30%', left: '15%' }} data-testid="marker-start">
@@ -150,6 +267,53 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
             </div>
           </div>
         </>
+      )}
+
+      {/* Traffic Incident Markers */}
+      {showIncidents && trafficIncidents.slice(0, 3).map((incident, index) => (
+        <div 
+          key={incident.id}
+          className="absolute cursor-pointer hover:scale-110 transition-transform" 
+          style={{ 
+            top: `${35 + index * 4}%`, 
+            left: `${25 + index * 20}%` 
+          }}
+          onClick={() => onIncidentClick?.(incident)}
+          data-testid={`incident-marker-${incident.id}`}
+        >
+          <div className={cn(
+            "w-5 h-5 border-2 border-white rounded-full shadow-lg flex items-center justify-center",
+            {
+              'bg-red-600': incident.severity === 'critical',
+              'bg-red-500': incident.severity === 'high',
+              'bg-orange-500': incident.severity === 'medium',
+              'bg-yellow-500': incident.severity === 'low',
+            }
+          )}>
+            <AlertTriangle className="w-3 h-3 text-white" />
+          </div>
+          <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-card border border-border rounded px-2 py-1 text-xs font-medium whitespace-nowrap shadow-lg min-w-max">
+            <AlertTriangle className="w-3 h-3 mr-1 inline text-amber-500" />
+            {incident.title}
+            <div className="text-xs text-muted-foreground">
+              {incident.severity} • {incident.type.replace('_', ' ')}
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Traffic Congestion Zones */}
+      {showTrafficLayer && trafficConditions.some(c => c.flowLevel === 'heavy' || c.flowLevel === 'standstill') && (
+        <div className="absolute" style={{ top: '32%', left: '40%' }}>
+          <div className="w-8 h-8 bg-red-500/20 border-2 border-red-500 rounded-full animate-pulse">
+            <div className="w-full h-full bg-red-500/30 rounded-full flex items-center justify-center">
+              <Clock className="w-4 h-4 text-red-600" />
+            </div>
+          </div>
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white rounded px-2 py-1 text-xs font-medium whitespace-nowrap shadow-lg">
+            Heavy Traffic Zone
+          </div>
+        </div>
       )}
 
       {/* Restriction Markers */}
