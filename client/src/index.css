@@ -594,3 +594,26 @@ select:focus-visible,
   50% { opacity: 0.7; transform: scale(1.1); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+/* Flag emoji font support for country selector */
+.font-emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  font-feature-settings: "liga" off;
+  font-variant-ligatures: none;
+}
+
+/* Country flag display optimization */
+.country-flag {
+  display: inline-block;
+  font-size: inherit;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Ensure flags render correctly in different contexts */
+.flag-icon {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}

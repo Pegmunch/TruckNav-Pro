@@ -4,14 +4,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Globe, ChevronDown } from "lucide-react";
 import { amazonRegions } from '@/i18n/config';
+import CountryLanguageSelector, { SimpleCountrySelector } from '@/components/country/country-language-selector';
+import { detectUserCountry, getPreferredLanguageForCountry, saveUserPreferences } from '@/lib/country-utils';
+import { getCountryByCode } from '@/data/countries';
 
 interface LanguageSelectorProps {
-  variant?: 'dropdown' | 'button';
+  variant?: 'dropdown' | 'button' | 'country-first';
   className?: string;
+  showCountryFlags?: boolean;
 }
 
-// Memoized for mobile performance - prevents re-renders when parent components update
-const LanguageSelector = memo(function LanguageSelector({ variant = 'dropdown', className = '' }: LanguageSelectorProps) {
+// Enhanced LanguageSelector with country flag support
+// Now integrates with comprehensive country-language system
+const LanguageSelector = memo(function LanguageSelector({ 
+  variant = 'dropdown', 
+  className = '',
+  showCountryFlags = true 
+}: LanguageSelectorProps) {
   const { i18n, t } = useTranslation();
 
   // Memoize languages array to prevent recreation on every render
@@ -49,30 +58,66 @@ const LanguageSelector = memo(function LanguageSelector({ variant = 'dropdown', 
     if (selectedLang?.amazonRegion) {
       localStorage.setItem('trucknav_amazon_region', selectedLang.amazonRegion);
     }
-    
-    // Optional: Use OpenAI for dynamic content translation if needed
-    // This would be called for user-generated content that isn't pre-translated
   };
 
-  if (variant === 'button') {
+  // Handle country-first selection mode
+  const handleCountryLanguageChange = (countryCode: string, languageCode: string) => {
+    i18n.changeLanguage(languageCode);
+    // Use the actually selected country, not the detected one
+    const selectedCountry = getCountryByCode(countryCode);
+    if (selectedCountry) {
+      saveUserPreferences(selectedCountry, languageCode);
+    }
+  };
+
+  // Use new country-first variant for enhanced experience
+  if (variant === 'country-first') {
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className={`flex items-center gap-2 ${className}`}
-        onClick={() => {
-          const nextIndex = (languages.findIndex(lang => lang.code === i18n.language) + 1) % languages.length;
-          handleLanguageChange(languages[nextIndex].code);
-        }}
-        data-testid="button-language-toggle"
-      >
-        <Globe className="w-4 h-4" />
-        <span>{currentLanguage.flag}</span>
-        <span className="hidden sm:inline">{currentLanguage.name}</span>
-      </Button>
+      <CountryLanguageSelector
+        value={i18n.language}
+        onValueChange={handleCountryLanguageChange}
+        variant="default"
+        showFavorites={true}
+        showRecent={true}
+        showTruckingMarkets={true}
+        className={className}
+      />
     );
   }
 
+  if (variant === 'button') {
+    return (
+      <SimpleCountrySelector
+        value={i18n.language}
+        onValueChange={(countryCode) => {
+          // Use the selected country, not the detected one
+          const selectedCountry = getCountryByCode(countryCode);
+          if (selectedCountry) {
+            const language = getPreferredLanguageForCountry(selectedCountry);
+            handleCountryLanguageChange(countryCode, language);
+          }
+        }}
+        className={`flex items-center gap-2 ${className}`}
+      />
+    );
+  }
+
+  // Enhanced dropdown with country flags if enabled
+  if (showCountryFlags) {
+    return (
+      <CountryLanguageSelector
+        value={i18n.language}
+        onValueChange={handleCountryLanguageChange}
+        variant="default"
+        showFavorites={false}
+        showRecent={false}
+        showTruckingMarkets={false}
+        className={className}
+      />
+    );
+  }
+
+  // Fallback to traditional language selector
   return (
     <Select value={i18n.language} onValueChange={handleLanguageChange}>
       <SelectTrigger className={`w-[180px] ${className}`} data-testid="select-language">

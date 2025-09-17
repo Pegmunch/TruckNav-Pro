@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Plus, Minus, Crosshair, TestTube, CheckCircle, AlertTriangle, Route as RouteIcon } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
+import CountryLanguageSelector, { DetailedCountrySelector } from '@/components/country/country-language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
@@ -260,7 +261,7 @@ export default function NavigationPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <LanguageSelector variant="button" />
+            <LanguageSelector variant="country-first" />
             {selectedProfile && (
               <div className="bg-muted rounded-lg px-3 py-2 text-xs" data-testid="vehicle-profile-display">
                 <span className="font-medium text-foreground">
