@@ -385,10 +385,13 @@ export default function NavigationPage() {
               currentRoute={currentRoute}
               selectedProfile={selectedProfile}
               onOpenLaneSelection={handleOpenLaneSelection}
-              isFullscreen={true}
-              onToggleFullscreen={() => {}} // No-op for mobile
-              autoExpanded={true}
-              onCollapseMap={() => {}} // No-op for mobile
+              isFullscreen={isMapExpanded}
+              onToggleFullscreen={handleToggleMapExpansion}
+              autoExpanded={isMapExpanded}
+              onCollapseMap={() => {
+                setIsMapExpanded(false);
+                setIsDrawerOpen(false);
+              }}
             />
           </div>
 
