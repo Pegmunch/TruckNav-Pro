@@ -21,6 +21,7 @@ import {
   Star
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility } from "@shared/schema";
+import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 interface RoutePlanningPanelProps {
   fromLocation: string;
@@ -47,6 +48,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   selectedProfile,
 }: RoutePlanningPanelProps) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const { formatDistance, formatHeight, system, convertDistance } = useMeasurement();
 
   // Get restrictions that would be avoided
   const { data: restrictions = [] } = useQuery<Restriction[]>({
@@ -78,6 +80,18 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
   }, []);
+
+  // Memoize fuel cost calculation to ensure accuracy across measurement systems
+  const calculateFuelCost = useCallback((distanceInMiles: number) => {
+    if (system === 'imperial') {
+      // Imperial: £0.48 per mile
+      return Math.round(distanceInMiles * 0.48);
+    } else {
+      // Metric: Convert miles to km, then £0.30 per km
+      const distanceInKm = convertDistance(distanceInMiles, 'miles', 'km');
+      return Math.round(distanceInKm * 0.30);
+    }
+  }, [system, convertDistance]);
 
   // Get facilities along the route
   const { data: facilities = [] } = useQuery<Facility[]>({
@@ -160,9 +174,9 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-2xl font-bold text-foreground" data-testid="text-route-distance">
-                    {currentRoute.distance}
+                    {formatDistance(currentRoute.distance || 0, "miles")}
                   </div>
-                  <div className="text-xs text-muted-foreground">miles</div>
+                  <div className="text-xs text-muted-foreground">distance</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-foreground" data-testid="text-route-duration">
@@ -172,7 +186,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-foreground" data-testid="text-fuel-cost">
-                    £{Math.round((currentRoute.distance || 0) * 0.48)}
+                    £{calculateFuelCost(currentRoute.distance || 0)}
                   </div>
                   <div className="text-xs text-muted-foreground">est. fuel</div>
                 </div>
@@ -202,11 +216,10 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                     <div className="flex-1">
                       <div className="text-sm font-medium text-foreground">{restriction.description}</div>
                       <div className="text-xs text-muted-foreground">
-                        {restriction.type === 'height' ? 'Height' : 'Width'}: {restriction.limit}
-                        {restriction.type === 'height' ? '" ' : '" '}
-                        (You: {restriction.type === 'height' ? 
-                          `${Math.floor(selectedProfile?.height || 0)}'${Math.round(((selectedProfile?.height || 0) % 1) * 12)}"` :
-                          `${Math.floor(selectedProfile?.width || 0)}'${Math.round(((selectedProfile?.width || 0) % 1) * 12)}"`
+                        {restriction.type === 'height' ? 'Height' : 'Width'}: {formatHeight(restriction.limit)}
+                        {" "}(You: {restriction.type === 'height' ? 
+                          formatHeight(selectedProfile?.height || 0) :
+                          formatHeight(selectedProfile?.width || 0)
                         })
                       </div>
                     </div>
@@ -247,7 +260,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                           }
                         </div>
                         <div className="text-xs text-accent font-medium mt-1">
-                          {Math.random() * 2 + 0.5} miles off route
+                          {formatDistance(Math.random() * 2 + 0.5, "miles")} off route
                         </div>
                       </div>
                       <div className="text-right">

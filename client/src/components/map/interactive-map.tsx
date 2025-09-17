@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,8 @@ interface InteractiveMapProps {
 
 // Memoized for mobile performance - only re-renders when route or profile changes
 const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProfile }: InteractiveMapProps) {
+  const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
+  
   // Get restrictions for the current view
   const { data: restrictions = [] } = useQuery<Restriction[]>({
     queryKey: ["/api/restrictions?north=54&south=50&east=2&west=-6"],
@@ -33,15 +35,51 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
     queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 1, 18)); // Max zoom level 18
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 1, 1)); // Min zoom level 1
+  };
+
+  const handleCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("Current location:", position.coords.latitude, position.coords.longitude);
+          // In a real implementation, this would center the map on the user's location
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  };
+
   return (
     <div className="flex-1 relative map-container">
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-10 space-y-2">
         <Card className="overflow-hidden">
-          <Button variant="ghost" size="icon" className="rounded-none border-b" data-testid="button-zoom-in">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-none border-b" 
+            data-testid="button-zoom-in"
+            onClick={handleZoomIn}
+            disabled={zoomLevel >= 18}
+          >
             <Plus className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-none" data-testid="button-zoom-out">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-none" 
+            data-testid="button-zoom-out"
+            onClick={handleZoomOut}
+            disabled={zoomLevel <= 1}
+          >
             <Minus className="w-4 h-4" />
           </Button>
         </Card>
@@ -69,9 +107,15 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
         size="icon" 
         className="absolute bottom-20 right-4 bg-card shadow-lg"
         data-testid="button-current-location"
+        onClick={handleCurrentLocation}
       >
         <Crosshair className="w-4 h-4" />
       </Button>
+      
+      {/* Zoom Level Indicator */}
+      <div className="absolute bottom-4 left-4 bg-card border border-border rounded px-2 py-1 text-xs shadow-lg">
+        Zoom: {zoomLevel}
+      </div>
 
       {/* Mock Map Elements */}
       {currentRoute && (

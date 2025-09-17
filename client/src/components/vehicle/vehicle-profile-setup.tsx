@@ -14,6 +14,7 @@ import { insertVehicleProfileSchema, type VehicleProfile } from "@shared/schema"
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { remoteTrackingService } from "@/lib/remote-tracking";
+import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 const vehicleSetupSchema = insertVehicleProfileSchema.extend({
   name: z.string().min(1, "Vehicle name is required"),
@@ -34,15 +35,15 @@ interface VehicleProfileSetupProps {
 
 export default function VehicleProfileSetup({ onClose, onProfileCreated, currentProfile }: VehicleProfileSetupProps) {
   const { toast } = useToast();
-  const [units, setUnits] = useState<'metric' | 'imperial'>('metric'); // Default to metric for Europe
+  const { system: units, convertDistance } = useMeasurement();
   
   const form = useForm<VehicleSetupForm>({
     resolver: zodResolver(vehicleSetupSchema),
     defaultValues: {
       name: currentProfile?.name || "My Lorry",
-      height: currentProfile?.height ? (units === 'metric' ? currentProfile.height * 0.3048 : currentProfile.height) : 4.0, // 4m default (13.1 feet)
-      width: currentProfile?.width ? (units === 'metric' ? currentProfile.width * 0.3048 : currentProfile.width) : 2.55, // 2.55m default (8.37 feet)
-      length: currentProfile?.length ? (units === 'metric' ? currentProfile.length * 0.3048 : currentProfile.length) : 16.5, // 16.5m default (54.1 feet)
+      height: currentProfile?.height ? (units === 'metric' ? convertDistance(currentProfile.height, "feet", "meters") : currentProfile.height) : (units === 'metric' ? 4.0 : 13.1), // 4m default (13.1 feet)
+      width: currentProfile?.width ? (units === 'metric' ? convertDistance(currentProfile.width, "feet", "meters") : currentProfile.width) : (units === 'metric' ? 2.55 : 8.37), // 2.55m default (8.37 feet)  
+      length: currentProfile?.length ? (units === 'metric' ? convertDistance(currentProfile.length, "feet", "meters") : currentProfile.length) : (units === 'metric' ? 16.5 : 54.1), // 16.5m default (54.1 feet)
       weight: currentProfile?.weight || 40, // 40 tonnes default for Europe
       axles: currentProfile?.axles || 5, // 5 axles standard for articulated lorries
       isHazmat: currentProfile?.isHazmat || false,
@@ -76,9 +77,9 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
     // Convert to feet for storage (internal format)
     const convertedData = {
       ...data,
-      height: units === 'metric' ? data.height / 0.3048 : data.height,
-      width: units === 'metric' ? data.width / 0.3048 : data.width,
-      length: data.length ? (units === 'metric' ? data.length / 0.3048 : data.length) : undefined,
+      height: units === 'metric' ? convertDistance(data.height, "meters", "feet") : data.height,
+      width: units === 'metric' ? convertDistance(data.width, "meters", "feet") : data.width,
+      length: data.length ? (units === 'metric' ? convertDistance(data.length, "meters", "feet") : data.length) : undefined,
     };
     
     createProfileMutation.mutate(convertedData);
@@ -114,20 +115,8 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Unit and Region Selection */}
-            <div className="grid grid-cols-2 gap-4 p-3 bg-muted rounded-lg">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Units</label>
-                <Select value={units} onValueChange={(value: 'metric' | 'imperial') => setUnits(value)}>
-                  <SelectTrigger data-testid="select-units">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="metric">Metric (EU Standard)</SelectItem>
-                    <SelectItem value="imperial">Imperial (UK/US)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Region Selection */}
+            <div className="p-3 bg-muted rounded-lg">
               <FormField
                 control={form.control}
                 name="region"

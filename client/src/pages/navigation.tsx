@@ -13,11 +13,14 @@ import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import { CompactThemeSelector } from "@/components/theme/theme-selector";
+import { MeasurementSelector } from "@/components/measurement/measurement-selector";
+import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { type VehicleProfile, type Route } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
+  const { formatHeight, formatWeight } = useMeasurement();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
@@ -92,13 +95,12 @@ export default function NavigationPage() {
             {selectedProfile && (
               <div className="bg-muted rounded-lg px-3 py-2 text-xs" data-testid="vehicle-profile-display">
                 <span className="font-medium text-foreground">
-                  {Math.floor(selectedProfile.height)}'
-                  {Math.round((selectedProfile.height % 1) * 12)}" H × {Math.floor(selectedProfile.width)}'
-                  {Math.round((selectedProfile.width % 1) * 12)}" W
+                  {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W
                 </span>
-                <span className="text-muted-foreground ml-1">{selectedProfile.weight}T</span>
+                <span className="text-muted-foreground ml-1">{formatWeight(selectedProfile.weight || 0)}</span>
               </div>
             )}
+            <MeasurementSelector variant="compact" />
             <CompactThemeSelector data-testid="header-theme-selector" />
             <Button
               variant="outline"
