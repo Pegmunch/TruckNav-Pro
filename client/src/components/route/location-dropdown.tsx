@@ -673,15 +673,26 @@ const LocationDropdown = memo(function LocationDropdown({
       {/* Virtual Keyboard */}
       <VirtualKeyboard
         value={searchValue}
-        onChange={setSearchValue}
+        onChange={(newValue) => {
+          // Auto-uppercase for postcode mode
+          const finalValue = isPostcodeMode ? newValue.toUpperCase() : newValue;
+          setSearchValue(finalValue);
+          onChange(finalValue);
+        }}
         onEnter={handleKeyboardEnter}
         onSearch={handleKeyboardSearch}
-        placeholder={`Enter ${icon === 'start' ? 'starting location' : 'destination'}...`}
+        placeholder={isPostcodeMode 
+          ? `Enter ${postcodeValidation.country ? POSTCODE_PATTERNS[postcodeValidation.country]?.label || 'postcode' : 'postcode'}...`
+          : `Enter ${icon === 'start' ? 'starting location' : 'destination'}...`
+        }
         isVisible={showVirtualKeyboard}
         onToggleKeyboard={handleToggleKeyboard}
-        keyboardLayout="qwerty"
+        keyboardLayout={isPostcodeMode ? "alphabetical" : "qwerty"}
         showSuggestions={true}
-        suggestions={favoriteLocations.map(loc => loc.label).slice(0, 5)}
+        suggestions={isPostcodeMode 
+          ? (postcodeValidation.country ? [POSTCODE_PATTERNS[postcodeValidation.country].example] : ['SW1A 1AA', '10001', 'K1A 0A6', '2000'])
+          : favoriteLocations.map(loc => loc.label).slice(0, 5)
+        }
         onSuggestionClick={(suggestion) => {
           setSearchValue(suggestion);
           onChange(suggestion);
