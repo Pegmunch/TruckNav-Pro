@@ -17,7 +17,9 @@ import {
   validateLocation,
   validateJourney,
   validateNumericId,
-  validatePagination
+  validatePagination,
+  validatePostcodeSearch,
+  validatePostcodeGeocoding
 } from "./middleware/validation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -437,6 +439,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(location);
     } catch (error) {
       res.status(500).json({ message: "Failed to mark location as used" });
+    }
+  });
+
+  // Postcode/ZIP Code Search
+  app.get("/api/postcodes/search", validatePostcodeSearch, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { postcode, country, strict } = req.query;
+      
+      if (!postcode || typeof postcode !== 'string') {
+        return res.status(400).json({ message: "Postcode parameter is required" });
+      }
+      
+      const results = await storage.searchPostcode(
+        postcode, 
+        country as string | undefined
+      );
+      
+      // Return empty array if no results found (not an error)
+      res.json(results);
+    } catch (error) {
+      console.error("Postcode search error:", error);
+      res.status(500).json({ message: "Failed to search postcodes" });
+    }
+  });
+
+  app.post("/api/postcodes/geocode", validatePostcodeGeocoding, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { postcode, country } = req.body;
+      
+      if (!postcode || typeof postcode !== 'string') {
+        return res.status(400).json({ message: "Postcode is required" });
+      }
+      
+      const result = await storage.geocodePostcode(postcode, country);
+      
+      if (!result) {
+        return res.status(404).json({ 
+          message: "Postcode not found",
+          postcode,
+          country: country || "auto-detect"
+        });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Postcode geocoding error:", error);
+      res.status(500).json({ message: "Failed to geocode postcode" });
     }
   });
 

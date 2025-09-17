@@ -1,6 +1,21 @@
 import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption } from "@shared/schema";
 import { randomUUID } from "crypto";
 
+// Postcode search result type for storage layer
+export interface PostcodeResult {
+  postcode: string;
+  formatted: string;
+  country: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  address?: string;
+  city?: string;
+  region?: string;
+  confidence: number; // 0-1 confidence score
+}
+
 export interface IStorage {
   // Vehicle Profiles
   getVehicleProfile(id: string): Promise<VehicleProfile | undefined>;
@@ -70,6 +85,10 @@ export interface IStorage {
   completeJourney(id: number): Promise<Journey | undefined>;
   getLastJourney(): Promise<Journey | undefined>;
   getJourneyHistory(limit?: number, offset?: number): Promise<Journey[]>;
+
+  // Postcode/Geocoding
+  searchPostcode(postcode: string, country?: string): Promise<PostcodeResult[]>;
+  geocodePostcode(postcode: string, country?: string): Promise<PostcodeResult | null>;
 }
 
 export class MemStorage implements IStorage {
@@ -85,6 +104,7 @@ export class MemStorage implements IStorage {
   private journeys: Map<number, Journey>;
   private locationIdCounter: number;
   private journeyIdCounter: number;
+  private postcodeDatabase: Map<string, PostcodeResult>;
 
   constructor() {
     this.vehicleProfiles = new Map();
@@ -99,6 +119,7 @@ export class MemStorage implements IStorage {
     this.journeys = new Map();
     this.locationIdCounter = 1;
     this.journeyIdCounter = 1;
+    this.postcodeDatabase = new Map();
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -418,6 +439,212 @@ export class MemStorage implements IStorage {
 
     sampleJourneys.forEach(journey => {
       this.journeys.set(journey.id, journey);
+    });
+
+    // Sample postcodes for testing - comprehensive coverage of supported countries
+    const samplePostcodes: PostcodeResult[] = [
+      // UK Postcodes
+      {
+        postcode: "SW1A1AA",
+        formatted: "SW1A 1AA",
+        country: "UK",
+        coordinates: { lat: 51.5014, lng: -0.1419 },
+        address: "Buckingham Palace, Westminster",
+        city: "London",
+        region: "England",
+        confidence: 0.98,
+      },
+      {
+        postcode: "M11AA",
+        formatted: "M1 1AA",
+        country: "UK",
+        coordinates: { lat: 53.4808, lng: -2.2426 },
+        address: "Manchester City Centre",
+        city: "Manchester",
+        region: "England",
+        confidence: 0.95,
+      },
+      {
+        postcode: "B338TH",
+        formatted: "B33 8TH",
+        country: "UK",
+        coordinates: { lat: 52.4862, lng: -1.8904 },
+        address: "Birmingham Area",
+        city: "Birmingham",
+        region: "England",
+        confidence: 0.92,
+      },
+      {
+        postcode: "G12QP",
+        formatted: "G1 2QP",
+        country: "UK",
+        coordinates: { lat: 55.8642, lng: -4.2518 },
+        address: "Glasgow City Centre",
+        city: "Glasgow",
+        region: "Scotland",
+        confidence: 0.94,
+      },
+      // US ZIP Codes
+      {
+        postcode: "10001",
+        formatted: "10001",
+        country: "US",
+        coordinates: { lat: 40.7505, lng: -73.9934 },
+        address: "New York, NY",
+        city: "New York",
+        region: "New York",
+        confidence: 0.97,
+      },
+      {
+        postcode: "902101234",
+        formatted: "90210-1234",
+        country: "US",
+        coordinates: { lat: 34.0901, lng: -118.4065 },
+        address: "Beverly Hills, CA",
+        city: "Beverly Hills",
+        region: "California",
+        confidence: 0.96,
+      },
+      {
+        postcode: "60601",
+        formatted: "60601",
+        country: "US",
+        coordinates: { lat: 41.8781, lng: -87.6298 },
+        address: "Chicago, IL",
+        city: "Chicago",
+        region: "Illinois",
+        confidence: 0.95,
+      },
+      // Canadian Postal Codes
+      {
+        postcode: "K1A0A6",
+        formatted: "K1A 0A6",
+        country: "CA",
+        coordinates: { lat: 45.4215, lng: -75.6972 },
+        address: "Ottawa, ON",
+        city: "Ottawa",
+        region: "Ontario",
+        confidence: 0.94,
+      },
+      {
+        postcode: "H0H0H0",
+        formatted: "H0H 0H0",
+        country: "CA",
+        coordinates: { lat: 45.5017, lng: -73.5673 },
+        address: "Montreal, QC",
+        city: "Montreal",
+        region: "Quebec",
+        confidence: 0.93,
+      },
+      {
+        postcode: "V6B5A7",
+        formatted: "V6B 5A7",
+        country: "CA",
+        coordinates: { lat: 49.2827, lng: -123.1207 },
+        address: "Vancouver, BC",
+        city: "Vancouver",
+        region: "British Columbia",
+        confidence: 0.95,
+      },
+      // Australian Postcodes
+      {
+        postcode: "2000",
+        formatted: "2000",
+        country: "AU",
+        coordinates: { lat: -33.8688, lng: 151.2093 },
+        address: "Sydney CBD, NSW",
+        city: "Sydney",
+        region: "New South Wales",
+        confidence: 0.96,
+      },
+      {
+        postcode: "3000",
+        formatted: "3000",
+        country: "AU",
+        coordinates: { lat: -37.8136, lng: 144.9631 },
+        address: "Melbourne CBD, VIC",
+        city: "Melbourne",
+        region: "Victoria",
+        confidence: 0.95,
+      },
+      {
+        postcode: "4000",
+        formatted: "4000",
+        country: "AU",
+        coordinates: { lat: -27.4698, lng: 153.0251 },
+        address: "Brisbane CBD, QLD",
+        city: "Brisbane",
+        region: "Queensland",
+        confidence: 0.94,
+      },
+      // German PLZ
+      {
+        postcode: "10115",
+        formatted: "10115",
+        country: "DE",
+        coordinates: { lat: 52.5200, lng: 13.4050 },
+        address: "Berlin Mitte",
+        city: "Berlin",
+        region: "Berlin",
+        confidence: 0.97,
+      },
+      {
+        postcode: "80331",
+        formatted: "80331",
+        country: "DE",
+        coordinates: { lat: 48.1351, lng: 11.5820 },
+        address: "München Altstadt",
+        city: "München",
+        region: "Bayern",
+        confidence: 0.96,
+      },
+      {
+        postcode: "20095",
+        formatted: "20095",
+        country: "DE",
+        coordinates: { lat: 53.5511, lng: 9.9937 },
+        address: "Hamburg Altstadt",
+        city: "Hamburg",
+        region: "Hamburg",
+        confidence: 0.95,
+      },
+      // French Postal Codes
+      {
+        postcode: "75001",
+        formatted: "75001",
+        country: "FR",
+        coordinates: { lat: 48.8606, lng: 2.3376 },
+        address: "Paris 1er Arrondissement",
+        city: "Paris",
+        region: "Île-de-France",
+        confidence: 0.98,
+      },
+      {
+        postcode: "69001",
+        formatted: "69001",
+        country: "FR",
+        coordinates: { lat: 45.7640, lng: 4.8357 },
+        address: "Lyon 1er Arrondissement",
+        city: "Lyon",
+        region: "Auvergne-Rhône-Alpes",
+        confidence: 0.96,
+      },
+      {
+        postcode: "13001",
+        formatted: "13001",
+        country: "FR",
+        coordinates: { lat: 43.2965, lng: 5.3698 },
+        address: "Marseille 1er Arrondissement",
+        city: "Marseille",
+        region: "Provence-Alpes-Côte d'Azur",
+        confidence: 0.95,
+      },
+    ];
+
+    samplePostcodes.forEach(postcode => {
+      // Use normalized postcode (without spaces) as key for consistent lookup
+      const key = postcode.postcode.replace(/\s+/g, '').toUpperCase();
+      this.postcodeDatabase.set(key, postcode);
     });
   }
 
@@ -1149,6 +1376,95 @@ export class MemStorage implements IStorage {
     
     // Apply pagination
     return journeys.slice(offset, offset + limit);
+  }
+
+  // Postcode search functions
+  async searchPostcode(postcode: string, country?: string): Promise<PostcodeResult[]> {
+    if (!postcode || postcode.trim().length === 0) {
+      return [];
+    }
+
+    // Normalize the search term (remove spaces, convert to uppercase)
+    const normalizedSearch = postcode.replace(/\s+/g, '').toUpperCase();
+    const results: PostcodeResult[] = [];
+
+    // Search through the postcode database
+    for (const [key, postcodeData] of Array.from(this.postcodeDatabase.entries())) {
+      const matches = this.isPostcodeMatch(key, postcodeData, normalizedSearch, country);
+      if (matches) {
+        results.push(postcodeData);
+      }
+    }
+
+    // Sort by confidence score (highest first) and limit results
+    return results
+      .sort((a, b) => b.confidence - a.confidence)
+      .slice(0, 10); // Limit to top 10 results
+  }
+
+  async geocodePostcode(postcode: string, country?: string): Promise<PostcodeResult | null> {
+    if (!postcode || postcode.trim().length === 0) {
+      return null;
+    }
+
+    // Normalize the postcode for exact lookup
+    const normalizedPostcode = postcode.replace(/\s+/g, '').toUpperCase();
+    
+    // Try exact match first
+    const exactMatch = this.postcodeDatabase.get(normalizedPostcode);
+    if (exactMatch && (!country || exactMatch.country === country)) {
+      return exactMatch;
+    }
+
+    // Try partial matching for formats that support it (like UK postcodes)
+    for (const [key, postcodeData] of Array.from(this.postcodeDatabase.entries())) {
+      if (this.isPostcodeMatch(key, postcodeData, normalizedPostcode, country, true)) {
+        return postcodeData;
+      }
+    }
+
+    return null;
+  }
+
+  private isPostcodeMatch(
+    key: string, 
+    postcodeData: PostcodeResult, 
+    searchTerm: string, 
+    country?: string,
+    exactOnly: boolean = false
+  ): boolean {
+    // Filter by country if specified
+    if (country && postcodeData.country !== country) {
+      return false;
+    }
+
+    // Exact match
+    if (key === searchTerm || postcodeData.postcode === searchTerm) {
+      return true;
+    }
+
+    // Skip partial matching if exactOnly is true
+    if (exactOnly) {
+      return false;
+    }
+
+    // Partial matching for different postcode formats
+    if (postcodeData.country === 'UK') {
+      // UK: Allow matching on district (first part before space)
+      // e.g., "SW1A" should match "SW1A 1AA"
+      const ukDistrict = postcodeData.postcode.split(/\s/)[0];
+      if (ukDistrict && searchTerm.startsWith(ukDistrict.replace(/\s+/g, '').toUpperCase())) {
+        return true;
+      }
+    }
+
+    // Contains matching for addresses and cities
+    const searchLower = searchTerm.toLowerCase();
+    return Boolean(
+      postcodeData.address?.toLowerCase().includes(searchLower) ||
+      postcodeData.city?.toLowerCase().includes(searchLower) ||
+      postcodeData.region?.toLowerCase().includes(searchLower)
+    );
   }
 }
 
