@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Truck, Save, X, Globe } from "lucide-react";
+import { Truck, Save, X, Globe, Ruler } from "lucide-react";
 import { insertVehicleProfileSchema, type VehicleProfile } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,8 +18,8 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 const vehicleSetupSchema = insertVehicleProfileSchema.extend({
   name: z.string().min(1, "Vehicle name is required"),
-  height: z.coerce.number().min(2).max(6.5, "Height must be between 2-6.5 meters (6.6-21.3 feet)"),
-  width: z.coerce.number().min(1.8).max(3.7, "Width must be between 1.8-3.7 meters (5.9-12.1 feet)"),
+  height: z.coerce.number().min(0.5, "Height must be at least 0.5").max(25, "Height must be less than 25"),
+  width: z.coerce.number().min(0.5, "Width must be at least 0.5").max(15, "Width must be less than 15"),
   weight: z.coerce.number().min(1).max(80, "Weight must be between 1-80 tonnes"),
   region: z.enum(['UK', 'EU'], { required_error: 'Please select your operating region' }),
   enableRemoteTracking: z.boolean().default(false),
@@ -37,12 +37,16 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
   const { toast } = useToast();
   const { system: units, convertDistance } = useMeasurement();
   
+  // Individual unit state for height and width
+  const [heightUnit, setHeightUnit] = useState<'metric' | 'imperial'>(units);
+  const [widthUnit, setWidthUnit] = useState<'metric' | 'imperial'>(units);
+  
   const form = useForm<VehicleSetupForm>({
     resolver: zodResolver(vehicleSetupSchema),
     defaultValues: {
       name: currentProfile?.name || "My Lorry",
-      height: currentProfile?.height ? (units === 'metric' ? convertDistance(currentProfile.height, "feet", "meters") : currentProfile.height) : (units === 'metric' ? 4.0 : 13.1), // 4m default (13.1 feet)
-      width: currentProfile?.width ? (units === 'metric' ? convertDistance(currentProfile.width, "feet", "meters") : currentProfile.width) : (units === 'metric' ? 2.55 : 8.37), // 2.55m default (8.37 feet)  
+      height: currentProfile?.height ? (heightUnit === 'metric' ? convertDistance(currentProfile.height, "feet", "meters") : currentProfile.height) : (heightUnit === 'metric' ? 4.0 : 13.1), // 4m default (13.1 feet)
+      width: currentProfile?.width ? (widthUnit === 'metric' ? convertDistance(currentProfile.width, "feet", "meters") : currentProfile.width) : (widthUnit === 'metric' ? 2.55 : 8.37), // 2.55m default (8.37 feet)  
       length: currentProfile?.length ? (units === 'metric' ? convertDistance(currentProfile.length, "feet", "meters") : currentProfile.length) : (units === 'metric' ? 16.5 : 54.1), // 16.5m default (54.1 feet)
       weight: currentProfile?.weight || 40, // 40 tonnes default for Europe
       axles: currentProfile?.axles || 5, // 5 axles standard for articulated lorries
@@ -77,8 +81,8 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
     // Convert to feet for storage (internal format)
     const convertedData = {
       ...data,
-      height: units === 'metric' ? convertDistance(data.height, "meters", "feet") : data.height,
-      width: units === 'metric' ? convertDistance(data.width, "meters", "feet") : data.width,
+      height: heightUnit === 'metric' ? convertDistance(data.height, "meters", "feet") : data.height,
+      width: widthUnit === 'metric' ? convertDistance(data.width, "meters", "feet") : data.width,
       length: data.length ? (units === 'metric' ? convertDistance(data.length, "meters", "feet") : data.length) : undefined,
     };
     
@@ -98,6 +102,52 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
     const wholeFeet = Math.floor(feet);
     const inches = Math.round((feet % 1) * 12);
     return `${wholeFeet}'${inches}"`;
+  };
+
+  // Helper functions for unit conversion
+  const handleHeightUnitChange = (newUnit: 'metric' | 'imperial') => {
+    const currentValue = form.getValues('height');
+    if (currentValue && heightUnit !== newUnit) {
+      let convertedValue: number;
+      if (newUnit === 'metric') {
+        // Converting from imperial to metric
+        convertedValue = convertDistance(currentValue, "feet", "meters");
+      } else {
+        // Converting from metric to imperial
+        convertedValue = convertDistance(currentValue, "meters", "feet");
+      }
+      form.setValue('height', Number(convertedValue.toFixed(2)));
+    }
+    setHeightUnit(newUnit);
+  };
+
+  const handleWidthUnitChange = (newUnit: 'metric' | 'imperial') => {
+    const currentValue = form.getValues('width');
+    if (currentValue && widthUnit !== newUnit) {
+      let convertedValue: number;
+      if (newUnit === 'metric') {
+        // Converting from imperial to metric
+        convertedValue = convertDistance(currentValue, "feet", "meters");
+      } else {
+        // Converting from metric to imperial
+        convertedValue = convertDistance(currentValue, "meters", "feet");
+      }
+      form.setValue('width', Number(convertedValue.toFixed(2)));
+    }
+    setWidthUnit(newUnit);
+  };
+
+  // Get unit display information
+  const getHeightUnitInfo = () => {
+    return heightUnit === 'metric' 
+      ? { label: 'meters', placeholder: '4.0', step: '0.1' }
+      : { label: 'feet', placeholder: '13.1', step: '0.25' };
+  };
+
+  const getWidthUnitInfo = () => {
+    return widthUnit === 'metric' 
+      ? { label: 'meters', placeholder: '2.55', step: '0.1' }
+      : { label: 'feet', placeholder: '8.37', step: '0.25' };
   };
 
   return (
@@ -164,52 +214,98 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                 <FormField
                   control={form.control}
                   name="height"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Height ({units === 'metric' ? 'meters' : 'feet'})</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step={units === 'metric' ? '0.1' : '0.25'}
-                          placeholder={units === 'metric' ? '4.0' : '15.75'} 
-                          {...field} 
-                          data-testid="input-vehicle-height"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs">
-                        {field.value ? (
-                          units === 'metric' ? 
-                            `${Number(field.value).toFixed(1)}m (${formatFeetAndInches(Number(field.value) / 0.3048)})` : 
-                            `${formatFeetAndInches(Number(field.value))} (${(Number(field.value) * 0.3048).toFixed(1)}m)`
-                        ) : (units === 'metric' ? '4.0m (13\'1")' : '15\'9" (4.8m)')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const unitInfo = getHeightUnitInfo();
+                    return (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Ruler className="w-4 h-4" />
+                          Height
+                        </FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl className="flex-1">
+                            <Input 
+                              type="number" 
+                              step={unitInfo.step}
+                              placeholder={unitInfo.placeholder} 
+                              {...field} 
+                              data-testid="input-vehicle-height"
+                            />
+                          </FormControl>
+                          <Select 
+                            value={heightUnit} 
+                            onValueChange={(value: 'metric' | 'imperial') => handleHeightUnitChange(value)}
+                            data-testid="select-height-unit"
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="metric">meters</SelectItem>
+                              <SelectItem value="imperial">feet</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <FormDescription className="text-xs">
+                          {field.value ? (
+                            heightUnit === 'metric' ? 
+                              `${Number(field.value).toFixed(1)}m (${formatFeetAndInches(convertDistance(Number(field.value), "meters", "feet"))})` : 
+                              `${formatFeetAndInches(Number(field.value))} (${convertDistance(Number(field.value), "feet", "meters").toFixed(1)}m)`
+                          ) : (heightUnit === 'metric' ? '4.0m (13\'1")' : '13\'1" (4.0m)')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
                   control={form.control}
                   name="width"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Width ({units === 'metric' ? 'meters' : 'feet'})</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                        step="0.25"
-                        placeholder="8.5" 
-                        {...field} 
-                        data-testid="input-vehicle-width"
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      {field.value ? formatFeetAndInches(Number(field.value)) : "8'6\""}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  render={({ field }) => {
+                    const unitInfo = getWidthUnitInfo();
+                    return (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Ruler className="w-4 h-4" />
+                          Width
+                        </FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl className="flex-1">
+                            <Input 
+                              type="number" 
+                              step={unitInfo.step}
+                              placeholder={unitInfo.placeholder} 
+                              {...field} 
+                              data-testid="input-vehicle-width"
+                            />
+                          </FormControl>
+                          <Select 
+                            value={widthUnit} 
+                            onValueChange={(value: 'metric' | 'imperial') => handleWidthUnitChange(value)}
+                            data-testid="select-width-unit"
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="metric">meters</SelectItem>
+                              <SelectItem value="imperial">feet</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <FormDescription className="text-xs">
+                          {field.value ? (
+                            widthUnit === 'metric' ? 
+                              `${Number(field.value).toFixed(1)}m (${formatFeetAndInches(convertDistance(Number(field.value), "meters", "feet"))})` : 
+                              `${formatFeetAndInches(Number(field.value))} (${convertDistance(Number(field.value), "feet", "meters").toFixed(1)}m)`
+                          ) : (widthUnit === 'metric' ? '2.6m (8\'6")' : '8\'6" (2.6m)')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
