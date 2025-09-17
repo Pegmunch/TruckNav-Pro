@@ -39,38 +39,70 @@ html, body {
 }
 
 :root {
-  --background: hsl(210, 40%, 96%);
-  --foreground: hsl(222, 84%, 5%);
+  /* Day Theme - Bright, warm colors for daytime truck navigation */
+  --background: hsl(210, 45%, 98%);
+  --foreground: hsl(220, 90%, 8%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222, 84%, 5%);
+  --card-foreground: hsl(220, 90%, 8%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222, 84%, 5%);
-  --primary: hsl(210, 83%, 53%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(45, 100%, 50%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(210, 40%, 88%);
-  --muted-foreground: hsl(215, 16%, 47%);
-  --accent: hsl(120, 61%, 34%);
+  --popover-foreground: hsl(220, 90%, 8%);
+  
+  /* Primary - Strong blue for navigation elements */
+  --primary: hsl(214, 100%, 45%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  
+  /* Secondary - Bright amber for warnings and highlights */
+  --secondary: hsl(45, 100%, 55%);
+  --secondary-foreground: hsl(220, 90%, 8%);
+  
+  /* Muted elements with higher contrast */
+  --muted: hsl(210, 45%, 90%);
+  --muted-foreground: hsl(220, 25%, 35%);
+  
+  /* Accent - Safety green for go/safe indicators */
+  --accent: hsl(120, 65%, 40%);
   --accent-foreground: hsl(0, 0%, 100%);
-  --destructive: hsl(0, 72%, 51%);
-  --destructive-foreground: hsl(0, 85%, 97%);
-  --border: hsl(214, 32%, 91%);
-  --input: hsl(214, 32%, 91%);
-  --ring: hsl(221, 83%, 53%);
-  --chart-1: hsl(210, 83%, 53%);
-  --chart-2: hsl(120, 61%, 34%);
-  --chart-3: hsl(45, 100%, 50%);
-  --chart-4: hsl(0, 72%, 51%);
-  --chart-5: hsl(280, 100%, 70%);
-  --sidebar: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(222, 84%, 5%);
-  --sidebar-primary: hsl(210, 83%, 53%);
-  --sidebar-primary-foreground: hsl(210, 40%, 98%);
-  --sidebar-accent: hsl(210, 40%, 88%);
-  --sidebar-accent-foreground: hsl(210, 83%, 53%);
-  --sidebar-border: hsl(214, 32%, 91%);
-  --sidebar-ring: hsl(221, 83%, 53%);
+  
+  /* Destructive - High-contrast red for alerts and restrictions */
+  --destructive: hsl(0, 85%, 45%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  
+  /* Enhanced borders and inputs for better visibility */
+  --border: hsl(214, 40%, 85%);
+  --input: hsl(214, 40%, 94%);
+  --ring: hsl(214, 100%, 50%);
+  
+  /* Truck navigation specific colors */
+  --route-primary: hsl(214, 100%, 45%);
+  --route-secondary: hsl(190, 80%, 50%);
+  --route-warning: hsl(35, 100%, 50%);
+  --route-danger: hsl(0, 85%, 45%);
+  --route-safe: hsl(120, 65%, 40%);
+  --map-road: hsl(0, 0%, 85%);
+  --map-highway: hsl(214, 30%, 75%);
+  --truck-profile: hsl(214, 100%, 45%);
+  --warning-amber: hsl(45, 100%, 55%);
+  --safety-green: hsl(120, 65%, 40%);
+  --alert-red: hsl(0, 85%, 45%);
+  
+  /* Chart colors optimized for day visibility */
+  --chart-1: hsl(214, 100%, 45%);
+  --chart-2: hsl(120, 65%, 40%);
+  --chart-3: hsl(45, 100%, 55%);
+  --chart-4: hsl(0, 85%, 45%);
+  --chart-5: hsl(280, 90%, 60%);
+  
+  /* Sidebar with enhanced contrast */
+  --sidebar: hsl(210, 45%, 98%);
+  --sidebar-foreground: hsl(220, 90%, 8%);
+  --sidebar-primary: hsl(214, 100%, 45%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(210, 45%, 90%);
+  --sidebar-accent-foreground: hsl(214, 100%, 45%);
+  --sidebar-border: hsl(214, 40%, 85%);
+  --sidebar-ring: hsl(214, 100%, 50%);
+  
+  /* Typography and spacing */
   --font-sans: 'Roboto', system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -78,33 +110,68 @@ html, body {
 }
 
 .dark {
-  --background: hsl(224, 71%, 4%);
-  --foreground: hsl(213, 31%, 91%);
-  --card: hsl(224, 71%, 6%);
-  --card-foreground: hsl(213, 31%, 91%);
-  --popover: hsl(224, 71%, 6%);
-  --popover-foreground: hsl(213, 31%, 91%);
-  --primary: hsl(210, 83%, 53%);
-  --primary-foreground: hsl(222, 84%, 5%);
-  --secondary: hsl(45, 100%, 50%);
-  --secondary-foreground: hsl(222, 84%, 5%);
-  --muted: hsl(223, 47%, 11%);
-  --muted-foreground: hsl(215, 16%, 57%);
-  --accent: hsl(120, 61%, 34%);
-  --accent-foreground: hsl(210, 40%, 98%);
-  --destructive: hsl(0, 72%, 51%);
-  --destructive-foreground: hsl(0, 85%, 97%);
-  --border: hsl(216, 34%, 17%);
-  --input: hsl(216, 34%, 17%);
-  --ring: hsl(216, 34%, 17%);
-  --sidebar: hsl(224, 71%, 6%);
-  --sidebar-foreground: hsl(213, 31%, 91%);
-  --sidebar-primary: hsl(210, 83%, 53%);
-  --sidebar-primary-foreground: hsl(210, 40%, 98%);
-  --sidebar-accent: hsl(223, 47%, 11%);
-  --sidebar-accent-foreground: hsl(210, 83%, 53%);
-  --sidebar-border: hsl(216, 34%, 17%);
-  --sidebar-ring: hsl(221, 83%, 53%);
+  /* Night Theme - Dark colors with amber/red accents for night vision preservation */
+  --background: hsl(224, 80%, 2%);
+  --foreground: hsl(15, 20%, 85%);
+  --card: hsl(224, 70%, 4%);
+  --card-foreground: hsl(15, 20%, 85%);
+  --popover: hsl(224, 70%, 4%);
+  --popover-foreground: hsl(15, 20%, 85%);
+  
+  /* Primary - Muted blue that preserves night vision */
+  --primary: hsl(214, 70%, 60%);
+  --primary-foreground: hsl(224, 80%, 2%);
+  
+  /* Secondary - Warm amber for night visibility */
+  --secondary: hsl(45, 100%, 65%);
+  --secondary-foreground: hsl(224, 80%, 2%);
+  
+  /* Muted elements optimized for night */
+  --muted: hsl(224, 60%, 8%);
+  --muted-foreground: hsl(15, 15%, 65%);
+  
+  /* Accent - Soft green that doesn't strain eyes */
+  --accent: hsl(120, 50%, 55%);
+  --accent-foreground: hsl(224, 80%, 2%);
+  
+  /* Destructive - Soft red for night alerts */
+  --destructive: hsl(0, 65%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  
+  /* Enhanced borders and inputs for night visibility */
+  --border: hsl(216, 40%, 12%);
+  --input: hsl(216, 40%, 10%);
+  --ring: hsl(214, 70%, 60%);
+  
+  /* Night-optimized truck navigation colors */
+  --route-primary: hsl(214, 70%, 60%);
+  --route-secondary: hsl(190, 60%, 65%);
+  --route-warning: hsl(35, 90%, 65%);
+  --route-danger: hsl(0, 65%, 60%);
+  --route-safe: hsl(120, 50%, 55%);
+  --map-road: hsl(224, 30%, 15%);
+  --map-highway: hsl(214, 40%, 20%);
+  --truck-profile: hsl(214, 70%, 60%);
+  --warning-amber: hsl(45, 100%, 65%);
+  --safety-green: hsl(120, 50%, 55%);
+  --alert-red: hsl(0, 65%, 60%);
+  
+  /* Chart colors optimized for night vision */
+  --chart-1: hsl(214, 70%, 60%);
+  --chart-2: hsl(120, 50%, 55%);
+  --chart-3: hsl(45, 100%, 65%);
+  --chart-4: hsl(0, 65%, 60%);
+  --chart-5: hsl(280, 60%, 70%);
+  
+  /* Sidebar with night-optimized contrast */
+  --sidebar: hsl(224, 70%, 4%);
+  --sidebar-foreground: hsl(15, 20%, 85%);
+  --sidebar-primary: hsl(214, 70%, 60%);
+  --sidebar-primary-foreground: hsl(224, 80%, 2%);
+  --sidebar-accent: hsl(224, 60%, 8%);
+  --sidebar-accent-foreground: hsl(214, 70%, 60%);
+  --sidebar-border: hsl(216, 40%, 12%);
+  --sidebar-ring: hsl(214, 70%, 60%);
 }
 
 @layer base {
@@ -117,25 +184,268 @@ html, body {
   }
 }
 
+/* Map Container - Day/Night Adaptive Background */
 .map-container {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23e5e7eb" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="%23f9fafb"/><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23d1d5db" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="%23f3f4f6"/><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
 }
 
+/* Dark mode map container */
+.dark .map-container {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23374151" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="%231f2937"/><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  border: 1px solid var(--border);
+}
+
+/* Route Line - Enhanced for Day/Night Visibility */
 .route-line {
   position: absolute;
-  background: linear-gradient(90deg, hsl(210, 83%, 53%), hsl(210, 83%, 73%));
-  height: 4px;
-  border-radius: 2px;
-  box-shadow: 0 2px 4px rgba(21, 101, 192, 0.3);
+  background: linear-gradient(90deg, var(--route-primary), var(--route-secondary));
+  height: 5px;
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(21, 101, 192, 0.4);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Enhanced route line visibility in dark mode */
+.dark .route-line {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Alternative route lines */
+.route-line.alternative {
+  background: linear-gradient(90deg, var(--muted-foreground), var(--muted));
+  opacity: 0.7;
+  height: 3px;
+}
+
+/* Warning route segments */
+.route-line.warning {
+  background: linear-gradient(90deg, var(--route-warning), var(--secondary));
+}
+
+/* Restricted route segments */
+.route-line.restricted {
+  background: linear-gradient(90deg, var(--route-danger), var(--destructive));
+  animation: restrictionPulse 2s infinite;
+}
+
+@keyframes restrictionPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+/* Truck Navigation Markers */
 .restriction-marker {
-  animation: pulse 2s infinite;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background: var(--alert-red);
+  border: 3px solid var(--destructive-foreground);
+  border-radius: 50%;
+  animation: restrictionAlert 2s infinite;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+  z-index: 10;
+}
+
+.dark .restriction-marker {
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.6);
+}
+
+/* Safe facility markers */
+.facility-marker {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  background: var(--safety-green);
+  border: 2px solid var(--accent-foreground);
+  border-radius: 4px;
+  animation: facilityGlow 3s infinite;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+}
+
+/* Truck profile indicators */
+.truck-profile-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--truck-profile);
+  color: var(--primary-foreground);
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.truck-profile-indicator:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Warning badges for restrictions */
+.warning-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--warning-amber);
+  color: var(--secondary-foreground);
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 11px;
+  font-weight: 700;
+  animation: warningFlash 4s infinite;
+}
+
+@keyframes restrictionAlert {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  25% { 
+    opacity: 0.8; 
+    transform: scale(1.1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.15);
+  }
+  75% { 
+    opacity: 0.8; 
+    transform: scale(1.1);
+  }
+}
+
+@keyframes facilityGlow {
+  0%, 100% { 
+    box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+  }
+  50% { 
+    box-shadow: 0 2px 12px rgba(34, 197, 94, 0.6);
+  }
+}
+
+@keyframes warningFlash {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.8; }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+/* Enhanced Focus Indicators for Accessibility and Safety */
+.navigation-focus:focus,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 
+    0 0 0 6px hsla(214, 100%, 50%, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+  border-radius: var(--radius);
+}
+
+.dark .navigation-focus:focus,
+.dark button:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark [tabindex]:focus-visible {
+  outline: 3px solid var(--primary);
+  box-shadow: 
+    0 0 0 6px hsla(214, 70%, 60%, 0.4),
+    0 2px 10px rgba(59, 130, 246, 0.2);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --primary: hsl(214, 100%, 35%);
+    --destructive: hsl(0, 100%, 40%);
+    --accent: hsl(120, 100%, 30%);
+  }
+  
+  .dark {
+    --primary: hsl(214, 100%, 70%);
+    --destructive: hsl(0, 100%, 70%);
+    --accent: hsl(120, 100%, 60%);
+  }
+  
+  .route-line {
+    height: 6px;
+    border: 2px solid var(--foreground);
+  }
+  
+  .restriction-marker,
+  .facility-marker {
+    border-width: 4px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .restriction-marker,
+  .route-line.restricted,
+  .warning-badge,
+  .facility-marker {
+    animation: none;
+  }
+  
+  .navigation-focus:focus,
+  button:focus-visible,
+  input:focus-visible {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Navigation Status Indicators */
+.nav-status-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nav-status-indicator.active {
+  background: var(--safety-green);
+  color: var(--accent-foreground);
+  border-color: var(--accent);
+}
+
+.nav-status-indicator.warning {
+  background: var(--warning-amber);
+  color: var(--secondary-foreground);
+  border-color: var(--secondary);
+}
+
+.nav-status-indicator.danger {
+  background: var(--alert-red);
+  color: var(--destructive-foreground);
+  border-color: var(--destructive);
+  animation: dangerPulse 2s infinite;
+}
+
+@keyframes dangerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; transform: scale(1.02); }
 }
 
 /* Amazon Fire TV and 10-foot UI Optimizations */
@@ -146,25 +456,62 @@ html, body {
     font-size: 18px;
   }
   
-  /* Focus management for TV remote navigation */
+  /* Enhanced focus management for TV remote navigation with theme support */
   button:focus,
   [tabindex]:focus,
   input:focus,
   select:focus,
   textarea:focus {
-    outline: 3px solid hsl(210, 83%, 53%);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 6px hsla(210, 83%, 53%, 0.3);
-    transform: scale(1.05);
+    outline: 4px solid var(--primary);
+    outline-offset: 3px;
+    box-shadow: 
+      0 0 0 8px hsla(214, 100%, 50%, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.2);
+    transform: scale(1.08);
     transition: all 0.2s ease;
+    border-radius: var(--radius);
+  }
+  
+  .dark button:focus,
+  .dark [tabindex]:focus,
+  .dark input:focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    outline: 4px solid var(--primary);
+    box-shadow: 
+      0 0 0 8px hsla(214, 70%, 60%, 0.4),
+      0 4px 20px rgba(59, 130, 246, 0.3);
   }
   
   /* Larger touch targets for TV navigation */
   button {
-    min-height: 48px;
-    min-width: 120px;
-    font-size: 16px;
-    padding: 12px 24px;
+    min-height: 52px;
+    min-width: 140px;
+    font-size: 18px;
+    padding: 16px 28px;
+    font-weight: 600;
+  }
+  
+  /* Enhanced map visibility for TV */
+  .map-container {
+    border: 2px solid var(--border);
+    border-radius: calc(var(--radius) + 2px);
+  }
+  
+  .route-line {
+    height: 6px;
+  }
+  
+  .restriction-marker {
+    width: 24px;
+    height: 24px;
+    border-width: 4px;
+  }
+  
+  .facility-marker {
+    width: 22px;
+    height: 22px;
+    border-width: 3px;
   }
 }
 
