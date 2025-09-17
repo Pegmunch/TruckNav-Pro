@@ -481,55 +481,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     isStartingJourney={isStartingJourney}
                     isCompletingJourney={isCompletingJourney}
                   />
-                  
-                  {/* Enhanced Go Button */}
-                  {isReadyToGo && (
-                    <div className="p-4 border-t-2 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-                      <Card className="border-primary/30 bg-primary/5">
-                        <CardContent className="p-4">
-                          <div className="text-center space-y-3">
-                            <div className="text-sm font-medium text-primary">
-                              Ready to Navigate
-                            </div>
-                            <Button
-                              onClick={handleGoNavigation}
-                              disabled={!canStartNavigation || isNavigating}
-                              size="lg"
-                              className={cn(
-                                "w-full automotive-button min-h-16 text-lg font-bold",
-                                "bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90",
-                                "transform transition-all duration-200 hover:scale-105 active:scale-95",
-                                "shadow-lg hover:shadow-xl border-2 border-primary/20"
-                              )}
-                              data-testid="button-go-navigation"
-                            >
-                              {isNavigating ? (
-                                <>
-                                  <Navigation className="w-6 h-6 mr-3 animate-pulse" />
-                                  Navigating...
-                                </>
-                              ) : !currentRoute ? (
-                                <>
-                                  <Zap className="w-6 h-6 mr-3" />
-                                  Plan & Go
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="w-6 h-6 mr-3" />
-                                  START NAVIGATION
-                                </>
-                              )}
-                            </Button>
-                            {currentRoute && (
-                              <div className="text-xs text-muted-foreground">
-                                Route planned • {formatDuration(currentRoute.estimatedTime || 0)} • {formatDistance(currentRoute.distance || 0)}
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
 
                   {/* Map Window Controls */}
                   <div className="p-4 border-t border-border">
