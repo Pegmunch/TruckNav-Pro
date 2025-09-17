@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,46 @@ interface InteractiveMapProps {
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
+// Map preferences storage keys
+const MAP_PREFERENCES_KEY = 'trucknav_map_preferences';
+
+interface MapPreferences {
+  mapViewMode: 'roads' | 'satellite';
+  showTrafficLayer: boolean;
+  showIncidents: boolean;
+  zoomLevel: number;
+}
+
+const defaultMapPreferences: MapPreferences = {
+  mapViewMode: 'roads',
+  showTrafficLayer: true,
+  showIncidents: true,
+  zoomLevel: 10,
+};
+
+// Load map preferences from localStorage
+function loadMapPreferences(): MapPreferences {
+  try {
+    const stored = localStorage.getItem(MAP_PREFERENCES_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...defaultMapPreferences, ...parsed };
+    }
+  } catch (error) {
+    console.warn('Failed to load map preferences:', error);
+  }
+  return defaultMapPreferences;
+}
+
+// Save map preferences to localStorage
+function saveMapPreferences(preferences: MapPreferences): void {
+  try {
+    localStorage.setItem(MAP_PREFERENCES_KEY, JSON.stringify(preferences));
+  } catch (error) {
+    console.warn('Failed to save map preferences:', error);
+  }
+}
+
 const InteractiveMap = memo(function InteractiveMap({ 
   currentRoute, 
   selectedProfile, 
@@ -61,8 +101,18 @@ const InteractiveMap = memo(function InteractiveMap({
   autoExpanded = false,
   onCollapseMap
 }: InteractiveMapProps) {
-  const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
-  const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>('roads'); // Map view mode
+  // Load preferences on mount
+  const [preferences, setPreferences] = useState<MapPreferences>(() => loadMapPreferences());
+  const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
+  const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>(preferences.mapViewMode);
+  
+  // Auto-hide functionality state
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const autoHideTimerRef = useRef<number | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  
+  const AUTO_HIDE_DELAY = 3000; // 3 seconds
   
   // Get restrictions for the current view
   const { data: restrictions = [] } = useQuery<Restriction[]>({
@@ -75,25 +125,18 @@ const InteractiveMap = memo(function InteractiveMap({
     queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
-  // Get traffic conditions for current route
+  // Get traffic conditions for current route - using preferences as single source of truth
   const { data: trafficConditions = [] } = useCurrentTrafficConditions(
     currentRoute?.id || null,
-    showTrafficLayer && !!currentRoute
+    preferences.showTrafficLayer && !!currentRoute
   );
 
-  // Get traffic incidents in the current map bounds
+  // Get traffic incidents in the current map bounds - using preferences as single source of truth
   const { data: trafficIncidents = [] } = useTrafficIncidents(
     { north: 54, south: 50, east: 2, west: -6 },
-    showIncidents
+    preferences.showIncidents
   );
 
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 1, 18)); // Max zoom level 18
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 1, 1)); // Min zoom level 1
-  };
 
   const handleCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -107,15 +150,121 @@ const InteractiveMap = memo(function InteractiveMap({
         }
       );
     }
+    resetAutoHideTimer();
   };
 
+  // Auto-hide functionality
+  const resetAutoHideTimer = useCallback(() => {
+    setControlsVisible(true);
+    setIsUserInteracting(true);
+    
+    if (autoHideTimerRef.current) {
+      clearTimeout(autoHideTimerRef.current);
+    }
+    
+    autoHideTimerRef.current = setTimeout(() => {
+      setControlsVisible(false);
+      setIsUserInteracting(false);
+    }, AUTO_HIDE_DELAY);
+  }, []);
+
+  // Handle map interaction to show controls
+  const handleMapInteraction = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    event.preventDefault();
+    resetAutoHideTimer();
+  }, [resetAutoHideTimer]);
+
+  // Enhanced handlers with preference persistence and auto-hide reset
+  const handleZoomIn = () => {
+    const newZoomLevel = Math.min(zoomLevel + 1, 18);
+    setZoomLevel(newZoomLevel);
+    const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    resetAutoHideTimer();
+  };
+
+  const handleZoomOut = () => {
+    const newZoomLevel = Math.max(zoomLevel - 1, 1);
+    setZoomLevel(newZoomLevel);
+    const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    resetAutoHideTimer();
+  };
+
+  const handleMapViewModeChange = (mode: 'roads' | 'satellite') => {
+    setMapViewMode(mode);
+    const newPreferences = { ...preferences, mapViewMode: mode };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    resetAutoHideTimer();
+  };
+
+  const handleToggleTrafficLayer = () => {
+    const newShowTraffic = !preferences.showTrafficLayer;
+    const newPreferences = { ...preferences, showTrafficLayer: newShowTraffic };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    onToggleTrafficLayer?.();
+    resetAutoHideTimer();
+  };
+
+  const handleToggleIncidents = () => {
+    const newShowIncidents = !preferences.showIncidents;
+    const newPreferences = { ...preferences, showIncidents: newShowIncidents };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    onToggleIncidents?.();
+    resetAutoHideTimer();
+  };
+
+  const handleFullscreenToggle = () => {
+    if (autoExpanded && onCollapseMap) {
+      onCollapseMap();
+    } else if (onToggleFullscreen) {
+      onToggleFullscreen();
+    }
+    resetAutoHideTimer();
+  };
+
+  // Initialize auto-hide timer on mount
+  useEffect(() => {
+    resetAutoHideTimer();
+    
+    return () => {
+      if (autoHideTimerRef.current) {
+        clearTimeout(autoHideTimerRef.current);
+      }
+    };
+  }, [resetAutoHideTimer]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoHideTimerRef.current) {
+        clearTimeout(autoHideTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className={cn(
-      "flex-1 relative map-container",
-      (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
-      autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
-      mapViewMode === 'satellite' && "satellite-view" // Satellite view styling
-    )}>
+    <div 
+      ref={mapContainerRef}
+      className={cn(
+        "flex-1 relative map-container",
+        (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
+        autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
+        mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
+        "cursor-pointer" // Indicate interactive map
+      )}
+      onClick={handleMapInteraction}
+      onTouchStart={handleMapInteraction}
+      onTouchMove={handleMapInteraction}
+      onPointerMove={handleMapInteraction}
+      onWheel={handleMapInteraction}
+      data-testid="map-container"
+    >
       {/* Satellite View Background */}
       {mapViewMode === 'satellite' && (
         <div className="absolute inset-0 bg-gradient-to-br from-green-800 via-green-700 to-green-900 opacity-90">
@@ -124,113 +273,144 @@ const InteractiveMap = memo(function InteractiveMap({
         </div>
       )}
       
-      {/* Map Controls */}
-      <div className="absolute top-4 right-4 z-10 space-y-2">
-        {/* Enhanced Automotive Fullscreen/Expansion Toggle */}
+      {/* Scalable Map Controls Cluster - Mobile-Optimized Positioning */}
+      <div className={cn(
+        "absolute z-20 space-y-2 transition-all duration-300 ease-in-out",
+        // Thumb-reachable positioning for mobile devices
+        "bottom-24 right-4 sm:bottom-20 sm:right-4 md:top-20 md:right-4",
+        // Auto-hide functionality
+        controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+        // Ensure never overlaps guidance (guidance is at top-4 left-4 right-4)
+        "max-w-[200px]"
+      )} data-testid="map-controls-cluster">
+        {/* Enhanced Automotive Fullscreen/Expansion Toggle - Mobile First */}
         {(onToggleFullscreen || onCollapseMap) && (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden shadow-lg">
             <Button 
               variant="outline" 
               size="icon" 
-              className="automotive-button" 
+              className={cn(
+                "automotive-button scalable-control-button",
+                "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]"
+              )}
               data-testid="button-fullscreen-toggle"
-              onClick={() => {
-                if (autoExpanded && onCollapseMap) {
-                  onCollapseMap();
-                } else if (onToggleFullscreen) {
-                  onToggleFullscreen();
-                }
-              }}
+              onClick={handleFullscreenToggle}
             >
-              {(isFullscreen || autoExpanded) ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+              {(isFullscreen || autoExpanded) ? 
+                <Minimize className="scalable-control-icon" /> : 
+                <Maximize className="scalable-control-icon" />
+              }
             </Button>
           </Card>
         )}
         
-        <Card className="overflow-hidden">
+        {/* Scalable Zoom Controls */}
+        <Card className="overflow-hidden shadow-lg">
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-none border-b automotive-button" 
+            className={cn(
+              "rounded-none border-b automotive-button scalable-control-button",
+              "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]"
+            )}
             data-testid="button-zoom-in"
             onClick={handleZoomIn}
             disabled={zoomLevel >= 18}
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="scalable-control-icon" />
           </Button>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="rounded-none automotive-button" 
+            className={cn(
+              "rounded-none automotive-button scalable-control-button",
+              "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]"
+            )}
             data-testid="button-zoom-out"
             onClick={handleZoomOut}
             disabled={zoomLevel <= 1}
           >
-            <Minus className="w-5 h-5" />
+            <Minus className="scalable-control-icon" />
           </Button>
         </Card>
         
-        {/* Layer Controls */}
-        <Card className="p-2 space-y-1">
+        {/* Enhanced Layer Controls with Persistent Preferences */}
+        <Card className="p-2 space-y-1 shadow-lg max-w-[180px]">
           <Button 
             variant={mapViewMode === 'roads' ? "default" : "ghost"}
             size="sm" 
-            className="w-full justify-start" 
-            onClick={() => setMapViewMode('roads')}
+            className={cn(
+              "w-full justify-start scalable-control-button",
+              "min-h-[clamp(36px,10vw,44px)]"
+            )}
+            onClick={() => handleMapViewModeChange('roads')}
             data-testid="button-layer-roads"
           >
-            <MapPin className="w-4 h-4 mr-2 text-primary" />
-            Roads
+            <MapPin className="scalable-control-icon-sm mr-2 text-primary" />
+            <span className="scalable-control-text">Roads</span>
           </Button>
           <Button 
             variant={mapViewMode === 'satellite' ? "default" : "ghost"}
             size="sm" 
-            className="w-full justify-start" 
-            onClick={() => setMapViewMode('satellite')}
+            className={cn(
+              "w-full justify-start scalable-control-button",
+              "min-h-[clamp(36px,10vw,44px)]"
+            )}
+            onClick={() => handleMapViewModeChange('satellite')}
             data-testid="button-layer-satellite"
           >
             <div className={cn(
-              "w-4 h-4 mr-2 rounded",
+              "scalable-control-icon-sm mr-2 rounded",
               mapViewMode === 'satellite' ? "bg-green-600" : "bg-muted"
             )}></div>
-            Satellite
-          </Button>
-          <Button variant="default" size="sm" className="w-full justify-start bg-accent/10 text-accent hover:bg-accent/20" data-testid="button-layer-truck">
-            <Navigation className="w-4 h-4 mr-2" />
-            Truck Routes
+            <span className="scalable-control-text">Satellite</span>
           </Button>
           <Button 
-            variant={showTrafficLayer ? "default" : "ghost"} 
+            variant="default" 
             size="sm" 
             className={cn(
-              "w-full justify-start",
-              showTrafficLayer && "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
+              "w-full justify-start bg-accent/10 text-accent hover:bg-accent/20 scalable-control-button",
+              "min-h-[clamp(36px,10vw,44px)]"
             )}
-            onClick={onToggleTrafficLayer}
+            data-testid="button-layer-truck"
+          >
+            <Navigation className="scalable-control-icon-sm mr-2" />
+            <span className="scalable-control-text">Truck Routes</span>
+          </Button>
+          <Button 
+            variant={preferences.showTrafficLayer ? "default" : "ghost"} 
+            size="sm" 
+            className={cn(
+              "w-full justify-start scalable-control-button",
+              "min-h-[clamp(36px,10vw,44px)]",
+              preferences.showTrafficLayer && "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
+            )}
+            onClick={handleToggleTrafficLayer}
             data-testid="button-layer-traffic"
           >
-            <Activity className="w-4 h-4 mr-2" />
-            Traffic
+            <Activity className="scalable-control-icon-sm mr-2" />
+            <span className="scalable-control-text">Traffic</span>
             {trafficConditions.length > 0 && (
-              <Badge variant="outline" className="ml-auto text-xs">
+              <Badge variant="outline" className="ml-auto scalable-badge">
                 {trafficConditions.length}
               </Badge>
             )}
           </Button>
           <Button 
-            variant={showIncidents ? "default" : "ghost"} 
+            variant={preferences.showIncidents ? "default" : "ghost"} 
             size="sm" 
             className={cn(
-              "w-full justify-start",
-              showIncidents && "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-300"
+              "w-full justify-start scalable-control-button",
+              "min-h-[clamp(36px,10vw,44px)]",
+              preferences.showIncidents && "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-300"
             )}
-            onClick={onToggleIncidents}
+            onClick={handleToggleIncidents}
             data-testid="button-layer-incidents"
           >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Incidents
+            <AlertTriangle className="scalable-control-icon-sm mr-2" />
+            <span className="scalable-control-text">Incidents</span>
             {trafficIncidents.length > 0 && (
-              <Badge variant="outline" className="ml-auto text-xs">
+              <Badge variant="outline" className="ml-auto scalable-badge">
                 {trafficIncidents.length}
               </Badge>
             )}
@@ -238,40 +418,57 @@ const InteractiveMap = memo(function InteractiveMap({
         </Card>
       </div>
 
-      {/* Current Location Button */}
+      {/* Scalable Current Location Button - Positioned for Thumb Reach */}
       <Button 
         variant="outline" 
         size="icon" 
-        className="absolute bottom-20 right-4 bg-card shadow-lg automotive-button"
+        className={cn(
+          "absolute bg-card shadow-lg automotive-button scalable-control-button transition-all duration-300",
+          "bottom-32 left-4 sm:bottom-28 md:bottom-20 lg:bottom-16", // Mobile-first positioning
+          "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]",
+          controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
+        )}
         data-testid="button-current-location"
         onClick={handleCurrentLocation}
       >
-        <Crosshair className="w-4 h-4" />
+        <Crosshair className="scalable-control-icon" />
       </Button>
       
       {/* Auto-expansion indicator */}
       {autoExpanded && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-          Map Expanded - Tap minimize to return
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-primary/90 text-primary-foreground px-4 py-2 rounded-full shadow-lg z-30">
+          <span className="scalable-control-text font-medium">Map Expanded - Tap minimize to return</span>
         </div>
       )}
       
-      {/* Enhanced Status Bar */}
-      <div className="absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 text-xs shadow-lg">
+      {/* Controls Visibility Hint */}
+      {!controlsVisible && !isUserInteracting && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-3 py-2 rounded-full text-sm opacity-70 pointer-events-none z-10 transition-opacity duration-500">
+          <span className="scalable-control-text">Tap map to show controls</span>
+        </div>
+      )}
+      
+      {/* Enhanced Status Bar with Auto-Hide */}
+      <div className={cn(
+        "absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 shadow-lg z-10 transition-all duration-300",
+        controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+      )}>
         <div className="flex items-center space-x-3">
-          <span>Zoom: {zoomLevel}</span>
+          <span className="scalable-control-text-xs">Zoom: {zoomLevel}</span>
           {autoExpanded && (
             <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-accent font-medium">Auto-Expanded</span>
+              <span className="text-muted-foreground scalable-control-text-xs">•</span>
+              <span className="text-accent font-medium scalable-control-text-xs">Auto-Expanded</span>
             </>
           )}
           {currentRoute && (
             <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-primary font-medium">Route Active</span>
+              <span className="text-muted-foreground scalable-control-text-xs">•</span>
+              <span className="text-primary font-medium scalable-control-text-xs">Route Active</span>
             </>
           )}
+          <span className="text-muted-foreground scalable-control-text-xs">•</span>
+          <span className="scalable-control-text-xs">{preferences.mapViewMode}</span>
         </div>
       </div>
 
