@@ -76,7 +76,7 @@ export default function NavigationPage() {
   return (
     <div className="bg-background">
       {/* Header */}
-      <header className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
+      <header className="bg-card shadow-sm border-b border-border md:sticky md:top-0 z-50">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -113,9 +113,9 @@ export default function NavigationPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col md:flex-row min-h-screen">
         {/* Route Planning Panel */}
-        <div className="w-full lg:w-96 bg-card border-r">
+        <div className="w-full md:w-96 bg-card md:border-r border-b md:border-b-0">
           <RoutePlanningPanel
             fromLocation={fromLocation}
             toLocation={toLocation}
@@ -130,7 +130,7 @@ export default function NavigationPage() {
         </div>
 
         {/* Map */}
-        <div className="flex-1 min-h-[70vh] lg:min-h-screen">
+        <div className="flex-1 min-h-[50vh] md:min-h-screen">
           <InteractiveMap
             currentRoute={currentRoute}
             selectedProfile={selectedProfile}

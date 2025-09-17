@@ -2,36 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smooth scrolling behavior */
+/* Simplified smooth scrolling behavior */
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
 }
 
 body {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Fix scroll issues on mobile */
-* {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Ensure body can scroll */
-html, body {
-  height: auto;
-  min-height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Smooth scrolling for all scroll areas */
-.scroll-smooth {
-  scroll-behavior: smooth;
-}
-
-/* Better touch scrolling */
+/* Mobile-optimized touch scrolling */
 .touch-scroll {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
@@ -408,10 +391,7 @@ select:focus-visible,
 
 /* Navigation Status Indicators */
 .nav-status-indicator {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -422,6 +402,17 @@ select:focus-visible,
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 12px;
   font-weight: 600;
+  margin: 8px;
+}
+
+@media (min-width: 768px) {
+  .nav-status-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    margin: 0;
+  }
 }
 
 .nav-status-indicator.active {
@@ -561,21 +552,29 @@ select:focus-visible,
 
 /* Amazon-specific legal notices positioning */
 .amazon-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   padding: 8px 16px;
   background: hsl(210, 40%, 96%);
   border-top: 1px solid hsl(214, 32%, 91%);
   font-size: 12px;
   text-align: center;
-  z-index: 1000;
+  margin-top: auto;
 }
 
 .dark .amazon-footer {
   background: hsl(224, 71%, 4%);
   border-top: 1px solid hsl(216, 34%, 17%);
+}
+
+@media (min-width: 768px) {
+  .amazon-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin-top: 0;
+  }
 }
 
 /* Fire TV voice command indicators */
