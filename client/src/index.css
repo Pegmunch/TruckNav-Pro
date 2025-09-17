@@ -73,13 +73,46 @@ body {
   border-width: 2px;
 }
 
-/* Automotive responsive breakpoints */
+/* Enhanced Automotive Sidebar Layout */
+.automotive-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar transitions and animations */
+.sidebar-transition {
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Map expansion animations */
+.automotive-map-expanded {
+  animation: mapExpand 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes mapExpand {
+  from {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive sidebar behavior for automotive displays */
 @media (orientation: landscape) and (min-width: 640px) {
   .automotive-layout {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 16px;
-    height: 100vh;
+    /* Landscape automotive layout optimization */
+  }
+  
+  /* Sidebar auto-collapse on small automotive screens */
+  @media (max-width: 1024px) {
+    .sidebar-auto-collapse {
+      width: 64px;
+    }
   }
 }
 
@@ -93,6 +126,55 @@ body {
     font-size: 14px;
     line-height: 1.4;
   }
+  
+  /* Compact sidebar for very small automotive screens */
+  .sidebar-compact {
+    width: 48px;
+  }
+  
+  .sidebar-compact .sidebar-content {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* Sidebar-specific styling */
+.sidebar-backdrop {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(2px);
+  transition: opacity 200ms ease-in-out;
+}
+
+/* Map container enhancements */
+.map-container {
+  position: relative;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-container.expanded {
+  z-index: 100;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Enhanced automotive touch targets */
+.automotive-touch-target {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 150ms ease-in-out;
+}
+
+.automotive-touch-target:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.automotive-touch-target:active {
+  transform: scale(0.98);
 }
 
 :root {
@@ -129,6 +211,11 @@ body {
   --input: hsl(214, 40%, 94%);
   --ring: hsl(214, 100%, 50%);
   
+  /* Sidebar-specific colors */
+  --sidebar-background: hsl(210, 45%, 98%);
+  --sidebar-border: hsl(214, 40%, 85%);
+  --sidebar-shadow: hsla(214, 40%, 10%, 0.1);
+  
   /* Truck navigation specific colors */
   --route-primary: hsl(214, 100%, 45%);
   --route-secondary: hsl(190, 80%, 50%);
@@ -149,14 +236,14 @@ body {
   --chart-4: hsl(0, 85%, 45%);
   --chart-5: hsl(280, 90%, 60%);
   
-  /* Sidebar with enhanced contrast */
-  --sidebar: hsl(210, 45%, 98%);
+  /* Enhanced sidebar with automotive styling */
+  --sidebar: var(--sidebar-background);
   --sidebar-foreground: hsl(220, 90%, 8%);
   --sidebar-primary: hsl(214, 100%, 45%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
   --sidebar-accent: hsl(210, 45%, 90%);
   --sidebar-accent-foreground: hsl(214, 100%, 45%);
-  --sidebar-border: hsl(214, 40%, 85%);
+  --sidebar-border: var(--sidebar-border);
   --sidebar-ring: hsl(214, 100%, 50%);
   
   /* Typography and spacing */
@@ -174,6 +261,11 @@ body {
   --card-foreground: hsl(15, 20%, 85%);
   --popover: hsl(224, 70%, 4%);
   --popover-foreground: hsl(15, 20%, 85%);
+  
+  /* Dark theme sidebar colors */
+  --sidebar-background: hsl(224, 70%, 4%);
+  --sidebar-border: hsl(224, 40%, 12%);
+  --sidebar-shadow: hsla(224, 40%, 2%, 0.3);
   
   /* Primary - Muted blue that preserves night vision */
   --primary: hsl(214, 70%, 60%);

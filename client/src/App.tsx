@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { MeasurementProvider } from "@/components/measurement/measurement-provider";
 import NavigationPage from "@/pages/navigation";
 import LaneSelectionPage from "@/pages/lane-selection";
+import MapWindow from "@/pages/map-window";
 import NotFound from "@/pages/not-found";
 import UserAgreement from "@/components/legal/user-agreement";
 import LegalDisclaimerModal from "@/components/legal/legal-disclaimer-modal";
@@ -26,6 +27,7 @@ function Router({ hasAcceptedAllLegal }: { hasAcceptedAllLegal: boolean }) {
           <Route path="/lane-selection/:id" component={LaneSelectionPage} />
           <Route path="/lane-selection" component={LaneSelectionPage} />
           <Route path="/lanes/:routeId" component={LaneSelectionPage} />
+          <Route path="/map-window" component={MapWindow} />
           <Route component={NotFound} />
         </Switch>
       </div>

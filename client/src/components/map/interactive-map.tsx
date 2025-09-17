@@ -36,9 +36,12 @@ interface InteractiveMapProps {
   onIncidentClick?: (incident: TrafficIncident) => void;
   onToggleTrafficLayer?: () => void;
   onToggleIncidents?: () => void;
-  // Automotive fullscreen functionality
+  // Enhanced automotive fullscreen functionality
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  // Auto-expansion functionality
+  autoExpanded?: boolean;
+  onCollapseMap?: () => void;
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
@@ -54,7 +57,9 @@ const InteractiveMap = memo(function InteractiveMap({
   onToggleTrafficLayer,
   onToggleIncidents,
   isFullscreen = false,
-  onToggleFullscreen
+  onToggleFullscreen,
+  autoExpanded = false,
+  onCollapseMap
 }: InteractiveMapProps) {
   const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
   
@@ -106,21 +111,28 @@ const InteractiveMap = memo(function InteractiveMap({
   return (
     <div className={cn(
       "flex-1 relative map-container",
-      isFullscreen && "fixed inset-0 z-50 bg-white" // Automotive fullscreen with white background
+      (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
+      autoExpanded && "automotive-map-expanded" // Additional class for auto-expansion styling
     )}>
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-10 space-y-2">
-        {/* Automotive Fullscreen Toggle */}
-        {onToggleFullscreen && (
+        {/* Enhanced Automotive Fullscreen/Expansion Toggle */}
+        {(onToggleFullscreen || onCollapseMap) && (
           <Card className="overflow-hidden">
             <Button 
               variant="outline" 
               size="icon" 
               className="automotive-button" 
               data-testid="button-fullscreen-toggle"
-              onClick={onToggleFullscreen}
+              onClick={() => {
+                if (autoExpanded && onCollapseMap) {
+                  onCollapseMap();
+                } else if (onToggleFullscreen) {
+                  onToggleFullscreen();
+                }
+              }}
             >
-              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+              {(isFullscreen || autoExpanded) ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
             </Button>
           </Card>
         )}
@@ -205,16 +217,37 @@ const InteractiveMap = memo(function InteractiveMap({
       <Button 
         variant="outline" 
         size="icon" 
-        className="absolute bottom-20 right-4 bg-card shadow-lg"
+        className="absolute bottom-20 right-4 bg-card shadow-lg automotive-button"
         data-testid="button-current-location"
         onClick={handleCurrentLocation}
       >
         <Crosshair className="w-4 h-4" />
       </Button>
       
-      {/* Zoom Level Indicator */}
-      <div className="absolute bottom-4 left-4 bg-card border border-border rounded px-2 py-1 text-xs shadow-lg">
-        Zoom: {zoomLevel}
+      {/* Auto-expansion indicator */}
+      {autoExpanded && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+          Map Expanded - Tap minimize to return
+        </div>
+      )}
+      
+      {/* Enhanced Status Bar */}
+      <div className="absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 text-xs shadow-lg">
+        <div className="flex items-center space-x-3">
+          <span>Zoom: {zoomLevel}</span>
+          {autoExpanded && (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-accent font-medium">Auto-Expanded</span>
+            </>
+          )}
+          {currentRoute && (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-primary font-medium">Route Active</span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Mock Map Elements */}

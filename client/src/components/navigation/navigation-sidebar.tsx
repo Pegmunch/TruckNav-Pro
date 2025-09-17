@@ -1,0 +1,565 @@
+import { useState, useEffect, memo } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { 
+  Settings, 
+  Truck, 
+  Navigation, 
+  MapPin, 
+  Menu, 
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Route as RouteIcon,
+  Clock,
+  User,
+  Fuel,
+  Utensils,
+  Bed,
+  Bookmark,
+  History,
+  ExternalLink,
+  Eye,
+  EyeOff
+} from "lucide-react";
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from '@/components/language/language-selector';
+import CountryLanguageSelector from '@/components/country/country-language-selector';
+import RoutePlanningPanel from "@/components/route/route-planning-panel";
+import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
+import { MeasurementSelector } from "@/components/measurement/measurement-selector";
+import { useMeasurement } from "@/components/measurement/measurement-provider";
+import { type VehicleProfile, type Route, type Journey } from "@shared/schema";
+import { cn } from "@/lib/utils";
+import { openMapWindow, closeMapWindow, isMapWindowOpen, TruckNavWindowManager, windowManager } from "@/lib/window-manager";
+import { useWindowSync } from "@/hooks/use-window-sync";
+import { useToast } from "@/hooks/use-toast";
+
+interface NavigationSidebarProps {
+  // Route planning props
+  fromLocation: string;
+  toLocation: string;
+  onFromLocationChange: (value: string) => void;
+  onToLocationChange: (value: string) => void;
+  onPlanRoute: () => void;
+  onStartNavigation: () => void;
+  onStopNavigation?: () => void;
+  onOpenLaneSelection?: () => void;
+  currentRoute: Route | null;
+  isCalculating: boolean;
+  
+  // Vehicle profile props
+  selectedProfile: VehicleProfile | null;
+  onProfileSelect: (profile: VehicleProfile) => void;
+  activeJourney?: Journey | null;
+  isNavigating?: boolean;
+  isStartingJourney?: boolean;
+  isCompletingJourney?: boolean;
+  
+  // Sidebar state
+  isOpen: boolean;
+  onToggle: () => void;
+  isCollapsed: boolean;
+  onCollapseToggle: () => void;
+}
+
+// Memoized sidebar component for automotive performance
+const NavigationSidebar = memo(function NavigationSidebar({
+  fromLocation,
+  toLocation,
+  onFromLocationChange,
+  onToLocationChange,
+  onPlanRoute,
+  onStartNavigation,
+  onStopNavigation,
+  onOpenLaneSelection,
+  currentRoute,
+  isCalculating,
+  selectedProfile,
+  onProfileSelect,
+  activeJourney,
+  isNavigating = false,
+  isStartingJourney = false,
+  isCompletingJourney = false,
+  isOpen,
+  onToggle,
+  isCollapsed,
+  onCollapseToggle,
+}: NavigationSidebarProps) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const { formatHeight, formatWeight } = useMeasurement();
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('route');
+  
+  // Window sync state
+  const windowSync = useWindowSync();
+  const [isMapWindowCurrentlyOpen, setIsMapWindowCurrentlyOpen] = useState(false);
+  
+  // Update window sync when props change
+  useEffect(() => {
+    windowSync.updateRoute(currentRoute);
+  }, [currentRoute, windowSync]);
+  
+  useEffect(() => {
+    windowSync.updateProfile(selectedProfile);
+  }, [selectedProfile, windowSync]);
+  
+  useEffect(() => {
+    windowSync.updateJourney(activeJourney, isNavigating || false);
+  }, [activeJourney, isNavigating, windowSync]);
+  
+  useEffect(() => {
+    windowSync.updateLocations(fromLocation, toLocation);
+  }, [fromLocation, toLocation, windowSync]);
+  
+  // Check map window status periodically
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      setIsMapWindowCurrentlyOpen(isMapWindowOpen());
+    }, 1000);
+    
+    return () => clearInterval(checkInterval);
+  }, []);
+
+  // Automotive-optimized sidebar sections
+  const sidebarSections = [
+    {
+      id: 'route' as const,
+      title: 'Route Planning',
+      icon: RouteIcon,
+      badge: currentRoute ? 'Planned' : null,
+    },
+    {
+      id: 'vehicle' as const,
+      title: 'Vehicle Profile',
+      icon: Truck,
+      badge: selectedProfile ? 'Set' : 'Required',
+    },
+    {
+      id: 'settings' as const,
+      title: 'Settings',
+      icon: Settings,
+      badge: null,
+    },
+  ];
+
+  const handleProfileCreated = (profile: VehicleProfile) => {
+    onProfileSelect(profile);
+    setShowProfileSetup(false);
+  };
+
+  // Window management handlers
+  const handleOpenMapWindow = async () => {
+    try {
+      const mapWindow = await openMapWindow({
+        automotive: true, // Optimize for automotive displays
+        fallbackToFullscreen: true,
+        onPopupBlocked: () => {
+          toast({
+            title: "Popup Blocked",
+            description: TruckNavWindowManager.getPopupBlockedMessage(),
+            variant: "destructive",
+          });
+        },
+        onWindowClosed: () => {
+          setIsMapWindowCurrentlyOpen(false);
+          windowSync.closeMapWindow();
+        }
+      });
+
+      if (mapWindow) {
+        setIsMapWindowCurrentlyOpen(true);
+        windowSync.openMapWindow();
+        toast({
+          title: "Map window opened",
+          description: "Your map is now displayed in a separate window.",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to open map window:', error);
+      toast({
+        title: "Failed to open map window",
+        description: "There was an error opening the map in a new window.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCloseMapWindow = () => {
+    try {
+      closeMapWindow();
+      setIsMapWindowCurrentlyOpen(false);
+      windowSync.closeMapWindow();
+      toast({
+        title: "Map window closed",
+        description: "The map window has been closed.",
+      });
+    } catch (error) {
+      console.error('Failed to close map window:', error);
+    }
+  };
+
+  const handleFocusMapWindow = () => {
+    const focused = windowManager.focusMapWindow();
+    if (!focused) {
+      toast({
+        title: "Map window not available",
+        description: "The map window is not currently open.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Mobile/automotive overlay behavior
+  if (!isOpen) {
+    return (
+      <Button
+        onClick={onToggle}
+        className="fixed top-4 left-4 z-50 automotive-button shadow-lg"
+        size="icon"
+        data-testid="button-open-sidebar"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      {/* Mobile overlay backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/20 z-40 lg:hidden" 
+        onClick={onToggle}
+        data-testid="sidebar-backdrop"
+      />
+      
+      {/* Sidebar Container */}
+      <div className={cn(
+        "fixed lg:relative left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col",
+        "transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-16" : "w-80 lg:w-96",
+        "shadow-lg lg:shadow-none"
+      )}>
+        
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          {!isCollapsed && (
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Truck className="text-primary-foreground text-lg" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">{t('app.name')}</h1>
+                <p className="text-sm text-muted-foreground">{t('app.tagline')}</p>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-center space-x-2">
+            {/* Collapse Toggle - Desktop */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCollapseToggle}
+              className="hidden lg:flex automotive-button"
+              data-testid="button-collapse-sidebar"
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+            
+            {/* Close Toggle - Mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="lg:hidden automotive-button"
+              data-testid="button-close-sidebar"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Status Bar */}
+        {!isCollapsed && (
+          <div className="px-4 py-2 bg-muted/50 border-b border-border">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2">
+                <LanguageSelector variant="country-first" />
+                <MeasurementSelector variant="compact" />
+              </div>
+              {selectedProfile && (
+                <div className="text-muted-foreground">
+                  {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Sections */}
+        {isCollapsed ? (
+          /* Collapsed Mode - Icon Navigation */
+          <div className="flex-1 p-2 space-y-2">
+            {sidebarSections.map((section) => (
+              <Button
+                key={section.id}
+                variant={activeSection === section.id ? "default" : "ghost"}
+                size="icon"
+                onClick={() => setActiveSection(section.id)}
+                className="w-full automotive-button relative"
+                data-testid={`button-section-${section.id}`}
+              >
+                <section.icon className="w-5 h-5" />
+                {section.badge && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" />
+                )}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          /* Expanded Mode - Full Navigation */
+          <div className="flex-1 overflow-y-auto touch-scroll">
+            {/* Section Navigation */}
+            <div className="p-4 border-b border-border">
+              <div className="grid grid-cols-3 gap-2">
+                {sidebarSections.map((section) => (
+                  <Button
+                    key={section.id}
+                    variant={activeSection === section.id ? "default" : "outline"}
+                    onClick={() => setActiveSection(section.id)}
+                    className="automotive-text-sm relative"
+                    data-testid={`button-section-${section.id}`}
+                  >
+                    <section.icon className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">{section.title.split(' ')[0]}</span>
+                    {section.badge && (
+                      <Badge 
+                        variant={activeSection === section.id ? "secondary" : "outline"} 
+                        className="ml-2 text-xs"
+                      >
+                        {section.badge}
+                      </Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Section Content */}
+            <div className="flex-1">
+              {activeSection === 'route' && (
+                <>
+                  <RoutePlanningPanel
+                    fromLocation={fromLocation}
+                    toLocation={toLocation}
+                    onFromLocationChange={onFromLocationChange}
+                    onToLocationChange={onToLocationChange}
+                    onPlanRoute={onPlanRoute}
+                    onStartNavigation={onStartNavigation}
+                    onStopNavigation={onStopNavigation}
+                    onOpenLaneSelection={onOpenLaneSelection}
+                    currentRoute={currentRoute}
+                    isCalculating={isCalculating}
+                    selectedProfile={selectedProfile}
+                    activeJourney={activeJourney}
+                    isNavigating={isNavigating}
+                    isStartingJourney={isStartingJourney}
+                    isCompletingJourney={isCompletingJourney}
+                  />
+                  
+                  {/* Map Window Controls */}
+                  <div className="p-4 border-t border-border">
+                    <Card className="bg-card">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center">
+                          <ExternalLink className="w-4 h-4 mr-2 text-primary" />
+                          Map Window
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="text-xs text-muted-foreground">
+                          Open the map in a separate window for enhanced viewing and multi-monitor support.
+                        </div>
+                        
+                        {/* Window Status */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full",
+                              isMapWindowCurrentlyOpen ? "bg-green-500" : "bg-muted-foreground"
+                            )} />
+                            <span className="text-xs text-muted-foreground">
+                              {isMapWindowCurrentlyOpen ? "Window Open" : "Window Closed"}
+                            </span>
+                          </div>
+                          {currentRoute && (
+                            <Badge variant="secondary" className="text-xs">
+                              Route Ready
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Window Controls */}
+                        <div className="space-y-2">
+                          {!isMapWindowCurrentlyOpen ? (
+                            <Button
+                              onClick={handleOpenMapWindow}
+                              className="w-full automotive-button"
+                              size="sm"
+                              disabled={!TruckNavWindowManager.isPopupSupported()}
+                              data-testid="button-open-map-window"
+                            >
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Open Map in New Window
+                            </Button>
+                          ) : (
+                            <div className="space-y-2">
+                              <Button
+                                onClick={handleFocusMapWindow}
+                                variant="outline"
+                                className="w-full automotive-button"
+                                size="sm"
+                                data-testid="button-focus-map-window"
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Focus Map Window
+                              </Button>
+                              <Button
+                                onClick={handleCloseMapWindow}
+                                variant="destructive"
+                                className="w-full automotive-button"
+                                size="sm"
+                                data-testid="button-close-map-window"
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Close Map Window
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Popup Blocked Warning */}
+                        {!TruckNavWindowManager.isPopupSupported() && (
+                          <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800">
+                            ⚠️ Popup windows may be blocked by your browser. Check popup settings if the map window doesn't open.
+                          </div>
+                        )}
+
+                        {/* Auto-Expansion Info */}
+                        {currentRoute && (
+                          <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                            💡 When you plan a new route, the map window will automatically expand and focus for optimal viewing.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
+
+              {activeSection === 'vehicle' && (
+                <div className="p-4 space-y-4">
+                  {/* Current Vehicle Profile */}
+                  {selectedProfile ? (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center">
+                          <Truck className="w-4 h-4 mr-2 text-primary" />
+                          Current Vehicle
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div>
+                          <div className="font-medium text-foreground">{selectedProfile.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W × {formatWeight(selectedProfile.weight || 0)}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            onClick={() => setShowProfileSetup(true)}
+                            className="flex-1"
+                            data-testid="button-edit-profile"
+                          >
+                            Edit Profile
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-dashed border-2">
+                      <CardContent className="p-6 text-center">
+                        <Truck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="font-medium text-foreground mb-2">No Vehicle Profile</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Set up your vehicle profile for accurate routing
+                        </p>
+                        <Button
+                          onClick={() => setShowProfileSetup(true)}
+                          className="automotive-button"
+                          data-testid="button-create-profile"
+                        >
+                          <Truck className="w-4 h-4 mr-2" />
+                          Create Profile
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {activeSection === 'settings' && (
+                <div className="p-4 space-y-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center">
+                        <Settings className="w-4 h-4 mr-2 text-primary" />
+                        App Settings
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            Language & Region
+                          </label>
+                          <CountryLanguageSelector />
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            Measurement System
+                          </label>
+                          <MeasurementSelector />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Vehicle Profile Setup Modal */}
+      {showProfileSetup && (
+        <VehicleProfileSetup
+          onClose={() => setShowProfileSetup(false)}
+          onProfileCreated={handleProfileCreated}
+          currentProfile={selectedProfile}
+        />
+      )}
+    </>
+  );
+});
+
+export default NavigationSidebar;

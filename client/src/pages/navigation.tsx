@@ -1,39 +1,37 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Route as RouteIcon } from "lucide-react";
+import { Truck } from "lucide-react";
 import { useTranslation } from 'react-i18next';
-import LanguageSelector from '@/components/language/language-selector';
-import CountryLanguageSelector, { DetailedCountrySelector } from '@/components/country/country-language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
-import RoutePlanningPanel from "@/components/route/route-planning-panel";
-import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
-import { MeasurementSelector } from "@/components/measurement/measurement-selector";
-import { useMeasurement } from "@/components/measurement/measurement-provider";
+import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import { type VehicleProfile, type Route, type Journey } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import { useWindowSync } from "@/hooks/use-window-sync";
+import { isMapWindowOpen, focusMapWindow } from "@/lib/window-manager";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
-  const { formatHeight, formatWeight } = useMeasurement();
   const [, setLocation] = useLocation();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
-  const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("Manchester M1 Industrial Estate");
   const [toLocation, setToLocation] = useState("Birmingham B1 Logistics Hub");
-  const [activeTab, setActiveTab] = useState("navigation");
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
-  // Automotive fullscreen map functionality
-  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  
+  // Sidebar state management
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Map expansion state - auto-expand when route is selected
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  
+  // Window sync for cross-window communication
+  const windowSync = useWindowSync();
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
@@ -173,11 +171,34 @@ export default function NavigationPage() {
     },
     onSuccess: (route) => {
       setCurrentRoute(route);
+      // Update window sync with new route
+      windowSync.updateRoute(route);
+      
       // If route calculation includes a plannedJourney (from route calculation), set it as active
       if (route.plannedJourney) {
         setActiveJourney(route.plannedJourney);
         localStorage.setItem('activeJourneyId', route.plannedJourney.id.toString());
+        windowSync.updateJourney(route.plannedJourney, false);
       }
+      
+      // Auto-expand map window if open, otherwise expand in-page map
+      const handleMapExpansion = () => {
+        if (isMapWindowOpen()) {
+          // Focus the map window and let it handle auto-expansion
+          focusMapWindow();
+          console.log('Route calculated: focusing map window for auto-expansion');
+        } else {
+          // Use existing in-page expansion logic
+          setIsMapExpanded(true);
+          // On mobile, also close sidebar to give more space
+          if (window.innerWidth < 1024) {
+            setIsSidebarOpen(false);
+          }
+        }
+      };
+
+      // Small delay to allow route state to update
+      setTimeout(handleMapExpansion, 200);
     },
     onError: (error) => {
       console.error('Failed to calculate route:', error);
@@ -201,6 +222,23 @@ export default function NavigationPage() {
       vehicleProfileId: selectedProfile?.id,
     });
   };
+
+  // Enhanced auto-expand map logic - works with both in-page and window modes
+  useEffect(() => {
+    if (currentRoute && !isMapExpanded) {
+      // Only auto-expand in-page map if no map window is open
+      if (!isMapWindowOpen()) {
+        const timer = setTimeout(() => {
+          setIsMapExpanded(true);
+          // On mobile, also close sidebar to give more space
+          if (window.innerWidth < 1024) {
+            setIsSidebarOpen(false);
+          }
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentRoute, isMapExpanded]);
 
   const handleStartNavigation = () => {
     if (currentRoute) {
@@ -230,9 +268,22 @@ export default function NavigationPage() {
     }
   };
 
-  // Automotive fullscreen map functionality
-  const handleToggleFullscreen = () => {
-    setIsMapFullscreen(!isMapFullscreen);
+  // Map expansion toggle functionality
+  const handleToggleMapExpansion = () => {
+    setIsMapExpanded(!isMapExpanded);
+    // When collapsing map, ensure sidebar is visible
+    if (isMapExpanded && !isSidebarOpen) {
+      setIsSidebarOpen(true);
+    }
+  };
+
+  // Sidebar toggle functionality
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleSidebarCollapseToggle = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   if (profilesLoading) {
@@ -248,90 +299,66 @@ export default function NavigationPage() {
 
   return (
     <div className="bg-background">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b border-border md:sticky md:top-0 z-50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Truck className="text-primary-foreground text-lg" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">{t('app.name')}</h1>
-              <p className="text-sm text-muted-foreground">{t('app.tagline')}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <LanguageSelector variant="country-first" />
-            {selectedProfile && (
-              <div className="bg-muted rounded-lg px-3 py-2 text-xs" data-testid="vehicle-profile-display">
-                <span className="font-medium text-foreground">
-                  {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W
-                </span>
-                <span className="text-muted-foreground ml-1">{formatWeight(selectedProfile.weight || 0)}</span>
-              </div>
-            )}
-            <MeasurementSelector variant="compact" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowProfileSetup(true)}
-              data-testid="button-settings"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Sidebar-Based Layout */}
+      <div className={cn(
+        "flex h-screen overflow-hidden",
+        "automotive-layout"
+      )}>
+        
+        {/* Navigation Sidebar */}
+        <NavigationSidebar
+          // Route planning props
+          fromLocation={fromLocation}
+          toLocation={toLocation}
+          onFromLocationChange={setFromLocation}
+          onToLocationChange={setToLocation}
+          onPlanRoute={handlePlanRoute}
+          onStartNavigation={handleStartNavigation}
+          onStopNavigation={handleStopNavigation}
+          onOpenLaneSelection={handleOpenLaneSelection}
+          currentRoute={currentRoute}
+          isCalculating={calculateRouteMutation.isPending}
+          
+          // Vehicle profile props
+          selectedProfile={selectedProfile}
+          onProfileSelect={(profile) => {
+            setSelectedProfile(profile);
+            queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+          }}
+          activeJourney={activeJourney}
+          isNavigating={isNavigating}
+          isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+          isCompletingJourney={completeJourneyMutation.isPending}
+          
+          // Sidebar state
+          isOpen={isSidebarOpen}
+          onToggle={handleSidebarToggle}
+          isCollapsed={isSidebarCollapsed}
+          onCollapseToggle={handleSidebarCollapseToggle}
+        />
 
-      {/* Automotive Navigation Interface - Simplified for CarPlay/Android Auto */}
-      <div className={`automotive-layout ${isMapFullscreen ? 'hidden' : 'flex flex-col md:flex-row min-h-screen'}`}>
-        {/* Route Planning Panel */}
-        <div className="w-full md:w-96 bg-card md:border-r border-b md:border-b-0">
-          <RoutePlanningPanel
-            fromLocation={fromLocation}
-            toLocation={toLocation}
-            onFromLocationChange={setFromLocation}
-            onToLocationChange={setToLocation}
-            onPlanRoute={handlePlanRoute}
-            onStartNavigation={handleStartNavigation}
-            onStopNavigation={handleStopNavigation}
-            onOpenLaneSelection={handleOpenLaneSelection}
-            currentRoute={currentRoute}
-            isCalculating={calculateRouteMutation.isPending}
-            selectedProfile={selectedProfile}
-            activeJourney={activeJourney}
-            isNavigating={isNavigating}
-            isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-            isCompletingJourney={completeJourneyMutation.isPending}
-          />
-        </div>
-
-        {/* Map */}
-        <div className="flex-1 min-h-[50vh] md:min-h-screen">
+        {/* Main Map Area */}
+        <div className={cn(
+          "flex-1 relative transition-all duration-300 ease-in-out",
+          isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
+        )}>
           <InteractiveMap
             currentRoute={currentRoute}
             selectedProfile={selectedProfile}
             onOpenLaneSelection={handleOpenLaneSelection}
-            isFullscreen={isMapFullscreen}
-            onToggleFullscreen={handleToggleFullscreen}
+            isFullscreen={isMapExpanded}
+            onToggleFullscreen={handleToggleMapExpansion}
+            // Auto-expansion props
+            autoExpanded={isMapExpanded}
+            onCollapseMap={() => {
+              setIsMapExpanded(false);
+              if (!isSidebarOpen) {
+                setIsSidebarOpen(true);
+              }
+            }}
           />
         </div>
       </div>
-
-
-
-      {/* Vehicle Profile Setup Modal */}
-      {showProfileSetup && (
-        <VehicleProfileSetup
-          onClose={() => setShowProfileSetup(false)}
-          onProfileCreated={(profile) => {
-            setSelectedProfile(profile);
-            setShowProfileSetup(false);
-            queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
-          }}
-          currentProfile={selectedProfile}
-        />
-      )}
     </div>
   );
 }
