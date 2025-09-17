@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import NavigationPage from "@/pages/navigation";
 import NotFound from "@/pages/not-found";
 import UserAgreement from "@/components/legal/user-agreement";
@@ -64,19 +65,21 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        
-        {/* User Agreement Modal */}
-        <UserAgreement 
-          isOpen={showUserAgreement}
-          onAccept={handleAcceptTerms}
-          onDecline={handleDeclineTerms}
-        />
-        
-        {/* Main Application */}
-        <Router hasAcceptedTerms={hasAcceptedTerms} />
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="auto" storageKey="theme-mode">
+        <TooltipProvider>
+          <Toaster />
+          
+          {/* User Agreement Modal */}
+          <UserAgreement 
+            isOpen={showUserAgreement}
+            onAccept={handleAcceptTerms}
+            onDecline={handleDeclineTerms}
+          />
+          
+          {/* Main Application */}
+          <Router hasAcceptedTerms={hasAcceptedTerms} />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

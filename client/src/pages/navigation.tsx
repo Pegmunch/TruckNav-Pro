@@ -12,6 +12,7 @@ import LanguageSelector from '@/components/language/language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
+import { ThemeTest } from "@/components/theme/theme-test";
 import { type VehicleProfile, type Route } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -134,6 +135,11 @@ export default function NavigationPage() {
             selectedProfile={selectedProfile}
           />
         </div>
+      </div>
+
+      {/* Theme Test Component - Development Only */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <ThemeTest />
       </div>
 
       {/* Vehicle Profile Setup Modal */}
