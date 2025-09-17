@@ -12,7 +12,7 @@ import LanguageSelector from '@/components/language/language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
-import { ThemeTest } from "@/components/theme/theme-test";
+import { ThemeSelector } from "@/components/theme/theme-selector";
 import { type VehicleProfile, type Route } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -137,9 +137,11 @@ export default function NavigationPage() {
         </div>
       </div>
 
-      {/* Theme Test Component - Development Only */}
+      {/* Theme Selector - Switch between day/night/auto modes */}
       <div className="fixed bottom-4 right-4 z-50">
-        <ThemeTest />
+        <div className="bg-card border border-border rounded-lg p-4 shadow-lg">
+          <ThemeSelector className="mb-2" />
+        </div>
       </div>
 
       {/* Vehicle Profile Setup Modal */}
