@@ -12,7 +12,7 @@ import LanguageSelector from '@/components/language/language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
-import { ThemeSelector } from "@/components/theme/theme-selector";
+import { CompactThemeSelector } from "@/components/theme/theme-selector";
 import { type VehicleProfile, type Route } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -99,6 +99,7 @@ export default function NavigationPage() {
                 <span className="text-muted-foreground ml-1">{selectedProfile.weight}T</span>
               </div>
             )}
+            <CompactThemeSelector data-testid="header-theme-selector" />
             <Button
               variant="outline"
               size="sm"
@@ -137,12 +138,6 @@ export default function NavigationPage() {
         </div>
       </div>
 
-      {/* Theme Selector - Switch between day/night/auto modes */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="bg-card border border-border rounded-lg p-4 shadow-lg">
-          <ThemeSelector className="mb-2" />
-        </div>
-      </div>
 
       {/* Vehicle Profile Setup Modal */}
       {showProfileSetup && (

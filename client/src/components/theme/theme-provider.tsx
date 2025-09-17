@@ -23,7 +23,20 @@ export function ThemeProvider({
   defaultTheme = "auto",
   storageKey = "theme-mode",
 }: ThemeProviderProps) {
-  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(defaultTheme);
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
+    // Prevent initial theme flicker by checking localStorage first
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(storageKey) as ThemeMode | null;
+        if (stored && ["day", "night", "auto"].includes(stored)) {
+          return stored;
+        }
+      } catch (error) {
+        console.warn("Failed to load theme from localStorage:", error);
+      }
+    }
+    return defaultTheme;
+  });
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>("day");
 
   // Check if current time is between 6 PM (18:00) and 6 AM (06:00)
@@ -84,19 +97,7 @@ export function ThemeProvider({
     }
   }, [storageKey]);
 
-  // Initialize theme from localStorage on mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const stored = localStorage.getItem(storageKey) as ThemeMode | null;
-      if (stored && ["day", "night", "auto"].includes(stored)) {
-        setCurrentTheme(stored);
-      }
-    } catch (error) {
-      console.warn("Failed to load theme from localStorage:", error);
-    }
-  }, [storageKey]);
+  // Note: Theme initialization moved to useState initializer to prevent flicker
 
   // Update effective theme when current theme changes
   useEffect(() => {
@@ -105,8 +106,9 @@ export function ThemeProvider({
 
   // Set up listeners for auto mode
   useEffect(() => {
-    let timeInterval: NodeJS.Timeout | null = null;
+    let timeInterval: ReturnType<typeof setInterval> | null = null;
     let mediaQueryList: MediaQueryList | null = null;
+    let handleSystemChange: (() => void) | null = null;
 
     if (currentTheme === "auto") {
       // Update every minute to check for time changes (6 PM to 6 AM transitions)
@@ -117,7 +119,7 @@ export function ThemeProvider({
       // Listen for system preference changes
       if (typeof window !== "undefined") {
         mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
-        const handleSystemChange = () => {
+        handleSystemChange = () => {
           updateEffectiveTheme();
         };
         
@@ -131,16 +133,12 @@ export function ThemeProvider({
       }
     }
 
-    // Cleanup
+    // Cleanup - use the same handleSystemChange reference
     return () => {
       if (timeInterval) {
         clearInterval(timeInterval);
       }
-      if (mediaQueryList) {
-        const handleSystemChange = () => {
-          updateEffectiveTheme();
-        };
-        
+      if (mediaQueryList && handleSystemChange) {
         if (mediaQueryList.removeEventListener) {
           mediaQueryList.removeEventListener("change", handleSystemChange);
         } else {
