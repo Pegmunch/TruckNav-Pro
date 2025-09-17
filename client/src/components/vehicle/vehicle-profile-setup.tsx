@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Truck, Save, X, Globe, Ruler } from "lucide-react";
+import { Truck, Save, X, Globe, Ruler, Car } from "lucide-react";
 import { insertVehicleProfileSchema, type VehicleProfile } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,9 +18,13 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 const vehicleSetupSchema = insertVehicleProfileSchema.extend({
   name: z.string().min(1, "Vehicle name is required"),
+  type: z.enum(['car', 'truck'], { required_error: 'Please select vehicle type' }),
   height: z.coerce.number().min(0.5, "Height must be at least 0.5").max(25, "Height must be less than 25"),
   width: z.coerce.number().min(0.5, "Width must be at least 0.5").max(15, "Width must be less than 15"),
-  weight: z.coerce.number().min(1).max(80, "Weight must be between 1-80 tonnes"),
+  weight: z.coerce.number().min(0.5).max(80, "Weight must be between 0.5-80 tonnes"),
+  length: z.coerce.number().min(1).max(100).optional(),
+  axles: z.coerce.number().min(2).max(10).optional(),
+  isHazmat: z.boolean().default(false),
   region: z.enum(['UK', 'EU'], { required_error: 'Please select your operating region' }),
   enableRemoteTracking: z.boolean().default(false),
 });
@@ -40,19 +44,52 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
   // Individual unit state for height and width
   const [heightUnit, setHeightUnit] = useState<'metric' | 'imperial'>(units);
   const [widthUnit, setWidthUnit] = useState<'metric' | 'imperial'>(units);
+  const [vehicleType, setVehicleType] = useState<'car' | 'truck'>(
+    (currentProfile as any)?.type || 'truck'
+  );
   
+  // Get defaults based on vehicle type
+  const getVehicleDefaults = (type: 'car' | 'truck') => {
+    if (type === 'car') {
+      return {
+        name: units === 'metric' ? "My Car" : "My Car",
+        height: heightUnit === 'metric' ? 1.5 : 4.9, // 1.5m (4.9 feet) for cars
+        width: widthUnit === 'metric' ? 1.8 : 5.9, // 1.8m (5.9 feet) for cars
+        length: units === 'metric' ? 4.5 : 14.8, // 4.5m (14.8 feet) for cars
+        weight: 2.0, // 2 tonnes typical for cars
+        axles: 2, // 2 axles for cars
+        isHazmat: false,
+      };
+    } else {
+      return {
+        name: units === 'metric' ? "My Lorry" : "My Truck",
+        height: heightUnit === 'metric' ? 4.0 : 13.1, // 4m (13.1 feet) for trucks
+        width: widthUnit === 'metric' ? 2.55 : 8.37, // 2.55m (8.37 feet) for trucks
+        length: units === 'metric' ? 16.5 : 54.1, // 16.5m (54.1 feet) for trucks
+        weight: 40, // 40 tonnes default for trucks
+        axles: 5, // 5 axles for articulated trucks
+        isHazmat: false,
+      };
+    }
+  };
+
   const form = useForm<VehicleSetupForm>({
     resolver: zodResolver(vehicleSetupSchema),
     defaultValues: {
-      name: currentProfile?.name || "My Lorry",
-      height: currentProfile?.height ? (heightUnit === 'metric' ? convertDistance(currentProfile.height, "feet", "meters") : currentProfile.height) : (heightUnit === 'metric' ? 4.0 : 13.1), // 4m default (13.1 feet)
-      width: currentProfile?.width ? (widthUnit === 'metric' ? convertDistance(currentProfile.width, "feet", "meters") : currentProfile.width) : (widthUnit === 'metric' ? 2.55 : 8.37), // 2.55m default (8.37 feet)  
-      length: currentProfile?.length ? (units === 'metric' ? convertDistance(currentProfile.length, "feet", "meters") : currentProfile.length) : (units === 'metric' ? 16.5 : 54.1), // 16.5m default (54.1 feet)
-      weight: currentProfile?.weight || 40, // 40 tonnes default for Europe
-      axles: currentProfile?.axles || 5, // 5 axles standard for articulated lorries
-      isHazmat: currentProfile?.isHazmat || false,
+      type: (currentProfile as any)?.type || vehicleType,
+      ...getVehicleDefaults(vehicleType),
       region: (currentProfile as any)?.region || 'EU',
       enableRemoteTracking: (currentProfile as any)?.enableRemoteTracking || false,
+      // Override with current profile values if editing - with proper null coalescing
+      ...(currentProfile && {
+        name: currentProfile.name,
+        height: heightUnit === 'metric' ? convertDistance(currentProfile.height, "feet", "meters") : currentProfile.height,
+        width: widthUnit === 'metric' ? convertDistance(currentProfile.width, "feet", "meters") : currentProfile.width,
+        length: currentProfile.length ? (units === 'metric' ? convertDistance(currentProfile.length, "feet", "meters") : currentProfile.length) : getVehicleDefaults(vehicleType).length,
+        weight: currentProfile.weight ?? getVehicleDefaults(vehicleType).weight,
+        axles: currentProfile.axles ?? getVehicleDefaults(vehicleType).axles,
+        isHazmat: currentProfile.isHazmat ?? false,
+      }),
     },
   });
 
@@ -137,6 +174,24 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
     setWidthUnit(newUnit);
   };
 
+  // Handle vehicle type change and update defaults
+  const handleVehicleTypeChange = (newType: 'car' | 'truck') => {
+    if (newType !== vehicleType) {
+      setVehicleType(newType);
+      const defaults = getVehicleDefaults(newType);
+      
+      // Update form with new defaults
+      form.setValue('type', newType);
+      form.setValue('name', defaults.name);
+      form.setValue('height', defaults.height);
+      form.setValue('width', defaults.width);
+      form.setValue('length', defaults.length);
+      form.setValue('weight', defaults.weight);
+      form.setValue('axles', defaults.axles);
+      form.setValue('isHazmat', defaults.isHazmat);
+    }
+  };
+
   // Get unit display information
   const getHeightUnitInfo = () => {
     return heightUnit === 'metric' 
@@ -165,6 +220,51 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Vehicle Type Selection */}
+            <div className="p-3 bg-muted rounded-lg">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      {vehicleType === 'car' ? <Car className="w-4 h-4" /> : <Truck className="w-4 h-4" />}
+                      Vehicle Type
+                    </FormLabel>
+                    <Select 
+                      onValueChange={(value: 'car' | 'truck') => {
+                        field.onChange(value);
+                        handleVehicleTypeChange(value);
+                      }} 
+                      defaultValue={field.value} 
+                      data-testid="select-vehicle-type"
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select vehicle type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="car">
+                          <div className="flex items-center gap-2">
+                            <Car className="w-4 h-4" />
+                            <span>Car</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="truck">
+                          <div className="flex items-center gap-2">
+                            <Truck className="w-4 h-4" />
+                            <span>Truck/Lorry</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Region Selection */}
             <div className="p-3 bg-muted rounded-lg">
               <FormField
@@ -200,7 +300,11 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                 <FormItem>
                   <FormLabel>Vehicle Name</FormLabel>
                   <FormControl>
-                    <Input placeholder={units === 'metric' ? "e.g., My Lorry" : "e.g., My Truck"} {...field} data-testid="input-vehicle-name" />
+                    <Input 
+                      placeholder={vehicleType === 'car' ? "e.g., My Car" : (units === 'metric' ? "e.g., My Lorry" : "e.g., My Truck")} 
+                      {...field} 
+                      data-testid="input-vehicle-name" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -338,11 +442,14 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder="44" 
+                        placeholder={vehicleType === 'car' ? "2.0" : "44"} 
                         {...field} 
                         data-testid="input-vehicle-weight"
                       />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      {vehicleType === 'car' ? 'Typical car weight: 1.5-2.5 tonnes' : 'Maximum truck weight in EU: 44 tonnes'}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -360,39 +467,45 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                     <Input 
                       type="number" 
                       min="2" 
-                      max="8" 
-                      placeholder="4" 
+                      max={vehicleType === 'car' ? "4" : "8"} 
+                      placeholder={vehicleType === 'car' ? "2" : "5"} 
                       {...field} 
                       value={field.value || ''}
                       data-testid="input-vehicle-axles"
                     />
                   </FormControl>
+                  <FormDescription className="text-xs">
+                    {vehicleType === 'car' ? 'Cars typically have 2 axles' : 'Articulated trucks typically have 5+ axles'}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="isHazmat"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Hazardous Materials</FormLabel>
-                    <FormDescription>
-                      Vehicle carries hazardous materials requiring special routing
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value || false}
-                      onCheckedChange={field.onChange}
-                      data-testid="switch-hazmat"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            {/* Only show hazmat for trucks */}
+            {vehicleType === 'truck' && (
+              <FormField
+                control={form.control}
+                name="isHazmat"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Hazardous Materials</FormLabel>
+                      <FormDescription>
+                        Vehicle carries hazardous materials requiring special routing
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                        data-testid="switch-hazmat"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose} data-testid="button-cancel">

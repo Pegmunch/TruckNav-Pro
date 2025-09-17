@@ -190,6 +190,7 @@ export class MemStorage implements IStorage {
     const defaultProfile: VehicleProfile = {
       id: "default-profile",
       name: "Standard HGV",
+      type: "truck",
       height: 15.75, // 15'9"
       width: 8.5, // 8'6"
       length: 53,
@@ -852,17 +853,9 @@ export class MemStorage implements IStorage {
     return R * c;
   }
 
-  private haversineDistance(coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }): number {
-    const R = 6371000; // Earth's radius in meters
-    const dLat = this.toRad(coord2.lat - coord1.lat);
-    const dLon = this.toRad(coord2.lng - coord1.lng);
-    const lat1 = this.toRad(coord1.lat);
-    const lat2 = this.toRad(coord2.lat);
-
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Returns distance in meters
+  // Journey Management
+  async getJourney(id: number): Promise<Journey | undefined> {
+    return this.journeys.get(id);
   }
 
   private toRad(value: number): number {
@@ -1535,6 +1528,11 @@ export class MemStorage implements IStorage {
     const monitoring: RouteMonitoring = {
       ...insertMonitoring,
       id,
+      vehicleProfileId: insertMonitoring.vehicleProfileId ?? null,
+      journeyId: insertMonitoring.journeyId ?? null,
+      isActive: insertMonitoring.isActive ?? true,
+      checkInterval: insertMonitoring.checkInterval ?? 300,
+      alertThreshold: insertMonitoring.alertThreshold ?? 5,
       monitoringStarted: new Date(),
       monitoringEnded: null,
       lastTrafficCheck: null,
@@ -1591,6 +1589,9 @@ export class MemStorage implements IStorage {
     const alternativeRoute: AlternativeRouteDB = {
       ...insertRoute,
       id,
+      restrictionsAvoided: insertRoute.restrictionsAvoided ?? [],
+      trafficConditions: insertRoute.trafficConditions ?? null,
+      viabilityScore: insertRoute.viabilityScore ?? 0.5,
       calculatedAt: new Date(),
       isActive: insertRoute.isActive ?? true,
       expiresAt: insertRoute.expiresAt || new Date(Date.now() + 30 * 60 * 1000), // 30 minutes default
@@ -1641,7 +1642,7 @@ export class MemStorage implements IStorage {
     const now = new Date();
     let cleanedCount = 0;
 
-    for (const [id, route] of this.alternativeRoutes.entries()) {
+    for (const [id, route] of Array.from(this.alternativeRoutes.entries())) {
       if (route.expiresAt && route.expiresAt <= now) {
         this.alternativeRoutes.delete(id);
         cleanedCount++;
@@ -1657,6 +1658,14 @@ export class MemStorage implements IStorage {
     const event: ReRoutingEventDB = {
       ...insertEvent,
       id,
+      journeyId: insertEvent.journeyId ?? null,
+      alternativeRouteId: insertEvent.alternativeRouteId ?? null,
+      timeSavingsOffered: insertEvent.timeSavingsOffered ?? null,
+      userResponse: insertEvent.userResponse ?? null,
+      responseTime: insertEvent.responseTime ?? null,
+      appliedAt: insertEvent.appliedAt ?? null,
+      effectiveness: insertEvent.effectiveness ?? null,
+      metadata: insertEvent.metadata ?? {},
       createdAt: new Date(),
     };
 
@@ -1671,13 +1680,13 @@ export class MemStorage implements IStorage {
   async getReRoutingEventsByJourney(journeyId: number): Promise<ReRoutingEventDB[]> {
     return Array.from(this.reRoutingEvents.values())
       .filter(event => event.journeyId === journeyId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
   async getReRoutingEventsByRoute(routeId: string): Promise<ReRoutingEventDB[]> {
     return Array.from(this.reRoutingEvents.values())
       .filter(event => event.originalRouteId === routeId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
   async updateReRoutingEvent(id: string, updates: Partial<ReRoutingEventDB>): Promise<ReRoutingEventDB | undefined> {
@@ -1700,7 +1709,7 @@ export class MemStorage implements IStorage {
     const cutoffDate = new Date(Date.now() - timeframeDays * 24 * 60 * 60 * 1000);
 
     let events = Array.from(this.reRoutingEvents.values())
-      .filter(event => event.createdAt >= cutoffDate);
+      .filter(event => event.createdAt && event.createdAt >= cutoffDate);
 
     if (routeId) {
       events = events.filter(event => event.originalRouteId === routeId);
@@ -1779,10 +1788,10 @@ export class MemStorage implements IStorage {
     const cutoffTime = Date.now() - (hoursToKeep * 60 * 60 * 1000);
     let cleanedCount = 0;
 
-    for (const [routeId, history] of this.trafficHistory.entries()) {
+    for (const [routeId, history] of Array.from(this.trafficHistory.entries())) {
       const originalLength = history.length;
       const filteredHistory = history.filter(
-        entry => entry.timestamp.getTime() > cutoffTime
+        (entry: { timestamp: Date; conditions: any[]; averageDelay: number }) => entry.timestamp.getTime() > cutoffTime
       );
 
       if (filteredHistory.length === 0) {

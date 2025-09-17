@@ -25,6 +25,7 @@ export const laneSegmentSchema = z.object({
 export const vehicleProfiles = pgTable("vehicle_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
+  type: text("type").notNull().default("truck"), // 'car' or 'truck'
   height: real("height").notNull(), // in feet
   width: real("width").notNull(), // in feet
   length: real("length"), // in feet
@@ -162,6 +163,12 @@ export const journeys = pgTable("journeys", {
 
 export const insertVehicleProfileSchema = createInsertSchema(vehicleProfiles).omit({
   id: true,
+}).extend({
+  type: z.enum(["car", "truck"]).default("truck"),
+  length: z.number().nullable().optional(),
+  weight: z.number().nullable().optional(), 
+  axles: z.number().nullable().optional(),
+  isHazmat: z.boolean().default(false)
 });
 
 export const insertRestrictionSchema = createInsertSchema(restrictions).omit({
