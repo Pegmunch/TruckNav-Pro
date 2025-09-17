@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,8 @@ interface InteractiveMapProps {
   selectedProfile: VehicleProfile | null;
 }
 
-export default function InteractiveMap({ currentRoute, selectedProfile }: InteractiveMapProps) {
+// Memoized for mobile performance - only re-renders when route or profile changes
+const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProfile }: InteractiveMapProps) {
   // Get restrictions for the current view
   const { data: restrictions = [] } = useQuery<Restriction[]>({
     queryKey: ["/api/restrictions?north=54&south=50&east=2&west=-6"],
@@ -191,4 +193,6 @@ export default function InteractiveMap({ currentRoute, selectedProfile }: Intera
       </div>
     </div>
   );
-}
+});
+
+export default InteractiveMap;

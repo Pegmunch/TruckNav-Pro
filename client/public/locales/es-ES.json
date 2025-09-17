@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Navegación Profesional de Camiones",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Planificación de Rutas",
+    "vehicle_setup": "Configuración del Vehículo", 
+    "facility_search": "Búsqueda de Instalaciones",
+    "live_traffic": "Tráfico en Vivo",
+    "restrictions": "Restricciones",
+    "settings": "Configuración"
+  },
+  "vehicle": {
+    "profile": "Perfil del Vehículo",
+    "name": "Nombre del Vehículo",
+    "height": "Altura",
+    "width": "Ancho", 
+    "length": "Longitud",
+    "weight": "Peso",
+    "axles": "Ejes",
+    "hazmat": "Materiales Peligrosos",
+    "feet": "pies",
+    "inches": "pulgadas",
+    "tons": "toneladas",
+    "save": "Guardar Perfil"
+  },
+  "route": {
+    "plan": "Planificar Ruta",
+    "from": "Desde",
+    "to": "Hasta",
+    "calculate": "Calcular Ruta",
+    "distance": "Distancia",
+    "duration": "Duración",
+    "restrictions": "Restricciones Encontradas",
+    "alternative": "Ruta Alternativa"
+  },
+  "facilities": {
+    "search": "Buscar Instalaciones",
+    "truck_stop": "Parada de Camiones",
+    "fuel": "Gasolinera",
+    "parking": "Estacionamiento",
+    "restaurant": "Restaurante",
+    "hotel": "Hotel",
+    "restrooms": "Baños",
+    "showers": "Duchas",
+    "near_me": "Cerca de Mí"
+  },
+  "legal": {
+    "title": "Acuerdo Legal Requerido - TruckNav Pro",
+    "description": "Debe aceptar estos términos legales para usar TruckNav Pro",
+    "patent_notice": "TruckNav Pro contiene tecnología patentada propiedad de Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro y Professional Navigation son marcas registradas",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Todos los derechos reservados",
+    "accept": "Acepto Estos Términos",
+    "decline": "No Acepto",
+    "terms_of_service": "Términos de Servicio",
+    "privacy_policy": "Política de Privacidad"
+  },
+  "subscription": {
+    "plans": "Planes de Suscripción",
+    "3month": "Plan de 3 Meses",
+    "6month": "Plan de 6 Meses", 
+    "12month": "Plan de 12 Meses",
+    "lifetime": "Acceso de por Vida",
+    "price_3m": "25,99 €",
+    "price_6m": "49,99 €",
+    "price_12m": "99,99 €",
+    "price_lifetime": "200,00 €",
+    "features": "Características Incluidas",
+    "subscribe": "Suscribirse Ahora"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "language": "Idioma"
+  },
+  "amazon": {
+    "fire_tv": "Optimizado para Fire TV",
+    "fire_tablet": "Optimizado para Fire Tablet",
+    "silk_browser": "Mejorado para Silk Browser",
+    "voice_support": "Navegación por Voz Soportada",
+    "remote_navigation": "Navegación con Control Remoto"
+  }
+}

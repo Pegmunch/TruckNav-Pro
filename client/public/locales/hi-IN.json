@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "पेशेवर ट्रक नेवीगेशन",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "रूट प्लानिंग",
+    "vehicle_setup": "वाहन सेटअप", 
+    "facility_search": "सुविधा खोज",
+    "live_traffic": "लाइव ट्रैफिक",
+    "restrictions": "प्रतिबंध",
+    "settings": "सेटिंग्स"
+  },
+  "vehicle": {
+    "profile": "वाहन प्रोफाइल",
+    "name": "वाहन का नाम",
+    "height": "ऊंचाई",
+    "width": "चौड़ाई", 
+    "length": "लंबाई",
+    "weight": "वजन",
+    "axles": "एक्सल",
+    "hazmat": "खतरनाक सामग्री",
+    "feet": "फीट",
+    "inches": "इंच",
+    "tons": "टन",
+    "save": "प्रोफाइल सेव करें"
+  },
+  "route": {
+    "plan": "रूट प्लान करें",
+    "from": "से",
+    "to": "तक",
+    "calculate": "रूट कैलकुलेट करें",
+    "distance": "दूरी",
+    "duration": "समय",
+    "restrictions": "प्रतिबंध मिले",
+    "alternative": "वैकल्पिक रूट"
+  },
+  "facilities": {
+    "search": "सुविधाएं खोजें",
+    "truck_stop": "ट्रक स्टॉप",
+    "fuel": "फ्यूल स्टेशन",
+    "parking": "पार्किंग",
+    "restaurant": "रेस्तरां",
+    "hotel": "होटल",
+    "restrooms": "शौचालय",
+    "showers": "स्नान",
+    "near_me": "मेरे आस-पास"
+  },
+  "legal": {
+    "title": "कानूनी समझौता आवश्यक - TruckNav Pro",
+    "description": "TruckNav Pro का उपयोग करने के लिए आपको इन कानूनी शर्तों को स्वीकार करना होगा",
+    "patent_notice": "TruckNav Pro में Bespoke Marketing.Ai Ltd के स्वामित्व की पेटेंट तकनीक है",
+    "trademark_notice": "TruckNav Pro और Professional Navigation पंजीकृत ट्रेडमार्क हैं",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. सभी अधिकार सुरक्षित",
+    "accept": "मैं इन शर्तों को स्वीकार करता हूं",
+    "decline": "मैं स्वीकार नहीं करता",
+    "terms_of_service": "सेवा की शर्तें",
+    "privacy_policy": "गोपनीयता नीति"
+  },
+  "subscription": {
+    "plans": "सब्स्क्रिप्शन प्लान",
+    "3month": "3 महीने का प्लान",
+    "6month": "6 महीने का प्लान", 
+    "12month": "12 महीने का प्लान",
+    "lifetime": "लाइफटाइम एक्सेस",
+    "price_3m": "₹2,199",
+    "price_6m": "₹4,199",
+    "price_12m": "₹8,399",
+    "price_lifetime": "₹16,799",
+    "features": "शामिल फीचर्स",
+    "subscribe": "अभी सब्स्क्राइब करें"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "cancel": "रद्द करें",
+    "continue": "जारी रखें",
+    "back": "वापस",
+    "next": "अगला",
+    "save": "सेव करें",
+    "delete": "डिलीट करें",
+    "edit": "एडिट करें",
+    "close": "बंद करें",
+    "search": "खोजें",
+    "filter": "फिल्टर",
+    "language": "भाषा"
+  },
+  "amazon": {
+    "fire_tv": "Fire TV के लिए अनुकूलित",
+    "fire_tablet": "Fire Tablet के लिए अनुकूलित",
+    "silk_browser": "Silk Browser के लिए बेहतर",
+    "voice_support": "वॉइस नेवीगेशन समर्थित",
+    "remote_navigation": "रिमोट कंट्रोल नेवीगेशन"
+  }
+}

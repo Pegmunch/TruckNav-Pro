@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Профессиональная навигация для грузовиков",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Планирование маршрута",
+    "vehicle_setup": "Настройка транспорта", 
+    "facility_search": "Поиск объектов",
+    "live_traffic": "Трафик в реальном времени",
+    "restrictions": "Ограничения",
+    "settings": "Настройки"
+  },
+  "vehicle": {
+    "profile": "Профиль транспорта",
+    "name": "Название транспорта",
+    "height": "Высота",
+    "width": "Ширина", 
+    "length": "Длина",
+    "weight": "Вес",
+    "axles": "Оси",
+    "hazmat": "Опасные грузы",
+    "feet": "футы",
+    "inches": "дюймы",
+    "tons": "тонны",
+    "save": "Сохранить профиль"
+  },
+  "route": {
+    "plan": "Планировать маршрут",
+    "from": "Откуда",
+    "to": "Куда",
+    "calculate": "Рассчитать маршрут",
+    "distance": "Расстояние",
+    "duration": "Продолжительность",
+    "restrictions": "Найдены ограничения",
+    "alternative": "Альтернативный маршрут"
+  },
+  "facilities": {
+    "search": "Поиск объектов",
+    "truck_stop": "Стоянка грузовиков",
+    "fuel": "Заправка",
+    "parking": "Парковка",
+    "restaurant": "Ресторан",
+    "hotel": "Отель",
+    "restrooms": "Туалеты",
+    "showers": "Душевые",
+    "near_me": "Рядом со мной"
+  },
+  "legal": {
+    "title": "Требуется правовое соглашение - TruckNav Pro",
+    "description": "Вы должны принять эти правовые условия для использования TruckNav Pro",
+    "patent_notice": "TruckNav Pro содержит запатентованную технологию, принадлежащую Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro и Professional Navigation являются зарегистрированными торговыми марками",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Все права защищены",
+    "accept": "Я принимаю эти условия",
+    "decline": "Я не принимаю",
+    "terms_of_service": "Условия обслуживания",
+    "privacy_policy": "Политика конфиденциальности"
+  },
+  "subscription": {
+    "plans": "Планы подписки",
+    "3month": "План на 3 месяца",
+    "6month": "План на 6 месяцев", 
+    "12month": "План на 12 месяцев",
+    "lifetime": "Пожизненный доступ",
+    "price_3m": "2490 ₽",
+    "price_6m": "4890 ₽",
+    "price_12m": "9790 ₽",
+    "price_lifetime": "19590 ₽",
+    "features": "Включенные функции",
+    "subscribe": "Подписаться сейчас"
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех",
+    "cancel": "Отмена",
+    "continue": "Продолжить",
+    "back": "Назад",
+    "next": "Далее",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "close": "Закрыть",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "language": "Язык"
+  },
+  "amazon": {
+    "fire_tv": "Оптимизировано для Fire TV",
+    "fire_tablet": "Оптимизировано для Fire Tablet",
+    "silk_browser": "Улучшено для браузера Silk",
+    "voice_support": "Поддержка голосовой навигации",
+    "remote_navigation": "Навигация с пульта"
+  }
+}

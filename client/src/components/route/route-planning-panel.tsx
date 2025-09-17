@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,8 @@ interface RoutePlanningPanelProps {
   selectedProfile: VehicleProfile | null;
 }
 
-export default function RoutePlanningPanel({
+// Memoized for mobile performance - prevents unnecessary re-renders
+const RoutePlanningPanel = memo(function RoutePlanningPanel({
   fromLocation,
   toLocation,
   onFromLocationChange,
@@ -53,31 +54,36 @@ export default function RoutePlanningPanel({
     enabled: !!selectedProfile,
   });
 
+  // Memoize expensive calculations for mobile performance
+  const restrictionsToAvoid = useMemo(() => {
+    if (!selectedProfile || !restrictions.length) return [];
+    
+    return restrictions.filter((restriction: Restriction) => {
+      switch (restriction.type) {
+        case 'height':
+          return selectedProfile.height >= restriction.limit;
+        case 'width':
+          return selectedProfile.width >= restriction.limit;
+        case 'weight':
+          return selectedProfile.weight && selectedProfile.weight >= restriction.limit;
+        default:
+          return false;
+      }
+    });
+  }, [selectedProfile, restrictions]);
+
+  // Memoize duration formatting to prevent recalculation
+  const formatDuration = useCallback((minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  }, []);
+
   // Get facilities along the route
   const { data: facilities = [] } = useQuery<Facility[]>({
     queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
-  const restrictionsToAvoid = restrictions.filter((restriction: Restriction) => {
-    if (!selectedProfile) return false;
-    
-    switch (restriction.type) {
-      case 'height':
-        return selectedProfile.height >= restriction.limit;
-      case 'width':
-        return selectedProfile.width >= restriction.limit;
-      case 'weight':
-        return selectedProfile.weight && selectedProfile.weight >= restriction.limit;
-      default:
-        return false;
-    }
-  });
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
 
   return (
     <div className="w-full md:w-80 bg-card md:border-r border-border flex flex-col min-h-full overflow-y-auto touch-scroll">
@@ -292,4 +298,6 @@ export default function RoutePlanningPanel({
       </div>
     </div>
   );
-}
+});
+
+export default RoutePlanningPanel;

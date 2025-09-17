@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Profesyonel Kamyon Navigasyonu",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Rota Planlama",
+    "vehicle_setup": "Araç Kurulumu", 
+    "facility_search": "Tesis Arama",
+    "live_traffic": "Canlı Trafik",
+    "restrictions": "Kısıtlamalar",
+    "settings": "Ayarlar"
+  },
+  "vehicle": {
+    "profile": "Araç Profili",
+    "name": "Araç Adı",
+    "height": "Yükseklik",
+    "width": "Genişlik", 
+    "length": "Uzunluk",
+    "weight": "Ağırlık",
+    "axles": "Akslar",
+    "hazmat": "Tehlikeli Maddeler",
+    "feet": "fit",
+    "inches": "inç",
+    "tons": "ton",
+    "save": "Profili Kaydet"
+  },
+  "route": {
+    "plan": "Rota Planla",
+    "from": "Nereden",
+    "to": "Nereye",
+    "calculate": "Rotayı Hesapla",
+    "distance": "Mesafe",
+    "duration": "Süre",
+    "restrictions": "Kısıtlamalar Bulundu",
+    "alternative": "Alternatif Rota"
+  },
+  "facilities": {
+    "search": "Tesis Ara",
+    "truck_stop": "Kamyon Durağı",
+    "fuel": "Benzin İstasyonu",
+    "parking": "Park Yeri",
+    "restaurant": "Restoran",
+    "hotel": "Otel",
+    "restrooms": "Tuvaletler",
+    "showers": "Duşlar",
+    "near_me": "Yakınımda"
+  },
+  "legal": {
+    "title": "Yasal Anlaşma Gerekli - TruckNav Pro",
+    "description": "TruckNav Pro'yu kullanmak için bu yasal koşulları kabul etmelisiniz",
+    "patent_notice": "TruckNav Pro, Bespoke Marketing.Ai Ltd'ye ait patentli teknoloji içerir",
+    "trademark_notice": "TruckNav Pro ve Professional Navigation tescilli ticari markalardır",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Tüm hakları saklıdır",
+    "accept": "Bu Koşulları Kabul Ediyorum",
+    "decline": "Kabul Etmiyorum",
+    "terms_of_service": "Hizmet Koşulları",
+    "privacy_policy": "Gizlilik Politikası"
+  },
+  "subscription": {
+    "plans": "Abonelik Planları",
+    "3month": "3 Aylık Plan",
+    "6month": "6 Aylık Plan", 
+    "12month": "12 Aylık Plan",
+    "lifetime": "Yaşam Boyu Erişim",
+    "price_3m": "899 ₺",
+    "price_6m": "1.699 ₺",
+    "price_12m": "3.399 ₺",
+    "price_lifetime": "6.799 ₺",
+    "features": "Dahil Edilen Özellikler",
+    "subscribe": "Şimdi Abone Ol"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "cancel": "İptal",
+    "continue": "Devam Et",
+    "back": "Geri",
+    "next": "İleri",
+    "save": "Kaydet",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "language": "Dil"
+  },
+  "amazon": {
+    "fire_tv": "Fire TV için optimize edildi",
+    "fire_tablet": "Fire Tablet için optimize edildi",
+    "silk_browser": "Silk Browser için geliştirildi",
+    "voice_support": "Sesli navigasyon desteklenir",
+    "remote_navigation": "Uzaktan kumanda navigasyonu"
+  }
+}

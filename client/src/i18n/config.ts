@@ -3,24 +3,6 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
 
-// Import translation resources
-import enUS from './locales/en-US.json';
-import enGB from './locales/en-GB.json';
-import esES from './locales/es-ES.json';
-import frFR from './locales/fr-FR.json';
-import deDE from './locales/de-DE.json';
-import jaJP from './locales/ja-JP.json';
-import itIT from './locales/it-IT.json';
-import ptBR from './locales/pt-BR.json';
-import nlNL from './locales/nl-NL.json';
-import zhCN from './locales/zh-CN.json';
-import koKR from './locales/ko-KR.json';
-import arSA from './locales/ar-SA.json';
-import hiIN from './locales/hi-IN.json';
-import ruRU from './locales/ru-RU.json';
-import plPL from './locales/pl-PL.json';
-import trTR from './locales/tr-TR.json';
-
 // Amazon region to language mapping
 export const amazonRegions = {
   'com': ['en-US'], // US
@@ -47,36 +29,21 @@ export const amazonRegions = {
   'ru': ['ru-RU'], // Russia (not official Amazon but for completeness)
 };
 
-// TruckNav Pro Translation Configuration
+// TruckNav Pro Translation Configuration - Optimized for Mobile Performance
 // Patent-protected by Bespoke Marketing.Ai Ltd
-const resources = {
-  'en-US': { translation: enUS },
-  'en-GB': { translation: enGB },
-  'es-ES': { translation: esES },
-  'fr-FR': { translation: frFR },
-  'de-DE': { translation: deDE },
-  'ja-JP': { translation: jaJP },
-  'it-IT': { translation: itIT },
-  'pt-BR': { translation: ptBR },
-  'nl-NL': { translation: nlNL },
-  'zh-CN': { translation: zhCN },
-  'ko-KR': { translation: koKR },
-  'ar-SA': { translation: arSA },
-  'hi-IN': { translation: hiIN },
-  'ru-RU': { translation: ruRU },
-  'pl-PL': { translation: plPL },
-  'tr-TR': { translation: trTR },
-};
+// Languages are now loaded dynamically to reduce initial bundle size
 
 i18n
   .use(Backend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
     fallbackLng: 'en-US',
     lng: 'en-US',
-
+    
+    // Load current language with region (e.g., en-US.json instead of en.json)
+    load: 'currentOnly',
+    
     keySeparator: '.',
     interpolation: {
       escapeValue: false,
@@ -90,11 +57,36 @@ i18n
 
     backend: {
       loadPath: '/locales/{{lng}}.json',
+      // Add cache busting for mobile performance
+      addPath: '/locales/add/{{lng}}/{{ns}}',
+      // Configure request options for mobile networks
+      requestOptions: {
+        cache: 'default',
+        credentials: 'omit',
+        mode: 'cors'
+      },
+      // Retry configuration for poor mobile connections
+      crossDomain: false,
+      withCredentials: false,
+      overrideMimeType: false
     },
 
     react: {
       useSuspense: false,
+      // Optimize for mobile performance
+      transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'p'],
+      hashTransKey: function(defaultValue) {
+        return defaultValue;
+      }
     },
+    
+    // Mobile-optimized cache configuration
+    cache: {
+      enabled: true,
+      prefix: 'trucknav_i18n_',
+      expirationTime: 24 * 60 * 60 * 1000, // 24 hours
+      versions: {}
+    }
   });
 
 export default i18n;

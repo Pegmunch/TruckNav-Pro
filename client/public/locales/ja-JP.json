@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "プロフェッショナルトラックナビゲーション",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "ルート計画",
+    "vehicle_setup": "車両設定", 
+    "facility_search": "施設検索",
+    "live_traffic": "リアルタイム交通情報",
+    "restrictions": "制限",
+    "settings": "設定"
+  },
+  "vehicle": {
+    "profile": "車両プロファイル",
+    "name": "車両名",
+    "height": "高さ",
+    "width": "幅", 
+    "length": "長さ",
+    "weight": "重量",
+    "axles": "車軸",
+    "hazmat": "危険物",
+    "feet": "フィート",
+    "inches": "インチ",
+    "tons": "トン",
+    "save": "プロファイルを保存"
+  },
+  "route": {
+    "plan": "ルートを計画",
+    "from": "出発地",
+    "to": "目的地",
+    "calculate": "ルートを計算",
+    "distance": "距離",
+    "duration": "所要時間",
+    "restrictions": "制限が見つかりました",
+    "alternative": "代替ルート"
+  },
+  "facilities": {
+    "search": "施設を検索",
+    "truck_stop": "トラックストップ",
+    "fuel": "ガソリンスタンド",
+    "parking": "駐車場",
+    "restaurant": "レストラン",
+    "hotel": "ホテル",
+    "restrooms": "トイレ",
+    "showers": "シャワー",
+    "near_me": "近くの施設"
+  },
+  "legal": {
+    "title": "法的合意が必要 - TruckNav Pro",
+    "description": "TruckNav Proを使用するには、これらの法的条件に同意する必要があります",
+    "patent_notice": "TruckNav ProにはBespoke Marketing.Ai Ltdが所有する特許技術が含まれています",
+    "trademark_notice": "TruckNav ProとProfessional Navigationは登録商標です",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. 全著作権所有",
+    "accept": "これらの条件に同意します",
+    "decline": "同意しません",
+    "terms_of_service": "利用規約",
+    "privacy_policy": "プライバシーポリシー"
+  },
+  "subscription": {
+    "plans": "サブスクリプションプラン",
+    "3month": "3ヶ月プラン",
+    "6month": "6ヶ月プラン", 
+    "12month": "12ヶ月プラン",
+    "lifetime": "生涯アクセス",
+    "price_3m": "¥3,999",
+    "price_6m": "¥7,999",
+    "price_12m": "¥15,999",
+    "price_lifetime": "¥32,000",
+    "features": "含まれる機能",
+    "subscribe": "今すぐ購読"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "cancel": "キャンセル",
+    "continue": "続行",
+    "back": "戻る",
+    "next": "次へ",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "search": "検索",
+    "filter": "フィルター",
+    "language": "言語"
+  },
+  "amazon": {
+    "fire_tv": "Fire TV用に最適化",
+    "fire_tablet": "Fire Tablet用に最適化",
+    "silk_browser": "Silk Browser用に強化",
+    "voice_support": "音声ナビゲーションサポート",
+    "remote_navigation": "リモコンナビゲーション"
+  }
+}

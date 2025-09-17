@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,12 @@ interface LanguageSelectorProps {
   className?: string;
 }
 
-export default function LanguageSelector({ variant = 'dropdown', className = '' }: LanguageSelectorProps) {
+// Memoized for mobile performance - prevents re-renders when parent components update
+const LanguageSelector = memo(function LanguageSelector({ variant = 'dropdown', className = '' }: LanguageSelectorProps) {
   const { i18n, t } = useTranslation();
 
-  const languages = [
+  // Memoize languages array to prevent recreation on every render
+  const languages = useMemo(() => [
     { code: 'en-US', name: 'English (US)', flag: '🇺🇸', amazonRegion: 'com' },
     { code: 'en-GB', name: 'English (UK)', flag: '🇬🇧', amazonRegion: 'co.uk' },
     { code: 'de-DE', name: 'Deutsch', flag: '🇩🇪', amazonRegion: 'de' },
@@ -29,9 +32,13 @@ export default function LanguageSelector({ variant = 'dropdown', className = '' 
     { code: 'ru-RU', name: 'Русский', flag: '🇷🇺', amazonRegion: 'ru' },
     { code: 'pl-PL', name: 'Polski', flag: '🇵🇱', amazonRegion: 'pl' },
     { code: 'tr-TR', name: 'Türkçe', flag: '🇹🇷', amazonRegion: 'com.tr' },
-  ];
+  ], []);
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+  // Memoize current language lookup
+  const currentLanguage = useMemo(() => 
+    languages.find(lang => lang.code === i18n.language) || languages[0],
+    [languages, i18n.language]
+  );
 
   const handleLanguageChange = (languageCode: string) => {
     i18n.changeLanguage(languageCode);
@@ -91,10 +98,12 @@ export default function LanguageSelector({ variant = 'dropdown', className = '' 
       </SelectContent>
     </Select>
   );
-}
+});
 
-// Amazon Fire TV specific language selector for remote navigation
-export function FireTVLanguageSelector() {
+export default LanguageSelector;
+
+// Amazon Fire TV specific language selector for remote navigation - also memoized
+export const FireTVLanguageSelector = memo(function FireTVLanguageSelector() {
   const { i18n, t } = useTranslation();
 
   const languages = [
@@ -131,4 +140,4 @@ export function FireTVLanguageSelector() {
       ))}
     </div>
   );
-}
+});
