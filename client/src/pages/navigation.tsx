@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Plus, Minus, Crosshair } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Truck, Navigation, MapPin, Shield, Fuel, Utensils, Bed, Heart, Plus, Minus, Crosshair, TestTube, CheckCircle, AlertTriangle } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
 import InteractiveMap from "@/components/map/interactive-map";
 import RoutePlanningPanel from "@/components/route/route-planning-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
-import { CompactThemeSelector } from "@/components/theme/theme-selector";
+import { CompactThemeSelector, ThemeSelector } from "@/components/theme/theme-selector";
+import { GrayscaleSelector } from "@/components/theme/grayscale-selector";
+import AccessibilityTest from "@/components/theme/accessibility-test";
+import UIComponentTest from "@/components/theme/ui-component-test";
+import EdgeCaseTest from "@/components/theme/edge-case-test";
+import AccessibilitySummary from "@/components/theme/accessibility-summary";
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { type VehicleProfile, type Route } from "@shared/schema";
@@ -26,6 +32,8 @@ export default function NavigationPage() {
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("Manchester M1 Industrial Estate");
   const [toLocation, setToLocation] = useState("Birmingham B1 Logistics Hub");
+  const [activeTab, setActiveTab] = useState("navigation");
+  const [showTestingMode, setShowTestingMode] = useState(false);
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
@@ -105,6 +113,15 @@ export default function NavigationPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowTestingMode(!showTestingMode)}
+              data-testid="button-testing-mode"
+              className={showTestingMode ? "bg-secondary" : ""}
+            >
+              <TestTube className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowProfileSetup(true)}
               data-testid="button-settings"
             >
@@ -115,30 +132,161 @@ export default function NavigationPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col md:flex-row min-h-screen">
-        {/* Route Planning Panel */}
-        <div className="w-full md:w-96 bg-card md:border-r border-b md:border-b-0">
-          <RoutePlanningPanel
-            fromLocation={fromLocation}
-            toLocation={toLocation}
-            onFromLocationChange={setFromLocation}
-            onToLocationChange={setToLocation}
-            onPlanRoute={handlePlanRoute}
-            onStartNavigation={handleStartNavigation}
-            currentRoute={currentRoute}
-            isCalculating={calculateRouteMutation.isPending}
-            selectedProfile={selectedProfile}
-          />
-        </div>
+      {!showTestingMode ? (
+        <div className="flex flex-col md:flex-row min-h-screen">
+          {/* Route Planning Panel */}
+          <div className="w-full md:w-96 bg-card md:border-r border-b md:border-b-0">
+            <RoutePlanningPanel
+              fromLocation={fromLocation}
+              toLocation={toLocation}
+              onFromLocationChange={setFromLocation}
+              onToLocationChange={setToLocation}
+              onPlanRoute={handlePlanRoute}
+              onStartNavigation={handleStartNavigation}
+              currentRoute={currentRoute}
+              isCalculating={calculateRouteMutation.isPending}
+              selectedProfile={selectedProfile}
+            />
+          </div>
 
-        {/* Map */}
-        <div className="flex-1 min-h-[50vh] md:min-h-screen">
-          <InteractiveMap
-            currentRoute={currentRoute}
-            selectedProfile={selectedProfile}
-          />
+          {/* Map */}
+          <div className="flex-1 min-h-[50vh] md:min-h-screen">
+            <InteractiveMap
+              currentRoute={currentRoute}
+              selectedProfile={selectedProfile}
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="min-h-screen bg-background">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <div className="border-b border-border bg-background">
+              <TabsList className="w-full justify-start bg-transparent h-12 p-0 space-x-0">
+                <TabsTrigger 
+                  value="navigation" 
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  data-testid="tab-navigation"
+                >
+                  <Navigation className="w-4 h-4 mr-2" />
+                  Navigation
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="accessibility" 
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  data-testid="tab-accessibility"
+                >
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Accessibility Testing
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="theme-controls" 
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  data-testid="tab-theme-controls"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Theme Controls
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="ui-components" 
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  data-testid="tab-ui-components"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  UI Components
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="edge-cases" 
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  data-testid="tab-edge-cases"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Edge Cases
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="summary" 
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  data-testid="tab-summary"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Summary
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="navigation" className="mt-0">
+              <div className="flex flex-col md:flex-row min-h-screen">
+                {/* Route Planning Panel */}
+                <div className="w-full md:w-96 bg-card md:border-r border-b md:border-b-0">
+                  <RoutePlanningPanel
+                    fromLocation={fromLocation}
+                    toLocation={toLocation}
+                    onFromLocationChange={setFromLocation}
+                    onToLocationChange={setToLocation}
+                    onPlanRoute={handlePlanRoute}
+                    onStartNavigation={handleStartNavigation}
+                    currentRoute={currentRoute}
+                    isCalculating={calculateRouteMutation.isPending}
+                    selectedProfile={selectedProfile}
+                  />
+                </div>
+
+                {/* Map */}
+                <div className="flex-1 min-h-[50vh] md:min-h-screen">
+                  <InteractiveMap
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="accessibility" className="mt-0 p-6">
+              <div className="max-w-4xl mx-auto">
+                <AccessibilityTest />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="theme-controls" className="mt-0 p-6">
+              <div className="max-w-2xl mx-auto space-y-6">
+                <Card>
+                  <CardHeader>
+                    <h3 className="text-xl font-semibold">Theme Selection</h3>
+                    <p className="text-muted-foreground">
+                      Test different theme modes and grayscale combinations for accessibility compliance.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <ThemeSelector showGrayscale={true} />
+                    <Separator />
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Standalone Grayscale Controls</h4>
+                      <GrayscaleSelector showLabel={true} showReset={true} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ui-components" className="mt-0 p-6">
+              <div className="max-w-6xl mx-auto">
+                <UIComponentTest />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="edge-cases" className="mt-0 p-6">
+              <div className="max-w-4xl mx-auto">
+                <EdgeCaseTest />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="summary" className="mt-0 p-6">
+              <div className="max-w-4xl mx-auto">
+                <AccessibilitySummary />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
 
 
       {/* Vehicle Profile Setup Modal */}
