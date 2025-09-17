@@ -22,13 +22,13 @@ interface InteractiveMapProps {
 export default function InteractiveMap({ currentRoute, selectedProfile }: InteractiveMapProps) {
   // Get restrictions for the current view
   const { data: restrictions = [] } = useQuery<Restriction[]>({
-    queryKey: ["/api/restrictions", { north: 54, south: 50, east: 2, west: -6 }],
+    queryKey: ["/api/restrictions?north=54&south=50&east=2&west=-6"],
     enabled: !!selectedProfile,
   });
 
   // Get facilities for the current view
   const { data: facilities = [] } = useQuery<Facility[]>({
-    queryKey: ["/api/facilities", { lat: 52.5, lng: -1.5, radius: 50 }],
+    queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
   return (

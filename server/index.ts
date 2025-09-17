@@ -7,10 +7,9 @@ import { sessionConfig } from "./middleware/session-security";
 
 const app = express();
 
-// Trust proxy for production deployments behind reverse proxies/CDNs
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
+// Trust proxy for deployments behind reverse proxies/CDNs (including Replit)
+// Replit runs behind a proxy even in development
+app.set('trust proxy', 1);
 
 // Enhanced session security with PostgreSQL store (must be before CSRF)
 app.use(session(sessionConfig));

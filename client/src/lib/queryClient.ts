@@ -1,5 +1,16 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Store CSRF token in memory
+let csrfToken: string | null = null;
+
+// Function to extract CSRF token from response headers
+function extractCSRFToken(res: Response) {
+  const token = res.headers.get('X-CSRF-Token');
+  if (token) {
+    csrfToken = token;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,12 +23,27 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Build headers
+  const headers: Record<string, string> = {};
+  
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  // Include CSRF token for state-changing requests
+  if (method !== 'GET' && method !== 'OPTIONS' && csrfToken) {
+    headers["X-CSRF-Token"] = csrfToken;
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  // Extract CSRF token from response headers
+  extractCSRFToken(res);
 
   await throwIfResNotOk(res);
   return res;
@@ -32,6 +58,9 @@ export const getQueryFn: <T>(options: {
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
     });
+
+    // Extract CSRF token from response headers (for GET requests)
+    extractCSRFToken(res);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
