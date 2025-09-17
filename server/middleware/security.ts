@@ -63,7 +63,7 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
 // Different rate limits for different endpoints
 export const generalRateLimit = createRateLimiter(
   15 * 60 * 1000, // 15 minutes
-  100, // limit each IP to 100 requests per windowMs
+  process.env.NODE_ENV === 'development' ? 1000 : 100, // Higher limit for development
   'Too many requests from this IP, please try again later.'
 );
 
@@ -75,7 +75,7 @@ export const authRateLimit = createRateLimiter(
 
 export const apiRateLimit = createRateLimiter(
   1 * 60 * 1000, // 1 minute
-  50, // limit each IP to 50 API requests per minute
+  process.env.NODE_ENV === 'development' ? 500 : 50, // Higher limit for development
   'API rate limit exceeded. Please slow down your requests.'
 );
 
