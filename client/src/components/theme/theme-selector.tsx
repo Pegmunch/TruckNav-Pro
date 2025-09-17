@@ -1,9 +1,13 @@
 import { useTheme } from "./theme-provider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
-import { Sun, Moon, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Sun, Moon, Clock, Settings, MapPin, Thermometer, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GrayscaleSelector } from "./grayscale-selector";
+import { AutoThemeSettings } from "./auto-theme-settings";
+import { formatTimeInfo } from "@/lib/auto-theme-utils";
 
 interface ThemeOption {
   value: "day" | "night" | "auto";
@@ -39,6 +43,8 @@ interface ThemeSelectorProps {
   size?: "default" | "sm" | "lg";
   variant?: "default" | "outline";
   showGrayscale?: boolean;
+  showAutoSettings?: boolean;
+  showAutoStatus?: boolean;
 }
 
 export function ThemeSelector({ 
@@ -46,9 +52,19 @@ export function ThemeSelector({
   showLabels = true,
   size = "default",
   variant = "outline",
-  showGrayscale = true
+  showGrayscale = true,
+  showAutoSettings = true,
+  showAutoStatus = true
 }: ThemeSelectorProps) {
-  const { currentTheme, setTheme, effectiveTheme } = useTheme();
+  const { 
+    currentTheme, 
+    setTheme, 
+    effectiveTheme,
+    autoThemeConfig,
+    timeInfo,
+    coordinates,
+    isLocationLoading
+  } = useTheme();
 
   const handleThemeChange = (value: string) => {
     if (value && (value === "day" || value === "night" || value === "auto")) {
@@ -132,8 +148,82 @@ export function ThemeSelector({
         </>
       )}
       
-      {/* Optional status text for auto mode */}
-      {currentTheme === "auto" && (
+      {/* Enhanced auto-theme status and settings */}
+      {currentTheme === "auto" && showAutoStatus && (
+        <>
+          <Separator className="my-2" />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-muted-foreground">Auto-Theme Status</h4>
+              {showAutoSettings && (
+                <AutoThemeSettings
+                  showTrigger={true}
+                  triggerVariant="ghost"
+                  className="h-7 px-2 text-xs"
+                />
+              )}
+            </div>
+            
+            {/* Current theme status */}
+            <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+              <div className="flex items-center gap-2">
+                {effectiveTheme === "night" ? (
+                  <Moon className="w-4 h-4 text-blue-500" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-500" />
+                )}
+                <span className="text-sm font-medium">
+                  {effectiveTheme === "night" ? "Dark" : "Light"} Theme
+                </span>
+              </div>
+              <Badge variant={effectiveTheme === "night" ? "secondary" : "default"}>
+                {timeInfo?.source || "Active"}
+              </Badge>
+            </div>
+            
+            {/* Enhanced status information */}
+            {timeInfo && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Timer className="w-3 h-3" />
+                  <span>{formatTimeInfo(timeInfo)}</span>
+                </div>
+                
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="w-3 h-3" />
+                  <span>
+                    Next switch in {timeInfo.timeUntilNextSwitch} min
+                  </span>
+                </div>
+                
+                {/* Location status */}
+                {autoThemeConfig.useGeolocation && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    <span>
+                      {coordinates ? "GPS enabled" : isLocationLoading ? "Getting location..." : "GPS pending"}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Color temperature status */}
+                {autoThemeConfig.enableColorTemperature && effectiveTheme === "night" && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Thermometer className="w-3 h-3" />
+                    <span>
+                      Warm colors ({autoThemeConfig.warmTemperatureStrength}%)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <Separator className="my-2" />
+        </>
+      )}
+      
+      {/* Simplified status for when showAutoStatus is false */}
+      {currentTheme === "auto" && !showAutoStatus && (
         <div className="text-center">
           <p className="text-xs text-muted-foreground" data-testid="auto-status">
             Currently using{" "}

@@ -1,4 +1,13 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { 
+  AutoThemeConfig, 
+  loadAutoThemeConfig, 
+  saveAutoThemeConfig,
+  getCurrentTimeInfo,
+  getCurrentPosition,
+  generateColorTemperatureCSS,
+  TimeInfo
+} from "@/lib/auto-theme-utils";
 
 export type ThemeMode = "day" | "night" | "auto";
 export type EffectiveTheme = "day" | "night";
@@ -10,6 +19,13 @@ interface ThemeContextType {
   isAutoMode: boolean;
   grayL: number | null;
   setGrayL: (grayL: number | null) => void;
+  // Enhanced auto-theme properties
+  autoThemeConfig: AutoThemeConfig;
+  setAutoThemeConfig: (config: AutoThemeConfig) => void;
+  timeInfo: TimeInfo | null;
+  coordinates: { latitude: number; longitude: number } | null;
+  requestLocation: () => Promise<void>;
+  isLocationLoading: boolean;
 }
 
 // WCAG contrast calculation utilities
@@ -124,20 +140,36 @@ export function ThemeProvider({
     return null;
   });
 
-  // Check if current time is between 6 PM (18:00) and 6 AM (06:00)
-  const isNightTime = useCallback((): boolean => {
-    const now = new Date();
-    const hour = now.getHours();
-    return hour >= 18 || hour < 6;
+  // Enhanced auto-theme state
+  const [autoThemeConfig, setAutoThemeConfigState] = useState<AutoThemeConfig>(() => loadAutoThemeConfig());
+  const [timeInfo, setTimeInfo] = useState<TimeInfo | null>(null);
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+
+  // Request location for geolocation-based themes
+  const requestLocation = useCallback(async () => {
+    setIsLocationLoading(true);
+    try {
+      const position = await getCurrentPosition();
+      const coords = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+      setCoordinates(coords);
+    } catch (error) {
+      console.warn("Failed to get location:", error);
+    } finally {
+      setIsLocationLoading(false);
+    }
   }, []);
 
-  // Get system preference
-  const getSystemPreference = useCallback((): EffectiveTheme => {
-    if (typeof window === "undefined") return "day";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "day";
+  // Set auto-theme config and save to storage
+  const setAutoThemeConfig = useCallback((config: AutoThemeConfig) => {
+    setAutoThemeConfigState(config);
+    saveAutoThemeConfig(config);
   }, []);
 
-  // Calculate effective theme based on current mode
+  // Enhanced theme calculation using new utilities
   const calculateEffectiveTheme = useCallback((mode: ThemeMode): EffectiveTheme => {
     switch (mode) {
       case "day":
@@ -145,15 +177,26 @@ export function ThemeProvider({
       case "night":
         return "night";
       case "auto":
-        // For auto mode, check time first, then fall back to system preference
-        if (isNightTime()) {
-          return "night";
-        }
-        return getSystemPreference();
+        // Use enhanced auto-theme utilities
+        const currentTimeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
+        setTimeInfo(currentTimeInfo);
+        return currentTimeInfo.currentTheme;
       default:
         return "day";
     }
-  }, [isNightTime, getSystemPreference]);
+  }, [autoThemeConfig, coordinates]);
+
+  // Legacy compatibility methods (for existing components)
+  const isNightTime = useCallback((): boolean => {
+    const now = new Date();
+    const hour = now.getHours();
+    return hour >= autoThemeConfig.nightStartHour || hour < autoThemeConfig.dayStartHour;
+  }, [autoThemeConfig]);
+
+  const getSystemPreference = useCallback((): EffectiveTheme => {
+    if (typeof window === "undefined") return "day";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "day";
+  }, []);
 
   // Apply grayscale CSS overrides to document root
   const applyGrayscaleOverrides = useCallback((grayValue: number | null, isDark: boolean) => {
@@ -215,11 +258,12 @@ export function ThemeProvider({
     }
   }, []);
   
-  // Apply theme to DOM
+  // Apply theme to DOM with enhanced color temperature support
   const applyTheme = useCallback((theme: EffectiveTheme, grayValue?: number | null) => {
     if (typeof document === "undefined") return;
     
     const root = document.documentElement;
+    const style = root.style;
     const isDark = theme === "night";
     
     if (isDark) {
@@ -231,7 +275,23 @@ export function ThemeProvider({
     // Apply grayscale overrides if specified
     const currentGrayL = grayValue !== undefined ? grayValue : grayL;
     applyGrayscaleOverrides(currentGrayL, isDark);
-  }, [grayL, applyGrayscaleOverrides]);
+    
+    // Apply color temperature adjustments if enabled and timeInfo is available
+    if (autoThemeConfig.enableColorTemperature && timeInfo) {
+      const colorTempCSS = generateColorTemperatureCSS(timeInfo, autoThemeConfig);
+      
+      // Apply color temperature CSS variables
+      Object.entries(colorTempCSS).forEach(([property, value]) => {
+        style.setProperty(property, value);
+      });
+    } else {
+      // Remove color temperature overrides
+      const tempProps = ['--theme-bg-temp', '--theme-fg-temp', '--theme-temp-filter'];
+      tempProps.forEach(prop => {
+        style.removeProperty(prop);
+      });
+    }
+  }, [grayL, applyGrayscaleOverrides, autoThemeConfig, timeInfo]);
 
   // Update effective theme and apply to DOM
   const updateEffectiveTheme = useCallback(() => {
@@ -280,17 +340,19 @@ export function ThemeProvider({
     updateEffectiveTheme();
   }, [updateEffectiveTheme]);
 
-  // Set up listeners for auto mode
+  // Set up enhanced listeners for auto mode with configurable intervals
   useEffect(() => {
     let timeInterval: ReturnType<typeof setInterval> | null = null;
     let mediaQueryList: MediaQueryList | null = null;
     let handleSystemChange: (() => void) | null = null;
 
     if (currentTheme === "auto") {
-      // Update every minute to check for time changes (6 PM to 6 AM transitions)
+      // Use configurable update interval from auto-theme config
+      const intervalMs = autoThemeConfig.updateInterval * 1000; // Convert seconds to milliseconds
+      
       timeInterval = setInterval(() => {
         updateEffectiveTheme();
-      }, 60000); // 60 seconds
+      }, intervalMs);
 
       // Listen for system preference changes
       if (typeof window !== "undefined") {
@@ -323,7 +385,7 @@ export function ThemeProvider({
         }
       }
     };
-  }, [currentTheme, updateEffectiveTheme]);
+  }, [currentTheme, updateEffectiveTheme, autoThemeConfig.updateInterval]);
 
   // Listen for visibility changes to update theme when tab becomes active
   useEffect(() => {
@@ -348,6 +410,13 @@ export function ThemeProvider({
     isAutoMode: currentTheme === "auto",
     grayL,
     setGrayL,
+    // Enhanced auto-theme values
+    autoThemeConfig,
+    setAutoThemeConfig,
+    timeInfo,
+    coordinates,
+    requestLocation,
+    isLocationLoading,
   };
 
   return (
