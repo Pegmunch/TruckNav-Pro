@@ -14,14 +14,16 @@ import {
   Navigation
 } from "lucide-react";
 import { type Route, type VehicleProfile, type Restriction, type Facility } from "@shared/schema";
+import NextManeuverGuidance from "@/components/route/next-maneuver-guidance";
 
 interface InteractiveMapProps {
   currentRoute: Route | null;
   selectedProfile: VehicleProfile | null;
+  onOpenLaneSelection?: () => void;
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
-const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProfile }: InteractiveMapProps) {
+const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProfile, onOpenLaneSelection }: InteractiveMapProps) {
   const [zoomLevel, setZoomLevel] = useState(10); // Default zoom level
   
   // Get restrictions for the current view
@@ -193,6 +195,16 @@ const InteractiveMap = memo(function InteractiveMap({ currentRoute, selectedProf
           </div>
         </div>
       ))}
+
+      {/* Next Maneuver Guidance Overlay */}
+      {currentRoute && (
+        <div className="absolute top-4 left-4 right-4 z-20">
+          <NextManeuverGuidance
+            currentRoute={currentRoute}
+            onOpenLaneSelection={onOpenLaneSelection}
+          />
+        </div>
+      )}
 
       {/* Bottom Info Bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">

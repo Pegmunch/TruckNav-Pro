@@ -166,6 +166,7 @@ export default function NavigationPage() {
             <InteractiveMap
               currentRoute={currentRoute}
               selectedProfile={selectedProfile}
+              onOpenLaneSelection={handleOpenLaneSelection}
             />
           </div>
         </div>
@@ -248,6 +249,7 @@ export default function NavigationPage() {
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile}
+                    onOpenLaneSelection={handleOpenLaneSelection}
                   />
                 </div>
               </div>
