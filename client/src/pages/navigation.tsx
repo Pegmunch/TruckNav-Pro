@@ -73,7 +73,7 @@ export default function NavigationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background scroll-smooth no-scroll-lock">
+    <div className="min-h-screen bg-background overflow-auto">
       {/* Header */}
       <header className="bg-card shadow-sm border-b border-border sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 py-3">
@@ -111,9 +111,9 @@ export default function NavigationPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex min-h-[calc(100vh-73px)] touch-scroll">
+      <div className="flex flex-col md:flex-row overflow-auto">
         {/* Route Planning Panel */}
-        <div className="flex-shrink-0 overflow-y-auto touch-scroll">
+        <div className="w-full md:w-80 md:flex-shrink-0 overflow-y-auto">
           <RoutePlanningPanel
             fromLocation={fromLocation}
             toLocation={toLocation}
