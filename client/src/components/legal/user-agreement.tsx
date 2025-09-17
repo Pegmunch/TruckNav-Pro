@@ -90,19 +90,19 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-4xl max-h-[90vh] scroll-smooth" data-testid="dialog-user-agreement">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Shield className="w-6 h-6 text-primary" />
+      <DialogContent className="w-[95vw] max-w-4xl h-[95vh] max-h-[95vh] flex flex-col p-4 scroll-smooth" data-testid="dialog-user-agreement">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <Shield className="w-5 h-5 md:w-6 md:h-6 text-primary" />
             Legal Agreement Required - TruckNav Pro
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             You must accept these legal terms to use TruckNav Pro. This includes acknowledgment of patent protections, trademarks, and intellectual property rights owned by Bespoke Marketing.Ai Ltd.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative">
-          <ScrollArea ref={scrollAreaRef} className="max-h-[60vh] pr-4 scroll-smooth touch-scroll">
+        <div className="flex-1 flex flex-col min-h-0">
+          <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4 scroll-smooth touch-scroll" style={{height: 'calc(100% - 120px)'}}>
             <div className="space-y-6">
             
             {/* Critical Notice */}
@@ -315,11 +315,12 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-between pt-4 border-t">
+        {/* Action Buttons - Fixed at bottom for mobile accessibility */}
+        <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3 sm:justify-between pt-4 border-t bg-background">
           <Button 
             variant="outline" 
             onClick={handleDecline}
+            className="w-full sm:w-auto"
             data-testid="button-decline-terms"
           >
             I Do Not Accept
@@ -327,7 +328,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
           <Button 
             onClick={handleAccept}
             disabled={!canAccept}
-            className={canAccept ? "bg-green-600 hover:bg-green-700" : ""}
+            className={`w-full sm:w-auto ${canAccept ? "bg-green-600 hover:bg-green-700" : ""}`}
             data-testid="button-accept-terms"
           >
             I Accept These Terms
