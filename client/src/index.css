@@ -18,14 +18,17 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Ensure body can scroll */
+html, body {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 /* Smooth scrolling for all scroll areas */
 .scroll-smooth {
   scroll-behavior: smooth;
-}
-
-/* Prevent scroll locks */
-.no-scroll-lock {
-  overflow: auto !important;
 }
 
 /* Better touch scrolling */
