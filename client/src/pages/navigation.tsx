@@ -21,7 +21,7 @@ import EdgeCaseTest from "@/components/theme/edge-case-test";
 import AccessibilitySummary from "@/components/theme/accessibility-summary";
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
-import { type VehicleProfile, type Route } from "@shared/schema";
+import { type VehicleProfile, type Route, type Journey } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
@@ -36,10 +36,34 @@ export default function NavigationPage() {
   const [toLocation, setToLocation] = useState("Birmingham B1 Logistics Hub");
   const [activeTab, setActiveTab] = useState("navigation");
   const [showTestingMode, setShowTestingMode] = useState(false);
+  const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
     queryKey: ["/api/vehicle-profiles"],
+  });
+
+  // Get current active journey
+  const { data: currentJourney, refetch: refetchCurrentJourney } = useQuery<Journey | null>({
+    queryKey: ["/api/journeys", "active"],
+    queryFn: async () => {
+      // Check if we have an active journey in localStorage
+      const storedJourneyId = localStorage.getItem('activeJourneyId');
+      if (storedJourneyId) {
+        const response = await apiRequest("GET", `/api/journeys/${storedJourneyId}`);
+        const journey = await response.json();
+        if (journey.status === 'active' || journey.status === 'planned') {
+          return journey;
+        } else {
+          // Clean up completed/cancelled journey from localStorage
+          localStorage.removeItem('activeJourneyId');
+        }
+      }
+      return null;
+    },
+    enabled: true,
+    refetchInterval: isNavigating ? 5000 : false, // Refetch every 5 seconds during navigation
   });
 
   // Set default profile
@@ -49,6 +73,102 @@ export default function NavigationPage() {
     }
   }, [profiles, selectedProfile]);
 
+  // Sync active journey with current journey from query
+  useEffect(() => {
+    if (currentJourney) {
+      setActiveJourney(currentJourney);
+      if (currentJourney.status === 'active') {
+        setIsNavigating(true);
+      }
+    }
+  }, [currentJourney]);
+
+  // Handle page refresh - restore navigation state
+  useEffect(() => {
+    const storedJourneyId = localStorage.getItem('activeJourneyId');
+    if (storedJourneyId && !activeJourney) {
+      refetchCurrentJourney();
+    }
+  }, []);
+
+  // Journey mutations
+  const activateJourneyMutation = useMutation({
+    mutationFn: async (journeyId: number) => {
+      const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/activate`, {});
+      return response.json();
+    },
+    onSuccess: (journey) => {
+      setActiveJourney(journey);
+      setIsNavigating(true);
+      localStorage.setItem('activeJourneyId', journey.id.toString());
+      queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
+      refetchCurrentJourney();
+    },
+    onError: (error) => {
+      console.error('Failed to activate journey:', error);
+      // Reset navigation state on error
+      setIsNavigating(false);
+      // Show user-friendly error message
+      import('@/hooks/use-toast').then(({ toast }) => {
+        toast({
+          title: "Failed to start navigation",
+          description: "Unable to activate journey. Please try again.",
+          variant: "destructive",
+        });
+      });
+    },
+  });
+
+  const startJourneyMutation = useMutation({
+    mutationFn: async (routeId: string) => {
+      const response = await apiRequest("POST", "/api/journeys/start", { routeId });
+      return response.json();
+    },
+    onSuccess: (journey) => {
+      // Immediately activate the newly created journey
+      activateJourneyMutation.mutate(journey.id);
+    },
+    onError: (error) => {
+      console.error('Failed to start journey:', error);
+      // Show user-friendly error message
+      import('@/hooks/use-toast').then(({ toast }) => {
+        toast({
+          title: "Failed to start journey",
+          description: "Unable to create new journey. Please try again.",
+          variant: "destructive",
+        });
+      });
+    },
+  });
+
+  const completeJourneyMutation = useMutation({
+    mutationFn: async (journeyId: number) => {
+      const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/complete`, {});
+      return response.json();
+    },
+    onSuccess: (journey) => {
+      setActiveJourney(null);
+      setIsNavigating(false);
+      localStorage.removeItem('activeJourneyId');
+      // Invalidate all journey-related queries to keep UI consistent
+      queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/journeys", "last"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/journeys", "active"] });
+      refetchCurrentJourney();
+    },
+    onError: (error) => {
+      console.error('Failed to complete journey:', error);
+      // Show user-friendly error message
+      import('@/hooks/use-toast').then(({ toast }) => {
+        toast({
+          title: "Failed to stop navigation",
+          description: "Unable to complete journey. Please try again.",
+          variant: "destructive",
+        });
+      });
+    },
+  });
+
   // Route calculation mutation
   const calculateRouteMutation = useMutation({
     mutationFn: async (routeData: { startLocation: string; endLocation: string; vehicleProfileId?: string }) => {
@@ -57,6 +177,24 @@ export default function NavigationPage() {
     },
     onSuccess: (route) => {
       setCurrentRoute(route);
+      // If route calculation includes a plannedJourney (from route calculation), set it as active
+      if (route.plannedJourney) {
+        setActiveJourney(route.plannedJourney);
+        localStorage.setItem('activeJourneyId', route.plannedJourney.id.toString());
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to calculate route:', error);
+      // Clear any existing route on error
+      setCurrentRoute(null);
+      // Show user-friendly error message
+      import('@/hooks/use-toast').then(({ toast }) => {
+        toast({
+          title: "Route calculation failed",
+          description: "Unable to calculate route. Please check your locations and try again.",
+          variant: "destructive",
+        });
+      });
     },
   });
 
@@ -70,8 +208,20 @@ export default function NavigationPage() {
 
   const handleStartNavigation = () => {
     if (currentRoute) {
-      // In a real implementation, this would start GPS navigation
-      console.log("Starting navigation for route:", currentRoute.id);
+      // If we already have a planned journey from route calculation, activate it
+      if (activeJourney && activeJourney.status === 'planned') {
+        // Activate the existing planned journey to 'active' status
+        activateJourneyMutation.mutate(activeJourney.id);
+      } else {
+        // Create a new journey for this route if none exists (will auto-activate)
+        startJourneyMutation.mutate(currentRoute.id);
+      }
+    }
+  };
+
+  const handleStopNavigation = () => {
+    if (activeJourney && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
+      completeJourneyMutation.mutate(activeJourney.id);
     }
   };
 
@@ -154,10 +304,15 @@ export default function NavigationPage() {
               onToLocationChange={setToLocation}
               onPlanRoute={handlePlanRoute}
               onStartNavigation={handleStartNavigation}
+              onStopNavigation={handleStopNavigation}
               onOpenLaneSelection={handleOpenLaneSelection}
               currentRoute={currentRoute}
               isCalculating={calculateRouteMutation.isPending}
               selectedProfile={selectedProfile}
+              activeJourney={activeJourney}
+              isNavigating={isNavigating}
+              isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+              isCompletingJourney={completeJourneyMutation.isPending}
             />
           </div>
 

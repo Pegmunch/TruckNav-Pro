@@ -66,6 +66,7 @@ export interface IStorage {
 
   // Journey Management
   startJourney(routeId: string): Promise<Journey>;
+  activateJourney(id: number): Promise<Journey | undefined>;
   completeJourney(id: number): Promise<Journey | undefined>;
   getLastJourney(): Promise<Journey | undefined>;
   getJourneyHistory(limit?: number, offset?: number): Promise<Journey[]>;
@@ -1082,6 +1083,30 @@ export class MemStorage implements IStorage {
     return journey;
   }
 
+  async activateJourney(id: number): Promise<Journey | undefined> {
+    const journey = this.journeys.get(id);
+    if (!journey) return undefined;
+    
+    // Prevent repeated activation - if already active, return as-is
+    if (journey.status === 'active') {
+      return journey;
+    }
+    
+    // Only allow activation from 'planned' state
+    if (journey.status !== 'planned') {
+      throw new Error(`Cannot activate journey from status: ${journey.status}`);
+    }
+    
+    const activeJourney = {
+      ...journey,
+      status: 'active' as const,
+    };
+    
+    this.journeys.set(id, activeJourney);
+    console.log(`[JOURNEY] Activated journey ${id} - status changed to 'active'`);
+    return activeJourney;
+  }
+
   async completeJourney(id: number): Promise<Journey | undefined> {
     const journey = this.journeys.get(id);
     if (!journey) return undefined;
@@ -1103,6 +1128,7 @@ export class MemStorage implements IStorage {
     };
     
     this.journeys.set(id, completedJourney);
+    console.log(`[JOURNEY] Completed journey ${id} - status changed to 'completed'`);
     return completedJourney;
   }
 

@@ -484,6 +484,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/journeys/:id/activate", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      const journey = await storage.activateJourney(parseInt(id));
+      if (!journey) {
+        return res.status(404).json({ message: "Journey not found" });
+      }
+      
+      res.json(journey);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to activate journey" });
+    }
+  });
+
   app.patch("/api/journeys/:id/complete", validateNumericId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

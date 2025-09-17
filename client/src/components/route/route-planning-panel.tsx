@@ -26,7 +26,9 @@ import {
   ChevronRight,
   Bookmark,
   BookmarkPlus,
-  Trash2
+  Trash2,
+  Square,
+  Loader2
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility, type Journey } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
@@ -41,10 +43,15 @@ interface RoutePlanningPanelProps {
   onToLocationChange: (value: string) => void;
   onPlanRoute: () => void;
   onStartNavigation: () => void;
+  onStopNavigation?: () => void;
   onOpenLaneSelection?: () => void;
   currentRoute: RouteType | null;
   isCalculating: boolean;
   selectedProfile: VehicleProfile | null;
+  activeJourney?: Journey | null;
+  isNavigating?: boolean;
+  isStartingJourney?: boolean;
+  isCompletingJourney?: boolean;
 }
 
 // Memoized for mobile performance - prevents unnecessary re-renders
@@ -55,10 +62,15 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   onToLocationChange,
   onPlanRoute,
   onStartNavigation,
+  onStopNavigation,
   onOpenLaneSelection,
   currentRoute,
   isCalculating,
   selectedProfile,
+  activeJourney,
+  isNavigating = false,
+  isStartingJourney = false,
+  isCompletingJourney = false,
 }: RoutePlanningPanelProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoritesExpanded, setFavoritesExpanded] = useState(false);
@@ -116,7 +128,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   });
 
   // Journey History
-  const { data: lastJourney, isLoading: isLoadingLastJourney } = useQuery<Journey>({
+  const { data: lastJourney, isLoading: isLoadingLastJourney } = useQuery<Journey | null>({
     queryKey: ["/api/journeys", "last"],
     queryFn: () => fetch("/api/journeys/last", { credentials: "include" }).then(res => {
       if (res.status === 404) return null;
@@ -223,11 +235,16 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     setSaveRouteDialogOpen(true);
   }, [currentRoute, toast]);
 
+  // Helper functions
   const formatTimeAgo = useCallback((date: Date | string) => {
     const now = new Date();
     const journeyDate = new Date(date);
-    const diffInHours = Math.floor((now.getTime() - journeyDate.getTime()) / (1000 * 60 * 60));
+    const diffInMinutes = Math.floor((now.getTime() - journeyDate.getTime()) / (1000 * 60));
     
+    if (diffInMinutes < 1) return "Just started";
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 1) return "Less than an hour ago";
     if (diffInHours === 1) return "1 hour ago";
     if (diffInHours < 24) return `${diffInHours} hours ago`;
@@ -622,27 +639,92 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
         )}
       </div>
 
+      {/* Journey Status Display */}
+      {activeJourney && (
+        <div className="p-4 border-t border-border bg-muted/30">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-medium text-foreground flex items-center">
+              <Navigation className="w-4 h-4 text-primary mr-2" />
+              Active Journey
+            </h4>
+            <Badge 
+              variant={activeJourney.status === 'active' ? 'default' : activeJourney.status === 'planned' ? 'secondary' : 'outline'}
+              className={`${
+                activeJourney.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                activeJourney.status === 'planned' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+              }`}
+              data-testid="journey-status-badge"
+            >
+              {activeJourney.status === 'active' ? 'Navigating' : 
+               activeJourney.status === 'planned' ? 'Planned' : 
+               activeJourney.status === 'completed' ? 'Completed' : 'Unknown'}
+            </Badge>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Started: {formatTimeAgo(activeJourney.startedAt)}
+          </div>
+          {activeJourney.status === 'active' && (
+            <div className="text-xs text-green-600 mt-1 flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse" />
+              Navigation in progress
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Bottom Action Bar */}
       <div className="p-4 border-t border-border bg-card">
         <div className="space-y-2">
           <div className="flex space-x-2">
-            <Button 
-              onClick={onStartNavigation}
-              disabled={!currentRoute}
-              className="flex-1 bg-accent hover:bg-accent/90"
-              data-testid="button-start-navigation"
-            >
-              <Navigation className="w-4 h-4 mr-2" />
-              Start Navigation
-            </Button>
+            {!isNavigating ? (
+              <Button 
+                onClick={onStartNavigation}
+                disabled={!currentRoute || isStartingJourney}
+                className="flex-1 bg-accent hover:bg-accent/90"
+                data-testid="button-start-navigation"
+              >
+                {isStartingJourney ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Starting...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Start Navigation
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button 
+                onClick={onStopNavigation}
+                disabled={isCompletingJourney}
+                variant="destructive"
+                className="flex-1"
+                data-testid="button-stop-navigation"
+              >
+                {isCompletingJourney ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Ending...
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-4 h-4 mr-2" />
+                    End Navigation
+                  </>
+                )}
+              </Button>
+            )}
             <Button 
               variant="outline" 
               size="icon"
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={isFavorite ? "text-red-500" : ""}
-              data-testid="button-favorite"
+              onClick={handleSaveCurrentRoute}
+              disabled={!currentRoute}
+              data-testid="button-save-route"
             >
-              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+              <BookmarkPlus className="w-4 h-4" />
             </Button>
           </div>
           {currentRoute && onOpenLaneSelection && (
@@ -650,10 +732,11 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
               variant="outline"
               onClick={onOpenLaneSelection}
               className="w-full"
+              disabled={isNavigating}
               data-testid="button-lane-selection"
             >
               <RouteIcon className="w-4 h-4 mr-2" />
-              Lane Selection
+              {isNavigating ? 'Lane Selection (Navigate to modify)' : 'Lane Selection'}
             </Button>
           )}
         </div>
