@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +16,9 @@ import {
   Route as RouteIcon,
   Clock,
   User,
-  Fuel,
-  Utensils,
-  Bed,
+  Car,
+  Coffee,
+  Home,
   Bookmark,
   History,
   ExternalLink,
@@ -126,19 +126,19 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Update window sync when props change
   useEffect(() => {
     windowSync.updateRoute(currentRoute);
-  }, [currentRoute, windowSync]);
+  }, [currentRoute]);
   
   useEffect(() => {
     windowSync.updateProfile(selectedProfile);
-  }, [selectedProfile, windowSync]);
+  }, [selectedProfile]);
   
   useEffect(() => {
     windowSync.updateJourney(activeJourney, isNavigating || false);
-  }, [activeJourney, isNavigating, windowSync]);
+  }, [activeJourney, isNavigating]);
   
   useEffect(() => {
     windowSync.updateLocations(fromLocation, toLocation);
-  }, [fromLocation, toLocation, windowSync]);
+  }, [fromLocation, toLocation]);
   
   // Check map window status periodically
   useEffect(() => {

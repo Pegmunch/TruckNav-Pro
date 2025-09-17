@@ -13,9 +13,11 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useWindowSync } from "@/hooks/use-window-sync";
 import { isMapWindowOpen, focusMapWindow } from "@/lib/window-manager";
+import { useToast } from "@/hooks/use-toast";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
@@ -107,13 +109,11 @@ export default function NavigationPage() {
       // Reset navigation state on error
       setIsNavigating(false);
       // Show user-friendly error message
-      import('@/hooks/use-toast').then(({ toast }) => {
-        toast({
+      toast({
           title: "Failed to start navigation",
           description: "Unable to activate journey. Please try again.",
           variant: "destructive",
         });
-      });
     },
   });
 
@@ -129,13 +129,11 @@ export default function NavigationPage() {
     onError: (error) => {
       console.error('Failed to start journey:', error);
       // Show user-friendly error message
-      import('@/hooks/use-toast').then(({ toast }) => {
-        toast({
+      toast({
           title: "Failed to start journey",
           description: "Unable to create new journey. Please try again.",
           variant: "destructive",
         });
-      });
     },
   });
 
@@ -157,13 +155,11 @@ export default function NavigationPage() {
     onError: (error) => {
       console.error('Failed to complete journey:', error);
       // Show user-friendly error message
-      import('@/hooks/use-toast').then(({ toast }) => {
-        toast({
+      toast({
           title: "Failed to stop navigation",
           description: "Unable to complete journey. Please try again.",
           variant: "destructive",
         });
-      });
     },
   });
 
@@ -209,13 +205,11 @@ export default function NavigationPage() {
       // Clear any existing route on error
       setCurrentRoute(null);
       // Show user-friendly error message
-      import('@/hooks/use-toast').then(({ toast }) => {
-        toast({
+      toast({
           title: "Route calculation failed",
           description: "Unable to calculate route. Please check your locations and try again.",
           variant: "destructive",
         });
-      });
     },
   });
 

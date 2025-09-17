@@ -67,97 +67,136 @@ export function useWindowSync() {
 
       // Listen for messages from other windows
       const handleMessage = (event: MessageEvent<WindowSyncMessage>) => {
-        const { type, payload, windowId, timestamp } = event.data;
-        
-        // Ignore messages from our own window
-        if (windowId === WINDOW_ID) return;
+        try {
+          const { type, payload, windowId, timestamp } = event.data;
+          
+          // Ignore messages from our own window
+          if (windowId === WINDOW_ID) return;
 
-        // Only process newer messages
-        if (timestamp <= syncState.lastUpdated) return;
-
-        switch (type) {
-          case 'SYNC_STATE':
-            setSyncState(prevState => ({
-              ...prevState,
-              ...payload,
-              lastUpdated: timestamp
-            }));
-            break;
-            
-          case 'ROUTE_UPDATE':
-            setSyncState(prevState => ({
-              ...prevState,
-              currentRoute: payload,
-              lastUpdated: timestamp
-            }));
-            break;
-            
-          case 'PROFILE_UPDATE':
-            setSyncState(prevState => ({
-              ...prevState,
-              selectedProfile: payload,
-              lastUpdated: timestamp
-            }));
-            break;
-            
-          case 'JOURNEY_UPDATE':
-            setSyncState(prevState => ({
-              ...prevState,
-              activeJourney: payload.journey,
-              isNavigating: payload.isNavigating,
-              lastUpdated: timestamp
-            }));
-            break;
-            
-          case 'MAP_WINDOW_OPENED':
-            setSyncState(prevState => ({
-              ...prevState,
-              isMapWindowOpen: true,
-              lastUpdated: timestamp
-            }));
-            break;
-            
-          case 'MAP_WINDOW_CLOSED':
-            setSyncState(prevState => ({
-              ...prevState,
-              isMapWindowOpen: false,
-              lastUpdated: timestamp
-            }));
-            break;
-            
-          case 'REQUEST_SYNC':
-            // Another window is requesting current state - send it
-            broadcastCurrentState(channel);
-            break;
-            
-          case 'MAP_EXPAND_REQUEST':
-            // Request to expand/focus map window (handled by specific window)
-            break;
-            
-          case 'POPUP_BLOCKED':
-            // Handle popup blocked events for fallback behavior
-            console.warn('Map window popup was blocked');
-            break;
+          switch (type) {
+            case 'SYNC_STATE':
+              setSyncState(prevState => {
+                // Only process newer messages
+                if (timestamp <= prevState.lastUpdated) return prevState;
+                return {
+                  ...prevState,
+                  ...payload,
+                  lastUpdated: timestamp
+                };
+              });
+              break;
+              
+            case 'ROUTE_UPDATE':
+              setSyncState(prevState => {
+                if (timestamp <= prevState.lastUpdated) return prevState;
+                return {
+                  ...prevState,
+                  currentRoute: payload,
+                  lastUpdated: timestamp
+                };
+              });
+              break;
+              
+            case 'PROFILE_UPDATE':
+              setSyncState(prevState => {
+                if (timestamp <= prevState.lastUpdated) return prevState;
+                return {
+                  ...prevState,
+                  selectedProfile: payload,
+                  lastUpdated: timestamp
+                };
+              });
+              break;
+              
+            case 'JOURNEY_UPDATE':
+              setSyncState(prevState => {
+                if (timestamp <= prevState.lastUpdated) return prevState;
+                return {
+                  ...prevState,
+                  activeJourney: payload.journey,
+                  isNavigating: payload.isNavigating,
+                  lastUpdated: timestamp
+                };
+              });
+              break;
+              
+            case 'MAP_WINDOW_OPENED':
+              setSyncState(prevState => {
+                if (timestamp <= prevState.lastUpdated) return prevState;
+                return {
+                  ...prevState,
+                  isMapWindowOpen: true,
+                  lastUpdated: timestamp
+                };
+              });
+              break;
+              
+            case 'MAP_WINDOW_CLOSED':
+              setSyncState(prevState => {
+                if (timestamp <= prevState.lastUpdated) return prevState;
+                return {
+                  ...prevState,
+                  isMapWindowOpen: false,
+                  lastUpdated: timestamp
+                };
+              });
+              break;
+              
+            case 'REQUEST_SYNC':
+              // Send current state to requesting window
+              try {
+                const currentState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                const responseMessage: WindowSyncMessage = {
+                  type: 'SYNC_STATE',
+                  payload: currentState,
+                  timestamp: Date.now(),
+                  windowId: WINDOW_ID
+                };
+                channel.postMessage(responseMessage);
+              } catch (error) {
+                console.error('Failed to broadcast state:', error);
+              }
+              break;
+              
+            case 'MAP_EXPAND_REQUEST':
+              // Request to expand/focus map window (handled by specific window)
+              break;
+              
+            case 'POPUP_BLOCKED':
+              // Handle popup blocked events for fallback behavior
+              console.warn('Map window popup was blocked');
+              break;
+          }
+        } catch (error) {
+          console.error('Error handling window sync message:', error);
         }
       };
 
       channel.addEventListener('message', handleMessage);
 
       // Request sync from other windows on initialization
-      const requestMessage: WindowSyncMessage = {
-        type: 'REQUEST_SYNC',
-        payload: null,
-        timestamp: Date.now(),
-        windowId: WINDOW_ID
-      };
-      channel.postMessage(requestMessage);
+      try {
+        const requestMessage: WindowSyncMessage = {
+          type: 'REQUEST_SYNC',
+          payload: null,
+          timestamp: Date.now(),
+          windowId: WINDOW_ID
+        };
+        channel.postMessage(requestMessage);
+      } catch (error) {
+        console.error('Failed to request sync on initialization:', error);
+      }
 
       return () => {
-        channel.removeEventListener('message', handleMessage);
-        channel.close();
+        try {
+          channel.removeEventListener('message', handleMessage);
+          channel.close();
+        } catch (error) {
+          console.error('Error closing broadcast channel:', error);
+        }
       };
     }
-  }, [syncState.lastUpdated]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -189,13 +228,17 @@ export function useWindowSync() {
     }));
 
     if (broadcastChannel) {
-      const message: WindowSyncMessage = {
-        type: 'ROUTE_UPDATE',
-        payload: route,
-        timestamp,
-        windowId: WINDOW_ID
-      };
-      broadcastChannel.postMessage(message);
+      try {
+        const message: WindowSyncMessage = {
+          type: 'ROUTE_UPDATE',
+          payload: route,
+          timestamp,
+          windowId: WINDOW_ID
+        };
+        broadcastChannel.postMessage(message);
+      } catch (error) {
+        console.error('Failed to broadcast route update:', error);
+      }
     }
   }, [broadcastChannel]);
 
@@ -208,13 +251,17 @@ export function useWindowSync() {
     }));
 
     if (broadcastChannel) {
-      const message: WindowSyncMessage = {
-        type: 'PROFILE_UPDATE',
-        payload: profile,
-        timestamp,
-        windowId: WINDOW_ID
-      };
-      broadcastChannel.postMessage(message);
+      try {
+        const message: WindowSyncMessage = {
+          type: 'PROFILE_UPDATE',
+          payload: profile,
+          timestamp,
+          windowId: WINDOW_ID
+        };
+        broadcastChannel.postMessage(message);
+      } catch (error) {
+        console.error('Failed to broadcast profile update:', error);
+      }
     }
   }, [broadcastChannel]);
 
@@ -228,13 +275,17 @@ export function useWindowSync() {
     }));
 
     if (broadcastChannel) {
-      const message: WindowSyncMessage = {
-        type: 'JOURNEY_UPDATE',
-        payload: { journey, isNavigating },
-        timestamp,
-        windowId: WINDOW_ID
-      };
-      broadcastChannel.postMessage(message);
+      try {
+        const message: WindowSyncMessage = {
+          type: 'JOURNEY_UPDATE',
+          payload: { journey, isNavigating },
+          timestamp,
+          windowId: WINDOW_ID
+        };
+        broadcastChannel.postMessage(message);
+      } catch (error) {
+        console.error('Failed to broadcast journey update:', error);
+      }
     }
   }, [broadcastChannel]);
 
@@ -248,13 +299,17 @@ export function useWindowSync() {
     }));
 
     if (broadcastChannel) {
-      const message: WindowSyncMessage = {
-        type: 'SYNC_STATE',
-        payload: { fromLocation, toLocation },
-        timestamp,
-        windowId: WINDOW_ID
-      };
-      broadcastChannel.postMessage(message);
+      try {
+        const message: WindowSyncMessage = {
+          type: 'SYNC_STATE',
+          payload: { fromLocation, toLocation },
+          timestamp,
+          windowId: WINDOW_ID
+        };
+        broadcastChannel.postMessage(message);
+      } catch (error) {
+        console.error('Failed to broadcast location update:', error);
+      }
     }
   }, [broadcastChannel]);
 
@@ -267,13 +322,17 @@ export function useWindowSync() {
     }));
 
     if (broadcastChannel) {
-      const message: WindowSyncMessage = {
-        type: 'MAP_WINDOW_OPENED',
-        payload: null,
-        timestamp,
-        windowId: WINDOW_ID
-      };
-      broadcastChannel.postMessage(message);
+      try {
+        const message: WindowSyncMessage = {
+          type: 'MAP_WINDOW_OPENED',
+          payload: null,
+          timestamp,
+          windowId: WINDOW_ID
+        };
+        broadcastChannel.postMessage(message);
+      } catch (error) {
+        console.error('Failed to broadcast map window opened:', error);
+      }
     }
   }, [broadcastChannel]);
 
@@ -286,13 +345,17 @@ export function useWindowSync() {
     }));
 
     if (broadcastChannel) {
-      const message: WindowSyncMessage = {
-        type: 'MAP_WINDOW_CLOSED',
-        payload: null,
-        timestamp,
-        windowId: WINDOW_ID
-      };
-      broadcastChannel.postMessage(message);
+      try {
+        const message: WindowSyncMessage = {
+          type: 'MAP_WINDOW_CLOSED',
+          payload: null,
+          timestamp,
+          windowId: WINDOW_ID
+        };
+        broadcastChannel.postMessage(message);
+      } catch (error) {
+        console.error('Failed to broadcast map window closed:', error);
+      }
     }
   }, [broadcastChannel]);
 
