@@ -1,7 +1,9 @@
 import { useTheme } from "./theme-provider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Separator } from "@/components/ui/separator";
 import { Sun, Moon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GrayscaleSelector } from "./grayscale-selector";
 
 interface ThemeOption {
   value: "day" | "night" | "auto";
@@ -36,13 +38,15 @@ interface ThemeSelectorProps {
   showLabels?: boolean;
   size?: "default" | "sm" | "lg";
   variant?: "default" | "outline";
+  showGrayscale?: boolean;
 }
 
 export function ThemeSelector({ 
   className,
   showLabels = true,
   size = "default",
-  variant = "outline"
+  variant = "outline",
+  showGrayscale = true
 }: ThemeSelectorProps) {
   const { currentTheme, setTheme, effectiveTheme } = useTheme();
 
@@ -108,6 +112,25 @@ export function ThemeSelector({
           );
         })}
       </ToggleGroup>
+      
+      {/* Grayscale Color Controls */}
+      {showGrayscale && (
+        <>
+          <Separator className="my-2" />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium text-muted-foreground">Color Customization</h4>
+            </div>
+            <GrayscaleSelector 
+              size={size === "lg" ? "lg" : size === "sm" ? "sm" : "default"}
+              showLabel={false}
+              showReset={true}
+              className="px-1"
+            />
+          </div>
+          <Separator className="my-2" />
+        </>
+      )}
       
       {/* Optional status text for auto mode */}
       {currentTheme === "auto" && (
