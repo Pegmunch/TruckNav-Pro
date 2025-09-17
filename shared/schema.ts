@@ -3,6 +3,25 @@ import { pgTable, text, varchar, real, integer, boolean, jsonb, timestamp, decim
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Lane selection data types
+export const laneOptionSchema = z.object({
+  index: z.number(), // lane position (0-based from left)
+  direction: z.enum(['left', 'right', 'straight', 'exit']), // lane direction/purpose
+  restrictions: z.array(z.string()).optional(), // optional restrictions (e.g., ["no-trucks", "weight-limit"])
+  allowedVehicles: z.array(z.string()).optional(), // optional allowed vehicle types
+  recommended: z.boolean().optional(), // whether this lane is recommended for the vehicle
+});
+
+export const laneSegmentSchema = z.object({
+  stepIndex: z.number(), // which step in the route this applies to
+  roadName: z.string(), // name of the road/street
+  maneuverType: z.enum(['straight', 'turn-left', 'turn-right', 'merge', 'exit', 'enter']), // type of maneuver
+  distance: z.number(), // distance to this maneuver (in miles)
+  totalLanes: z.number(), // total number of lanes available
+  laneOptions: z.array(laneOptionSchema), // array of available lanes
+  advisory: z.string().optional(), // optional advisory text
+});
+
 export const vehicleProfiles = pgTable("vehicle_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -55,6 +74,7 @@ export const routes = pgTable("routes", {
   routePath: jsonb("route_path"), // array of coordinate points
   restrictionsAvoided: jsonb("restrictions_avoided"), // array of restriction IDs
   facilitiesNearby: jsonb("facilities_nearby"), // array of facility IDs
+  laneGuidance: jsonb("lane_guidance"), // array of LaneSegment objects
   isFavorite: boolean("is_favorite").default(false),
 });
 
@@ -182,3 +202,6 @@ export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema
 
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+
+export type LaneOption = z.infer<typeof laneOptionSchema>;
+export type LaneSegment = z.infer<typeof laneSegmentSchema>;
