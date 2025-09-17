@@ -266,11 +266,22 @@ body {
   transition: opacity 200ms ease-in-out;
 }
 
-/* Map container enhancements */
+/* Map container enhancements - Consolidated and Fixed */
 .map-container {
   position: relative;
+  /* Base background gradient */
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  /* Grid overlay pattern for mock map */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23d1d5db" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  background-blend-mode: overlay;
+  /* Ensure proper dimensions */
+  min-height: 400px;
+  width: 100%;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius));
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .map-container.expanded {
@@ -454,17 +465,29 @@ body {
   }
 }
 
-/* Map Container - Day/Night Adaptive Background */
-.map-container {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23d1d5db" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="%23f3f4f6"/><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-  border: 1px solid var(--border);
-  transition: all 0.3s ease;
-}
+/* Duplicate map-container rule removed - consolidated above */
 
 /* Dark mode map container */
 .dark .map-container {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23374151" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="%231f2937"/><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-  border: 1px solid var(--border);
+  /* Dark background gradient */
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  /* Dark grid overlay pattern */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23374151" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  background-blend-mode: overlay;
+}
+
+/* Satellite view styling - Enhanced green terrain appearance */
+.map-container.satellite-view {
+  /* Override base background with terrain-like gradient */
+  background: linear-gradient(135deg, #065f46 0%, #059669 30%, #10b981 60%, #34d399 100%);
+  /* Remove grid pattern for satellite view */
+  background-image: none;
+}
+
+/* Dark mode satellite view */
+.dark .map-container.satellite-view {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 30%, #047857 60%, #059669 100%);
+  background-image: none;
 }
 
 /* Route Line - Enhanced for Day/Night Visibility */
@@ -770,9 +793,9 @@ select:focus-visible,
     font-weight: 600;
   }
   
-  /* Enhanced map visibility for TV */
+  /* Enhanced map visibility for TV - Additional styles only */
   .map-container {
-    border: 2px solid var(--border);
+    border-width: 2px; /* Thicker border for TV */
     border-radius: calc(var(--radius) + 2px);
   }
   
@@ -830,10 +853,10 @@ select:focus-visible,
     margin: 12px 0;
   }
   
-  /* Optimized map size for tablets */
+  /* Optimized map size for tablets - Additional styles only */
   .map-container {
-    min-height: 400px;
-    border-radius: 8px;
+    /* min-height already set in main definition */
+    border-radius: 8px; /* Custom border radius for tablets */
   }
 }
 
@@ -942,14 +965,20 @@ select:focus-visible,
   position: relative;
 }
 
-/* Mobile fullscreen map container */
+/* Mobile fullscreen map container - Fixed height issues */
 .mobile-map-container {
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: 0;
+  min-height: 300px; /* Fixed: was 0, now has proper minimum height */
+  height: 100%;
   background: var(--map-background, #f8fafc);
   overflow: hidden;
+}
+
+/* Inherit map-container styles for mobile */
+.mobile-map-container > .map-container {
+  min-height: 100%;
 }
 
 /* Mobile drawer overlay - Enhanced with fallback visibility */
