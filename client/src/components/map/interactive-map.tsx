@@ -104,7 +104,6 @@ const InteractiveMap = memo(function InteractiveMap({
   // Load preferences on mount
   const [preferences, setPreferences] = useState<MapPreferences>(() => loadMapPreferences());
   const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
-  const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>(preferences.mapViewMode);
   
   // Auto-hide functionality state
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -194,7 +193,6 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   const handleMapViewModeChange = (mode: 'roads' | 'satellite') => {
-    setMapViewMode(mode);
     const newPreferences = { ...preferences, mapViewMode: mode };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
@@ -255,7 +253,7 @@ const InteractiveMap = memo(function InteractiveMap({
         "flex-1 relative map-container",
         (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
         autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
-        mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
+        preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
         "cursor-pointer" // Indicate interactive map
       )}
       onClick={handleMapInteraction}
@@ -266,7 +264,7 @@ const InteractiveMap = memo(function InteractiveMap({
       data-testid="map-container"
     >
       {/* Satellite View Background */}
-      {mapViewMode === 'satellite' && (
+      {preferences.mapViewMode === 'satellite' && (
         <div className="absolute inset-0 bg-gradient-to-br from-green-800 via-green-700 to-green-900 opacity-90">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzY2Nzc2NyIgZmlsbC1vcGFjaXR5PSIwLjMiLz4KPC9zdmc+')] opacity-30"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
@@ -337,7 +335,7 @@ const InteractiveMap = memo(function InteractiveMap({
         {/* Enhanced Layer Controls with Persistent Preferences */}
         <Card className="p-2 space-y-1 shadow-lg max-w-[180px]">
           <Button 
-            variant={mapViewMode === 'roads' ? "default" : "ghost"}
+            variant={preferences.mapViewMode === 'roads' ? "default" : "ghost"}
             size="sm" 
             className={cn(
               "w-full justify-start scalable-control-button",
@@ -350,7 +348,7 @@ const InteractiveMap = memo(function InteractiveMap({
             <span className="scalable-control-text">Roads</span>
           </Button>
           <Button 
-            variant={mapViewMode === 'satellite' ? "default" : "ghost"}
+            variant={preferences.mapViewMode === 'satellite' ? "default" : "ghost"}
             size="sm" 
             className={cn(
               "w-full justify-start scalable-control-button",
@@ -361,7 +359,7 @@ const InteractiveMap = memo(function InteractiveMap({
           >
             <div className={cn(
               "scalable-control-icon-sm mr-2 rounded",
-              mapViewMode === 'satellite' ? "bg-green-600" : "bg-muted"
+              preferences.mapViewMode === 'satellite' ? "bg-green-600" : "bg-muted"
             )}></div>
             <span className="scalable-control-text">Satellite</span>
           </Button>
