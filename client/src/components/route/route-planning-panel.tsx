@@ -691,12 +691,12 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                 ) : currentRoute ? (
                   <>
                     <Navigation className="w-5 h-5 mr-3" />
-                    GO - Start Navigation
+                    Start Navigation
                   </>
                 ) : (
                   <>
                     <Route className="w-5 h-5 mr-3" />
-                    GO - Plan Route
+                    Plan Route
                   </>
                 )}
               </Button>
