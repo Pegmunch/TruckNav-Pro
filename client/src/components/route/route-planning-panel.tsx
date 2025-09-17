@@ -49,13 +49,13 @@ export default function RoutePlanningPanel({
 
   // Get restrictions that would be avoided
   const { data: restrictions = [] } = useQuery<Restriction[]>({
-    queryKey: ["/api/restrictions", { north: 54, south: 50, east: 2, west: -6 }],
+    queryKey: ["/api/restrictions?north=54&south=50&east=2&west=-6"],
     enabled: !!selectedProfile,
   });
 
   // Get facilities along the route
   const { data: facilities = [] } = useQuery<Facility[]>({
-    queryKey: ["/api/facilities", { lat: 52.5, lng: -1.5, radius: 50 }],
+    queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
   const restrictionsToAvoid = restrictions.filter((restriction: Restriction) => {

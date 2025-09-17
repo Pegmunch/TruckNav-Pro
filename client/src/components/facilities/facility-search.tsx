@@ -27,11 +27,22 @@ export default function FacilitySearch({ coordinates, onSelectFacility }: Facili
   const [searchQuery, setSearchQuery] = useState("");
   const [facilityType, setFacilityType] = useState<string>("");
 
+  // Build query parameters dynamically
+  const queryParams = new URLSearchParams();
+  if (coordinates) {
+    queryParams.set('lat', coordinates.lat.toString());
+    queryParams.set('lng', coordinates.lng.toString());
+    queryParams.set('radius', '25');
+  }
+  if (facilityType) {
+    queryParams.set('type', facilityType);
+  }
+  
+  const queryString = queryParams.toString();
+  const apiUrl = queryString ? `/api/facilities?${queryString}` : '/api/facilities';
+
   const { data: facilities = [], isLoading } = useQuery<Facility[]>({
-    queryKey: ["/api/facilities", { 
-      ...(coordinates && { lat: coordinates.lat, lng: coordinates.lng, radius: 25 }),
-      ...(facilityType && { type: facilityType }),
-    }],
+    queryKey: [apiUrl],
   });
 
   const filteredFacilities = facilities.filter((facility: Facility) =>
@@ -48,7 +59,7 @@ export default function FacilitySearch({ coordinates, onSelectFacility }: Facili
     { value: "hotel", label: "Hotels", icon: Bed },
   ];
 
-  const getAmenityIcon = (amenity: string) => {
+  const getAmenityIcon = (amenity: string): JSX.Element => {
     switch (amenity) {
       case 'fuel': return <Fuel className="w-3 h-3" />;
       case 'parking': return <ParkingMeter className="w-3 h-3" />;
@@ -136,24 +147,27 @@ export default function FacilitySearch({ coordinates, onSelectFacility }: Facili
                 </Badge>
               </div>
 
-              {facility.amenities && Array.isArray(facility.amenities) && (
-                <div className="flex flex-wrap gap-2">
-                  {(facility.amenities as string[]).slice(0, 5).map((amenity: string) => (
-                    <div 
-                      key={amenity} 
-                      className="flex items-center space-x-1 text-xs text-muted-foreground bg-muted rounded px-2 py-1"
-                    >
-                      {getAmenityIcon(amenity)}
-                      <span className="capitalize">{amenity}</span>
-                    </div>
-                  ))}
-                  {(facility.amenities as string[]).length > 5 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{(facility.amenities as string[]).length - 5} more
-                    </span>
-                  )}
-                </div>
-              )}
+              {(() => {
+                const amenities = facility.amenities as string[] | null;
+                return amenities && Array.isArray(amenities) && (
+                  <div className="flex flex-wrap gap-2">
+                    {amenities.slice(0, 5).map((amenity: string) => (
+                      <div 
+                        key={amenity} 
+                        className="flex items-center space-x-1 text-xs text-muted-foreground bg-muted rounded px-2 py-1"
+                      >
+                        {getAmenityIcon(amenity)}
+                        <span className="capitalize">{amenity}</span>
+                      </div>
+                    ))}
+                    {amenities.length > 5 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{amenities.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
             </Card>
           ))
         )}
