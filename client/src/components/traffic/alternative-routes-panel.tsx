@@ -151,14 +151,14 @@ const RouteComparisonRow = memo(function RouteComparisonRow({
                 <span className="text-sm font-medium">Distance</span>
               </div>
               <div className="text-lg font-semibold">
-                {formatDistance(alternative.distance)}
+                {formatDistance(alternative.distance, 'miles')}
               </div>
               <div className={cn("text-sm flex items-center space-x-1",
                 distanceDifference < 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
               )}>
                 {distanceDifference < 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
                 <span>
-                  {Math.abs(distanceDifference).toFixed(1)} miles {distanceDifference < 0 ? 'shorter' : 'longer'}
+                  {formatDistance(Math.abs(distanceDifference), 'miles')} {distanceDifference < 0 ? 'shorter' : 'longer'}
                 </span>
               </div>
             </div>

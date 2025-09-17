@@ -8,7 +8,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
-import { type VehicleProfile, type Route, type Journey } from "@shared/schema";
+import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
+import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLiveNotifications } from "@/hooks/use-live-notifications";
 import { MobileNotificationStack } from "@/components/notifications/mobile-notification-cards";
 import { DNDControls } from "@/components/notifications/dnd-controls";
+import { useTrafficState } from "@/hooks/use-traffic";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -43,6 +45,12 @@ export default function NavigationPage() {
   
   // Legacy drawer state for navigation transitions
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  
+  // Alternative routes panel state
+  const [isAlternativeRoutesOpen, setIsAlternativeRoutesOpen] = useState(false);
+  const [previewRoute, setPreviewRoute] = useState<AlternativeRoute | null>(null);
+  const [selectedAlternativeRouteId, setSelectedAlternativeRouteId] = useState<string | null>(null);
+  const [isApplyingRoute, setIsApplyingRoute] = useState(false);
   
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
@@ -73,6 +81,16 @@ export default function NavigationPage() {
     queueLength = 0,
     getNotificationIcon = () => null,
   } = liveNotifications || {};
+
+  // Get traffic state for current route - including alternative routes
+  const {
+    alternatives = [],
+    shouldReroute,
+    bestAlternative,
+    timeSavingsAvailable,
+    rerouteReason,
+    isLoadingAlternatives,
+  } = useTrafficState(currentRoute?.id || null, selectedProfile);
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
@@ -269,6 +287,80 @@ export default function NavigationPage() {
     });
   };
 
+  // Alternative routes preview handlers
+  const handlePreviewRoute = (route: AlternativeRoute) => {
+    setPreviewRoute(route);
+    toast({
+      title: "Previewing alternative route",
+      description: `Showing ${route.reasonForSuggestion?.replace(/_/g, ' ') || 'alternative route'} on map`,
+    });
+  };
+
+  const handleSelectRoute = async (route: AlternativeRoute) => {
+    setSelectedAlternativeRouteId(route.id);
+    setIsApplyingRoute(true);
+    
+    try {
+      // Apply the alternative route
+      const response = await apiRequest("POST", `/api/routes/apply-alternative`, {
+        routeId: currentRoute?.id,
+        alternativeRouteId: route.id,
+        vehicleProfileId: selectedProfile?.id,
+      });
+      
+      const newRoute = await response.json();
+      setCurrentRoute(newRoute);
+      
+      // Clear preview and close panel
+      setPreviewRoute(null);
+      setIsAlternativeRoutesOpen(false);
+      
+      // Trigger live notification for route change
+      triggerLiveNotification('route_change');
+      
+      toast({
+        title: "Route updated",
+        description: `Now using ${route.reasonForSuggestion?.replace(/_/g, ' ') || 'alternative route'}`,
+      });
+      
+      // Update window sync
+      windowSync.updateRoute(newRoute);
+      
+    } catch (error) {
+      console.error('Failed to apply alternative route:', error);
+      toast({
+        title: "Failed to apply route",
+        description: "Unable to switch to alternative route. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplyingRoute(false);
+      setSelectedAlternativeRouteId(null);
+    }
+  };
+
+  const handleCloseAlternatives = () => {
+    setIsAlternativeRoutesOpen(false);
+    setPreviewRoute(null);
+    setSelectedAlternativeRouteId(null);
+  };
+
+  // Effect to automatically show alternative routes when they become available
+  useEffect(() => {
+    if (alternatives.length > 0 && shouldReroute && timeSavingsAvailable && timeSavingsAvailable > 5) {
+      // Auto-open alternatives panel if significant time savings are available
+      setIsAlternativeRoutesOpen(true);
+      
+      // Trigger notification about available alternatives
+      triggerLiveNotification('reroute_suggestion');
+      
+      toast({
+        title: "Better routes found",
+        description: `Up to ${timeSavingsAvailable} minutes faster routes available`,
+      });
+    }
+  }, [alternatives.length, shouldReroute, timeSavingsAvailable, triggerLiveNotification]);
+
   // Enhanced auto-expand map logic - works with both in-page and window modes
   useEffect(() => {
     if (currentRoute && !isMapWindowOpen()) {
@@ -384,6 +476,8 @@ export default function NavigationPage() {
             <InteractiveMap
               currentRoute={currentRoute}
               selectedProfile={selectedProfile}
+              alternativeRoutes={alternatives}
+              previewRoute={previewRoute}
               onOpenLaneSelection={handleOpenLaneSelection}
               isFullscreen={isMapExpanded}
               onToggleFullscreen={handleToggleMapExpansion}
@@ -501,6 +595,8 @@ export default function NavigationPage() {
             <InteractiveMap
               currentRoute={currentRoute}
               selectedProfile={selectedProfile}
+              alternativeRoutes={alternatives}
+              previewRoute={previewRoute}
               onOpenLaneSelection={handleOpenLaneSelection}
               isFullscreen={isMapExpanded}
               onToggleFullscreen={handleToggleMapExpansion}
@@ -601,6 +697,19 @@ export default function NavigationPage() {
           hasNavigationGuidance={isNavigating && currentRoute !== null}
         />
       ) : null}
+
+      {/* Alternative Routes Panel */}
+      <AlternativeRoutesPanel
+        isOpen={isAlternativeRoutesOpen}
+        alternatives={alternatives}
+        currentRoute={currentRoute}
+        vehicleProfile={selectedProfile}
+        onClose={handleCloseAlternatives}
+        onSelectRoute={handleSelectRoute}
+        onPreviewRoute={handlePreviewRoute}
+        isApplying={isApplyingRoute}
+        selectedRouteId={selectedAlternativeRouteId}
+      />
     </div>
   );
 }
