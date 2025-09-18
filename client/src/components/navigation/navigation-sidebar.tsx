@@ -48,6 +48,7 @@ import { VoiceMicButton } from "@/components/ui/voice-mic-button";
 import { useVoiceCommands, type VoiceTranscript, type VoiceError } from "@/hooks/use-voice-commands";
 import { useVoiceIntents, type IntentHandlers, type VoiceProcessingResult } from "@/hooks/use-voice-intents";
 import ManualSearchPanel from "./manual-search-panel";
+import { openFeatureWindow, getOpenWindowCount, type FeatureWindowType } from "@/lib/multi-window-manager";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
 import CountryLanguageSelector from '@/components/country/country-language-selector';
@@ -144,7 +145,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const { toast } = useToast();
   const { formatHeight, formatWeight } = useMeasurement();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'entertainment' | 'themes' | 'history' | 'settings'>('vehicle');
+  const [openWindowCount, setOpenWindowCount] = useState(0);
   const [isHistoryFavoritesOpen, setIsHistoryFavoritesOpen] = useState(false);
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
@@ -187,45 +188,75 @@ const NavigationSidebar = memo(function NavigationSidebar({
     return () => clearInterval(checkInterval);
   }, []);
 
-  // Automotive-optimized sidebar sections
-  const sidebarSections = [
+  // Feature window sections
+  const windowSections = [
     {
       id: 'route' as const,
       title: 'Route Planning',
       icon: RouteIcon,
       badge: currentRoute ? 'Planned' : null,
+      description: 'Plan routes with manual search'
     },
     {
       id: 'vehicle' as const,
       title: 'Vehicle Profile',
       icon: Truck,
       badge: selectedProfile ? 'Set' : 'Required',
+      description: 'Manage truck specifications'
     },
     {
       id: 'entertainment' as const,
       title: 'Entertainment',
       icon: Music,
       badge: null,
+      description: 'Music and audio controls'
     },
     {
       id: 'themes' as const,
       title: 'Themes',
       icon: Eye,
       badge: null,
+      description: 'Color palette customization'
     },
     {
       id: 'history' as const,
       title: 'History',
       icon: History,
       badge: null,
+      description: 'Route history and favorites'
     },
     {
       id: 'settings' as const,
       title: 'Settings',
       icon: Settings,
       badge: null,
+      description: 'App preferences and legal'
     },
   ];
+
+  // Update window count periodically
+  useEffect(() => {
+    const updateCount = () => {
+      setOpenWindowCount(getOpenWindowCount());
+    };
+    
+    updateCount();
+    const interval = setInterval(updateCount, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle opening feature windows
+  const handleOpenWindow = (featureType: FeatureWindowType) => {
+    if (getOpenWindowCount() >= 10) {
+      toast({
+        title: "Window Limit Reached",
+        description: "Maximum of 10 windows can be open at once. Please close some windows first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    openFeatureWindow(featureType);
+  };
 
   // Handle History & Favorites panel
   const handleToggleHistoryFavorites = () => {
@@ -546,16 +577,14 @@ const NavigationSidebar = memo(function NavigationSidebar({
       const playbackStatus = audioManager.getPlaybackStatus();
       
       if (intent.action === 'play_music' || intent.action === 'start_music') {
-        setActiveSection('entertainment');
-        setIsEntertainmentPanelOpen(true);
+        handleOpenWindow('entertainment');
         setLastNavigationVoiceCommand('Opening entertainment panel');
         toast({
           title: "Entertainment opened",
           description: "Entertainment panel is now active",
         });
       } else if (intent.action === 'play_radio') {
-        setActiveSection('entertainment');
-        setIsEntertainmentPanelOpen(true);
+        handleOpenWindow('entertainment');
         setLastNavigationVoiceCommand('Opening radio stations');
         toast({
           title: "Radio stations",
@@ -675,9 +704,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
       navigationState: isNavigating ? 'navigating' : 'idle',
       routeActive: !!currentRoute,
       hasVehicleProfile: !!selectedProfile,
-      sidebarSection: activeSection
+      openWindows: getOpenWindowCount()
     });
-  }, [isNavigating, currentRoute, selectedProfile, activeSection, navigationVoiceIntents]);
+  }, [isNavigating, currentRoute, selectedProfile, openWindowCount, navigationVoiceIntents]);
 
   return (
     <>
@@ -802,12 +831,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {isCollapsed ? (
           /* Collapsed Mode - Icon Navigation */
           <div className="flex-1 p-2 space-y-2">
-            {sidebarSections.filter(section => ['route', 'vehicle', 'entertainment', 'themes', 'history'].includes(section.id)).map((section) => (
+            {windowSections.map((section) => (
               <Button
                 key={section.id}
-                variant={activeSection === section.id ? "default" : "ghost"}
+                variant="outline"
                 size="icon"
-                onClick={() => setActiveSection(section.id)}
+                onClick={() => handleOpenWindow(section.id as FeatureWindowType)}
                 className="w-full automotive-button relative"
                 data-testid={`button-section-${section.id}`}
               >
@@ -835,11 +864,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
             {/* Section Navigation */}
             <div className="p-4 border-b border-border">
               <div className="grid grid-cols-2 gap-2 mb-3">
-                {sidebarSections.filter(section => ['route', 'vehicle', 'entertainment', 'themes', 'history'].includes(section.id)).map((section) => (
+                {windowSections.map((section) => (
                   <Button
                     key={section.id}
-                    variant={activeSection === section.id ? "default" : "outline"}
-                    onClick={() => setActiveSection(section.id)}
+                    variant="outline"
+                    onClick={() => handleOpenWindow(section.id as FeatureWindowType)}
                     className="automotive-text-sm relative"
                     data-testid={`button-section-${section.id}`}
                   >
@@ -847,7 +876,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     <span className="hidden sm:inline">{section.title.split(' ')[0]}</span>
                     {section.badge && (
                       <Badge 
-                        variant={activeSection === section.id ? "secondary" : "outline"} 
+                        variant="outline" 
                         className="ml-2 mobile-text-xs"
                       >
                         {section.badge}
@@ -872,116 +901,94 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
             {/* Section Content */}
             <div className="flex-1">
-              {activeSection === 'route' && (
-                <>
-                  <RoutePlanningPanel
-                    fromLocation={fromLocation}
-                    toLocation={toLocation}
-                    onFromLocationChange={onFromLocationChange}
-                    onToLocationChange={onToLocationChange}
-                    onPlanRoute={onPlanRoute}
-                    onStartNavigation={onStartNavigation}
-                    onStopNavigation={onStopNavigation}
-                    onOpenLaneSelection={onOpenLaneSelection}
-                    currentRoute={currentRoute}
-                    isCalculating={isCalculating}
-                    selectedProfile={selectedProfile}
-                    activeJourney={activeJourney}
-                    isNavigating={isNavigating}
-                    isStartingJourney={isStartingJourney}
-                    isCompletingJourney={isCompletingJourney}
-                  />
+              {/* Map Window Controls - Only show when navigation is active */}
+              {isNavigating && (
+                <div className="p-4 border-t border-border">
+                  <Card className="bg-card">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center">
+                        <ExternalLink className="w-4 h-4 mr-2 text-primary" />
+                        Map Window
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="text-xs text-muted-foreground">
+                        Open the map in a separate window for enhanced viewing and multi-monitor support.
+                      </div>
+                      
+                      {/* Window Status */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            isMapWindowCurrentlyOpen ? "bg-green-500" : "bg-muted-foreground"
+                          )} />
+                          <span className="text-xs text-muted-foreground">
+                            {isMapWindowCurrentlyOpen ? "Window Open" : "Window Closed"}
+                          </span>
+                        </div>
+                        {currentRoute && (
+                          <Badge variant="secondary" className="text-xs">
+                            Route Ready
+                          </Badge>
+                        )}
+                      </div>
 
-                  {/* Map Window Controls - Only show when navigation is active */}
-                  {isNavigating && (
-                    <div className="p-4 border-t border-border">
-                      <Card className="bg-card">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm flex items-center">
-                            <ExternalLink className="w-4 h-4 mr-2 text-primary" />
-                            Map Window
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="text-xs text-muted-foreground">
-                            Open the map in a separate window for enhanced viewing and multi-monitor support.
-                          </div>
-                          
-                          {/* Window Status */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div className={cn(
-                                "w-2 h-2 rounded-full",
-                                isMapWindowCurrentlyOpen ? "bg-green-500" : "bg-muted-foreground"
-                              )} />
-                              <span className="text-xs text-muted-foreground">
-                                {isMapWindowCurrentlyOpen ? "Window Open" : "Window Closed"}
-                              </span>
-                            </div>
-                            {currentRoute && (
-                              <Badge variant="secondary" className="text-xs">
-                                Route Ready
-                              </Badge>
-                            )}
-                          </div>
-
-                          {/* Window Controls */}
+                      {/* Window Controls */}
+                      <div className="space-y-2">
+                        {!isMapWindowCurrentlyOpen ? (
+                          <Button
+                            onClick={handleOpenMapWindow}
+                            className="w-full automotive-button"
+                            size="sm"
+                            disabled={!TruckNavWindowManager.isPopupSupported()}
+                            data-testid="button-open-map-window"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Open Map in New Window
+                          </Button>
+                        ) : (
                           <div className="space-y-2">
-                            {!isMapWindowCurrentlyOpen ? (
-                              <Button
-                                onClick={handleOpenMapWindow}
-                                className="w-full automotive-button"
-                                size="sm"
-                                disabled={!TruckNavWindowManager.isPopupSupported()}
-                                data-testid="button-open-map-window"
-                              >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                Open Map in New Window
-                              </Button>
-                            ) : (
-                              <div className="space-y-2">
-                                <Button
-                                  onClick={handleFocusMapWindow}
-                                  variant="outline"
-                                  className="w-full automotive-button"
-                                  size="sm"
-                                  data-testid="button-focus-map-window"
-                                >
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Focus Map Window
-                                </Button>
-                                <Button
-                                  onClick={handleCloseMapWindow}
-                                  variant="destructive"
-                                  className="w-full automotive-button"
-                                  size="sm"
-                                  data-testid="button-close-map-window"
-                                >
-                                  <X className="w-4 h-4 mr-2" />
-                                  Close Map Window
-                                </Button>
-                              </div>
-                            )}
+                            <Button
+                              onClick={handleFocusMapWindow}
+                              variant="outline"
+                              className="w-full automotive-button"
+                              size="sm"
+                              data-testid="button-focus-map-window"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Focus Map Window
+                            </Button>
+                            <Button
+                              onClick={handleCloseMapWindow}
+                              variant="destructive"
+                              className="w-full automotive-button"
+                              size="sm"
+                              data-testid="button-close-map-window"
+                            >
+                              <X className="w-4 h-4 mr-2" />
+                              Close Map Window
+                            </Button>
                           </div>
+                        )}
+                      </div>
 
-                          {/* Popup Blocked Warning */}
-                          {!TruckNavWindowManager.isPopupSupported() && (
-                            <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800">
-                              ⚠️ Popup windows may be blocked by your browser. Check popup settings if the map window doesn't open.
-                            </div>
-                          )}
+                      {/* Popup Blocked Warning */}
+                      {!TruckNavWindowManager.isPopupSupported() && (
+                        <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800">
+                          ⚠️ Popup windows may be blocked by your browser. Check popup settings if the map window doesn't open.
+                        </div>
+                      )}
 
-                          {/* Auto-Expansion Info */}
-                          {currentRoute && (
-                            <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-                              💡 When you plan a new route, the map window will automatically expand and focus for optimal viewing.
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-                </>
+                      {/* Auto-Expansion Info */}
+                      {currentRoute && (
+                        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                          💡 When you plan a new route, the map window will automatically expand and focus for optimal viewing.
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               )}
 
 
@@ -1029,300 +1036,187 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </div>
               )}
 
-              {activeSection === 'vehicle' && (
-                <div className="p-4 space-y-4">
-                  {/* Current Vehicle Profile */}
-                  {selectedProfile ? (
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center">
-                          <Truck className="w-4 h-4 mr-2 text-primary" />
-                          Current Vehicle
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div>
-                          <div className="font-medium text-foreground">{selectedProfile.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W × {formatWeight(selectedProfile.weight || 0)}
-                          </div>
-                        </div>
-                        
-                        {/* Vehicle Status Button - Blue/Yellow */}
-                        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
-                          <div className="flex items-center space-x-3">
-                            <div className={cn(
-                              "w-3 h-3 rounded-full transition-colors",
-                              selectedProfile && fromLocation && toLocation ? "bg-blue-500" : "bg-yellow-500"
-                            )} />
-                            <div>
-                              <div className="text-sm font-medium">
-                                {selectedProfile && fromLocation && toLocation ? "Ready for Navigation" : "Setup Required"}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {selectedProfile && fromLocation && toLocation 
-                                  ? "Vehicle configured and route planned"
-                                  : "Complete route planning to proceed"
-                                }
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            variant={selectedProfile && fromLocation && toLocation ? "default" : "outline"}
-                            size="sm"
-                            className={cn(
-                              "h-8 px-3 text-xs font-medium transition-all",
-                              selectedProfile && fromLocation && toLocation 
-                                ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                                : "bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800"
-                            )}
-                            onClick={() => {
-                              if (!fromLocation || !toLocation) {
-                                setActiveSection('route');
-                                toast({
-                                  title: "Route planning required",
-                                  description: "Please set your starting point and destination first.",
-                                });
-                              } else {
-                                toast({
-                                  title: "Vehicle ready",
-                                  description: `${selectedProfile.name} is configured for navigation.`,
-                                });
-                              }
-                            }}
-                            data-testid="button-vehicle-status"
-                          >
-                            {selectedProfile && fromLocation && toLocation ? "✓ Ready" : "⚠ Setup"}
-                          </Button>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            onClick={() => setShowProfileSetup(true)}
-                            className="flex-1"
-                            data-testid="button-edit-profile"
-                          >
-                            Edit Profile
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card className="border-dashed border-2">
-                      <CardContent className="p-6 text-center">
-                        <Truck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="font-medium text-foreground mb-2">No Vehicle Profile</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Set up your vehicle profile for accurate routing
-                        </p>
-                        <Button
-                          onClick={() => setShowProfileSetup(true)}
-                          className="automotive-button"
-                          data-testid="button-create-profile"
-                        >
-                          <Truck className="w-4 h-4 mr-2" />
-                          Create Profile
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-
-              {activeSection === 'route' && (
-                <div className="p-4 space-y-4">
-                  {/* Manual Search Panel */}
-                  <ManualSearchPanel
-                    fromLocation={fromLocation}
-                    toLocation={toLocation}
-                    onFromLocationChange={onFromLocationChange}
-                    onToLocationChange={onToLocationChange}
-                    onPlanRoute={onPlanRoute}
-                    isCalculating={isCalculating}
-                  />
-
-                  {/* Route Planning Panel */}
-                  <RoutePlanningPanel
-                    fromLocation={fromLocation}
-                    toLocation={toLocation}
-                    onFromLocationChange={onFromLocationChange}
-                    onToLocationChange={onToLocationChange}
-                    onPlanRoute={onPlanRoute}
-                    onStartNavigation={onStartNavigation}
-                    onStopNavigation={onStopNavigation}
-                    onOpenLaneSelection={onOpenLaneSelection}
-                    currentRoute={currentRoute}
-                    isCalculating={isCalculating}
-                    selectedProfile={selectedProfile}
-                    activeJourney={activeJourney}
-                    isNavigating={isNavigating}
-                    isStartingJourney={isStartingJourney}
-                    isCompletingJourney={isCompletingJourney}
-                  />
-                </div>
-              )}
-
-              {activeSection === 'entertainment' && (
-                <div className="p-4">
-                  <EntertainmentPanel 
-                    isOpen={true}
-                    onClose={() => setActiveSection('vehicle')}
-                  />
-                </div>
-              )}
-
-              {activeSection === 'themes' && (
-                <div className="p-4 space-y-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center">
-                        <Eye className="w-4 h-4 mr-2 text-primary" />
-                        Theme & Color Palette
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-3 block">
-                          Choose Your Theme
-                        </label>
-                        <ThemeSelector 
-                          size="default"
-                          showLabels={true}
-                          showGrayscale={true}
-                          showColorSpectrum={true}
-                          showAutoSettings={true}
-                          showAutoStatus={true}
-                          className="w-full"
-                        />
+              {/* Window Management Dashboard */}
+              <div className="p-4 space-y-4">
+                {/* Window Status Header */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <div className="flex items-center">
+                        <ExternalLink className="w-4 h-4 mr-2 text-primary" />
+                        Feature Windows
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {activeSection === 'history' && (
-                <div className="p-4">
-                  <HistoryFavoritesPanel 
-                    isOpen={true}
-                    onClose={() => setActiveSection('vehicle')}
-                    onFromLocationChange={onFromLocationChange}
-                    onToLocationChange={onToLocationChange}
-                    onStartNavigation={onStartNavigation}
-                    currentRoute={currentRoute}
-                  />
-                </div>
-              )}
-
-              {activeSection === 'settings' && (
-                <div className="p-4 space-y-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center">
-                        <Settings className="w-4 h-4 mr-2 text-primary" />
-                        App Settings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">
-                            Language & Region
-                          </label>
-                          <CountryLanguageSelector />
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">
-                            Measurement System
-                          </label>
-                          <MeasurementSelector />
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">
-                            Legal Information
-                          </label>
-                          <div className="space-y-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setIsDisclaimerDialogOpen(true)}
-                              className={cn(
-                                "w-full justify-start h-auto p-3 automotive-button",
-                                // Visual indicator for users who haven't accepted terms
-                                !hasAcceptedTerms && "ring-2 ring-red-400/50 bg-red-50/50 dark:bg-red-950/20"
+                      <Badge variant="outline" className="text-xs">
+                        {openWindowCount}/10 open
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-muted-foreground mb-4">
+                      Open dedicated windows for focused work on each feature.
+                    </div>
+                    
+                    {/* Window Grid */}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {windowSections.map((section) => {
+                        const Icon = section.icon;
+                        return (
+                          <div key={section.id} className="border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+                                <div>
+                                  <div className="font-medium text-sm">{section.title}</div>
+                                  <div className="text-xs text-muted-foreground">{section.description}</div>
+                                </div>
+                              </div>
+                              {section.badge && (
+                                <Badge 
+                                  variant={section.badge === 'Required' ? 'destructive' : 'secondary'} 
+                                  className="text-xs"
+                                >
+                                  {section.badge}
+                                </Badge>
                               )}
-                              data-testid="button-legal-disclaimer"
-                              aria-label="View legal disclaimer and terms of service - required for use of TruckNav Pro"
-                            >
-                              <div className="relative">
-                                <Shield className={cn(
-                                  "w-4 h-4 mr-3", 
-                                  hasAcceptedTerms ? "text-primary" : "text-red-600"
-                                )} />
-                                {!hasAcceptedTerms && (
-                                  <div className="absolute -top-1 -left-1 w-2 h-2 bg-red-600 rounded-full border border-white animate-pulse"></div>
-                                )}
-                              </div>
-                              <div className="flex-1 text-left">
-                                <div className={cn(
-                                  "font-medium",
-                                  hasAcceptedTerms ? "text-foreground" : "text-red-800 dark:text-red-200"
-                                )}>
-                                  Legal Disclaimer {!hasAcceptedTerms && "⚠️"}
-                                </div>
-                                <div className={cn(
-                                  "text-xs",
-                                  hasAcceptedTerms ? "text-muted-foreground" : "text-red-700 dark:text-red-300"
-                                )}>
-                                  {hasAcceptedTerms ? "Terms of service and disclaimers" : "Required acknowledgements - click to review"}
-                                </div>
-                              </div>
-                            </Button>
+                            </div>
                             
                             <Button
-                              variant="ghost"
+                              onClick={() => handleOpenWindow(section.id)}
+                              variant="outline"
                               size="sm"
-                              onClick={handleViewLegalNotices}
-                              className={cn(
-                                "w-full justify-start h-auto p-3 automotive-button",
-                                // Visual indicator for users who haven't accepted terms
-                                !hasAcceptedTerms && "ring-2 ring-blue-400/50 bg-blue-50/50 dark:bg-blue-950/20"
-                              )}
-                              data-testid="button-legal-notices"
-                              aria-label="View legal notices and copyright information"
+                              className="w-full automotive-button"
+                              data-testid={`button-open-${section.id}-window`}
                             >
-                              <FileText className={cn(
-                                "w-4 h-4 mr-3", 
-                                hasAcceptedTerms ? "text-blue-600" : "text-blue-700"
-                              )} />
-                              <div className="flex-1 text-left">
-                                <div className={cn(
-                                  "font-medium",
-                                  hasAcceptedTerms ? "text-foreground" : "text-blue-800 dark:text-blue-200"
-                                )}>
-                                  Legal Notices
-                                </div>
-                                <div className={cn(
-                                  "text-xs",
-                                  hasAcceptedTerms ? "text-muted-foreground" : "text-blue-700 dark:text-blue-300"
-                                )}>
-                                  {hasAcceptedTerms ? "Copyright, patents, and ownership" : "Legal protections and ownership info"}
-                                </div>
-                              </div>
+                              <ExternalLink className="w-3 h-3 mr-2" />
+                              Open {section.title}
                             </Button>
                           </div>
-                        </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Quick Actions */}
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="text-sm font-medium mb-2">Quick Actions</div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProfile && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowProfileSetup(true)}
+                            className="text-xs h-8"
+                            data-testid="button-edit-profile-quick"
+                          >
+                            <Truck className="w-3 h-3 mr-1" />
+                            Edit Vehicle
+                          </Button>
+                        )}
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsDisclaimerDialogOpen(true)}
+                          className="text-xs h-8"
+                          data-testid="button-legal-quick"
+                        >
+                          <Shield className="w-3 h-3 mr-1" />
+                          Legal
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsLegalNoticesOpen(true)}
+                          className="text-xs h-8"
+                          data-testid="button-notices-quick"
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          Notices
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Current Status Summary */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center">
+                      <Car className="w-4 h-4 mr-2 text-primary" />
+                      Navigation Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Vehicle Status */}
+                      <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <div className="flex items-center space-x-2">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            selectedProfile ? "bg-green-500" : "bg-red-500"
+                          )} />
+                          <span className="text-sm font-medium">
+                            {selectedProfile ? selectedProfile.name : "No Vehicle Profile"}
+                          </span>
+                        </div>
+                        {!selectedProfile && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenWindow('vehicle')}
+                            className="text-xs h-6"
+                          >
+                            Setup
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Route Status */}
+                      <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                        <div className="flex items-center space-x-2">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            currentRoute ? "bg-green-500" : "bg-yellow-500"
+                          )} />
+                          <span className="text-sm font-medium">
+                            {currentRoute ? "Route Planned" : "No Route"}
+                          </span>
+                        </div>
+                        {!currentRoute && fromLocation && toLocation && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenWindow('route')}
+                            className="text-xs h-6"
+                          >
+                            Plan
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Navigation Status */}
+                      {isNavigating && (
+                        <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                            <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                              Navigation Active
+                            </span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleOpenMapWindow}
+                            className="text-xs h-6"
+                          >
+                            View Map
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         )}
