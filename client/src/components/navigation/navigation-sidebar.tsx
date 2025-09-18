@@ -519,7 +519,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
           className={cn(
             "absolute -right-8 top-1/2 -translate-y-1/2 z-60",
             "bg-card border border-l-0 border-border rounded-r-lg",
-            "transition-all duration-300 ease-out cursor-grab active:cursor-grabbing",
+            "transition-all duration-300 ease-out cursor-pointer",
             "shadow-md hover:shadow-xl hover:scale-105",
             "select-none touch-manipulation", // Prevent text selection and optimize touch
             isDragging && "cursor-grabbing shadow-xl scale-105 bg-accent",
@@ -528,6 +528,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
             "group backdrop-blur-sm", // For hover effects on children
             "hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           )}
+          onClick={onToggle}
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -535,7 +536,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
           onMouseEnter={() => setIsHoveringTab(true)}
           onMouseLeave={() => setIsHoveringTab(false)}
           data-testid="sidebar-drag-tab"
-          aria-label={isOpen ? "Drag to collapse sidebar" : "Drag to expand sidebar"}
+          aria-label={isOpen ? "Tap to collapse sidebar" : "Tap to expand sidebar"}
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
