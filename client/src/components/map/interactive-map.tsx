@@ -59,6 +59,7 @@ interface MapPreferences {
   mapViewMode: 'roads' | 'satellite';
   showTrafficLayer: boolean;
   showIncidents: boolean;
+  showTruckRoutes: boolean;
   zoomLevel: number;
   // Extended with country-specific provider info
   provider?: string;
@@ -70,6 +71,7 @@ const defaultMapPreferences: MapPreferences = {
   mapViewMode: 'roads',
   showTrafficLayer: true,
   showIncidents: true,
+  showTruckRoutes: true,
   zoomLevel: 10,
   provider: 'openstreetmap',
   tiles: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -353,6 +355,14 @@ const InteractiveMap = memo(function InteractiveMap({
     resetAutoHideTimer();
   };
 
+  const handleToggleTruckRoutes = () => {
+    const newShowTruckRoutes = !preferences.showTruckRoutes;
+    const newPreferences = { ...preferences, showTruckRoutes: newShowTruckRoutes };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    resetAutoHideTimer();
+  };
+
   const handleFullscreenToggle = () => {
     if (autoExpanded && onCollapseMap) {
       onCollapseMap();
@@ -542,12 +552,14 @@ const InteractiveMap = memo(function InteractiveMap({
             <span className="scalable-control-text">Satellite</span>
           </Button>
           <Button 
-            variant="default" 
+            variant={preferences.showTruckRoutes ? "default" : "ghost"}
             size="sm" 
             className={cn(
-              "w-full justify-start bg-accent/10 text-accent hover:bg-accent/20 scalable-control-button",
-              "min-h-[clamp(36px,10vw,44px)]"
+              "w-full justify-start scalable-control-button",
+              "min-h-[clamp(36px,10vw,44px)]",
+              preferences.showTruckRoutes && "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
             )}
+            onClick={handleToggleTruckRoutes}
             data-testid="button-layer-truck"
           >
             <Navigation className="scalable-control-icon-sm mr-2" />
