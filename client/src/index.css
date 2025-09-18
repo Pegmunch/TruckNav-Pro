@@ -1333,8 +1333,8 @@ select:focus-visible,
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  /* Backdrop blur removed to prevent frosted glass overlay issues */
-  /* backdrop-filter controlled by component state only when open */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   /* Default hidden to prevent stuck overlays */
   opacity: 0;
   pointer-events: none;
