@@ -810,7 +810,7 @@ export default function NavigationPage() {
             <MapLegalOwnership compact={true} className="hidden sm:block" />
           </div>
 
-          {/* Desktop Right Side Container - Features and Search */}
+          {/* Desktop Right Side Container - Features Sidebar */}
           <div className="relative">
             {/* Desktop Features Sidebar */}
             <FeaturesSidebar
@@ -819,25 +819,18 @@ export default function NavigationPage() {
               isCollapsed={isFeaturesSidebarCollapsed}
               onCollapseToggle={handleFeaturesSidebarCollapseToggle}
             />
-            
-            {/* Desktop Search POI Sidebar - positioned relative to features sidebar */}
-            <div className={cn(
-              "absolute top-0 right-0 z-10 transition-all duration-300",
-              isFeaturesSidebarOpen ? 
-                (isFeaturesSidebarCollapsed ? "right-16" : "right-80") : 
-                "right-0"
-            )}>
-              <SearchSidebar
-                isOpen={isSearchSidebarOpen}
-                onToggle={handleSearchSidebarToggle}
-                isCollapsed={isSearchSidebarCollapsed}
-                onCollapseToggle={handleSearchSidebarCollapseToggle}
-                coordinates={currentRoute ? { lat: 52.5, lng: -1.5 } : undefined}
-                onSelectFacility={handleSelectFacility}
-                onNavigateToLocation={(location) => setToLocation(location)}
-              />
-            </div>
           </div>
+
+          {/* Desktop Search POI Sidebar - independent positioning */}
+          <SearchSidebar
+            isOpen={isSearchSidebarOpen}
+            onToggle={handleSearchSidebarToggle}
+            isCollapsed={isSearchSidebarCollapsed}
+            onCollapseToggle={handleSearchSidebarCollapseToggle}
+            coordinates={{ lat: 51.5074, lng: -0.1278 }}
+            onSelectFacility={handleSelectFacility}
+            onNavigateToLocation={(location) => setToLocation(location)}
+          />
         </div>
       )}
 
