@@ -20,7 +20,8 @@ import {
   Check,
   Mail,
   Globe,
-  Keyboard
+  Keyboard,
+  Search
 } from "lucide-react";
 import { type Location } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -603,6 +604,25 @@ const LocationDropdown = memo(function LocationDropdown({
             </Command>
           </PopoverContent>
         </Popover>
+
+        {/* Go Button for Postcode Search - appears when in postcode mode */}
+        {isPostcodeMode && (
+          <Button
+            size="lg"
+            onClick={handlePostcodeEnter}
+            disabled={!postcodeValidation.isValid || geocodePostcodeMutation.isPending || !searchValue.trim()}
+            className="h-11 min-w-[44px] px-4 shrink-0"
+            aria-label="Search postcode"
+            data-testid="button-postcode-go"
+          >
+            {geocodePostcodeMutation.isPending ? (
+              <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline ml-2">Go</span>
+          </Button>
+        )}
 
         <Button
           variant="outline"
