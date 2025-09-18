@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Truck, Save, X, Globe, Ruler, Car } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Truck, Save, X, Globe, Ruler, Car, Building2 } from "lucide-react";
 import { insertVehicleProfileSchema, type VehicleProfile } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +19,7 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 const vehicleSetupSchema = insertVehicleProfileSchema.extend({
   name: z.string().min(1, "Vehicle name is required"),
-  type: z.enum(['car', 'truck'], { required_error: 'Please select vehicle type' }),
+  type: z.enum(['car', 'car_caravan', 'class_2_lorry', '7_5_tonne'], { required_error: 'Please select vehicle type' }),
   height: z.coerce.number().min(0.5, "Height must be at least 0.5").max(25, "Height must be less than 25"),
   width: z.coerce.number().min(0.5, "Width must be at least 0.5").max(15, "Width must be less than 15"),
   weight: z.coerce.number().min(0.5).max(80, "Weight must be between 0.5-80 tonnes"),
@@ -44,32 +45,55 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
   // Individual unit state for height and width
   const [heightUnit, setHeightUnit] = useState<'metric' | 'imperial'>(units);
   const [widthUnit, setWidthUnit] = useState<'metric' | 'imperial'>(units);
-  const [vehicleType, setVehicleType] = useState<'car' | 'truck'>(
-    (currentProfile as any)?.type || 'truck'
+  const [vehicleType, setVehicleType] = useState<'car' | 'car_caravan' | 'class_2_lorry' | '7_5_tonne'>(
+    (currentProfile as any)?.type || 'car'
   );
   
   // Get defaults based on vehicle type
-  const getVehicleDefaults = (type: 'car' | 'truck') => {
-    if (type === 'car') {
-      return {
-        name: units === 'metric' ? "My Car" : "My Car",
-        height: heightUnit === 'metric' ? 1.5 : 4.9, // 1.5m (4.9 feet) for cars
-        width: widthUnit === 'metric' ? 1.8 : 5.9, // 1.8m (5.9 feet) for cars
-        length: units === 'metric' ? 4.5 : 14.8, // 4.5m (14.8 feet) for cars
-        weight: 2.0, // 2 tonnes typical for cars
-        axles: 2, // 2 axles for cars
-        isHazmat: false,
-      };
-    } else {
-      return {
-        name: units === 'metric' ? "My Lorry" : "My Truck",
-        height: heightUnit === 'metric' ? 4.0 : 13.1, // 4m (13.1 feet) for trucks
-        width: widthUnit === 'metric' ? 2.55 : 8.37, // 2.55m (8.37 feet) for trucks
-        length: units === 'metric' ? 16.5 : 54.1, // 16.5m (54.1 feet) for trucks
-        weight: 40, // 40 tonnes default for trucks
-        axles: 5, // 5 axles for articulated trucks
-        isHazmat: false,
-      };
+  const getVehicleDefaults = (type: 'car' | 'car_caravan' | 'class_2_lorry' | '7_5_tonne') => {
+    switch (type) {
+      case 'car':
+        return {
+          name: "My Car",
+          height: heightUnit === 'metric' ? 1.5 : 4.9, // 1.5m (4.9 feet) for cars
+          width: widthUnit === 'metric' ? 1.8 : 5.9, // 1.8m (5.9 feet) for cars
+          length: units === 'metric' ? 4.5 : 14.8, // 4.5m (14.8 feet) for cars
+          weight: 2.0, // 2 tonnes typical for cars
+          axles: 2, // 2 axles for cars
+          isHazmat: false,
+        };
+      case 'car_caravan':
+        return {
+          name: "My Car + Caravan",
+          height: heightUnit === 'metric' ? 2.5 : 8.2, // 2.5m (8.2 feet) for car + caravan
+          width: widthUnit === 'metric' ? 2.3 : 7.5, // 2.3m (7.5 feet) for car + caravan
+          length: units === 'metric' ? 12.0 : 39.4, // 12m (39.4 feet) for car + caravan
+          weight: 3.5, // 3.5 tonnes for car + caravan
+          axles: 4, // 4 axles for car + caravan
+          isHazmat: false,
+        };
+      case 'class_2_lorry':
+        return {
+          name: "My Class 2 Lorry",
+          height: heightUnit === 'metric' ? 3.5 : 11.5, // 3.5m (11.5 feet) for Class 2 Lorry
+          width: widthUnit === 'metric' ? 2.5 : 8.2, // 2.5m (8.2 feet) for Class 2 Lorry
+          length: units === 'metric' ? 12.0 : 39.4, // 12m (39.4 feet) for Class 2 Lorry
+          weight: 18.0, // 18 tonnes for Class 2 Lorry
+          axles: 3, // 3 axles for Class 2 Lorry
+          isHazmat: false,
+        };
+      case '7_5_tonne':
+        return {
+          name: "My 7.5 Tonne Vehicle",
+          height: heightUnit === 'metric' ? 3.3 : 10.8, // 3.3m (10.8 feet) for 7.5 tonne
+          width: widthUnit === 'metric' ? 2.55 : 8.37, // 2.55m (8.37 feet) for 7.5 tonne
+          length: units === 'metric' ? 10.0 : 32.8, // 10m (32.8 feet) for 7.5 tonne
+          weight: 7.5, // 7.5 tonnes for 7.5 tonne vehicle
+          axles: 3, // 3 axles for 7.5 tonne vehicle
+          isHazmat: false,
+        };
+      default:
+        return getVehicleDefaults('car');
     }
   };
 
@@ -175,7 +199,7 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
   };
 
   // Handle vehicle type change and update defaults
-  const handleVehicleTypeChange = (newType: 'car' | 'truck') => {
+  const handleVehicleTypeChange = (newType: 'car' | 'car_caravan' | 'class_2_lorry' | '7_5_tonne') => {
     if (newType !== vehicleType) {
       setVehicleType(newType);
       const defaults = getVehicleDefaults(newType);
@@ -189,6 +213,38 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
       form.setValue('weight', defaults.weight);
       form.setValue('axles', defaults.axles);
       form.setValue('isHazmat', defaults.isHazmat);
+    }
+  };
+
+  // Get icon for vehicle type
+  const getVehicleIcon = (type: string) => {
+    switch (type) {
+      case 'car':
+        return <Car className="w-4 h-4" />;
+      case 'car_caravan':
+        return <Truck className="w-4 h-4" />;
+      case 'class_2_lorry':
+        return <Building2 className="w-4 h-4" />;
+      case '7_5_tonne':
+        return <Truck className="w-4 h-4" />;
+      default:
+        return <Car className="w-4 h-4" />;
+    }
+  };
+
+  // Get vehicle type display name
+  const getVehicleDisplayName = (type: string) => {
+    switch (type) {
+      case 'car':
+        return 'Car';
+      case 'car_caravan':
+        return 'Car + Caravan';
+      case 'class_2_lorry':
+        return 'Class 2 Lorry';
+      case '7_5_tonne':
+        return '7.5 Tonne Vehicle';
+      default:
+        return 'Car';
     }
   };
 
@@ -228,11 +284,11 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
-                      {vehicleType === 'car' ? <Car className="w-4 h-4" /> : <Truck className="w-4 h-4" />}
+                      {getVehicleIcon(vehicleType)}
                       Vehicle Type
                     </FormLabel>
                     <Select 
-                      onValueChange={(value: 'car' | 'truck') => {
+                      onValueChange={(value: 'car' | 'car_caravan' | 'class_2_lorry' | '7_5_tonne') => {
                         field.onChange(value);
                         handleVehicleTypeChange(value);
                       }} 
@@ -248,13 +304,37 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                         <SelectItem value="car">
                           <div className="flex items-center gap-2">
                             <Car className="w-4 h-4" />
-                            <span>Car</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium">Car</span>
+                              <span className="text-xs text-muted-foreground">Single passenger vehicle</span>
+                            </div>
                           </div>
                         </SelectItem>
-                        <SelectItem value="truck">
+                        <SelectItem value="car_caravan">
                           <div className="flex items-center gap-2">
                             <Truck className="w-4 h-4" />
-                            <span>Truck/Lorry</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium">Car + Caravan</span>
+                              <span className="text-xs text-muted-foreground">Car towing a caravan/trailer</span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="class_2_lorry">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">Class 2 Lorry</span>
+                              <span className="text-xs text-muted-foreground">Medium commercial vehicle</span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="7_5_tonne">
+                          <div className="flex items-center gap-2">
+                            <Truck className="w-4 h-4" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">7.5 Tonne Vehicle</span>
+                              <span className="text-xs text-muted-foreground">Large commercial vehicle</span>
+                            </div>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -301,7 +381,7 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                   <FormLabel>Vehicle Name</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder={vehicleType === 'car' ? "e.g., My Car" : (units === 'metric' ? "e.g., My Lorry" : "e.g., My Truck")} 
+                      placeholder={`e.g., ${getVehicleDefaults(vehicleType).name}`} 
                       {...field} 
                       data-testid="input-vehicle-name" 
                     />
@@ -442,13 +522,16 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder={vehicleType === 'car' ? "2.0" : "44"} 
+                        placeholder={getVehicleDefaults(vehicleType).weight.toString()} 
                         {...field} 
                         data-testid="input-vehicle-weight"
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      {vehicleType === 'car' ? 'Typical car weight: 1.5-2.5 tonnes' : 'Maximum truck weight in EU: 44 tonnes'}
+                      {vehicleType === 'car' ? 'Typical car weight: 1.5-2.5 tonnes' : 
+                       vehicleType === 'car_caravan' ? 'Car + caravan weight: 2.5-4.5 tonnes' :
+                       vehicleType === 'class_2_lorry' ? 'Class 2 lorry weight: up to 7.5 tonnes' :
+                       '7.5 tonne vehicle weight: up to 7.5 tonnes'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -468,22 +551,25 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                       type="number" 
                       min="2" 
                       max={vehicleType === 'car' ? "4" : "8"} 
-                      placeholder={vehicleType === 'car' ? "2" : "5"} 
+                      placeholder={getVehicleDefaults(vehicleType).axles.toString()} 
                       {...field} 
                       value={field.value || ''}
                       data-testid="input-vehicle-axles"
                     />
                   </FormControl>
                   <FormDescription className="text-xs">
-                    {vehicleType === 'car' ? 'Cars typically have 2 axles' : 'Articulated trucks typically have 5+ axles'}
+                    {vehicleType === 'car' ? 'Cars typically have 2 axles' : 
+                     vehicleType === 'car_caravan' ? 'Car + caravan typically have 4 axles' :
+                     vehicleType === 'class_2_lorry' ? 'Class 2 lorries typically have 3 axles' :
+                     '7.5 tonne vehicles typically have 3 axles'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Only show hazmat for trucks */}
-            {vehicleType === 'truck' && (
+            {/* Only show hazmat for commercial vehicles */}
+            {(vehicleType === 'class_2_lorry' || vehicleType === '7_5_tonne') && (
               <FormField
                 control={form.control}
                 name="isHazmat"
