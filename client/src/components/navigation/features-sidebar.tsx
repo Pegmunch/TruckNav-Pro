@@ -88,13 +88,6 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
       description: 'Music and media controls'
     },
     {
-      id: 'themes' as const,
-      title: 'Themes',
-      icon: Settings,
-      badge: null,
-      description: 'UI customization and themes'
-    },
-    {
       id: 'history' as const,
       title: 'History',
       icon: Clock,
@@ -104,9 +97,9 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
     {
       id: 'settings' as const,
       title: 'Settings',
-      icon: Settings2,
+      icon: Settings,
       badge: null,
-      description: 'App preferences and configuration'
+      description: 'App preferences, themes, and configuration'
     },
   ];
 
@@ -309,44 +302,6 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
                 })}
               </div>
               
-              {/* Quick Actions */}
-              <div className="mt-4 pt-4 border-t">
-                <div className="text-sm font-medium mb-2">Quick Actions</div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenWindow('vehicle')}
-                    className="text-xs h-8"
-                    data-testid="button-setup-vehicle-quick"
-                  >
-                    <Truck className="w-3 h-3 mr-1" />
-                    Vehicle Setup
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenWindow('route')}
-                    className="text-xs h-8"
-                    data-testid="button-plan-route-quick"
-                  >
-                    <Map className="w-3 h-3 mr-1" />
-                    Plan Route
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenWindow('settings')}
-                    className="text-xs h-8"
-                    data-testid="button-settings-quick"
-                  >
-                    <Settings className="w-3 h-3 mr-1" />
-                    Settings
-                  </Button>
-                </div>
-              </div>
             </div>
           </ScrollArea>
         </div>
