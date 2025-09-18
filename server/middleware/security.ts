@@ -20,9 +20,9 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Allow OPTIONS requests for CORS but count everything else
+    // Allow OPTIONS and HEAD requests (for health checks) without counting
     skip: (req) => {
-      return req.method === 'OPTIONS';
+      return req.method === 'OPTIONS' || req.method === 'HEAD';
     },
     
     // Handle suspicious activity with immediate blocking
@@ -75,7 +75,7 @@ export const authRateLimit = createRateLimiter(
 
 export const apiRateLimit = createRateLimiter(
   1 * 60 * 1000, // 1 minute
-  process.env.NODE_ENV === 'development' ? 500 : 50, // Higher limit for development
+  process.env.NODE_ENV === 'development' ? 10000 : 50, // Much higher limit for development
   'API rate limit exceeded. Please slow down your requests.'
 );
 
@@ -236,8 +236,8 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
 
 // CSRF protection using double submit cookie pattern
 export const csrfProtection = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
-  // Skip CSRF for GET requests and OPTIONS (CORS preflight)
-  if (req.method === 'GET' || req.method === 'OPTIONS') {
+  // Skip CSRF for GET, HEAD, and OPTIONS requests
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
     return next();
   }
 
