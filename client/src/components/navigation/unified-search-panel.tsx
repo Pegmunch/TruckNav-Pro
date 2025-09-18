@@ -32,6 +32,12 @@ import {
   Phone,
   ShowerHead,
   Cloud,
+  CloudRain,
+  CloudSnow,
+  Sun,
+  RefreshCw,
+  Thermometer,
+  AlertTriangle,
   Music,
   Settings,
   Palette
@@ -39,6 +45,7 @@ import {
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { useVoiceCommands } from "@/hooks/use-voice-commands";
 import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
+import { useWeatherData } from "@/hooks/use-weather-data";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
@@ -105,6 +112,9 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const { t } = useTranslation();
   const { toast } = useToast();
   const { formatDistance } = useMeasurement();
+  
+  // Weather data hook
+  const { weatherData, isLoading: isWeatherLoading, error: weatherError, refreshWeather } = useWeatherData();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -486,6 +496,43 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     }
   };
 
+  // Get weather icon based on condition
+  const getWeatherIcon = (condition: string) => {
+    switch (condition.toLowerCase()) {
+      case 'sunny':
+      case 'clear':
+        return Sun;
+      case 'cloudy':
+      case 'partly cloudy':
+        return Cloud;
+      case 'rainy':
+      case 'rain':
+        return CloudRain;
+      case 'snowy':
+      case 'snow':
+        return CloudSnow;
+      default:
+        return Cloud;
+    }
+  };
+
+  // Handle weather refresh
+  const handleWeatherRefresh = useCallback(async () => {
+    try {
+      await refreshWeather();
+      toast({
+        title: "Weather Updated",
+        description: "Current conditions refreshed",
+      });
+    } catch (error) {
+      toast({
+        title: "Weather Refresh Failed",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+    }
+  }, [refreshWeather, toast]);
+
   return (
     <>
       {/* Overlay backdrop */}
@@ -729,6 +776,137 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                     <span className="text-xs font-medium">Theme</span>
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Weather Preview Card */}
+            <Card className="mx-4 mb-4 shadow-sm border border-border bg-card dark:bg-card">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">Current Weather</h3>
+                  {weatherData && !isWeatherLoading && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleWeatherRefresh}
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Refresh weather data"
+                      data-testid="button-refresh-weather-preview"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+                
+                {isWeatherLoading ? (
+                  /* Loading State */
+                  <div className="space-y-3" data-testid="weather-preview-loading">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="space-y-1">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-6 w-12" />
+                    </div>
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                ) : weatherError ? (
+                  /* Error State */
+                  <div className="text-center py-4 space-y-2" data-testid="weather-preview-error">
+                    <AlertTriangle className="w-8 h-8 mx-auto text-orange-500 dark:text-orange-400" />
+                    <p className="text-sm text-muted-foreground">Weather data unavailable</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleWeatherRefresh}
+                      className="h-8 px-3 text-xs"
+                      data-testid="button-retry-weather"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Retry
+                    </Button>
+                  </div>
+                ) : weatherData ? (
+                  /* Weather Data Display */
+                  <div className="space-y-3" data-testid="weather-preview-data">
+                    {/* Weather Summary */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {(() => {
+                          const WeatherIcon = getWeatherIcon(weatherData.condition);
+                          return (
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20">
+                              <WeatherIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                          );
+                        })()}
+                        <div>
+                          <div className="text-lg font-semibold text-foreground dark:text-foreground" data-testid="text-weather-temperature">
+                            {weatherData.temperature}°C
+                          </div>
+                          <div className="text-xs text-muted-foreground dark:text-muted-foreground" data-testid="text-weather-condition">
+                            {weatherData.condition}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground dark:text-muted-foreground" data-testid="text-weather-location">
+                          {weatherData.location}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Weather Alerts */}
+                    {weatherData.alerts && weatherData.alerts.length > 0 && (
+                      <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-2">
+                        <div className="flex items-start space-x-2">
+                          <AlertTriangle className="w-3 h-3 text-orange-600 dark:text-orange-400 mt-0.5 shrink-0" />
+                          <div className="text-xs text-orange-700 dark:text-orange-300" data-testid="text-weather-alert">
+                            {weatherData.alerts[0]}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Open Weather Button */}
+                    <Button
+                      variant="outline"
+                      onClick={onOpenWeatherModal}
+                      className={cn(
+                        "w-full h-8 text-xs font-medium transition-all duration-200",
+                        "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                        "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                        "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                        "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                        "active:scale-95"
+                      )}
+                      aria-label="Open detailed weather information"
+                      data-testid="button-open-weather-modal"
+                    >
+                      <Cloud className="w-3 h-3 mr-1" />
+                      Open Weather
+                    </Button>
+                  </div>
+                ) : (
+                  /* No Data State */
+                  <div className="text-center py-4 space-y-2" data-testid="weather-preview-empty">
+                    <Cloud className="w-8 h-8 mx-auto text-muted-foreground opacity-50" />
+                    <p className="text-sm text-muted-foreground">No weather data</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleWeatherRefresh}
+                      className="h-8 px-3 text-xs"
+                      data-testid="button-load-weather"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Load Weather
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
