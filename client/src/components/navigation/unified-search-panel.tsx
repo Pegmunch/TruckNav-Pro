@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VoiceMicButton } from "@/components/ui/voice-mic-button";
 import { 
   Search,
@@ -93,7 +92,6 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
-  const [activeTab, setActiveTab] = useState("search");
   
   // History & Favorites state
   const [saveRouteDialogOpen, setSaveRouteDialogOpen] = useState(false);
@@ -209,7 +207,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const searchParams = buildSearchParams();
   const { data: facilities = [], isLoading, error } = useQuery<Facility[]>({
     queryKey: ['/api/facilities', searchParams],
-    enabled: isOpen && activeTab === 'search',
+    enabled: isOpen,
     retry: 2,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -221,7 +219,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       if (res.status === 404) return null;
       return res.json();
     }),
-    enabled: isOpen && activeTab === 'recent',
+    enabled: isOpen,
     retry: false,
   });
 
@@ -229,14 +227,14 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const { data: lastJourneyRoute } = useQuery<RouteType>({
     queryKey: ["/api/routes", lastJourney?.routeId],
     queryFn: () => fetch(`/api/routes/${lastJourney?.routeId}`, { credentials: "include" }).then(res => res.json()),
-    enabled: !!lastJourney?.routeId && isOpen && activeTab === 'recent',
+    enabled: !!lastJourney?.routeId && isOpen,
   });
 
   // Route Favorites
   const { data: favoriteRoutes = [], isLoading: isLoadingFavorites } = useQuery<RouteType[]>({
     queryKey: ["/api/routes", "favorites"],
     queryFn: () => fetch("/api/routes/favorites", { credentials: "include" }).then(res => res.json()),
-    enabled: isOpen && activeTab === 'recent',
+    enabled: isOpen,
   });
 
   // Save current route as favorite mutation
@@ -460,21 +458,10 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
           </Button>
         </div>
 
-        {/* Tabbed Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
-            <TabsTrigger value="search" className="flex items-center space-x-2" data-testid="tab-search">
-              <Search className="w-4 h-4" />
-              <span>Search</span>
-            </TabsTrigger>
-            <TabsTrigger value="recent" className="flex items-center space-x-2" data-testid="tab-recent">
-              <History className="w-4 h-4" />
-              <span>Recent</span>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Search Tab Content */}
-          <TabsContent value="search" className="flex-1 flex flex-col overflow-hidden mt-4">
+        {/* Unified Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Search Section */}
+          <div className="flex-1 flex flex-col overflow-hidden mt-4">
             <div className="p-4 space-y-4">
               {/* Search Input */}
               <div className="relative">
@@ -610,10 +597,10 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                 </div>
               </ScrollArea>
             </div>
-          </TabsContent>
+          </div>
 
-          {/* Recent Tab Content (History & Favorites) */}
-          <TabsContent value="recent" className="flex-1 overflow-y-auto touch-scroll mt-4">
+          {/* Recent Section (History & Favorites) */}
+          <div className="border-t border-border overflow-y-auto touch-scroll">
             {/* Journey History Section */}
             {(lastJourney || isLoadingLastJourney) && (
               <div className="p-4 border-b border-border">
@@ -791,8 +778,8 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                 </ScrollArea>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </>
   );
