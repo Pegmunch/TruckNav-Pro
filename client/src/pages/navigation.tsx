@@ -3,12 +3,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Star, Settings } from "lucide-react";
+import { Truck, X, Menu, MapPin, Star, Settings, Search } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import FeaturesSidebar from "@/components/navigation/features-sidebar";
+import SearchSidebar from "@/components/navigation/search-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
 import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
@@ -46,9 +47,14 @@ export default function NavigationPage() {
   const [isFeaturesSidebarOpen, setIsFeaturesSidebarOpen] = useState(false);
   const [isFeaturesSidebarCollapsed, setIsFeaturesSidebarCollapsed] = useState(false);
   
+  // Search sidebar state management (center sidebar)
+  const [isSearchSidebarOpen, setIsSearchSidebarOpen] = useState(false);
+  const [isSearchSidebarCollapsed, setIsSearchSidebarCollapsed] = useState(false);
+  
   // Mobile drawer state (replaces sidebar on mobile)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isMobileFeaturesDrawerOpen, setIsMobileFeaturesDrawerOpen] = useState(false);
+  const [isMobileSearchDrawerOpen, setIsMobileSearchDrawerOpen] = useState(false);
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -77,6 +83,7 @@ export default function NavigationPage() {
   useEffect(() => {
     setIsSidebarOpen(false);
     setIsFeaturesSidebarOpen(false);
+    setIsSearchSidebarOpen(false);
   }, [isMobile]);
 
   // Check legal consent and show popup if needed
@@ -531,6 +538,29 @@ export default function NavigationPage() {
     setIsFeaturesSidebarCollapsed(!isFeaturesSidebarCollapsed);
   };
 
+  // Search sidebar handlers
+  const handleSearchSidebarToggle = () => {
+    setIsSearchSidebarOpen(!isSearchSidebarOpen);
+    // Auto-collapse expanded map when sidebar opens
+    if (!isSearchSidebarOpen && isMapExpanded) {
+      setIsMapExpanded(false);
+    }
+  };
+
+  const handleSearchSidebarCollapseToggle = () => {
+    setIsSearchSidebarCollapsed(!isSearchSidebarCollapsed);
+  };
+
+  // Handle facility selection from search sidebar
+  const handleSelectFacility = (facility: any) => {
+    // Navigate to selected facility
+    setToLocation(facility.address || facility.name);
+    toast({
+      title: "Facility selected",
+      description: `Set destination to ${facility.name}`,
+    });
+  };
+
   if (profilesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -564,6 +594,15 @@ export default function NavigationPage() {
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileSearchDrawerOpen(true)}
+                className="automotive-touch-target"
+                data-testid="button-open-mobile-search"
+              >
+                <Search className="w-5 h-5" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -682,6 +721,26 @@ export default function NavigationPage() {
               </div>
             </DrawerContent>
           </Drawer>
+
+          {/* Mobile Search POI Drawer */}
+          <Drawer open={isMobileSearchDrawerOpen} onOpenChange={setIsMobileSearchDrawerOpen}>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle className="mobile-text-xl">Search POI</DrawerTitle>
+              </DrawerHeader>
+              <div className="drawer-content">
+                <SearchSidebar
+                  isOpen={true}
+                  onToggle={() => setIsMobileSearchDrawerOpen(false)}
+                  isCollapsed={false}
+                  onCollapseToggle={() => {}}
+                  coordinates={currentRoute ? { lat: 52.5, lng: -1.5 } : undefined}
+                  onSelectFacility={handleSelectFacility}
+                  onNavigateToLocation={(location) => setToLocation(location)}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */
@@ -750,6 +809,17 @@ export default function NavigationPage() {
             {/* Legal Ownership Section - Desktop */}
             <MapLegalOwnership compact={true} className="hidden sm:block" />
           </div>
+
+          {/* Desktop Search POI Sidebar */}
+          <SearchSidebar
+            isOpen={isSearchSidebarOpen}
+            onToggle={handleSearchSidebarToggle}
+            isCollapsed={isSearchSidebarCollapsed}
+            onCollapseToggle={handleSearchSidebarCollapseToggle}
+            coordinates={currentRoute ? { lat: 52.5, lng: -1.5 } : undefined}
+            onSelectFacility={handleSelectFacility}
+            onNavigateToLocation={(location) => setToLocation(location)}
+          />
 
           {/* Desktop Features Sidebar */}
           <FeaturesSidebar
