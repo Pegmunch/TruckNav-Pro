@@ -4,6 +4,11 @@ import { X, Pin, PinOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import UnifiedSearchPanel from "./unified-search-panel";
+import WeatherWidget from "@/components/weather/weather-widget";
+import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
+import SettingsModal from "@/components/settings/settings-modal";
+import { ThemeSelector } from "@/components/theme/theme-selector";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type VehicleProfile, type Route, type Facility } from "@shared/schema";
 
 interface RightWidgetProps {
@@ -56,6 +61,12 @@ const RightWidget = memo(function RightWidget({
   // Activity tracking state
   const [hasActivity, setHasActivity] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Modal state management
+  const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
+  const [isEntertainmentPanelOpen, setIsEntertainmentPanelOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
 
   // Update localStorage when pin state changes
   useEffect(() => {
@@ -188,6 +199,39 @@ const RightWidget = memo(function RightWidget({
     recordActivity();
   }, [isPinned, recordActivity]);
 
+  // Modal handlers
+  const handleOpenWeatherModal = useCallback(() => {
+    setIsWeatherModalOpen(true);
+    recordActivity();
+  }, [recordActivity]);
+
+  const handleOpenEntertainmentPanel = useCallback(() => {
+    setIsEntertainmentPanelOpen(true);
+    recordActivity();
+  }, [recordActivity]);
+
+  const handleOpenSettingsModal = useCallback(() => {
+    setIsSettingsModalOpen(true);
+    recordActivity();
+  }, [recordActivity]);
+
+  const handleOpenThemeSelector = useCallback(() => {
+    setIsThemeSelectorOpen(true);
+    recordActivity();
+  }, [recordActivity]);
+
+  // Handler for focusing on facilities in search
+  const handleFocusOnFacilities = useCallback(() => {
+    // This will be handled in the UnifiedSearchPanel
+    recordActivity();
+  }, [recordActivity]);
+
+  // Handler for showing navigation history
+  const handleShowHistory = useCallback(() => {
+    // This will be handled in the UnifiedSearchPanel
+    recordActivity();
+  }, [recordActivity]);
+
   // Don't render on mobile - use existing drawer behavior
   if (isMobile) {
     return null;
@@ -293,6 +337,13 @@ const RightWidget = memo(function RightWidget({
             onStartNavigation={onStartNavigation}
             currentRoute={currentRoute}
             className="h-full border-0 shadow-none bg-transparent" // Remove conflicting styles
+            // Quick action handlers
+            onOpenWeatherModal={handleOpenWeatherModal}
+            onOpenEntertainmentPanel={handleOpenEntertainmentPanel}
+            onOpenSettingsModal={handleOpenSettingsModal}
+            onOpenThemeSelector={handleOpenThemeSelector}
+            onFocusOnFacilities={handleFocusOnFacilities}
+            onShowHistory={handleShowHistory}
           />
         </div>
 
@@ -303,6 +354,39 @@ const RightWidget = memo(function RightWidget({
           </div>
         )}
       </div>
+
+      {/* Modal Components */}
+      <WeatherWidget
+        isOpen={isWeatherModalOpen}
+        onClose={() => setIsWeatherModalOpen(false)}
+      />
+
+      <Dialog open={isEntertainmentPanelOpen} onOpenChange={setIsEntertainmentPanelOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-foreground dark:text-gray-100">Entertainment Center</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-hidden">
+            <EntertainmentPanel />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <SettingsModal
+        open={isSettingsModalOpen}
+        onOpenChange={setIsSettingsModalOpen}
+      />
+
+      <Dialog open={isThemeSelectorOpen} onOpenChange={setIsThemeSelectorOpen}>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-foreground dark:text-gray-100">Theme Settings</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <ThemeSelector />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 });

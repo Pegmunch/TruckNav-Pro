@@ -30,7 +30,11 @@ import {
   Loader2,
   Wifi,
   Phone,
-  ShowerHead
+  ShowerHead,
+  Cloud,
+  Music,
+  Settings,
+  Palette
 } from "lucide-react";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { useVoiceCommands } from "@/hooks/use-voice-commands";
@@ -57,6 +61,14 @@ interface UnifiedSearchPanelProps {
   onStartNavigation: () => void;
   currentRoute: RouteType | null;
   
+  // Quick action handlers
+  onOpenWeatherModal?: () => void;
+  onOpenEntertainmentPanel?: () => void;
+  onOpenSettingsModal?: () => void;
+  onOpenThemeSelector?: () => void;
+  onFocusOnFacilities?: () => void;
+  onShowHistory?: () => void;
+  
   // Styling
   className?: string;
 }
@@ -82,6 +94,12 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   onToLocationChange,
   onStartNavigation,
   currentRoute,
+  onOpenWeatherModal,
+  onOpenEntertainmentPanel,
+  onOpenSettingsModal,
+  onOpenThemeSelector,
+  onFocusOnFacilities,
+  onShowHistory,
   className
 }: UnifiedSearchPanelProps) {
   const { t } = useTranslation();
@@ -92,6 +110,63 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
+  
+  // Quick action handlers for internal functionality
+  const handleQuickFacilitiesSearch = useCallback(() => {
+    // Focus on the search input and set facilities category
+    const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.placeholder = "Search for nearby truck stops, fuel stations, parking...";
+    }
+    
+    // Clear current search and category to refresh results
+    setSearchQuery("");
+    setSelectedCategory(""); // This will show all facility categories
+    
+    // Trigger helpful toast
+    toast({
+      title: "🚛 Facilities Search",
+      description: "Search for nearby truck stops, fuel stations, and parking areas above.",
+      duration: 4000,
+    });
+    
+    // Call the parent handler to record activity
+    onFocusOnFacilities?.();
+  }, [toast, onFocusOnFacilities]);
+
+  const handleQuickHistoryView = useCallback(() => {
+    // Scroll to the history section at the bottom
+    setTimeout(() => {
+      const historyElement = document.querySelector('[data-testid="section-navigation-history"]') || 
+                           document.querySelector('.border-t');
+      if (historyElement) {
+        historyElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      } else {
+        // Fallback: scroll to bottom of the panel
+        const panelElement = document.querySelector('.unified-search-panel') as HTMLElement;
+        if (panelElement) {
+          panelElement.scrollTo({ 
+            top: panelElement.scrollHeight, 
+            behavior: 'smooth' 
+          });
+        }
+      }
+    }, 100); // Small delay to ensure DOM is ready
+    
+    // Show helpful toast
+    toast({
+      title: "📍 Navigation History",
+      description: "Your recent routes and saved favorites are shown below.",
+      duration: 4000,
+    });
+    
+    // Call the parent handler to record activity
+    onShowHistory?.();
+  }, [toast, onShowHistory]);
   
   // History & Favorites state
   const [saveRouteDialogOpen, setSaveRouteDialogOpen] = useState(false);
@@ -532,6 +607,128 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                     Clear Search
                   </Button>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions Grid */}
+            <Card className="mx-4 mb-4 shadow-sm border border-border bg-card dark:bg-card">
+              <CardContent className="p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Weather Button */}
+                  <Button
+                    variant="outline"
+                    onClick={onOpenWeatherModal}
+                    className={cn(
+                      "h-16 p-3 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+                      "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                      "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                      "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                      "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                      "active:scale-95"
+                    )}
+                    aria-label="Open weather information"
+                    data-testid="button-quickaction-weather"
+                  >
+                    <Cloud className="w-5 h-5" />
+                    <span className="text-xs font-medium">Weather</span>
+                  </Button>
+
+                  {/* Facilities Button */}
+                  <Button
+                    variant="outline"
+                    onClick={handleQuickFacilitiesSearch}
+                    className={cn(
+                      "h-16 p-3 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+                      "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                      "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                      "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                      "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                      "active:scale-95"
+                    )}
+                    aria-label="Focus on facilities search"
+                    data-testid="button-quickaction-facilities"
+                  >
+                    <MapPin className="w-5 h-5" />
+                    <span className="text-xs font-medium">Facilities</span>
+                  </Button>
+
+                  {/* History Button */}
+                  <Button
+                    variant="outline"
+                    onClick={handleQuickHistoryView}
+                    className={cn(
+                      "h-16 p-3 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+                      "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                      "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                      "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                      "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                      "active:scale-95"
+                    )}
+                    aria-label="Show navigation history"
+                    data-testid="button-quickaction-history"
+                  >
+                    <Clock className="w-5 h-5" />
+                    <span className="text-xs font-medium">History</span>
+                  </Button>
+
+                  {/* Entertainment Button */}
+                  <Button
+                    variant="outline"
+                    onClick={onOpenEntertainmentPanel}
+                    className={cn(
+                      "h-16 p-3 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+                      "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                      "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                      "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                      "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                      "active:scale-95"
+                    )}
+                    aria-label="Open entertainment panel"
+                    data-testid="button-quickaction-entertainment"
+                  >
+                    <Music className="w-5 h-5" />
+                    <span className="text-xs font-medium">Entertainment</span>
+                  </Button>
+
+                  {/* Settings Button */}
+                  <Button
+                    variant="outline"
+                    onClick={onOpenSettingsModal}
+                    className={cn(
+                      "h-16 p-3 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+                      "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                      "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                      "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                      "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                      "active:scale-95"
+                    )}
+                    aria-label="Open settings modal"
+                    data-testid="button-quickaction-settings"
+                  >
+                    <Settings className="w-5 h-5" />
+                    <span className="text-xs font-medium">Settings</span>
+                  </Button>
+
+                  {/* Theme Button */}
+                  <Button
+                    variant="outline"
+                    onClick={onOpenThemeSelector}
+                    className={cn(
+                      "h-16 p-3 flex flex-col items-center justify-center gap-2 transition-all duration-200",
+                      "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600",
+                      "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                      "hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500",
+                      "focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2",
+                      "active:scale-95"
+                    )}
+                    aria-label="Open theme selector"
+                    data-testid="button-quickaction-theme"
+                  >
+                    <Palette className="w-5 h-5" />
+                    <span className="text-xs font-medium">Theme</span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
