@@ -227,7 +227,7 @@ const RightWidget = memo(function RightWidget({
         }}
       >
         {/* Widget Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30 shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-muted shrink-0">
           <div className="flex items-center space-x-2">
             <h2 className="font-semibold text-foreground">Search & Navigation</h2>
             {hasActivity && (
@@ -284,7 +284,7 @@ const RightWidget = memo(function RightWidget({
 
         {/* Activity Indicator - shown when auto-close timer is active */}
         {!isPinned && !isInputFocused && isOpen && (
-          <div className="absolute bottom-4 right-4 text-xs text-muted-foreground bg-muted/80 px-2 py-1 rounded">
+          <div className="absolute bottom-4 right-4 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             Auto-close in {Math.ceil(autoCloseDelay / 1000)}s
           </div>
         )}
