@@ -399,3 +399,19 @@ export type InsertAlternativeRouteDB = z.infer<typeof insertAlternativeRouteSche
 
 export type ReRoutingEventDB = typeof reRoutingEvents.$inferSelect;
 export type InsertReRoutingEventDB = z.infer<typeof insertReRoutingEventSchema>;
+
+// Traffic Settings Schema
+export const trafficSettingsSchema = z.object({
+  autoApplyEnabled: z.boolean().default(false),
+  autoApplyThreshold: z.number().min(1).max(60).default(10), // minutes
+  notificationsEnabled: z.boolean().default(true),
+  updateFrequency: z.number().min(1).max(10).default(3), // minutes between updates
+  minimumSavings: z.number().min(1).max(30).default(5), // minimum minutes to show alerts
+  aggressiveReroutingEnabled: z.boolean().default(false),
+  avoidHighwayIncidents: z.boolean().default(true),
+  considerFuelSavings: z.boolean().default(true),
+  voiceAnnouncements: z.boolean().default(true),
+  privacyMode: z.boolean().default(false),
+});
+
+export type TrafficSettings = z.infer<typeof trafficSettingsSchema>;

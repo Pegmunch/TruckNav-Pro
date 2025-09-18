@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type TrafficCondition, type AlternativeRoute, type Route, type VehicleProfile } from "@shared/schema";
+import { type TrafficCondition, type AlternativeRoute, type Route, type VehicleProfile, type TrafficSettings } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 // Hook for getting current traffic conditions for a route
@@ -131,13 +131,7 @@ export function useUpdateTrafficSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (settings: {
-      autoApplyThreshold?: number; // minutes
-      autoApplyEnabled?: boolean;
-      notificationsEnabled?: boolean;
-      updateFrequency?: number; // minutes
-      minimumSavings?: number; // minutes
-    }) => {
+    mutationFn: async (settings: Partial<TrafficSettings>) => {
       const response = await apiRequest("POST", "/api/user/traffic-settings", settings);
       return response.json();
     },
@@ -149,7 +143,7 @@ export function useUpdateTrafficSettings() {
 
 // Hook for getting traffic settings
 export function useTrafficSettings() {
-  return useQuery({
+  return useQuery<TrafficSettings>({
     queryKey: ["/api/user", "traffic-settings"],
     staleTime: 10 * 60 * 1000, // Settings change rarely, keep for 10 minutes
     retry: 1,

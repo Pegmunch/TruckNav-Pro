@@ -234,7 +234,7 @@ const ReroutingNotification = memo(function ReroutingNotification({
                     <RouteIcon className="w-3 h-3" />
                     <span className="opacity-75">Distance</span>
                   </div>
-                  <div className="font-medium">{formatDistance(newRoute.distance)}</div>
+                  <div className="font-medium">{formatDistance(newRoute.distance, "miles")}</div>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center space-x-1">

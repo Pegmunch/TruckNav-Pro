@@ -199,10 +199,10 @@ const TrafficAlertBanner = memo(function TrafficAlertBanner({
                         <span className="text-sm font-medium">Distance</span>
                       </div>
                       <div className="text-lg font-semibold">
-                        {formatDistance(bestAlternative.distance)}
+                        {formatDistance(bestAlternative.distance, "miles")}
                         {bestAlternative.distance > (bestAlternative.distance - timeSavingsAvailable * 0.5) && (
                           <span className="text-sm font-normal ml-2 opacity-75">
-                            (+{formatDistance(bestAlternative.distance - (bestAlternative.distance - timeSavingsAvailable * 0.5))} longer)
+                            (+{formatDistance(bestAlternative.distance - (bestAlternative.distance - timeSavingsAvailable * 0.5), "miles")} longer)
                           </span>
                         )}
                       </div>
