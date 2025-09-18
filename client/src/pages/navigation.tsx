@@ -3,11 +3,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin } from "lucide-react";
+import { Truck, X, Menu, MapPin, Star, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
+import FeaturesSidebar from "@/components/navigation/features-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
 import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
@@ -40,8 +41,13 @@ export default function NavigationPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
+  // Right sidebar state management
+  const [isFeaturesSidebarOpen, setIsFeaturesSidebarOpen] = useState(false);
+  const [isFeaturesSidebarCollapsed, setIsFeaturesSidebarCollapsed] = useState(false);
+  
   // Mobile drawer state (replaces sidebar on mobile)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isMobileFeaturesDrawerOpen, setIsMobileFeaturesDrawerOpen] = useState(false);
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -69,6 +75,7 @@ export default function NavigationPage() {
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
     setIsSidebarOpen(false);
+    setIsFeaturesSidebarOpen(false);
   }, [isMobile]);
 
   // Check legal consent and show popup if needed
@@ -500,10 +507,27 @@ export default function NavigationPage() {
   // Sidebar toggle functionality
   const handleSidebarToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
+    // Auto-collapse expanded map when sidebar opens
+    if (!isSidebarOpen && isMapExpanded) {
+      setIsMapExpanded(false);
+    }
   };
 
   const handleSidebarCollapseToggle = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
+  // Features sidebar handlers
+  const handleFeaturesSidebarToggle = () => {
+    setIsFeaturesSidebarOpen(!isFeaturesSidebarOpen);
+    // Auto-collapse expanded map when sidebar opens
+    if (!isFeaturesSidebarOpen && isMapExpanded) {
+      setIsMapExpanded(false);
+    }
+  };
+
+  const handleFeaturesSidebarCollapseToggle = () => {
+    setIsFeaturesSidebarCollapsed(!isFeaturesSidebarCollapsed);
   };
 
   if (profilesLoading) {
@@ -538,15 +562,26 @@ export default function NavigationPage() {
               <Truck className="w-6 h-6 text-primary" />
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileDrawerOpen(true)}
-              className="automotive-touch-target"
-              data-testid="button-open-mobile-menu"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileFeaturesDrawerOpen(true)}
+                className="automotive-touch-target"
+                data-testid="button-open-mobile-features"
+              >
+                <Star className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileDrawerOpen(true)}
+                className="automotive-touch-target"
+                data-testid="button-open-mobile-menu"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Fullscreen Map */}
@@ -626,9 +661,26 @@ export default function NavigationPage() {
               </div>
             </DrawerContent>
           </Drawer>
+
+          {/* Mobile Features Drawer */}
+          <Drawer open={isMobileFeaturesDrawerOpen} onOpenChange={setIsMobileFeaturesDrawerOpen}>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle className="mobile-text-xl">Features</DrawerTitle>
+              </DrawerHeader>
+              <div className="drawer-content">
+                <FeaturesSidebar
+                  isOpen={true}
+                  onToggle={() => setIsMobileFeaturesDrawerOpen(false)}
+                  isCollapsed={false}
+                  onCollapseToggle={() => {}}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
       ) : (
-        /* Desktop Layout - Keep existing sidebar layout */
+        /* Desktop Layout - Keep existing sidebar layout with features sidebar */
         <div className={cn(
           "flex h-screen overflow-hidden",
           "automotive-layout desktop-sidebar"
@@ -671,6 +723,21 @@ export default function NavigationPage() {
             "flex-1 relative transition-all duration-300 ease-in-out",
             isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
           )}>
+            {/* Features Toggle Button */}
+            <Button
+              onClick={handleFeaturesSidebarToggle}
+              variant="outline"
+              size="icon"
+              className={cn(
+                "fixed top-4 right-4 z-50 automotive-touch-target shadow-lg bg-background/95 backdrop-blur-sm",
+                "border-2 border-primary/20 hover:border-primary/40",
+                isFeaturesSidebarOpen ? "bg-primary text-primary-foreground" : ""
+              )}
+              data-testid="button-toggle-features-sidebar"
+            >
+              <Star className="w-5 h-5" />
+            </Button>
+
             <InteractiveMap
               currentRoute={currentRoute}
               selectedProfile={selectedProfile}
@@ -690,6 +757,14 @@ export default function NavigationPage() {
               onHideSidebar={() => setIsSidebarOpen(false)}
             />
           </div>
+
+          {/* Desktop Features Sidebar */}
+          <FeaturesSidebar
+            isOpen={isFeaturesSidebarOpen}
+            onToggle={handleFeaturesSidebarToggle}
+            isCollapsed={isFeaturesSidebarCollapsed}
+            onCollapseToggle={handleFeaturesSidebarCollapseToggle}
+          />
         </div>
       )}
 
