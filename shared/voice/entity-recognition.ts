@@ -381,7 +381,7 @@ export function extractMeasurementEntities(text: string): MeasurementEntity[] {
 
 export interface VehicleEntity extends Omit<VoiceEntity, 'type'> {
   type: 'vehicle';
-  vehicleType: 'car' | 'car_caravan' | 'class_2_lorry' | '7_5_tonne' | 'truck';
+  vehicleType: 'car' | 'car_caravan' | 'class_1_lorry' | 'class_2_lorry' | '7_5_tonne' | 'truck';
   restrictions: string[];
 }
 
@@ -399,6 +399,11 @@ export function extractVehicleEntities(text: string): VehicleEntity[] {
       patterns: ['car with caravan', 'car and caravan', 'caravan'], 
       type: 'car_caravan' as const, 
       restrictions: ['length', 'width'] 
+    },
+    { 
+      patterns: ['class 1 lorry', 'class one lorry', 'light lorry', 'small lorry'], 
+      type: 'class_1_lorry' as const, 
+      restrictions: ['height', 'weight'] 
     },
     { 
       patterns: ['class 2 lorry', 'small truck', 'delivery truck'], 

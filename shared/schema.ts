@@ -25,7 +25,7 @@ export const laneSegmentSchema = z.object({
 export const vehicleProfiles = pgTable("vehicle_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  type: text("type").notNull().default("car"), // 'car', 'car_caravan', 'class_2_lorry', '7_5_tonne'
+  type: text("type").notNull().default("class_1_lorry"), // 'car', 'car_caravan', 'class_1_lorry', 'class_2_lorry', '7_5_tonne'
   height: real("height").notNull(), // in feet
   width: real("width").notNull(), // in feet
   length: real("length"), // in feet
@@ -165,7 +165,7 @@ export const journeys = pgTable("journeys", {
 export const insertVehicleProfileSchema = createInsertSchema(vehicleProfiles).omit({
   id: true,
 }).extend({
-  type: z.enum(["car", "car_caravan", "class_2_lorry", "7_5_tonne", "truck"]).default("car")
+  type: z.enum(["car", "car_caravan", "class_1_lorry", "class_2_lorry", "7_5_tonne", "truck"]).default("class_1_lorry")
     .transform((val) => {
       // Backward compatibility: map legacy "truck" type to appropriate new type
       if (val === "truck") {
