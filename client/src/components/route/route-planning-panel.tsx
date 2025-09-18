@@ -162,8 +162,59 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
           />
         </div>
         
-        {/* Route Options - Removed primary button, keeping utility buttons */}
-        <div className="flex justify-end mt-4">
+        {/* Start Navigation Button - Positioned after destination input */}
+        {(isNavigating || (fromLocation && toLocation)) && (
+          <div className="mt-4">
+            {!isNavigating ? (
+              <Button 
+                onClick={currentRoute ? onStartNavigation : onPlanRoute}
+                disabled={(!fromLocation || !toLocation) || isStartingJourney || isCalculating}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold automotive-button"
+                data-testid="button-start-navigation button-go-navigation"
+              >
+                {isStartingJourney || isCalculating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    {isCalculating ? "Planning Route..." : "Starting..."}
+                  </>
+                ) : currentRoute ? (
+                  <>
+                    <Navigation className="w-5 h-5 mr-3" />
+                    Start Navigation
+                  </>
+                ) : (
+                  <>
+                    <Route className="w-5 h-5 mr-3" />
+                    Plan Route
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button 
+                onClick={onStopNavigation}
+                disabled={isCompletingJourney}
+                variant="destructive"
+                className="w-full h-12 text-lg font-semibold automotive-button"
+                data-testid="button-stop-navigation"
+              >
+                {isCompletingJourney ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Ending...
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-4 h-4 mr-2" />
+                    End Navigation
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+        
+        {/* Route Options - Utility buttons */}
+        <div className="flex justify-end mt-3">
           <Button variant="outline" size="icon" data-testid="button-location-picker">
             <MapPin className="w-4 h-4" />
           </Button>
@@ -333,72 +384,21 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
         </div>
       )}
 
-      {/* Bottom Action Bar - Main Go Button Area */}
-      <div className="p-4 border-t border-border bg-accent/10">
-        <div className="space-y-3">
-          {/* Primary Go Button */}
-          <div className="flex space-x-2">
-            {!isNavigating ? (
-              <Button 
-                onClick={currentRoute ? onStartNavigation : onPlanRoute}
-                disabled={(!fromLocation || !toLocation) || isStartingJourney || isCalculating}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold automotive-button"
-                data-testid="button-go-navigation"
-              >
-                {isStartingJourney || isCalculating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    {isCalculating ? "Planning Route..." : "Starting..."}
-                  </>
-                ) : currentRoute ? (
-                  <>
-                    <Navigation className="w-5 h-5 mr-3" />
-                    Start Navigation
-                  </>
-                ) : (
-                  <>
-                    <Route className="w-5 h-5 mr-3" />
-                    Start Navigation
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button 
-                onClick={onStopNavigation}
-                disabled={isCompletingJourney}
-                variant="destructive"
-                className="flex-1"
-                data-testid="button-stop-navigation"
-              >
-                {isCompletingJourney ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Ending...
-                  </>
-                ) : (
-                  <>
-                    <Square className="w-4 h-4 mr-2" />
-                    End Navigation
-                  </>
-                )}
-              </Button>
-            )}
-            {/* Save route functionality moved to History & Favorites panel */}
-          </div>
-          {currentRoute && onOpenLaneSelection && (
-            <Button 
-              variant="outline"
-              onClick={onOpenLaneSelection}
-              className="w-full"
-              disabled={isNavigating}
-              data-testid="button-lane-selection"
-            >
-              <Route className="w-4 h-4 mr-2" />
-              {isNavigating ? 'Lane Selection (Navigate to modify)' : 'Lane Selection'}
-            </Button>
-          )}
+      {/* Bottom Action Bar - Lane Selection and Additional Options */}
+      {currentRoute && onOpenLaneSelection && (
+        <div className="p-4 border-t border-border bg-accent/10">
+          <Button 
+            variant="outline"
+            onClick={onOpenLaneSelection}
+            className="w-full"
+            disabled={isNavigating}
+            data-testid="button-lane-selection"
+          >
+            <Route className="w-4 h-4 mr-2" />
+            {isNavigating ? 'Lane Selection (Navigate to modify)' : 'Lane Selection'}
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 });
