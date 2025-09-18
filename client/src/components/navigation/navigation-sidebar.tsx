@@ -188,7 +188,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     return () => clearInterval(checkInterval);
   }, []);
 
-  // Core navigation window sections (focused on navigation essentials)
+  // Essential navigation section (single core function)
   const windowSections = [
     {
       id: 'route' as const,
@@ -196,13 +196,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
       icon: RouteIcon,
       badge: currentRoute ? 'Planned' : null,
       description: 'Plan routes with manual search'
-    },
-    {
-      id: 'vehicle' as const,
-      title: 'Vehicle Profile',
-      icon: Truck,
-      badge: selectedProfile ? 'Set' : 'Required',
-      description: 'Manage truck specifications'
     },
   ];
 
