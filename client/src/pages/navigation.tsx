@@ -66,9 +66,9 @@ export default function NavigationPage() {
   const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
   const [showLegalPopup, setShowLegalPopup] = useState(false);
 
-  // Initialize sidebar state based on mobile status
+  // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
-    setIsSidebarOpen(!isMobile);
+    setIsSidebarOpen(false);
   }, [isMobile]);
 
   // Check legal consent and show popup if needed

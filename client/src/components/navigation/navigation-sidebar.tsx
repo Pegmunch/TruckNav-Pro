@@ -580,8 +580,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
         "transition-all duration-300 ease-out", // Improved easing for smoother feel
         isCollapsed ? "w-16" : "w-80 lg:w-96",
         "shadow-lg lg:shadow-none",
-        // Hide/show sidebar based on isOpen state
-        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0" // Always visible on desktop, slides in/out on mobile
+        // Hide/show sidebar based on isOpen state - hidden by default on all screen sizes
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         
         {/* Sidebar Header */}
