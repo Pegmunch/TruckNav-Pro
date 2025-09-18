@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
@@ -158,6 +158,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Mock route calculation - in real implementation, this would use a routing service
+      const routeCoordinates = [
+        [-2.2426, 53.4808], // Manchester (lng, lat for GeoJSON)
+        [-2.1642, 53.2569], // Intermediate point
+        [-2.0842, 52.9569], // Intermediate point  
+        [-1.9904, 52.7862], // Intermediate point
+        [-1.8904, 52.4862]  // Birmingham (lng, lat for GeoJSON)
+      ];
+      
+      // Create geometry object and validate it
+      const geometry = {
+        type: "LineString" as const,
+        coordinates: routeCoordinates
+      };
+      
+      // Validate geometry using schema for stronger type guarantees
+      const geometryValidation = geoJsonLineStringSchema.safeParse(geometry);
+      if (!geometryValidation.success) {
+        console.error('Route geometry validation failed:', geometryValidation.error);
+        return res.status(500).json({ 
+          message: "Failed to generate valid route geometry",
+          errors: geometryValidation.error.errors
+        });
+      }
+
       const mockRoute = {
         startLocation,
         endLocation,
@@ -168,9 +192,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vehicleProfileId,
         routePath: [
           { lat: 53.4808, lng: -2.2426 },
-          { lat: 52.9569, lng: -2.0642 },
+          { lat: 53.2569, lng: -2.1642 },
+          { lat: 52.9569, lng: -2.0842 },
+          { lat: 52.7862, lng: -1.9904 },
           { lat: 52.4862, lng: -1.8904 }
         ],
+        geometry: geometryValidation.data, // Use validated geometry
         restrictionsAvoided: ["rest-1", "rest-2"],
         facilitiesNearby: ["facility-1", "facility-2"],
       };

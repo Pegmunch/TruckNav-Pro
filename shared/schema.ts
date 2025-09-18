@@ -73,6 +73,7 @@ export const routes = pgTable("routes", {
   duration: integer("duration"), // in minutes
   vehicleProfileId: varchar("vehicle_profile_id"),
   routePath: jsonb("route_path"), // array of coordinate points
+  geometry: jsonb("geometry"), // GeoJSON LineString geometry for MapLibre GL JS animations
   restrictionsAvoided: jsonb("restrictions_avoided"), // array of restriction IDs
   facilitiesNearby: jsonb("facilities_nearby"), // array of facility IDs
   laneGuidance: jsonb("lane_guidance"), // array of LaneSegment objects
@@ -248,6 +249,16 @@ export type InsertJourney = z.infer<typeof insertJourneySchema>;
 
 export type LaneOption = z.infer<typeof laneOptionSchema>;
 export type LaneSegment = z.infer<typeof laneSegmentSchema>;
+
+// GeoJSON schemas for route geometry
+export const geoJsonPointSchema = z.tuple([z.number(), z.number()]);
+
+export const geoJsonLineStringSchema = z.object({
+  type: z.literal("LineString"),
+  coordinates: z.array(geoJsonPointSchema),
+});
+
+export type GeoJsonLineString = z.infer<typeof geoJsonLineStringSchema>;
 
 // Traffic re-routing system schemas
 export const trafficConditionSchema = z.object({

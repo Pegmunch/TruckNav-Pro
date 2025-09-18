@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
+import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -53,6 +54,10 @@ export default function NavigationPage() {
   const [previewRoute, setPreviewRoute] = useState<AlternativeRoute | null>(null);
   const [selectedAlternativeRouteId, setSelectedAlternativeRouteId] = useState<string | null>(null);
   const [isApplyingRoute, setIsApplyingRoute] = useState(false);
+  
+  // Route preview overlay state
+  const [showRoutePreview, setShowRoutePreview] = useState(false);
+  const [previewRouteData, setPreviewRouteData] = useState<Route | null>(null);
   
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
@@ -252,30 +257,36 @@ export default function NavigationPage() {
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
-      // Auto-expand map window if open, otherwise expand in-page map
-      const handleMapExpansion = () => {
-        if (isMapWindowOpen()) {
-          // Focus the map window and let it handle auto-expansion
-          focusMapWindow();
-          if (import.meta.env.DEV) {
-            console.log('Route calculated: focusing map window for auto-expansion');
-          }
-        } else {
-          if (isMobile) {
-            // On mobile, close drawer to show full map
-            setIsMobileDrawerOpen(false);
+      // Show route preview overlay if geometry is available
+      if (route.geometry) {
+        setPreviewRouteData(route);
+        setShowRoutePreview(true);
+      } else {
+        // Fallback to existing map expansion behavior if no geometry
+        const handleMapExpansion = () => {
+          if (isMapWindowOpen()) {
+            // Focus the map window and let it handle auto-expansion
+            focusMapWindow();
+            if (import.meta.env.DEV) {
+              console.log('Route calculated: focusing map window for auto-expansion');
+            }
           } else {
-            // Use existing in-page expansion logic for desktop
-            setIsMapExpanded(true);
-            if (window.innerWidth < 1024) {
-              setIsSidebarOpen(false);
+            if (isMobile) {
+              // On mobile, close drawer to show full map
+              setIsMobileDrawerOpen(false);
+            } else {
+              // Use existing in-page expansion logic for desktop
+              setIsMapExpanded(true);
+              if (window.innerWidth < 1024) {
+                setIsSidebarOpen(false);
+              }
             }
           }
-        }
-      };
+        };
 
-      // Small delay to allow route state to update
-      setTimeout(handleMapExpansion, 200);
+        // Small delay to allow route state to update
+        setTimeout(handleMapExpansion, 200);
+      }
     },
     onError: (error) => {
       if (import.meta.env.DEV) {
@@ -356,6 +367,49 @@ export default function NavigationPage() {
     setIsAlternativeRoutesOpen(false);
     setPreviewRoute(null);
     setSelectedAlternativeRouteId(null);
+  };
+
+  // Route preview overlay handlers
+  const handleSkipPreview = () => {
+    setShowRoutePreview(false);
+    setPreviewRouteData(null);
+    // Show the regular map view after skipping
+    handleMapExpansionAfterPreview();
+  };
+
+  const handleStartNavigationFromPreview = () => {
+    setShowRoutePreview(false);
+    setPreviewRouteData(null);
+    // Start navigation immediately
+    handleStartNavigation();
+  };
+
+  const handleClosePreview = () => {
+    setShowRoutePreview(false);
+    setPreviewRouteData(null);
+    // Don't expand map, just return to planning view
+  };
+
+  // Helper function for map expansion after preview
+  const handleMapExpansionAfterPreview = () => {
+    if (isMapWindowOpen()) {
+      // Focus the map window and let it handle auto-expansion
+      focusMapWindow();
+      if (import.meta.env.DEV) {
+        console.log('Route preview completed: focusing map window for auto-expansion');
+      }
+    } else {
+      if (isMobile) {
+        // On mobile, close drawer to show full map
+        setIsMobileDrawerOpen(false);
+      } else {
+        // Use existing in-page expansion logic for desktop
+        setIsMapExpanded(true);
+        if (window.innerWidth < 1024) {
+          setIsSidebarOpen(false);
+        }
+      }
+    }
   };
 
   // Effect to automatically show alternative routes when they become available
@@ -735,6 +789,17 @@ export default function NavigationPage() {
         isApplying={isApplyingRoute}
         selectedRouteId={selectedAlternativeRouteId || undefined}
       />
+
+      {/* Route Preview Overlay */}
+      {showRoutePreview && previewRouteData && (
+        <RoutePreviewOverlay
+          route={previewRouteData}
+          isVisible={showRoutePreview}
+          onSkip={handleSkipPreview}
+          onStartNavigation={handleStartNavigationFromPreview}
+          onClose={handleClosePreview}
+        />
+      )}
     </div>
   );
 }
