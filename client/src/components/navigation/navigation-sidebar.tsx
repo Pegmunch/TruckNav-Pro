@@ -28,7 +28,8 @@ import {
   Play,
   ArrowRight,
   Zap,
-  Shield
+  Shield,
+  FileText
 } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
@@ -46,6 +47,9 @@ import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { LegalPopupManager } from "@/lib/legal-popup-manager";
 import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 import HistoryFavoritesPanel from "@/components/navigation/history-favorites-panel";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import LegalNotices from "@/components/legal/legal-notices";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -124,6 +128,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [isHistoryFavoritesOpen, setIsHistoryFavoritesOpen] = useState(false);
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
+  const [isLegalNoticesOpen, setIsLegalNoticesOpen] = useState(false);
   
   // Window sync state
   const windowSync = useWindowSync();
@@ -300,6 +305,20 @@ const NavigationSidebar = memo(function NavigationSidebar({
     }
     
     setIsDisclaimerDialogOpen(true);
+  };
+
+  // Legal Notices button handler with access control
+  const handleViewLegalNotices = () => {
+    if (!hasAcceptedTerms) {
+      toast({
+        title: "Access restricted",
+        description: "Please complete agreement first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLegalNoticesOpen(true);
   };
 
   // Go button functionality
@@ -728,26 +747,49 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           <label className="text-sm font-medium text-foreground mb-2 block">
                             Legal Information
                           </label>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleViewDisclaimer}
-                            disabled={!hasAcceptedTerms}
-                            className={cn(
-                              "w-full justify-start h-auto p-3 automotive-button",
-                              !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
-                            )}
-                            data-testid="button-view-disclaimer"
-                            aria-label={hasAcceptedTerms ? "View legal disclaimer and terms" : "Complete agreement first to view disclaimer"}
-                          >
-                            <Shield className="w-4 h-4 mr-3 text-primary" />
-                            <div className="flex-1 text-left">
-                              <div className="font-medium text-foreground">View Disclaimer</div>
-                              <div className="text-xs text-muted-foreground">
-                                {hasAcceptedTerms ? "Access legal terms and disclaimers" : "Complete agreement first"}
+                          <div className="space-y-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleViewDisclaimer}
+                              disabled={!hasAcceptedTerms}
+                              className={cn(
+                                "w-full justify-start h-auto p-3 automotive-button",
+                                !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
+                              )}
+                              data-testid="button-view-disclaimer"
+                              aria-label={hasAcceptedTerms ? "View legal disclaimer and terms" : "Complete agreement first to view disclaimer"}
+                            >
+                              <Shield className="w-4 h-4 mr-3 text-primary" />
+                              <div className="flex-1 text-left">
+                                <div className="font-medium text-foreground">View Disclaimer</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {hasAcceptedTerms ? "Access legal terms and disclaimers" : "Complete agreement first"}
+                                </div>
                               </div>
-                            </div>
-                          </Button>
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleViewLegalNotices}
+                              disabled={!hasAcceptedTerms}
+                              className={cn(
+                                "w-full justify-start h-auto p-3 automotive-button",
+                                !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
+                              )}
+                              data-testid="button-legal-notices"
+                              aria-label={hasAcceptedTerms ? "View legal notices and copyright information" : "Complete agreement first to view legal notices"}
+                            >
+                              <FileText className="w-4 h-4 mr-3 text-blue-600" />
+                              <div className="flex-1 text-left">
+                                <div className="font-medium text-foreground">Legal Notices</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {hasAcceptedTerms ? "Copyright, patents, and ownership" : "Complete agreement first"}
+                                </div>
+                              </div>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -773,6 +815,23 @@ const NavigationSidebar = memo(function NavigationSidebar({
         open={isDisclaimerDialogOpen}
         onOpenChange={setIsDisclaimerDialogOpen}
       />
+      
+      {/* Legal Notices Dialog */}
+      <Dialog open={isLegalNoticesOpen} onOpenChange={setIsLegalNoticesOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] automotive-dialog">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              Legal Notices & Copyright Information
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="flex-1 max-h-[80vh]">
+            <div className="pr-4">
+              <LegalNotices />
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       
       {/* History & Favorites Secondary Panel */}
       <HistoryFavoritesPanel

@@ -273,12 +273,13 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                 Restrictions Avoided
               </h4>
               <div className="space-y-2">
-                {restrictionsToAvoid.slice(0, 3).map((restriction: Restriction) => (
-                  <div 
-                    key={restriction.id} 
-                    className={`flex items-center space-x-3 p-2 rounded-lg ${
-                      restriction.type === 'height' ? 'bg-destructive/10' : 'bg-secondary/10'
-                    }`}
+                {restrictionsToAvoid.slice(0, 3).map((restriction: Restriction) => {
+                  return (
+                    <div 
+                      key={restriction.id} 
+                      className={`flex items-center space-x-3 p-2 rounded-lg ${
+                        restriction.type === 'height' ? 'bg-destructive/10' : 'bg-secondary/10'
+                      }`}
                     data-testid={`restriction-${restriction.id}`}
                   >
                     {restriction.type === 'height' ? (
@@ -296,11 +297,13 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                         })
                       </div>
                     </div>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
+            }
+            
             {/* Facilities Along Route */}
             <div className="p-4">
               <h4 className="font-medium text-foreground mb-3 flex items-center">
