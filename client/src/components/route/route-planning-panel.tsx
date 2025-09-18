@@ -32,6 +32,8 @@ import LocationDropdown from "./location-dropdown";
 import TrafficConditionsDisplay from "@/components/traffic/traffic-conditions-display";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { openMapWindow, closeMapWindow, isMapWindowOpen, TruckNavWindowManager, windowManager } from "@/lib/window-manager";
+import { useWindowSync } from "@/hooks/use-window-sync";
 
 interface RoutePlanningPanelProps {
   fromLocation: string;
@@ -135,6 +137,97 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
+  // Window sync state for map integration
+  const windowSync = useWindowSync();
+
+  // Navigation readiness logic
+  const isReadyToGo = fromLocation && toLocation && selectedProfile;
+  const canStartNavigation = isReadyToGo && currentRoute && !isNavigating;
+
+  // Window management handlers
+  const handleOpenMapWindow = async () => {
+    try {
+      const mapWindow = await openMapWindow({
+        automotive: true, // Optimize for automotive displays
+        fallbackToFullscreen: true,
+        onPopupBlocked: () => {
+          toast({
+            title: "Popup Blocked",
+            description: TruckNavWindowManager.getPopupBlockedMessage(),
+            variant: "destructive",
+          });
+        },
+        onWindowClosed: () => {
+          windowSync.closeMapWindow();
+        }
+      });
+
+      if (mapWindow) {
+        windowSync.openMapWindow();
+        toast({
+          title: "Map window opened",
+          description: "Your map is now displayed in a separate window.",
+        });
+      }
+    } catch (error) {
+      console.error('Failed to open map window:', error);
+      toast({
+        title: "Failed to open map window",
+        description: "There was an error opening the map in a new window.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Start Navigation handler
+  const handleGoNavigation = async () => {
+    if (!canStartNavigation) {
+      if (!selectedProfile) {
+        toast({
+          title: "Vehicle profile required",
+          description: "Please set up your vehicle profile before starting navigation.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!fromLocation || !toLocation) {
+        toast({
+          title: "Locations required",
+          description: "Please set both starting point and destination.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!currentRoute) {
+        // Try to plan route first
+        onPlanRoute();
+        return;
+      }
+    }
+
+    try {
+      // Start navigation
+      onStartNavigation();
+      
+      // Open map window automatically
+      await handleOpenMapWindow();
+      
+      toast({
+        title: "Navigation started",
+        description: "TruckNav Pro is now guiding your journey.",
+      });
+    } catch (error) {
+      console.error('Failed to start navigation:', error);
+      toast({
+        title: "Failed to start navigation",
+        description: "There was an error starting navigation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   
   // Note: Journey History and Route Favorites have been moved to HistoryFavoritesPanel
 
@@ -206,6 +299,41 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
               )}
             </div>
           </div>
+
+          {/* Start Navigation Button - appears right after destination input */}
+          {currentRoute && !isNavigating && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <Button 
+                onClick={handleGoNavigation}
+                disabled={(!fromLocation || !toLocation) || !selectedProfile || isStartingJourney}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 text-lg font-semibold automotive-button shadow-lg"
+                data-testid="button-start-navigation"
+              >
+                {isStartingJourney ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    Starting Navigation...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-5 h-5 mr-3" />
+                    Start Navigation
+                  </>
+                )}
+              </Button>
+              
+              {/* Prerequisites Check */}
+              {(!selectedProfile || !fromLocation || !toLocation) && (
+                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="text-amber-800 dark:text-amber-200 text-sm">
+                    {!selectedProfile && '• Vehicle profile required'}
+                    {!fromLocation && '• Starting location required'}
+                    {!toLocation && '• Destination required'}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

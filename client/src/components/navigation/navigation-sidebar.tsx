@@ -350,60 +350,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
     setIsLegalNoticesOpen(true);
   };
 
-  
-  // Go button functionality
-  const isReadyToGo = fromLocation && toLocation && selectedProfile;
-  const canStartNavigation = isReadyToGo && currentRoute && !isNavigating;
-
-  const handleGoNavigation = async () => {
-    if (!canStartNavigation) {
-      if (!selectedProfile) {
-        toast({
-          title: "Vehicle profile required",
-          description: "Please set up your vehicle profile before starting navigation.",
-          variant: "destructive",
-        });
-        setActiveSection('vehicle');
-        return;
-      }
-      
-      if (!fromLocation || !toLocation) {
-        toast({
-          title: "Locations required",
-          description: "Please set both starting point and destination.",
-          variant: "destructive",
-        });
-        setActiveSection('vehicle');
-        return;
-      }
-      
-      if (!currentRoute) {
-        // Try to plan route first
-        onPlanRoute();
-        return;
-      }
-    }
-
-    try {
-      // Start navigation
-      onStartNavigation();
-      
-      // Open map window automatically
-      await handleOpenMapWindow();
-      
-      toast({
-        title: "Navigation started",
-        description: "TruckNav Pro is now guiding your journey.",
-      });
-    } catch (error) {
-      console.error('Failed to start navigation:', error);
-      toast({
-        title: "Failed to start navigation",
-        description: "There was an error starting navigation. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Voice command handlers for navigation sidebar
   const navigationVoiceHandlers: IntentHandlers = {
@@ -411,8 +357,74 @@ const NavigationSidebar = memo(function NavigationSidebar({
       console.log('Navigation sidebar navigation intent:', intent.action, entities);
       
       if (intent.action === 'start_navigation') {
-        await handleGoNavigation();
-        setLastNavigationVoiceCommand('Started navigation');
+        // Use same validation logic as button version
+        const isReadyToGo = fromLocation && toLocation && selectedProfile;
+        const canStartNavigation = isReadyToGo && currentRoute && !isNavigating;
+        
+        if (!canStartNavigation) {
+          if (!selectedProfile) {
+            setLastNavigationVoiceCommand('Vehicle profile required');
+            toast({
+              title: "Vehicle profile required",
+              description: "Please set up your vehicle profile before starting navigation.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          if (!fromLocation || !toLocation) {
+            setLastNavigationVoiceCommand('Locations required');
+            toast({
+              title: "Locations required",
+              description: "Please set both starting point and destination.",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          if (!currentRoute) {
+            // Try to plan route first
+            setLastNavigationVoiceCommand('Planning route first');
+            onPlanRoute();
+            toast({
+              title: "Planning route",
+              description: "Calculating truck-safe route before navigation.",
+            });
+            return;
+          }
+          
+          if (isNavigating) {
+            setLastNavigationVoiceCommand('Navigation already active');
+            toast({
+              title: "Already navigating",
+              description: "Navigation is currently active.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+
+        try {
+          // Start navigation
+          onStartNavigation();
+          
+          // Open map window automatically
+          await handleOpenMapWindow();
+          
+          setLastNavigationVoiceCommand('Navigation started - map window opened');
+          toast({
+            title: "Navigation started",
+            description: "TruckNav Pro is now guiding your journey.",
+          });
+        } catch (error) {
+          console.error('Failed to start navigation via voice:', error);
+          setLastNavigationVoiceCommand('Failed to start navigation');
+          toast({
+            title: "Failed to start navigation",
+            description: "There was an error starting navigation. Please try again.",
+            variant: "destructive",
+          });
+        }
       } else if (intent.action === 'stop_navigation') {
         if (isNavigating && onStopNavigation) {
           onStopNavigation();
@@ -983,51 +995,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </>
               )}
 
-              {/* Navigation Controls Section - Show when route is ready */}
-              {currentRoute && !isNavigating && (
-                <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-accent/5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-foreground flex items-center">
-                      <Navigation className="w-4 h-4 text-primary mr-2" />
-                      Navigation Controls
-                    </h3>
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                      Ready
-                    </Badge>
-                  </div>
-                  
-                  {/* Start Navigation Button */}
-                  <Button 
-                    onClick={handleGoNavigation}
-                    disabled={(!fromLocation || !toLocation) || !selectedProfile || isStartingJourney}
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 text-lg font-semibold automotive-button shadow-lg"
-                    data-testid="button-start-navigation"
-                  >
-                    {isStartingJourney ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                        Starting Navigation...
-                      </>
-                    ) : (
-                      <>
-                        <Navigation className="w-5 h-5 mr-3" />
-                        Start Navigation
-                      </>
-                    )}
-                  </Button>
-                  
-                  {/* Prerequisites Check */}
-                  {(!selectedProfile || !fromLocation || !toLocation) && (
-                    <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                      <div className="text-amber-800 dark:text-amber-200 text-sm">
-                        {!selectedProfile && '• Vehicle profile required'}
-                        {!fromLocation && '• Starting location required'}
-                        {!toLocation && '• Destination required'}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Active Navigation Controls - Show during navigation */}
               {isNavigating && (
