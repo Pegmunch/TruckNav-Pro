@@ -14,7 +14,7 @@ import {
   MapPin,
   Star,
   Fuel,
-  ParkingMeter,
+  CircleParking,
   Utensils,
   ShoppingCart,
   Coffee,
@@ -27,7 +27,6 @@ import {
   Building,
   Truck,
   Navigation,
-  MapPin as ToiletIcon,
   Loader2
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -55,13 +54,13 @@ interface SearchSidebarProps {
 const POI_CATEGORIES = [
   { id: 'truck_stop', label: 'Truck Stops', icon: Truck, type: 'truck_stop', color: 'bg-blue-500' },
   { id: 'fuel', label: 'Fuel Stations', icon: Fuel, type: 'fuel', color: 'bg-red-500' },
-  { id: 'parking', label: 'Parking', icon: ParkingMeter, type: 'parking', color: 'bg-green-500' },
+  { id: 'parking', label: 'Parking', icon: CircleParking, type: 'parking', color: 'bg-green-500' },
   { id: 'restaurant', label: 'Restaurants', icon: Utensils, type: 'restaurant', color: 'bg-orange-500' },
   { id: 'supermarket', label: 'Supermarkets', icon: ShoppingCart, type: 'supermarket', color: 'bg-purple-500' },
   { id: 'shop', label: 'Shops', icon: Building, type: 'shop', color: 'bg-indigo-500' },
   { id: 'coffee', label: 'Coffee Shops', icon: Coffee, type: 'coffee', color: 'bg-amber-600' },
   { id: 'hotel', label: 'Hotels', icon: Bed, type: 'hotel', color: 'bg-pink-500' },
-  { id: 'toilet', label: 'Toilets', icon: ToiletIcon, type: 'toilet', color: 'bg-cyan-500' },
+  { id: 'toilet', label: 'Toilets', icon: ShowerHead, type: 'toilet', color: 'bg-cyan-500' },
   { id: 'repair', label: 'Repair Shops', icon: Wrench, type: 'repair', color: 'bg-gray-500' },
 ];
 
@@ -234,9 +233,9 @@ const SearchSidebar = memo(function SearchSidebar({
   const getAmenityIcon = (amenity: string): JSX.Element => {
     switch (amenity) {
       case 'fuel': return <Fuel className="w-3 h-3" />;
-      case 'parking': return <ParkingMeter className="w-3 h-3" />;
+      case 'parking': return <CircleParking className="w-3 h-3" />;
       case 'restaurant': return <Utensils className="w-3 h-3" />;
-      case 'restrooms': return <ToiletIcon className="w-3 h-3" />;
+      case 'restrooms': return <ShowerHead className="w-3 h-3" />;
       case 'showers': return <ShowerHead className="w-3 h-3" />;
       case 'wifi': return <Wifi className="w-3 h-3" />;
       case 'phone': return <Phone className="w-3 h-3" />;
