@@ -98,7 +98,7 @@ export default function WeatherWidget({
   if (!isOpen) return null;
 
   return (
-    <div className={cn("fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4", className)}>
+    <div className={cn("fixed inset-0 bg-background z-50 flex items-center justify-center p-4", className)}>
       <Card className="w-full max-w-md bg-background shadow-xl">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center">
@@ -132,7 +132,7 @@ export default function WeatherWidget({
           </div>
 
           {/* Current Conditions */}
-          <div className="bg-muted/30 p-4 rounded-lg">
+          <div className="bg-muted p-4 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
                 <WeatherIcon className="w-8 h-8 text-primary" />
@@ -192,7 +192,7 @@ export default function WeatherWidget({
           )}
 
           {/* Trucking-Specific Info */}
-          <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+          <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
             <div className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
               Driving Conditions
             </div>
