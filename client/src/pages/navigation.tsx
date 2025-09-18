@@ -618,7 +618,7 @@ export default function NavigationPage() {
                   
                   // Sidebar state (always open in mobile drawer)
                   isOpen={true}
-                  onToggle={() => {}}
+                  onToggle={() => setIsMobileDrawerOpen(false)} // Close drawer when hamburger is clicked
                   isCollapsed={false}
                   onCollapseToggle={() => {}}
                 />
