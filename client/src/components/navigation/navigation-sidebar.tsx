@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import ManualSearchPanel from "./manual-search-panel";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
+import SettingsModal from "@/components/settings/settings-modal";
 import { type VehicleProfile, type Route, type Journey } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,8 @@ interface NavigationSidebarProps {
   onCollapseToggle: () => void;
   
   // Search panel controls
-  onOpenSearchPanel?: () => void;
+  isSearchPanelOpen?: boolean;
+  onToggleSearchPanel?: () => void;
 }
 
 // Configuration for the 5 core navigation sections
@@ -106,10 +108,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
   onToggle,
   isCollapsed,
   onCollapseToggle,
-  onOpenSearchPanel,
+  isSearchPanelOpen,
+  onToggleSearchPanel,
 }: NavigationSidebarProps) {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
   const [showVehicleProfileSetup, setShowVehicleProfileSetup] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Handle section button clicks
   const handleSectionClick = (sectionId: SectionId) => {
@@ -121,14 +125,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
         handleNavigationToggle();
         break;
       case 'search':
-        onOpenSearchPanel?.();
+        onToggleSearchPanel?.();
         break;
       case 'vehicle':
         setShowVehicleProfileSetup(true);
         break;
       case 'settings':
-        // TODO: Open consolidated SettingsModal when created
-        console.log('Settings panel not yet implemented');
+        setShowSettingsModal(true);
         break;
     }
   };
@@ -152,42 +155,46 @@ const NavigationSidebar = memo(function NavigationSidebar({
   };
 
   // Get section button state
-  const getSectionButtonState = (sectionId: SectionId) => {
+  const getSectionButtonState = (sectionId: SectionId): {
+    disabled: boolean;
+    variant: "default" | "outline" | "destructive" | "secondary" | "ghost" | "link";
+    loading: boolean;
+  } => {
     switch (sectionId) {
       case 'plan':
         return {
           disabled: false,
-          variant: activeSection === 'plan' ? 'default' : 'outline' as const,
+          variant: activeSection === 'plan' ? 'default' : 'outline',
           loading: isCalculating
         };
       case 'go':
         return {
           disabled: !currentRoute || !selectedProfile,
-          variant: isNavigating ? 'destructive' : 'default' as const,
+          variant: isNavigating ? 'destructive' : 'default',
           loading: isStartingJourney || isCompletingJourney
         };
       case 'search':
         return {
           disabled: false,
-          variant: 'outline' as const,
+          variant: isSearchPanelOpen ? 'default' : 'outline',
           loading: false
         };
       case 'vehicle':
         return {
           disabled: false,
-          variant: selectedProfile ? 'default' : 'outline' as const,
+          variant: selectedProfile ? 'default' : 'outline',
           loading: false
         };
       case 'settings':
         return {
           disabled: false,
-          variant: 'outline' as const,
+          variant: 'outline',
           loading: false
         };
       default:
         return {
           disabled: false,
-          variant: 'outline' as const,
+          variant: 'outline',
           loading: false
         };
     }
@@ -344,13 +351,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Distance:</span>
                         <span className="font-medium">
-                          {(currentRoute.distance / 1000).toFixed(1)} km
+                          {currentRoute.distance ? (currentRoute.distance / 1000).toFixed(1) : '0'} km
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Duration:</span>
                         <span className="font-medium">
-                          {Math.round(currentRoute.duration / 60)} min
+                          {currentRoute.duration ? Math.round(currentRoute.duration / 60) : '0'} min
                         </span>
                       </div>
                     </div>
@@ -433,6 +440,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
           currentProfile={selectedProfile}
         />
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        open={showSettingsModal}
+        onOpenChange={setShowSettingsModal}
+      />
     </>
   );
 });

@@ -30,6 +30,7 @@ import {
   Headphones,
   Podcast
 } from "lucide-react";
+import { SiTunein, SiMixcloud } from "react-icons/si";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -89,7 +90,7 @@ export default function EntertainmentPanel({
   });
 
   // Popular trucking stations query
-  const { data: truckingStations, isLoading: loadingTruckingStations } = useQuery({
+  const { data: truckingStations, isLoading: loadingTruckingStations } = useQuery<EntertainmentStation[]>({
     queryKey: ['/api/entertainment/stations?trucking=true&limit=5'],
   });
 
@@ -179,7 +180,7 @@ export default function EntertainmentPanel({
 
   // Quick access stations
   const quickAccessStations = useMemo(() => {
-    if (!truckingStations) return [];
+    if (!truckingStations || !Array.isArray(truckingStations)) return [];
     return truckingStations.slice(0, 3);
   }, [truckingStations]);
 

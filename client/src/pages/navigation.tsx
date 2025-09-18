@@ -3,13 +3,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Star, Settings, Search } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
-import FeaturesSidebar from "@/components/navigation/features-sidebar";
-import SearchSidebar from "@/components/navigation/search-sidebar";
+import UnifiedSearchPanel from "@/components/navigation/unified-search-panel";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
 import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
@@ -43,18 +42,12 @@ export default function NavigationPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  // Right sidebar state management
-  const [isFeaturesSidebarOpen, setIsFeaturesSidebarOpen] = useState(false);
-  const [isFeaturesSidebarCollapsed, setIsFeaturesSidebarCollapsed] = useState(false);
   
-  // Search sidebar state management (center sidebar)
-  const [isSearchSidebarOpen, setIsSearchSidebarOpen] = useState(false);
-  const [isSearchSidebarCollapsed, setIsSearchSidebarCollapsed] = useState(false);
+  // Unified search panel state management (right-side panel)
+  const [isUnifiedSearchPanelOpen, setIsUnifiedSearchPanelOpen] = useState(false);
   
   // Mobile drawer state (replaces sidebar on mobile)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
-  const [isMobileFeaturesDrawerOpen, setIsMobileFeaturesDrawerOpen] = useState(false);
-  const [isMobileSearchDrawerOpen, setIsMobileSearchDrawerOpen] = useState(false);
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -82,8 +75,7 @@ export default function NavigationPage() {
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
     setIsSidebarOpen(false);
-    setIsFeaturesSidebarOpen(false);
-    setIsSearchSidebarOpen(false);
+    setIsUnifiedSearchPanelOpen(false);
   }, [isMobile]);
 
   // Check legal consent and show popup if needed
@@ -525,30 +517,14 @@ export default function NavigationPage() {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  // Features sidebar handlers
-  const handleFeaturesSidebarToggle = () => {
-    setIsFeaturesSidebarOpen(!isFeaturesSidebarOpen);
-    // Auto-collapse expanded map when sidebar opens
-    if (!isFeaturesSidebarOpen && isMapExpanded) {
+
+  // Unified search panel handlers
+  const handleUnifiedSearchPanelToggle = () => {
+    setIsUnifiedSearchPanelOpen(!isUnifiedSearchPanelOpen);
+    // Auto-collapse expanded map when panel opens
+    if (!isUnifiedSearchPanelOpen && isMapExpanded) {
       setIsMapExpanded(false);
     }
-  };
-
-  const handleFeaturesSidebarCollapseToggle = () => {
-    setIsFeaturesSidebarCollapsed(!isFeaturesSidebarCollapsed);
-  };
-
-  // Search sidebar handlers
-  const handleSearchSidebarToggle = () => {
-    setIsSearchSidebarOpen(!isSearchSidebarOpen);
-    // Auto-collapse expanded map when sidebar opens
-    if (!isSearchSidebarOpen && isMapExpanded) {
-      setIsMapExpanded(false);
-    }
-  };
-
-  const handleSearchSidebarCollapseToggle = () => {
-    setIsSearchSidebarCollapsed(!isSearchSidebarCollapsed);
   };
 
   // Handle facility selection from search sidebar
@@ -594,24 +570,6 @@ export default function NavigationPage() {
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileSearchDrawerOpen(true)}
-                className="automotive-touch-target"
-                data-testid="button-open-mobile-search"
-              >
-                <Search className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileFeaturesDrawerOpen(true)}
-                className="automotive-touch-target"
-                data-testid="button-open-mobile-features"
-              >
-                <Star className="w-5 h-5" />
-              </Button>
             </div>
           </div>
 
@@ -696,42 +654,7 @@ export default function NavigationPage() {
             </DrawerContent>
           </Drawer>
 
-          {/* Mobile Features Drawer */}
-          <Drawer open={isMobileFeaturesDrawerOpen} onOpenChange={setIsMobileFeaturesDrawerOpen}>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle className="mobile-text-xl">Features</DrawerTitle>
-              </DrawerHeader>
-              <div className="drawer-content">
-                <FeaturesSidebar
-                  isOpen={true}
-                  onToggle={() => setIsMobileFeaturesDrawerOpen(false)}
-                  isCollapsed={false}
-                  onCollapseToggle={() => {}}
-                />
-              </div>
-            </DrawerContent>
-          </Drawer>
 
-          {/* Mobile Search POI Drawer */}
-          <Drawer open={isMobileSearchDrawerOpen} onOpenChange={setIsMobileSearchDrawerOpen}>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle className="mobile-text-xl">Search POI</DrawerTitle>
-              </DrawerHeader>
-              <div className="drawer-content">
-                <SearchSidebar
-                  isOpen={true}
-                  onToggle={() => setIsMobileSearchDrawerOpen(false)}
-                  isCollapsed={false}
-                  onCollapseToggle={() => {}}
-                  coordinates={currentRoute ? { lat: 52.5, lng: -1.5 } : undefined}
-                  onSelectFacility={handleSelectFacility}
-                  onNavigateToLocation={(location) => setToLocation(location)}
-                />
-              </div>
-            </DrawerContent>
-          </Drawer>
         </div>
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */
@@ -770,6 +693,10 @@ export default function NavigationPage() {
             onToggle={handleSidebarToggle}
             isCollapsed={isSidebarCollapsed}
             onCollapseToggle={handleSidebarCollapseToggle}
+            
+            // Search panel integration
+            isSearchPanelOpen={isUnifiedSearchPanelOpen}
+            onToggleSearchPanel={handleUnifiedSearchPanelToggle}
           />
 
           {/* Desktop Map Area */}
@@ -801,23 +728,11 @@ export default function NavigationPage() {
             <MapLegalOwnership compact={true} className="hidden sm:block" />
           </div>
 
-          {/* Desktop Right Side Container - Features Sidebar */}
-          <div className="relative">
-            {/* Desktop Features Sidebar */}
-            <FeaturesSidebar
-              isOpen={isFeaturesSidebarOpen}
-              onToggle={handleFeaturesSidebarToggle}
-              isCollapsed={isFeaturesSidebarCollapsed}
-              onCollapseToggle={handleFeaturesSidebarCollapseToggle}
-            />
-          </div>
 
-          {/* Desktop Search POI Sidebar - independent positioning */}
-          <SearchSidebar
-            isOpen={isSearchSidebarOpen}
-            onToggle={handleSearchSidebarToggle}
-            isCollapsed={isSearchSidebarCollapsed}
-            onCollapseToggle={handleSearchSidebarCollapseToggle}
+          {/* Desktop Unified Search Panel - right-side */}
+          <UnifiedSearchPanel
+            isOpen={isUnifiedSearchPanelOpen}
+            onClose={() => setIsUnifiedSearchPanelOpen(false)}
             coordinates={{ lat: 51.5074, lng: -0.1278 }}
             onSelectFacility={handleSelectFacility}
             onNavigateToLocation={(location) => setToLocation(location)}
