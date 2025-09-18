@@ -225,6 +225,12 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Handle map click (desktop mouse clicks)
   const handleMapClick = useCallback((event: React.MouseEvent) => {
+    // Don't prevent default on button clicks to allow proper interaction
+    const target = event.target as HTMLElement;
+    if (target.closest('button, [role="button"]')) {
+      return;
+    }
+    
     event.preventDefault();
     resetAutoHideTimer();
     
@@ -250,6 +256,13 @@ const InteractiveMap = memo(function InteractiveMap({
   
   // Handle touch end - implement true tap detection
   const handleMapTouchEnd = useCallback((event: React.TouchEvent) => {
+    // Don't prevent default on button touches to allow proper interaction
+    const target = event.target as HTMLElement;
+    if (target.closest('button, [role="button"]')) {
+      resetAutoHideTimer();
+      return;
+    }
+    
     event.preventDefault();
     resetAutoHideTimer();
     

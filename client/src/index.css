@@ -76,11 +76,12 @@ body {
   border-width: 2px;
 }
 
-/* Enhanced Automotive Sidebar Layout */
+/* Enhanced Automotive Sidebar Layout with Optimized Spacing */
 .automotive-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  gap: 0;
 }
 
 /* Sidebar transitions and animations */
@@ -177,11 +178,15 @@ body {
   border-right: 1px solid hsl(var(--border));
 }
 
-/* Desktop sidebar with proper left positioning */
+/* Desktop sidebar with proper left positioning and optimized width */
 @media (min-width: 1024px) {
   .desktop-sidebar-layout {
     position: relative;
     border-right: 1px solid hsl(var(--border));
+    /* Optimized sidebar width to prevent blocking map detail buttons */
+    flex-shrink: 0;
+    max-width: min(400px, 30vw);
+    width: clamp(320px, 25vw, 380px);
   }
 }
 
@@ -240,11 +245,19 @@ body {
   min-height: clamp(14px, 3.5vw, 18px);
 }
 
-/* Mobile-Optimized Control Clustering */
+/* Mobile-Optimized Control Clustering with Sidebar Avoidance */
 .map-controls-cluster {
-  /* Safe area for mobile devices */
+  /* Safe area for mobile devices with sidebar consideration */
   max-width: clamp(160px, 45vw, 220px);
   gap: clamp(8px, 2vw, 12px);
+}
+
+/* Ensure map controls avoid sidebar on desktop layouts */
+@media (min-width: 1024px) {
+  .desktop-sidebar ~ * .map-controls-cluster {
+    /* Position controls with sidebar clearance */
+    right: max(16px, calc(4px + env(safe-area-inset-right, 0px)));
+  }
 }
 
 /* Adaptive spacing for different screen sizes */
