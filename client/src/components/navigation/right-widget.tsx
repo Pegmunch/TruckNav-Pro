@@ -367,7 +367,10 @@ const RightWidget = memo(function RightWidget({
             <DialogTitle className="text-foreground dark:text-gray-100">Entertainment Center</DialogTitle>
           </DialogHeader>
           <div className="overflow-hidden">
-            <EntertainmentPanel />
+            <EntertainmentPanel 
+              isOpen={isEntertainmentPanelOpen} 
+              onClose={() => setIsEntertainmentPanelOpen(false)} 
+            />
           </div>
         </DialogContent>
       </Dialog>
