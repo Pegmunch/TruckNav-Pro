@@ -287,11 +287,31 @@ export function ThemeProvider({
   grayStorageKey = "theme-grayL",
   hslColorStorageKey = "theme-hslColor",
 }: ThemeProviderProps) {
-  // Automotive mode: Always use day theme for CarPlay/Android Auto compatibility
-  const [currentTheme, setCurrentTheme] = useState<ThemeMode>("day");
+  // Initialize theme from localStorage or use default
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return defaultTheme;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return (stored && ["day", "night", "auto"].includes(stored)) ? stored as ThemeMode : defaultTheme;
+    } catch {
+      return defaultTheme;
+    }
+  });
+  
   const [effectiveTheme, setEffectiveTheme] = useState<EffectiveTheme>("day");
-  // Automotive mode: Disabled grayscale and auto-theme for simplicity
-  const [grayL, setGrayLState] = useState<number | null>(null);
+  
+  // Initialize grayscale from localStorage
+  const [grayL, setGrayLState] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = localStorage.getItem(grayStorageKey);
+      if (stored === null || stored === "null") return null;
+      const parsed = parseFloat(stored);
+      return isNaN(parsed) ? null : parsed;
+    } catch {
+      return null;
+    }
+  });
   // HSL color customization state
   const [customHSLColor, setCustomHSLColorState] = useState<HSLColor | null>(() => {
     if (typeof window === "undefined") return null;
@@ -330,10 +350,39 @@ export function ThemeProvider({
     saveAutoThemeConfig(config);
   }, []);
 
-  // Automotive mode: Always use day theme for optimal visibility
+  // Calculate effective theme based on mode and conditions
   const calculateEffectiveTheme = useCallback((mode: ThemeMode): EffectiveTheme => {
-    return "day"; // Force day theme for automotive safety
-  }, []);
+    if (mode === "day") {
+      return "day";
+    } else if (mode === "night") {
+      return "night";
+    } else {
+      // Auto mode - determine based on time and system preference
+      let result: EffectiveTheme = "day";
+      
+      // Use time-based logic with geolocation if enabled
+      const timeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
+      setTimeInfo(timeInfo);
+      
+      // Use the time info to determine theme
+      result = timeInfo.currentTheme as EffectiveTheme;
+      
+      // If geolocation is not available, fall back to system preference
+      if (!autoThemeConfig.useGeolocation && !coordinates) {
+        const systemPreference = getSystemPreference();
+        
+        // Combine time-based and system preference
+        // If it's daytime but user prefers dark mode, respect system preference
+        if (timeInfo.isDaytime && systemPreference === "night") {
+          result = "night";
+        } else if (timeInfo.isNighttime && systemPreference === "day") {
+          result = "day";  
+        }
+      }
+      
+      return result;
+    }
+  }, [autoThemeConfig, coordinates]);
 
   // Legacy compatibility methods (for existing components)
   const isNightTime = useCallback((): boolean => {
@@ -529,12 +578,15 @@ ${darkCSS}
     }
   }, [hslColorStorageKey]);
 
-  // Automotive mode: Always keep day theme
+  // Set theme and persist to localStorage
   const setTheme = useCallback((theme: ThemeMode) => {
-    // In automotive mode, ignore theme changes and force day theme
-    setCurrentTheme("day");
+    setCurrentTheme(theme);
     if (typeof window !== "undefined") {
-      localStorage.setItem(storageKey, "day");
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch (error) {
+        console.warn("Failed to save theme to localStorage:", error);
+      }
     }
   }, [storageKey]);
   

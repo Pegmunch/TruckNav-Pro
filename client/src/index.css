@@ -6,8 +6,8 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
-  /* Force white background for automotive displays */
-  background-color: white;
+  /* Use theme-aware background instead of forced white */
+  background-color: hsl(var(--background));
   /* Safe area handling is managed at component level to prevent double spacing */
   box-sizing: border-box;
 }
@@ -16,8 +16,9 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Automotive-friendly white background */
-  background-color: white !important;
+  /* Theme-aware background color */
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground));
   /* Larger base font size for automotive visibility */
   font-size: 16px;
 }
