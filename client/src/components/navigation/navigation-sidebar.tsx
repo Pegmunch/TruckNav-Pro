@@ -136,7 +136,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const { toast } = useToast();
   const { formatHeight, formatWeight } = useMeasurement();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('route');
+  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('vehicle');
   const [isHistoryFavoritesOpen, setIsHistoryFavoritesOpen] = useState(false);
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
@@ -359,7 +359,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
           description: "Please set both starting point and destination.",
           variant: "destructive",
         });
-        setActiveSection('route');
+        setActiveSection('vehicle');
         return;
       }
       
@@ -710,7 +710,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {isCollapsed ? (
           /* Collapsed Mode - Icon Navigation */
           <div className="flex-1 p-2 space-y-2">
-            {sidebarSections.filter(section => section.id !== 'settings').map((section) => (
+            {sidebarSections.filter(section => section.id === 'vehicle').map((section) => (
               <Button
                 key={section.id}
                 variant={activeSection === section.id ? "default" : "ghost"}
@@ -742,8 +742,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
           <div className="flex-1 overflow-y-auto touch-scroll">
             {/* Section Navigation */}
             <div className="p-4 border-b border-border">
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {sidebarSections.map((section) => (
+              <div className="grid grid-cols-1 gap-2 mb-3">
+                {sidebarSections.filter(section => section.id === 'vehicle').map((section) => (
                   <Button
                     key={section.id}
                     variant={activeSection === section.id ? "default" : "outline"}
