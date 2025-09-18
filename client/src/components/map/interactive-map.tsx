@@ -18,13 +18,17 @@ import {
   Route as RouteIcon,
   Clock,
   Maximize,
-  Minimize
+  Minimize,
+  Menu,
+  Shield
 } from "lucide-react";
 import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
 import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
 import NextManeuverGuidance from "@/components/route/next-maneuver-guidance";
 import { useCountryMap } from "@/hooks/use-country-preferences";
 import { cn } from "@/lib/utils";
+import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
+import { useLegalConsent } from "@/hooks/use-legal-consent";
 
 interface InteractiveMapProps {
   currentRoute: Route | null;
@@ -114,6 +118,10 @@ const InteractiveMap = memo(function InteractiveMap({
 }: InteractiveMapProps) {
   // Use country-based map provider
   const { mapProvider, getMapConfig, country } = useCountryMap();
+  
+  // Legal disclaimer dialog state
+  const [isLegalDisclaimerOpen, setIsLegalDisclaimerOpen] = useState(false);
+  const { hasAcceptedTerms } = useLegalConsent();
   
   // Load preferences on mount and merge with country-specific provider
   const [preferences, setPreferences] = useState<MapPreferences>(() => {
@@ -208,6 +216,12 @@ const InteractiveMap = memo(function InteractiveMap({
       setIsUserInteracting(false);
     }, AUTO_HIDE_DELAY);
   }, []);
+
+  // Handle legal disclaimer toggle
+  const handleToggleLegalDisclaimer = useCallback(() => {
+    setIsLegalDisclaimerOpen(!isLegalDisclaimerOpen);
+    resetAutoHideTimer();
+  }, [isLegalDisclaimerOpen, resetAutoHideTimer]);
 
   // Handle map click (desktop mouse clicks)
   const handleMapClick = useCallback((event: React.MouseEvent) => {
@@ -756,6 +770,42 @@ const InteractiveMap = memo(function InteractiveMap({
           />
         </div>
       )}
+
+      {/* Floating Legal Disclaimer Button - Bottom Right Corner */}
+      {hasAcceptedTerms && (
+        <div className={cn(
+          "absolute z-30 transition-all duration-300 ease-in-out",
+          "bottom-20 right-4", // Position above bottom info bar with proper spacing
+          controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
+        )}>
+          <Card className="overflow-hidden shadow-2xl">
+            <Button
+              onClick={handleToggleLegalDisclaimer}
+              size="icon"
+              className={cn(
+                "automotive-button floating-action-button",
+                "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
+                "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
+                "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
+                "backdrop-blur-sm bg-card/95 hover:bg-accent/95"
+              )}
+              data-testid="button-legal-disclaimer"
+              aria-label={isLegalDisclaimerOpen ? "Close legal disclaimer" : "Open legal disclaimer"}
+            >
+              <Menu className={cn(
+                "scalable-control-icon text-primary",
+                isLegalDisclaimerOpen && "rotate-45 text-accent-foreground"
+              )} />
+            </Button>
+          </Card>
+        </div>
+      )}
+      
+      {/* Legal Disclaimer Dialog */}
+      <LegalDisclaimerDialog
+        open={isLegalDisclaimerOpen}
+        onOpenChange={setIsLegalDisclaimerOpen}
+      />
 
       {/* Bottom Info Bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">

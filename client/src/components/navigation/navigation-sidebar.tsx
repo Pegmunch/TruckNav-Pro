@@ -565,33 +565,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   return (
     <>
-      {/* Persistent Hamburger Menu Button - Always Visible */}
-      <Button
-        onClick={onToggle}
-        className={cn(
-          "fixed top-4 left-4 z-[60] hamburger-menu-button bg-card border border-border hover:bg-accent hover:border-accent-foreground transition-all duration-300 ease-out",
-          "min-h-[44px] min-w-[44px]", // Automotive-grade touch targets
-          // Dynamic positioning based on sidebar state and screen size
-          isOpen && !isCollapsed && "left-[calc(20rem+1rem)] lg:left-[calc(24rem+1rem)]", // Mobile: 320px + 16px, Desktop: 384px + 16px
-          isOpen && isCollapsed && "left-[calc(4rem+1rem)]" // Collapsed: 64px + 16px
-        )}
-        size="icon"
-        data-testid="button-hamburger-menu"
-        aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
-      >
-        {/* Always show hamburger icon for consistency, or use X when open */}
-        {isOpen ? (
-          <X className="w-4 h-4" />
-        ) : (
-          <div className="flex flex-col justify-center items-center space-y-0.5">
-            <div className="w-4 h-0.5 bg-current"></div>
-            <div className="w-4 h-0.5 bg-current"></div>
-            <div className="w-4 h-0.5 bg-current"></div>
-            <div className="w-4 h-0.5 bg-current"></div>
-          </div>
-        )}
-      </Button>
-      
       {/* Mobile overlay backdrop - only show when sidebar is open */}
       {isOpen && (
         <div 
