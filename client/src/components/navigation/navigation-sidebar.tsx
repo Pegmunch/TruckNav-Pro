@@ -144,7 +144,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const { toast } = useToast();
   const { formatHeight, formatWeight } = useMeasurement();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'entertainment' | 'settings'>('vehicle');
+  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'entertainment' | 'themes' | 'history' | 'settings'>('vehicle');
   const [isHistoryFavoritesOpen, setIsHistoryFavoritesOpen] = useState(false);
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
@@ -205,6 +205,18 @@ const NavigationSidebar = memo(function NavigationSidebar({
       id: 'entertainment' as const,
       title: 'Entertainment',
       icon: Music,
+      badge: null,
+    },
+    {
+      id: 'themes' as const,
+      title: 'Themes',
+      icon: Eye,
+      badge: null,
+    },
+    {
+      id: 'history' as const,
+      title: 'History',
+      icon: History,
       badge: null,
     },
     {
@@ -783,17 +795,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
               )}
             </div>
             
-            {/* Manual Search Panel */}
-            <div className="mt-2">
-              <ManualSearchPanel
-                fromLocation={fromLocation}
-                toLocation={toLocation}
-                onFromLocationChange={onFromLocationChange}
-                onToLocationChange={onToLocationChange}
-                onPlanRoute={onPlanRoute}
-                isCalculating={isCalculating}
-              />
-            </div>
           </div>
         )}
 
@@ -801,7 +802,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {isCollapsed ? (
           /* Collapsed Mode - Icon Navigation */
           <div className="flex-1 p-2 space-y-2">
-            {sidebarSections.filter(section => ['entertainment', 'vehicle'].includes(section.id)).map((section) => (
+            {sidebarSections.filter(section => ['route', 'vehicle', 'entertainment', 'themes', 'history'].includes(section.id)).map((section) => (
               <Button
                 key={section.id}
                 variant={activeSection === section.id ? "default" : "ghost"}
@@ -833,8 +834,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
           <div className="flex-1 overflow-y-auto touch-scroll">
             {/* Section Navigation */}
             <div className="p-4 border-b border-border">
-              <div className="grid grid-cols-1 gap-2 mb-3">
-                {sidebarSections.filter(section => ['entertainment', 'vehicle'].includes(section.id)).map((section) => (
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {sidebarSections.filter(section => ['route', 'vehicle', 'entertainment', 'themes', 'history'].includes(section.id)).map((section) => (
                   <Button
                     key={section.id}
                     variant={activeSection === section.id ? "default" : "outline"}
@@ -1129,11 +1130,86 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </div>
               )}
 
+              {activeSection === 'route' && (
+                <div className="p-4 space-y-4">
+                  {/* Manual Search Panel */}
+                  <ManualSearchPanel
+                    fromLocation={fromLocation}
+                    toLocation={toLocation}
+                    onFromLocationChange={onFromLocationChange}
+                    onToLocationChange={onToLocationChange}
+                    onPlanRoute={onPlanRoute}
+                    isCalculating={isCalculating}
+                  />
+
+                  {/* Route Planning Panel */}
+                  <RoutePlanningPanel
+                    fromLocation={fromLocation}
+                    toLocation={toLocation}
+                    onFromLocationChange={onFromLocationChange}
+                    onToLocationChange={onToLocationChange}
+                    onPlanRoute={onPlanRoute}
+                    onStartNavigation={onStartNavigation}
+                    onStopNavigation={onStopNavigation}
+                    onOpenLaneSelection={onOpenLaneSelection}
+                    currentRoute={currentRoute}
+                    isCalculating={isCalculating}
+                    selectedProfile={selectedProfile}
+                    activeJourney={activeJourney}
+                    isNavigating={isNavigating}
+                    isStartingJourney={isStartingJourney}
+                    isCompletingJourney={isCompletingJourney}
+                  />
+                </div>
+              )}
+
               {activeSection === 'entertainment' && (
                 <div className="p-4">
                   <EntertainmentPanel 
                     isOpen={true}
                     onClose={() => setActiveSection('vehicle')}
+                  />
+                </div>
+              )}
+
+              {activeSection === 'themes' && (
+                <div className="p-4 space-y-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center">
+                        <Eye className="w-4 h-4 mr-2 text-primary" />
+                        Theme & Color Palette
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-3 block">
+                          Choose Your Theme
+                        </label>
+                        <ThemeSelector 
+                          size="default"
+                          showLabels={true}
+                          showGrayscale={true}
+                          showColorSpectrum={true}
+                          showAutoSettings={true}
+                          showAutoStatus={true}
+                          className="w-full"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeSection === 'history' && (
+                <div className="p-4">
+                  <HistoryFavoritesPanel 
+                    isOpen={true}
+                    onClose={() => setActiveSection('vehicle')}
+                    onFromLocationChange={onFromLocationChange}
+                    onToLocationChange={onToLocationChange}
+                    onStartNavigation={onStartNavigation}
+                    currentRoute={currentRoute}
                   />
                 </div>
               )}
@@ -1163,23 +1239,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                             Measurement System
                           </label>
                           <MeasurementSelector />
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">
-                            Theme & Appearance
-                          </label>
-                          <ThemeSelector 
-                            size="default"
-                            showLabels={true}
-                            showGrayscale={true}
-                            showColorSpectrum={true}
-                            showAutoSettings={true}
-                            showAutoStatus={true}
-                            className="w-full"
-                          />
                         </div>
                         
                         <Separator />
