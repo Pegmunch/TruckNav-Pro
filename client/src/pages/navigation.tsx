@@ -727,20 +727,6 @@ export default function NavigationPage() {
             "flex-1 relative transition-all duration-300 ease-in-out",
             isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
           )}>
-            {/* Features Toggle Button */}
-            <Button
-              onClick={handleFeaturesSidebarToggle}
-              variant="outline"
-              size="icon"
-              className={cn(
-                "fixed top-4 right-4 z-50 automotive-touch-target shadow-lg bg-background/95 backdrop-blur-sm",
-                "border-2 border-primary/20 hover:border-primary/40",
-                isFeaturesSidebarOpen ? "bg-primary text-primary-foreground" : ""
-              )}
-              data-testid="button-toggle-features-sidebar"
-            >
-              <Star className="w-5 h-5" />
-            </Button>
 
             <InteractiveMap
               currentRoute={currentRoute}

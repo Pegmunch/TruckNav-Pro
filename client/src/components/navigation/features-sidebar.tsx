@@ -115,16 +115,47 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
   };
 
   return (
-    <div
-      className={cn(
-        "fixed right-0 top-0 h-screen bg-background border-l border-border z-30 shadow-lg",
-        "automotive-layout sidebar-transition",
-        isOpen ? "translate-x-0" : "translate-x-full",
-        isCollapsed ? "w-16" : "w-80",
-        "flex flex-col"
-      )}
-      data-testid="features-sidebar"
-    >
+    <>
+      {/* Sidebar Tab Toggle Button */}
+      <div
+        className={cn(
+          "fixed top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ease-in-out",
+          isOpen 
+            ? (isCollapsed ? "right-16" : "right-80") 
+            : "right-0"
+        )}
+      >
+        <Button
+          onClick={onToggle}
+          variant="default"
+          className={cn(
+            "h-16 w-8 rounded-l-lg rounded-r-none px-0 py-0",
+            "bg-primary hover:bg-primary/90 text-primary-foreground",
+            "border-l border-t border-b border-border shadow-lg",
+            "automotive-touch-target flex flex-col items-center justify-center gap-1",
+            "transform transition-all duration-300 ease-in-out",
+            !isOpen && "hover:translate-x-[-4px]"
+          )}
+          data-testid="button-toggle-features-sidebar-tab"
+        >
+          <Star className="w-4 h-4" />
+          <div className="text-xs font-medium leading-none">
+            F
+          </div>
+        </Button>
+      </div>
+
+      {/* Sidebar Panel */}
+      <div
+        className={cn(
+          "fixed right-0 top-0 h-screen bg-background border-l border-border z-30 shadow-lg",
+          "automotive-layout sidebar-transition",
+          isOpen ? "translate-x-0" : "translate-x-full",
+          isCollapsed ? "w-16" : "w-80",
+          "flex flex-col"
+        )}
+        data-testid="features-sidebar"
+      >
       {/* Header */}
       <div className="border-b border-border p-4 automotive-card">
         <div className="flex items-center justify-between">
@@ -417,6 +448,7 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
         </div>
       )}
     </div>
+    </>
   );
 });
 
