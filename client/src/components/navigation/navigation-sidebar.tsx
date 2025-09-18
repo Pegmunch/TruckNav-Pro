@@ -813,7 +813,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {isCollapsed ? (
           /* Collapsed Mode - Icon Navigation */
           <div className="flex-1 p-2 space-y-2">
-            {sidebarSections.filter(section => ['vehicle', 'entertainment'].includes(section.id)).map((section) => (
+            {sidebarSections.filter(section => ['entertainment', 'vehicle'].includes(section.id)).map((section) => (
               <Button
                 key={section.id}
                 variant={activeSection === section.id ? "default" : "ghost"}
@@ -846,7 +846,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
             {/* Section Navigation */}
             <div className="p-4 border-b border-border">
               <div className="grid grid-cols-1 gap-2 mb-3">
-                {sidebarSections.filter(section => ['vehicle', 'entertainment'].includes(section.id)).map((section) => (
+                {sidebarSections.filter(section => ['entertainment', 'vehicle'].includes(section.id)).map((section) => (
                   <Button
                     key={section.id}
                     variant={activeSection === section.id ? "default" : "outline"}
