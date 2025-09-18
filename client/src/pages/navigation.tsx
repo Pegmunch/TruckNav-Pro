@@ -20,6 +20,8 @@ import { useLiveNotifications } from "@/hooks/use-live-notifications";
 import { MobileNotificationStack } from "@/components/notifications/mobile-notification-cards";
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
+import { useLegalConsent } from "@/hooks/use-legal-consent";
+import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -54,11 +56,22 @@ export default function NavigationPage() {
   
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
+  
+  // Legal consent state - for automatic popup display
+  const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
+  const [showLegalPopup, setShowLegalPopup] = useState(false);
 
   // Initialize sidebar state based on mobile status
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
+
+  // Check legal consent and show popup if needed
+  useEffect(() => {
+    if (!isConsentLoading && !hasAcceptedTerms) {
+      setShowLegalPopup(true);
+    }
+  }, [hasAcceptedTerms, isConsentLoading]);
 
   // Live notifications system with mobile enhancements - with error handling
   const liveNotifications = useLiveNotifications({
@@ -352,7 +365,7 @@ export default function NavigationPage() {
       setIsAlternativeRoutesOpen(true);
       
       // Trigger notification about available alternatives
-      triggerLiveNotification('reroute_suggestion');
+      triggerLiveNotification('route_change');
       
       toast({
         title: "Better routes found",
@@ -451,6 +464,16 @@ export default function NavigationPage() {
 
   return (
     <div className="bg-background">
+      {/* Legal Disclaimer Popup - shown automatically on first visit */}
+      {showLegalPopup && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <LegalDisclaimerPopup 
+            onClose={() => {
+              setShowLegalPopup(false);
+            }}
+          />
+        </div>
+      )}
       {/* Mobile-First Layout */}
       {isMobile ? (
         <div className="mobile-layout">
@@ -708,7 +731,7 @@ export default function NavigationPage() {
         onSelectRoute={handleSelectRoute}
         onPreviewRoute={handlePreviewRoute}
         isApplying={isApplyingRoute}
-        selectedRouteId={selectedAlternativeRouteId}
+        selectedRouteId={selectedAlternativeRouteId || undefined}
       />
     </div>
   );

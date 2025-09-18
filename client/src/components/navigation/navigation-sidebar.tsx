@@ -27,7 +27,8 @@ import {
   Scale,
   Play,
   ArrowRight,
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
@@ -41,7 +42,9 @@ import { cn } from "@/lib/utils";
 import { openMapWindow, closeMapWindow, isMapWindowOpen, TruckNavWindowManager, windowManager } from "@/lib/window-manager";
 import { useWindowSync } from "@/hooks/use-window-sync";
 import { useToast } from "@/hooks/use-toast";
+import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { LegalPopupManager } from "@/lib/legal-popup-manager";
+import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -118,10 +121,14 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('route');
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
+  const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
   
   // Window sync state
   const windowSync = useWindowSync();
   const [isMapWindowCurrentlyOpen, setIsMapWindowCurrentlyOpen] = useState(false);
+  
+  // Legal consent state
+  const { hasAcceptedTerms } = useLegalConsent();
   
   // Update window sync when props change
   useEffect(() => {
@@ -268,6 +275,20 @@ const NavigationSidebar = memo(function NavigationSidebar({
         variant: "destructive",
       });
     }
+  };
+
+  // View Disclaimer button handler with access control
+  const handleViewDisclaimer = () => {
+    if (!hasAcceptedTerms) {
+      toast({
+        title: "Access restricted",
+        description: "Please complete agreement first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDisclaimerDialogOpen(true);
   };
 
   // Go button functionality
@@ -652,6 +673,34 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           </label>
                           <MeasurementSelector />
                         </div>
+                        
+                        <Separator />
+                        
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            Legal Information
+                          </label>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleViewDisclaimer}
+                            disabled={!hasAcceptedTerms}
+                            className={cn(
+                              "w-full justify-start h-auto p-3 automotive-button",
+                              !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
+                            )}
+                            data-testid="button-view-disclaimer"
+                            aria-label={hasAcceptedTerms ? "View legal disclaimer and terms" : "Complete agreement first to view disclaimer"}
+                          >
+                            <Shield className="w-4 h-4 mr-3 text-primary" />
+                            <div className="flex-1 text-left">
+                              <div className="font-medium text-foreground">View Disclaimer</div>
+                              <div className="text-xs text-muted-foreground">
+                                {hasAcceptedTerms ? "Access legal terms and disclaimers" : "Complete agreement first"}
+                              </div>
+                            </div>
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -670,6 +719,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
           currentProfile={selectedProfile}
         />
       )}
+      
+      {/* Legal Disclaimer Dialog */}
+      <LegalDisclaimerDialog
+        open={isDisclaimerDialogOpen}
+        onOpenChange={setIsDisclaimerDialogOpen}
+      />
     </>
   );
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
   X,
   ExternalLink
 } from "lucide-react";
+import { useLegalConsent, migrateOldConsentData } from "@/hooks/use-legal-consent";
 
 interface LegalDisclaimerPopupProps {
   // For popup window context
@@ -32,27 +33,34 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   const [acknowledgeTerms, setAcknowledgeTerms] = useState(false);
   const [acceptDisclaimer, setAcceptDisclaimer] = useState(false);
 
+  // Use the centralized legal consent hook
+  const {
+    hasAcceptedTerms,
+    setConsentAccepted,
+    clearConsent,
+    isLoading
+  } = useLegalConsent();
+
   const canAccept = acknowledgeNavigation && acknowledgeLiability && acknowledgeResponsibility && acknowledgePrivacy && acknowledgeTerms && acceptDisclaimer;
 
-  // Check if already accepted
-  const hasAcceptedDisclaimer = localStorage.getItem('trucknav_disclaimer_accepted');
-  let isAlreadyAccepted = false;
-  if (hasAcceptedDisclaimer) {
-    try {
-      const disclaimerData = JSON.parse(hasAcceptedDisclaimer);
-      isAlreadyAccepted = disclaimerData.accepted && disclaimerData.timestamp;
-    } catch {
-      // Invalid data
-    }
-  }
+  // Use hook's hasAcceptedTerms instead of localStorage directly
+  const isAlreadyAccepted = hasAcceptedTerms;
+
+  // Handle data migration from old format on component mount
+  useEffect(() => {
+    migrateOldConsentData();
+  }, []);
 
   const handleAccept = () => {
     if (canAccept) {
-      localStorage.setItem('trucknav_disclaimer_accepted', JSON.stringify({
-        accepted: true,
-        timestamp: new Date().toISOString(),
-        version: '1.0'
-      }));
+      // Use the centralized consent management hook
+      setConsentAccepted({
+        navigation: acknowledgeNavigation,
+        liability: acknowledgeLiability,
+        responsibility: acknowledgeResponsibility,
+        privacy: acknowledgePrivacy,
+        terms: acknowledgeTerms,
+      });
       
       // Notify parent window or close
       if (window.opener) {
@@ -68,7 +76,8 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   };
 
   const handleDecline = () => {
-    localStorage.removeItem('trucknav_disclaimer_accepted');
+    // Use the centralized consent management hook
+    clearConsent();
     
     if (window.opener) {
       window.opener.postMessage({ type: 'legal_disclaimer_declined' }, window.location.origin);
