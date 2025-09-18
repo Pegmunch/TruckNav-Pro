@@ -212,7 +212,7 @@ const RightWidget = memo(function RightWidget({
         className={cn(
           "fixed right-0 top-0 h-screen z-50",
           "w-[360px] max-w-[90vw]", // ~360px width as specified
-          "bg-background border-l border-border shadow-xl", // Solid background - no backdrop blur to prevent frosted glass overlay
+          "bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-xl", // Explicit light/dark variants
           "transition-transform duration-300 ease-out",
           "flex flex-col",
           // Slide-in animation: translate-x-full → translate-x-0
@@ -220,30 +220,44 @@ const RightWidget = memo(function RightWidget({
           className
         )}
         tabIndex={-1}
+        role="complementary"
+        aria-label="Search and tools sidebar"
         data-testid="right-widget-panel"
         style={{
           // Ensure widget appears above other elements
           zIndex: 50
         }}
       >
-        {/* Widget Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted shrink-0">
-          <div className="flex items-center space-x-2">
-            <h2 className="font-semibold text-foreground">Search & Navigation</h2>
+        {/* Sticky Widget Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm shrink-0">
+          <div className="flex items-center space-x-3">
+            <h2 
+              className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              data-testid="text-rightwidget-title"
+            >
+              Search & Tools
+            </h2>
             {hasActivity && (
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse" />
             )}
           </div>
           
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-2">
             {/* Pin/Unpin Button */}
             <Button
               variant={isPinned ? "default" : "ghost"}
               size="icon"
               onClick={handlePinToggle}
-              className="scalable-control-button"
+              className={cn(
+                "scalable-control-button h-10 w-10 rounded-lg transition-all duration-200",
+                isPinned 
+                  ? "bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 shadow-md" 
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              )}
               title={isPinned ? "Unpin widget" : "Pin widget open"}
-              data-testid="button-pin-right-widget"
+              aria-pressed={isPinned}
+              aria-label={isPinned ? "Unpin widget" : "Pin widget"}
+              data-testid="button-pin-rightwidget"
             >
               {isPinned ? (
                 <Pin className="w-4 h-4" />
@@ -257,9 +271,9 @@ const RightWidget = memo(function RightWidget({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="scalable-control-button"
+              className="scalable-control-button h-10 w-10 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
               title="Close search panel (ESC)"
-              data-testid="button-close-right-widget"
+              data-testid="button-close-rightwidget"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -267,7 +281,7 @@ const RightWidget = memo(function RightWidget({
         </div>
 
         {/* Widget Content - UnifiedSearchPanel */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-800">
           <UnifiedSearchPanel
             isOpen={isOpen}
             onClose={onClose}
@@ -284,7 +298,7 @@ const RightWidget = memo(function RightWidget({
 
         {/* Activity Indicator - shown when auto-close timer is active */}
         {!isPinned && !isInputFocused && isOpen && (
-          <div className="absolute bottom-4 right-4 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+          <div className="absolute bottom-4 right-4 text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 px-3 py-2 rounded-lg shadow-md">
             Auto-close in {Math.ceil(autoCloseDelay / 1000)}s
           </div>
         )}
