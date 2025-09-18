@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { LegalPopupManager } from "@/lib/legal-popup-manager";
 import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
+import HistoryFavoritesPanel from "@/components/navigation/history-favorites-panel";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -120,6 +121,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const { formatHeight, formatWeight } = useMeasurement();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('route');
+  const [isHistoryFavoritesOpen, setIsHistoryFavoritesOpen] = useState(false);
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
   
@@ -177,6 +179,15 @@ const NavigationSidebar = memo(function NavigationSidebar({
       badge: null,
     },
   ];
+
+  // Handle History & Favorites panel
+  const handleOpenHistoryFavorites = () => {
+    setIsHistoryFavoritesOpen(true);
+  };
+
+  const handleCloseHistoryFavorites = () => {
+    setIsHistoryFavoritesOpen(false);
+  };
 
   const handleProfileCreated = (profile: VehicleProfile) => {
     onProfileSelect(profile);
@@ -465,13 +476,24 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 )}
               </Button>
             ))}
+            
+            {/* History & Favorites Button - Collapsed Mode */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleOpenHistoryFavorites}
+              className="w-full automotive-button"
+              data-testid="button-history-favorites-collapsed"
+            >
+              <History className="w-5 h-5" />
+            </Button>
           </div>
         ) : (
           /* Expanded Mode - Full Navigation */
           <div className="flex-1 overflow-y-auto touch-scroll">
             {/* Section Navigation */}
             <div className="p-4 border-b border-border">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 {sidebarSections.map((section) => (
                   <Button
                     key={section.id}
@@ -493,6 +515,18 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </Button>
                 ))}
               </div>
+              
+              {/* History & Favorites Access Button */}
+              <Button
+                variant="outline"
+                onClick={handleOpenHistoryFavorites}
+                className="w-full automotive-text-sm justify-start"
+                data-testid="button-history-favorites"
+              >
+                <History className="w-4 h-4 mr-2" />
+                History & Favorites
+                <ArrowRight className="w-3 h-3 ml-auto" />
+              </Button>
             </div>
 
             {/* Section Content */}
@@ -738,6 +772,16 @@ const NavigationSidebar = memo(function NavigationSidebar({
       <LegalDisclaimerDialog
         open={isDisclaimerDialogOpen}
         onOpenChange={setIsDisclaimerDialogOpen}
+      />
+      
+      {/* History & Favorites Secondary Panel */}
+      <HistoryFavoritesPanel
+        isOpen={isHistoryFavoritesOpen}
+        onClose={handleCloseHistoryFavorites}
+        onFromLocationChange={onFromLocationChange}
+        onToLocationChange={onToLocationChange}
+        onStartNavigation={onStartNavigation}
+        currentRoute={currentRoute}
       />
     </>
   );
