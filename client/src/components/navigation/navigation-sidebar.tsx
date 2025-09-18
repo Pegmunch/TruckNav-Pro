@@ -47,6 +47,7 @@ import {
 import { VoiceMicButton } from "@/components/ui/voice-mic-button";
 import { useVoiceCommands, type VoiceTranscript, type VoiceError } from "@/hooks/use-voice-commands";
 import { useVoiceIntents, type IntentHandlers, type VoiceProcessingResult } from "@/hooks/use-voice-intents";
+import ManualSearchPanel from "./manual-search-panel";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
 import CountryLanguageSelector from '@/components/country/country-language-selector';
@@ -782,53 +783,17 @@ const NavigationSidebar = memo(function NavigationSidebar({
               )}
             </div>
             
-            {/* Voice Transcript Display */}
-            {showNavigationVoiceTranscript && navigationVoiceCommands.currentTranscript && (
-              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-200">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium">Voice Command...</span>
-                </div>
-                <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                  {navigationVoiceCommands.currentTranscript.interim || navigationVoiceCommands.currentTranscript.final}
-                </div>
-              </div>
-            )}
-            
-            {/* Last Voice Command Feedback */}
-            {lastNavigationVoiceCommand && !showNavigationVoiceTranscript && (
-              <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center space-x-2 text-green-800 dark:text-green-200">
-                  <MessageSquare className="w-3 h-3" />
-                  <span className="text-sm">{lastNavigationVoiceCommand}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setLastNavigationVoiceCommand('')}
-                    className="ml-auto h-6 w-6 p-0"
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-            {/* Voice Command Suggestions */}
-            {navigationVoiceCommands.state === 'idle' && !navigationVoiceCommands.currentTranscript && !lastNavigationVoiceCommand && (
-              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
-                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Voice commands:</div>
-                <div className="flex flex-wrap gap-1">
-                  {['Start navigation', 'Play music', 'Zoom in', 'Find fuel station'].map((suggestion, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      "{suggestion}"
-                    </Badge>
-                  ))}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  Click mic or press spacebar to speak
-                </div>
-              </div>
-            )}
+            {/* Manual Search Panel */}
+            <div className="mt-2">
+              <ManualSearchPanel
+                fromLocation={fromLocation}
+                toLocation={toLocation}
+                onFromLocationChange={onFromLocationChange}
+                onToLocationChange={onToLocationChange}
+                onPlanRoute={onPlanRoute}
+                isCalculating={isCalculating}
+              />
+            </div>
           </div>
         )}
 
