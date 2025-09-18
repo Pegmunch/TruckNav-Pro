@@ -668,6 +668,29 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   return (
     <>
+      {/* Sidebar Toggle Button - Always visible when sidebar is closed */}
+      {!isOpen && (
+        <div className="fixed top-1/3 left-0 z-40 transform -translate-y-1/2">
+          <Button
+            onClick={onToggle}
+            variant="default"
+            className={cn(
+              "h-16 w-8 rounded-l-none rounded-r-lg px-0 py-0",
+              "bg-primary hover:bg-primary/90 text-primary-foreground",
+              "border border-border shadow-lg",
+              "scalable-control-button flex flex-col items-center justify-center gap-1",
+              "transition-all duration-300 ease-in-out hover:scale-105"
+            )}
+            data-testid="button-toggle-navigation-sidebar-tab"
+          >
+            <Menu className="w-4 h-4" />
+            <div className="text-xs font-medium leading-none">
+              NAV
+            </div>
+          </Button>
+        </div>
+      )}
+
       {/* Mobile overlay backdrop - only show when sidebar is open */}
       {isOpen && (
         <div 
