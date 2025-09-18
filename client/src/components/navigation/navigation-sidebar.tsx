@@ -606,7 +606,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
         "fixed lg:relative left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col",
         "transition-all duration-300 ease-out", // Improved easing for smoother feel
         isCollapsed ? "w-16" : "w-80 lg:w-96",
-        "shadow-lg lg:shadow-none"
+        "shadow-lg lg:shadow-none",
+        // Hide/show sidebar based on isOpen state
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0" // Always visible on desktop, slides in/out on mobile
       )}>
         
         {/* Sidebar Header */}
