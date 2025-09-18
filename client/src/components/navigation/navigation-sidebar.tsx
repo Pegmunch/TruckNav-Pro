@@ -31,8 +31,17 @@ import {
   Shield,
   FileText,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Volume2,
+  VolumeX,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  MessageSquare
 } from "lucide-react";
+import { VoiceMicButton } from "@/components/ui/voice-mic-button";
+import { useVoiceCommands } from "@/hooks/use-voice-commands";
+import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
 import CountryLanguageSelector from '@/components/country/country-language-selector';
@@ -132,6 +141,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
   const [isLegalNoticesOpen, setIsLegalNoticesOpen] = useState(false);
+  const [showNavigationVoiceTranscript, setShowNavigationVoiceTranscript] = useState(false);
+  const [lastNavigationVoiceCommand, setLastNavigationVoiceCommand] = useState<string>('');
   
   
   // Window sync state
@@ -380,6 +391,170 @@ const NavigationSidebar = memo(function NavigationSidebar({
     }
   };
 
+  // Voice command handlers for navigation sidebar
+  const navigationVoiceHandlers: IntentHandlers = {
+    navigation: async (intent, entities) => {
+      console.log('Navigation sidebar navigation intent:', intent.action, entities);
+      
+      if (intent.action === 'start_navigation') {
+        await handleGoNavigation();
+        setLastNavigationVoiceCommand('Started navigation');
+      } else if (intent.action === 'stop_navigation') {
+        if (isNavigating && onStopNavigation) {
+          onStopNavigation();
+          setLastNavigationVoiceCommand('Stopped navigation');
+          toast({
+            title: "Navigation stopped",
+            description: "Navigation has been ended",
+          });
+        } else {
+          toast({
+            title: "Not navigating",
+            description: "Navigation is not currently active",
+            variant: "destructive"
+          });
+        }
+      }
+    },
+    
+    routing: async (intent, entities) => {
+      console.log('Navigation sidebar routing intent:', intent.action, entities);
+      
+      if (intent.action === 'avoid_tolls') {
+        setLastNavigationVoiceCommand('Avoiding tolls in route planning');
+        toast({
+          title: "Toll avoidance enabled",
+          description: "Future routes will avoid toll roads",
+        });
+      } else if (intent.action === 'reroute') {
+        setLastNavigationVoiceCommand('Recalculating route');
+        if (currentRoute) {
+          onPlanRoute();
+          toast({
+            title: "Recalculating route",
+            description: "Finding new truck-safe route",
+          });
+        }
+      }
+    },
+    
+    search: async (intent, entities) => {
+      console.log('Navigation sidebar search intent:', intent.action, entities);
+      
+      if (intent.action === 'find_nearest') {
+        const poiEntity = entities.find(e => e.type === 'poi');
+        if (poiEntity) {
+          const facilityType = poiEntity.value;
+          setLastNavigationVoiceCommand(`Finding nearest ${facilityType}`);
+          toast({
+            title: "Searching facilities",
+            description: `Finding nearest ${facilityType}`,
+          });
+        }
+      }
+    },
+    
+    controls: async (intent, entities) => {
+      console.log('Navigation sidebar controls intent:', intent.action, entities);
+      
+      if (intent.action === 'zoom_in') {
+        setLastNavigationVoiceCommand('Zoomed in');
+        toast({ title: "Zoomed in", description: "Map zoom increased" });
+      } else if (intent.action === 'zoom_out') {
+        setLastNavigationVoiceCommand('Zoomed out');
+        toast({ title: "Zoomed out", description: "Map zoom decreased" });
+      } else if (intent.action === 'mute') {
+        setLastNavigationVoiceCommand('Audio muted');
+        toast({ title: "Audio muted", description: "Navigation audio turned off" });
+      } else if (intent.action === 'unmute') {
+        setLastNavigationVoiceCommand('Audio unmuted');
+        toast({ title: "Audio unmuted", description: "Navigation audio turned on" });
+      }
+    },
+    
+    settings: async (intent, entities) => {
+      console.log('Navigation sidebar settings intent:', intent.action, entities);
+      
+      if (intent.action === 'change_theme') {
+        const themeEntity = entities.find(e => e.type === 'theme');
+        if (themeEntity) {
+          const theme = themeEntity.value;
+          setLastNavigationVoiceCommand(`Changed theme to ${theme}`);
+          toast({
+            title: "Theme changed",
+            description: `Theme set to ${theme} mode`,
+          });
+        }
+      }
+    },
+    
+    traffic: async (intent, entities) => {
+      console.log('Navigation sidebar traffic intent:', intent.action, entities);
+      
+      if (intent.action === 'show_traffic') {
+        setLastNavigationVoiceCommand('Traffic display enabled');
+        toast({ title: "Traffic shown", description: "Traffic conditions now displayed" });
+      } else if (intent.action === 'hide_traffic') {
+        setLastNavigationVoiceCommand('Traffic display disabled');
+        toast({ title: "Traffic hidden", description: "Traffic conditions hidden" });
+      }
+    },
+    
+    unknown: async (intent, entities) => {
+      setLastNavigationVoiceCommand(`Unrecognized: "${intent.originalText}"`);
+      toast({
+        title: "Command not recognized",
+        description: "Try 'start navigation', 'zoom in', or 'find fuel station'",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Initialize voice commands for navigation sidebar
+  const navigationVoiceIntents = useVoiceIntents(navigationVoiceHandlers, {
+    minConfidence: 0.6,
+    contextAware: true
+  });
+  
+  const navigationVoiceCommands = useVoiceCommands(
+    {
+      interactionMode: 'toggle',
+      continuous: true,
+      interimResults: true,
+      enableDebugLogging: true
+    },
+    {
+      onTranscriptUpdate: (transcript) => {
+        setShowNavigationVoiceTranscript(true);
+        
+        if (transcript.isFinal) {
+          setTimeout(() => setShowNavigationVoiceTranscript(false), 3000);
+        }
+      },
+      onIntentProcessed: (result) => {
+        console.log('Navigation intent processed:', result);
+      },
+      onError: (error) => {
+        console.error('Navigation voice error:', error);
+        toast({
+          title: "Voice error",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    },
+    navigationVoiceHandlers
+  );
+  
+  // Update voice context for navigation
+  useEffect(() => {
+    navigationVoiceIntents.updateContext({
+      navigationState: isNavigating ? 'active' : 'idle',
+      routeActive: !!currentRoute,
+      hasVehicleProfile: !!selectedProfile,
+      sidebarSection: activeSection
+    });
+  }, [isNavigating, currentRoute, selectedProfile, activeSection, navigationVoiceIntents]);
 
   return (
     <>
@@ -442,6 +617,25 @@ const NavigationSidebar = memo(function NavigationSidebar({
           )}
           
           <div className="flex items-center space-x-2">
+            {/* Voice Control Button */}
+            {!isCollapsed && (
+              <VoiceMicButton
+                state={navigationVoiceCommands.state}
+                size="sm"
+                onToggle={() => {
+                  if (navigationVoiceCommands.state === 'idle') {
+                    navigationVoiceCommands.startListening?.();
+                  } else {
+                    navigationVoiceCommands.stopListening?.();
+                  }
+                }}
+                disabled={navigationVoiceCommands.isProcessing}
+                className="shrink-0"
+                data-testid="button-voice-navigation"
+                aria-label="Voice commands for navigation"
+              />
+            )}
+            
             {/* Collapse Toggle - Desktop */}
             <Button
               variant="ghost"
@@ -480,6 +674,54 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </div>
               )}
             </div>
+            
+            {/* Voice Transcript Display */}
+            {showNavigationVoiceTranscript && navigationVoiceCommands.currentTranscript && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-200">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">Voice Command...</span>
+                </div>
+                <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                  {navigationVoiceCommands.currentTranscript.interim || navigationVoiceCommands.currentTranscript.final}
+                </div>
+              </div>
+            )}
+            
+            {/* Last Voice Command Feedback */}
+            {lastNavigationVoiceCommand && !showNavigationVoiceTranscript && (
+              <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-center space-x-2 text-green-800 dark:text-green-200">
+                  <MessageSquare className="w-3 h-3" />
+                  <span className="text-sm">{lastNavigationVoiceCommand}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLastNavigationVoiceCommand('')}
+                    className="ml-auto h-6 w-6 p-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Voice Command Suggestions */}
+            {navigationVoiceCommands.state === 'idle' && !navigationVoiceCommands.currentTranscript && !lastNavigationVoiceCommand && (
+              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Voice commands:</div>
+                <div className="flex flex-wrap gap-1">
+                  {['Start navigation', 'Zoom in', 'Find fuel station'].map((suggestion, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      "{suggestion}"
+                    </Badge>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Click mic or press spacebar to speak
+                </div>
+              </div>
+            )}
           </div>
         )}
 

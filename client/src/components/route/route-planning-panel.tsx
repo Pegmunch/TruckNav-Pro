@@ -1,4 +1,4 @@
-import { useState, memo, useMemo, useCallback } from "react";
+import { useState, memo, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,10 @@ import {
   Bed,
   Star,
   Square,
-  Loader2
+  Loader2,
+  ArrowUpDown,
+  X,
+  RotateCcw
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility, type Journey } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
@@ -29,6 +32,10 @@ import LocationDropdown from "./location-dropdown";
 import TrafficConditionsDisplay from "@/components/traffic/traffic-conditions-display";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { VoiceMicButton } from "@/components/ui/voice-mic-button";
+import { useVoiceCommands } from "@/hooks/use-voice-commands";
+import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
+import { validatePostcode, formatPostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 
 interface RoutePlanningPanelProps {
   fromLocation: string;
@@ -67,6 +74,8 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   isCompletingJourney = false,
 }: RoutePlanningPanelProps) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showVoiceTranscript, setShowVoiceTranscript] = useState(false);
+  const [lastVoiceCommand, setLastVoiceCommand] = useState<string>('');
   const { formatDistance, formatHeight, system, convertDistance } = useMeasurement();
   const { toast } = useToast();
 
@@ -132,6 +141,219 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
   });
 
+  // Voice command handlers for route planning
+  const routeVoiceHandlers: IntentHandlers = {
+    navigation: async (intent, entities) => {
+      console.log('Route navigation intent:', intent.action, entities);
+      
+      if (intent.action === 'navigate_to') {
+        // Find postcode in entities
+        const postcodeEntity = entities.find(e => e.type === 'postcode');
+        if (postcodeEntity) {
+          const postcode = postcodeEntity.value;
+          const country = detectPostcodeCountry(postcode);
+          
+          if (country && validatePostcode(postcode, country)) {
+            const formatted = formatPostcode(postcode, country);
+            onToLocationChange(formatted);
+            setLastVoiceCommand(`Set destination to ${formatted}`);
+            
+            toast({
+              title: "Destination set",
+              description: `Destination set to ${formatted}`,
+            });
+            
+            // Auto-plan route if origin is set
+            if (fromLocation) {
+              setTimeout(onPlanRoute, 500);
+            }
+          } else {
+            toast({
+              title: "Invalid postcode",
+              description: "Please speak a valid postcode",
+              variant: "destructive"
+            });
+          }
+        } else {
+          // Handle location entity
+          const locationEntity = entities.find(e => e.type === 'location' || e.type === 'poi');
+          if (locationEntity) {
+            onToLocationChange(locationEntity.value);
+            setLastVoiceCommand(`Set destination to ${locationEntity.value}`);
+            
+            toast({
+              title: "Destination set",
+              description: `Destination set to ${locationEntity.value}`,
+            });
+            
+            if (fromLocation) {
+              setTimeout(onPlanRoute, 500);
+            }
+          }
+        }
+      } else if (intent.action === 'start_navigation') {
+        if (currentRoute) {
+          onStartNavigation();
+          setLastVoiceCommand('Starting navigation');
+          toast({
+            title: "Navigation started",
+            description: "Truck-safe navigation has begun",
+          });
+        } else if (fromLocation && toLocation) {
+          onPlanRoute();
+          setLastVoiceCommand('Planning route first');
+          toast({
+            title: "Planning route",
+            description: "Planning truck-safe route before navigation",
+          });
+        } else {
+          toast({
+            title: "Missing locations",
+            description: "Please set both origin and destination first",
+            variant: "destructive"
+          });
+        }
+      }
+    },
+    
+    routing: async (intent, entities) => {
+      console.log('Route routing intent:', intent.action, entities);
+      
+      if (intent.action === 'clear_destination') {
+        onToLocationChange('');
+        setLastVoiceCommand('Cleared destination');
+        toast({
+          title: "Destination cleared",
+          description: "Destination has been cleared",
+        });
+      } else if (intent.action === 'swap_locations') {
+        if (fromLocation && toLocation) {
+          onFromLocationChange(toLocation);
+          onToLocationChange(fromLocation);
+          setLastVoiceCommand('Swapped origin and destination');
+          toast({
+            title: "Locations swapped",
+            description: "Origin and destination have been swapped",
+          });
+        }
+      } else if (intent.action === 'plan_route') {
+        if (fromLocation && toLocation) {
+          onPlanRoute();
+          setLastVoiceCommand('Planning route');
+          toast({
+            title: "Planning route",
+            description: "Calculating truck-safe route",
+          });
+        } else {
+          toast({
+            title: "Missing locations",
+            description: "Please set both origin and destination first",
+            variant: "destructive"
+          });
+        }
+      }
+    },
+    
+    unknown: async (intent, entities) => {
+      setLastVoiceCommand(`Unrecognized: "${intent.originalText}"`);
+      toast({
+        title: "Command not recognized",
+        description: "Try saying 'navigate to [postcode]' or 'plan route'",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Initialize voice commands with route-specific handlers
+  const voiceIntents = useVoiceIntents(routeVoiceHandlers, {
+    minConfidence: 0.6,
+    contextAware: true
+  });
+  
+  const voiceCommands = useVoiceCommands(
+    {
+      interactionMode: 'toggle',
+      continuous: true,
+      interimResults: true,
+      enableDebugLogging: true
+    },
+    {
+      onTranscriptUpdate: (transcript) => {
+        setShowVoiceTranscript(true);
+        
+        // Auto-hide transcript after final result
+        if (transcript.isFinal) {
+          setTimeout(() => setShowVoiceTranscript(false), 3000);
+        }
+      },
+      onIntentProcessed: (result) => {
+        console.log('Route intent processed:', result);
+      },
+      onError: (error) => {
+        console.error('Route voice error:', error);
+        toast({
+          title: "Voice error",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    },
+    routeVoiceHandlers
+  );
+  
+  // Update voice context when route planning state changes
+  useEffect(() => {
+    voiceIntents.updateContext({
+      routeActive: !!currentRoute,
+      navigationState: isNavigating ? 'active' : 'idle',
+      hasOrigin: !!fromLocation,
+      hasDestination: !!toLocation
+    });
+  }, [currentRoute, isNavigating, fromLocation, toLocation, voiceIntents]);
+  
+  // Keyboard shortcut for voice activation (spacebar)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && !event.repeat && event.target === document.body) {
+        event.preventDefault();
+        if (voiceCommands.state === 'idle') {
+          voiceCommands.startListening?.();
+        }
+      }
+    };
+    
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === 'Space' && event.target === document.body) {
+        if (voiceCommands.state === 'listening') {
+          voiceCommands.stopListening?.();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [voiceCommands]);
+  
+  // Voice command suggestions
+  const getVoiceCommandSuggestions = () => {
+    if (!fromLocation && !toLocation) {
+      return ['"Navigate to [postcode]"', '"Set destination to [location]"'];
+    } else if (!fromLocation) {
+      return ['"Set origin to [location]"', '"Plan route"'];
+    } else if (!toLocation) {
+      return ['"Navigate to [postcode]"', '"Set destination to [location]"'];
+    } else if (!currentRoute) {
+      return ['"Plan route"', '"Start navigation"', '"Swap locations"'];
+    } else {
+      return ['"Start navigation"', '"Clear destination"', '"Plan new route"'];
+    }
+  };
+  
   // Note: Journey History and Route Favorites have been moved to HistoryFavoritesPanel
 
   return (
@@ -148,14 +370,130 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
             icon="start"
           />
           
-          {/* To Location */}
-          <LocationDropdown
-            value={toLocation}
-            onChange={onToLocationChange}
-            placeholder="Destination"
-            testId="input-to-location"
-            icon="destination"
-          />
+          {/* To Location with Voice Input */}
+          <div className="relative">
+            <div className="flex items-center space-x-2">
+              <div className="flex-1">
+                <LocationDropdown
+                  value={toLocation}
+                  onChange={onToLocationChange}
+                  placeholder="Destination (or use voice)"
+                  testId="input-to-location"
+                  icon="destination"
+                />
+              </div>
+              
+              {/* Voice Input Button for Destination */}
+              <VoiceMicButton
+                state={voiceCommands.state}
+                size="md"
+                onToggle={() => {
+                  if (voiceCommands.state === 'idle') {
+                    voiceCommands.startListening?.();
+                  } else {
+                    voiceCommands.stopListening?.();
+                  }
+                }}
+                disabled={voiceCommands.isProcessing}
+                className="shrink-0"
+                data-testid="button-voice-destination"
+                aria-label="Voice input for destination"
+              />
+              
+              {/* Quick Action Buttons */}
+              {(fromLocation && toLocation) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onFromLocationChange(toLocation);
+                    onToLocationChange(fromLocation);
+                    toast({
+                      title: "Locations swapped",
+                      description: "Origin and destination have been swapped",
+                    });
+                  }}
+                  className="shrink-0 h-10 w-10 p-0"
+                  data-testid="button-swap-locations"
+                  aria-label="Swap origin and destination"
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                </Button>
+              )}
+              
+              {toLocation && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onToLocationChange('');
+                    toast({
+                      title: "Destination cleared",
+                      description: "Destination has been cleared",
+                    });
+                  }}
+                  className="shrink-0 h-10 w-10 p-0"
+                  data-testid="button-clear-destination"
+                  aria-label="Clear destination"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+            
+            {/* Voice Transcript Display */}
+            {showVoiceTranscript && voiceCommands.currentTranscript && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-200">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">Listening...</span>
+                </div>
+                <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                  {voiceCommands.currentTranscript.interim || voiceCommands.currentTranscript.final}
+                </div>
+                {voiceCommands.currentTranscript.isFinal && (
+                  <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                    Processing command...
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Last Voice Command Feedback */}
+            {lastVoiceCommand && !showVoiceTranscript && (
+              <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-center space-x-2 text-green-800 dark:text-green-200">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm">{lastVoiceCommand}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLastVoiceCommand('')}
+                    className="ml-auto h-6 w-6 p-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Voice Command Suggestions */}
+            {voiceCommands.state === 'idle' && !voiceCommands.currentTranscript && (
+              <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
+                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Voice commands:</div>
+                <div className="flex flex-wrap gap-1">
+                  {getVoiceCommandSuggestions().map((suggestion, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {suggestion}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Hold spacebar to speak
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
