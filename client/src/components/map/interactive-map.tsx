@@ -785,34 +785,41 @@ const InteractiveMap = memo(function InteractiveMap({
       )}
 
       {/* Floating Legal Disclaimer Button - Bottom Right Corner */}
-      {hasAcceptedTerms && (
-        <div className={cn(
-          "absolute z-30 transition-all duration-300 ease-in-out",
-          "bottom-20 right-4", // Position above bottom info bar with proper spacing
-          controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
-        )}>
-          <Card className="overflow-hidden shadow-2xl">
-            <Button
-              onClick={handleToggleLegalDisclaimer}
-              size="icon"
-              className={cn(
-                "automotive-button floating-action-button",
-                "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
-                "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
-                "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
-                "backdrop-blur-sm bg-card/95 hover:bg-accent/95"
-              )}
-              data-testid="button-legal-disclaimer"
-              aria-label={isLegalDisclaimerOpen ? "Close legal disclaimer" : "Open legal disclaimer"}
-            >
-              <Menu className={cn(
-                "scalable-control-icon text-primary",
+      <div className={cn(
+        "absolute z-30 transition-all duration-300 ease-in-out",
+        "bottom-20 right-4", // Position above bottom info bar with proper spacing
+        controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
+      )}>
+        <Card className="overflow-hidden shadow-2xl">
+          <Button
+            onClick={handleToggleLegalDisclaimer}
+            size="icon"
+            className={cn(
+              "automotive-button floating-action-button",
+              "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
+              "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
+              "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
+              "backdrop-blur-sm bg-card/95 hover:bg-accent/95",
+              // Visual indicator for new users who haven't accepted terms yet
+              !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75 animate-pulse"
+            )}
+            data-testid="button-legal-disclaimer"
+            aria-label={isLegalDisclaimerOpen ? "Close legal disclaimer" : "Open legal disclaimer"}
+          >
+            <div className="relative">
+              <Shield className={cn(
+                "scalable-control-icon",
+                hasAcceptedTerms ? "text-primary" : "text-red-600",
                 isLegalDisclaimerOpen && "rotate-45 text-accent-foreground"
               )} />
-            </Button>
-          </Card>
-        </div>
-      )}
+              {/* Alert indicator for users who haven't accepted terms */}
+              {!hasAcceptedTerms && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border border-white animate-pulse"></div>
+              )}
+            </div>
+          </Button>
+        </Card>
+      </div>
       
       {/* Legal Disclaimer Dialog */}
       <LegalDisclaimerDialog

@@ -1089,19 +1089,35 @@ const NavigationSidebar = memo(function NavigationSidebar({
                               variant="ghost"
                               size="sm"
                               onClick={() => setIsDisclaimerDialogOpen(true)}
-                              disabled={!hasAcceptedTerms}
                               className={cn(
                                 "w-full justify-start h-auto p-3 automotive-button",
-                                !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
+                                // Visual indicator for users who haven't accepted terms
+                                !hasAcceptedTerms && "ring-2 ring-red-400/50 bg-red-50/50 dark:bg-red-950/20"
                               )}
                               data-testid="button-legal-disclaimer"
-                              aria-label={hasAcceptedTerms ? "View legal disclaimer and terms of service" : "Complete agreement first to view legal disclaimer"}
+                              aria-label="View legal disclaimer and terms of service - required for use of TruckNav Pro"
                             >
-                              <Shield className="w-4 h-4 mr-3 text-primary" />
+                              <div className="relative">
+                                <Shield className={cn(
+                                  "w-4 h-4 mr-3", 
+                                  hasAcceptedTerms ? "text-primary" : "text-red-600"
+                                )} />
+                                {!hasAcceptedTerms && (
+                                  <div className="absolute -top-1 -left-1 w-2 h-2 bg-red-600 rounded-full border border-white animate-pulse"></div>
+                                )}
+                              </div>
                               <div className="flex-1 text-left">
-                                <div className="font-medium text-foreground">Legal Disclaimer</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {hasAcceptedTerms ? "Terms of service and disclaimers" : "Complete agreement first"}
+                                <div className={cn(
+                                  "font-medium",
+                                  hasAcceptedTerms ? "text-foreground" : "text-red-800 dark:text-red-200"
+                                )}>
+                                  Legal Disclaimer {!hasAcceptedTerms && "⚠️"}
+                                </div>
+                                <div className={cn(
+                                  "text-xs",
+                                  hasAcceptedTerms ? "text-muted-foreground" : "text-red-700 dark:text-red-300"
+                                )}>
+                                  {hasAcceptedTerms ? "Terms of service and disclaimers" : "Required acknowledgements - click to review"}
                                 </div>
                               </div>
                             </Button>
@@ -1110,19 +1126,30 @@ const NavigationSidebar = memo(function NavigationSidebar({
                               variant="ghost"
                               size="sm"
                               onClick={handleViewLegalNotices}
-                              disabled={!hasAcceptedTerms}
                               className={cn(
                                 "w-full justify-start h-auto p-3 automotive-button",
-                                !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
+                                // Visual indicator for users who haven't accepted terms
+                                !hasAcceptedTerms && "ring-2 ring-blue-400/50 bg-blue-50/50 dark:bg-blue-950/20"
                               )}
                               data-testid="button-legal-notices"
-                              aria-label={hasAcceptedTerms ? "View legal notices and copyright information" : "Complete agreement first to view legal notices"}
+                              aria-label="View legal notices and copyright information"
                             >
-                              <FileText className="w-4 h-4 mr-3 text-blue-600" />
+                              <FileText className={cn(
+                                "w-4 h-4 mr-3", 
+                                hasAcceptedTerms ? "text-blue-600" : "text-blue-700"
+                              )} />
                               <div className="flex-1 text-left">
-                                <div className="font-medium text-foreground">Legal Notices</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {hasAcceptedTerms ? "Copyright, patents, and ownership" : "Complete agreement first"}
+                                <div className={cn(
+                                  "font-medium",
+                                  hasAcceptedTerms ? "text-foreground" : "text-blue-800 dark:text-blue-200"
+                                )}>
+                                  Legal Notices
+                                </div>
+                                <div className={cn(
+                                  "text-xs",
+                                  hasAcceptedTerms ? "text-muted-foreground" : "text-blue-700 dark:text-blue-300"
+                                )}>
+                                  {hasAcceptedTerms ? "Copyright, patents, and ownership" : "Legal protections and ownership info"}
                                 </div>
                               </div>
                             </Button>

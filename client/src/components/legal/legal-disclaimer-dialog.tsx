@@ -111,44 +111,12 @@ export default function LegalDisclaimerDialog({
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="px-4 py-6 sm:px-6" id="legal-disclaimer-description">
-              {/* Access Control Check */}
+              {/* Loading State */}
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   <span className="ml-3 text-muted-foreground">Loading...</span>
                 </div>
-              ) : !hasAcceptedTerms ? (
-                /* Warning for Unauthorized Access */
-                <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
-                  <CardContent className="pt-6">
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      <AlertDescription className="text-amber-800 dark:text-amber-200">
-                        <div className="space-y-3">
-                          <p className="font-medium">
-                            Access Restricted - Consent Required
-                          </p>
-                          <p className="text-sm">
-                            You must first complete the legal consent agreement to access 
-                            the full terms and disclaimers. Please return to the main 
-                            application and complete all required agreement checkboxes.
-                          </p>
-                          <div className="mt-4">
-                            <Button
-                              onClick={handleClose}
-                              variant="outline"
-                              size="sm"
-                              className="text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                              data-testid="button-return-to-consent"
-                            >
-                              Return to Complete Consent
-                            </Button>
-                          </div>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  </CardContent>
-                </Card>
               ) : (
                 /* Main Content - Terms of Service */
                 <div 
@@ -158,16 +126,30 @@ export default function LegalDisclaimerDialog({
                 >
                   {/* Introduction */}
                   <div className="mb-6">
-                    <Alert className="border-primary/20 bg-primary/5">
-                      <Shield className="h-4 w-4 text-primary" />
+                    <Alert className={cn(
+                      hasAcceptedTerms 
+                        ? "border-primary/20 bg-primary/5" 
+                        : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20"
+                    )}>
+                      <Shield className={cn(
+                        "h-4 w-4",
+                        hasAcceptedTerms ? "text-primary" : "text-red-600"
+                      )} />
                       <AlertDescription className="text-sm">
                         <p className="font-medium mb-2">
-                          Complete Legal Documentation
+                          {hasAcceptedTerms ? "Complete Legal Documentation" : "Required Legal Acknowledgements"}
                         </p>
-                        <p>
-                          This dialog contains the complete terms of service, disclaimers, 
-                          and legal protections for TruckNav Pro. You have access to this 
-                          content because you have completed the required consent agreement.
+                        <p className={cn(
+                          hasAcceptedTerms ? "text-foreground" : "text-red-800 dark:text-red-200"
+                        )}>
+                          {hasAcceptedTerms ? (
+                            "You have completed the required acknowledgements. This content shows the complete terms of service, disclaimers, and legal protections for TruckNav Pro."
+                          ) : (
+                            <>
+                              <strong>IMPORTANT:</strong> You must review and accept the legal acknowledgements to use TruckNav Pro. 
+                              Please complete the required acknowledgement checkboxes in the main application after reviewing this content.
+                            </>
+                          )}
                         </p>
                       </AlertDescription>
                     </Alert>
