@@ -612,15 +612,6 @@ export default function NavigationPage() {
               >
                 <Star className="w-5 h-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileDrawerOpen(true)}
-                className="automotive-touch-target"
-                data-testid="button-open-mobile-menu"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
             </div>
           </div>
 

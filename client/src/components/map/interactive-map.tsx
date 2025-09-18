@@ -204,7 +204,7 @@ const InteractiveMap = memo(function InteractiveMap({
     resetAutoHideTimer();
   };
 
-  // Auto-hide functionality
+  // Auto-hide functionality with improved timing
   const resetAutoHideTimer = useCallback(() => {
     setControlsVisible(true);
     setIsUserInteracting(true);
@@ -214,8 +214,10 @@ const InteractiveMap = memo(function InteractiveMap({
     }
     
     autoHideTimerRef.current = window.setTimeout(() => {
-      setControlsVisible(false);
-      setIsUserInteracting(false);
+      if (!document.querySelector('button:hover, [role="button"]:hover')) {
+        setControlsVisible(false);
+        setIsUserInteracting(false);
+      }
     }, AUTO_HIDE_DELAY);
   }, []);
 
