@@ -362,8 +362,10 @@ body {
   /* Grid overlay pattern for mock map */
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23d1d5db" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
   background-blend-mode: overlay;
-  /* Ensure proper dimensions */
-  min-height: 400px;
+  /* Extended dimensions to fill space up to legal footer */
+  min-height: calc(100vh - 200px); /* Increased to use most viewport height, leaving space for legal footer */
+  /* Responsive adjustments */
+  height: calc(100vh - 200px);
   width: 100%;
   flex: 1;
   border: 1px solid var(--border);
@@ -1271,8 +1273,8 @@ select:focus-visible,
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: 300px; /* Fixed: was 0, now has proper minimum height */
-  height: 100%;
+  min-height: calc(100vh - 150px); /* Increased to fill more space up to legal footer */
+  height: calc(100vh - 150px);
   background: var(--map-background, #f8fafc);
   overflow: hidden;
 }
@@ -1280,6 +1282,41 @@ select:focus-visible,
 /* Inherit map-container styles for mobile */
 .mobile-map-container > .map-container {
   min-height: 100%;
+  height: 100%;
+}
+
+/* Responsive adjustments for map height */
+@media (max-height: 600px) {
+  .map-container {
+    min-height: calc(100vh - 120px);
+    height: calc(100vh - 120px);
+  }
+  
+  .mobile-map-container {
+    min-height: calc(100vh - 100px);
+    height: calc(100vh - 100px);
+  }
+}
+
+@media (min-height: 800px) {
+  .map-container {
+    min-height: calc(100vh - 250px);
+    height: calc(100vh - 250px);
+  }
+  
+  .mobile-map-container {
+    min-height: calc(100vh - 180px);
+    height: calc(100vh - 180px);
+  }
+}
+
+/* CarPlay/Android Auto specific map adjustments */
+@media (max-height: 480px) and (orientation: landscape) {
+  .map-container,
+  .mobile-map-container {
+    min-height: calc(100vh - 80px);
+    height: calc(100vh - 80px);
+  }
 }
 
 /* Mobile drawer overlay - Enhanced with fallback visibility */
