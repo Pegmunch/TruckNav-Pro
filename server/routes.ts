@@ -8,6 +8,12 @@ import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySche
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
+import OpenAI from "openai";
+import multer from "multer";
+import { createReadStream } from "fs";
+import { writeFile, unlink } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 import { 
   validateVehicleProfile, 
   validateRoute, 
@@ -120,6 +126,60 @@ async function calculateTruckSafeRoute(
   }
 }
 
+// Initialize OpenAI client for voice transcription (gracefully handle missing API key)
+// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+let openai: OpenAI | null = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY 
+    });
+    console.log('OpenAI client initialized successfully');
+  } else {
+    console.warn('OpenAI API key not found - voice transcription features will be disabled');
+  }
+} catch (error) {
+  console.error('Failed to initialize OpenAI client:', error);
+  openai = null;
+}
+
+// Configure multer for audio file uploads
+const upload = multer({
+  dest: tmpdir(), // Temporary directory for uploaded files
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB limit (Whisper API limit)
+    files: 1 // Only one file at a time
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept audio files only
+    const allowedMimeTypes = [
+      'audio/webm',
+      'audio/mp3',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/m4a',
+      'audio/mp4',
+      'audio/ogg',
+      'audio/flac'
+    ];
+    
+    if (allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
+    }
+  }
+});
+
+// Voice transcription request validation
+const validateVoiceTranscription = [
+  z.object({
+    language: z.string().optional(),
+    duration: z.string().transform(val => parseInt(val)).optional(),
+    timestamp: z.string().transform(val => parseInt(val)).optional()
+  })
+];
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply API rate limiting to all API routes
   app.use("/api", apiRateLimit);
@@ -147,6 +207,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return csrfProtection(req, res, next);
     }
     next();
+  });
+
+  // Voice Transcription Endpoint - Whisper API fallback
+  app.post("/api/voice/transcribe", upload.single('audio'), async (req: Request, res: Response) => {
+    const startTime = Date.now();
+    
+    try {
+      // Check if OpenAI client is available
+      if (!openai || !process.env.OPENAI_API_KEY) {
+        return res.status(500).json({ 
+          error: 'OPENAI_API_KEY_MISSING',
+          message: 'OpenAI API key not configured. Voice fallback unavailable.' 
+        });
+      }
+
+      // Validate uploaded file
+      if (!req.file) {
+        return res.status(400).json({ 
+          error: 'NO_AUDIO_FILE',
+          message: 'No audio file provided.' 
+        });
+      }
+
+      // Validate file size (Whisper has a 25MB limit)
+      if (req.file.size > 25 * 1024 * 1024) {
+        return res.status(400).json({ 
+          error: 'FILE_TOO_LARGE',
+          message: 'Audio file too large. Maximum size is 25MB.' 
+        });
+      }
+
+      // Extract request parameters
+      const { language = 'en', duration, timestamp } = req.body;
+      
+      // Validate language parameter
+      const supportedLanguages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh', 'ar', 'hi', 'tr', 'nl', 'pl'];
+      const whisperLanguage = supportedLanguages.includes(language) ? language : 'en';
+
+      try {
+        // Create a read stream from the uploaded file
+        const audioFile = createReadStream(req.file.path);
+        
+        // Transcribe using OpenAI Whisper
+        const transcription = await openai.audio.transcriptions.create({
+          file: audioFile,
+          model: 'whisper-1',
+          language: whisperLanguage,
+          response_format: 'verbose_json', // Get timestamps and confidence scores
+          temperature: 0.0 // For consistent results
+        });
+
+        // Calculate processing time
+        const processingTime = Date.now() - startTime;
+
+        // Extract confidence from segments (if available)
+        let confidence = 1.0;
+        if (transcription.segments && transcription.segments.length > 0) {
+          const totalTokens = transcription.segments.reduce((acc, segment) => acc + (segment.tokens?.length || 0), 0);
+          const weightedConfidence = transcription.segments.reduce((acc, segment) => {
+            const segmentWeight = (segment.tokens?.length || 0) / totalTokens;
+            const segmentConfidence = segment.avg_logprob ? Math.exp(segment.avg_logprob) : 0.9;
+            return acc + (segmentConfidence * segmentWeight);
+          }, 0);
+          confidence = Math.min(Math.max(weightedConfidence, 0.0), 1.0);
+        }
+
+        // Prepare response with word-level timestamps if available
+        const words = transcription.segments?.flatMap(segment => 
+          segment.words?.map(word => ({
+            text: word.word,
+            confidence: word.probability || confidence,
+            start: word.start,
+            end: word.end
+          })) || []
+        ) || undefined;
+
+        const response = {
+          text: transcription.text.trim(),
+          confidence,
+          language: transcription.language || whisperLanguage,
+          duration: transcription.duration || (duration ? parseInt(duration) / 1000 : 0),
+          processingTime,
+          words,
+          metadata: {
+            model: 'whisper-1',
+            timestamp: timestamp ? parseInt(timestamp) : Date.now(),
+            fileSize: req.file.size,
+            originalFilename: req.file.originalname
+          }
+        };
+
+        // Clean up temporary file
+        try {
+          await unlink(req.file.path);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up temporary audio file:', cleanupError);
+        }
+
+        res.json(response);
+
+      } catch (openaiError: any) {
+        // Handle OpenAI API errors specifically
+        console.error('OpenAI Whisper API error:', openaiError);
+        
+        let errorMessage = 'Speech transcription failed.';
+        let errorCode = 'TRANSCRIPTION_FAILED';
+        
+        if (openaiError.code === 'insufficient_quota') {
+          errorMessage = 'OpenAI API quota exceeded. Please try again later.';
+          errorCode = 'QUOTA_EXCEEDED';
+        } else if (openaiError.code === 'invalid_api_key') {
+          errorMessage = 'Invalid OpenAI API key configuration.';
+          errorCode = 'INVALID_API_KEY';
+        } else if (openaiError.message?.includes('file format')) {
+          errorMessage = 'Unsupported audio format. Please try a different format.';
+          errorCode = 'UNSUPPORTED_FORMAT';
+        } else if (openaiError.message?.includes('duration')) {
+          errorMessage = 'Audio file too long. Maximum duration is 25 minutes.';
+          errorCode = 'FILE_TOO_LONG';
+        }
+
+        return res.status(500).json({ 
+          error: errorCode,
+          message: errorMessage,
+          processingTime: Date.now() - startTime 
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Voice transcription endpoint error:', error);
+      
+      // Clean up temporary file if it exists
+      if (req.file?.path) {
+        try {
+          await unlink(req.file.path);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up temporary audio file after error:', cleanupError);
+        }
+      }
+
+      return res.status(500).json({ 
+        error: 'INTERNAL_ERROR',
+        message: 'Internal server error during voice transcription.',
+        processingTime: Date.now() - startTime 
+      });
+    }
   });
 
   // Vehicle Profiles

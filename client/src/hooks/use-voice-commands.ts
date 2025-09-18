@@ -12,6 +12,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useCountryPreferences } from './use-country-preferences';
 import { useVoiceIntents, type VoiceProcessingResult, type IntentHandlers } from './use-voice-intents';
+import { useVoiceFallback, type VoiceFallbackConfig, VOICE_FALLBACK_PRESETS } from './use-voice-fallback';
 import type { VoiceState, InteractionMode } from '@/components/ui/voice-mic-button';
 
 // ===== WEB SPEECH API TYPE DECLARATIONS =====
@@ -113,6 +114,11 @@ export interface VoiceCommandsConfig {
   rateLimitWindow?: number;       // Rate limit window (ms)
   maxRequestsPerWindow?: number;  // Max requests per window
   
+  // Fallback configuration
+  enableFallback?: boolean;       // Enable Whisper fallback when Web Speech API unavailable
+  fallbackMode?: 'auto' | 'force'; // 'auto' = fallback only when needed, 'force' = always use fallback
+  fallbackConfig?: VoiceFallbackConfig; // Configuration for fallback hook
+  
   // Debug settings
   enableDebugLogging?: boolean;
   logTranscripts?: boolean;       // Be careful with privacy
@@ -156,6 +162,12 @@ export interface VoiceCommandsState {
   error: VoiceError | null;
   errorHistory: VoiceError[];
   
+  // Fallback state
+  usingFallback: boolean;          // Whether currently using fallback
+  webSpeechSupported: boolean;     // Web Speech API support detection
+  fallbackSupported: boolean;      // MediaRecorder fallback support
+  fallbackReason: string | null;   // Reason for using fallback
+  
   // Performance tracking
   sessionStats: {
     totalCommands: number;
@@ -196,6 +208,9 @@ export function useVoiceCommands(
     enableRateLimit = true,
     rateLimitWindow = 60000,
     maxRequestsPerWindow = 20,
+    enableFallback = true,
+    fallbackMode = 'auto',
+    fallbackConfig,
     enableDebugLogging = false,
     logTranscripts = false
   } = config;
@@ -208,6 +223,67 @@ export function useVoiceCommands(
     contextAware: true,
     enableFuzzyMatching: true
   });
+
+  // ===== FALLBACK DETECTION =====
+  
+  const webSpeechSupported = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    
+    // Check for native SpeechRecognition or webkit prefixed version
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    return !!SpeechRecognitionClass;
+  }, []);
+
+  // Determine if we should use fallback
+  const shouldUseFallback = useMemo(() => {
+    if (!enableFallback) return false;
+    if (fallbackMode === 'force') return true;
+    if (fallbackMode === 'auto') return !webSpeechSupported;
+    return false;
+  }, [enableFallback, fallbackMode, webSpeechSupported]);
+
+  // ===== FALLBACK INITIALIZATION =====
+  
+  // Configure fallback based on main config
+  const fallbackConfiguration: VoiceFallbackConfig = useMemo(() => ({
+    interactionMode,
+    maxRecordingDuration: maxDuration,
+    enableDebugLogging,
+    enableVoiceActivityDetection: true,
+    vadSilenceDuration: silenceTimeout,
+    ...fallbackConfig
+  }), [interactionMode, maxDuration, enableDebugLogging, silenceTimeout, fallbackConfig]);
+
+  // Always initialize fallback hook to maintain consistent hook order
+  const fallback = useVoiceFallback(
+    fallbackConfiguration,
+    {
+      onTranscriptUpdate: (transcript) => {
+        if (!shouldUseFallback) return; // Don't process if not using fallback
+        callbacks.onTranscriptUpdate?.(transcript);
+        // Process the transcript through voice intents
+        if (transcript.isFinal && transcript.final.trim()) {
+          voiceIntents.processVoiceInput(transcript.final.trim()).then((result) => {
+            callbacks.onIntentProcessed?.(result);
+          }).catch((error) => {
+            console.error('[VoiceCommands] Intent processing error:', error);
+          });
+        }
+      },
+      onStateChange: (state) => {
+        if (!shouldUseFallback) return; // Don't process if not using fallback
+        callbacks.onStateChange?.(state);
+      },
+      onError: (error) => {
+        if (!shouldUseFallback) return; // Don't process if not using fallback
+        callbacks.onError?.(error);
+      },
+      onPermissionChange: (hasPermission) => {
+        if (!shouldUseFallback) return; // Don't process if not using fallback
+        callbacks.onPermissionChange?.(hasPermission);
+      }
+    }
+  );
 
   // ===== STATE =====
   
@@ -223,6 +299,12 @@ export function useVoiceCommands(
     processingHistory: [],
     error: null,
     errorHistory: [],
+    usingFallback: shouldUseFallback,
+    webSpeechSupported: webSpeechSupported,
+    fallbackSupported: fallback.isSupported,
+    fallbackReason: shouldUseFallback ? 
+      (fallbackMode === 'force' ? 'Forced fallback mode' : 'Web Speech API not available') : 
+      null,
     sessionStats: {
       totalCommands: 0,
       successfulCommands: 0,
@@ -699,10 +781,17 @@ export function useVoiceCommands(
   // ===== CORE ACTIONS =====
   
   const startListening = useCallback(async () => {
-    if (!speechRecognitionSupported) {
+    // Check if we should use fallback
+    if (shouldUseFallback) {
+      if (enableDebugLogging) console.log('[VoiceCommands] Using Whisper fallback for recording');
+      return await fallback.startRecording();
+    }
+    
+    // Use Web Speech API
+    if (!webSpeechSupported) {
       handleError(createError(
         'NOT_SUPPORTED',
-        'Speech recognition is not supported in this browser',
+        'Speech recognition is not supported in this browser and fallback is disabled',
         false
       ));
       return false;
@@ -745,7 +834,10 @@ export function useVoiceCommands(
       return false;
     }
   }, [
-    speechRecognitionSupported,
+    shouldUseFallback,
+    fallback,
+    enableDebugLogging,
+    webSpeechSupported,
     state.isListening,
     state.hasPermission,
     checkRateLimit,
@@ -756,6 +848,14 @@ export function useVoiceCommands(
   ]);
   
   const stopListening = useCallback(() => {
+    // Check if we should use fallback
+    if (shouldUseFallback) {
+      if (enableDebugLogging) console.log('[VoiceCommands] Stopping Whisper fallback recording');
+      fallback.stopRecording();
+      return;
+    }
+    
+    // Use Web Speech API
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
@@ -770,7 +870,7 @@ export function useVoiceCommands(
     }));
     
     callbacks.onStateChange?.('idle');
-  }, [clearAllTimeouts, callbacks]);
+  }, [shouldUseFallback, enableDebugLogging, fallback, clearAllTimeouts, callbacks]);
   
   const toggleListening = useCallback(async () => {
     if (state.isListening) {
@@ -803,23 +903,47 @@ export function useVoiceCommands(
   
   useEffect(() => {
     if (!isInitializedRef.current) {
+      const totalSupported = webSpeechSupported || (enableFallback && fallback.isSupported);
+      
       setState(prev => ({
         ...prev,
-        isSupported: speechRecognitionSupported
+        isSupported: totalSupported,
+        usingFallback: shouldUseFallback,
+        webSpeechSupported: webSpeechSupported,
+        fallbackSupported: fallback.isSupported,
+        fallbackReason: shouldUseFallback ? 
+          (fallbackMode === 'force' ? 'Forced fallback mode' : 'Web Speech API not available') : 
+          null
       }));
       
       isInitializedRef.current = true;
       
       if (enableDebugLogging) {
         console.log('[VoiceCommands] Initialized', {
-          supported: speechRecognitionSupported,
+          supported: totalSupported,
+          webSpeechSupported: webSpeechSupported,
+          fallbackSupported: fallback.isSupported,
+          usingFallback: shouldUseFallback,
+          fallbackReason: shouldUseFallback ? 
+            (fallbackMode === 'force' ? 'Forced fallback mode' : 'Web Speech API not available') : 
+            null,
           language: recognitionLanguage,
           continuous,
           interimResults
         });
       }
     }
-  }, [speechRecognitionSupported, recognitionLanguage, continuous, interimResults, enableDebugLogging]);
+  }, [
+    webSpeechSupported,
+    fallback.isSupported,
+    shouldUseFallback,
+    fallbackMode,
+    enableFallback,
+    recognitionLanguage,
+    continuous,
+    interimResults,
+    enableDebugLogging
+  ]);
   
   // Handle language changes
   useEffect(() => {
@@ -860,9 +984,23 @@ export function useVoiceCommands(
     config: {
       interactionMode,
       recognitionLanguage,
-      isSupported: speechRecognitionSupported,
+      isSupported: state.isSupported, // Now includes fallback support
+      webSpeechSupported: state.webSpeechSupported,
+      fallbackSupported: state.fallbackSupported,
+      usingFallback: state.usingFallback,
+      fallbackReason: state.fallbackReason,
       continuous,
       interimResults
+    },
+    
+    // Fallback specific info
+    fallback: {
+      isSupported: fallback.isSupported,
+      isRecording: fallback.isRecording,
+      isProcessing: fallback.isProcessing,
+      recordingFormat: fallback.recordingFormat,
+      hasPermission: fallback.hasPermission,
+      audioLevel: fallback.audioLevel
     },
     
     // Session info

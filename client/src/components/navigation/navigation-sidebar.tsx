@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +40,8 @@ import {
   MessageSquare
 } from "lucide-react";
 import { VoiceMicButton } from "@/components/ui/voice-mic-button";
-import { useVoiceCommands } from "@/hooks/use-voice-commands";
-import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
+import { useVoiceCommands, type VoiceTranscript, type VoiceError } from "@/hooks/use-voice-commands";
+import { useVoiceIntents, type IntentHandlers, type VoiceProcessingResult } from "@/hooks/use-voice-intents";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '@/components/language/language-selector';
 import CountryLanguageSelector from '@/components/country/country-language-selector';
@@ -510,39 +510,46 @@ const NavigationSidebar = memo(function NavigationSidebar({
     }
   };
   
-  // Initialize voice commands for navigation sidebar
-  const navigationVoiceIntents = useVoiceIntents(navigationVoiceHandlers, {
+  // Memoize voice configuration to prevent hook order changes
+  const voiceConfig = useMemo(() => ({
+    interactionMode: 'toggle' as const,
+    continuous: true,
+    interimResults: true,
+    enableDebugLogging: true
+  }), []);
+  
+  const voiceIntentConfig = useMemo(() => ({
     minConfidence: 0.6,
     contextAware: true
-  });
+  }), []);
   
-  const navigationVoiceCommands = useVoiceCommands(
-    {
-      interactionMode: 'toggle',
-      continuous: true,
-      interimResults: true,
-      enableDebugLogging: true
-    },
-    {
-      onTranscriptUpdate: (transcript) => {
-        setShowNavigationVoiceTranscript(true);
-        
-        if (transcript.isFinal) {
-          setTimeout(() => setShowNavigationVoiceTranscript(false), 3000);
-        }
-      },
-      onIntentProcessed: (result) => {
-        console.log('Navigation intent processed:', result);
-      },
-      onError: (error) => {
-        console.error('Navigation voice error:', error);
-        toast({
-          title: "Voice error",
-          description: error.message,
-          variant: "destructive"
-        });
+  const voiceCallbacks = useMemo(() => ({
+    onTranscriptUpdate: (transcript: VoiceTranscript) => {
+      setShowNavigationVoiceTranscript(true);
+      
+      if (transcript.isFinal) {
+        setTimeout(() => setShowNavigationVoiceTranscript(false), 3000);
       }
     },
+    onIntentProcessed: (result: VoiceProcessingResult) => {
+      console.log('Navigation intent processed:', result);
+    },
+    onError: (error: VoiceError) => {
+      console.error('Navigation voice error:', error);
+      toast({
+        title: "Voice error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  }), [toast]);
+
+  // Initialize voice commands for navigation sidebar
+  const navigationVoiceIntents = useVoiceIntents(navigationVoiceHandlers, voiceIntentConfig);
+  
+  const navigationVoiceCommands = useVoiceCommands(
+    voiceConfig,
+    voiceCallbacks,
     navigationVoiceHandlers
   );
   
@@ -911,6 +918,96 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </>
               )}
 
+              {/* Navigation Controls Section - Show when route is ready */}
+              {currentRoute && !isNavigating && (
+                <div className="p-4 border-t border-border bg-gradient-to-r from-primary/5 to-accent/5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-foreground flex items-center">
+                      <Navigation className="w-4 h-4 text-primary mr-2" />
+                      Navigation Controls
+                    </h3>
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                      Ready
+                    </Badge>
+                  </div>
+                  
+                  {/* Start Navigation Button */}
+                  <Button 
+                    onClick={handleGoNavigation}
+                    disabled={(!fromLocation || !toLocation) || !selectedProfile || isStartingJourney}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 text-lg font-semibold automotive-button shadow-lg"
+                    data-testid="button-start-navigation"
+                  >
+                    {isStartingJourney ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                        Starting Navigation...
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-5 h-5 mr-3" />
+                        Start Navigation
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Prerequisites Check */}
+                  {(!selectedProfile || !fromLocation || !toLocation) && (
+                    <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="text-amber-800 dark:text-amber-200 text-sm">
+                        {!selectedProfile && '• Vehicle profile required'}
+                        {!fromLocation && '• Starting location required'}
+                        {!toLocation && '• Destination required'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Active Navigation Controls - Show during navigation */}
+              {isNavigating && (
+                <div className="p-4 border-t border-border bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-foreground flex items-center">
+                      <Navigation className="w-4 h-4 text-green-600 mr-2" />
+                      Active Navigation
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                        Navigating
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {/* Stop Navigation Button */}
+                  <Button 
+                    onClick={onStopNavigation}
+                    disabled={isCompletingJourney}
+                    variant="destructive"
+                    className="w-full h-12 text-base font-semibold automotive-button shadow-lg"
+                    data-testid="button-stop-navigation"
+                  >
+                    {isCompletingJourney ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Ending Navigation...
+                      </>
+                    ) : (
+                      <>
+                        <Square className="w-4 h-4 mr-2" />
+                        End Navigation
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Navigation Status */}
+                  <div className="mt-3 text-center text-sm text-green-700 dark:text-green-300">
+                    TruckNav Pro is guiding your journey
+                  </div>
+                </div>
+              )}
+
               {activeSection === 'vehicle' && (
                 <div className="p-4 space-y-4">
                   {/* Current Vehicle Profile */}
@@ -1014,6 +1111,27 @@ const NavigationSidebar = memo(function NavigationSidebar({
                             Legal Information
                           </label>
                           <div className="space-y-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setIsDisclaimerDialogOpen(true)}
+                              disabled={!hasAcceptedTerms}
+                              className={cn(
+                                "w-full justify-start h-auto p-3 automotive-button",
+                                !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
+                              )}
+                              data-testid="button-legal-disclaimer"
+                              aria-label={hasAcceptedTerms ? "View legal disclaimer and terms of service" : "Complete agreement first to view legal disclaimer"}
+                            >
+                              <Shield className="w-4 h-4 mr-3 text-primary" />
+                              <div className="flex-1 text-left">
+                                <div className="font-medium text-foreground">Legal Disclaimer</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {hasAcceptedTerms ? "Terms of service and disclaimers" : "Complete agreement first"}
+                                </div>
+                              </div>
+                            </Button>
+                            
                             <Button
                               variant="ghost"
                               size="sm"
