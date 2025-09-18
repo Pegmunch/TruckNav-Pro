@@ -530,7 +530,7 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
                     <FormDescription className="text-xs">
                       {vehicleType === 'car' ? 'Typical car weight: 1.5-2.5 tonnes' : 
                        vehicleType === 'car_caravan' ? 'Car + caravan weight: 2.5-4.5 tonnes' :
-                       vehicleType === 'class_2_lorry' ? 'Class 2 lorry weight: up to 7.5 tonnes' :
+                       vehicleType === 'class_2_lorry' ? 'Class 2 lorry weight: 18-26 tonnes' :
                        '7.5 tonne vehicle weight: up to 7.5 tonnes'}
                     </FormDescription>
                     <FormMessage />
