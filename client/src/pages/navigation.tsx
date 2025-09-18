@@ -24,6 +24,7 @@ import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
+import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -585,7 +586,7 @@ export default function NavigationPage() {
           </div>
 
           {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container">
+          <div className="mobile-map-container relative">
             <InteractiveMap
               currentRoute={currentRoute}
               selectedProfile={selectedProfile}
@@ -601,6 +602,9 @@ export default function NavigationPage() {
               }}
               onHideSidebar={() => setIsMobileDrawerOpen(false)}
             />
+            
+            {/* Legal Ownership Section - Mobile */}
+            <MapLegalOwnership compact={true} className="sm:hidden" />
           </div>
 
           {/* Mobile Route Planning Drawer */}
@@ -756,6 +760,9 @@ export default function NavigationPage() {
               }}
               onHideSidebar={() => setIsSidebarOpen(false)}
             />
+            
+            {/* Legal Ownership Section - Desktop */}
+            <MapLegalOwnership compact={true} className="hidden sm:block" />
           </div>
 
           {/* Desktop Features Sidebar */}

@@ -11,7 +11,6 @@ import LaneSelectionPage from "@/pages/lane-selection";
 import MapWindow from "@/pages/map-window";
 import LegalPopupPage from "@/pages/legal-popup";
 import NotFound from "@/pages/not-found";
-import LegalNotices from "@/components/legal/legal-notices";
 
 function Router() {
   return (
@@ -27,7 +26,6 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </div>
-      <LegalNotices />
     </div>
   );
 }

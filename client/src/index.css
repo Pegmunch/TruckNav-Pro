@@ -1635,3 +1635,183 @@ select:focus-visible,
     box-shadow: 0 0 0 6px hsla(214, 100%, 50%, 0.2);
   }
 }
+
+/* ===== AUTOMOTIVE LEGAL OVERLAY STYLES ===== */
+
+/* Legal overlay at bottom of map - automotive design language */
+.automotive-legal-overlay {
+  /* Ensure proper stacking - below map controls but above map content */
+  z-index: 30 !important;
+  
+  /* Enhanced backdrop blur for readability on any map background */
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  
+  /* Automotive-grade contrast and readability */
+  background: hsla(var(--background), 0.95);
+  border: 1px solid hsla(var(--border), 0.8);
+  
+  /* Automotive spacing and safe areas */
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+  
+  /* Smooth animations for automotive feel */
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Ensure text remains readable */
+  color: hsl(var(--foreground));
+  
+  /* Prevent interference with map interactions */
+  pointer-events: auto;
+  
+  /* Enhanced shadow for depth perception */
+  box-shadow: 
+    0 4px 12px hsla(0, 0%, 0%, 0.15),
+    0 2px 4px hsla(0, 0%, 0%, 0.1),
+    inset 0 1px 0 hsla(var(--background), 0.8);
+}
+
+/* Hover state for interactive elements within legal overlay */
+.automotive-legal-overlay:hover {
+  background: hsla(var(--background), 0.98);
+  border-color: hsla(var(--primary), 0.3);
+}
+
+/* Mobile-specific legal overlay adjustments */
+@media (max-width: 640px) {
+  .automotive-legal-overlay {
+    /* Tighter margins on mobile for space efficiency */
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    
+    /* Adjusted font size for mobile visibility */
+    font-size: 11px;
+    line-height: 1.4;
+    
+    /* Increased touch targets for mobile */
+    padding: 8px 12px !important;
+    
+    /* Enhanced safe area handling */
+    margin-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  }
+}
+
+/* Tablet and desktop legal overlay adjustments */
+@media (min-width: 641px) {
+  .automotive-legal-overlay {
+    /* More generous spacing on larger screens */
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    
+    /* Optimal font size for desktop visibility */
+    font-size: 12px;
+    line-height: 1.5;
+    
+    /* Desktop padding */
+    padding: 12px 16px !important;
+    
+    /* Max width to prevent excessive stretching on wide screens */
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Large desktop adjustments */
+@media (min-width: 1024px) {
+  .automotive-legal-overlay {
+    /* Prevent interference with sidebar areas */
+    max-width: calc(100% - 64px);
+    
+    /* Enhanced readability on larger screens */
+    font-size: 13px;
+    padding: 14px 20px !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .automotive-legal-overlay {
+    background: hsl(var(--background));
+    border: 2px solid hsl(var(--foreground));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 hsl(var(--background));
+  }
+}
+
+/* Dark mode enhancements */
+.dark .automotive-legal-overlay {
+  background: hsla(var(--background), 0.92);
+  border: 1px solid hsla(var(--border), 0.6);
+  
+  box-shadow: 
+    0 4px 12px hsla(0, 0%, 0%, 0.4),
+    0 2px 4px hsla(0, 0%, 0%, 0.2),
+    inset 0 1px 0 hsla(var(--background), 0.6);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .automotive-legal-overlay {
+    transition: none;
+  }
+}
+
+/* Legal overlay protection indicators styling */
+.automotive-legal-overlay .protection-badge {
+  /* Small, automotive-style badges */
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 2px 6px;
+  
+  /* Subtle animation */
+  transition: all 200ms ease-in-out;
+}
+
+.automotive-legal-overlay .protection-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Ensure legal buttons maintain automotive touch targets */
+.automotive-legal-overlay button {
+  min-height: 32px;
+  min-width: 64px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  
+  /* Enhanced automotive touch feedback */
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.automotive-legal-overlay button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px hsla(var(--primary), 0.3);
+}
+
+.automotive-legal-overlay button:active {
+  transform: translateY(0);
+}
+
+/* Print styles for legal overlay */
+@media print {
+  .automotive-legal-overlay {
+    position: static !important;
+    background: white !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    margin: 20px 0 !important;
+    page-break-inside: avoid;
+  }
+}
