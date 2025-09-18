@@ -428,7 +428,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-50 bg-black/95 backdrop-blur-sm",
+        "fixed inset-0 z-50 bg-black", // Solid background - no backdrop blur to prevent frosted glass overlay
         "flex flex-col",
         "touch-none" // Prevent touch scrolling
       )}
@@ -455,7 +455,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
         variant="outline"
         size="icon"
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 bg-background/90 backdrop-blur-sm"
+        className="absolute top-4 right-4 z-10 bg-background border border-border shadow-lg"
         data-testid="button-close-preview"
       >
         <X className="w-4 h-4" />
@@ -463,7 +463,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
 
       {/* Route info overlay */}
       <div className="absolute top-4 left-4 z-10">
-        <Card className="p-3 bg-background/90 backdrop-blur-sm">
+        <Card className="p-3 bg-background border border-border shadow-lg">
           <div className="flex items-center space-x-2 text-sm">
             <Truck className="w-4 h-4 text-primary" />
             <span className="font-medium">Route Preview</span>

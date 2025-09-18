@@ -39,7 +39,7 @@ export default function MapLegalOwnership({
         // Base positioning - absolute positioned at map top right corner
         "absolute top-4 right-4 z-30",
         // Background and styling - semi-transparent with border
-        "bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg",
+        "bg-background border border-border rounded-lg shadow-lg",
         // Padding and spacing
         compact ? "px-3 py-2" : "px-4 py-3",
         // Ensure readable on any map background

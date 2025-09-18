@@ -99,7 +99,7 @@ export default function MapWindow() {
     <div className="h-screen bg-background overflow-hidden">
       {/* Map Window Header - Automotive Style */}
       <div className={cn(
-        "absolute top-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-b border-border z-40",
+        "absolute top-0 left-0 right-0 bg-card border-b border-border z-40",
         "transition-transform duration-300",
         isFullscreen ? "-translate-y-full" : "translate-y-0"
       )}>
@@ -231,7 +231,7 @@ export default function MapWindow() {
 
       {/* Keyboard Shortcuts Help */}
       <div className="absolute bottom-4 right-4 z-30">
-        <Card className="p-3 bg-card/95 backdrop-blur-sm">
+        <Card className="p-3 bg-card border border-border shadow-lg">
           <div className="text-xs text-muted-foreground space-y-1">
             <div><kbd className="px-1 py-0.5 bg-muted rounded text-xs">Esc</kbd> Close window</div>
             <div><kbd className="px-1 py-0.5 bg-muted rounded text-xs">F11</kbd> Toggle fullscreen</div>

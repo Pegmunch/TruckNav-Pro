@@ -356,8 +356,7 @@ body {
 
 /* Sidebar-specific styling */
 .sidebar-backdrop {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.3); /* Increased opacity for solid background visibility */
   transition: opacity 200ms ease-in-out;
 }
 
@@ -1325,16 +1324,14 @@ select:focus-visible,
   }
 }
 
-/* Mobile drawer overlay - Enhanced with fallback visibility */
+/* Mobile drawer overlay - Enhanced with fallback visibility - No backdrop blur to prevent frosted glass overlay */
 .mobile-drawer-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.7); /* Increased opacity for solid background visibility */
   /* Default opacity 0 to prevent stuck overlays */
   opacity: 0;
   pointer-events: none;

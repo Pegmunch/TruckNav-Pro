@@ -855,7 +855,7 @@ const InteractiveMap = memo(function InteractiveMap({
               "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
               "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
-              "backdrop-blur-sm bg-card/95 hover:bg-accent/95",
+              "bg-card hover:bg-accent",
               // Visual indicator for new users who haven't accepted terms yet
               !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75 animate-pulse"
             )}

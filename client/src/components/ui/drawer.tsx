@@ -39,8 +39,8 @@ const DrawerOverlay = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed inset-0 z-40 bg-black/50",
-        // Only apply backdrop blur when drawer is actually open to prevent stuck overlays
-        "data-[state=open]:backdrop-blur-sm",
+        // Removed backdrop-blur to prevent frosted glass overlay effects
+        "",
         isMobile ? [
           "mobile-drawer-overlay",
           "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
