@@ -675,7 +675,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
             <div className="flex items-center justify-between mobile-text-xs">
               <div className="flex items-center space-x-2">
                 <LanguageSelector variant="country-first" />
-                <MeasurementSelector variant="compact" />
               </div>
               {selectedProfile && (
                 <div className="text-muted-foreground">
@@ -738,7 +737,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {isCollapsed ? (
           /* Collapsed Mode - Icon Navigation */
           <div className="flex-1 p-2 space-y-2">
-            {sidebarSections.map((section) => (
+            {sidebarSections.filter(section => section.id !== 'settings').map((section) => (
               <Button
                 key={section.id}
                 variant={activeSection === section.id ? "default" : "ghost"}
