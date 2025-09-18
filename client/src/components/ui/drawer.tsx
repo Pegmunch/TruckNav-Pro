@@ -38,7 +38,9 @@ const DrawerOverlay = React.forwardRef<
     <DrawerPrimitive.Overlay
       ref={ref}
       className={cn(
-        "fixed inset-0 z-40 bg-black/50 backdrop-blur-sm",
+        "fixed inset-0 z-40 bg-black/50",
+        // Only apply backdrop blur when drawer is actually open
+        "data-[state=open]:backdrop-blur-sm",
         isMobile ? [
           "mobile-drawer-overlay",
           "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
