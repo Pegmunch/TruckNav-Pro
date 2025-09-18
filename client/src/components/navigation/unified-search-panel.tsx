@@ -460,139 +460,288 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
 
         {/* Unified Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Search Section */}
+          {/* Search Section wrapped in Card */}
           <div className="flex-1 flex flex-col overflow-hidden mt-4">
-            <div className="p-4 space-y-4">
-              {/* Search Input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search locations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-12 automotive-input scalable-control-button"
-                  data-testid="input-search-query"
-                />
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <VoiceMicButton
-                    state={searchVoiceCommands.state}
-                    size="sm"
-                    onToggle={handleVoiceSearchToggle}
-                    data-testid="button-voice-search"
+            <Card className="mx-4 mb-4 shadow-md border border-border bg-card dark:bg-card">
+              <CardContent className="p-4 space-y-4">
+                {/* POI Category Chips - Horizontal Scrolling */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground">Categories</h3>
+                  <ScrollArea className="w-full">
+                    <div className="flex space-x-2 pb-2">
+                      {POI_CATEGORIES.map((category) => (
+                        <Button
+                          key={category.id}
+                          variant={selectedCategory === category.type ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleCategorySelect(category.type)}
+                          className={cn(
+                            "flex items-center space-x-2 whitespace-nowrap min-w-fit px-3 py-2 rounded-full transition-all",
+                            "hover:shadow-sm active:scale-95",
+                            "bg-background dark:bg-background border border-border dark:border-border",
+                            "text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent",
+                            selectedCategory === category.type && (
+                              "bg-primary dark:bg-primary text-primary-foreground dark:text-primary-foreground border-primary dark:border-primary shadow-sm"
+                            )
+                          )}
+                          data-testid={`button-category-chip-${category.id}`}
+                          aria-label={`Filter by ${category.label}`}
+                          role="tab"
+                          aria-selected={selectedCategory === category.type}
+                        >
+                          <category.icon className="w-4 h-4" />
+                          <span className="text-xs font-medium">{category.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
+                  <Input
+                    placeholder="Search locations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 pr-12 bg-background dark:bg-background border-border dark:border-border text-foreground dark:text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
+                    data-testid="input-search-query"
+                    aria-label="Search for locations"
                   />
-                </div>
-              </div>
-
-              {/* Category Buttons */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Categories</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {POI_CATEGORIES.map((category) => (
-                    <Button
-                      key={category.id}
-                      variant={selectedCategory === category.type ? "default" : "outline"}
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <VoiceMicButton
+                      state={searchVoiceCommands.state}
                       size="sm"
-                      onClick={() => handleCategorySelect(category.type)}
-                      className={cn(
-                        "flex items-center space-x-2 justify-start scalable-control-button",
-                        selectedCategory === category.type && category.color
-                      )}
-                      data-testid={`button-category-${category.id}`}
-                    >
-                      <category.icon className="w-4 h-4" />
-                      <span className="text-xs">{category.label}</span>
-                    </Button>
-                  ))}
+                      onToggle={handleVoiceSearchToggle}
+                      data-testid="button-voice-search"
+                      aria-label="Voice search"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearSearch}
-                  className="w-full"
-                  data-testid="button-clear-search"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Clear Search
-                </Button>
-              )}
-            </div>
+                {(searchQuery || selectedCategory) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearSearch}
+                    className="w-full bg-muted/50 dark:bg-muted/50 hover:bg-muted dark:hover:bg-muted text-foreground dark:text-foreground"
+                    data-testid="button-clear-search"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear Search
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
 
-            {/* Search Results */}
+            {/* Search Results with improved design */}
             <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-3">
+                <div className="px-4 pb-4 space-y-3">
                   {isLoading ? (
-                    <div className="text-center py-8">
-                      <Loader2 className="w-8 h-8 text-primary mx-auto mb-2 animate-spin" />
-                      <p className="text-muted-foreground">Searching...</p>
+                    /* Skeleton Loading States */
+                    <div className="space-y-3" data-testid="search-results-loading">
+                      <h4 className="text-sm font-medium text-muted-foreground dark:text-muted-foreground px-2 mb-3">
+                        Searching nearby locations...
+                      </h4>
+                      {[1, 2, 3, 4].map((index) => (
+                        <Card key={index} className="p-4 bg-card dark:bg-card border border-border dark:border-border">
+                          <div className="flex items-center space-x-4">
+                            {/* Icon skeleton */}
+                            <Skeleton className="h-10 w-10 rounded-lg bg-muted dark:bg-muted" />
+                            
+                            {/* Content skeleton */}
+                            <div className="flex-1 space-y-2">
+                              <Skeleton className="h-4 w-3/4 bg-muted dark:bg-muted" />
+                              <Skeleton className="h-3 w-1/2 bg-muted dark:bg-muted" />
+                              <div className="flex space-x-2">
+                                <Skeleton className="h-5 w-16 rounded-full bg-muted dark:bg-muted" />
+                                <Skeleton className="h-5 w-12 rounded-full bg-muted dark:bg-muted" />
+                              </div>
+                            </div>
+                            
+                            {/* Actions skeleton */}
+                            <div className="flex flex-col space-y-2">
+                              <Skeleton className="h-8 w-8 rounded bg-muted dark:bg-muted" />
+                              <Skeleton className="h-8 w-8 rounded bg-muted dark:bg-muted" />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
                     </div>
                   ) : filteredFacilities.length === 0 ? (
-                    <div className="text-center py-8">
-                      <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-muted-foreground">No locations found</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Try a different search term or category
+                    /* Enhanced Empty State */
+                    <div className="text-center py-12" data-testid="search-results-empty">
+                      <div className="mb-4">
+                        <MapPin className="w-16 h-16 text-muted-foreground dark:text-muted-foreground mx-auto mb-3 opacity-50" />
+                      </div>
+                      <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
+                        No locations found
+                      </h3>
+                      <p className="text-muted-foreground dark:text-muted-foreground mb-4 max-w-sm mx-auto">
+                        {searchQuery || selectedCategory 
+                          ? "Try adjusting your search terms or selected category"
+                          : "Enter a search term or select a category to find nearby places"
+                        }
                       </p>
+                      {(searchQuery || selectedCategory) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleClearSearch}
+                          className="mt-2 bg-background dark:bg-background border-border dark:border-border text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent"
+                          data-testid="button-clear-search-empty"
+                        >
+                          <Search className="w-4 h-4 mr-2" />
+                          Clear filters
+                        </Button>
+                      )}
                     </div>
                   ) : (
-                    filteredFacilities.map((facility: Facility) => (
-                      <Card 
-                        key={facility.id} 
-                        className="p-3 hover:shadow-md transition-shadow cursor-pointer automotive-card"
-                        onClick={() => handleFacilitySelect(facility)}
-                        data-testid={`facility-result-${facility.id}`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-foreground text-sm">{facility.name}</h4>
-                            <p className="text-xs text-muted-foreground">{facility.address}</p>
-                          </div>
-                          <div className="text-right ml-2">
-                            <div className="flex items-center space-x-1">
-                              <Star className="w-3 h-3 text-yellow-500" />
-                              <span className="text-xs font-medium">{facility.rating}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-1 mb-2">
-                          <Badge 
-                            variant={facility.truckParking ? "default" : "secondary"}
-                            className="text-xs"
+                    /* Enhanced Results Cards */
+                    <>
+                      <h4 className="text-sm font-medium text-muted-foreground dark:text-muted-foreground px-2 mb-3">
+                        Found {filteredFacilities.length} location{filteredFacilities.length !== 1 ? 's' : ''}
+                      </h4>
+                      {filteredFacilities.map((facility: Facility) => {
+                        // Get facility type icon
+                        const getFacilityTypeIcon = () => {
+                          const category = POI_CATEGORIES.find(cat => cat.type === facility.type);
+                          const IconComponent = category?.icon || MapPin;
+                          return <IconComponent className="w-6 h-6 text-primary dark:text-primary" />;
+                        };
+                        
+                        return (
+                          <Card 
+                            key={facility.id} 
+                            className="group p-4 hover:shadow-lg transition-all duration-200 cursor-pointer bg-card dark:bg-card border border-border dark:border-border hover:border-primary/20 dark:hover:border-primary/20"
+                            onClick={() => handleFacilitySelect(facility)}
+                            data-testid={`facility-card-${facility.id}`}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Select ${facility.name} at ${facility.address}`}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleFacilitySelect(facility);
+                              }
+                            }}
                           >
-                            {facility.truckParking ? "Truck Parking" : "Limited"}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {facility.type.replace('_', ' ')}
-                          </Badge>
-                        </div>
-
-                        {(() => {
-                          const amenities = facility.amenities as string[] | null;
-                          return amenities && Array.isArray(amenities) && amenities.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {amenities.slice(0, 4).map((amenity: string) => (
-                                <div 
-                                  key={amenity} 
-                                  className="flex items-center space-x-1 text-xs text-muted-foreground bg-muted rounded px-1 py-0.5"
-                                >
-                                  {getAmenityIcon(amenity)}
-                                  <span className="capitalize">{amenity}</span>
+                            <div className="flex items-center space-x-4">
+                              {/* Icon on the left */}
+                              <div className="flex-shrink-0">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/10 border border-primary/20 dark:border-primary/20 flex items-center justify-center group-hover:bg-primary/15 dark:group-hover:bg-primary/15 transition-colors">
+                                  {getFacilityTypeIcon()}
                                 </div>
-                              ))}
-                              {amenities.length > 4 && (
-                                <span className="text-xs text-muted-foreground">
-                                  +{amenities.length - 4}
-                                </span>
-                              )}
+                              </div>
+                              
+                              {/* Primary and secondary text lines */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-foreground dark:text-foreground text-sm truncate group-hover:text-primary dark:group-hover:text-primary transition-colors">
+                                      {facility.name}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 truncate">
+                                      {facility.address}
+                                    </p>
+                                  </div>
+                                  
+                                  {/* Rating */}
+                                  {facility.rating && (
+                                    <div className="flex items-center space-x-1 ml-2">
+                                      <Star className="w-3 h-3 text-yellow-500 dark:text-yellow-400 fill-current" />
+                                      <span className="text-xs font-medium text-foreground dark:text-foreground">
+                                        {facility.rating}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Badges */}
+                                <div className="flex items-center space-x-1 mt-2">
+                                  <Badge 
+                                    variant={facility.truckParking ? "default" : "secondary"}
+                                    className="text-xs bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground border border-border dark:border-border"
+                                  >
+                                    {facility.truckParking ? "Truck Parking" : "Limited"}
+                                  </Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs capitalize bg-background dark:bg-background border-border dark:border-border text-muted-foreground dark:text-muted-foreground"
+                                  >
+                                    {facility.type.replace('_', ' ')}
+                                  </Badge>
+                                </div>
+                                
+                                {/* Amenities */}
+                                {(() => {
+                                  const amenities = facility.amenities as string[] | null;
+                                  return amenities && Array.isArray(amenities) && amenities.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {amenities.slice(0, 3).map((amenity: string) => (
+                                        <div 
+                                          key={amenity} 
+                                          className="flex items-center space-x-1 text-xs text-muted-foreground dark:text-muted-foreground bg-muted/50 dark:bg-muted/50 rounded px-2 py-1 border border-border/50 dark:border-border/50"
+                                        >
+                                          {getAmenityIcon(amenity)}
+                                          <span className="capitalize">{amenity}</span>
+                                        </div>
+                                      ))}
+                                      {amenities.length > 3 && (
+                                        <span className="text-xs text-muted-foreground dark:text-muted-foreground bg-muted/50 dark:bg-muted/50 rounded px-2 py-1 border border-border/50 dark:border-border/50">
+                                          +{amenities.length - 3}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                              
+                              {/* Trailing inline actions */}
+                              <div className="flex flex-col space-y-1 flex-shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 hover:bg-primary/10 dark:hover:bg-primary/10 text-muted-foreground dark:text-muted-foreground hover:text-primary dark:hover:text-primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onNavigateToLocation?.(`${facility.name}, ${facility.address}`);
+                                    toast({
+                                      title: "Navigation started",
+                                      description: `Navigating to ${facility.name}`
+                                    });
+                                  }}
+                                  data-testid={`button-navigate-${facility.id}`}
+                                  aria-label={`Navigate to ${facility.name}`}
+                                >
+                                  <RouteIcon className="w-4 h-4" />
+                                </Button>
+                                
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 hover:bg-accent dark:hover:bg-accent text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Implement save functionality here
+                                    toast({
+                                      title: "Location saved",
+                                      description: `${facility.name} added to favorites`
+                                    });
+                                  }}
+                                  data-testid={`button-save-${facility.id}`}
+                                  aria-label={`Save ${facility.name} to favorites`}
+                                >
+                                  <BookmarkPlus className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                          );
-                        })()}
-                      </Card>
-                    ))
+                          </Card>
+                        );
+                      })}
+                    </>
                   )}
                 </div>
               </ScrollArea>
