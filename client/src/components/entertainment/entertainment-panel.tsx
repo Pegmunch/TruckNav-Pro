@@ -269,9 +269,9 @@ export default function EntertainmentPanel({
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
                     {currentStation.platform === 'tunein' ? (
-                      <Radio className="h-6 w-6 text-primary" />
+                      <SiTunein className="h-6 w-6 text-primary" />
                     ) : (
-                      <Music className="h-6 w-6 text-primary" />
+                      <SiMixcloud className="h-6 w-6 text-primary" />
                     )}
                   </div>
                 )}
@@ -341,7 +341,7 @@ export default function EntertainmentPanel({
               className="automotive-text-sm"
               data-testid="tab-tunein"
             >
-              <Radio className="h-4 w-4 mr-1" />
+              <SiTunein className="h-4 w-4 mr-1" />
               TuneIn
             </TabsTrigger>
             <TabsTrigger 
@@ -349,7 +349,7 @@ export default function EntertainmentPanel({
               className="automotive-text-sm"
               data-testid="tab-mixcloud"
             >
-              <Music className="h-4 w-4 mr-1" />
+              <SiMixcloud className="h-4 w-4 mr-1" />
               MixCloud
             </TabsTrigger>
             <TabsTrigger 

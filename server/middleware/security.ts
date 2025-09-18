@@ -327,14 +327,29 @@ export const intrusionDetection = (req: express.Request, res: express.Response, 
                                req.url.includes('/node_modules/') ||
                                req.url.includes('.js?v=') ||
                                req.url.includes('.css?v=') ||
-                               req.url.includes('.json?import');
+                               req.url.includes('.json?import') ||
+                               req.url.includes('/src/') ||
+                               req.url.includes('/@replit/') ||
+                               req.url.includes('favicon') ||
+                               req.url.includes('vite.svg') ||
+                               req.url.endsWith('.tsx') ||
+                               req.url.endsWith('.ts') ||
+                               req.url.endsWith('.css') ||
+                               req.url.endsWith('.js');
+
+  // Check for localhost/development environment
+  const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip.startsWith('10.');
 
   if (!isDevelopmentRequest) {
     // Check for rapid successive requests (potential DDoS)
     const ipActivity = suspiciousActivity.get(ip) || { count: 0, firstRequest: now };
     ipActivity.count++;
     
-    if (now - ipActivity.firstRequest < 30000 && ipActivity.count > 100) { // 100 requests in 30 seconds for production
+    // More lenient limits for development/localhost
+    const limit = isLocalhost ? 1000 : 100; // 1000 requests for localhost, 100 for production
+    const timeWindow = isLocalhost ? 60000 : 30000; // 60s for localhost, 30s for production
+    
+    if (now - ipActivity.firstRequest < timeWindow && ipActivity.count > limit) {
       console.error(`[SECURITY] Potential DDoS attack detected from IP: ${ip}`);
       return res.status(429).json({
         error: 'Rate limit exceeded - potential abuse detected',

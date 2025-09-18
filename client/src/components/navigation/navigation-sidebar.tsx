@@ -1144,8 +1144,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
               {activeSection === 'entertainment' && (
                 <div className="p-4">
                   <EntertainmentPanel 
-                    isOpen={isEntertainmentPanelOpen}
-                    onClose={() => setIsEntertainmentPanelOpen(false)}
+                    isOpen={true}
+                    onClose={() => setActiveSection('vehicle')}
                   />
                 </div>
               )}
