@@ -188,7 +188,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     return () => clearInterval(checkInterval);
   }, []);
 
-  // Feature window sections
+  // Core navigation window sections (focused on navigation essentials)
   const windowSections = [
     {
       id: 'route' as const,
@@ -203,34 +203,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
       icon: Truck,
       badge: selectedProfile ? 'Set' : 'Required',
       description: 'Manage truck specifications'
-    },
-    {
-      id: 'entertainment' as const,
-      title: 'Entertainment',
-      icon: Music,
-      badge: null,
-      description: 'Music and audio controls'
-    },
-    {
-      id: 'themes' as const,
-      title: 'Themes',
-      icon: Eye,
-      badge: null,
-      description: 'Color palette customization'
-    },
-    {
-      id: 'history' as const,
-      title: 'History',
-      icon: History,
-      badge: null,
-      description: 'Route history and favorites'
-    },
-    {
-      id: 'settings' as const,
-      title: 'Settings',
-      icon: Settings,
-      badge: null,
-      description: 'App preferences and legal'
     },
   ];
 

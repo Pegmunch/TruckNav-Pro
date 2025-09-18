@@ -64,22 +64,8 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
   const { toast } = useToast();
   const [openWindowCount, setOpenWindowCount] = useState(0);
 
-  // Feature window sections for fleet management
+  // Additional feature window sections (non-navigation features)
   const windowSections = [
-    {
-      id: 'vehicle' as const,
-      title: 'Vehicle Profile',
-      icon: Truck,
-      badge: null,
-      description: 'Vehicle specifications and settings'
-    },
-    {
-      id: 'route' as const,
-      title: 'Route Planning',
-      icon: Map,
-      badge: null,
-      description: 'Advanced route optimization'
-    },
     {
       id: 'entertainment' as const,
       title: 'Entertainment',
