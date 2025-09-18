@@ -820,7 +820,7 @@ select:focus-visible,
     inset 0 1px 0 hsla(0, 0%, 100%, 0.2),
     0 0 0 1px hsla(214, 100%, 45%, 0.3);
   background: var(--popover);
-  backdrop-filter: blur(8px);
+  /* backdrop-filter: blur(8px); - Removed to prevent frosted glass overlay effects */
   overflow: hidden;
   position: relative;
 }
@@ -1408,8 +1408,8 @@ select:focus-visible,
   padding: var(--mobile-padding);
   padding-top: calc(var(--safe-area-inset-top) + var(--mobile-padding));
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
+  /* -webkit-backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
 }
 
 /* Touch-friendly button classes */
@@ -1620,8 +1620,8 @@ select:focus-visible,
 }
 
 .dark .mobile-nav-header {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
+  /* -webkit-backdrop-filter: blur(12px); - Removed to prevent frosted glass overlay effects */
   border-bottom: 1px solid var(--border);
 }
 
@@ -1657,9 +1657,9 @@ select:focus-visible,
   /* Ensure proper stacking - below map controls but above map content */
   z-index: 30 !important;
   
-  /* Enhanced backdrop blur for readability on any map background */
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  /* Enhanced backdrop blur for readability on any map background - Removed to prevent frosted glass overlay effects */
+  /* backdrop-filter: blur(8px) saturate(120%); - Removed to prevent frosted glass overlay effects */
+  /* -webkit-backdrop-filter: blur(8px) saturate(120%); - Removed to prevent frosted glass overlay effects */
   
   /* Automotive-grade contrast and readability */
   background: hsla(var(--background), 0.95);
