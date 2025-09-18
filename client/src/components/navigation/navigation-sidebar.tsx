@@ -2,6 +2,7 @@ import { useState, useEffect, memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
@@ -844,6 +845,126 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
             {/* Section Content */}
             <div className="flex-1">
+              {/* Essential Navigation Controls */}
+              <div className="p-4 space-y-4">
+                <Card className="bg-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center">
+                      <MapPin className="w-4 h-4 mr-2 text-primary" />
+                      Navigation
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Location Entry */}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                          Current Location
+                        </label>
+                        <div className="relative">
+                          <Input
+                            placeholder="Enter current location"
+                            value={fromLocation || ''}
+                            onChange={(e) => onFromLocationChange(e.target.value)}
+                            className="automotive-text-sm pr-10"
+                            data-testid="input-current-location"
+                          />
+                          <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                          Destination
+                        </label>
+                        <div className="relative">
+                          <Input
+                            placeholder="Enter destination"
+                            value={toLocation || ''}
+                            onChange={(e) => onToLocationChange(e.target.value)}
+                            className="automotive-text-sm pr-10"
+                            data-testid="input-destination"
+                          />
+                          <Navigation className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation Actions */}
+                    <div className="space-y-2">
+                      {!isNavigating ? (
+                        <>
+                          <Button
+                            onClick={onPlanRoute}
+                            disabled={!fromLocation || !toLocation || isCalculating}
+                            variant="outline"
+                            className="w-full automotive-button"
+                            data-testid="button-plan-route"
+                          >
+                            {isCalculating ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Planning Route...
+                              </>
+                            ) : (
+                              <>
+                                <RouteIcon className="w-4 h-4 mr-2" />
+                                Plan Route
+                              </>
+                            )}
+                          </Button>
+                          
+                          <Button
+                            onClick={onStartNavigation}
+                            disabled={!currentRoute || !selectedProfile || isStartingJourney}
+                            className="w-full h-12 text-base font-semibold automotive-button shadow-lg"
+                            data-testid="button-start-navigation"
+                          >
+                            {isStartingJourney ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Starting...
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4 mr-2" />
+                                Start Navigation
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <Button 
+                          onClick={onStopNavigation}
+                          disabled={isCompletingJourney}
+                          variant="destructive"
+                          className="w-full h-12 text-base font-semibold automotive-button shadow-lg"
+                          data-testid="button-stop-navigation"
+                        >
+                          {isCompletingJourney ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Ending Navigation...
+                            </>
+                          ) : (
+                            <>
+                              <Square className="w-4 h-4 mr-2" />
+                              End Navigation
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Route Status */}
+                    {currentRoute && (
+                      <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                        ✓ Route planned: {Math.round(currentRoute.distance / 1000)}km, {Math.round(currentRoute.duration / 60)}min
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
               {/* Map Window Controls - Only show when navigation is active */}
               {isNavigating && (
                 <div className="p-4 border-t border-border">
