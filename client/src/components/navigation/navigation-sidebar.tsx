@@ -953,27 +953,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={handleViewDisclaimer}
-                              disabled={!hasAcceptedTerms}
-                              className={cn(
-                                "w-full justify-start h-auto p-3 automotive-button",
-                                !hasAcceptedTerms && "opacity-50 cursor-not-allowed"
-                              )}
-                              data-testid="button-view-disclaimer"
-                              aria-label={hasAcceptedTerms ? "View legal disclaimer and terms" : "Complete agreement first to view disclaimer"}
-                            >
-                              <Shield className="w-4 h-4 mr-3 text-primary" />
-                              <div className="flex-1 text-left">
-                                <div className="font-medium text-foreground">View Disclaimer</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {hasAcceptedTerms ? "Access legal terms and disclaimers" : "Complete agreement first"}
-                                </div>
-                              </div>
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
                               onClick={handleViewLegalNotices}
                               disabled={!hasAcceptedTerms}
                               className={cn(
