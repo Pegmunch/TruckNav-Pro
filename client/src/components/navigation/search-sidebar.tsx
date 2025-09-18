@@ -50,18 +50,15 @@ interface SearchSidebarProps {
   onNavigateToLocation?: (location: string) => void;
 }
 
-// POI Categories with automotive-focused options
+// POI Categories with automotive-focused options - matched to server validation
 const POI_CATEGORIES = [
   { id: 'truck_stop', label: 'Truck Stops', icon: Truck, type: 'truck_stop', color: 'bg-blue-500' },
   { id: 'fuel', label: 'Fuel Stations', icon: Fuel, type: 'fuel', color: 'bg-red-500' },
   { id: 'parking', label: 'Parking', icon: CircleParking, type: 'parking', color: 'bg-green-500' },
   { id: 'restaurant', label: 'Restaurants', icon: Utensils, type: 'restaurant', color: 'bg-orange-500' },
-  { id: 'supermarket', label: 'Supermarkets', icon: ShoppingCart, type: 'supermarket', color: 'bg-purple-500' },
-  { id: 'shop', label: 'Shops', icon: Building, type: 'shop', color: 'bg-indigo-500' },
-  { id: 'coffee', label: 'Coffee Shops', icon: Coffee, type: 'coffee', color: 'bg-amber-600' },
   { id: 'hotel', label: 'Hotels', icon: Bed, type: 'hotel', color: 'bg-pink-500' },
-  { id: 'toilet', label: 'Toilets', icon: ShowerHead, type: 'toilet', color: 'bg-cyan-500' },
-  { id: 'repair', label: 'Repair Shops', icon: Wrench, type: 'repair', color: 'bg-gray-500' },
+  { id: 'rest_area', label: 'Rest Areas', icon: Coffee, type: 'rest_area', color: 'bg-amber-600' },
+  { id: 'service', label: 'Service Stations', icon: Wrench, type: 'service', color: 'bg-gray-500' },
 ];
 
 // Memoized search sidebar component for automotive performance
@@ -162,15 +159,18 @@ const SearchSidebar = memo(function SearchSidebar({
     }
   );
 
-  // Build search query parameters
+  // Build search query parameters with fallback coordinates
   const buildSearchParams = useCallback(() => {
     const params = new URLSearchParams();
     
-    if (coordinates) {
-      params.set('lat', coordinates.lat.toString());
-      params.set('lng', coordinates.lng.toString());
-      params.set('radius', '25');
-    }
+    // Use provided coordinates, or fall back to a default location (London, UK)
+    // This ensures search works even without an active route
+    const lat = coordinates?.lat || 51.5074;
+    const lng = coordinates?.lng || -0.1278;
+    
+    params.set('lat', lat.toString());
+    params.set('lng', lng.toString());
+    params.set('radius', '25');
     
     if (selectedCategory) {
       params.set('type', selectedCategory);
@@ -179,23 +179,31 @@ const SearchSidebar = memo(function SearchSidebar({
     return params.toString();
   }, [coordinates, selectedCategory]);
 
-  // Facilities search query
+  // Facilities search query with error handling - uses default fetcher for consistency
   const searchParams = buildSearchParams();
-  const { data: facilities = [], isLoading } = useQuery<Facility[]>({
+  const { data: facilities = [], isLoading, error } = useQuery<Facility[]>({
     queryKey: ['/api/facilities', searchParams],
-    queryFn: async () => {
-      const url = searchParams ? `/api/facilities?${searchParams}` : '/api/facilities';
-      const response = await fetch(url);
-      return response.json();
-    },
-    enabled: isOpen, // Only fetch when sidebar is open
+    enabled: isOpen, // Search works at all times when sidebar is open
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Filter facilities by search query
-  const filteredFacilities = facilities.filter((facility: Facility) =>
-    facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    facility.address?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter facilities by search query with null safety
+  const filteredFacilities = (facilities || []).filter((facility: Facility) =>
+    (facility.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (facility.address || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Show error toast when query fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Search Error",
+        description: "Failed to search facilities. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   // Handle category selection
   const handleCategorySelect = (categoryType: string) => {
@@ -248,10 +256,10 @@ const SearchSidebar = memo(function SearchSidebar({
       {/* Sidebar Tab Toggle Button */}
       <div
         className={cn(
-          "fixed top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ease-in-out",
+          "fixed top-1/3 -translate-y-1/2 z-40 transition-all duration-300 ease-in-out",
           isOpen 
-            ? (isCollapsed ? "left-1/2 -translate-x-8" : "left-1/2 -translate-x-40") 
-            : "left-1/2 -translate-x-4"
+            ? (isCollapsed ? "right-16" : "right-80") 
+            : "right-0"
         )}
       >
         <Button
@@ -259,7 +267,7 @@ const SearchSidebar = memo(function SearchSidebar({
           variant="default"
           className={cn(
             "h-16 w-8 rounded-l-lg rounded-r-lg px-0 py-0",
-            "bg-primary hover:bg-primary/90 text-primary-foreground",
+            "bg-blue-600 hover:bg-blue-700 text-white",
             "border border-border shadow-lg",
             "scalable-control-button flex flex-col items-center justify-center gap-1",
             "transform transition-all duration-300 ease-in-out",
@@ -269,7 +277,7 @@ const SearchSidebar = memo(function SearchSidebar({
         >
           <Search className="w-4 h-4" />
           <div className="text-xs font-medium leading-none">
-            S
+            POI
           </div>
         </Button>
       </div>
@@ -277,8 +285,8 @@ const SearchSidebar = memo(function SearchSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-1/2 top-0 h-screen bg-background border-l border-r border-border z-30 shadow-lg",
-          "automotive-layout sidebar-transition -translate-x-1/2",
+          "fixed right-0 top-0 h-screen bg-background border-l border-border z-30 shadow-lg",
+          "automotive-layout sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
           "flex flex-col"
