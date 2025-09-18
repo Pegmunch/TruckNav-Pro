@@ -811,16 +811,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
               </Button>
             ))}
             
-            {/* History & Favorites Button - Collapsed Mode */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleToggleHistoryFavorites}
-              className="w-full automotive-button"
-              data-testid="button-history-favorites-collapsed"
-            >
-              <History className="w-5 h-5" />
-            </Button>
           </div>
         ) : (
           /* Expanded Mode - Full Navigation */
@@ -850,17 +840,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 ))}
               </div>
               
-              {/* History & Favorites Access Button */}
-              <Button
-                variant="outline"
-                onClick={handleToggleHistoryFavorites}
-                className="w-full automotive-text-sm justify-start"
-                data-testid="button-history-favorites"
-              >
-                <History className="w-4 h-4 mr-2" />
-                History & Favorites
-                <ArrowRight className="w-3 h-3 ml-auto" />
-              </Button>
             </div>
 
             {/* Section Content */}
