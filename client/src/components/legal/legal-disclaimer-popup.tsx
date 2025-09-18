@@ -13,10 +13,14 @@ import {
   Truck, 
   MapPin,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ScrollText,
   Scale,
   X,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  CheckSquare
 } from "lucide-react";
 import { useLegalConsent, migrateOldConsentData } from "@/hooks/use-legal-consent";
 
@@ -26,6 +30,10 @@ interface LegalDisclaimerPopupProps {
 }
 
 export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupProps) {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<1 | 2>(1);
+  
+  // Acknowledgement state
   const [acknowledgeNavigation, setAcknowledgeNavigation] = useState(false);
   const [acknowledgeLiability, setAcknowledgeLiability] = useState(false);
   const [acknowledgeResponsibility, setAcknowledgeResponsibility] = useState(false);
@@ -100,6 +108,33 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
     }
   };
 
+  // Page navigation handlers
+  const goToNextPage = () => {
+    if (currentPage === 1) {
+      setCurrentPage(2);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage === 2) {
+      setCurrentPage(1);
+    }
+  };
+
+  const goToPage = (page: 1 | 2) => {
+    setCurrentPage(page);
+  };
+
+  // Helper function for "Accept All" checkboxes on page 2
+  const handleAcceptAll = () => {
+    setAcknowledgeNavigation(true);
+    setAcknowledgeLiability(true);
+    setAcknowledgeResponsibility(true);
+    setAcknowledgePrivacy(true);
+    setAcknowledgeTerms(true);
+    setAcceptDisclaimer(true);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4" data-testid="legal-disclaimer-popup">
       {/* Header */}
@@ -112,29 +147,73 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
           </div>
         </div>
         
-        {/* Close button for popup */}
-        <div className="flex items-center gap-2">
-          {isAlreadyAccepted && (
-            <Badge variant="secondary" className="automotive-text-sm">
-              Previously Accepted
-            </Badge>
-          )}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={onClose || (() => window.close())}
-            className="automotive-touch-target"
-            data-testid="button-close-legal"
-          >
-            <X className="w-5 h-5" />
-          </Button>
+        {/* Page Navigation and Close */}
+        <div className="flex items-center gap-4">
+          {/* Page Indicators */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={currentPage === 1 ? "default" : "outline"}
+              size="sm"
+              onClick={() => goToPage(1)}
+              className="automotive-touch-target min-w-[100px]"
+              data-testid="button-page-1"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Legal Terms
+            </Button>
+            <Button
+              variant={currentPage === 2 ? "default" : "outline"}
+              size="sm"
+              onClick={() => goToPage(2)}
+              className="automotive-touch-target min-w-[120px]"
+              data-testid="button-page-2"
+            >
+              <CheckSquare className="w-4 h-4 mr-2" />
+              Acknowledgments
+            </Button>
+          </div>
+          
+          {/* Status and Close */}
+          <div className="flex items-center gap-2">
+            {isAlreadyAccepted && (
+              <Badge variant="secondary" className="automotive-text-sm">
+                Previously Accepted
+              </Badge>
+            )}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onClose || (() => window.close())}
+              className="automotive-touch-target"
+              data-testid="button-close-legal"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
+      </div>
+
+      {/* Page Progress Indicator */}
+      <div className="flex items-center justify-center mb-4">
+        <div className="flex items-center gap-2">
+          <div className={`h-2 w-8 rounded-full transition-colors ${
+            currentPage === 1 ? 'bg-primary' : 'bg-muted'
+          }`} data-testid="progress-page-1" />
+          <div className={`h-2 w-8 rounded-full transition-colors ${
+            currentPage === 2 ? 'bg-primary' : 'bg-muted'
+          }`} data-testid="progress-page-2" />
+        </div>
+        <span className="ml-3 text-sm text-muted-foreground" data-testid="text-page-indicator">
+          Page {currentPage} of 2
+        </span>
       </div>
 
       {/* Content Area */}
       <div className="max-w-6xl mx-auto">
-        <ScrollArea className="h-[calc(100vh-200px)] pr-4" data-testid="legal-scroll-area">
-          <div className="space-y-6">
+        {/* Page 1: Legal Terms and Disclaimers */}
+        {currentPage === 1 && (
+          <ScrollArea className="h-[calc(100vh-280px)] pr-4" data-testid="legal-scroll-area-page-1">
+            <div className="space-y-6">
             
             {/* Critical Safety Warning */}
             <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
@@ -290,98 +369,175 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
                 </div>
               </CardContent>
             </Card>
+            </div>
+          </ScrollArea>
+        )}
+
+        {/* Page 2: Required Acknowledgments */}
+        {currentPage === 2 && (
+          <ScrollArea className="h-[calc(100vh-280px)] pr-4" data-testid="legal-scroll-area-page-2">
+            <div className="space-y-6">
+              {/* Page 2 Header */}
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <CheckSquare className="w-8 h-8 text-primary mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-primary text-lg mb-3">
+                        ✓ Required Acknowledgments
+                      </h3>
+                      <p className="text-primary/80 automotive-text-base leading-relaxed mb-3">
+                        <strong>IMPORTANT:</strong> Please review and acknowledge each statement below. 
+                        All acknowledgments must be completed to proceed with TruckNav Pro.
+                      </p>
+                      <p className="text-primary/80 automotive-text-base leading-relaxed">
+                        These acknowledgments confirm your understanding of the legal terms 
+                        and your acceptance of responsibility when using our navigation service.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Acknowledgment Section */}
+              <Card className="border-muted">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold automotive-text-lg">Individual Acknowledgments</h3>
+                    <Button 
+                      onClick={handleAcceptAll}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-touch-target"
+                      data-testid="button-accept-all-checkboxes"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-2" />
+                      Accept All
+                    </Button>
+                  </div>
+                  
+                  {/* Individual Acknowledgments */}
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                      <Checkbox 
+                        id="acknowledge-navigation"
+                        checked={acknowledgeNavigation}
+                        onCheckedChange={(checked) => setAcknowledgeNavigation(checked === true)}
+                        className="mt-1 automotive-touch-target"
+                        data-testid="checkbox-acknowledge-navigation"
+                      />
+                      <label htmlFor="acknowledge-navigation" className="automotive-text-sm font-medium">
+                        I acknowledge that navigation guidance is for reference only and I remain fully responsible for safe driving and route verification.
+                      </label>
+                    </div>
+
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                      <Checkbox 
+                        id="acknowledge-liability"
+                        checked={acknowledgeLiability}
+                        onCheckedChange={(checked) => setAcknowledgeLiability(checked === true)}
+                        className="mt-1 automotive-touch-target"
+                        data-testid="checkbox-acknowledge-liability"
+                      />
+                      <label htmlFor="acknowledge-liability" className="automotive-text-sm font-medium">
+                        I understand and accept the liability limitations and that TruckNav Pro is provided without warranties.
+                      </label>
+                    </div>
+
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                      <Checkbox 
+                        id="acknowledge-responsibility"
+                        checked={acknowledgeResponsibility}
+                        onCheckedChange={(checked) => setAcknowledgeResponsibility(checked === true)}
+                        className="mt-1 automotive-touch-target"
+                        data-testid="checkbox-acknowledge-responsibility"
+                      />
+                      <label htmlFor="acknowledge-responsibility" className="automotive-text-sm font-medium">
+                        I accept full responsibility for commercial vehicle compliance, route verification, and professional driving standards.
+                      </label>
+                    </div>
+
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                      <Checkbox 
+                        id="acknowledge-privacy"
+                        checked={acknowledgePrivacy}
+                        onCheckedChange={(checked) => setAcknowledgePrivacy(checked === true)}
+                        className="mt-1 automotive-touch-target"
+                        data-testid="checkbox-acknowledge-privacy"
+                      />
+                      <label htmlFor="acknowledge-privacy" className="automotive-text-sm font-medium">
+                        I understand the privacy policy and consent to location data collection for navigation services.
+                      </label>
+                    </div>
+
+                    <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                      <Checkbox 
+                        id="acknowledge-terms"
+                        checked={acknowledgeTerms}
+                        onCheckedChange={(checked) => setAcknowledgeTerms(checked === true)}
+                        className="mt-1 automotive-touch-target"
+                        data-testid="checkbox-acknowledge-terms"
+                      />
+                      <label htmlFor="acknowledge-terms" className="automotive-text-sm font-medium">
+                        I agree to the Terms of Service and understand that these terms may be updated periodically.
+                      </label>
+                    </div>
+
+                    <Separator className="my-4" />
+
+                    <div className="flex items-start space-x-3 p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
+                      <Checkbox 
+                        id="accept-disclaimer"
+                        checked={acceptDisclaimer}
+                        onCheckedChange={(checked) => setAcceptDisclaimer(checked === true)}
+                        className="mt-1 automotive-touch-target"
+                        data-testid="checkbox-accept-disclaimer"
+                      />
+                      <label htmlFor="accept-disclaimer" className="automotive-text-sm font-bold text-primary">
+                        I accept all terms and disclaimers above and wish to proceed with using TruckNav Pro.
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </ScrollArea>
+        )}
+        {/* Bottom Navigation and Action Buttons */}
+        <div className="mt-6 space-y-4">
+          {/* Page Navigation */}
+          <div className="flex items-center justify-between p-4 bg-muted/20 rounded-lg border">
+            <Button 
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              variant="outline"
+              className="automotive-button automotive-text-base"
+              data-testid="button-previous-page"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-3">
+              <span className="automotive-text-sm text-muted-foreground" data-testid="text-page-counter">
+                {currentPage === 1 ? 'Legal Terms' : 'Acknowledgments'}
+              </span>
+            </div>
+            
+            <Button 
+              onClick={goToNextPage}
+              disabled={currentPage === 2}
+              variant="outline"
+              className="automotive-button automotive-text-base"
+              data-testid="button-next-page"
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
-        </ScrollArea>
 
-        {/* Acknowledgment Section */}
-        <div className="mt-8 space-y-4 p-6 bg-muted/30 rounded-lg border">
-          <h3 className="font-bold automotive-text-lg mb-4">Required Acknowledgments</h3>
-          
-          {/* Individual Acknowledgments */}
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="acknowledge-navigation"
-                checked={acknowledgeNavigation}
-                onCheckedChange={(checked) => setAcknowledgeNavigation(checked === true)}
-                className="mt-1 automotive-touch-target"
-                data-testid="checkbox-acknowledge-navigation"
-              />
-              <label htmlFor="acknowledge-navigation" className="automotive-text-sm font-medium">
-                I acknowledge that navigation guidance is for reference only and I remain fully responsible for safe driving and route verification.
-              </label>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="acknowledge-liability"
-                checked={acknowledgeLiability}
-                onCheckedChange={(checked) => setAcknowledgeLiability(checked === true)}
-                className="mt-1 automotive-touch-target"
-                data-testid="checkbox-acknowledge-liability"
-              />
-              <label htmlFor="acknowledge-liability" className="automotive-text-sm font-medium">
-                I understand and accept the liability limitations and that TruckNav Pro is provided without warranties.
-              </label>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="acknowledge-responsibility"
-                checked={acknowledgeResponsibility}
-                onCheckedChange={(checked) => setAcknowledgeResponsibility(checked === true)}
-                className="mt-1 automotive-touch-target"
-                data-testid="checkbox-acknowledge-responsibility"
-              />
-              <label htmlFor="acknowledge-responsibility" className="automotive-text-sm font-medium">
-                I accept full responsibility for commercial vehicle compliance, route verification, and professional driving standards.
-              </label>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="acknowledge-privacy"
-                checked={acknowledgePrivacy}
-                onCheckedChange={(checked) => setAcknowledgePrivacy(checked === true)}
-                className="mt-1 automotive-touch-target"
-                data-testid="checkbox-acknowledge-privacy"
-              />
-              <label htmlFor="acknowledge-privacy" className="automotive-text-sm font-medium">
-                I understand the privacy policy and consent to location data collection for navigation services.
-              </label>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="acknowledge-terms"
-                checked={acknowledgeTerms}
-                onCheckedChange={(checked) => setAcknowledgeTerms(checked === true)}
-                className="mt-1 automotive-touch-target"
-                data-testid="checkbox-acknowledge-terms"
-              />
-              <label htmlFor="acknowledge-terms" className="automotive-text-sm font-medium">
-                I agree to the Terms of Service and understand that these terms may be updated periodically.
-              </label>
-            </div>
-
-            <Separator className="my-4" />
-
-            <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="accept-disclaimer"
-                checked={acceptDisclaimer}
-                onCheckedChange={(checked) => setAcceptDisclaimer(checked === true)}
-                className="mt-1 automotive-touch-target"
-                data-testid="checkbox-accept-disclaimer"
-              />
-              <label htmlFor="accept-disclaimer" className="automotive-text-sm font-bold">
-                I accept all terms and disclaimers above and wish to proceed with using TruckNav Pro.
-              </label>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+          {/* Action Buttons - Show on both pages but different functionality */}
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={handleDecline}
               variant="outline"
@@ -391,29 +547,50 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
               Decline & Close
             </Button>
             
-            <Button 
-              onClick={canAccept ? scrollToBottom : undefined}
-              variant="outline"
-              className="automotive-button automotive-text-base"
-              data-testid="button-scroll-bottom"
-            >
-              <ChevronDown className="w-4 h-4 mr-2" />
-              Read All Terms
-            </Button>
+            {currentPage === 1 ? (
+              <Button 
+                onClick={scrollToBottom}
+                variant="outline"
+                className="automotive-button automotive-text-base"
+                data-testid="button-scroll-bottom"
+              >
+                <ChevronDown className="w-4 h-4 mr-2" />
+                Read All Terms
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleAcceptAll}
+                variant="outline"
+                className="automotive-button automotive-text-base"
+                data-testid="button-accept-all-page2"
+              >
+                <CheckSquare className="w-4 h-4 mr-2" />
+                Accept All
+              </Button>
+            )}
             
             <Button 
-              onClick={handleAccept}
-              disabled={!canAccept}
+              onClick={currentPage === 1 ? goToNextPage : handleAccept}
+              disabled={currentPage === 2 && !canAccept}
               className="automotive-button automotive-text-base flex-1 min-w-48"
-              data-testid="button-accept-legal"
+              data-testid={currentPage === 1 ? "button-continue-to-acknowledgments" : "button-accept-legal"}
             >
-              Accept & {isAlreadyAccepted ? 'Close' : 'Enter TruckNav Pro'}
+              {currentPage === 1 ? (
+                <>
+                  Continue to Acknowledgments
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              ) : (
+                `Accept & ${isAlreadyAccepted ? 'Close' : 'Enter TruckNav Pro'}`
+              )}
             </Button>
           </div>
 
-          <p className="automotive-text-sm text-muted-foreground text-center mt-4">
-            By clicking "Accept & Enter TruckNav Pro", you acknowledge reading and understanding all disclaimers above.
-          </p>
+          {currentPage === 2 && (
+            <p className="automotive-text-sm text-muted-foreground text-center mt-4">
+              By clicking "Accept & Enter TruckNav Pro", you acknowledge reading and understanding all disclaimers.
+            </p>
+          )}
         </div>
       </div>
     </div>
