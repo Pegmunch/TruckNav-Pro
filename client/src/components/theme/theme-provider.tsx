@@ -362,7 +362,6 @@ export function ThemeProvider({
       
       // Use time-based logic with geolocation if enabled
       const timeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
-      setTimeInfo(timeInfo);
       
       // Use the time info to determine theme
       result = timeInfo.currentTheme as EffectiveTheme;
@@ -607,6 +606,16 @@ ${darkCSS}
   }, [customHSLColor, effectiveTheme, applyHSLColorOverrides]);
 
   // Note: Theme initialization moved to useState initializer to prevent flicker
+
+  // Update timeInfo separately to avoid infinite loops in calculateEffectiveTheme
+  useEffect(() => {
+    if (currentTheme === "auto") {
+      const newTimeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
+      setTimeInfo(newTimeInfo);
+    } else {
+      setTimeInfo(null);
+    }
+  }, [currentTheme, autoThemeConfig, coordinates]);
 
   // Update effective theme when current theme changes
   useEffect(() => {

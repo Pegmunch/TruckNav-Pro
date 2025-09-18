@@ -23,6 +23,7 @@ import {
 import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
 import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
 import NextManeuverGuidance from "@/components/route/next-maneuver-guidance";
+import { useCountryMap } from "@/hooks/use-country-preferences";
 import { cn } from "@/lib/utils";
 
 interface InteractiveMapProps {
@@ -47,7 +48,7 @@ interface InteractiveMapProps {
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
-// Map preferences storage keys
+// Map preferences storage keys (now extended with country-specific providers)
 const MAP_PREFERENCES_KEY = 'trucknav_map_preferences';
 
 interface MapPreferences {
@@ -55,6 +56,10 @@ interface MapPreferences {
   showTrafficLayer: boolean;
   showIncidents: boolean;
   zoomLevel: number;
+  // Extended with country-specific provider info
+  provider?: string;
+  tiles?: string;
+  attribution?: string;
 }
 
 const defaultMapPreferences: MapPreferences = {
@@ -62,6 +67,9 @@ const defaultMapPreferences: MapPreferences = {
   showTrafficLayer: true,
   showIncidents: true,
   zoomLevel: 10,
+  provider: 'openstreetmap',
+  tiles: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '© OpenStreetMap contributors'
 };
 
 // Load map preferences from localStorage
@@ -104,9 +112,32 @@ const InteractiveMap = memo(function InteractiveMap({
   onCollapseMap,
   onHideSidebar
 }: InteractiveMapProps) {
-  // Load preferences on mount
-  const [preferences, setPreferences] = useState<MapPreferences>(() => loadMapPreferences());
+  // Use country-based map provider
+  const { mapProvider, getMapConfig, country } = useCountryMap();
+  
+  // Load preferences on mount and merge with country-specific provider
+  const [preferences, setPreferences] = useState<MapPreferences>(() => {
+    const stored = loadMapPreferences();
+    return {
+      ...stored,
+      provider: mapProvider.provider,
+      tiles: mapProvider.tiles,
+      attribution: mapProvider.attribution
+    };
+  });
   const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
+  
+  // Update preferences when country changes
+  useEffect(() => {
+    const updatedPreferences = {
+      ...preferences,
+      provider: mapProvider.provider,
+      tiles: mapProvider.tiles,
+      attribution: mapProvider.attribution
+    };
+    setPreferences(updatedPreferences);
+    saveMapPreferences(updatedPreferences);
+  }, [mapProvider.provider, mapProvider.tiles, mapProvider.attribution]);
   
   // Auto-hide functionality state
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -730,6 +761,13 @@ const InteractiveMap = memo(function InteractiveMap({
       <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
+            {/* Map Provider Info */}
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-muted-foreground">
+                {country.flag} {preferences.provider || 'OSM'}
+              </span>
+            </div>
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-accent rounded-full"></div>
               <span className="text-sm text-muted-foreground">Start</span>
@@ -765,6 +803,13 @@ const InteractiveMap = memo(function InteractiveMap({
               </Button>
             </div>
           )}
+        </div>
+        
+        {/* Map Attribution - Dynamic based on provider */}
+        <div className="mt-2 pt-2 border-t border-border">
+          <div className="text-xs text-muted-foreground text-center">
+            {preferences.attribution || mapProvider.attribution}
+          </div>
         </div>
       </div>
     </div>

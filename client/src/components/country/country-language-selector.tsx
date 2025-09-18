@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, ChevronDown, Globe, MapPin, Star, Clock } from "lucide-react";
+import { Check, ChevronDown, Globe, MapPin, Star, Clock, Loader2 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { 
   countries, 
@@ -25,6 +25,7 @@ import {
   DEFAULT_COUNTRY 
 } from '@/data/countries';
 import FlagIcon, { DropdownFlagIcon, FlagBadge } from './flag-icon';
+import { useCountryPreferences } from '@/hooks/use-country-preferences';
 
 interface CountryLanguageSelectorProps {
   value?: string; // Country code or language code
@@ -55,8 +56,21 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   
-  // Get current selections
-  const currentCountry = useMemo(() => {
+  // Use the new country preferences hook
+  const { 
+    changeCountry, 
+    currentCountry,
+    isLoading: isChangingCountry,
+    error: countryError 
+  } = useCountryPreferences();
+  
+  // Get current selection (override from preferences hook if available)
+  const selectedCountry = useMemo(() => {
+    // Use the country from preferences hook if available
+    if (currentCountry) {
+      return currentCountry;
+    }
+    
     if (value) {
       // Try to find by country code first, then by language
       const byCode = getCountryByCode(value);
@@ -70,9 +84,9 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
     // Try to determine from current i18n language
     const langCountries = getCountriesByLanguage(i18n.language);
     return langCountries[0] || DEFAULT_COUNTRY;
-  }, [value, i18n.language]);
+  }, [value, i18n.language, currentCountry]);
 
-  const currentLanguage = i18n.language || currentCountry.defaultLanguage;
+  const currentLanguage = i18n.language || selectedCountry.defaultLanguage;
 
   // Get recent countries from localStorage
   const recentCountries = useMemo(() => {
@@ -130,8 +144,8 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
     return grouped;
   }, [filteredCountries]);
 
-  // Handle country selection
-  const handleCountrySelect = useCallback((country: Country) => {
+  // Handle country selection with new preferences system
+  const handleCountrySelect = useCallback(async (country: Country) => {
     const languageCode = country.defaultLanguage;
     
     // Update recent countries
@@ -145,21 +159,30 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
       console.warn('Error saving recent country:', error);
     }
 
-    // Change language
-    i18n.changeLanguage(languageCode);
-    localStorage.setItem('trucknav_language', languageCode);
-    localStorage.setItem('trucknav_country', country.code);
-    
-    // Update Amazon region if available
-    if (country.amazonRegion) {
-      localStorage.setItem('trucknav_amazon_region', country.amazonRegion);
+    // Use the new country preferences system to handle the change
+    // This will automatically update fonts, maps, and other preferences
+    try {
+      await changeCountry(country.code);
+      
+      // Call parent handler
+      onValueChange?.(country.code, languageCode);
+    } catch (error) {
+      console.error('Error changing country:', error);
+      // Fallback to the old behavior if the new system fails
+      i18n.changeLanguage(languageCode);
+      localStorage.setItem('trucknav_language', languageCode);
+      localStorage.setItem('trucknav_country', country.code);
+      
+      if (country.amazonRegion) {
+        localStorage.setItem('trucknav_amazon_region', country.amazonRegion);
+      }
+      
+      onValueChange?.(country.code, languageCode);
     }
 
-    // Call parent handler
-    onValueChange?.(country.code, languageCode);
     setOpen(false);
     setSearch('');
-  }, [i18n, onValueChange, recentCountries]);
+  }, [changeCountry, onValueChange, recentCountries, i18n]);
 
   // Toggle favorite country
   const toggleFavorite = useCallback((country: Country, event: React.MouseEvent) => {
@@ -188,7 +211,7 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
   // Render country item
   const renderCountryItem = useCallback((country: Country, showFavoriteButton = true) => {
     const isFavorite = favoriteCountries.some(c => c.code === country.code);
-    const isSelected = currentCountry.code === country.code;
+    const isSelected = selectedCountry.code === country.code;
     
     return (
       <CommandItem
@@ -241,7 +264,7 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
         )}
       </CommandItem>
     );
-  }, [currentCountry.code, favoriteCountries, handleCountrySelect, toggleFavorite, variant]);
+  }, [selectedCountry.code, favoriteCountries, handleCountrySelect, toggleFavorite, variant]);
 
   if (variant === 'compact') {
     return (
@@ -270,13 +293,16 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
           data-testid="country-selector-trigger"
         >
           <div className="flex items-center gap-2">
-            <DropdownFlagIcon country={currentCountry} />
+            <DropdownFlagIcon country={selectedCountry} />
             <span className="truncate">
               {variant === 'detailed' 
-                ? `${currentCountry.name} (${currentCountry.nativeName})`
-                : currentCountry.name
+                ? `${selectedCountry.name} (${selectedCountry.nativeName})`
+                : selectedCountry.name
               }
             </span>
+            {isChangingCountry && (
+              <Loader2 className="h-3 w-3 animate-spin ml-1" />
+            )}
           </div>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>

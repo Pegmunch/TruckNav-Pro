@@ -237,7 +237,8 @@ export function useWindowSync() {
         };
         broadcastChannel.postMessage(message);
       } catch (error) {
-        console.error('Failed to broadcast route update:', error);
+        // Silently fail if channel is not ready or closed
+        console.debug('BroadcastChannel not ready for route update');
       }
     }
   }, [broadcastChannel]);
@@ -260,7 +261,8 @@ export function useWindowSync() {
         };
         broadcastChannel.postMessage(message);
       } catch (error) {
-        console.error('Failed to broadcast profile update:', error);
+        // Silently fail if channel is not ready or closed
+        console.debug('BroadcastChannel not ready for profile update');
       }
     }
   }, [broadcastChannel]);
@@ -284,7 +286,8 @@ export function useWindowSync() {
         };
         broadcastChannel.postMessage(message);
       } catch (error) {
-        console.error('Failed to broadcast journey update:', error);
+        // Silently fail if channel is not ready or closed
+        console.debug('BroadcastChannel not ready for journey update');
       }
     }
   }, [broadcastChannel]);
@@ -308,7 +311,8 @@ export function useWindowSync() {
         };
         broadcastChannel.postMessage(message);
       } catch (error) {
-        console.error('Failed to broadcast location update:', error);
+        // Silently fail if channel is not ready or closed
+        console.debug('BroadcastChannel not ready for location update');
       }
     }
   }, [broadcastChannel]);
