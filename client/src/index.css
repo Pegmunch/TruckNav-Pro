@@ -188,6 +188,13 @@ body {
     max-width: min(400px, 30vw);
     width: clamp(320px, 25vw, 380px);
   }
+  
+  /* EXTENDED DEPTH: Enhanced map coverage for desktop with sidebar */
+  .map-container {
+    /* Ensure consistent extended depth on desktop */
+    min-height: calc(100vh - 120px);
+    height: calc(100vh - 120px);
+  }
 }
 
 /* Enhanced mobile-first responsive sidebar */
@@ -354,7 +361,7 @@ body {
   transition: opacity 200ms ease-in-out;
 }
 
-/* Map container enhancements - Consolidated and Fixed */
+/* Map container enhancements - Extended for maximum depth coverage */
 .map-container {
   position: relative;
   /* Base background gradient */
@@ -362,10 +369,9 @@ body {
   /* Grid overlay pattern for mock map */
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23d1d5db" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
   background-blend-mode: overlay;
-  /* Extended dimensions to fill space up to legal footer */
-  min-height: calc(100vh - 200px); /* Increased to use most viewport height, leaving space for legal footer */
-  /* Responsive adjustments */
-  height: calc(100vh - 200px);
+  /* EXTENDED MAP DEPTH: Reduced reserved space from 200px to 120px for maximum coverage */
+  min-height: calc(100vh - 120px); /* Extended height for better navigation depth */
+  height: calc(100vh - 120px); /* More geographical coverage */
   width: 100%;
   flex: 1;
   border: 1px solid var(--border);
@@ -1268,13 +1274,13 @@ select:focus-visible,
   position: relative;
 }
 
-/* Mobile fullscreen map container - Fixed height issues */
+/* Mobile fullscreen map container - Extended depth coverage */
 .mobile-map-container {
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: calc(100vh - 150px); /* Increased to fill more space up to legal footer */
-  height: calc(100vh - 150px);
+  min-height: calc(100vh - 100px); /* EXTENDED: Reduced from 150px to 100px for maximum mobile depth */
+  height: calc(100vh - 100px); /* More navigation coverage on mobile */
   background: var(--map-background, #f8fafc);
   overflow: hidden;
 }
@@ -1285,37 +1291,37 @@ select:focus-visible,
   height: 100%;
 }
 
-/* Responsive adjustments for map height */
+/* EXTENDED DEPTH: Optimized responsive adjustments for maximum map coverage */
 @media (max-height: 600px) {
   .map-container {
-    min-height: calc(100vh - 120px);
-    height: calc(100vh - 120px);
+    min-height: calc(100vh - 80px); /* EXTENDED: Reduced from 120px to 80px */
+    height: calc(100vh - 80px); /* Maximum depth for small screens */
   }
   
   .mobile-map-container {
-    min-height: calc(100vh - 100px);
-    height: calc(100vh - 100px);
+    min-height: calc(100vh - 70px); /* EXTENDED: Reduced from 100px to 70px */
+    height: calc(100vh - 70px); /* Optimized mobile depth */
   }
 }
 
 @media (min-height: 800px) {
   .map-container {
-    min-height: calc(100vh - 250px);
-    height: calc(100vh - 250px);
+    min-height: calc(100vh - 140px); /* EXTENDED: Reduced from 250px to 140px */
+    height: calc(100vh - 140px); /* Enhanced depth for large screens */
   }
   
   .mobile-map-container {
-    min-height: calc(100vh - 180px);
-    height: calc(100vh - 180px);
+    min-height: calc(100vh - 110px); /* EXTENDED: Reduced from 180px to 110px */
+    height: calc(100vh - 110px); /* Better mobile coverage on tall screens */
   }
 }
 
-/* CarPlay/Android Auto specific map adjustments */
+/* EXTENDED DEPTH: CarPlay/Android Auto maximum coverage adjustments */
 @media (max-height: 480px) and (orientation: landscape) {
   .map-container,
   .mobile-map-container {
-    min-height: calc(100vh - 80px);
-    height: calc(100vh - 80px);
+    min-height: calc(100vh - 60px); /* EXTENDED: Reduced from 80px to 60px for maximum automotive depth */
+    height: calc(100vh - 60px); /* Enhanced coverage for automotive displays */
   }
 }
 
@@ -1490,7 +1496,7 @@ select:focus-visible,
     display: none;
   }
   
-  /* Full viewport map on mobile */
+  /* Full viewport map on mobile with extended depth */
   .navigation-layout {
     flex-direction: column;
   }
@@ -1498,8 +1504,9 @@ select:focus-visible,
   .map-container {
     position: relative;
     width: 100%;
-    height: 100vh;
-    height: 100dvh;
+    /* EXTENDED DEPTH: Use calculated height for consistency with container sizing */
+    height: calc(100vh - 100px);
+    height: calc(100dvh - 100px); /* Dynamic viewport height with extended depth */
     border-radius: 0;
     border: none;
   }
@@ -1520,7 +1527,7 @@ select:focus-visible,
   }
 }
 
-/* Tablet landscape optimization */
+/* EXTENDED DEPTH: Tablet landscape optimization with enhanced coverage */
 @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
   .mobile-drawer {
     left: 50%;
@@ -1530,6 +1537,15 @@ select:focus-visible,
   
   .mobile-map-container {
     width: 50%;
+    /* Enhanced depth for tablet landscape */
+    min-height: calc(100vh - 90px);
+    height: calc(100vh - 90px);
+  }
+  
+  /* Desktop-style map container for tablets */
+  .map-container {
+    min-height: calc(100vh - 100px);
+    height: calc(100vh - 100px);
   }
 }
 
