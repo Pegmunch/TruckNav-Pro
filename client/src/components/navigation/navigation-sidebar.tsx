@@ -1000,6 +1000,55 @@ const NavigationSidebar = memo(function NavigationSidebar({
                             {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W × {formatWeight(selectedProfile.weight || 0)}
                           </div>
                         </div>
+                        
+                        {/* Vehicle Status Button - Blue/Yellow */}
+                        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                          <div className="flex items-center space-x-3">
+                            <div className={cn(
+                              "w-3 h-3 rounded-full transition-colors",
+                              selectedProfile && fromLocation && toLocation ? "bg-blue-500" : "bg-yellow-500"
+                            )} />
+                            <div>
+                              <div className="text-sm font-medium">
+                                {selectedProfile && fromLocation && toLocation ? "Ready for Navigation" : "Setup Required"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {selectedProfile && fromLocation && toLocation 
+                                  ? "Vehicle configured and route planned"
+                                  : "Complete route planning to proceed"
+                                }
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant={selectedProfile && fromLocation && toLocation ? "default" : "outline"}
+                            size="sm"
+                            className={cn(
+                              "h-8 px-3 text-xs font-medium transition-all",
+                              selectedProfile && fromLocation && toLocation 
+                                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                                : "bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800"
+                            )}
+                            onClick={() => {
+                              if (!fromLocation || !toLocation) {
+                                setActiveSection('route');
+                                toast({
+                                  title: "Route planning required",
+                                  description: "Please set your starting point and destination first.",
+                                });
+                              } else {
+                                toast({
+                                  title: "Vehicle ready",
+                                  description: `${selectedProfile.name} is configured for navigation.`,
+                                });
+                              }
+                            }}
+                            data-testid="button-vehicle-status"
+                          >
+                            {selectedProfile && fromLocation && toLocation ? "✓ Ready" : "⚠ Setup"}
+                          </Button>
+                        </div>
+                        
                         <div className="flex space-x-2">
                           <Button
                             size="sm"
