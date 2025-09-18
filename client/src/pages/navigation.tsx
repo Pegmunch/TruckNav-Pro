@@ -509,6 +509,7 @@ export default function NavigationPage() {
                 setIsMapExpanded(false);
                 setIsDrawerOpen(false);
               }}
+              onHideSidebar={() => setIsMobileDrawerOpen(false)}
             />
           </div>
 
@@ -631,6 +632,7 @@ export default function NavigationPage() {
                   setIsSidebarOpen(true);
                 }
               }}
+              onHideSidebar={() => setIsSidebarOpen(false)}
             />
           </div>
         </div>

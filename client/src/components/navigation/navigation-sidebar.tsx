@@ -345,28 +345,42 @@ const NavigationSidebar = memo(function NavigationSidebar({
     }
   };
 
-  // Mobile/automotive overlay behavior
-  if (!isOpen) {
-    return (
-      <Button
-        onClick={onToggle}
-        className="fixed top-4 left-4 z-50 automotive-button shadow-lg"
-        size="icon"
-        data-testid="button-open-sidebar"
-      >
-        <Menu className="w-5 h-5" />
-      </Button>
-    );
-  }
 
   return (
     <>
-      {/* Mobile overlay backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/20 z-40 lg:hidden" 
+      {/* Persistent Hamburger Menu Button - Always Visible */}
+      <Button
         onClick={onToggle}
-        data-testid="sidebar-backdrop"
-      />
+        className={cn(
+          "fixed top-4 left-4 z-[60] hamburger-menu-button bg-card border border-border hover:bg-accent hover:border-accent-foreground transition-all duration-200",
+          "min-h-[44px] min-w-[44px]", // Automotive-grade touch targets
+          isOpen && "lg:left-[calc(24rem+1rem)]" // Move right when sidebar is open on desktop
+        )}
+        size="icon"
+        data-testid="button-hamburger-menu"
+        aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+      >
+        {/* Always show hamburger icon for consistency, or use X when open */}
+        {isOpen ? (
+          <X className="w-4 h-4" />
+        ) : (
+          <div className="flex flex-col justify-center items-center space-y-0.5">
+            <div className="w-4 h-0.5 bg-current"></div>
+            <div className="w-4 h-0.5 bg-current"></div>
+            <div className="w-4 h-0.5 bg-current"></div>
+            <div className="w-4 h-0.5 bg-current"></div>
+          </div>
+        )}
+      </Button>
+      
+      {/* Mobile overlay backdrop - only show when sidebar is open */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-40 lg:hidden" 
+          onClick={onToggle}
+          data-testid="sidebar-backdrop"
+        />
+      )}
       
       {/* Sidebar Container */}
       <div className={cn(

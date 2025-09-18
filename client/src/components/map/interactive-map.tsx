@@ -42,6 +42,8 @@ interface InteractiveMapProps {
   // Auto-expansion functionality
   autoExpanded?: boolean;
   onCollapseMap?: () => void;
+  // Sidebar interaction functionality
+  onHideSidebar?: () => void;
 }
 
 // Memoized for mobile performance - only re-renders when route or profile changes
@@ -99,7 +101,8 @@ const InteractiveMap = memo(function InteractiveMap({
   isFullscreen = false,
   onToggleFullscreen,
   autoExpanded = false,
-  onCollapseMap
+  onCollapseMap,
+  onHideSidebar
 }: InteractiveMapProps) {
   // Load preferences on mount
   const [preferences, setPreferences] = useState<MapPreferences>(() => loadMapPreferences());
@@ -110,6 +113,14 @@ const InteractiveMap = memo(function InteractiveMap({
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const autoHideTimerRef = useRef<number | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Touch tap detection state
+  const touchStartRef = useRef<{
+    x: number;
+    y: number;
+    timestamp: number;
+    touchCount: number;
+  } | null>(null);
   
   const AUTO_HIDE_DELAY = 3000; // 3 seconds
   
@@ -161,16 +172,83 @@ const InteractiveMap = memo(function InteractiveMap({
       clearTimeout(autoHideTimerRef.current);
     }
     
-    autoHideTimerRef.current = setTimeout(() => {
+    autoHideTimerRef.current = window.setTimeout(() => {
       setControlsVisible(false);
       setIsUserInteracting(false);
     }, AUTO_HIDE_DELAY);
   }, []);
 
-  // Handle map interaction to show controls
-  const handleMapInteraction = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+  // Handle map click (desktop mouse clicks)
+  const handleMapClick = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
     resetAutoHideTimer();
+    
+    // Only hide sidebar when user actually clicks the map
+    if (onHideSidebar) {
+      onHideSidebar();
+    }
+  }, [resetAutoHideTimer, onHideSidebar]);
+  
+  // Handle touch start - record initial touch position and time
+  const handleMapTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    if (touch) {
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        timestamp: Date.now(),
+        touchCount: event.touches.length
+      };
+    }
+    resetAutoHideTimer();
+  }, [resetAutoHideTimer]);
+  
+  // Handle touch end - implement true tap detection
+  const handleMapTouchEnd = useCallback((event: React.TouchEvent) => {
+    event.preventDefault();
+    resetAutoHideTimer();
+    
+    const touchStart = touchStartRef.current;
+    if (!touchStart || !onHideSidebar) {
+      return;
+    }
+    
+    // Get the touch that ended
+    const touch = event.changedTouches[0];
+    if (!touch) {
+      return;
+    }
+    
+    // Calculate movement distance and duration
+    const deltaX = Math.abs(touch.clientX - touchStart.x);
+    const deltaY = Math.abs(touch.clientY - touchStart.y);
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const duration = Date.now() - touchStart.timestamp;
+    
+    // Only hide sidebar for genuine taps:
+    // - Single touch (not multi-touch gestures like pinch-zoom)
+    // - Small movement (<10px) 
+    // - Short duration (<300ms)
+    const isTap = touchStart.touchCount === 1 && 
+                  distance < 10 && 
+                  duration < 300;
+    
+    if (isTap) {
+      onHideSidebar();
+    }
+    
+    // Clear touch start data
+    touchStartRef.current = null;
+  }, [resetAutoHideTimer, onHideSidebar]);
+  
+  // Handle map movement/interaction to show controls only (no sidebar hiding)
+  const handleMapMovement = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    // Don't preventDefault on wheel events to allow normal scrolling
+    if (event.type !== 'wheel') {
+      event.preventDefault();
+    }
+    resetAutoHideTimer();
+    // Only show controls, don't hide sidebar on movement
   }, [resetAutoHideTimer]);
 
   // Enhanced handlers with preference persistence and auto-hide reset
@@ -256,11 +334,11 @@ const InteractiveMap = memo(function InteractiveMap({
         preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
         "cursor-pointer" // Indicate interactive map
       )}
-      onClick={handleMapInteraction}
-      onTouchStart={handleMapInteraction}
-      onTouchMove={handleMapInteraction}
-      onPointerMove={handleMapInteraction}
-      onWheel={handleMapInteraction}
+      onClick={handleMapClick}
+      onTouchStart={handleMapTouchStart}
+      onTouchEnd={handleMapTouchEnd}
+      onPointerMove={handleMapMovement}
+      onWheel={handleMapMovement}
       data-testid="map-container"
     >
       {/* Satellite View Background */}
@@ -548,7 +626,7 @@ const InteractiveMap = memo(function InteractiveMap({
       )}
 
       {/* Traffic Incident Markers */}
-      {showIncidents && trafficIncidents.slice(0, 3).map((incident, index) => (
+      {showIncidents && trafficIncidents.slice(0, 3).map((incident: TrafficIncident, index: number) => (
         <div 
           key={incident.id}
           className="absolute cursor-pointer hover:scale-110 transition-transform" 
