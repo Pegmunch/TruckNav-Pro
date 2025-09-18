@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sun, Moon, Clock, Settings, MapPin, Thermometer, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GrayscaleSelector } from "./grayscale-selector";
+import { ColorSpectrumPicker } from "./color-spectrum-picker";
 import { AutoThemeSettings } from "./auto-theme-settings";
 import { formatTimeInfo } from "@/lib/auto-theme-utils";
 
@@ -43,6 +44,7 @@ interface ThemeSelectorProps {
   size?: "default" | "sm" | "lg";
   variant?: "default" | "outline";
   showGrayscale?: boolean;
+  showColorSpectrum?: boolean;
   showAutoSettings?: boolean;
   showAutoStatus?: boolean;
 }
@@ -53,6 +55,7 @@ export function ThemeSelector({
   size = "default",
   variant = "outline",
   showGrayscale = true,
+  showColorSpectrum = true,
   showAutoSettings = true,
   showAutoStatus = true
 }: ThemeSelectorProps) {
@@ -129,20 +132,41 @@ export function ThemeSelector({
         })}
       </ToggleGroup>
       
-      {/* Grayscale Color Controls */}
-      {showGrayscale && (
+      {/* Color Customization Controls */}
+      {(showGrayscale || showColorSpectrum) && (
         <>
           <Separator className="my-2" />
-          <div className="space-y-2">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-muted-foreground">Color Customization</h4>
             </div>
-            <GrayscaleSelector 
-              size={size === "lg" ? "lg" : size === "sm" ? "sm" : "default"}
-              showLabel={false}
-              showReset={true}
-              className="px-1"
-            />
+            
+            {/* HSL Color Spectrum Picker */}
+            {showColorSpectrum && (
+              <div className="space-y-2">
+                <ColorSpectrumPicker 
+                  size={size === "lg" ? "lg" : size === "sm" ? "sm" : "default"}
+                  showPresets={true}
+                  className="w-full"
+                />
+              </div>
+            )}
+            
+            {/* Grayscale Override */}
+            {showGrayscale && (
+              <>
+                {showColorSpectrum && <Separator className="my-2" />}
+                <div className="space-y-2">
+                  <h5 className="text-xs font-medium text-muted-foreground">Grayscale Override</h5>
+                  <GrayscaleSelector 
+                    size={size === "lg" ? "lg" : size === "sm" ? "sm" : "default"}
+                    showLabel={false}
+                    showReset={true}
+                    className="px-1"
+                  />
+                </div>
+              </>
+            )}
           </div>
           <Separator className="my-2" />
         </>

@@ -50,6 +50,7 @@ import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { LegalPopupManager } from "@/lib/legal-popup-manager";
 import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 import HistoryFavoritesPanel from "@/components/navigation/history-favorites-panel";
+import { ThemeSelector } from "@/components/theme/theme-selector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LegalNotices from "@/components/legal/legal-notices";
@@ -923,6 +924,23 @@ const NavigationSidebar = memo(function NavigationSidebar({
                             Measurement System
                           </label>
                           <MeasurementSelector />
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">
+                            Theme & Appearance
+                          </label>
+                          <ThemeSelector 
+                            size="default"
+                            showLabels={true}
+                            showGrayscale={true}
+                            showColorSpectrum={true}
+                            showAutoSettings={true}
+                            showAutoStatus={true}
+                            className="w-full"
+                          />
                         </div>
                         
                         <Separator />
