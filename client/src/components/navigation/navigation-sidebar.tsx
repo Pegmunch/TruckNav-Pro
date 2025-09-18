@@ -197,8 +197,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
   ];
 
   // Handle History & Favorites panel
-  const handleOpenHistoryFavorites = () => {
-    setIsHistoryFavoritesOpen(true);
+  const handleToggleHistoryFavorites = () => {
+    setIsHistoryFavoritesOpen(!isHistoryFavoritesOpen);
   };
 
   const handleCloseHistoryFavorites = () => {
@@ -685,7 +685,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleOpenHistoryFavorites}
+              onClick={handleToggleHistoryFavorites}
               className="w-full automotive-button"
               data-testid="button-history-favorites-collapsed"
             >
@@ -723,7 +723,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
               {/* History & Favorites Access Button */}
               <Button
                 variant="outline"
-                onClick={handleOpenHistoryFavorites}
+                onClick={handleToggleHistoryFavorites}
                 className="w-full automotive-text-sm justify-start"
                 data-testid="button-history-favorites"
               >
