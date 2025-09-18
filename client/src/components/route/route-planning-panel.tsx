@@ -162,6 +162,57 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
           />
         </div>
         
+        {/* Start Navigation Button - positioned right after destination input */}
+        {(fromLocation && toLocation) && (
+          <div className="mt-4">
+            {!isNavigating ? (
+              <Button 
+                onClick={currentRoute ? onStartNavigation : onPlanRoute}
+                disabled={(!fromLocation || !toLocation) || isStartingJourney || isCalculating}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold automotive-button"
+                data-testid="button-start-navigation button-go-navigation"
+              >
+                {isStartingJourney || isCalculating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    {isCalculating ? "Planning Route..." : "Starting..."}
+                  </>
+                ) : currentRoute ? (
+                  <>
+                    <Navigation className="w-5 h-5 mr-3" />
+                    Start Navigation
+                  </>
+                ) : (
+                  <>
+                    <Route className="w-5 h-5 mr-3" />
+                    Plan Route
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button 
+                onClick={onStopNavigation}
+                disabled={isCompletingJourney}
+                variant="destructive"
+                className="w-full h-12 text-lg font-semibold automotive-button"
+                data-testid="button-stop-navigation"
+              >
+                {isCompletingJourney ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Ending...
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-4 h-4 mr-2" />
+                    End Navigation
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+        
         {/* Route Options - Utility buttons */}
         <div className="flex justify-end mt-3">
           <Button variant="outline" size="icon" data-testid="button-location-picker">
@@ -206,65 +257,6 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
               </div>
             </div>
 
-            {/* Route Planning Controls - Start Navigation Button positioned in plan route section */}
-            {(isNavigating || (fromLocation && toLocation)) && (
-              <div className="p-4 border-b border-border bg-primary/5">
-                <div className="mb-3">
-                  <h4 className="font-medium text-foreground flex items-center">
-                    <Navigation className="w-4 h-4 text-primary mr-2" />
-                    Route Planning Controls
-                  </h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {!isNavigating ? 'Ready to start your journey' : 'Navigation in progress'}
-                  </p>
-                </div>
-                {!isNavigating ? (
-                  <Button 
-                    onClick={currentRoute ? onStartNavigation : onPlanRoute}
-                    disabled={(!fromLocation || !toLocation) || isStartingJourney || isCalculating}
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold automotive-button"
-                    data-testid="button-start-navigation button-go-navigation"
-                  >
-                    {isStartingJourney || isCalculating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                        {isCalculating ? "Planning Route..." : "Starting..."}
-                      </>
-                    ) : currentRoute ? (
-                      <>
-                        <Navigation className="w-5 h-5 mr-3" />
-                        Start Navigation
-                      </>
-                    ) : (
-                      <>
-                        <Route className="w-5 h-5 mr-3" />
-                        Plan Route
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={onStopNavigation}
-                    disabled={isCompletingJourney}
-                    variant="destructive"
-                    className="w-full h-12 text-lg font-semibold automotive-button"
-                    data-testid="button-stop-navigation"
-                  >
-                    {isCompletingJourney ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Ending...
-                      </>
-                    ) : (
-                      <>
-                        <Square className="w-4 h-4 mr-2" />
-                        End Navigation
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            )}
 
             {/* Restrictions Avoided */
             <div className="p-4 border-b border-border">
