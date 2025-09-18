@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 // Postcode search result type for storage layer
@@ -133,6 +133,34 @@ export interface IStorage {
     averageDelay: number;
   }>>;
   cleanupTrafficHistory(hoursToKeep: number): Promise<number>;
+
+  // Entertainment Stations
+  getEntertainmentStation(id: string): Promise<EntertainmentStation | undefined>;
+  createEntertainmentStation(station: InsertEntertainmentStation): Promise<EntertainmentStation>;
+  getAllEntertainmentStations(params?: { platform?: string; type?: string; trucking?: boolean; limit?: number }): Promise<EntertainmentStation[]>;
+  searchEntertainmentStations(query: string, params?: { platform?: string; type?: string; limit?: number }): Promise<EntertainmentStation[]>;
+  updateEntertainmentStation(id: string, updates: Partial<EntertainmentStation>): Promise<EntertainmentStation | undefined>;
+  deleteEntertainmentStation(id: string): Promise<boolean>;
+
+  // Entertainment Presets
+  getEntertainmentPreset(id: number): Promise<EntertainmentPreset | undefined>;
+  createEntertainmentPreset(preset: InsertEntertainmentPreset): Promise<EntertainmentPreset>;
+  getAllEntertainmentPresets(userId?: string): Promise<EntertainmentPreset[]>;
+  updateEntertainmentPreset(id: number, updates: Partial<EntertainmentPreset>): Promise<EntertainmentPreset | undefined>;
+  deleteEntertainmentPreset(id: number): Promise<boolean>;
+
+  // Entertainment History
+  getEntertainmentHistory(userId?: string, limit?: number): Promise<EntertainmentHistory[]>;
+  createEntertainmentHistory(history: InsertEntertainmentHistory): Promise<EntertainmentHistory>;
+  clearEntertainmentHistory(userId?: string): Promise<number>; // returns count of cleared items
+
+  // Entertainment Playback State
+  getEntertainmentPlaybackState(): Promise<EntertainmentPlaybackState | undefined>;
+  updateEntertainmentPlaybackState(state: InsertEntertainmentPlaybackState): Promise<EntertainmentPlaybackState>;
+
+  // Entertainment Settings
+  getEntertainmentSettings(): Promise<EntertainmentSettings>;
+  updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings>;
 }
 
 export class MemStorage implements IStorage {
@@ -160,6 +188,15 @@ export class MemStorage implements IStorage {
     averageDelay: number;
   }>>;
 
+  // Entertainment system storage
+  private entertainmentStations: Map<string, EntertainmentStation>;
+  private entertainmentPresets: Map<number, EntertainmentPreset>;
+  private entertainmentHistory: Map<number, EntertainmentHistory>;
+  private entertainmentPlaybackState: EntertainmentPlaybackState | null;
+  private entertainmentSettings: EntertainmentSettings;
+  private presetIdCounter: number;
+  private historyIdCounter: number;
+
   constructor() {
     this.vehicleProfiles = new Map();
     this.restrictions = new Map();
@@ -180,6 +217,27 @@ export class MemStorage implements IStorage {
     this.alternativeRoutes = new Map();
     this.reRoutingEvents = new Map();
     this.trafficHistory = new Map();
+
+    // Initialize entertainment system storage
+    this.entertainmentStations = new Map();
+    this.entertainmentPresets = new Map();
+    this.entertainmentHistory = new Map();
+    this.entertainmentPlaybackState = null;
+    this.entertainmentSettings = {
+      defaultVolume: 0.8,
+      autoPlay: false,
+      crossfadeEnabled: false,
+      crossfadeDuration: 3,
+      backgroundPlayEnabled: true,
+      voiceControlEnabled: true,
+      showTruckingStationsFirst: true,
+      preferredGenres: ['news', 'talk', 'music'],
+      maxHistoryItems: 50,
+      audioQuality: 'medium',
+      emergencyInterruptEnabled: true,
+    };
+    this.presetIdCounter = 1;
+    this.historyIdCounter = 1;
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -1820,6 +1878,287 @@ export class MemStorage implements IStorage {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
     return R * c; // Distance in meters
+  }
+
+  // ===== ENTERTAINMENT STORAGE METHODS =====
+
+  // Entertainment Stations
+  async getEntertainmentStation(id: string): Promise<EntertainmentStation | undefined> {
+    return this.entertainmentStations.get(id);
+  }
+
+  async createEntertainmentStation(station: InsertEntertainmentStation): Promise<EntertainmentStation> {
+    const id = randomUUID();
+    const now = new Date();
+    const newStation: EntertainmentStation = {
+      id,
+      ...station,
+      playCount: station.playCount || 0,
+      reliability: station.reliability || 100,
+      isActive: station.isActive !== undefined ? station.isActive : true,
+      lastVerified: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.entertainmentStations.set(id, newStation);
+    return newStation;
+  }
+
+  async getAllEntertainmentStations(params?: { 
+    platform?: string; 
+    type?: string; 
+    trucking?: boolean; 
+    limit?: number 
+  }): Promise<EntertainmentStation[]> {
+    let stations = Array.from(this.entertainmentStations.values());
+
+    // Apply filters
+    if (params?.platform) {
+      stations = stations.filter(s => s.platform === params.platform);
+    }
+    if (params?.type) {
+      stations = stations.filter(s => s.type === params.type);
+    }
+    if (params?.trucking) {
+      stations = stations.filter(s => s.isTruckingRelated);
+    }
+
+    // Sort by trucking-related first, then by reliability/play count
+    stations.sort((a, b) => {
+      if (a.isTruckingRelated !== b.isTruckingRelated) {
+        return a.isTruckingRelated ? -1 : 1;
+      }
+      return (b.reliability || 0) - (a.reliability || 0);
+    });
+
+    // Apply limit
+    if (params?.limit) {
+      stations = stations.slice(0, params.limit);
+    }
+
+    return stations;
+  }
+
+  async searchEntertainmentStations(query: string, params?: { 
+    platform?: string; 
+    type?: string; 
+    limit?: number 
+  }): Promise<EntertainmentStation[]> {
+    const lowercaseQuery = query.toLowerCase();
+    let stations = Array.from(this.entertainmentStations.values()).filter(station => 
+      station.name.toLowerCase().includes(lowercaseQuery) ||
+      station.description?.toLowerCase().includes(lowercaseQuery) ||
+      station.genre.toLowerCase().includes(lowercaseQuery) ||
+      station.creator.toLowerCase().includes(lowercaseQuery) ||
+      (station.tags as string[]).some(tag => tag.toLowerCase().includes(lowercaseQuery))
+    );
+
+    // Apply additional filters
+    if (params?.platform) {
+      stations = stations.filter(s => s.platform === params.platform);
+    }
+    if (params?.type) {
+      stations = stations.filter(s => s.type === params.type);
+    }
+
+    // Sort by relevance (exact matches first, then partial matches)
+    stations.sort((a, b) => {
+      const aExact = a.name.toLowerCase() === lowercaseQuery ? 1 : 0;
+      const bExact = b.name.toLowerCase() === lowercaseQuery ? 1 : 0;
+      if (aExact !== bExact) return bExact - aExact;
+      
+      return (b.playCount || 0) - (a.playCount || 0);
+    });
+
+    // Apply limit
+    if (params?.limit) {
+      stations = stations.slice(0, params.limit);
+    }
+
+    return stations;
+  }
+
+  async updateEntertainmentStation(id: string, updates: Partial<EntertainmentStation>): Promise<EntertainmentStation | undefined> {
+    const station = this.entertainmentStations.get(id);
+    if (!station) return undefined;
+
+    const updatedStation: EntertainmentStation = {
+      ...station,
+      ...updates,
+      id, // Ensure ID cannot be changed
+      updatedAt: new Date(),
+    };
+
+    this.entertainmentStations.set(id, updatedStation);
+    return updatedStation;
+  }
+
+  async deleteEntertainmentStation(id: string): Promise<boolean> {
+    return this.entertainmentStations.delete(id);
+  }
+
+  // Entertainment Presets
+  async getEntertainmentPreset(id: number): Promise<EntertainmentPreset | undefined> {
+    return this.entertainmentPresets.get(id);
+  }
+
+  async createEntertainmentPreset(preset: InsertEntertainmentPreset): Promise<EntertainmentPreset> {
+    const id = this.presetIdCounter++;
+    const newPreset: EntertainmentPreset = {
+      id,
+      ...preset,
+      useCount: preset.useCount || 0,
+      isDefault: preset.isDefault || false,
+      volume: preset.volume || 0.8,
+      createdAt: new Date(),
+    };
+
+    this.entertainmentPresets.set(id, newPreset);
+    return newPreset;
+  }
+
+  async getAllEntertainmentPresets(userId?: string): Promise<EntertainmentPreset[]> {
+    let presets = Array.from(this.entertainmentPresets.values());
+
+    if (userId) {
+      presets = presets.filter(p => p.userId === userId || p.isDefault);
+    }
+
+    // Sort by preset number first, then by use count
+    presets.sort((a, b) => {
+      if (a.presetNumber && b.presetNumber) {
+        return a.presetNumber - b.presetNumber;
+      }
+      if (a.presetNumber && !b.presetNumber) return -1;
+      if (!a.presetNumber && b.presetNumber) return 1;
+      return (b.useCount || 0) - (a.useCount || 0);
+    });
+
+    return presets;
+  }
+
+  async updateEntertainmentPreset(id: number, updates: Partial<EntertainmentPreset>): Promise<EntertainmentPreset | undefined> {
+    const preset = this.entertainmentPresets.get(id);
+    if (!preset) return undefined;
+
+    const updatedPreset: EntertainmentPreset = {
+      ...preset,
+      ...updates,
+      id, // Ensure ID cannot be changed
+    };
+
+    this.entertainmentPresets.set(id, updatedPreset);
+    return updatedPreset;
+  }
+
+  async deleteEntertainmentPreset(id: number): Promise<boolean> {
+    return this.entertainmentPresets.delete(id);
+  }
+
+  // Entertainment History
+  async getEntertainmentHistory(userId?: string, limit?: number): Promise<EntertainmentHistory[]> {
+    let history = Array.from(this.entertainmentHistory.values());
+
+    if (userId) {
+      history = history.filter(h => h.userId === userId);
+    }
+
+    // Sort by played date (most recent first)
+    history.sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime());
+
+    if (limit) {
+      history = history.slice(0, limit);
+    }
+
+    return history;
+  }
+
+  async createEntertainmentHistory(history: InsertEntertainmentHistory): Promise<EntertainmentHistory> {
+    const id = this.historyIdCounter++;
+    const newHistory: EntertainmentHistory = {
+      id,
+      ...history,
+      playedAt: new Date(),
+      wasCompleted: history.wasCompleted || false,
+      source: history.source || 'manual',
+    };
+
+    this.entertainmentHistory.set(id, newHistory);
+
+    // Cleanup old history if over max items
+    const allHistory = Array.from(this.entertainmentHistory.values());
+    if (allHistory.length > this.entertainmentSettings.maxHistoryItems) {
+      const sortedHistory = allHistory.sort((a, b) => 
+        new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
+      );
+      
+      const toDelete = sortedHistory.slice(this.entertainmentSettings.maxHistoryItems);
+      toDelete.forEach(item => this.entertainmentHistory.delete(item.id));
+    }
+
+    return newHistory;
+  }
+
+  async clearEntertainmentHistory(userId?: string): Promise<number> {
+    let clearedCount = 0;
+    
+    if (userId) {
+      // Clear history for specific user
+      const toDelete = Array.from(this.entertainmentHistory.entries())
+        .filter(([_, history]) => history.userId === userId)
+        .map(([id, _]) => id);
+      
+      toDelete.forEach(id => {
+        if (this.entertainmentHistory.delete(id)) {
+          clearedCount++;
+        }
+      });
+    } else {
+      // Clear all history
+      clearedCount = this.entertainmentHistory.size;
+      this.entertainmentHistory.clear();
+    }
+
+    return clearedCount;
+  }
+
+  // Entertainment Playback State
+  async getEntertainmentPlaybackState(): Promise<EntertainmentPlaybackState | undefined> {
+    return this.entertainmentPlaybackState || undefined;
+  }
+
+  async updateEntertainmentPlaybackState(state: InsertEntertainmentPlaybackState): Promise<EntertainmentPlaybackState> {
+    const id = this.entertainmentPlaybackState?.id || 1;
+    const newState: EntertainmentPlaybackState = {
+      id,
+      ...state,
+      volume: state.volume || 0.8,
+      position: state.position || 0,
+      isPlaying: state.isPlaying !== undefined ? state.isPlaying : false,
+      audioFocusHeld: state.audioFocusHeld !== undefined ? state.audioFocusHeld : false,
+      crossfadeEnabled: state.crossfadeEnabled !== undefined ? state.crossfadeEnabled : false,
+      repeatMode: state.repeatMode || 'none',
+      shuffleEnabled: state.shuffleEnabled !== undefined ? state.shuffleEnabled : false,
+      updatedAt: new Date(),
+    };
+
+    this.entertainmentPlaybackState = newState;
+    return newState;
+  }
+
+  // Entertainment Settings
+  async getEntertainmentSettings(): Promise<EntertainmentSettings> {
+    return { ...this.entertainmentSettings };
+  }
+
+  async updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings> {
+    this.entertainmentSettings = {
+      ...this.entertainmentSettings,
+      ...settings,
+    };
+    
+    return { ...this.entertainmentSettings };
   }
 }
 

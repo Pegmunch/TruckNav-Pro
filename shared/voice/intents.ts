@@ -17,6 +17,7 @@ export type IntentCategory =
   | 'settings' 
   | 'favorites' 
   | 'traffic'
+  | 'entertainment'
   | 'help'
   | 'unknown';
 
@@ -1034,6 +1035,8 @@ export interface IntentContext {
   lastIntent?: VoiceIntent;
   navigationState?: 'idle' | 'navigating' | 'paused';
   routeActive?: boolean;
+  hasVehicleProfile?: boolean;
+  sidebarSection?: string;
   userPreferences?: Record<string, any>;
 }
 

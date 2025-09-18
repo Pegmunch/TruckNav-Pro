@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, type VehicleProfile, type Restriction } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
@@ -1569,6 +1569,307 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =============================================================================
   // END TRAFFIC RE-ROUTING SYSTEM
+  // =============================================================================
+
+  // =============================================================================
+  // ENTERTAINMENT SYSTEM API ROUTES
+  // =============================================================================
+
+  // Entertainment Stations
+  app.get("/api/entertainment/stations", async (req: Request, res: Response) => {
+    try {
+      const { platform, type, trucking, limit, search } = req.query;
+      
+      let stations;
+      
+      if (search && typeof search === 'string') {
+        // Search stations
+        stations = await storage.searchEntertainmentStations(search, {
+          platform: platform as string,
+          type: type as string,
+          limit: limit ? parseInt(limit as string) : undefined,
+        });
+      } else {
+        // Get all stations with filters
+        stations = await storage.getAllEntertainmentStations({
+          platform: platform as string,
+          type: type as string,
+          trucking: trucking === 'true',
+          limit: limit ? parseInt(limit as string) : undefined,
+        });
+      }
+      
+      res.json(stations);
+    } catch (error) {
+      console.error('Error getting entertainment stations:', error);
+      res.status(500).json({ message: "Failed to get entertainment stations" });
+    }
+  });
+
+  app.get("/api/entertainment/stations/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const station = await storage.getEntertainmentStation(id);
+      
+      if (!station) {
+        return res.status(404).json({ message: "Entertainment station not found" });
+      }
+      
+      res.json(station);
+    } catch (error) {
+      console.error('Error getting entertainment station:', error);
+      res.status(500).json({ message: "Failed to get entertainment station" });
+    }
+  });
+
+  app.post("/api/entertainment/stations", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertEntertainmentStationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid entertainment station data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const station = await storage.createEntertainmentStation(result.data);
+      res.json(station);
+    } catch (error) {
+      console.error('Error creating entertainment station:', error);
+      res.status(500).json({ message: "Failed to create entertainment station" });
+    }
+  });
+
+  app.patch("/api/entertainment/stations/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const station = await storage.updateEntertainmentStation(id, req.body);
+      
+      if (!station) {
+        return res.status(404).json({ message: "Entertainment station not found" });
+      }
+      
+      res.json(station);
+    } catch (error) {
+      console.error('Error updating entertainment station:', error);
+      res.status(500).json({ message: "Failed to update entertainment station" });
+    }
+  });
+
+  app.delete("/api/entertainment/stations/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteEntertainmentStation(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Entertainment station not found" });
+      }
+      
+      res.json({ message: "Entertainment station deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting entertainment station:', error);
+      res.status(500).json({ message: "Failed to delete entertainment station" });
+    }
+  });
+
+  // Entertainment Presets
+  app.get("/api/entertainment/presets", async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.query;
+      const presets = await storage.getAllEntertainmentPresets(userId as string);
+      
+      // Enrich presets with station data
+      const enrichedPresets = await Promise.all(
+        presets.map(async (preset) => {
+          const station = await storage.getEntertainmentStation(preset.stationId);
+          return { ...preset, station };
+        })
+      );
+      
+      res.json(enrichedPresets);
+    } catch (error) {
+      console.error('Error getting entertainment presets:', error);
+      res.status(500).json({ message: "Failed to get entertainment presets" });
+    }
+  });
+
+  app.get("/api/entertainment/presets/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const preset = await storage.getEntertainmentPreset(parseInt(id));
+      
+      if (!preset) {
+        return res.status(404).json({ message: "Entertainment preset not found" });
+      }
+      
+      // Enrich with station data
+      const station = await storage.getEntertainmentStation(preset.stationId);
+      res.json({ ...preset, station });
+    } catch (error) {
+      console.error('Error getting entertainment preset:', error);
+      res.status(500).json({ message: "Failed to get entertainment preset" });
+    }
+  });
+
+  app.post("/api/entertainment/presets", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertEntertainmentPresetSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid entertainment preset data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const preset = await storage.createEntertainmentPreset(result.data);
+      res.json(preset);
+    } catch (error) {
+      console.error('Error creating entertainment preset:', error);
+      res.status(500).json({ message: "Failed to create entertainment preset" });
+    }
+  });
+
+  app.patch("/api/entertainment/presets/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const preset = await storage.updateEntertainmentPreset(parseInt(id), req.body);
+      
+      if (!preset) {
+        return res.status(404).json({ message: "Entertainment preset not found" });
+      }
+      
+      res.json(preset);
+    } catch (error) {
+      console.error('Error updating entertainment preset:', error);
+      res.status(500).json({ message: "Failed to update entertainment preset" });
+    }
+  });
+
+  app.delete("/api/entertainment/presets/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteEntertainmentPreset(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Entertainment preset not found" });
+      }
+      
+      res.json({ message: "Entertainment preset deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting entertainment preset:', error);
+      res.status(500).json({ message: "Failed to delete entertainment preset" });
+    }
+  });
+
+  // Entertainment History
+  app.get("/api/entertainment/history", async (req: Request, res: Response) => {
+    try {
+      const { userId, limit } = req.query;
+      const history = await storage.getEntertainmentHistory(
+        userId as string,
+        limit ? parseInt(limit as string) : undefined
+      );
+      
+      // Enrich history with station data
+      const enrichedHistory = await Promise.all(
+        history.map(async (item) => {
+          const station = await storage.getEntertainmentStation(item.stationId);
+          return { ...item, station };
+        })
+      );
+      
+      res.json(enrichedHistory);
+    } catch (error) {
+      console.error('Error getting entertainment history:', error);
+      res.status(500).json({ message: "Failed to get entertainment history" });
+    }
+  });
+
+  app.post("/api/entertainment/history", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertEntertainmentHistorySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid entertainment history data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const history = await storage.createEntertainmentHistory(result.data);
+      res.json(history);
+    } catch (error) {
+      console.error('Error creating entertainment history:', error);
+      res.status(500).json({ message: "Failed to create entertainment history" });
+    }
+  });
+
+  app.delete("/api/entertainment/history", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.query;
+      const clearedCount = await storage.clearEntertainmentHistory(userId as string);
+      
+      res.json({ 
+        message: "Entertainment history cleared successfully",
+        clearedCount 
+      });
+    } catch (error) {
+      console.error('Error clearing entertainment history:', error);
+      res.status(500).json({ message: "Failed to clear entertainment history" });
+    }
+  });
+
+  // Entertainment Playback State
+  app.get("/api/entertainment/playback-state", async (req: Request, res: Response) => {
+    try {
+      const state = await storage.getEntertainmentPlaybackState();
+      res.json(state || null);
+    } catch (error) {
+      console.error('Error getting entertainment playback state:', error);
+      res.status(500).json({ message: "Failed to get entertainment playback state" });
+    }
+  });
+
+  app.post("/api/entertainment/playback-state", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertEntertainmentPlaybackStateSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid entertainment playback state data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const state = await storage.updateEntertainmentPlaybackState(result.data);
+      res.json(state);
+    } catch (error) {
+      console.error('Error updating entertainment playback state:', error);
+      res.status(500).json({ message: "Failed to update entertainment playback state" });
+    }
+  });
+
+  // Entertainment Settings
+  app.get("/api/entertainment/settings", async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.getEntertainmentSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Error getting entertainment settings:', error);
+      res.status(500).json({ message: "Failed to get entertainment settings" });
+    }
+  });
+
+  app.patch("/api/entertainment/settings", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const settings = await storage.updateEntertainmentSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error('Error updating entertainment settings:', error);
+      res.status(500).json({ message: "Failed to update entertainment settings" });
+    }
+  });
+
+  // =============================================================================
+  // END ENTERTAINMENT SYSTEM API ROUTES
   // =============================================================================
 
   const httpServer = createServer(app);

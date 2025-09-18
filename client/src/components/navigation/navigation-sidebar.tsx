@@ -37,7 +37,12 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  MessageSquare
+  MessageSquare,
+  Music,
+  Radio,
+  Headphones,
+  Loader2,
+  Square
 } from "lucide-react";
 import { VoiceMicButton } from "@/components/ui/voice-mic-button";
 import { useVoiceCommands, type VoiceTranscript, type VoiceError } from "@/hooks/use-voice-commands";
@@ -62,6 +67,8 @@ import { ThemeSelector } from "@/components/theme/theme-selector";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import LegalNotices from "@/components/legal/legal-notices";
+import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
+import { getAudioManager } from "@/lib/entertainment/audio-manager";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -136,13 +143,14 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const { toast } = useToast();
   const { formatHeight, formatWeight } = useMeasurement();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'settings'>('vehicle');
+  const [activeSection, setActiveSection] = useState<'route' | 'vehicle' | 'entertainment' | 'settings'>('vehicle');
   const [isHistoryFavoritesOpen, setIsHistoryFavoritesOpen] = useState(false);
   const [isLegalPopupOpen, setIsLegalPopupOpen] = useState(false);
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
   const [isLegalNoticesOpen, setIsLegalNoticesOpen] = useState(false);
   const [showNavigationVoiceTranscript, setShowNavigationVoiceTranscript] = useState(false);
   const [lastNavigationVoiceCommand, setLastNavigationVoiceCommand] = useState<string>('');
+  const [isEntertainmentPanelOpen, setIsEntertainmentPanelOpen] = useState(false);
   
   
   // Window sync state
@@ -191,6 +199,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
       title: 'Vehicle Profile',
       icon: Truck,
       badge: selectedProfile ? 'Set' : 'Required',
+    },
+    {
+      id: 'entertainment' as const,
+      title: 'Entertainment',
+      icon: Music,
+      badge: null,
     },
     {
       id: 'settings' as const,
@@ -500,11 +514,88 @@ const NavigationSidebar = memo(function NavigationSidebar({
       }
     },
     
+    entertainment: async (intent, entities) => {
+      console.log('Navigation sidebar entertainment intent:', intent.action, entities);
+      
+      const audioManager = getAudioManager();
+      const playbackStatus = audioManager.getPlaybackStatus();
+      
+      if (intent.action === 'play_music' || intent.action === 'start_music') {
+        setActiveSection('entertainment');
+        setIsEntertainmentPanelOpen(true);
+        setLastNavigationVoiceCommand('Opening entertainment panel');
+        toast({
+          title: "Entertainment opened",
+          description: "Entertainment panel is now active",
+        });
+      } else if (intent.action === 'play_radio') {
+        setActiveSection('entertainment');
+        setIsEntertainmentPanelOpen(true);
+        setLastNavigationVoiceCommand('Opening radio stations');
+        toast({
+          title: "Radio stations",
+          description: "Browse available radio stations",
+        });
+      } else if (intent.action === 'volume_up') {
+        const newVolume = Math.min(1.0, playbackStatus.volume + 0.1);
+        audioManager.setVolume(newVolume);
+        setLastNavigationVoiceCommand(`Volume increased to ${Math.round(newVolume * 100)}%`);
+        toast({ 
+          title: "Volume up", 
+          description: `Entertainment volume: ${Math.round(newVolume * 100)}%` 
+        });
+      } else if (intent.action === 'volume_down') {
+        const newVolume = Math.max(0.0, playbackStatus.volume - 0.1);
+        audioManager.setVolume(newVolume);
+        setLastNavigationVoiceCommand(`Volume decreased to ${Math.round(newVolume * 100)}%`);
+        toast({ 
+          title: "Volume down", 
+          description: `Entertainment volume: ${Math.round(newVolume * 100)}%` 
+        });
+      } else if (intent.action === 'pause_music' || intent.action === 'stop_music') {
+        try {
+          audioManager.pause();
+          setLastNavigationVoiceCommand('Music paused');
+          toast({ title: "Music paused", description: "Entertainment playback paused" });
+        } catch (error) {
+          setLastNavigationVoiceCommand('No music playing');
+          toast({ 
+            title: "No music playing", 
+            description: "Start playing a station first",
+            variant: "destructive" 
+          });
+        }
+      } else if (intent.action === 'resume_music') {
+        try {
+          audioManager.resume();
+          setLastNavigationVoiceCommand('Music resumed');
+          toast({ title: "Music resumed", description: "Entertainment playback resumed" });
+        } catch (error) {
+          setLastNavigationVoiceCommand('No music to resume');
+          toast({ 
+            title: "No music to resume", 
+            description: "Start playing a station first",
+            variant: "destructive" 
+          });
+        }
+      } else if (intent.action === 'next_track') {
+        // Emit next track event for station navigation
+        window.dispatchEvent(new CustomEvent('audio-next', { detail: { source: 'voice' } }));
+        setLastNavigationVoiceCommand('Next track requested');
+        toast({ title: "Next track", description: "Switching to next station" });
+      } else if (intent.action === 'previous_track') {
+        // Emit previous track event for station navigation
+        window.dispatchEvent(new CustomEvent('audio-previous', { detail: { source: 'voice' } }));
+        setLastNavigationVoiceCommand('Previous track requested');
+        toast({ title: "Previous track", description: "Switching to previous station" });
+      }
+    },
+
     unknown: async (intent, entities) => {
       setLastNavigationVoiceCommand(`Unrecognized: "${intent.originalText}"`);
       toast({
         title: "Command not recognized",
-        description: "Try 'start navigation', 'zoom in', or 'find fuel station'",
+        description: "Try 'start navigation', 'play music', 'zoom in', or 'find fuel station'",
         variant: "destructive"
       });
     }
@@ -556,7 +647,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Update voice context for navigation
   useEffect(() => {
     navigationVoiceIntents.updateContext({
-      navigationState: isNavigating ? 'active' : 'idle',
+      navigationState: isNavigating ? 'navigating' : 'idle',
       routeActive: !!currentRoute,
       hasVehicleProfile: !!selectedProfile,
       sidebarSection: activeSection
@@ -692,7 +783,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
               <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Voice commands:</div>
                 <div className="flex flex-wrap gap-1">
-                  {['Start navigation', 'Zoom in', 'Find fuel station'].map((suggestion, index) => (
+                  {['Start navigation', 'Play music', 'Zoom in', 'Find fuel station'].map((suggestion, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       "{suggestion}"
                     </Badge>
@@ -710,7 +801,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {isCollapsed ? (
           /* Collapsed Mode - Icon Navigation */
           <div className="flex-1 p-2 space-y-2">
-            {sidebarSections.filter(section => section.id === 'vehicle').map((section) => (
+            {sidebarSections.filter(section => ['vehicle', 'entertainment'].includes(section.id)).map((section) => (
               <Button
                 key={section.id}
                 variant={activeSection === section.id ? "default" : "ghost"}
@@ -743,7 +834,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
             {/* Section Navigation */}
             <div className="p-4 border-b border-border">
               <div className="grid grid-cols-1 gap-2 mb-3">
-                {sidebarSections.filter(section => section.id === 'vehicle').map((section) => (
+                {sidebarSections.filter(section => ['vehicle', 'entertainment'].includes(section.id)).map((section) => (
                   <Button
                     key={section.id}
                     variant={activeSection === section.id ? "default" : "outline"}
@@ -1080,6 +1171,15 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       </CardContent>
                     </Card>
                   )}
+                </div>
+              )}
+
+              {activeSection === 'entertainment' && (
+                <div className="p-4">
+                  <EntertainmentPanel 
+                    isOpen={isEntertainmentPanelOpen}
+                    onClose={() => setIsEntertainmentPanelOpen(false)}
+                  />
                 </div>
               )}
 

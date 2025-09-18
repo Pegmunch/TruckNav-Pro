@@ -415,3 +415,192 @@ export const trafficSettingsSchema = z.object({
 });
 
 export type TrafficSettings = z.infer<typeof trafficSettingsSchema>;
+
+// ===== ENTERTAINMENT SCHEMAS =====
+
+// Entertainment content types and platform schemas
+export const entertainmentPlatformSchema = z.enum(['tunein', 'mixcloud']);
+export const entertainmentTypeSchema = z.enum(['radio', 'music', 'podcast', 'talk', 'news', 'sports']);
+
+// TuneIn station schema
+export const tuneInStationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  genre: z.string(),
+  location: z.string().optional(),
+  language: z.string().optional(),
+  streamUrl: z.string(),
+  logoUrl: z.string().optional(),
+  websiteUrl: z.string().optional(),
+  bitrate: z.number().optional(),
+  format: z.string().optional(), // mp3, aac, etc.
+  reliability: z.number().min(0).max(100).default(100), // stream reliability score
+  listeners: z.number().optional(),
+  tags: z.array(z.string()).default([]),
+  isTruckingRelated: z.boolean().default(false),
+});
+
+// MixCloud content schema  
+export const mixCloudContentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  creator: z.string(),
+  genre: z.string(),
+  tags: z.array(z.string()).default([]),
+  duration: z.number(), // seconds
+  playCount: z.number().default(0),
+  streamUrl: z.string(),
+  artworkUrl: z.string().optional(),
+  createdAt: z.date(),
+  isDrivingFriendly: z.boolean().default(false), // suitable for driving
+});
+
+// Entertainment stations database table
+export const entertainmentStations = pgTable("entertainment_stations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  platform: text("platform").notNull(), // 'tunein' or 'mixcloud'
+  type: text("type").notNull(), // 'radio', 'music', 'podcast', 'talk', 'news', 'sports'
+  externalId: text("external_id").notNull(), // ID from the external platform
+  name: text("name").notNull(),
+  description: text("description"),
+  genre: text("genre"),
+  creator: text("creator"), // DJ, host, or station owner
+  streamUrl: text("stream_url").notNull(),
+  artworkUrl: text("artwork_url"),
+  websiteUrl: text("website_url"),
+  metadata: jsonb("metadata"), // platform-specific data
+  duration: integer("duration"), // seconds (null for live radio)
+  language: text("language").default('en'),
+  country: text("country").default('US'),
+  bitrate: integer("bitrate"),
+  format: text("format").default('mp3'),
+  reliability: integer("reliability").default(100), // 0-100 stream reliability
+  listeners: integer("listeners"),
+  playCount: integer("play_count").default(0),
+  tags: jsonb("tags"), // array of strings
+  isTruckingRelated: boolean("is_trucking_related").default(false),
+  isDrivingFriendly: boolean("is_driving_friendly").default(false),
+  isActive: boolean("is_active").default(true),
+  lastVerified: timestamp("last_verified").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Entertainment presets/favorites
+export const entertainmentPresets = pgTable("entertainment_presets", {
+  id: serial("id").primaryKey(),
+  stationId: varchar("station_id").notNull(), // references entertainment_stations
+  userId: varchar("user_id"), // optional user association
+  presetNumber: integer("preset_number"), // 1-10 for quick access
+  customName: text("custom_name"), // user-defined name override
+  volume: real("volume").default(0.8), // 0.0-1.0
+  isDefault: boolean("is_default").default(false), // system default preset
+  useCount: integer("use_count").default(0),
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Entertainment playback history
+export const entertainmentHistory = pgTable("entertainment_history", {
+  id: serial("id").primaryKey(),
+  stationId: varchar("station_id").notNull(), // references entertainment_stations
+  userId: varchar("user_id"), // optional user association
+  playedAt: timestamp("played_at").defaultNow(),
+  playDuration: integer("play_duration"), // seconds actually played
+  wasCompleted: boolean("was_completed").default(false), // finished the content
+  volume: real("volume"),
+  source: text("source").default('manual'), // 'manual', 'voice', 'preset'
+  metadata: jsonb("metadata"), // playback session data
+});
+
+// Current playback state (single row, updated frequently)
+export const entertainmentPlaybackState = pgTable("entertainment_playback_state", {
+  id: serial("id").primaryKey(),
+  currentStationId: varchar("current_station_id"), // references entertainment_stations
+  isPlaying: boolean("is_playing").default(false),
+  volume: real("volume").default(0.8),
+  position: integer("position").default(0), // current position in seconds (for non-live content)
+  duration: integer("duration"), // total duration in seconds (for non-live content)
+  playbackStartedAt: timestamp("playback_started_at"),
+  lastPausedAt: timestamp("last_paused_at"),
+  audioFocusHeld: boolean("audio_focus_held").default(false), // for proper audio management
+  crossfadeEnabled: boolean("crossfade_enabled").default(false),
+  repeatMode: text("repeat_mode").default('none'), // 'none', 'one', 'all'
+  shuffleEnabled: boolean("shuffle_enabled").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for entertainment tables
+export const insertEntertainmentStationSchema = createInsertSchema(entertainmentStations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastVerified: true,
+}).extend({
+  platform: entertainmentPlatformSchema,
+  type: entertainmentTypeSchema,
+  reliability: z.number().min(0).max(100).default(100),
+  volume: z.number().min(0).max(1).optional(),
+  tags: z.array(z.string()).default([]),
+});
+
+export const insertEntertainmentPresetSchema = createInsertSchema(entertainmentPresets).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  volume: z.number().min(0).max(1).default(0.8),
+  presetNumber: z.number().min(1).max(10).optional(),
+});
+
+export const insertEntertainmentHistorySchema = createInsertSchema(entertainmentHistory).omit({
+  id: true,
+  playedAt: true,
+}).extend({
+  volume: z.number().min(0).max(1).optional(),
+  source: z.enum(['manual', 'voice', 'preset']).default('manual'),
+});
+
+export const insertEntertainmentPlaybackStateSchema = createInsertSchema(entertainmentPlaybackState).omit({
+  id: true,
+  updatedAt: true,
+}).extend({
+  volume: z.number().min(0).max(1).default(0.8),
+  repeatMode: z.enum(['none', 'one', 'all']).default('none'),
+});
+
+// Entertainment settings schema
+export const entertainmentSettingsSchema = z.object({
+  defaultVolume: z.number().min(0).max(1).default(0.8),
+  autoPlay: z.boolean().default(false),
+  crossfadeEnabled: z.boolean().default(false),
+  crossfadeDuration: z.number().min(0).max(10).default(3), // seconds
+  backgroundPlayEnabled: z.boolean().default(true),
+  voiceControlEnabled: z.boolean().default(true),
+  showTruckingStationsFirst: z.boolean().default(true),
+  preferredGenres: z.array(z.string()).default(['news', 'talk', 'music']),
+  maxHistoryItems: z.number().min(10).max(100).default(50),
+  audioQuality: z.enum(['low', 'medium', 'high']).default('medium'),
+  emergencyInterruptEnabled: z.boolean().default(true), // pause for navigation alerts
+});
+
+// Type exports for entertainment schemas
+export type EntertainmentPlatform = z.infer<typeof entertainmentPlatformSchema>;
+export type EntertainmentType = z.infer<typeof entertainmentTypeSchema>;
+export type TuneInStation = z.infer<typeof tuneInStationSchema>;
+export type MixCloudContent = z.infer<typeof mixCloudContentSchema>;
+
+export type EntertainmentStation = typeof entertainmentStations.$inferSelect;
+export type InsertEntertainmentStation = z.infer<typeof insertEntertainmentStationSchema>;
+
+export type EntertainmentPreset = typeof entertainmentPresets.$inferSelect;
+export type InsertEntertainmentPreset = z.infer<typeof insertEntertainmentPresetSchema>;
+
+export type EntertainmentHistory = typeof entertainmentHistory.$inferSelect;
+export type InsertEntertainmentHistory = z.infer<typeof insertEntertainmentHistorySchema>;
+
+export type EntertainmentPlaybackState = typeof entertainmentPlaybackState.$inferSelect;
+export type InsertEntertainmentPlaybackState = z.infer<typeof insertEntertainmentPlaybackStateSchema>;
+
+export type EntertainmentSettings = z.infer<typeof entertainmentSettingsSchema>;

@@ -69,6 +69,7 @@ export interface IntentHandlers {
   settings?: IntentHandler;
   favorites?: IntentHandler;
   traffic?: IntentHandler;
+  entertainment?: IntentHandler;
   help?: IntentHandler;
   unknown?: IntentHandler;
 }
