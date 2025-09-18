@@ -2,18 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GLOBAL KILL SWITCH: Prevent any backdrop blur effects that could cause frosted glass overlays */
-*,::before,::after {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Re-enable backdrop blur only for specific open states that we control */
-.drawer-overlay[data-state='open'] {
-  backdrop-filter: blur(2px) !important;
-  -webkit-backdrop-filter: blur(2px) !important;
-}
-
 /* Automotive-optimized styling for CarPlay/Android Auto */
 html {
   scroll-behavior: smooth;
@@ -366,12 +354,10 @@ body {
   }
 }
 
-/* Sidebar-specific styling - FIXED: Remove backdrop blur to prevent frosted glass overlay */
+/* Sidebar-specific styling */
 .sidebar-backdrop {
   background: rgba(0, 0, 0, 0.1);
-  /* backdrop-filter: blur(2px); REMOVED - was causing frosted glass overlay issue */
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  backdrop-filter: blur(2px);
   transition: opacity 200ms ease-in-out;
 }
 
