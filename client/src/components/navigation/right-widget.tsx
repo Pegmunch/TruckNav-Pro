@@ -212,7 +212,7 @@ const RightWidget = memo(function RightWidget({
         className={cn(
           "fixed right-0 top-0 h-screen z-50",
           "w-[360px] max-w-[90vw]", // ~360px width as specified
-          "bg-background border-l border-border shadow-xl", // Solid background, no backdrop blur
+          "bg-background/95 backdrop-blur-md border-l border-border shadow-xl", // Semi-transparent with blur - restored visual appearance
           "transition-transform duration-300 ease-out",
           "flex flex-col",
           // Slide-in animation: translate-x-full → translate-x-0
