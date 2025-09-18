@@ -342,7 +342,7 @@ const SearchSidebar = memo(function SearchSidebar({
                   placeholder="Search locations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-12 automotive-input scalable-control-button"
+                  className="pl-12 pr-12 automotive-input scalable-control-button"
                   data-testid="input-search-query"
                 />
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
