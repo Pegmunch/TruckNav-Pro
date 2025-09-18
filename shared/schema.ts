@@ -32,17 +32,42 @@ export const vehicleProfiles = pgTable("vehicle_profiles", {
   weight: real("weight"), // in tonnes
   axles: integer("axles").default(4),
   isHazmat: boolean("is_hazmat").default(false),
+  // Enhanced vehicle class routing specifications
+  maxSpeed: integer("max_speed").default(70), // in mph - varies by vehicle type
+  canUseResidentialRoads: boolean("can_use_residential_roads").default(true),
+  canUseMotorways: boolean("can_use_motorways").default(true),
+  requiresCommercialRoutes: boolean("requires_commercial_routes").default(false),
+  restrictedHours: jsonb("restricted_hours"), // e.g., {"start": "22:00", "end": "06:00"} for night driving bans
+  allowedRoadTypes: jsonb("allowed_road_types"), // ['motorway', 'A-road', 'B-road', 'residential', 'industrial']
+  restrictedAreas: jsonb("restricted_areas"), // ['city_centre', 'residential_zone', 'school_zone']
+  region: text("region").default("UK"), // 'UK', 'EU'
+  minimumLaneWidth: real("minimum_lane_width"), // minimum lane width required in feet
+  turningRadius: real("turning_radius"), // turning radius in feet
+  bridgeFormula: jsonb("bridge_formula"), // axle weight distribution rules
 });
 
 export const restrictions = pgTable("restrictions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   location: text("location").notNull(),
-  type: text("type").notNull(), // 'height', 'width', 'weight', 'length'
+  type: text("type").notNull(), // 'height', 'width', 'weight', 'length', 'axle_count', 'hazmat', 'vehicle_type', 'time_based', 'residential_ban', 'bridge_weight', 'tunnel_clearance'
   limit: real("limit").notNull(), // in feet or tonnes
   description: text("description"),
   coordinates: jsonb("coordinates"), // { lat: number, lng: number }
   roadName: text("road_name"),
   country: text("country").default('UK'),
+  // Enhanced restriction specifications for strict enforcement
+  severity: text("severity").default('medium'), // 'low', 'medium', 'high', 'absolute' - absolute means zero tolerance
+  restrictedVehicleTypes: jsonb("restricted_vehicle_types"), // ['class_2_lorry', '7_5_tonne'] etc.
+  timeRestrictions: jsonb("time_restrictions"), // {"weekdays": {"start": "07:00", "end": "19:00"}, "weekends": null}
+  enforcementType: text("enforcement_type").default('advisory'), // 'advisory', 'legal', 'physical', 'strict'
+  alternativeRoutes: jsonb("alternative_routes"), // Suggested alternative route IDs or instructions
+  violationPenalty: text("violation_penalty"), // Description of penalty for violation
+  isActive: boolean("is_active").default(true),
+  activeSince: timestamp("active_since").default(sql`now()`),
+  activeUntil: timestamp("active_until"),
+  routeSegment: jsonb("route_segment"), // Specific route segment coordinates this applies to
+  bypassAllowed: boolean("bypass_allowed").default(false), // Whether route can bypass this restriction
+  exemptions: jsonb("exemptions"), // Special exemptions (emergency vehicles, etc.)
 });
 
 export const facilities = pgTable("facilities", {
@@ -176,7 +201,27 @@ export const insertVehicleProfileSchema = createInsertSchema(vehicleProfiles).om
   length: z.number().nullable().optional(),
   weight: z.number().nullable().optional(), 
   axles: z.number().nullable().optional(),
-  isHazmat: z.boolean().default(false)
+  isHazmat: z.boolean().default(false),
+  // Enhanced vehicle class routing specifications
+  maxSpeed: z.number().min(10).max(100).default(70),
+  canUseResidentialRoads: z.boolean().default(true),
+  canUseMotorways: z.boolean().default(true),
+  requiresCommercialRoutes: z.boolean().default(false),
+  restrictedHours: z.object({
+    start: z.string().regex(/^\d{2}:\d{2}$/),
+    end: z.string().regex(/^\d{2}:\d{2}$/),
+    days: z.array(z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])).optional()
+  }).optional(),
+  allowedRoadTypes: z.array(z.enum(['motorway', 'A-road', 'B-road', 'residential', 'industrial', 'urban', 'rural'])).default(['motorway', 'A-road', 'B-road']),
+  restrictedAreas: z.array(z.enum(['city_centre', 'residential_zone', 'school_zone', 'historic_district', 'environmental_zone'])).default([]),
+  region: z.enum(['UK', 'EU']).default('UK'),
+  minimumLaneWidth: z.number().min(6).max(20).optional(),
+  turningRadius: z.number().min(10).max(100).optional(),
+  bridgeFormula: z.object({
+    maxAxleWeight: z.number(),
+    maxGroupWeight: z.number(),
+    steerAxleMax: z.number().optional()
+  }).optional()
 });
 
 export const insertRestrictionSchema = createInsertSchema(restrictions).omit({
