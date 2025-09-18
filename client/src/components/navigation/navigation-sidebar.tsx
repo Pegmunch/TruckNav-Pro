@@ -227,7 +227,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Toggle Button */}
       <div
         className={cn(
-          "fixed left-0 top-1/3 -translate-y-1/2 z-40 transition-all duration-300 ease-in-out",
+          "fixed left-0 top-1/3 -translate-y-1/2 z-30 transition-all duration-300 ease-in-out",
           isOpen 
             ? (isCollapsed ? "left-16" : "left-80") 
             : "left-0"
@@ -265,20 +265,20 @@ const NavigationSidebar = memo(function NavigationSidebar({
         data-testid="navigation-sidebar-panel"
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
           {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <Navigation className="w-5 h-5 text-primary" />
-              <h2 className="font-semibold text-foreground">Navigation</h2>
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
+              <h2 className="font-semibold text-foreground truncate">Navigation</h2>
             </div>
           )}
           
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center ml-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={onCollapseToggle}
-              className="scalable-control-button"
+              className="scalable-control-button h-9 w-9"
               data-testid="button-collapse-navigation-sidebar"
             >
               {isCollapsed ? (

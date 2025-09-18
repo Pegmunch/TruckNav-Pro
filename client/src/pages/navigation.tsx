@@ -496,11 +496,7 @@ export default function NavigationPage() {
         });
       }
       
-      // ESC to close search panel
-      if (event.key === 'Escape' && isUnifiedSearchPanelOpen) {
-        event.preventDefault();
-        setIsUnifiedSearchPanelOpen(false);
-      }
+      // Note: ESC key handling is now managed by the RightWidget component itself to avoid conflicts
     };
 
     document.addEventListener('keydown', handleKeyDown);

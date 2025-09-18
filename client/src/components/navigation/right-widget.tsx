@@ -242,7 +242,7 @@ const RightWidget = memo(function RightWidget({
       {/* Backdrop - only show when open, no overlay for desktop */}
       <div
         className={cn(
-          "fixed inset-0 z-40 transition-opacity duration-300",
+          "fixed inset-0 z-45 transition-opacity duration-300",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         style={{ backgroundColor: 'transparent' }} // No dark overlay for desktop
@@ -273,27 +273,27 @@ const RightWidget = memo(function RightWidget({
         }}
       >
         {/* Sticky Widget Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm shrink-0">
-          <div className="flex items-center space-x-3">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm shrink-0">
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
             <h2 
-              className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+              className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate"
               data-testid="text-rightwidget-title"
             >
               Search & Tools
             </h2>
             {hasActivity && (
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse flex-shrink-0" />
             )}
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
             {/* Pin/Unpin Button */}
             <Button
               variant={isPinned ? "default" : "ghost"}
               size="icon"
               onClick={handlePinToggle}
               className={cn(
-                "scalable-control-button h-10 w-10 rounded-lg transition-all duration-200",
+                "scalable-control-button h-9 w-9 rounded-lg transition-all duration-200",
                 isPinned 
                   ? "bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 shadow-md" 
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -315,7 +315,7 @@ const RightWidget = memo(function RightWidget({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="scalable-control-button h-10 w-10 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              className="scalable-control-button h-9 w-9 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
               title="Close search panel (ESC)"
               data-testid="button-close-rightwidget"
             >
