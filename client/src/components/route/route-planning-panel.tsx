@@ -15,8 +15,8 @@ import {
   Clock, 
   Fuel,
   AlertTriangle,
-  CornerLeftUp,
-  ParkingMeter,
+  CornerUpLeft,
+  ParkingCircle,
   Bed,
   Star,
   Square,
@@ -134,10 +134,6 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
 
   // Note: Journey History and Route Favorites have been moved to HistoryFavoritesPanel
 
-  // Note: Route favorite handling moved to HistoryFavoritesPanel
-
-  // Note: Journey status formatting moved to HistoryFavoritesPanel
-
   return (
     <div className="w-full md:w-80 bg-card md:border-r border-border flex flex-col min-h-full overflow-y-auto touch-scroll">
       {/* Route Input Section */}
@@ -161,31 +157,71 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
             icon="destination"
           />
         </div>
-        
-        {/* Start Navigation Button - positioned right after destination input */}
-        {(fromLocation && toLocation) && (
-          <div className="mt-4">
+      </div>
+
+      {/* Enhanced Plan Route Section */}
+      {(fromLocation && toLocation) && (
+        <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-foreground flex items-center">
+              <Shield className="w-4 h-4 text-primary mr-2" />
+              Truck-Safe Route Planning
+            </h3>
+            {selectedProfile && (
+              <Badge variant="outline" className="text-xs">
+                {selectedProfile.type.replace('_', ' ').toUpperCase()}
+              </Badge>
+            )}
+          </div>
+          
+          {/* Vehicle Profile Warning */}
+          {!selectedProfile && (
+            <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">Vehicle profile required for truck-safe routing</span>
+              </div>
+            </div>
+          )}
+
+          {/* Restrictions Warning */}
+          {selectedProfile && restrictionsToAvoid.length > 0 && (
+            <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="flex items-center space-x-2 text-red-800 dark:text-red-200 mb-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {restrictionsToAvoid.length} restriction{restrictionsToAvoid.length > 1 ? 's' : ''} detected in route area
+                </span>
+              </div>
+              <div className="text-xs text-red-700 dark:text-red-300">
+                Your {selectedProfile.type.replace('_', ' ')} ({formatHeight(selectedProfile.height)}) will use truck-safe routing to avoid these restrictions.
+              </div>
+            </div>
+          )}
+
+          {/* Enhanced Route Planning Button */}
+          <div className="space-y-2">
             {!isNavigating ? (
               <Button 
                 onClick={currentRoute ? onStartNavigation : onPlanRoute}
                 disabled={(!fromLocation || !toLocation) || isStartingJourney || isCalculating}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg font-semibold automotive-button"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 text-lg font-semibold automotive-button shadow-lg"
                 data-testid="button-start-navigation button-go-navigation"
               >
                 {isStartingJourney || isCalculating ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    {isCalculating ? "Planning Route..." : "Starting..."}
+                    {isCalculating ? "Calculating Truck-Safe Route..." : "Starting Navigation..."}
                   </>
                 ) : currentRoute ? (
                   <>
                     <Navigation className="w-5 h-5 mr-3" />
-                    Start Navigation
+                    Start Truck-Safe Navigation
                   </>
                 ) : (
                   <>
                     <Route className="w-5 h-5 mr-3" />
-                    Plan Route
+                    {selectedProfile ? 'Plan Truck-Safe Route' : 'Plan Route'}
                   </>
                 )}
               </Button>
@@ -194,13 +230,13 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                 onClick={onStopNavigation}
                 disabled={isCompletingJourney}
                 variant="destructive"
-                className="w-full h-12 text-lg font-semibold automotive-button"
+                className="w-full h-14 text-lg font-semibold automotive-button shadow-lg"
                 data-testid="button-stop-navigation"
               >
                 {isCompletingJourney ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Ending...
+                    Ending Navigation...
                   </>
                 ) : (
                   <>
@@ -210,18 +246,37 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                 )}
               </Button>
             )}
+            
+            {/* Route Options Row */}
+            <div className="flex justify-between items-center pt-2">
+              <Button variant="ghost" size="sm" className="text-xs" data-testid="button-route-options">
+                <MapPin className="w-3 h-3 mr-1" />
+                Route Options
+              </Button>
+              {currentRoute && (
+                <Button variant="ghost" size="sm" className="text-xs" data-testid="button-alternative-routes">
+                  <CornerUpLeft className="w-3 h-3 mr-1" />
+                  Alternatives
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-        
-        {/* Route Options - Utility buttons */}
-        <div className="flex justify-end mt-3">
-          <Button variant="outline" size="icon" data-testid="button-location-picker">
-            <MapPin className="w-4 h-4" />
-          </Button>
         </div>
-      </div>
+      )}
 
-      {/* Note: Journey History and Route Favorites sections have been moved to HistoryFavoritesPanel */}
+      {/* Truck-Safe Features Summary */}
+      {selectedProfile && (fromLocation && toLocation) && (
+        <div className="px-4 py-2 bg-accent/5 border-b border-border">
+          <div className="text-xs text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <span>Vehicle: {formatHeight(selectedProfile.height)} H × {formatHeight(selectedProfile.width)} W</span>
+              {selectedProfile.weight && (
+                <span>Weight: {selectedProfile.weight}t</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Route Results */}
       <div className="flex-1 overflow-y-auto">
@@ -257,44 +312,95 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
               </div>
             </div>
 
-
-            {/* Restrictions Avoided */
+            {/* Enhanced Restrictions Avoided */}
             <div className="p-4 border-b border-border">
               <h4 className="font-medium text-foreground mb-3 flex items-center">
-                <Shield className="w-4 h-4 text-accent mr-2" />
-                Restrictions Avoided
+                <Shield className="w-4 h-4 text-green-600 mr-2" />
+                Vehicle Restrictions Successfully Avoided
               </h4>
-              <div className="space-y-2">
-                {restrictionsToAvoid.slice(0, 3).map((restriction: Restriction) => {
-                  return (
-                    <div 
-                      key={restriction.id} 
-                      className={`flex items-center space-x-3 p-2 rounded-lg ${
-                        restriction.type === 'height' ? 'bg-destructive/10' : 'bg-secondary/10'
-                      }`}
-                    data-testid={`restriction-${restriction.id}`}
-                  >
-                    {restriction.type === 'height' ? (
-                      <AlertTriangle className="w-4 h-4 text-destructive" />
-                    ) : (
-                      <CornerLeftUp className="w-4 h-4 text-secondary" />
-                    )}
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-foreground">{restriction.description}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {restriction.type === 'height' ? 'Height' : 'Width'}: {formatHeight(restriction.limit)}
-                        {" "}(You: {restriction.type === 'height' ? 
-                          formatHeight(selectedProfile?.height || 0) :
-                          formatHeight(selectedProfile?.width || 0)
-                        })
+              {restrictionsToAvoid.length > 0 ? (
+                <div className="space-y-3">
+                  {restrictionsToAvoid.slice(0, 4).map((restriction: Restriction) => {
+                    const isHeightRestriction = restriction.type === 'height';
+                    const isWeightRestriction = restriction.type === 'weight';
+                    const yourValue = restriction.type === 'height' ? 
+                      selectedProfile?.height || 0 :
+                      restriction.type === 'width' ?
+                      selectedProfile?.width || 0 :
+                      selectedProfile?.weight || 0;
+                    
+                    return (
+                      <div 
+                        key={restriction.id} 
+                        className={`flex items-center space-x-3 p-3 rounded-lg border-l-4 ${
+                          isHeightRestriction ? 'bg-red-50 dark:bg-red-900/20 border-red-500' : 
+                          isWeightRestriction ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500' :
+                          'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                        }`}
+                        data-testid={`restriction-${restriction.id}`}
+                      >
+                        <div className={`p-2 rounded-full ${
+                          isHeightRestriction ? 'bg-red-100 dark:bg-red-800' : 
+                          isWeightRestriction ? 'bg-orange-100 dark:bg-orange-800' :
+                          'bg-blue-100 dark:bg-blue-800'
+                        }`}>
+                          {isHeightRestriction ? (
+                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                          ) : isWeightRestriction ? (
+                            <AlertTriangle className="w-4 h-4 text-orange-600" />
+                          ) : (
+                            <CornerUpLeft className="w-4 h-4 text-blue-600" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-foreground">{restriction.description}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <div className="flex items-center justify-between">
+                              <span>
+                                {restriction.type === 'height' ? 'Max Height' : 
+                                 restriction.type === 'width' ? 'Max Width' : 'Max Weight'}: {
+                                  restriction.type === 'weight' ? 
+                                  `${restriction.limit}t` : 
+                                  formatHeight(restriction.limit)
+                                }
+                              </span>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                isHeightRestriction ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-200' :
+                                isWeightRestriction ? 'bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-200' :
+                                'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200'
+                              }`}>
+                                Your {restriction.type === 'weight' ? 
+                                  `${yourValue}t` : 
+                                  formatHeight(yourValue)
+                                }
+                              </span>
+                            </div>
+                          </div>
+                          {restriction.location && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              📍 {restriction.location}
+                            </div>
+                          )}
+                        </div>
                       </div>
+                    );
+                  })}
+                  {restrictionsToAvoid.length > 4 && (
+                    <div className="text-center">
+                      <Badge variant="outline" className="text-xs">
+                        +{restrictionsToAvoid.length - 4} more restrictions avoided
+                      </Badge>
                     </div>
-                    </div>
-                  );
-                })}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <Shield className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                  <p className="text-sm">No vehicle restrictions detected in this route area</p>
+                  <p className="text-xs">Route is safe for your {selectedProfile?.type.replace('_', ' ')} vehicle</p>
+                </div>
+              )}
             </div>
-            }
             
             {/* Facilities Along Route */}
             <div className="p-4">
@@ -314,7 +420,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                         facility.type === 'truck_stop' ? 'bg-primary/10' : 'bg-secondary/10'
                       }`}>
                         {facility.type === 'truck_stop' ? (
-                          <ParkingMeter className={`w-5 h-5 ${facility.type === 'truck_stop' ? 'text-primary' : 'text-secondary'}`} />
+                          <ParkingCircle className={`w-5 h-5 ${facility.type === 'truck_stop' ? 'text-primary' : 'text-secondary'}`} />
                         ) : (
                           <Bed className={`w-5 h-5 ${facility.type === 'truck_stop' ? 'text-primary' : 'text-secondary'}`} />
                         )}

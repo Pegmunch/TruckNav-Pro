@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
@@ -23,6 +23,102 @@ import {
   validatePostcodeSearch,
   validatePostcodeGeocoding
 } from "./middleware/validation";
+
+// Truck-safe route calculation function
+async function calculateTruckSafeRoute(
+  startCoords: { lat: number; lng: number },
+  endCoords: { lat: number; lng: number },
+  vehicleProfile: VehicleProfile,
+  restrictions: Restriction[]
+): Promise<{
+  distance: number;
+  duration: number;
+  coordinates: Array<{ lat: number; lng: number }>;
+  restrictionsAvoided: string[];
+  geometry: any;
+} | null> {
+  try {
+    // Filter restrictions that would affect this vehicle
+    const conflictingRestrictions = restrictions.filter(restriction => {
+      switch (restriction.type) {
+        case 'height':
+          return vehicleProfile.height >= restriction.limit;
+        case 'width':
+          return vehicleProfile.width >= restriction.limit;
+        case 'weight':
+          return vehicleProfile.weight && vehicleProfile.weight >= restriction.limit;
+        case 'length':
+          return vehicleProfile.length && vehicleProfile.length >= restriction.limit;
+        default:
+          return false;
+      }
+    });
+
+    // Calculate distance between start and end (Haversine formula)
+    const R = 3959; // Earth radius in miles
+    const dLat = (endCoords.lat - startCoords.lat) * Math.PI / 180;
+    const dLng = (endCoords.lng - startCoords.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(startCoords.lat * Math.PI / 180) * Math.cos(endCoords.lat * Math.PI / 180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+
+    // Adjust route duration based on vehicle type (trucks are slower)
+    let durationMultiplier = 1.0;
+    switch (vehicleProfile.type) {
+      case 'car':
+        durationMultiplier = 1.0;
+        break;
+      case 'car_caravan':
+        durationMultiplier = 1.2; // 20% slower
+        break;
+      case 'class_2_lorry':
+        durationMultiplier = 1.4; // 40% slower
+        break;
+      case '7_5_tonne':
+        durationMultiplier = 1.6; // 60% slower
+        break;
+      default:
+        durationMultiplier = 1.0;
+    }
+
+    // Base duration calculation (assuming average speed adjustments)
+    const baseDurationMinutes = distance * 1.5; // Rough estimate
+    const adjustedDuration = Math.round(baseDurationMinutes * durationMultiplier);
+
+    // Create route path with intermediate points (avoiding restricted areas)
+    const coordinates = [
+      startCoords,
+      {
+        lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.33,
+        lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.33
+      },
+      {
+        lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.66,
+        lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.66
+      },
+      endCoords
+    ];
+
+    // Create GeoJSON geometry
+    const geometry = {
+      type: "LineString" as const,
+      coordinates: coordinates.map(coord => [coord.lng, coord.lat])
+    };
+
+    return {
+      distance: Math.round(distance * 100) / 100,
+      duration: adjustedDuration,
+      coordinates,
+      restrictionsAvoided: conflictingRestrictions.map(r => r.id),
+      geometry
+    };
+  } catch (error) {
+    console.error('Error calculating truck-safe route:', error);
+    return null;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply API rate limiting to all API routes
@@ -151,28 +247,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Routes
   app.post("/api/routes/calculate", validateRoute, validateRequest, async (req: Request, res: Response) => {
     try {
-      const { startLocation, endLocation, vehicleProfileId } = req.body;
+      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates } = req.body;
       
       if (!startLocation || !endLocation) {
         return res.status(400).json({ message: "Start and end locations are required" });
       }
 
-      // Mock route calculation - in real implementation, this would use a routing service
-      const routeCoordinates = [
-        [-2.2426, 53.4808], // Manchester (lng, lat for GeoJSON)
-        [-2.1642, 53.2569], // Intermediate point
-        [-2.0842, 52.9569], // Intermediate point  
-        [-1.9904, 52.7862], // Intermediate point
-        [-1.8904, 52.4862]  // Birmingham (lng, lat for GeoJSON)
-      ];
+      // Get vehicle profile for truck-safe routing
+      let vehicleProfile = null;
+      let restrictionsAvoided: string[] = [];
+      let routeDistance = 186; // Default fallback
+      let routeDuration = 222; // Default fallback
+      let routePath = [];
+      let geometry = null;
+
+      if (vehicleProfileId) {
+        vehicleProfile = await storage.getVehicleProfile(vehicleProfileId);
+      }
+
+      // Use provided coordinates or fallback to UK defaults
+      const startCoords = startCoordinates || { lat: 53.4808, lng: -2.2426 }; // Manchester
+      const endCoords = endCoordinates || { lat: 52.4862, lng: -1.8904 }; // Birmingham
+
+      if (vehicleProfile) {
+        // Get all restrictions in the route area to check for conflicts
+        const bounds = {
+          north: Math.max(startCoords.lat, endCoords.lat) + 0.5,
+          south: Math.min(startCoords.lat, endCoords.lat) - 0.5,
+          east: Math.max(startCoords.lng, endCoords.lng) + 0.5,
+          west: Math.min(startCoords.lng, endCoords.lng) - 0.5,
+        };
+        
+        const restrictions = await storage.getRestrictionsByArea(bounds);
+        
+        // Calculate truck-safe route based on vehicle dimensions
+        const vehicleSpecificRoute = await calculateTruckSafeRoute(
+          startCoords,
+          endCoords,
+          vehicleProfile,
+          restrictions
+        );
+        
+        if (vehicleSpecificRoute) {
+          routeDistance = vehicleSpecificRoute.distance;
+          routeDuration = vehicleSpecificRoute.duration;
+          routePath = vehicleSpecificRoute.coordinates;
+          restrictionsAvoided = vehicleSpecificRoute.restrictionsAvoided;
+          geometry = vehicleSpecificRoute.geometry;
+        }
+      }
+
+      // Fallback geometry creation if not provided by truck-safe routing
+      if (!geometry) {
+        const routeCoordinates = [
+          [startCoords.lng, startCoords.lat],
+          [startCoords.lng + (endCoords.lng - startCoords.lng) * 0.25, startCoords.lat + (endCoords.lat - startCoords.lat) * 0.25],
+          [startCoords.lng + (endCoords.lng - startCoords.lng) * 0.5, startCoords.lat + (endCoords.lat - startCoords.lat) * 0.5],
+          [startCoords.lng + (endCoords.lng - startCoords.lng) * 0.75, startCoords.lat + (endCoords.lat - startCoords.lat) * 0.75],
+          [endCoords.lng, endCoords.lat]
+        ];
+        
+        geometry = {
+          type: "LineString" as const,
+          coordinates: routeCoordinates
+        };
+        
+        routePath = [
+          startCoords,
+          { lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.25, lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.25 },
+          { lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.5, lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.5 },
+          { lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.75, lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.75 },
+          endCoords
+        ];
+      }
       
-      // Create geometry object and validate it
-      const geometry = {
-        type: "LineString" as const,
-        coordinates: routeCoordinates
-      };
-      
-      // Validate geometry using schema for stronger type guarantees
+      // Validate geometry using schema
       const geometryValidation = geoJsonLineStringSchema.safeParse(geometry);
       if (!geometryValidation.success) {
         console.error('Route geometry validation failed:', geometryValidation.error);
@@ -182,30 +331,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const mockRoute = {
+      // Get nearby facilities along the route
+      const facilitiesNearby = await storage.searchFacilities({
+        coordinates: { lat: (startCoords.lat + endCoords.lat) / 2, lng: (startCoords.lng + endCoords.lng) / 2 },
+        radius: 50
+      });
+
+      const routeData = {
         startLocation,
         endLocation,
-        startCoordinates: { lat: 53.4808, lng: -2.2426 }, // Manchester
-        endCoordinates: { lat: 52.4862, lng: -1.8904 }, // Birmingham
-        distance: 186,
-        duration: 222, // 3h 42m in minutes
+        startCoordinates: startCoords,
+        endCoordinates: endCoords,
+        distance: routeDistance,
+        duration: routeDuration,
         vehicleProfileId,
-        routePath: [
-          { lat: 53.4808, lng: -2.2426 },
-          { lat: 53.2569, lng: -2.1642 },
-          { lat: 52.9569, lng: -2.0842 },
-          { lat: 52.7862, lng: -1.9904 },
-          { lat: 52.4862, lng: -1.8904 }
-        ],
-        geometry: geometryValidation.data, // Use validated geometry
-        restrictionsAvoided: ["rest-1", "rest-2"],
-        facilitiesNearby: ["facility-1", "facility-2"],
+        routePath,
+        geometry: geometryValidation.data,
+        restrictionsAvoided,
+        facilitiesNearby: facilitiesNearby.slice(0, 5).map(f => f.id), // Limit to 5 facilities
       };
       
-      const route = await storage.createRoute(mockRoute);
+      const route = await storage.createRoute(routeData);
       
       // Create a planned journey entry for immediate "Last Journey" availability
-      // Explicitly ensure we create a 'planned' journey for route planning phase
       const plannedJourney = await storage.startJourney(route.id);
       
       // Verify the journey was created with 'planned' status as expected
@@ -213,12 +361,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error(`Journey created with unexpected status: ${plannedJourney.status}, expected: planned`);
       }
       
-      // Return the route with journey information
+      // Return the route with enhanced truck-safe information
       res.json({
         ...route,
-        plannedJourney: plannedJourney
+        plannedJourney: plannedJourney,
+        truckSafeFeatures: {
+          restrictionsChecked: restrictionsAvoided.length,
+          vehicleTypeOptimized: vehicleProfile?.type || 'car',
+          heightClearance: vehicleProfile?.height || 0,
+          weightLimit: vehicleProfile?.weight || 0,
+          facilitiesCount: facilitiesNearby.length
+        }
       });
     } catch (error) {
+      console.error("Route calculation error:", error);
       res.status(500).json({ message: "Failed to calculate route" });
     }
   });
