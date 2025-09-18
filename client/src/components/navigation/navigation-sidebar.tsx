@@ -30,7 +30,6 @@ import {
   Zap,
   Shield,
   FileText,
-  GripVertical,
   ChevronUp,
   ChevronDown
 } from "lucide-react";
@@ -134,12 +133,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [isDisclaimerDialogOpen, setIsDisclaimerDialogOpen] = useState(false);
   const [isLegalNoticesOpen, setIsLegalNoticesOpen] = useState(false);
   
-  // Drag/swipe state for side tab
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragCurrentX, setDragCurrentX] = useState(0);
-  const [dragStartTime, setDragStartTime] = useState(0);
-  const [isHoveringTab, setIsHoveringTab] = useState(false);
   
   // Window sync state
   const windowSync = useWindowSync();
@@ -332,86 +325,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
     setIsLegalNoticesOpen(true);
   };
 
-  // Drag gesture handling for side tab
-  const DRAG_THRESHOLD = 50; // pixels to trigger open/close
-  const VELOCITY_THRESHOLD = 0.3; // pixels per millisecond for quick swipes
-  
-  const handleDragStart = (clientX: number) => {
-    setIsDragging(true);
-    setDragStartX(clientX);
-    setDragCurrentX(clientX);
-    setDragStartTime(Date.now());
-  };
-  
-  const handleDragMove = (clientX: number) => {
-    if (!isDragging) return;
-    setDragCurrentX(clientX);
-  };
-  
-  const handleDragEnd = () => {
-    if (!isDragging) return;
-    
-    const dragDistance = dragCurrentX - dragStartX;
-    const dragDuration = Date.now() - dragStartTime;
-    const velocity = Math.abs(dragDistance) / Math.max(dragDuration, 1);
-    
-    // Determine if we should toggle based on distance or velocity
-    const shouldToggle = 
-      Math.abs(dragDistance) > DRAG_THRESHOLD || 
-      velocity > VELOCITY_THRESHOLD;
-    
-    if (shouldToggle) {
-      // Right drag opens, left drag closes
-      if (dragDistance > 0 && !isOpen) {
-        onToggle(); // Open sidebar
-      } else if (dragDistance < 0 && isOpen) {
-        onToggle(); // Close sidebar
-      }
-    }
-    
-    // Reset drag state
-    setIsDragging(false);
-    setDragStartX(0);
-    setDragCurrentX(0);
-    setDragStartTime(0);
-  };
-  
-  // Mouse event handlers
-  const handleMouseDown = (event: React.MouseEvent) => {
-    event.preventDefault();
-    handleDragStart(event.clientX);
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      handleDragMove(e.clientX);
-    };
-    
-    const handleMouseUp = () => {
-      handleDragEnd();
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-  
-  // Touch event handlers
-  const handleTouchStart = (event: React.TouchEvent) => {
-    event.preventDefault();
-    const touch = event.touches[0];
-    handleDragStart(touch.clientX);
-  };
-  
-  const handleTouchMove = (event: React.TouchEvent) => {
-    event.preventDefault();
-    const touch = event.touches[0];
-    handleDragMove(touch.clientX);
-  };
-  
-  const handleTouchEnd = (event: React.TouchEvent) => {
-    event.preventDefault();
-    handleDragEnd();
-  };
   
   // Go button functionality
   const isReadyToGo = fromLocation && toLocation && selectedProfile;
@@ -509,102 +422,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
         "fixed lg:relative left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col",
         "transition-all duration-300 ease-out", // Improved easing for smoother feel
         isCollapsed ? "w-16" : "w-80 lg:w-96",
-        "shadow-lg lg:shadow-none",
-        "relative", // For absolute positioning of side tab
-        isDragging && "transition-none" // Disable transitions while dragging for immediate feedback
+        "shadow-lg lg:shadow-none"
       )}>
-        
-        {/* Expandable Side Tab/Handle - Automotive Grade Touch Target */}
-        <div
-          className={cn(
-            "absolute -right-8 top-1/2 -translate-y-1/2 z-60",
-            "bg-card border border-l-0 border-border rounded-r-lg",
-            "transition-all duration-300 ease-out cursor-pointer",
-            "shadow-md hover:shadow-xl hover:scale-105",
-            "select-none touch-manipulation", // Prevent text selection and optimize touch
-            isDragging && "cursor-grabbing shadow-xl scale-105 bg-accent",
-            isHoveringTab && "bg-accent border-accent-foreground",
-            "min-h-[120px] min-w-[48px] w-8 flex flex-col items-center justify-center", // 48px+ for automotive standard
-            "group backdrop-blur-sm", // For hover effects on children
-            "hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          )}
-          onClick={onToggle}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseEnter={() => setIsHoveringTab(true)}
-          onMouseLeave={() => setIsHoveringTab(false)}
-          data-testid="sidebar-drag-tab"
-          aria-label={isOpen ? "Tap to collapse sidebar" : "Tap to expand sidebar"}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onToggle();
-            }
-          }}
-        >
-          {/* Visual Handle Indicators */}
-          <div className={cn(
-            "flex flex-col items-center space-y-1.5 transition-all duration-300",
-            "opacity-70 group-hover:opacity-100",
-            isDragging && "opacity-100 scale-110",
-            isHoveringTab && "opacity-100"
-          )}>
-            {/* Grip Lines with Gradient Effect */}
-            <div className={cn(
-              "w-1.5 h-4 bg-gradient-to-b from-muted-foreground to-primary rounded-full",
-              "transition-all duration-200",
-              isDragging && "bg-gradient-to-b from-primary to-accent"
-            )} />
-            <div className={cn(
-              "w-1.5 h-4 bg-gradient-to-b from-muted-foreground to-primary rounded-full",
-              "transition-all duration-200 delay-75",
-              isDragging && "bg-gradient-to-b from-primary to-accent"
-            )} />
-            <div className={cn(
-              "w-1.5 h-4 bg-gradient-to-b from-muted-foreground to-primary rounded-full",
-              "transition-all duration-200 delay-150",
-              isDragging && "bg-gradient-to-b from-primary to-accent"
-            )} />
-          </div>
-          
-          {/* Direction Indicator with Enhanced Animation */}
-          <div className={cn(
-            "mt-3 transition-all duration-300 ease-out",
-            isDragging && "scale-125 text-primary",
-            isHoveringTab && "scale-110 text-primary"
-          )}>
-            {isOpen ? (
-              <ChevronLeft className={cn(
-                "w-4 h-4 transition-all duration-200",
-                "opacity-70 group-hover:opacity-100",
-                isDragging && "opacity-100 animate-pulse"
-              )} />
-            ) : (
-              <ChevronRight className={cn(
-                "w-4 h-4 transition-all duration-200",
-                "opacity-70 group-hover:opacity-100",
-                isDragging && "opacity-100 animate-pulse"
-              )} />
-            )}
-          </div>
-          
-          {/* Enhanced Active Drag Indicator */}
-          {isDragging && (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 rounded-r-lg animate-pulse" />
-              <div className="absolute inset-0 border border-primary/30 rounded-r-lg animate-pulse" />
-            </>
-          )}
-          
-          {/* Hover Ring Effect */}
-          {isHoveringTab && !isDragging && (
-            <div className="absolute inset-0 border border-accent/50 rounded-r-lg transition-opacity duration-200" />
-          )}
-        </div>
         
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
