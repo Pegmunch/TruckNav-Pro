@@ -316,7 +316,7 @@ const suspiciousActivity = new Map<string, { count: number; firstRequest: number
 
 // Intrusion detection system
 export const intrusionDetection = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const ip = req.ip;
+  const ip = req.ip || 'unknown';
   const now = Date.now();
   
   // Skip DDoS detection for development module requests  
