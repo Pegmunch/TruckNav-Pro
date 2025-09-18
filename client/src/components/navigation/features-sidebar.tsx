@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
   Home,
   Bookmark,
   AlertTriangle,
-  Gas,
+  Fuel,
   Wrench,
   Smartphone,
   Gauge,
@@ -36,12 +36,14 @@ import {
   Users,
   Bell,
   Star,
-  Map
+  Map,
+  ExternalLink
 } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { openFeatureWindow, getOpenWindowCount, type FeatureWindowType } from "@/lib/multi-window-manager";
 
 interface FeaturesSidebarProps {
   // Sidebar state
@@ -60,57 +62,79 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
 }: FeaturesSidebarProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [activeSection, setActiveSection] = useState<'monitoring' | 'services' | 'reports' | 'preferences'>('monitoring');
+  const [openWindowCount, setOpenWindowCount] = useState(0);
 
-  // Automotive-optimized sidebar sections for the right panel
-  const sidebarSections = [
+  // Feature window sections for fleet management
+  const windowSections = [
     {
-      id: 'monitoring' as const,
-      title: 'Vehicle Monitoring',
-      icon: Gauge,
-      badge: 'Live',
-      description: 'Real-time vehicle diagnostics and performance',
-    },
-    {
-      id: 'services' as const,
-      title: 'Fleet Services', 
-      icon: Wrench,
-      badge: '3 Available',
-      description: 'Maintenance scheduling and service locations',
-    },
-    {
-      id: 'reports' as const,
-      title: 'Analytics & Reports',
-      icon: BarChart3,
+      id: 'vehicle' as const,
+      title: 'Vehicle Profile',
+      icon: Truck,
       badge: null,
-      description: 'Performance insights and route analytics',
+      description: 'Vehicle specifications and settings'
     },
     {
-      id: 'preferences' as const,
-      title: 'Driver Preferences',
+      id: 'route' as const,
+      title: 'Route Planning',
+      icon: Map,
+      badge: null,
+      description: 'Advanced route optimization'
+    },
+    {
+      id: 'entertainment' as const,
+      title: 'Entertainment',
+      icon: Star,
+      badge: null,
+      description: 'Music and media controls'
+    },
+    {
+      id: 'themes' as const,
+      title: 'Themes',
+      icon: Settings,
+      badge: null,
+      description: 'UI customization and themes'
+    },
+    {
+      id: 'history' as const,
+      title: 'History',
+      icon: Clock,
+      badge: null,
+      description: 'Route history and favorites'
+    },
+    {
+      id: 'settings' as const,
+      title: 'Settings',
       icon: Settings2,
       badge: null,
-      description: 'Personal settings and customization',
+      description: 'App preferences and configuration'
     },
   ];
 
-  // Handle section selection with toast feedback
-  const handleSectionChange = (sectionId: typeof activeSection) => {
-    setActiveSection(sectionId);
-    const section = sidebarSections.find(s => s.id === sectionId);
-    if (section) {
-      toast({
-        title: `${section.title} Selected`,
-        description: section.description,
-      });
-    }
-  };
+  // Update window count periodically
+  useEffect(() => {
+    const updateCount = () => {
+      setOpenWindowCount(getOpenWindowCount());
+    };
+    
+    updateCount();
+    const interval = setInterval(updateCount, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Show placeholder interaction toast
-  const handlePlaceholderAction = (action: string) => {
+  // Handle opening feature windows
+  const handleOpenWindow = (featureType: FeatureWindowType) => {
+    if (getOpenWindowCount() >= 10) {
+      toast({
+        title: "Window Limit Reached",
+        description: "Maximum of 10 windows can be open at once. Please close some windows first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    openFeatureWindow(featureType);
     toast({
-      title: "Feature Placeholder",
-      description: `${action} functionality will be implemented here.`,
+      title: "Window Opened",
+      description: `${featureType.charAt(0).toUpperCase() + featureType.slice(1)} window opened successfully.`,
     });
   };
 
@@ -205,244 +229,124 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
       {isCollapsed ? (
         /* Collapsed Mode - Icon Navigation */
         <div className="flex-1 p-2 space-y-2">
-          {sidebarSections.map((section) => (
+          {windowSections.map((section) => (
             <Button
               key={section.id}
-              variant={activeSection === section.id ? "default" : "ghost"}
+              variant="ghost"
               size="icon"
-              onClick={() => handleSectionChange(section.id)}
+              onClick={() => handleOpenWindow(section.id)}
               className="w-full automotive-button relative"
-              data-testid={`button-section-${section.id}`}
+              data-testid={`button-open-${section.id}-window-collapsed`}
             >
               <section.icon className="w-5 h-5" />
-              {section.badge && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" />
-              )}
+              <ExternalLink className="absolute -top-1 -right-1 w-3 h-3 text-primary" />
             </Button>
           ))}
         </div>
       ) : (
-        /* Expanded Mode - Full Feature Panel */
+        /* Expanded Mode - Window Management Dashboard */
         <div className="flex-1 overflow-y-auto touch-scroll">
-          {/* Section Navigation */}
+          {/* Window Status Header */}
           <div className="p-4 border-b border-border">
-            <div className="grid grid-cols-1 gap-2">
-              {sidebarSections.map((section) => (
-                <Button
-                  key={section.id}
-                  variant={activeSection === section.id ? "default" : "outline"}
-                  onClick={() => handleSectionChange(section.id)}
-                  className="automotive-text-sm relative justify-start"
-                  data-testid={`button-section-${section.id}`}
-                >
-                  <section.icon className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">{section.title.split(' ')[0]}</span>
-                  {section.badge && (
-                    <Badge 
-                      variant={activeSection === section.id ? "secondary" : "outline"} 
-                      className="ml-auto mobile-text-xs"
-                    >
-                      {section.badge}
-                    </Badge>
-                  )}
-                </Button>
-              ))}
-            </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <div className="flex items-center">
+                    <ExternalLink className="w-4 h-4 mr-2 text-primary" />
+                    Feature Windows
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {openWindowCount}/10 open
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-4">
+                  Open dedicated windows for focused work on each feature.
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Section Content */}
+          {/* Window Grid */}
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-4">
-              
-              {/* Vehicle Monitoring Section */}
-              {activeSection === 'monitoring' && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold automotive-text-lg mb-2 text-foreground">
-                      Vehicle Health
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Real-time diagnostics and performance monitoring for your vehicle.
-                    </p>
-                  </div>
-
-                  {/* Engine Status Card */}
-                  <Card className="automotive-card">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center">
-                        <Gauge className="w-4 h-4 mr-2 text-green-600" />
-                        Engine Performance
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full" />
-                            <span className="text-sm font-medium">RPM</span>
-                          </div>
-                          <div className="text-lg font-bold text-green-700 dark:text-green-300">1,850</div>
-                        </div>
-                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <div className="flex items-center space-x-2">
-                            <Thermometer className="w-3 h-3 text-blue-600" />
-                            <span className="text-sm font-medium">Temp</span>
-                          </div>
-                          <div className="text-lg font-bold text-blue-700 dark:text-blue-300">92°C</div>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handlePlaceholderAction("View detailed engine diagnostics")}
-                        variant="outline"
-                        size="sm"
-                        className="w-full automotive-button"
-                        data-testid="button-engine-details"
-                      >
-                        View Full Diagnostics
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {/* Fleet Services Section */}
-              {activeSection === 'services' && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold automotive-text-lg mb-2 text-foreground">
-                      Fleet Services
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Maintenance scheduling, service locations, and fleet management tools.
-                    </p>
-                  </div>
-
-                  {/* Maintenance Schedule Card */}
-                  <Card className="automotive-card">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center">
-                        <Calendar className="w-4 h-4 mr-2 text-primary" />
-                        Maintenance Schedule
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                        <div className="flex items-center justify-between">
+              <div className="grid gap-3 sm:grid-cols-1">
+                {windowSections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <div key={section.id} className="border rounded-lg p-3 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Icon className="w-4 h-4 text-primary flex-shrink-0" />
                           <div>
-                            <div className="font-medium text-amber-800 dark:text-amber-300">Oil Change Due</div>
-                            <div className="text-sm text-amber-600 dark:text-amber-400">In 2,300 km</div>
+                            <div className="font-medium text-sm">{section.title}</div>
+                            <div className="text-xs text-muted-foreground">{section.description}</div>
                           </div>
-                          <Badge variant="outline" className="text-amber-700 border-amber-300">
-                            Soon
+                        </div>
+                        {section.badge && (
+                          <Badge 
+                            variant="secondary" 
+                            className="text-xs"
+                          >
+                            {section.badge}
                           </Badge>
-                        </div>
+                        )}
                       </div>
+                      
                       <Button
-                        onClick={() => handlePlaceholderAction("Schedule maintenance appointment")}
-                        className="w-full automotive-button"
-                        data-testid="button-schedule-maintenance"
-                      >
-                        <Clock className="w-4 h-4 mr-2" />
-                        Schedule Service
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {/* Analytics & Reports Section */}
-              {activeSection === 'reports' && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold automotive-text-lg mb-2 text-foreground">
-                      Analytics & Reports
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Performance insights, route efficiency, and driving analytics.
-                    </p>
-                  </div>
-
-                  {/* Route Statistics Card */}
-                  <Card className="automotive-card">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center">
-                        <BarChart3 className="w-4 h-4 mr-2 text-primary" />
-                        Today's Performance
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="text-center p-3 bg-muted/30 rounded-lg">
-                          <div className="text-lg font-bold text-foreground">247 km</div>
-                          <div className="text-xs text-muted-foreground">Distance</div>
-                        </div>
-                        <div className="text-center p-3 bg-muted/30 rounded-lg">
-                          <div className="text-lg font-bold text-foreground">4h 23m</div>
-                          <div className="text-xs text-muted-foreground">Drive Time</div>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handlePlaceholderAction("View detailed performance report")}
+                        onClick={() => handleOpenWindow(section.id)}
                         variant="outline"
                         size="sm"
                         className="w-full automotive-button"
-                        data-testid="button-view-report"
+                        data-testid={`button-open-${section.id}-window`}
                       >
-                        View Full Report
+                        <ExternalLink className="w-3 h-3 mr-2" />
+                        Open {section.title}
                       </Button>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="mt-4 pt-4 border-t">
+                <div className="text-sm font-medium mb-2">Quick Actions</div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenWindow('vehicle')}
+                    className="text-xs h-8"
+                    data-testid="button-setup-vehicle-quick"
+                  >
+                    <Truck className="w-3 h-3 mr-1" />
+                    Vehicle Setup
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenWindow('route')}
+                    className="text-xs h-8"
+                    data-testid="button-plan-route-quick"
+                  >
+                    <Map className="w-3 h-3 mr-1" />
+                    Plan Route
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenWindow('settings')}
+                    className="text-xs h-8"
+                    data-testid="button-settings-quick"
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Settings
+                  </Button>
                 </div>
-              )}
-
-              {/* Driver Preferences Section */}
-              {activeSection === 'preferences' && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold automotive-text-lg mb-2 text-foreground">
-                      Driver Preferences
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Personalize your driving experience and interface settings.
-                    </p>
-                  </div>
-
-                  {/* Quick Settings Card */}
-                  <Card className="automotive-card">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center">
-                        <Settings2 className="w-4 h-4 mr-2 text-primary" />
-                        Quick Settings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <Button
-                          onClick={() => handlePlaceholderAction("Configure voice commands")}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start"
-                          data-testid="button-voice-settings"
-                        >
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Voice Commands
-                        </Button>
-                        <Button
-                          onClick={() => handlePlaceholderAction("Configure security settings")}
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start"
-                          data-testid="button-security-settings"
-                        >
-                          <Shield className="w-4 h-4 mr-2" />
-                          Security Settings
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
+              </div>
             </div>
           </ScrollArea>
         </div>

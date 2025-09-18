@@ -703,8 +703,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     navigationVoiceIntents.updateContext({
       navigationState: isNavigating ? 'navigating' : 'idle',
       routeActive: !!currentRoute,
-      hasVehicleProfile: !!selectedProfile,
-      openWindows: getOpenWindowCount()
+      hasVehicleProfile: !!selectedProfile
     });
   }, [isNavigating, currentRoute, selectedProfile, openWindowCount, navigationVoiceIntents]);
 
