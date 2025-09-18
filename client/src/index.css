@@ -1325,7 +1325,7 @@ select:focus-visible,
   }
 }
 
-/* Mobile drawer overlay - Enhanced with fallback visibility */
+/* Mobile drawer overlay - Enhanced with fallback visibility - NO BACKDROP BLUR TO PREVENT FROSTED GLASS */
 .mobile-drawer-overlay {
   position: fixed;
   top: 0;
@@ -1333,8 +1333,8 @@ select:focus-visible,
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  /* backdrop-filter: blur(2px); REMOVED - causes frosted glass overlay issue */
+  /* -webkit-backdrop-filter: blur(2px); REMOVED - causes frosted glass overlay issue */
   /* Default hidden to prevent stuck overlays */
   opacity: 0;
   pointer-events: none;
