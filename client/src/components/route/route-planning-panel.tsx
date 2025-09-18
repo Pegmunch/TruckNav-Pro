@@ -23,12 +23,33 @@ import {
   Loader2,
   ArrowUpDown,
   X,
-  RotateCcw
+  RotateCcw,
+  Search,
+  Settings,
+  ZoomIn,
+  ZoomOut,
+  Volume2,
+  VolumeX,
+  Eye,
+  EyeOff,
+  RotateCw,
+  Maximize,
+  Play,
+  Pause,
+  Music,
+  Radio,
+  Filter,
+  SlidersHorizontal,
+  ExternalLink,
+  Coffee
 } from "lucide-react";
 import { type Route as RouteType, type VehicleProfile, type Restriction, type Facility, type Journey } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { useTrafficState } from "@/hooks/use-traffic";
 import LocationDropdown from "./location-dropdown";
+import { VoiceMicButton } from "@/components/ui/voice-mic-button";
+import { useVoiceCommands } from "@/hooks/use-voice-commands";
+import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
 import TrafficConditionsDisplay from "@/components/traffic/traffic-conditions-display";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +61,7 @@ interface RoutePlanningPanelProps {
   toLocation: string;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
-  onPlanRoute: () => void;
+  onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onStartNavigation: () => void;
   onStopNavigation?: () => void;
   onOpenLaneSelection?: () => void;
@@ -72,6 +93,13 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   isCompletingJourney = false,
 }: RoutePlanningPanelProps) {
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showAdvancedControls, setShowAdvancedControls] = useState(false);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showMapControls, setShowMapControls] = useState(false);
+  const [showRoutingOptions, setShowRoutingOptions] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [trafficVisible, setTrafficVisible] = useState(true);
+  const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   const { formatDistance, formatHeight, system, convertDistance } = useMeasurement();
   const { toast } = useToast();
 
@@ -143,6 +171,175 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   // Navigation readiness logic
   const isReadyToGo = fromLocation && toLocation && selectedProfile;
   const canStartNavigation = isReadyToGo && currentRoute && !isNavigating;
+  
+  // Manual action handlers that both voice and buttons can use
+  const handleZoomIn = useCallback(() => {
+    // Send zoom in command to map service
+    window.dispatchEvent(new CustomEvent('map:zoom', { detail: { direction: 'in' } }));
+    toast({ title: "Zoom in", description: "Map zoomed in" });
+  }, [toast]);
+
+  const handleZoomOut = useCallback(() => {
+    // Send zoom out command to map service
+    window.dispatchEvent(new CustomEvent('map:zoom', { detail: { direction: 'out' } }));
+    toast({ title: "Zoom out", description: "Map zoomed out" });
+  }, [toast]);
+
+  const handleCenterMap = useCallback(() => {
+    // Send center map command to map service
+    window.dispatchEvent(new CustomEvent('map:center', { detail: {} }));
+    toast({ title: "Map centered", description: "Map view centered" });
+  }, [toast]);
+
+  const handleToggleTraffic = useCallback(() => {
+    const newState = !trafficVisible;
+    setTrafficVisible(newState);
+    window.dispatchEvent(new CustomEvent('map:traffic', { detail: { show: newState } }));
+    toast({ 
+      title: newState ? "Traffic shown" : "Traffic hidden", 
+      description: `Traffic layer ${newState ? 'enabled' : 'disabled'}` 
+    });
+  }, [trafficVisible, toast]);
+
+  const handleFullscreen = useCallback(() => {
+    // Toggle fullscreen mode
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen();
+    }
+    toast({ title: "Fullscreen", description: "Toggled fullscreen mode" });
+  }, [toast]);
+
+  const handleAvoidTolls = useCallback(() => {
+    setRoutePreference('avoid_tolls');
+    if (currentRoute) {
+      onPlanRoute(); // Recalculate with new preference
+    }
+    toast({ title: "Route preference", description: "Avoiding tolls" });
+  }, [currentRoute, onPlanRoute, toast]);
+
+  const handleFastestRoute = useCallback(() => {
+    setRoutePreference('fastest');
+    if (currentRoute) {
+      onPlanRoute(); // Recalculate with new preference
+    }
+    toast({ title: "Route preference", description: "Fastest route selected" });
+  }, [currentRoute, onPlanRoute, toast]);
+
+  const handleReroute = useCallback(() => {
+    if (currentRoute) {
+      onPlanRoute();
+      toast({ title: "Recalculating", description: "Finding new route..." });
+    }
+  }, [currentRoute, onPlanRoute, toast]);
+
+  const handleAlternatives = useCallback(() => {
+    // Request alternative routes
+    window.dispatchEvent(new CustomEvent('route:alternatives', { detail: { routeId: currentRoute?.id } }));
+    toast({ title: "Alternative routes", description: "Searching for alternatives..." });
+  }, [currentRoute, toast]);
+
+  const handleToggleAudio = useCallback(() => {
+    const newMutedState = !isAudioMuted;
+    setIsAudioMuted(newMutedState);
+    window.dispatchEvent(new CustomEvent('audio:navigation', { detail: { muted: newMutedState } }));
+    toast({ 
+      title: newMutedState ? "Audio muted" : "Audio unmuted", 
+      description: `Navigation audio ${newMutedState ? 'muted' : 'unmuted'}` 
+    });
+  }, [isAudioMuted, toast]);
+
+  const handleFindFacility = useCallback((facilityType: 'fuel' | 'parking' | 'rest' | 'truck_stop') => {
+    const facilityNames = {
+      fuel: 'fuel stations',
+      parking: 'truck parking',
+      rest: 'rest areas', 
+      truck_stop: 'truck stops'
+    };
+    // Dispatch facility search event
+    window.dispatchEvent(new CustomEvent('search:facility', { 
+      detail: { 
+        type: facilityType, 
+        location: currentRoute ? 'route' : 'current' 
+      } 
+    }));
+    toast({ 
+      title: "Searching", 
+      description: `Finding nearest ${facilityNames[facilityType]}...` 
+    });
+  }, [currentRoute, toast]);
+
+  // Voice command handlers for route planning  
+  const routePlanningVoiceHandlers: IntentHandlers = {
+    navigation: async (intent, entities) => {
+      if (intent.action === 'start_navigation') {
+        if (canStartNavigation) {
+          onStartNavigation();
+          toast({ title: "Navigation started", description: "Voice command executed" });
+        }
+      } else if (intent.action === 'stop_navigation') {
+        if (isNavigating && onStopNavigation) {
+          onStopNavigation();
+          toast({ title: "Navigation stopped", description: "Voice command executed" });
+        }
+      }
+    },
+    routing: async (intent, entities) => {
+      if (intent.action === 'avoid_tolls') {
+        handleAvoidTolls();
+      } else if (intent.action === 'fastest_route') {
+        handleFastestRoute();
+      } else if (intent.action === 'reroute') {
+        handleReroute();
+      }
+    },
+    search: async (intent, entities) => {
+      if (intent.action === 'find_nearest') {
+        // Extract facility type from entities
+        const facilityEntity = entities.find(e => e.type === 'poi');
+        if (facilityEntity) {
+          const facilityType = facilityEntity.value.includes('fuel') ? 'fuel' :
+                              facilityEntity.value.includes('park') ? 'parking' :
+                              facilityEntity.value.includes('rest') ? 'rest' : 'truck_stop';
+          handleFindFacility(facilityType);
+        } else {
+          setShowSearchPanel(true);
+        }
+      } else if (intent.action === 'search_location') {
+        setShowSearchPanel(true);
+        toast({ title: "Search activated", description: "Voice command executed" });
+      }
+    },
+    controls: async (intent, entities) => {
+      if (intent.action === 'zoom_in') {
+        handleZoomIn();
+      } else if (intent.action === 'zoom_out') {
+        handleZoomOut();
+      } else if (intent.action === 'center_map') {
+        handleCenterMap();
+      } else if (intent.action === 'mute_audio') {
+        if (!isAudioMuted) handleToggleAudio();
+      } else if (intent.action === 'unmute_audio') {
+        if (isAudioMuted) handleToggleAudio();
+      } else if (intent.action === 'show_traffic') {
+        if (!trafficVisible) handleToggleTraffic();
+      } else if (intent.action === 'hide_traffic') {
+        if (trafficVisible) handleToggleTraffic();
+      }
+    }
+  };
+  
+  // Voice commands state
+  const voiceCommands = useVoiceCommands({
+    interactionMode: 'toggle',
+    continuous: true,
+    enableFallback: true
+  }, {
+    onIntentProcessed: (result) => {
+      console.log('Route planning voice command processed:', result);
+    }
+  }, routePlanningVoiceHandlers);
 
   // Window management handlers
   const handleOpenMapWindow = async () => {
@@ -380,7 +577,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
           {/* Plan Route Button */}
           <div className="space-y-2">
             <Button 
-              onClick={onPlanRoute}
+              onClick={() => onPlanRoute?.(routePreference)}
               disabled={(!fromLocation || !toLocation) || isCalculating}
               className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground h-12 text-base font-semibold automotive-button shadow-lg"
               data-testid="button-plan-route"
@@ -673,6 +870,429 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
           </Button>
         </div>
       )}
+      
+      {/* Enhanced Manual Controls Panel */}
+      <div className="border-t border-border">
+        {/* Voice Command Information */}
+        {voiceCommands.currentTranscript && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-blue-800 dark:text-blue-200">
+                Voice: "{voiceCommands.currentTranscript.final || voiceCommands.currentTranscript.interim}"
+              </span>
+            </div>
+          </div>
+        )}
+        
+        {/* Main Controls Bar with Voice Button */}
+        <div className="p-4 bg-gradient-to-r from-primary/5 to-accent/5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-foreground">Manual Controls</h3>
+              <Badge variant="outline" className="text-xs">Voice + Manual</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Voice Mic Button for All Controls */}
+              <VoiceMicButton
+                state={voiceCommands.state}
+                size="md"
+                mode="toggle"
+                transcript={voiceCommands.currentTranscript?.final || voiceCommands.currentTranscript?.interim || ''}
+                showTranscript={voiceCommands.isListening}
+                transcriptPosition="top"
+                onToggle={(isRecording) => {
+                  if (isRecording) {
+                    voiceCommands.startListening();
+                  } else {
+                    voiceCommands.stopListening();
+                  }
+                }}
+                tooltipText="Voice: 'Start navigation', 'Find nearest truck stop', 'Avoid tolls', 'Zoom in'"
+                data-testid="voice-button-main-controls"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowAdvancedControls(!showAdvancedControls)}
+                data-testid="button-toggle-advanced-controls"
+              >
+                <SlidersHorizontal className="w-4 h-4 mr-1" />
+                {showAdvancedControls ? 'Hide' : 'Show'} All
+              </Button>
+            </div>
+          </div>
+          
+          {/* Quick Action Controls */}
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowSearchPanel(!showSearchPanel)}
+              className="flex flex-col h-16 p-2"
+              data-testid="button-quick-search"
+            >
+              <Search className="w-4 h-4 mb-1" />
+              <span className="text-xs">Search</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowRoutingOptions(!showRoutingOptions)}
+              className="flex flex-col h-16 p-2"
+              data-testid="button-quick-routing"
+            >
+              <Filter className="w-4 h-4 mb-1" />
+              <span className="text-xs">Routing</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowMapControls(!showMapControls)}
+              className="flex flex-col h-16 p-2"
+              data-testid="button-quick-map"
+            >
+              <Settings className="w-4 h-4 mb-1" />
+              <span className="text-xs">Map</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                toast({
+                  title: "Entertainment panel",
+                  description: "Opening entertainment controls"
+                });
+              }}
+              className="flex flex-col h-16 p-2"
+              data-testid="button-quick-entertainment"
+            >
+              <Music className="w-4 h-4 mb-1" />
+              <span className="text-xs">Media</span>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Expandable Advanced Controls */}
+        {showAdvancedControls && (
+          <div className="p-4 border-t border-border space-y-4">
+            {/* Search Panel */}
+            {showSearchPanel && (
+              <div className="p-3 border border-border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm flex items-center">
+                    <Search className="w-4 h-4 mr-2" />
+                    Find Facilities
+                  </h4>
+                  <VoiceMicButton
+                    state={voiceCommands.state}
+                    size="sm"
+                    mode="toggle"
+                    transcript={voiceCommands.currentTranscript?.final || voiceCommands.currentTranscript?.interim || ''}
+                    showTranscript={voiceCommands.isListening}
+                    onToggle={(isRecording) => {
+                      if (isRecording) {
+                        voiceCommands.startListening();
+                      } else {
+                        voiceCommands.stopListening();
+                      }
+                    }}
+                    tooltipText="Voice: 'Find nearest fuel station', 'Find parking'"
+                    data-testid="voice-button-search"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleFindFacility('fuel')}
+                    className="h-12 automotive-button"
+                    data-testid="button-find-fuel"
+                  >
+                    <Fuel className="w-4 h-4 mr-1" />
+                    Fuel Stations
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleFindFacility('parking')}
+                    className="h-12 automotive-button"
+                    data-testid="button-find-parking"
+                  >
+                    <ParkingCircle className="w-4 h-4 mr-1" />
+                    Truck Parking
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleFindFacility('rest')}
+                    className="h-12 automotive-button"
+                    data-testid="button-find-rest"
+                  >
+                    <Bed className="w-4 h-4 mr-1" />
+                    Rest Areas
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleFindFacility('truck_stop')}
+                    className="h-12 automotive-button"
+                    data-testid="button-find-truck-stop"
+                  >
+                    <Coffee className="w-4 h-4 mr-1" />
+                    Truck Stops
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Routing Options Panel */}
+            {showRoutingOptions && (
+              <div className="p-3 border border-border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm flex items-center">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Route Preferences
+                  </h4>
+                  <VoiceMicButton
+                    state={voiceCommands.state}
+                    size="sm"
+                    mode="toggle"
+                    transcript={voiceCommands.currentTranscript?.final || voiceCommands.currentTranscript?.interim || ''}
+                    showTranscript={voiceCommands.isListening}
+                    onToggle={(isRecording) => {
+                      if (isRecording) {
+                        voiceCommands.startListening();
+                      } else {
+                        voiceCommands.stopListening();
+                      }
+                    }}
+                    tooltipText="Voice: 'Avoid tolls', 'Fastest route', 'Reroute'"
+                    data-testid="voice-button-routing"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant={routePreference === 'avoid_tolls' ? 'default' : 'outline'} 
+                      size="sm" 
+                      onClick={handleAvoidTolls}
+                      className="h-12 automotive-button"
+                      data-testid="button-avoid-tolls"
+                    >
+                      <Shield className="w-4 h-4 mr-1" />
+                      Avoid Tolls
+                    </Button>
+                    <Button 
+                      variant={routePreference === 'fastest' ? 'default' : 'outline'} 
+                      size="sm" 
+                      onClick={handleFastestRoute}
+                      className="h-12 automotive-button"
+                      data-testid="button-fastest-route"
+                    >
+                      <Clock className="w-4 h-4 mr-1" />
+                      Fastest Route
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleReroute}
+                      disabled={!currentRoute}
+                      className="h-12 automotive-button"
+                      data-testid="button-reroute"
+                    >
+                      <RotateCw className="w-4 h-4 mr-1" />
+                      Recalculate
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleAlternatives}
+                      disabled={!currentRoute}
+                      className="h-12 automotive-button"
+                      data-testid="button-alternatives"
+                    >
+                      <Route className="w-4 h-4 mr-1" />
+                      Alternatives
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Map Controls Panel */}
+            {showMapControls && (
+              <div className="p-3 border border-border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm flex items-center">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Map Controls
+                  </h4>
+                  <VoiceMicButton
+                    state={voiceCommands.state}
+                    size="sm"
+                    mode="toggle"
+                    transcript={voiceCommands.currentTranscript?.final || voiceCommands.currentTranscript?.interim || ''}
+                    showTranscript={voiceCommands.isListening}
+                    onToggle={(isRecording) => {
+                      if (isRecording) {
+                        voiceCommands.startListening();
+                      } else {
+                        voiceCommands.stopListening();
+                      }
+                    }}
+                    tooltipText="Voice: 'Zoom in', 'Zoom out', 'Center map', 'Show traffic'"
+                    data-testid="voice-button-map-controls"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleZoomIn}
+                      className="h-12 automotive-button"
+                      data-testid="button-zoom-in"
+                    >
+                      <ZoomIn className="w-4 h-4 mr-1" />
+                      Zoom In
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleZoomOut}
+                      className="h-12 automotive-button"
+                      data-testid="button-zoom-out"
+                    >
+                      <ZoomOut className="w-4 h-4 mr-1" />
+                      Zoom Out
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleCenterMap}
+                      className="h-12 automotive-button"
+                      data-testid="button-center-map"
+                    >
+                      <MapPin className="w-4 h-4 mr-1" />
+                      Center Map
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleFullscreen}
+                      className="h-12 automotive-button"
+                      data-testid="button-fullscreen"
+                    >
+                      <Maximize className="w-4 h-4 mr-1" />
+                      Fullscreen
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant={trafficVisible ? 'default' : 'outline'} 
+                      size="sm" 
+                      onClick={handleToggleTraffic}
+                      className="h-12 automotive-button"
+                      data-testid="button-toggle-traffic"
+                    >
+                      {trafficVisible ? (
+                        <>
+                          <EyeOff className="w-4 h-4 mr-1" />
+                          Hide Traffic
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4 mr-1" />
+                          Show Traffic
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleOpenMapWindow()}
+                      className="h-12 automotive-button"
+                      data-testid="button-open-map-window"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      Open Map
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Audio & Entertainment Controls */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 border border-border rounded-lg">
+                <h4 className="font-medium text-sm mb-2 flex items-center">
+                  <Volume2 className="w-4 h-4 mr-2" />
+                  Audio
+                </h4>
+                <div className="flex gap-1">
+                  <Button 
+                    variant={isAudioMuted ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={handleToggleAudio}
+                    className="flex-1 h-12 automotive-button"
+                    data-testid="button-toggle-audio"
+                  >
+                    {isAudioMuted ? (
+                      <>
+                        <Volume2 className="w-4 h-4 mr-1" />
+                        Unmute
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX className="w-4 h-4 mr-1" />
+                        Mute
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="p-3 border border-border rounded-lg">
+                <h4 className="font-medium text-sm mb-2 flex items-center">
+                  <Music className="w-4 h-4 mr-2" />
+                  Media
+                </h4>
+                <div className="flex gap-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('entertainment:toggle', { detail: { type: 'music' } }));
+                      toast({ title: "Music", description: "Opening music player" });
+                    }}
+                    className="flex-1 h-12 automotive-button"
+                    data-testid="button-music"
+                  >
+                    <Music className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('entertainment:toggle', { detail: { type: 'radio' } }));
+                      toast({ title: "Radio", description: "Opening radio player" });
+                    }}
+                    className="flex-1 h-12 automotive-button"
+                    data-testid="button-radio"
+                  >
+                    <Radio className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 });

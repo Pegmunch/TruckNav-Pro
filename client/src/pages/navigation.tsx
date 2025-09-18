@@ -236,7 +236,7 @@ export default function NavigationPage() {
 
   // Route calculation mutation
   const calculateRouteMutation = useMutation({
-    mutationFn: async (routeData: { startLocation: string; endLocation: string; vehicleProfileId?: string }) => {
+    mutationFn: async (routeData: { startLocation: string; endLocation: string; vehicleProfileId?: string; routePreference?: string }) => {
       const response = await apiRequest("POST", "/api/routes/calculate", routeData);
       return response.json();
     },
@@ -303,11 +303,12 @@ export default function NavigationPage() {
     },
   });
 
-  const handlePlanRoute = () => {
+  const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls') => {
     calculateRouteMutation.mutate({
       startLocation: fromLocation,
       endLocation: toLocation,
       vehicleProfileId: selectedProfile?.id,
+      routePreference: routePreference || 'fastest',
     });
   };
 

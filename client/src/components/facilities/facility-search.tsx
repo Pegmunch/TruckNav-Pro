@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,27 @@ export default function FacilitySearch({ coordinates, onSelectFacility }: Facili
       default: return <MapPin className="w-3 h-3" />;
     }
   };
+
+  // Add event listener for voice-to-manual interface
+  useEffect(() => {
+    const handleFacilitySearch = (event: CustomEvent) => {
+      const { query, type } = event.detail;
+      
+      if (query !== undefined) {
+        setSearchQuery(query);
+      }
+      
+      if (type !== undefined) {
+        setFacilityType(type);
+      }
+    };
+
+    window.addEventListener('search:facility', handleFacilitySearch as EventListener);
+
+    return () => {
+      window.removeEventListener('search:facility', handleFacilitySearch as EventListener);
+    };
+  }, []);
 
   return (
     <div className="space-y-4">

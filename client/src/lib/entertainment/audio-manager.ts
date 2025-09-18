@@ -53,6 +53,7 @@ export class AudioManager {
 
     this.initializeAudioContext();
     this.setupMediaSessionAPI();
+    this.setupNavigationEventListeners();
   }
 
   private initializeAudioContext() {
@@ -76,6 +77,45 @@ export class AudioManager {
       navigator.mediaSession.setActionHandler('previoustrack', () => this.emit('previous'));
       navigator.mediaSession.setActionHandler('nexttrack', () => this.emit('next'));
     }
+  }
+
+  private setupNavigationEventListeners() {
+    // Handle audio navigation events for voice-to-manual interface
+    const handleAudioNavigation = (event: CustomEvent) => {
+      const { action } = event.detail;
+      
+      switch (action) {
+        case 'mute':
+          this.setVolume(0);
+          break;
+        case 'unmute':
+          this.setVolume(this.config.defaultVolume || 0.8);
+          break;
+        case 'volume_up':
+          const currentVol = this.playbackStatus.volume;
+          this.setVolume(Math.min(1, currentVol + 0.1));
+          break;
+        case 'volume_down':
+          const currentVolDown = this.playbackStatus.volume;
+          this.setVolume(Math.max(0, currentVolDown - 0.1));
+          break;
+        case 'toggle_playback':
+          if (this.playbackStatus.isPlaying) {
+            this.pause();
+          } else {
+            this.resume();
+          }
+          break;
+        default:
+          console.warn('Unknown audio navigation action:', action);
+      }
+    };
+
+    // Register the event listener
+    window.addEventListener('audio:navigation', handleAudioNavigation as EventListener);
+
+    // Store reference for cleanup
+    (this as any)._audioNavigationListener = handleAudioNavigation;
   }
 
   private updateMediaSessionMetadata() {
@@ -356,6 +396,12 @@ export class AudioManager {
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
+    }
+
+    // Clean up navigation event listener
+    if ((this as any)._audioNavigationListener) {
+      window.removeEventListener('audio:navigation', (this as any)._audioNavigationListener);
+      delete (this as any)._audioNavigationListener;
     }
 
     this.listeners.clear();

@@ -1,4 +1,4 @@
-import { useState, memo, useMemo } from "react";
+import { useState, memo, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -250,6 +250,48 @@ const AlternativeRoutesPanel = memo(function AlternativeRoutesPanel({
   selectedRouteId,
 }: AlternativeRoutesPanelProps) {
   const [activeTab, setActiveTab] = useState("comparison");
+
+  // Add event listener for voice-to-manual interface
+  useEffect(() => {
+    const handleRouteAlternatives = (event: CustomEvent) => {
+      const { action, routeIndex } = event.detail;
+      
+      switch (action) {
+        case 'show':
+          // Panel opening is controlled by parent component
+          break;
+        case 'select':
+          if (routeIndex !== undefined && alternatives[routeIndex]) {
+            onSelectRoute(alternatives[routeIndex]);
+          } else if (alternatives.length > 0) {
+            // Select the best alternative (first one)
+            onSelectRoute(alternatives[0]);
+          }
+          break;
+        case 'preview':
+          if (routeIndex !== undefined && alternatives[routeIndex]) {
+            onPreviewRoute(alternatives[routeIndex]);
+          } else if (alternatives.length > 0) {
+            // Preview the best alternative (first one)
+            onPreviewRoute(alternatives[0]);
+          }
+          break;
+        case 'close':
+          onClose();
+          break;
+        default:
+          console.warn('Unknown route alternatives action:', action);
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('route:alternatives', handleRouteAlternatives as EventListener);
+    }
+
+    return () => {
+      window.removeEventListener('route:alternatives', handleRouteAlternatives as EventListener);
+    };
+  }, [isOpen, alternatives, onSelectRoute, onPreviewRoute, onClose]);
 
   if (!isOpen) return null;
 

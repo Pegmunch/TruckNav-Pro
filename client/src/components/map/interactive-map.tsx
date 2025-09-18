@@ -362,16 +362,58 @@ const InteractiveMap = memo(function InteractiveMap({
     resetAutoHideTimer();
   };
 
-  // Initialize auto-hide timer on mount
+  // Initialize auto-hide timer on mount and add event listeners
   useEffect(() => {
     resetAutoHideTimer();
+    
+    // Add event listeners for voice-to-manual interface
+    const handleMapZoom = (event: CustomEvent) => {
+      const { direction } = event.detail;
+      if (direction === 'in') {
+        handleZoomIn();
+      } else if (direction === 'out') {
+        handleZoomOut();
+      }
+    };
+
+    const handleMapCenter = (event: CustomEvent) => {
+      handleCurrentLocation();
+    };
+
+    const handleMapTraffic = (event: CustomEvent) => {
+      const { show } = event.detail;
+      if (show !== undefined) {
+        const newPreferences = { ...preferences, showTrafficLayer: show };
+        setPreferences(newPreferences);
+        saveMapPreferences(newPreferences);
+        onToggleTrafficLayer?.();
+      } else {
+        handleToggleTrafficLayer();
+      }
+      resetAutoHideTimer();
+    };
+
+    const handleMapFullscreen = (event: CustomEvent) => {
+      handleFullscreenToggle();
+    };
+
+    // Register event listeners
+    window.addEventListener('map:zoom', handleMapZoom as EventListener);
+    window.addEventListener('map:center', handleMapCenter as EventListener);
+    window.addEventListener('map:traffic', handleMapTraffic as EventListener);
+    window.addEventListener('map:fullscreen', handleMapFullscreen as EventListener);
     
     return () => {
       if (autoHideTimerRef.current) {
         clearTimeout(autoHideTimerRef.current);
       }
+      // Cleanup event listeners
+      window.removeEventListener('map:zoom', handleMapZoom as EventListener);
+      window.removeEventListener('map:center', handleMapCenter as EventListener);
+      window.removeEventListener('map:traffic', handleMapTraffic as EventListener);
+      window.removeEventListener('map:fullscreen', handleMapFullscreen as EventListener);
     };
-  }, [resetAutoHideTimer]);
+  }, [resetAutoHideTimer, preferences, handleZoomIn, handleZoomOut, handleCurrentLocation, handleToggleTrafficLayer, handleFullscreenToggle, onToggleTrafficLayer]);
 
   // Cleanup timer on unmount
   useEffect(() => {
