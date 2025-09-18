@@ -7,14 +7,14 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 
 const Drawer = ({
-  shouldScaleBackground = true,
+  shouldScaleBackground = false, // Disabled to prevent background scaling issues
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => {
   const isMobile = useIsMobile()
   
   return (
     <DrawerPrimitive.Root
-      shouldScaleBackground={isMobile ? shouldScaleBackground : false}
+      shouldScaleBackground={false} // Force disable to prevent frosted glass effects
       direction="bottom"
       {...props}
     />
