@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useEffect } from "react";
+import { useState, memo, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,13 +121,17 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isVoiceSearchActive, setIsVoiceSearchActive] = useState(false);
   
+  // Refs for proper focus management
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const resultsRegionRef = useRef<HTMLDivElement>(null);
+  const [focusedChipIndex, setFocusedChipIndex] = useState(-1);
+  
   // Quick action handlers for internal functionality
   const handleQuickFacilitiesSearch = useCallback(() => {
-    // Focus on the search input and set facilities category
-    const searchInput = document.querySelector('input[type="text"][placeholder*="Search"]') as HTMLInputElement;
-    if (searchInput) {
-      searchInput.focus();
-      searchInput.placeholder = "Search for nearby truck stops, fuel stations, parking...";
+    // Focus on the search input using proper ref
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+      searchInputRef.current.placeholder = "Search for nearby truck stops, fuel stations, parking...";
     }
     
     // Clear current search and category to refresh results
@@ -146,7 +150,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   }, [toast, onFocusOnFacilities]);
 
   const handleQuickHistoryView = useCallback(() => {
-    // Scroll to the history section at the bottom
+    // Scroll to the history section using proper ref
     setTimeout(() => {
       const historyElement = document.querySelector('[data-testid="section-navigation-history"]') || 
                            document.querySelector('.border-t');
@@ -156,7 +160,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
           block: 'start' 
         });
       } else {
-        // Fallback: scroll to bottom of the panel
+        // Fallback: scroll to bottom of the panel using ref
         const panelElement = document.querySelector('.unified-search-panel') as HTMLElement;
         if (panelElement) {
           panelElement.scrollTo({ 
@@ -406,6 +410,41 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     setSelectedCategory(categoryType === selectedCategory ? "" : categoryType);
     setSearchQuery(""); // Clear text search when selecting category
   };
+  
+  // Handle keyboard navigation for POI chips
+  const handleChipKeyDown = (event: React.KeyboardEvent, index: number) => {
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        const prevIndex = index === 0 ? POI_CATEGORIES.length - 1 : index - 1;
+        setFocusedChipIndex(prevIndex);
+        // Focus the previous chip
+        setTimeout(() => {
+          const prevChip = document.querySelector(`[data-testid="button-category-chip-${POI_CATEGORIES[prevIndex].id}"]`) as HTMLButtonElement;
+          prevChip?.focus();
+        }, 0);
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        const nextIndex = index === POI_CATEGORIES.length - 1 ? 0 : index + 1;
+        setFocusedChipIndex(nextIndex);
+        // Focus the next chip
+        setTimeout(() => {
+          const nextChip = document.querySelector(`[data-testid="button-category-chip-${POI_CATEGORIES[nextIndex].id}"]`) as HTMLButtonElement;
+          nextChip?.focus();
+        }, 0);
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        handleCategorySelect(POI_CATEGORIES[index].type);
+        break;
+      case 'Escape':
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        break;
+    }
+  };
 
   // Handle voice search toggle
   const handleVoiceSearchToggle = () => {
@@ -546,7 +585,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       
       {/* Unified Search Panel */}
       <div className={cn(
-        "fixed lg:absolute top-0 right-0 h-full w-80 lg:w-96 bg-card border-l border-border z-50 flex flex-col",
+        "unified-search-panel fixed lg:absolute top-0 right-0 h-full w-80 lg:w-96 bg-card border-l border-border z-50 flex flex-col",
         "transform transition-transform duration-300 ease-in-out",
         "shadow-2xl lg:shadow-lg",
         isOpen ? "translate-x-0" : "translate-x-full",
@@ -590,16 +629,22 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                 <div className="space-y-3">
                   <h3 className="text-sm font-medium text-muted-foreground">Categories</h3>
                   <ScrollArea className="w-full">
-                    <div className="flex space-x-2 pb-2">
-                      {POI_CATEGORIES.map((category) => (
+                    <div 
+                      className="flex space-x-2 pb-2"
+                      role="tablist"
+                      aria-label="Filter by facility categories"
+                      data-testid="poi-chips-container"
+                    >
+                      {POI_CATEGORIES.map((category, index) => (
                         <Button
                           key={category.id}
                           variant={selectedCategory === category.type ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleCategorySelect(category.type)}
+                          onKeyDown={(e) => handleChipKeyDown(e, index)}
                           className={cn(
                             "flex items-center space-x-2 whitespace-nowrap min-w-fit px-3 py-2 rounded-full transition-all",
-                            "hover:shadow-sm active:scale-95",
+                            "hover:shadow-sm active:scale-95 focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
                             "bg-background dark:bg-background border border-border dark:border-border",
                             "text-foreground dark:text-foreground hover:bg-accent dark:hover:bg-accent",
                             selectedCategory === category.type && (
@@ -610,6 +655,8 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                           aria-label={`Filter by ${category.label}`}
                           role="tab"
                           aria-selected={selectedCategory === category.type}
+                          aria-controls="search-results-region"
+                          tabIndex={index === 0 || selectedCategory === category.type ? 0 : -1}
                         >
                           <category.icon className="w-4 h-4" />
                           <span className="text-xs font-medium">{category.label}</span>
@@ -623,12 +670,14 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
                   <Input
+                    ref={searchInputRef}
                     placeholder="Search locations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-12 pr-12 bg-background dark:bg-background border-border dark:border-border text-foreground dark:text-foreground placeholder:text-muted-foreground dark:placeholder:text-muted-foreground"
                     data-testid="input-search-query"
                     aria-label="Search for locations"
+                    aria-describedby="search-results-live"
                   />
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                     <VoiceMicButton
@@ -910,8 +959,27 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
               </CardContent>
             </Card>
 
+            {/* Aria-live region for search results updates */}
+            <div 
+              id="search-results-live" 
+              className="sr-only" 
+              aria-live="polite" 
+              aria-atomic="true"
+              data-testid="search-results-live-region"
+            >
+              {isLoading ? "Searching for locations..." : 
+               filteredFacilities.length === 0 ? "No locations found" :
+               `Found ${filteredFacilities.length} location${filteredFacilities.length !== 1 ? 's' : ''}`}
+            </div>
+
             {/* Search Results with improved design */}
-            <div className="flex-1 overflow-hidden">
+            <div 
+              className="flex-1 overflow-hidden"
+              id="search-results-region"
+              role="region"
+              aria-label="Search results"
+              data-testid="search-results-region"
+            >
               <ScrollArea className="h-full">
                 <div className="px-4 pb-4 space-y-3">
                   {isLoading ? (
@@ -1002,6 +1070,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                                 handleFacilitySelect(facility);
                               }
                             }}
+                            onFocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
                           >
                             <div className="flex items-center space-x-4">
                               {/* Icon on the left */}
@@ -1079,7 +1148,14 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-8 w-8 p-0 hover:bg-primary/10 dark:hover:bg-primary/10 text-muted-foreground dark:text-muted-foreground hover:text-primary dark:hover:text-primary"
+                                  className={cn(
+                                    "h-8 w-8 p-0 transition-all duration-200 rounded-md",
+                                    "text-muted-foreground dark:text-muted-foreground",
+                                    "hover:bg-primary/10 dark:hover:bg-primary/10",
+                                    "hover:text-primary dark:hover:text-primary",
+                                    "focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:outline-none",
+                                    "active:scale-95"
+                                  )}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onNavigateToLocation?.(`${facility.name}, ${facility.address}`);
@@ -1097,7 +1173,14 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-8 w-8 p-0 hover:bg-accent dark:hover:bg-accent text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground"
+                                  className={cn(
+                                    "h-8 w-8 p-0 transition-all duration-200 rounded-md",
+                                    "text-muted-foreground dark:text-muted-foreground",
+                                    "hover:bg-yellow-50 dark:hover:bg-yellow-900/20",
+                                    "hover:text-yellow-700 dark:hover:text-yellow-400",
+                                    "focus:ring-2 focus:ring-yellow-500/50 focus:ring-offset-2 focus:outline-none",
+                                    "active:scale-95"
+                                  )}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     // Implement save functionality here
