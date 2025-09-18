@@ -29,8 +29,382 @@ import {
   validatePostcodeSearch,
   validatePostcodeGeocoding
 } from "./middleware/validation";
+import * as turf from "@turf/turf";
 
-// Truck-safe route calculation function
+// Server-side GraphHopper API integration with proper parameters
+async function callGraphHopperAPI(
+  startCoords: { lat: number; lng: number },
+  endCoords: { lat: number; lng: number },
+  vehicleProfile: VehicleProfile
+): Promise<{
+  distance: number;
+  duration: number;
+  coordinates: Array<{ lat: number; lng: number }>;
+  geometry: any;
+  instructions?: Array<{ text: string; distance: number; time: number; sign: number }>;
+} | null> {
+  try {
+    const apiKey = process.env.GRAPHHOPPER_API_KEY;
+    if (!apiKey) {
+      console.error('GraphHopper API key not found in server environment');
+      return null;
+    }
+
+    // Convert vehicle dimensions - feet to meters for GraphHopper
+    const heightMeters = vehicleProfile.height * 0.3048;
+    const widthMeters = vehicleProfile.width * 0.3048;
+    const weightKg = (vehicleProfile.weight || 0) * 1000;
+    const lengthMeters = (vehicleProfile.length || 0) * 0.3048;
+
+    // Determine GraphHopper vehicle profile based on vehicle type
+    let ghVehicle = 'car';
+    let customModel: any = {};
+    
+    switch (vehicleProfile.type) {
+      case 'car':
+        ghVehicle = 'car';
+        break;
+      case 'car_caravan':
+        ghVehicle = 'car';
+        customModel = {
+          priority: [
+            { if: "road_class == MOTORWAY", multiply_by: "1.2" },
+            { if: "road_class == TRUNK", multiply_by: "1.1" },
+            { if: "road_class == PRIMARY", multiply_by: "1.0" },
+            { if: "road_class == SECONDARY", multiply_by: "0.9" },
+            { if: "road_class == RESIDENTIAL", multiply_by: "0.7" }
+          ],
+          speed: [
+            { if: "true", limit_to: "60" }
+          ]
+        };
+        break;
+      case 'class_1_lorry':
+      case 'class_2_lorry':
+      case '7_5_tonne':
+        ghVehicle = 'truck';
+        const maxSpeed = vehicleProfile.maxSpeed || 70;
+        customModel = {
+          priority: [
+            { if: "road_class == MOTORWAY", multiply_by: "1.3" },
+            { if: "road_class == TRUNK", multiply_by: "1.2" },
+            { if: "road_class == PRIMARY", multiply_by: "1.1" },
+            { if: "road_class == SECONDARY", multiply_by: "0.8" },
+            { if: "road_class == RESIDENTIAL", multiply_by: "0.3" },
+            { if: "road_class == LIVING_STREET", multiply_by: "0.1" }
+          ],
+          speed: [
+            { if: "true", limit_to: maxSpeed.toString() }
+          ],
+          distance_influence: "70"
+        };
+        break;
+    }
+
+    // Build request parameters with valid GraphHopper API format
+    const params = new URLSearchParams({
+      point: `${startCoords.lat},${startCoords.lng}`,
+      vehicle: ghVehicle,
+      locale: 'en-GB',
+      instructions: 'true',
+      calc_points: 'true',
+      debug: 'false',
+      elevation: 'false',
+      points_encoded: 'false',
+      type: 'json'
+    });
+
+    // Add second point
+    params.append('point', `${endCoords.lat},${endCoords.lng}`);
+
+    // Add custom model if needed for truck routing
+    if (Object.keys(customModel).length > 0) {
+      params.append('custom_model', JSON.stringify(customModel));
+    }
+
+    // Add vehicle restrictions for trucks
+    if (ghVehicle === 'truck') {
+      if (heightMeters > 0) params.append('height', heightMeters.toFixed(2));
+      if (widthMeters > 0) params.append('width', widthMeters.toFixed(2));
+      if (weightKg > 0) params.append('weight', Math.round(weightKg).toString());
+      if (lengthMeters > 0) params.append('length', lengthMeters.toFixed(2));
+      
+      // Add truck-specific avoidances based on vehicle class
+      if (!vehicleProfile.canUseResidentialRoads) {
+        params.append('avoid', 'residential');
+      }
+      if (!vehicleProfile.canUseMotorways) {
+        params.append('avoid', 'motorway');
+      }
+      // Avoid tolls and ferries for commercial vehicles by default
+      if (vehicleProfile.type === 'class_2_lorry' || vehicleProfile.type === '7_5_tonne') {
+        params.append('avoid', 'toll');
+        params.append('avoid', 'ferry');
+      }
+    }
+
+    params.append('key', apiKey);
+
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    const response = await fetch(`https://graphhopper.com/api/1/route?${params}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'TruckNav-Pro/1.0'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error(`GraphHopper API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('GraphHopper error response:', errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.paths || data.paths.length === 0) {
+      console.error('No route found from GraphHopper API');
+      return null;
+    }
+
+    const path = data.paths[0];
+    
+    return {
+      distance: Math.round(path.distance / 1609.34 * 100) / 100, // meters to miles
+      duration: Math.round(path.time / 60000), // milliseconds to minutes
+      coordinates: path.points.coordinates.map((coord: number[]) => ({ 
+        lat: coord[1], 
+        lng: coord[0] 
+      })),
+      geometry: {
+        type: "LineString" as const,
+        coordinates: path.points.coordinates
+      },
+      instructions: path.instructions?.map((inst: any) => ({
+        text: inst.text,
+        distance: Math.round(inst.distance / 1609.34 * 100) / 100, // meters to miles
+        time: Math.round(inst.time / 1000), // milliseconds to seconds
+        sign: inst.sign
+      })) || []
+    };
+  } catch (error) {
+    console.error('GraphHopper API call failed:', error);
+    return null;
+  }
+}
+
+// Enhanced strict vehicle class routing function with actual spatial validation
+async function calculateStrictVehicleClassRoute(
+  startCoords: { lat: number; lng: number },
+  endCoords: { lat: number; lng: number },
+  vehicleProfile: VehicleProfile,
+  restrictions: Restriction[]
+): Promise<{
+  distance: number;
+  duration: number;
+  coordinates: Array<{ lat: number; lng: number }>;
+  restrictionsAvoided: string[];
+  geometry: any;
+  violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }>;
+  isRouteAllowed: boolean;
+} | null> {
+  try {
+    // Get route from GraphHopper API
+    const routeResult = await callGraphHopperAPI(startCoords, endCoords, vehicleProfile);
+    if (!routeResult) {
+      console.error('Failed to get route from GraphHopper API');
+      return null;
+    }
+
+    // Now perform spatial validation with actual route geometry
+    const violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }> = [];
+    const restrictionsAvoided: string[] = [];
+    const routeLine = turf.lineString(routeResult.geometry.coordinates);
+
+    // Check each restriction for spatial intersection with the actual route
+    for (const restriction of restrictions) {
+      let intersects = false;
+      
+      // Check if restriction has spatial coordinates
+      if (restriction.coordinates) {
+        const coords = typeof restriction.coordinates === 'string' 
+          ? JSON.parse(restriction.coordinates) 
+          : restriction.coordinates;
+        
+        if (coords.lat && coords.lng) {
+          // Create a point for the restriction
+          const restrictionPoint = turf.point([coords.lng, coords.lat]);
+          
+          // Check if route passes within 100 meters (0.1km) of restriction
+          const buffer = turf.buffer(restrictionPoint, 0.1, { units: 'kilometers' });
+          if (buffer) {
+            intersects = turf.booleanIntersects(routeLine, buffer);
+          }
+        }
+      } else if (restriction.routeSegment) {
+        // Handle route segment restrictions
+        const segmentCoords = typeof restriction.routeSegment === 'string'
+          ? JSON.parse(restriction.routeSegment)
+          : restriction.routeSegment;
+          
+        if (Array.isArray(segmentCoords) && segmentCoords.length >= 2) {
+          const restrictionSegment = turf.lineString(segmentCoords.map(coord => [coord.lng, coord.lat]));
+          intersects = turf.booleanIntersects(routeLine, restrictionSegment);
+        }
+      }
+
+      // If restriction intersects with route, check if vehicle is affected
+      if (intersects && isVehicleAffectedByRestriction(vehicleProfile, restriction)) {
+        const bypassable = restriction.bypassAllowed !== false && restriction.severity !== 'absolute';
+        
+        violations.push({
+          restriction,
+          severity: restriction.severity || 'medium',
+          bypassable
+        });
+        
+        restrictionsAvoided.push(restriction.id);
+        
+        console.log(`Route intersects with ${restriction.severity} restriction: ${restriction.type} at ${restriction.location}`);
+      }
+    }
+
+    // Check for absolute restrictions that block the route completely
+    const absoluteViolations = violations.filter(v => v.severity === 'absolute' && !v.bypassable);
+    if (absoluteViolations.length > 0) {
+      console.log(`Route blocked by ${absoluteViolations.length} absolute restrictions`);
+      return {
+        distance: 0,
+        duration: 0,
+        coordinates: [],
+        restrictionsAvoided,
+        geometry: null,
+        violations: absoluteViolations,
+        isRouteAllowed: false
+      };
+    }
+
+    // Return the validated route with spatial intersection results
+    return {
+      distance: routeResult.distance,
+      duration: routeResult.duration,
+      coordinates: routeResult.coordinates,
+      restrictionsAvoided,
+      geometry: routeResult.geometry,
+      violations,
+      isRouteAllowed: violations.every(v => v.bypassable) // Route allowed if all violations are bypassable
+    };
+  } catch (error) {
+    console.error('Error calculating strict vehicle class route:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if a vehicle is affected by a specific restriction
+ */
+function isVehicleAffectedByRestriction(vehicleProfile: VehicleProfile, restriction: Restriction): boolean {
+  // Check if restriction specifically targets this vehicle type
+  if (restriction.restrictedVehicleTypes) {
+    const restrictedTypes = Array.isArray(restriction.restrictedVehicleTypes) 
+      ? restriction.restrictedVehicleTypes 
+      : JSON.parse(restriction.restrictedVehicleTypes as string);
+    return restrictedTypes.includes(vehicleProfile.type);
+  }
+  
+  // Check dimensional restrictions
+  switch (restriction.type) {
+    case 'height':
+      return vehicleProfile.height >= restriction.limit;
+    case 'width':
+      return vehicleProfile.width >= restriction.limit;
+    case 'weight':
+      return !!vehicleProfile.weight && vehicleProfile.weight >= restriction.limit;
+    case 'length':
+      return !!vehicleProfile.length && vehicleProfile.length >= restriction.limit;
+    case 'axle_count':
+      return !!vehicleProfile.axles && vehicleProfile.axles > restriction.limit;
+    case 'hazmat':
+      return !!vehicleProfile.isHazmat;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Check if a vehicle violates vehicle class specific restrictions
+ */
+function isVehicleClassViolation(vehicleProfile: VehicleProfile, restriction: Restriction): boolean {
+  // Parse vehicle profile restrictions
+  const allowedRoadTypes = vehicleProfile.allowedRoadTypes 
+    ? (Array.isArray(vehicleProfile.allowedRoadTypes) 
+        ? vehicleProfile.allowedRoadTypes 
+        : JSON.parse(vehicleProfile.allowedRoadTypes as string))
+    : [];
+    
+  const restrictedAreas = vehicleProfile.restrictedAreas 
+    ? (Array.isArray(vehicleProfile.restrictedAreas) 
+        ? vehicleProfile.restrictedAreas 
+        : JSON.parse(vehicleProfile.restrictedAreas as string))
+    : [];
+
+  // Use actual schema fields for restriction types
+  switch (restriction.type) {
+    case 'residential_ban':
+      // Heavy vehicles banned from residential areas
+      return vehicleProfile.canUseResidentialRoads === false &&
+             ['class_1_lorry', 'class_2_lorry', '7_5_tonne'].includes(vehicleProfile.type);
+             
+    case 'vehicle_type':
+      // Check if this vehicle type is specifically restricted
+      const restrictedTypes = restriction.restrictedVehicleTypes
+        ? (Array.isArray(restriction.restrictedVehicleTypes) 
+            ? restriction.restrictedVehicleTypes 
+            : JSON.parse(restriction.restrictedVehicleTypes as string))
+        : [];
+      return restrictedTypes.includes(vehicleProfile.type);
+      
+    case 'time_based':
+      // Check time restrictions (simplified - would need actual time checking)
+      if (vehicleProfile.restrictedHours) {
+        const restrictedHours = typeof vehicleProfile.restrictedHours === 'string'
+          ? JSON.parse(vehicleProfile.restrictedHours)
+          : vehicleProfile.restrictedHours;
+        const currentHour = new Date().getHours();
+        const startHour = parseInt(restrictedHours.start?.split(':')[0] || '0');
+        const endHour = parseInt(restrictedHours.end?.split(':')[0] || '24');
+        
+        // Check if current time falls within restricted hours
+        if (startHour < endHour) {
+          return currentHour >= startHour && currentHour < endHour;
+        } else {
+          // Overnight restriction (e.g., 22:00 to 06:00)
+          return currentHour >= startHour || currentHour < endHour;
+        }
+      }
+      return false;
+      
+    case 'bridge_weight':
+      // Bridge weight restrictions for heavy vehicles
+      return (vehicleProfile.weight || 0) > restriction.limit;
+      
+    case 'tunnel_clearance':
+      // Tunnel height clearance - same as height restriction
+      return vehicleProfile.height > restriction.limit;
+      
+    default:
+      return false;
+  }
+}
+
+// Legacy function for backward compatibility
 async function calculateTruckSafeRoute(
   startCoords: { lat: number; lng: number },
   endCoords: { lat: number; lng: number },
@@ -43,86 +417,40 @@ async function calculateTruckSafeRoute(
   restrictionsAvoided: string[];
   geometry: any;
 } | null> {
-  try {
-    // Filter restrictions that would affect this vehicle
-    const conflictingRestrictions = restrictions.filter(restriction => {
-      switch (restriction.type) {
-        case 'height':
-          return vehicleProfile.height >= restriction.limit;
-        case 'width':
-          return vehicleProfile.width >= restriction.limit;
-        case 'weight':
-          return vehicleProfile.weight && vehicleProfile.weight >= restriction.limit;
-        case 'length':
-          return vehicleProfile.length && vehicleProfile.length >= restriction.limit;
-        default:
-          return false;
-      }
-    });
-
-    // Calculate distance between start and end (Haversine formula)
-    const R = 3959; // Earth radius in miles
-    const dLat = (endCoords.lat - startCoords.lat) * Math.PI / 180;
-    const dLng = (endCoords.lng - startCoords.lng) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(startCoords.lat * Math.PI / 180) * Math.cos(endCoords.lat * Math.PI / 180) *
-      Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-
-    // Adjust route duration based on vehicle type (trucks are slower)
-    let durationMultiplier = 1.0;
-    switch (vehicleProfile.type) {
-      case 'car':
-        durationMultiplier = 1.0;
-        break;
-      case 'car_caravan':
-        durationMultiplier = 1.2; // 20% slower
-        break;
-      case 'class_2_lorry':
-        durationMultiplier = 1.4; // 40% slower
-        break;
-      case '7_5_tonne':
-        durationMultiplier = 1.6; // 60% slower
-        break;
-      default:
-        durationMultiplier = 1.0;
-    }
-
-    // Base duration calculation (assuming average speed adjustments)
-    const baseDurationMinutes = distance * 1.5; // Rough estimate
-    const adjustedDuration = Math.round(baseDurationMinutes * durationMultiplier);
-
-    // Create route path with intermediate points (avoiding restricted areas)
-    const coordinates = [
-      startCoords,
-      {
-        lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.33,
-        lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.33
-      },
-      {
-        lat: startCoords.lat + (endCoords.lat - startCoords.lat) * 0.66,
-        lng: startCoords.lng + (endCoords.lng - startCoords.lng) * 0.66
-      },
-      endCoords
-    ];
-
-    // Create GeoJSON geometry
-    const geometry = {
-      type: "LineString" as const,
-      coordinates: coordinates.map(coord => [coord.lng, coord.lat])
-    };
-
-    return {
-      distance: Math.round(distance * 100) / 100,
-      duration: adjustedDuration,
-      coordinates,
-      restrictionsAvoided: conflictingRestrictions.map(r => r.id),
-      geometry
-    };
-  } catch (error) {
-    console.error('Error calculating truck-safe route:', error);
+  const result = await calculateStrictVehicleClassRoute(startCoords, endCoords, vehicleProfile, restrictions);
+  if (!result) return null;
+  
+  // If route is not allowed due to absolute restrictions, return null
+  if (!result.isRouteAllowed) {
     return null;
+  }
+  
+  return {
+    distance: result.distance,
+    duration: result.duration,
+    coordinates: result.coordinates,
+    restrictionsAvoided: result.restrictionsAvoided,
+    geometry: result.geometry
+  };
+}
+
+/**
+ * Get vehicle compliance level based on vehicle type
+ */
+function getVehicleComplianceLevel(vehicleType: string): string {
+  switch (vehicleType) {
+    case 'car':
+      return 'basic'; // Minimal restrictions
+    case 'car_caravan':
+      return 'moderate'; // Some restrictions for safety
+    case 'class_1_lorry':
+      return 'strict'; // Commercial vehicle restrictions
+    case 'class_2_lorry':
+      return 'very_strict'; // Heavy commercial restrictions
+    case '7_5_tonne':
+      return 'maximum'; // Maximum restrictions and compliance
+    default:
+      return 'basic';
   }
 }
 
@@ -275,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Prepare response with word-level timestamps if available
         const words = transcription.segments?.flatMap(segment => 
-          segment.words?.map(word => ({
+          (segment as any).words?.map((word: any) => ({
             text: word.word,
             confidence: word.probability || confidence,
             start: word.start,
@@ -450,7 +778,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Routes
+  // Route Validation and Compliance Checking
+  app.post("/api/routes/validate", validateRoute, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { routeId, vehicleProfileId, currentPosition, checkCompliance = true } = req.body;
+      
+      if (!routeId) {
+        return res.status(400).json({ message: "Route ID is required for validation" });
+      }
+      
+      // Get the route and vehicle profile
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+      
+      let vehicleProfile = null;
+      if (vehicleProfileId) {
+        vehicleProfile = await storage.getVehicleProfile(vehicleProfileId);
+      }
+      
+      if (!vehicleProfile) {
+        return res.status(400).json({ message: "Vehicle profile is required for compliance validation" });
+      }
+      
+      // Get restrictions in the route area
+      const routeCoords = route.routePath as Array<{ lat: number; lng: number }> || [];
+      if (routeCoords.length === 0) {
+        return res.status(400).json({ message: "Route has no coordinate data" });
+      }
+      
+      const bounds = {
+        north: Math.max(...routeCoords.map(c => c.lat)) + 0.5,
+        south: Math.min(...routeCoords.map(c => c.lat)) - 0.5,
+        east: Math.max(...routeCoords.map(c => c.lng)) + 0.5,
+        west: Math.min(...routeCoords.map(c => c.lng)) - 0.5,
+      };
+      
+      const restrictions = await storage.getRestrictionsByArea(bounds);
+      
+      // Perform compliance validation
+      const validationResult = {
+        routeId,
+        vehicleType: vehicleProfile.type,
+        isCompliant: true,
+        violations: [] as any[],
+        recommendations: [] as string[],
+        severity: 'low' as string,
+        requiresRerouting: false,
+        complianceScore: 100
+      };
+      
+      // Check for absolute restrictions that would block this vehicle type
+      const absoluteViolations = restrictions.filter(r => 
+        r.severity === 'absolute' && 
+        r.restrictedVehicleTypes && 
+        (Array.isArray(r.restrictedVehicleTypes) 
+          ? r.restrictedVehicleTypes.includes(vehicleProfile.type)
+          : JSON.parse(r.restrictedVehicleTypes as string).includes(vehicleProfile.type))
+      );
+      
+      if (absoluteViolations.length > 0) {
+        validationResult.isCompliant = false;
+        validationResult.severity = 'critical';
+        validationResult.requiresRerouting = true;
+        validationResult.complianceScore = 0;
+        validationResult.violations = absoluteViolations.map(r => ({
+          type: 'absolute_restriction',
+          restriction: {
+            id: r.id,
+            type: r.type,
+            location: r.location,
+            severity: r.severity,
+            description: r.description
+          },
+          message: `Absolute restriction violation: ${vehicleProfile.type} vehicles are completely prohibited in this area`,
+          canBypass: false
+        }));
+        validationResult.recommendations.push('Immediate rerouting required - no exceptions permitted');
+      } else {
+        // Check for other compliance issues
+        const vehicleClassViolations = [];
+        
+        // Check road type restrictions
+        if (!vehicleProfile.canUseMotorways) {
+          const motorwayRestrictions = restrictions.filter(r => r.type === 'motorway_restriction');
+          vehicleClassViolations.push(...motorwayRestrictions);
+        }
+        
+        if (!vehicleProfile.canUseResidentialRoads) {
+          const residentialRestrictions = restrictions.filter(r => r.type === 'residential_ban');
+          vehicleClassViolations.push(...residentialRestrictions);
+        }
+        
+        if (vehicleClassViolations.length > 0) {
+          validationResult.complianceScore = Math.max(0, 100 - (vehicleClassViolations.length * 20));
+          validationResult.violations = vehicleClassViolations.map(r => ({
+            type: 'vehicle_class_restriction',
+            restriction: {
+              id: r.id,
+              type: r.type,
+              location: r.location,
+              severity: r.severity || 'medium',
+              description: r.description
+            },
+            message: `Vehicle class ${vehicleProfile.type} has restrictions on ${r.type} roads`,
+            canBypass: r.bypassAllowed !== false && r.severity !== 'absolute'
+          }));
+          
+          if (vehicleClassViolations.some(r => r.severity === 'high' || r.enforcementType === 'strict')) {
+            validationResult.severity = 'high';
+            validationResult.requiresRerouting = true;
+            validationResult.recommendations.push('Consider alternative route for strict compliance');
+          } else {
+            validationResult.severity = 'medium';
+            validationResult.recommendations.push('Exercise caution in restricted areas');
+          }
+        }
+      }
+      
+      // Add current position check if provided
+      if (currentPosition && checkCompliance) {
+        const nearbyRestrictions = restrictions.filter(r => {
+          if (r.coordinates) {
+            const coords = typeof r.coordinates === 'string' ? JSON.parse(r.coordinates) : r.coordinates;
+            const distance = calculateHaversineDistance(currentPosition, coords);
+            return distance < 0.5; // Within 0.5 miles
+          }
+          return false;
+        });
+        
+        if (nearbyRestrictions.length > 0) {
+          validationResult.recommendations.push(`${nearbyRestrictions.length} restrictions detected near current position`);
+        }
+      }
+      
+      res.json(validationResult);
+    } catch (error) {
+      console.error('Route validation error:', error);
+      res.status(500).json({ message: "Failed to validate route compliance" });
+    }
+  });
+
+  // Real-time compliance monitoring endpoint
+  app.post("/api/routes/compliance-check", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { currentPosition, vehicleType, routeId } = req.body;
+      
+      if (!currentPosition || !vehicleType) {
+        return res.status(400).json({ message: "Current position and vehicle type are required" });
+      }
+      
+      // Get restrictions near current position
+      const bounds = {
+        north: currentPosition.lat + 0.1, // Small area around current position
+        south: currentPosition.lat - 0.1,
+        east: currentPosition.lng + 0.1,
+        west: currentPosition.lng - 0.1,
+      };
+      
+      const nearbyRestrictions = await storage.getRestrictionsByArea(bounds);
+      
+      // Check for immediate compliance violations
+      const immediateViolations = nearbyRestrictions.filter(r => {
+        if (r.severity === 'absolute' && r.restrictedVehicleTypes) {
+          const restrictedTypes = Array.isArray(r.restrictedVehicleTypes) 
+            ? r.restrictedVehicleTypes 
+            : JSON.parse(r.restrictedVehicleTypes as string);
+          return restrictedTypes.includes(vehicleType);
+        }
+        return false;
+      });
+      
+      const complianceStatus = {
+        position: currentPosition,
+        vehicleType,
+        timestamp: new Date().toISOString(),
+        compliant: immediateViolations.length === 0,
+        immediateAction: immediateViolations.length > 0 ? 'STOP_REROUTE' : 'CONTINUE',
+        violations: immediateViolations.map(r => ({
+          id: r.id,
+          type: r.type,
+          severity: r.severity,
+          message: `Immediate violation: ${vehicleType} vehicle in absolute restricted area`,
+          location: r.location
+        })),
+        nearbyRestrictions: nearbyRestrictions.length,
+        recommendations: immediateViolations.length > 0 
+          ? ['Stop vehicle immediately', 'Calculate alternative route', 'Contact dispatch if needed']
+          : ['Continue on current route', 'Monitor for upcoming restrictions']
+      };
+      
+      res.json(complianceStatus);
+    } catch (error) {
+      console.error('Real-time compliance check error:', error);
+      res.status(500).json({ message: "Failed to perform compliance check" });
+    }
+  });
+
+  // Helper function for distance calculation
+  function calculateHaversineDistance(
+    point1: { lat: number; lng: number },
+    point2: { lat: number; lng: number }
+  ): number {
+    const R = 3959; // Earth radius in miles
+    const dLat = (point2.lat - point1.lat) * Math.PI / 180;
+    const dLng = (point2.lng - point1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(point1.lat * Math.PI / 180) * Math.cos(point2.lat * Math.PI / 180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // Routes with strict vehicle class enforcement
   app.post("/api/routes/calculate", validateRoute, validateRequest, async (req: Request, res: Response) => {
     try {
       const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates } = req.body;
@@ -464,7 +1005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let restrictionsAvoided: string[] = [];
       let routeDistance = 186; // Default fallback
       let routeDuration = 222; // Default fallback
-      let routePath = [];
+      let routePath: Array<{ lat: number; lng: number }> = [];
       let geometry = null;
 
       if (vehicleProfileId) {
@@ -474,25 +1015,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use provided coordinates or fallback to UK defaults
       const startCoords = startCoordinates || { lat: 53.4808, lng: -2.2426 }; // Manchester
       const endCoords = endCoordinates || { lat: 52.4862, lng: -1.8904 }; // Birmingham
+      
+      // Pre-route validation: Check if vehicle type is provided and valid
+      if (vehicleProfileId && vehicleProfile) {
+        const allowedVehicleTypes = ['car', 'car_caravan', 'class_1_lorry', 'class_2_lorry', '7_5_tonne'];
+        if (!allowedVehicleTypes.includes(vehicleProfile.type)) {
+          return res.status(400).json({
+            message: `Invalid vehicle type: ${vehicleProfile.type}`,
+            allowedTypes: allowedVehicleTypes,
+            routeBlocked: true
+          });
+        }
+      }
 
       if (vehicleProfile) {
-        // Get all restrictions in the route area to check for conflicts
+        // Get all restrictions in the route area with expanded bounds for stricter checking
         const bounds = {
-          north: Math.max(startCoords.lat, endCoords.lat) + 0.5,
-          south: Math.min(startCoords.lat, endCoords.lat) - 0.5,
-          east: Math.max(startCoords.lng, endCoords.lng) + 0.5,
-          west: Math.min(startCoords.lng, endCoords.lng) - 0.5,
+          north: Math.max(startCoords.lat, endCoords.lat) + 1.0, // Expanded for stricter compliance
+          south: Math.min(startCoords.lat, endCoords.lat) - 1.0,
+          east: Math.max(startCoords.lng, endCoords.lng) + 1.0,
+          west: Math.min(startCoords.lng, endCoords.lng) - 1.0,
         };
         
         const restrictions = await storage.getRestrictionsByArea(bounds);
         
-        // Calculate truck-safe route based on vehicle dimensions
-        const vehicleSpecificRoute = await calculateTruckSafeRoute(
+        // Pre-route absolute restriction check - block route immediately if violations exist
+        const absoluteRestrictionsForVehicle = restrictions.filter(r => 
+          r.severity === 'absolute' && 
+          r.restrictedVehicleTypes && 
+          (Array.isArray(r.restrictedVehicleTypes) 
+            ? r.restrictedVehicleTypes.includes(vehicleProfile.type)
+            : JSON.parse(r.restrictedVehicleTypes as string).includes(vehicleProfile.type))
+        );
+        
+        if (absoluteRestrictionsForVehicle.length > 0) {
+          return res.status(403).json({
+            message: `Route completely blocked by ${absoluteRestrictionsForVehicle.length} absolute restrictions for vehicle type ${vehicleProfile.type}`,
+            absoluteRestrictions: absoluteRestrictionsForVehicle.map(r => ({
+              id: r.id,
+              type: r.type,
+              location: r.location,
+              description: r.description,
+              severity: r.severity
+            })),
+            routeBlocked: true,
+            canBypass: false
+          });
+        }
+        
+        // Calculate strict vehicle class route with absolute restriction enforcement
+        const strictRouteResult = await calculateStrictVehicleClassRoute(
           startCoords,
           endCoords,
           vehicleProfile,
           restrictions
         );
+        
+        // Check if route is completely blocked by absolute restrictions
+        if (strictRouteResult && !strictRouteResult.isRouteAllowed) {
+          return res.status(403).json({
+            message: `Route blocked for vehicle type ${vehicleProfile.type}`,
+            violations: strictRouteResult.violations,
+            absoluteRestrictions: strictRouteResult.violations.filter(v => v.severity === 'absolute'),
+            routeBlocked: true
+          });
+        }
+        
+        const vehicleSpecificRoute = strictRouteResult;
         
         if (vehicleSpecificRoute) {
           routeDistance = vehicleSpecificRoute.distance;
@@ -500,6 +1089,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           routePath = vehicleSpecificRoute.coordinates;
           restrictionsAvoided = vehicleSpecificRoute.restrictionsAvoided;
           geometry = vehicleSpecificRoute.geometry;
+          
+          // Include violation information in response for transparency
+          if (vehicleSpecificRoute.violations && vehicleSpecificRoute.violations.length > 0) {
+            // Add violations to the route response
+            const routeViolations = vehicleSpecificRoute.violations;
+            const nonBypassableViolations = routeViolations.filter(v => !v.bypassable);
+            
+            if (nonBypassableViolations.length > 0) {
+              console.warn(`Route contains ${nonBypassableViolations.length} non-bypassable violations for ${vehicleProfile.type}`);
+            }
+          }
         }
       }
 
@@ -575,6 +1175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           restrictionsChecked: restrictionsAvoided.length,
           vehicleTypeOptimized: vehicleProfile?.type || 'car',
           heightClearance: vehicleProfile?.height || 0,
+          complianceLevel: vehicleProfile?.type ? getVehicleComplianceLevel(vehicleProfile.type) : 'basic',
           weightLimit: vehicleProfile?.weight || 0,
           facilitiesCount: facilitiesNearby.length
         }
