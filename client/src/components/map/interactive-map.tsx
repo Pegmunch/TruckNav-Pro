@@ -716,18 +716,24 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* 3-Section Zoom Control - Vertical Oval Button */}
       <div className={cn(
-        "absolute right-4 top-1/3 transform -translate-y-1/4 z-20",
+        "absolute right-4 top-1/2 transform -translate-y-1/2 z-30",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
-        "flex flex-col transition-all duration-300",
+        "flex flex-col transition-all duration-300 pointer-events-auto",
         "opacity-100 translate-x-0"
-      )}>
+      )}
+      onPointerDown={(e) => { e.stopPropagation(); }}>
         {/* Zoom In - Top Section */}
         <Button
           variant="ghost"
           size="icon"
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleZoomIn}
-          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleZoomIn(); }}
+          onPointerDown={(e) => { 
+            console.log('Zoom In clicked - Pointer type:', e.pointerType);
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            handleZoomIn(); 
+          }}
           data-testid="button-zoom-in"
         >
           <Plus className="w-5 h-5" />
@@ -739,7 +745,12 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleCurrentLocation}
-          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleCurrentLocation(); }}
+          onPointerDown={(e) => { 
+            console.log('Center Location clicked - Pointer type:', e.pointerType);
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            handleCurrentLocation(); 
+          }}
           data-testid="button-zoom-center"
         >
           <Crosshair className="w-4 h-4" />
@@ -751,7 +762,12 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleZoomOut}
-          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleZoomOut(); }}
+          onPointerDown={(e) => { 
+            console.log('Zoom Out clicked - Pointer type:', e.pointerType);
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            handleZoomOut(); 
+          }}
           data-testid="button-zoom-out"
         >
           <Minus className="w-5 h-5" />
@@ -760,18 +776,24 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* 4-Direction Movement Control - Small Oval Vertical Button */}
       <div className={cn(
-        "absolute right-4 bottom-32 z-20",
+        "absolute right-4 bottom-[calc(env(safe-area-inset-bottom)+32px)] z-30",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
-        "flex flex-col transition-all duration-300",
+        "flex flex-col transition-all duration-300 pointer-events-auto",
         "opacity-100 translate-x-0"
-      )}>
+      )}
+      onPointerDown={(e) => { e.stopPropagation(); }}>
         {/* Up Arrow */}
         <Button
           variant="ghost"
           size="icon"
           className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleMoveUp}
-          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveUp(); }}
+          onPointerDown={(e) => { 
+            console.log('Move Up clicked - Pointer type:', e.pointerType);
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            handleMoveUp(); 
+          }}
           data-testid="button-move-up"
         >
           <ChevronUp className="w-4 h-4" />
@@ -784,7 +806,12 @@ const InteractiveMap = memo(function InteractiveMap({
             size="icon"
             className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer"
             onClick={handleMoveLeft}
-            onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveLeft(); }}
+            onPointerDown={(e) => { 
+              console.log('Move Left clicked - Pointer type:', e.pointerType);
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              handleMoveLeft(); 
+            }}
             data-testid="button-move-left"
           >
             <ChevronLeft className="w-3 h-3" />
@@ -794,7 +821,12 @@ const InteractiveMap = memo(function InteractiveMap({
             size="icon"
             className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
             onClick={handleMoveRight}
-            onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveRight(); }}
+            onPointerDown={(e) => { 
+              console.log('Move Right clicked - Pointer type:', e.pointerType);
+              e.preventDefault(); 
+              e.stopPropagation(); 
+              handleMoveRight(); 
+            }}
             data-testid="button-move-right"
           >
             <ChevronRight className="w-3 h-3" />
@@ -807,7 +839,12 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleMoveDown}
-          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveDown(); }}
+          onPointerDown={(e) => { 
+            console.log('Move Down clicked - Pointer type:', e.pointerType);
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            handleMoveDown(); 
+          }}
           data-testid="button-move-down"
         >
           <ChevronDown className="w-4 h-4" />
@@ -826,9 +863,9 @@ const InteractiveMap = memo(function InteractiveMap({
         variant={controlsVisible ? "default" : "outline"}
         size="icon"
         className={cn(
-          "absolute top-4 left-4 bg-card shadow-lg z-20 transition-all duration-300 hover:scale-105",
+          "absolute top-4 left-4 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
-          "touch-manipulation cursor-pointer",
+          "touch-manipulation cursor-pointer pointer-events-auto",
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
         )}
         onClick={() => {
@@ -842,8 +879,9 @@ const InteractiveMap = memo(function InteractiveMap({
           }
         }}
         onPointerDown={(e) => {
-          if (e.pointerType === 'mouse') return;
+          console.log('Toggle Controls clicked - Pointer type:', e.pointerType);
           e.preventDefault();
+          e.stopPropagation();
           const newVisible = !controlsVisible;
           setControlsVisible(newVisible);
           manualHiddenRef.current = !newVisible;
@@ -1062,16 +1100,18 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Floating Legal Disclaimer Button - Top Right Corner */}
       <div className={cn(
-        "absolute z-30 transition-all duration-300 ease-in-out",
+        "absolute z-30 transition-all duration-300 ease-in-out pointer-events-auto",
         "top-4 right-4", // Positioned at top right corner
         "opacity-100 translate-y-0"
-      )}>
+      )}
+      onPointerDown={(e) => { e.stopPropagation(); }}>
         <Card className="overflow-hidden shadow-2xl">
           <Button
             onClick={handleToggleLegalDisclaimer}
             onPointerDown={(e) => {
-              if (e.pointerType === 'mouse') return;
+              console.log('Legal Disclaimer clicked - Pointer type:', e.pointerType);
               e.preventDefault();
+              e.stopPropagation();
               handleToggleLegalDisclaimer();
             }}
             size="icon"
@@ -1080,7 +1120,7 @@ const InteractiveMap = memo(function InteractiveMap({
               "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
               "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
-              "bg-card hover:bg-accent touch-manipulation cursor-pointer",
+              "bg-card hover:bg-accent touch-manipulation cursor-pointer pointer-events-auto",
               // Visual indicator for new users who haven't accepted terms yet
               !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75 animate-pulse"
             )}
