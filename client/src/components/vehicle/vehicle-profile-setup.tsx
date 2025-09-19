@@ -277,7 +277,7 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]" data-testid="dialog-vehicle-setup">
+      <DialogContent className="sm:max-w-[400px]" data-testid="dialog-vehicle-setup">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Truck className="w-5 h-5" />
