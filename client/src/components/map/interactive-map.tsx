@@ -769,8 +769,9 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
+          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleMoveUp}
+          onTouchStart={(e) => { e.preventDefault(); handleMoveUp(); }}
           data-testid="button-move-up"
         >
           <ChevronUp className="w-4 h-4" />
@@ -781,8 +782,9 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50"
+            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer"
             onClick={handleMoveLeft}
+            onTouchStart={(e) => { e.preventDefault(); handleMoveLeft(); }}
             data-testid="button-move-left"
           >
             <ChevronLeft className="w-3 h-3" />
@@ -790,8 +792,9 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors"
+            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
             onClick={handleMoveRight}
+            onTouchStart={(e) => { e.preventDefault(); handleMoveRight(); }}
             data-testid="button-move-right"
           >
             <ChevronRight className="w-3 h-3" />
@@ -802,8 +805,9 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors"
+          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleMoveDown}
+          onTouchStart={(e) => { e.preventDefault(); handleMoveDown(); }}
           data-testid="button-move-down"
         >
           <ChevronDown className="w-4 h-4" />
@@ -824,6 +828,7 @@ const InteractiveMap = memo(function InteractiveMap({
         className={cn(
           "absolute top-4 left-4 bg-card shadow-lg z-20 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
+          "touch-manipulation cursor-pointer",
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
         )}
         onClick={() => {
@@ -832,6 +837,16 @@ const InteractiveMap = memo(function InteractiveMap({
           manualHiddenRef.current = !newVisible; // Track manual hide state
           if (newVisible) {
             // Clear manual hidden when user explicitly shows
+            manualHiddenRef.current = false;
+            resetAutoHideTimer();
+          }
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          const newVisible = !controlsVisible;
+          setControlsVisible(newVisible);
+          manualHiddenRef.current = !newVisible;
+          if (newVisible) {
             manualHiddenRef.current = false;
             resetAutoHideTimer();
           }
