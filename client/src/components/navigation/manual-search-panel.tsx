@@ -139,17 +139,42 @@ export default function ManualSearchPanel({
           });
         },
         (error) => {
-          console.error('Geolocation error:', error);
+          console.error('Geolocation error details:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.code === 1,
+            POSITION_UNAVAILABLE: error.code === 2,
+            TIMEOUT: error.code === 3
+          });
+          
+          let errorTitle = "Location access failed";
+          let errorDescription = "Please enable location access or enter your location manually";
+          
+          switch (error.code) {
+            case 1: // PERMISSION_DENIED
+              errorTitle = "Location permission denied";
+              errorDescription = "Please allow location access in your browser settings and try again";
+              break;
+            case 2: // POSITION_UNAVAILABLE
+              errorTitle = "Location unavailable";
+              errorDescription = "Your location could not be determined. Please enter manually";
+              break;
+            case 3: // TIMEOUT
+              errorTitle = "Location timeout";
+              errorDescription = "Location request timed out. Please try again or enter manually";
+              break;
+          }
+          
           toast({
-            title: "Location access denied",
-            description: "Please enable location access or enter your location manually",
+            title: errorTitle,
+            description: errorDescription,
             variant: "destructive"
           });
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
+          enableHighAccuracy: false, // Changed for better Safari compatibility
+          timeout: 15000, // Increased timeout for Safari
+          maximumAge: 300000 // 5 minutes cache
         }
       );
     } else {
