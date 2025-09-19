@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,6 +119,41 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Search functionality state
   const [facilitySearchInput, setFacilitySearchInput] = useState("");
   const [selectedPOICategory, setSelectedPOICategory] = useState<string>("");
+  
+  // Auto-close timer
+  const autoCloseTimer = useRef<NodeJS.Timeout | null>(null);
+  
+  // Auto-close functions
+  const clearAutoCloseTimer = () => {
+    if (autoCloseTimer.current) {
+      clearTimeout(autoCloseTimer.current);
+      autoCloseTimer.current = null;
+    }
+  };
+  
+  const startAutoCloseTimer = () => {
+    clearAutoCloseTimer();
+    autoCloseTimer.current = setTimeout(() => {
+      onToggle(); // Close the sidebar
+    }, 3000); // 3 seconds
+  };
+  
+  const resetAutoCloseTimer = () => {
+    if (isOpen && !isCollapsed) {
+      startAutoCloseTimer();
+    }
+  };
+  
+  // Start auto-close timer when sidebar opens
+  useEffect(() => {
+    if (isOpen && !isCollapsed) {
+      startAutoCloseTimer();
+    } else {
+      clearAutoCloseTimer();
+    }
+    
+    return () => clearAutoCloseTimer();
+  }, [isOpen, isCollapsed]);
   
   // Build search query parameters for facility search
   const buildFacilitySearchParams = () => {
@@ -454,6 +489,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
           "flex flex-col"
         )}
         data-testid="navigation-sidebar-panel"
+        onMouseMove={resetAutoCloseTimer}
+        onMouseEnter={resetAutoCloseTimer}
+        onClick={resetAutoCloseTimer}
+        onTouchStart={resetAutoCloseTimer}
+        onFocus={resetAutoCloseTimer}
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30 shrink-0">
