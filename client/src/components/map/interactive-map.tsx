@@ -1069,13 +1069,18 @@ const InteractiveMap = memo(function InteractiveMap({
         <Card className="overflow-hidden shadow-2xl">
           <Button
             onClick={handleToggleLegalDisclaimer}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'mouse') return;
+              e.preventDefault();
+              handleToggleLegalDisclaimer();
+            }}
             size="icon"
             className={cn(
               "automotive-button floating-action-button",
               "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
               "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
-              "bg-card hover:bg-accent",
+              "bg-card hover:bg-accent touch-manipulation cursor-pointer",
               // Visual indicator for new users who haven't accepted terms yet
               !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75 animate-pulse"
             )}
