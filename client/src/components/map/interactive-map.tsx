@@ -407,29 +407,36 @@ const InteractiveMap = memo(function InteractiveMap({
     alert(facilityInfo);
   };
 
-  // Map directional movement functions
+  // Map directional movement functions (Leaflet API)
   const handleMoveUp = () => {
     if (!mapRef.current) return;
-    const currentCenter = mapRef.current.getCenter();
-    mapRef.current.panBy([0, -100]);
+    const center = mapRef.current.getCenter();
+    const newCenter = L.latLng(center.lat + 0.01, center.lng);
+    mapRef.current.panTo(newCenter);
     resetAutoHideTimer();
   };
 
   const handleMoveDown = () => {
     if (!mapRef.current) return;
-    mapRef.current.panBy([0, 100]);
+    const center = mapRef.current.getCenter();
+    const newCenter = L.latLng(center.lat - 0.01, center.lng);
+    mapRef.current.panTo(newCenter);
     resetAutoHideTimer();
   };
 
   const handleMoveLeft = () => {
     if (!mapRef.current) return;
-    mapRef.current.panBy([-100, 0]);
+    const center = mapRef.current.getCenter();
+    const newCenter = L.latLng(center.lat, center.lng - 0.01);
+    mapRef.current.panTo(newCenter);
     resetAutoHideTimer();
   };
 
   const handleMoveRight = () => {
     if (!mapRef.current) return;
-    mapRef.current.panBy([100, 0]);
+    const center = mapRef.current.getCenter();
+    const newCenter = L.latLng(center.lat, center.lng + 0.01);
+    mapRef.current.panTo(newCenter);
     resetAutoHideTimer();
   };
 
@@ -532,9 +539,8 @@ const InteractiveMap = memo(function InteractiveMap({
       };
 
       try {
-        console.log('Initializing React Leaflet map');
-        // React Leaflet initialization is handled in JSX component
-
+        console.log('React Leaflet map will be initialized in JSX');
+        // React Leaflet initialization is now handled in JSX below
       } catch (error) {
         console.error('Failed to initialize map:');
         console.error('Error message:', error instanceof Error ? error.message : String(error));
@@ -556,61 +562,7 @@ const InteractiveMap = memo(function InteractiveMap({
     };
   }, []);
 
-  // Handle map view mode changes
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const getMapStyle = (viewMode: 'roads' | 'satellite') => {
-      const roadStyle = {
-        version: 8 as const,
-        sources: {
-          'osm': {
-            type: 'raster' as const,
-            tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors'
-          }
-        },
-        layers: [
-          {
-            id: 'osm',
-            type: 'raster' as const,
-            source: 'osm'
-          }
-        ]
-      };
-
-      const satelliteStyle = {
-        version: 8 as const,
-        sources: {
-          'satellite': {
-            type: 'raster' as const,
-            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-            tileSize: 256,
-            attribution: '© Esri, © OpenStreetMap contributors'
-          }
-        },
-        layers: [
-          {
-            id: 'satellite',
-            type: 'raster' as const,
-            source: 'satellite'
-          }
-        ]
-      };
-
-      return viewMode === 'satellite' ? satelliteStyle : roadStyle;
-    };
-
-    try {
-      mapRef.current.setStyle(getMapStyle(preferences.mapViewMode));
-      console.log(`Map style changed to: ${preferences.mapViewMode}`);
-    } catch (error) {
-      console.error('Failed to change map style:', error);
-    }
-  }, [preferences.mapViewMode]);
-
-  // Handle zoom level changes
+  // Handle zoom level changes for Leaflet
   useEffect(() => {
     if (!mapRef.current || mapRef.current.getZoom() === zoomLevel) return;
     
@@ -634,13 +586,34 @@ const InteractiveMap = memo(function InteractiveMap({
       onWheel={handleMapMovement}
       data-testid="map-container"
     >
-      {/* Satellite View Background */}
-      {preferences.mapViewMode === 'satellite' && (
-        <div className="absolute inset-0 bg-gradient-to-br from-green-800 via-green-700 to-green-900 opacity-90">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iIzY2Nzc2NyIgZmlsbC1vcGFjaXR5PSIwLjMiLz4KPC9zdmc+')] opacity-30"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent"></div>
-        </div>
-      )}
+      {/* React Leaflet Map */}
+      <MapContainer 
+        center={[52.5, -1.5]} 
+        zoom={zoomLevel} 
+        className="absolute inset-0 z-0"
+        ref={(mapInstance) => {
+          if (mapInstance && mapInstance.leafletMap) {
+            mapRef.current = mapInstance.leafletMap;
+            console.log('Leaflet map instance assigned:', mapInstance.leafletMap);
+          }
+        }}
+        whenReady={(map) => {
+          mapRef.current = map.target;
+          console.log('Leaflet map ready:', map.target);
+        }}
+        data-testid="leaflet-map"
+      >
+        <TileLayer
+          url={preferences.mapViewMode === 'satellite' 
+            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            : 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          }
+          attribution={preferences.mapViewMode === 'satellite'
+            ? '© Esri, © OpenStreetMap contributors'
+            : '© OpenStreetMap contributors'
+          }
+        />
+      </MapContainer>
       
       {/* Compact Layer Controls - Positioned between toolbar and map */}
       {controlsVisible && (
