@@ -574,16 +574,16 @@ export default function NavigationPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="default"
                 size="icon"
                 onClick={() => setIsMobileDrawerOpen(true)}
-                className="automotive-touch-target bg-background border-2 border-primary/20 hover:border-primary/50 hover:bg-accent"
+                className="automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
                 data-testid="button-menu-mobile"
               >
                 <div className="w-6 h-6 flex flex-col justify-center items-center gap-1">
-                  <div className="w-5 h-1 bg-foreground rounded-full"></div>
-                  <div className="w-5 h-1 bg-foreground rounded-full"></div>
-                  <div className="w-5 h-1 bg-foreground rounded-full"></div>
+                  <div className="w-5 h-1 bg-current rounded-sm"></div>
+                  <div className="w-5 h-1 bg-current rounded-sm"></div>
+                  <div className="w-5 h-1 bg-current rounded-sm"></div>
                 </div>
               </Button>
             </div>
