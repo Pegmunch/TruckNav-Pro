@@ -585,7 +585,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <div className={cn(
           "absolute z-20 space-y-2 transition-all duration-300 ease-in-out",
           // Positioned above map task bar as requested
-          "bottom-32 right-4 sm:bottom-28 sm:right-4 md:top-16 md:right-4",
+          "bottom-32 right-4 sm:bottom-28 sm:right-4 md:top-16 md:right-4 md:bottom-auto",
           // Visible state animation
           "opacity-100 translate-y-0",
           // Smaller panel as requested
