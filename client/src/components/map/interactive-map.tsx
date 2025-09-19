@@ -237,8 +237,10 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Handle legal disclaimer toggle
   const handleToggleLegalDisclaimer = useCallback(() => {
+    console.log('Legal disclaimer button clicked! Current state:', isLegalDisclaimerOpen);
     setIsLegalDisclaimerOpen(!isLegalDisclaimerOpen);
     resetAutoHideTimer();
+    console.log('Legal disclaimer will open:', !isLegalDisclaimerOpen);
   }, [isLegalDisclaimerOpen, resetAutoHideTimer]);
 
   // Handle map click (desktop mouse clicks)
