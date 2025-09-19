@@ -729,7 +729,6 @@ const InteractiveMap = memo(function InteractiveMap({
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleZoomIn}
           onPointerDown={(e) => { 
-            console.log('Zoom In clicked - Pointer type:', e.pointerType);
             e.preventDefault(); 
             e.stopPropagation(); 
             handleZoomIn(); 
@@ -746,7 +745,6 @@ const InteractiveMap = memo(function InteractiveMap({
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleCurrentLocation}
           onPointerDown={(e) => { 
-            console.log('Center Location clicked - Pointer type:', e.pointerType);
             e.preventDefault(); 
             e.stopPropagation(); 
             handleCurrentLocation(); 
@@ -763,7 +761,6 @@ const InteractiveMap = memo(function InteractiveMap({
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleZoomOut}
           onPointerDown={(e) => { 
-            console.log('Zoom Out clicked - Pointer type:', e.pointerType);
             e.preventDefault(); 
             e.stopPropagation(); 
             handleZoomOut(); 
@@ -789,7 +786,6 @@ const InteractiveMap = memo(function InteractiveMap({
           className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleMoveUp}
           onPointerDown={(e) => { 
-            console.log('Move Up clicked - Pointer type:', e.pointerType);
             e.preventDefault(); 
             e.stopPropagation(); 
             handleMoveUp(); 
@@ -807,7 +803,6 @@ const InteractiveMap = memo(function InteractiveMap({
             className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer"
             onClick={handleMoveLeft}
             onPointerDown={(e) => { 
-              console.log('Move Left clicked - Pointer type:', e.pointerType);
               e.preventDefault(); 
               e.stopPropagation(); 
               handleMoveLeft(); 
@@ -822,7 +817,6 @@ const InteractiveMap = memo(function InteractiveMap({
             className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
             onClick={handleMoveRight}
             onPointerDown={(e) => { 
-              console.log('Move Right clicked - Pointer type:', e.pointerType);
               e.preventDefault(); 
               e.stopPropagation(); 
               handleMoveRight(); 
@@ -840,7 +834,6 @@ const InteractiveMap = memo(function InteractiveMap({
           className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleMoveDown}
           onPointerDown={(e) => { 
-            console.log('Move Down clicked - Pointer type:', e.pointerType);
             e.preventDefault(); 
             e.stopPropagation(); 
             handleMoveDown(); 
@@ -863,7 +856,7 @@ const InteractiveMap = memo(function InteractiveMap({
         variant={controlsVisible ? "default" : "outline"}
         size="icon"
         className={cn(
-          "absolute top-4 left-4 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
+          "absolute bottom-4 right-4 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
           "touch-manipulation cursor-pointer pointer-events-auto",
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
@@ -879,7 +872,6 @@ const InteractiveMap = memo(function InteractiveMap({
           }
         }}
         onPointerDown={(e) => {
-          console.log('Toggle Controls clicked - Pointer type:', e.pointerType);
           e.preventDefault();
           e.stopPropagation();
           const newVisible = !controlsVisible;
@@ -1109,7 +1101,6 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             onClick={handleToggleLegalDisclaimer}
             onPointerDown={(e) => {
-              console.log('Legal Disclaimer clicked - Pointer type:', e.pointerType);
               e.preventDefault();
               e.stopPropagation();
               handleToggleLegalDisclaimer();
