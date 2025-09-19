@@ -158,8 +158,8 @@ const InteractiveMap = memo(function InteractiveMap({
   const [controlsVisible, setControlsVisible] = useState(false); // Start hidden to prevent blocking map view
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const [panelHover, setPanelHover] = useState(false);
+  const manualHiddenRef = useRef(false);
   const autoHideTimerRef = useRef<number | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   
@@ -214,7 +214,10 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Auto-hide functionality with improved timing - scoped to panel only
   const resetAutoHideTimer = useCallback(() => {
-    setControlsVisible(true);
+    // Only auto-show if not manually hidden
+    if (!manualHiddenRef.current) {
+      setControlsVisible(true);
+    }
     setIsUserInteracting(true);
     
     if (autoHideTimerRef.current) {
@@ -225,6 +228,9 @@ const InteractiveMap = memo(function InteractiveMap({
       if (!panelHover) {
         setControlsVisible(false);
         setIsUserInteracting(false);
+      } else {
+        // Reschedule if still hovering
+        resetAutoHideTimer();
       }
     }, AUTO_HIDE_DELAY);
   }, [panelHover]);
@@ -585,7 +591,6 @@ const InteractiveMap = memo(function InteractiveMap({
       {/* Compact Layer Controls - Positioned between toolbar and map */}
       {controlsVisible && (
         <div 
-          ref={panelRef}
           className={cn(
             "absolute z-20 transition-all duration-300 ease-in-out",
             // Positioned between white toolbar and map top edge
@@ -597,9 +602,15 @@ const InteractiveMap = memo(function InteractiveMap({
           )} 
           data-testid="map-controls-cluster"
           onMouseEnter={() => setPanelHover(true)}
-          onMouseLeave={() => setPanelHover(false)}
+          onMouseLeave={() => {
+            setPanelHover(false);
+            resetAutoHideTimer(); // Start fresh timer on hover end
+          }}
           onPointerEnter={() => setPanelHover(true)}
-          onPointerLeave={() => setPanelHover(false)}
+          onPointerLeave={() => {
+            setPanelHover(false);
+            resetAutoHideTimer(); // Start fresh timer on hover end
+          }}
         >
           {/* Roads */}
           <Button 
@@ -683,7 +694,7 @@ const InteractiveMap = memo(function InteractiveMap({
       
       {/* Controls Visibility Hint */}
       {!controlsVisible && !isUserInteracting && (
-        <div className="absolute top-16 left-4 bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm shadow-lg z-15 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute top-16 left-4 bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm shadow-lg z-[15] transition-opacity duration-500 pointer-events-none">
           <span className="scalable-control-text">↑ Tap layers button to show controls</span>
         </div>
       )}
@@ -697,7 +708,16 @@ const InteractiveMap = memo(function InteractiveMap({
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
         )}
-        onClick={() => setControlsVisible(!controlsVisible)}
+        onClick={() => {
+          const newVisible = !controlsVisible;
+          setControlsVisible(newVisible);
+          manualHiddenRef.current = !newVisible; // Track manual hide state
+          if (newVisible) {
+            // Clear manual hidden when user explicitly shows
+            manualHiddenRef.current = false;
+            resetAutoHideTimer();
+          }
+        }}
         data-testid="button-toggle-layer-controls"
         title={controlsVisible ? "Hide layer controls" : "Show layer controls"}
       >
