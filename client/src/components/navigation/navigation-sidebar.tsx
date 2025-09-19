@@ -553,23 +553,19 @@ const NavigationSidebar = memo(function NavigationSidebar({
             <Card className="bg-muted/30">
               <CardContent className="p-4">
                 <Button
-                  onClick={handleNavigationToggle}
-                  disabled={!currentRoute || !selectedProfile || isStartingJourney || isCompletingJourney}
-                  variant={isNavigating ? "destructive" : "default"}
+                  onClick={onPlanRoute}
+                  disabled={!fromLocation || !toLocation || isCalculating}
+                  variant="default"
                   size="lg"
                   className="w-full automotive-button h-12"
-                  data-testid="button-start-navigation"
+                  data-testid="button-plan-route"
                 >
-                  {isStartingJourney || isCompletingJourney ? (
+                  {isCalculating ? (
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  ) : isNavigating ? (
-                    <Square className="w-5 h-5 mr-2" />
                   ) : (
-                    <Play className="w-5 h-5 mr-2" />
+                    <RouteIcon className="w-5 h-5 mr-2" />
                   )}
-                  {isStartingJourney ? "Starting..." : 
-                   isCompletingJourney ? "Stopping..." :
-                   isNavigating ? "Stop Navigation" : "Start Navigation"}
+                  {isCalculating ? "Calculating..." : "Plan Route"}
                 </Button>
               </CardContent>
             </Card>
