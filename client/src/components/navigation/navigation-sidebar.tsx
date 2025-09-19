@@ -455,8 +455,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-screen bg-background border-r border-border z-30 shadow-lg",
-          "automotive-layout sidebar-transition",
+          "fixed left-0 top-0 h-screen bg-background border-r border-border z-50 shadow-lg",
+          "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
           "flex flex-col"
@@ -464,7 +464,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         data-testid="navigation-sidebar-panel"
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30 shrink-0">
           {!isCollapsed && (
             <div className="flex items-center space-x-2 min-w-0 flex-1">
               <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
@@ -491,7 +491,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {/* Sidebar Content */}
         {!isCollapsed && (
-          <div className="absolute top-16 bottom-0 left-0 right-0 overflow-y-auto overflow-x-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-scroll">
             <div className="flex flex-col space-y-4 p-4">
             
             {/* 1. Current Location Section */}
