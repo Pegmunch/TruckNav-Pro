@@ -379,6 +379,28 @@ const InteractiveMap = memo(function InteractiveMap({
     resetAutoHideTimer();
   };
 
+  const handleFacilityDetails = (facility: any) => {
+    if (!facility) return;
+    
+    // Create detailed facility information dialog
+    const amenitiesList = Array.isArray(facility.amenities) 
+      ? facility.amenities.join(', ') 
+      : 'Services available';
+    
+    const facilityInfo = [
+      `📍 **${facility.name}**`,
+      `📍 ${facility.address || 'Location information'}`,
+      facility.rating ? `⭐ Rating: ${facility.rating}/5` : '',
+      facility.phone ? `📞 ${facility.phone}` : '',
+      facility.hours ? `🕒 ${facility.hours}` : '',
+      `🛠️ Amenities: ${amenitiesList}`,
+      facility.distance ? `📏 Distance: ${facility.distance} miles` : ''
+    ].filter(Boolean).join('\n');
+
+    // Show alert with facility details
+    alert(facilityInfo);
+  };
+
   const handleFullscreenToggle = () => {
     if (autoExpanded && onCollapseMap) {
       onCollapseMap();
@@ -1010,7 +1032,11 @@ const InteractiveMap = memo(function InteractiveMap({
                     'Services'} available
                 </div>
               </div>
-              <Button size="sm" data-testid="button-facility-details">
+              <Button 
+                size="sm" 
+                data-testid="button-facility-details"
+                onClick={() => handleFacilityDetails(facilities[0])}
+              >
                 Details
               </Button>
             </div>
