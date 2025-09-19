@@ -227,7 +227,6 @@ export default function ManualSearchPanel({
           </Label>
           <div className="flex space-x-2">
             <div className="flex-1 relative">
-              <Crosshair className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="current-location-search"
                 placeholder="Enter your current location..."
@@ -239,7 +238,7 @@ export default function ManualSearchPanel({
                     handleCurrentLocationSearch();
                   }
                 }}
-                className="pl-10 automotive-input scalable-control-button"
+                className="automotive-input scalable-control-button"
                 data-testid="input-current-location-search"
               />
             </div>
