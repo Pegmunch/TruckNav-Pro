@@ -581,15 +581,16 @@ const InteractiveMap = memo(function InteractiveMap({
       )}
       
       {/* Scalable Map Controls Cluster - Mobile-Optimized Positioning */}
-      <div className={cn(
-        "absolute z-20 space-y-2 transition-all duration-300 ease-in-out",
-        // Thumb-reachable positioning for mobile devices
-        "bottom-24 right-4 sm:bottom-20 sm:right-4 md:top-20 md:right-4",
-        // Auto-hide functionality
-        controlsVisible ? "opacity-100 translate-y-0" : "opacity-30 translate-y-1",
-        // Ensure never overlaps guidance (guidance is at top-4 left-4 right-4)
-        "max-w-[200px]"
-      )} data-testid="map-controls-cluster">
+      {controlsVisible && (
+        <div className={cn(
+          "absolute z-20 space-y-2 transition-all duration-300 ease-in-out",
+          // Positioned above map task bar as requested
+          "bottom-32 right-4 sm:bottom-28 sm:right-4 md:top-16 md:right-4",
+          // Visible state animation
+          "opacity-100 translate-y-0",
+          // Smaller panel as requested
+          "max-w-[160px]"
+        )} data-testid="map-controls-cluster">
         {/* Enhanced Automotive Fullscreen/Expansion Toggle - Mobile First */}
         {(onToggleFullscreen || onCollapseMap) && (
           <Card className="overflow-hidden shadow-lg">
@@ -736,6 +737,7 @@ const InteractiveMap = memo(function InteractiveMap({
           </Button>
         </Card>
       </div>
+      )}
 
       {/* Scalable Current Location Button - Positioned for Thumb Reach */}
       <Button 
