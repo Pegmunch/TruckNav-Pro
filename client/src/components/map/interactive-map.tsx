@@ -716,7 +716,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* 3-Section Zoom Control - Vertical Oval Button */}
       <div className={cn(
-        "absolute right-4 top-1/2 transform -translate-y-1/2 z-30",
+        "absolute right-4 top-1/3 transform -translate-y-1/4 z-30",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         "opacity-100 translate-x-0"
@@ -776,7 +776,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* 4-Direction Movement Control - Small Oval Vertical Button */}
       <div className={cn(
-        "absolute right-4 bottom-24 z-30",
+        "absolute right-4 bottom-32 z-30",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         "opacity-100 translate-x-0"
@@ -858,21 +858,6 @@ const InteractiveMap = memo(function InteractiveMap({
         </div>
       )}
       
-      {/* TEST BUTTON - TEMPORARY DEBUG */}
-      <Button
-        className="absolute top-16 left-16 bg-red-500 text-white z-50 h-20 w-40 text-lg font-bold"
-        onPointerDown={(e) => {
-          console.log('*** TEST BUTTON CLICKED *** Pointer type:', e.pointerType);
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        onClick={() => {
-          console.log('*** TEST BUTTON ONCLICK ***');
-        }}
-      >
-        TEST BUTTON
-      </Button>
-
       {/* Toggle Controls Button - Always visible for easy access */}
       <Button
         variant={controlsVisible ? "default" : "outline"}
