@@ -577,11 +577,12 @@ export default function NavigationPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsMobileDrawerOpen(true)}
-                className="automotive-touch-target"
+                className="automotive-touch-target bg-red-500 text-white border-2 border-blue-500"
                 data-testid="button-menu-mobile"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-6 h-6" />
               </Button>
+              <span className="text-xs text-green-500">Mobile: {isMobile ? 'YES' : 'NO'}</span>
             </div>
           </div>
 
