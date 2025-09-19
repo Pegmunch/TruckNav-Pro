@@ -1,9 +1,11 @@
 import { useState, memo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Settings, 
   Truck, 
@@ -22,14 +24,20 @@ import {
   Music,
   Cloud,
   Monitor,
-  X
+  X,
+  Fuel,
+  CircleParking,
+  Utensils,
+  Bed,
+  Coffee,
+  Wrench
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import SettingsModal from "@/components/settings/settings-modal";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
 import { ThemeSelector } from "@/components/theme/theme-selector";
 import WeatherWidget from "@/components/weather/weather-widget";
-import { type VehicleProfile, type Route, type Journey } from "@shared/schema";
+import { type VehicleProfile, type Route, type Journey, type Facility } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -60,6 +68,11 @@ interface NavigationSidebarProps {
   isCollapsed: boolean;
   onCollapseToggle: () => void;
   
+  // Search functionality props
+  coordinates?: { lat: number; lng: number };
+  onSelectFacility?: (facility: Facility) => void;
+  onNavigateToLocation?: (location: string) => void;
+  
   // Search panel controls
   isSearchPanelOpen?: boolean;
   onToggleSearchPanel?: () => void;
@@ -84,6 +97,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
   onToggle,
   isCollapsed,
   onCollapseToggle,
+  coordinates,
+  onSelectFacility,
+  onNavigateToLocation,
 }: NavigationSidebarProps) {
   const { toast } = useToast();
   
@@ -99,6 +115,56 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   // Destination input handling
   const [destinationInput, setDestinationInput] = useState("");
+
+  // Search functionality state
+  const [facilitySearchInput, setFacilitySearchInput] = useState("");
+  const [selectedPOICategory, setSelectedPOICategory] = useState<string>("");
+  
+  // Build search query parameters for facility search
+  const buildFacilitySearchParams = () => {
+    const params = new URLSearchParams();
+    
+    // Use provided coordinates, or fall back to a default location (London, UK)
+    const lat = coordinates?.lat || 51.5074;
+    const lng = coordinates?.lng || -0.1278;
+    
+    params.set('lat', lat.toString());
+    params.set('lng', lng.toString());
+    params.set('radius', '25');
+    
+    if (selectedPOICategory) {
+      params.set('type', selectedPOICategory);
+    }
+    
+    // Include text search query parameter
+    if (facilitySearchInput.trim()) {
+      params.set('q', facilitySearchInput.trim());
+    }
+    
+    return params.toString();
+  };
+  
+  // Facilities search query - only when there's an active POI category or search
+  const searchParams = buildFacilitySearchParams();
+  const shouldFetchFacilities = Boolean(
+    isOpen && 
+    ((selectedPOICategory && selectedPOICategory.length > 0) || 
+     (facilitySearchInput && facilitySearchInput.trim().length > 0))
+  );
+  
+  const { data: facilities = [], isLoading: isFacilitiesLoading, error: facilitiesError, refetch: refetchFacilities } = useQuery<Facility[]>({
+    queryKey: ['/api/facilities', searchParams],
+    queryFn: async () => {
+      const response = await fetch(`/api/facilities?${searchParams}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch facilities: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: shouldFetchFacilities,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   // Handle current location search
   const handleCurrentLocationSearch = () => {
@@ -222,6 +288,75 @@ const NavigationSidebar = memo(function NavigationSidebar({
     setShowWeatherWidget(true);
   };
 
+  // Filter facilities by search query with null safety
+  const filteredFacilities = (facilities || []).filter((facility: Facility) =>
+    (facility.name || "").toLowerCase().includes(facilitySearchInput.toLowerCase()) ||
+    (facility.address || "").toLowerCase().includes(facilitySearchInput.toLowerCase())
+  );
+
+  // Handle facility selection
+  const handleFacilitySelect = (facility: Facility) => {
+    onSelectFacility?.(facility);
+    toast({
+      title: "Facility selected",
+      description: `Selected: ${facility.name}`,
+    });
+  };
+
+  // POI Search handlers - now perform real searches
+  const handlePOISearch = (category: string) => {
+    setSelectedPOICategory(category === selectedPOICategory ? "" : category);
+    setFacilitySearchInput(""); // Clear text search when selecting category
+    
+    if (category !== selectedPOICategory) {
+      toast({
+        title: `Searching for ${category.replace('_', ' ')}`,
+        description: "Finding nearby locations...",
+      });
+    } else {
+      toast({
+        title: "Search cleared",
+        description: "Category filter removed",
+      });
+    }
+  };
+
+  // Handle facility text search
+  const handleFacilitySearch = () => {
+    if (!facilitySearchInput.trim()) {
+      toast({
+        title: "Please enter search terms",
+        description: "Enter a location or facility name to search for",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSelectedPOICategory(""); // Clear category when doing text search
+    
+    toast({
+      title: "Searching facilities",
+      description: `Looking for: ${facilitySearchInput.trim()}`,
+    });
+  };
+
+  // Handle facility navigation
+  const handleNavigateToFacility = (facility: Facility) => {
+    const locationString = `${facility.name}, ${facility.address || ''}`;
+    onNavigateToLocation?.(locationString);
+    onToLocationChange(locationString);
+    
+    toast({
+      title: "Destination set",
+      description: `Navigating to: ${facility.name}`,
+    });
+  };
+
+  const handleTruckStopsClick = () => handlePOISearch("truck_stop");
+  const handleFuelStationsClick = () => handlePOISearch("fuel");
+  const handleParkingClick = () => handlePOISearch("parking");
+  const handleRestaurantsClick = () => handlePOISearch("restaurant");
+
   return (
     <>
       {/* Sidebar Toggle Button */}
@@ -292,7 +427,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {/* Sidebar Content */}
         {!isCollapsed && (
-          <div className="flex-1 flex flex-col overflow-y-auto space-y-4 p-4">
+          <ScrollArea className="flex-1 h-full">
+            <div className="flex flex-col space-y-4 p-4">
             
             {/* 1. Current Location Section */}
             <Card className="bg-muted/30">
@@ -469,44 +605,283 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     <Settings className="w-5 h-5 mb-1" />
                     <span className="text-xs">Vehicle Settings</span>
                   </Button>
-                  
-                  <Button
-                    onClick={handleEntertainmentClick}
-                    variant="outline"
-                    size="sm"
-                    className="automotive-button flex flex-col h-16 p-2"
-                    data-testid="button-entertainment"
-                  >
-                    <Music className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Entertainment</span>
-                  </Button>
-                  
-                  <Button
-                    onClick={handleThemeClick}
-                    variant="outline"
-                    size="sm"
-                    className="automotive-button flex flex-col h-16 p-2"
-                    data-testid="button-theme"
-                  >
-                    <Palette className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Theme</span>
-                  </Button>
                 </div>
-                
-                <Button
-                  onClick={handleWeatherClick}
-                  variant="outline"
-                  size="sm"
-                  className="w-full automotive-button flex items-center h-12"
-                  data-testid="button-weather"
-                >
-                  <Cloud className="w-5 h-5 mr-2" />
-                  Weather
-                </Button>
               </CardContent>
             </Card>
 
-            {/* 5. Plan Route Section */}
+            {/* 5. Tools & Widgets Section */}
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center">
+                  <Search className="w-4 h-4 mr-2 text-purple-600" />
+                  Tools & Widgets
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Search & POI Section */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">POI Search</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={handleTruckStopsClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-truck-stops"
+                    >
+                      <Truck className="w-4 h-4 mb-1" />
+                      <span>Truck Stops</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleFuelStationsClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-fuel-stations"
+                    >
+                      <Fuel className="w-4 h-4 mb-1" />
+                      <span>Fuel Stations</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleParkingClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-parking"
+                    >
+                      <CircleParking className="w-4 h-4 mb-1" />
+                      <span>Parking</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleRestaurantsClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-restaurants"
+                    >
+                      <Utensils className="w-4 h-4 mb-1" />
+                      <span>Restaurants</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Widget Access Buttons */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Quick Access</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={handleWeatherClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-weather-widget"
+                    >
+                      <Cloud className="w-4 h-4 mb-1" />
+                      <span>Weather</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleEntertainmentClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-entertainment-widget"
+                    >
+                      <Music className="w-4 h-4 mb-1" />
+                      <span>Entertainment</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleThemeClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-theme-widget"
+                    >
+                      <Palette className="w-4 h-4 mb-1" />
+                      <span>Themes</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleVehicleSettingsClick}
+                      variant="outline"
+                      size="sm"
+                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      data-testid="button-settings-widget"
+                    >
+                      <Settings className="w-4 h-4 mb-1" />
+                      <span>Settings</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Advanced Search */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">Advanced Search</Label>
+                  <div className="flex space-x-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search facilities, locations..."
+                        value={facilitySearchInput}
+                        onChange={(e) => setFacilitySearchInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleFacilitySearch();
+                          }
+                        }}
+                        className="pl-10 automotive-input text-sm"
+                        data-testid="input-facility-search"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleFacilitySearch}
+                      disabled={!facilitySearchInput.trim()}
+                      size="sm"
+                      className="automotive-button shrink-0"
+                      data-testid="button-search-facilities"
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Search Results Section - Show when there are facilities */}
+            {(selectedPOICategory || facilitySearchInput.trim()) && (
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Search className="w-4 h-4 mr-2 text-green-600" />
+                      Search Results
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isFacilitiesLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPOICategory("");
+                          setFacilitySearchInput("");
+                        }}
+                        className="h-6 w-6 p-0"
+                        data-testid="button-clear-search-results"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-60 overflow-y-auto">
+                  {isFacilitiesLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-background border rounded p-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="h-3 bg-muted rounded mb-1"></div>
+                              <div className="h-2 bg-muted rounded w-3/4"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : filteredFacilities.length > 0 ? (
+                    <div className="space-y-2">
+                      {filteredFacilities.slice(0, 10).map((facility) => (
+                        <div key={facility.id} className="bg-background border rounded p-2 hover:border-blue-300 transition-colors">
+                          <div className="flex items-start space-x-2">
+                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded flex items-center justify-center flex-shrink-0">
+                              {facility.type === 'truck_stop' ? <Truck className="w-4 h-4 text-blue-600" /> :
+                               facility.type === 'fuel' ? <Fuel className="w-4 h-4 text-orange-600" /> :
+                               facility.type === 'parking' ? <CircleParking className="w-4 h-4 text-green-600" /> :
+                               facility.type === 'restaurant' ? <Utensils className="w-4 h-4 text-red-600" /> :
+                               <MapPin className="w-4 h-4 text-gray-600" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate" data-testid={`text-facility-name-${facility.id}`}>
+                                {facility.name}
+                              </div>
+                              {facility.address && (
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {facility.address}
+                                </div>
+                              )}
+                              <div className="flex gap-1 mt-2">
+                                <Button
+                                  onClick={() => handleFacilitySelect(facility)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  data-testid={`button-select-facility-${facility.id}`}
+                                >
+                                  Select
+                                </Button>
+                                <Button
+                                  onClick={() => handleNavigateToFacility(facility)}
+                                  variant="default"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  data-testid={`button-navigate-facility-${facility.id}`}
+                                >
+                                  Navigate
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {filteredFacilities.length > 10 && (
+                        <div className="text-xs text-center text-muted-foreground py-2">
+                          Showing first 10 of {filteredFacilities.length} results
+                        </div>
+                      )}
+                    </div>
+                  ) : facilitiesError ? (
+                    <div className="text-center py-4 space-y-2" data-testid="facilities-error-state">
+                      <div className="text-sm text-red-600 dark:text-red-400">
+                        ⚠️ Failed to load facilities
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Check your connection and try again
+                      </div>
+                      <Button
+                        onClick={() => {
+                          // Use React Query's refetch method for proper retry functionality
+                          refetchFacilities();
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        data-testid="button-retry-facilities"
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted-foreground" data-testid="no-facilities-state">
+                      No facilities found for your search
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 6. Plan Route Section */}
             <Card className="bg-muted/30">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center">
@@ -593,7 +968,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
               </Card>
             )}
 
-          </div>
+            </div>
+          </ScrollArea>
         )}
 
         {/* Collapsed Icon State */}

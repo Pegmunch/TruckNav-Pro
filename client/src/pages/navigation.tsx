@@ -8,7 +8,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
-import RightWidget from "@/components/navigation/right-widget";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
 import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
@@ -43,8 +42,6 @@ export default function NavigationPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   
-  // Unified search panel state management (right-side panel)
-  const [isUnifiedSearchPanelOpen, setIsUnifiedSearchPanelOpen] = useState(false);
   
   // Mobile drawer state (replaces sidebar on mobile)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -75,7 +72,6 @@ export default function NavigationPage() {
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
     setIsSidebarOpen(false);
-    setIsUnifiedSearchPanelOpen(false);
   }, [isMobile]);
 
   // Check legal consent and show popup if needed
@@ -455,77 +451,8 @@ export default function NavigationPage() {
     }
   }, [currentRoute, isMapExpanded, isMobile]);
 
-  // Auto-open search panel triggers
-  useEffect(() => {
-    // Auto-open when there's no active route after landing (desktop only)
-    if (!isMobile && !currentRoute && !isUnifiedSearchPanelOpen) {
-      const timer = setTimeout(() => {
-        setIsUnifiedSearchPanelOpen(true);
-      }, 2000); // 2 second delay after landing
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentRoute, isUnifiedSearchPanelOpen, isMobile]);
 
-  // Keyboard shortcuts for search panel
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Only handle on desktop
-      if (isMobile) return;
-      
-      // Ignore if user is typing in an input
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.getAttribute('contenteditable') === 'true'
-      );
-      
-      if (isInputFocused) return;
-      
-      // Handle shortcuts
-      if (event.key === '/' || event.key === 's' || event.key === 'S') {
-        event.preventDefault();
-        setIsUnifiedSearchPanelOpen(true);
-        
-        // Show toast to indicate shortcut was activated
-        toast({
-          title: "Search panel opened",
-          description: "Use the search panel to find locations and facilities",
-          duration: 2000,
-        });
-      }
-      
-      // Note: ESC key handling is now managed by the RightWidget component itself to avoid conflicts
-    };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isUnifiedSearchPanelOpen, isMobile, toast]);
-
-  // Auto-open search panel when user focuses search inputs (global listener)
-  useEffect(() => {
-    if (isMobile) return; // Only for desktop
-    
-    const handleFocusIn = (event: FocusEvent) => {
-      const target = event.target as HTMLElement;
-      
-      // Check if focused element is a search input
-      const isSearchInput = target && (
-        target.getAttribute('data-search-input') === 'true' ||
-        target.className?.includes('search') ||
-        target.placeholder?.toLowerCase().includes('search') ||
-        target.getAttribute('aria-label')?.toLowerCase().includes('search')
-      );
-      
-      if (isSearchInput && !isUnifiedSearchPanelOpen) {
-        setIsUnifiedSearchPanelOpen(true);
-      }
-    };
-
-    document.addEventListener('focusin', handleFocusIn);
-    return () => document.removeEventListener('focusin', handleFocusIn);
-  }, [isUnifiedSearchPanelOpen, isMobile]);
 
   const handleStartNavigation = () => {
     if (currentRoute) {
@@ -590,14 +517,6 @@ export default function NavigationPage() {
   };
 
 
-  // Unified search panel handlers
-  const handleUnifiedSearchPanelToggle = () => {
-    setIsUnifiedSearchPanelOpen(!isUnifiedSearchPanelOpen);
-    // Auto-collapse expanded map when panel opens
-    if (!isUnifiedSearchPanelOpen && isMapExpanded) {
-      setIsMapExpanded(false);
-    }
-  };
 
   // Handle facility selection from search sidebar
   const handleSelectFacility = (facility: any) => {
@@ -608,6 +527,18 @@ export default function NavigationPage() {
       description: `Set destination to ${facility.name}`,
     });
   };
+
+  // Handle navigation to location - for left sidebar
+  const handleNavigateToLocation = (location: string) => {
+    setToLocation(location);
+    toast({
+      title: "Destination set",
+      description: `Navigating to: ${location}`,
+    });
+  };
+
+  // Get current coordinates for search (fallback to London if not available)
+  const currentCoordinates = { lat: 51.5074, lng: -0.1278 };
 
   if (profilesLoading) {
     return (
@@ -720,13 +651,9 @@ export default function NavigationPage() {
                   isCollapsed={false}
                   onCollapseToggle={() => {}}
                   
-                  // Search panel integration - mobile uses drawer for search
-                  isSearchPanelOpen={isUnifiedSearchPanelOpen}
-                  onToggleSearchPanel={() => {
-                    // On mobile, open the unified search in a drawer instead of right widget
-                    setIsUnifiedSearchPanelOpen(!isUnifiedSearchPanelOpen);
-                    setIsMobileDrawerOpen(false); // Close current drawer
-                  }}
+                  // Search panel integration - not needed on mobile since left sidebar contains search
+                  isSearchPanelOpen={false}
+                  onToggleSearchPanel={() => {}}
                 />
               </div>
             </DrawerContent>
@@ -770,9 +697,14 @@ export default function NavigationPage() {
             isCollapsed={isSidebarCollapsed}
             onCollapseToggle={handleSidebarCollapseToggle}
             
-            // Search panel integration
-            isSearchPanelOpen={isUnifiedSearchPanelOpen}
-            onToggleSearchPanel={handleUnifiedSearchPanelToggle}
+            // Search panel integration - not needed since left sidebar contains search
+            isSearchPanelOpen={false}
+            onToggleSearchPanel={() => {}}
+            
+            // Search functionality props
+            coordinates={currentCoordinates}
+            onSelectFacility={handleSelectFacility}
+            onNavigateToLocation={handleNavigateToLocation}
           />
 
           {/* Desktop Map Area */}
@@ -804,20 +736,6 @@ export default function NavigationPage() {
             <MapLegalOwnership compact={true} className="hidden sm:block" />
           </div>
 
-
-          {/* Desktop Right Widget - search panel with auto-close */}
-          <RightWidget
-            isOpen={isUnifiedSearchPanelOpen}
-            onClose={() => setIsUnifiedSearchPanelOpen(false)}
-            coordinates={{ lat: 51.5074, lng: -0.1278 }}
-            onSelectFacility={handleSelectFacility}
-            onNavigateToLocation={(location) => setToLocation(location)}
-            onFromLocationChange={setFromLocation}
-            onToLocationChange={setToLocation}
-            onStartNavigation={handleStartNavigation}
-            currentRoute={currentRoute}
-            autoCloseDelay={25000}
-          />
         </div>
       )}
 
