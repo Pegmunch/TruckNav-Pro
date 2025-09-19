@@ -929,7 +929,7 @@ const InteractiveMap = memo(function InteractiveMap({
       {/* Floating Legal Disclaimer Button - Bottom Right Corner */}
       <div className={cn(
         "absolute z-30 transition-all duration-300 ease-in-out",
-        "bottom-20 right-4", // Position above bottom info bar with proper spacing
+        "bottom-32 right-4", // Positioned higher above bottom info bar
         controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
       )}>
         <Card className="overflow-hidden shadow-2xl">
