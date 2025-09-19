@@ -23,7 +23,9 @@ import {
   Maximize,
   Minimize,
   Menu,
-  Shield
+  Shield,
+  X,
+  Layers
 } from "lucide-react";
 import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
 import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
@@ -153,7 +155,7 @@ const InteractiveMap = memo(function InteractiveMap({
   }, [mapProvider.provider, mapProvider.tiles, mapProvider.attribution]);
   
   // Auto-hide functionality state
-  const [controlsVisible, setControlsVisible] = useState(true);
+  const [controlsVisible, setControlsVisible] = useState(false); // Start hidden to prevent blocking map view
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const autoHideTimerRef = useRef<number | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -640,7 +642,17 @@ const InteractiveMap = memo(function InteractiveMap({
         </Card>
         
         {/* Enhanced Layer Controls with Persistent Preferences */}
-        <Card className="p-2 space-y-1 shadow-lg max-w-[180px]">
+        <Card className="p-2 space-y-1 shadow-lg max-w-[180px] relative">
+          {/* Close button for layer controls */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute -top-1 -right-1 h-6 w-6 p-0 rounded-full bg-background border hover:bg-accent"
+            onClick={() => setControlsVisible(false)}
+            data-testid="button-close-layer-controls"
+          >
+            <X className="h-3 w-3" />
+          </Button>
           <Button 
             variant={preferences.mapViewMode === 'roads' ? "default" : "ghost"}
             size="sm" 
@@ -751,9 +763,25 @@ const InteractiveMap = memo(function InteractiveMap({
       {/* Controls Visibility Hint */}
       {!controlsVisible && !isUserInteracting && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-3 py-2 rounded-full text-sm opacity-70 pointer-events-none z-10 transition-opacity duration-500">
-          <span className="scalable-control-text">Tap map to show controls</span>
+          <span className="scalable-control-text">Tap map to show layer controls</span>
         </div>
       )}
+      
+      {/* Toggle Controls Button - Always visible for easy access */}
+      <Button
+        variant="outline"
+        size="icon"
+        className={cn(
+          "absolute top-4 left-4 bg-card shadow-lg z-20 transition-all duration-300",
+          "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
+          controlsVisible && "opacity-50"
+        )}
+        onClick={() => setControlsVisible(!controlsVisible)}
+        data-testid="button-toggle-layer-controls"
+        title={controlsVisible ? "Hide layer controls" : "Show layer controls"}
+      >
+        <Layers className="scalable-control-icon" />
+      </Button>
       
       {/* Enhanced Status Bar with Auto-Hide */}
       <div className={cn(
