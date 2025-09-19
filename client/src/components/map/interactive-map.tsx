@@ -157,7 +157,9 @@ const InteractiveMap = memo(function InteractiveMap({
   // Auto-hide functionality state
   const [controlsVisible, setControlsVisible] = useState(false); // Start hidden to prevent blocking map view
   const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [panelHover, setPanelHover] = useState(false);
   const autoHideTimerRef = useRef<number | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   
@@ -210,7 +212,7 @@ const InteractiveMap = memo(function InteractiveMap({
     resetAutoHideTimer();
   };
 
-  // Auto-hide functionality with improved timing
+  // Auto-hide functionality with improved timing - scoped to panel only
   const resetAutoHideTimer = useCallback(() => {
     setControlsVisible(true);
     setIsUserInteracting(true);
@@ -220,12 +222,12 @@ const InteractiveMap = memo(function InteractiveMap({
     }
     
     autoHideTimerRef.current = window.setTimeout(() => {
-      if (!document.querySelector('button:hover, [role="button"]:hover')) {
+      if (!panelHover) {
         setControlsVisible(false);
         setIsUserInteracting(false);
       }
     }, AUTO_HIDE_DELAY);
-  }, []);
+  }, [panelHover]);
 
   // Handle legal disclaimer toggle
   const handleToggleLegalDisclaimer = useCallback(() => {
@@ -580,162 +582,79 @@ const InteractiveMap = memo(function InteractiveMap({
         </div>
       )}
       
-      {/* Scalable Map Controls Cluster - Mobile-Optimized Positioning */}
+      {/* Compact Layer Controls - Positioned between toolbar and map */}
       {controlsVisible && (
-        <div className={cn(
-          "absolute z-20 space-y-2 transition-all duration-300 ease-in-out",
-          // Positioned above map task bar as requested
-          "bottom-32 right-4 sm:bottom-28 sm:right-4 md:top-16 md:right-4 md:bottom-auto",
-          // Visible state animation
-          "opacity-100 translate-y-0",
-          // Smaller panel as requested
-          "max-w-[160px]"
-        )} data-testid="map-controls-cluster">
-        {/* Enhanced Automotive Fullscreen/Expansion Toggle - Mobile First */}
-        {(onToggleFullscreen || onCollapseMap) && (
-          <Card className="overflow-hidden shadow-lg">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className={cn(
-                "automotive-button scalable-control-button",
-                "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]"
-              )}
-              data-testid="button-fullscreen-toggle"
-              onClick={handleFullscreenToggle}
-            >
-              {(isFullscreen || autoExpanded) ? 
-                <Minimize className="scalable-control-icon" /> : 
-                <Maximize className="scalable-control-icon" />
-              }
-            </Button>
-          </Card>
-        )}
-        
-        {/* Scalable Zoom Controls */}
-        <Card className="overflow-hidden shadow-lg">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={cn(
-              "rounded-none border-b automotive-button scalable-control-button",
-              "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]"
-            )}
-            data-testid="button-zoom-in"
-            onClick={handleZoomIn}
-            disabled={zoomLevel >= 18}
-          >
-            <Plus className="scalable-control-icon" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={cn(
-              "rounded-none automotive-button scalable-control-button",
-              "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]"
-            )}
-            data-testid="button-zoom-out"
-            onClick={handleZoomOut}
-            disabled={zoomLevel <= 1}
-          >
-            <Minus className="scalable-control-icon" />
-          </Button>
-        </Card>
-        
-        {/* Enhanced Layer Controls with Persistent Preferences */}
-        <Card className="p-2 space-y-1 shadow-lg max-w-[180px] relative">
-          {/* Close button for layer controls */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute -top-1 -right-1 h-6 w-6 p-0 rounded-full bg-background border hover:bg-accent"
-            onClick={() => setControlsVisible(false)}
-            data-testid="button-close-layer-controls"
-          >
-            <X className="h-3 w-3" />
-          </Button>
+        <div 
+          ref={panelRef}
+          className={cn(
+            "absolute z-20 transition-all duration-300 ease-in-out",
+            // Positioned between white toolbar and map top edge
+            "top-14 left-1/2 transform -translate-x-1/2",
+            // Compact horizontal layout to fit constrained space
+            "flex items-center gap-1 h-8 px-2 bg-card/95 backdrop-blur rounded-full shadow-lg border",
+            // Visible state animation
+            "opacity-100 translate-y-0"
+          )} 
+          data-testid="map-controls-cluster"
+          onMouseEnter={() => setPanelHover(true)}
+          onMouseLeave={() => setPanelHover(false)}
+          onPointerEnter={() => setPanelHover(true)}
+          onPointerLeave={() => setPanelHover(false)}
+        >
+          {/* Roads */}
           <Button 
             variant={preferences.mapViewMode === 'roads' ? "default" : "ghost"}
             size="sm" 
-            className={cn(
-              "w-full justify-start scalable-control-button",
-              "min-h-[clamp(36px,10vw,44px)]"
-            )}
+            className="h-6 px-2 text-xs rounded-full"
             onClick={() => handleMapViewModeChange('roads')}
             data-testid="button-layer-roads"
           >
-            <MapPin className="scalable-control-icon-sm mr-2 text-primary" />
-            <span className="scalable-control-text">Roads</span>
+            Roads
           </Button>
+          
+          {/* Satellite */}
           <Button 
             variant={preferences.mapViewMode === 'satellite' ? "default" : "ghost"}
             size="sm" 
-            className={cn(
-              "w-full justify-start scalable-control-button",
-              "min-h-[clamp(36px,10vw,44px)]"
-            )}
+            className="h-6 px-2 text-xs rounded-full"
             onClick={() => handleMapViewModeChange('satellite')}
             data-testid="button-layer-satellite"
           >
-            <div className={cn(
-              "scalable-control-icon-sm mr-2 rounded",
-              preferences.mapViewMode === 'satellite' ? "bg-green-600" : "bg-muted"
-            )}></div>
-            <span className="scalable-control-text">Satellite</span>
+            Sat
           </Button>
+          
+          {/* Truck Routes */}
           <Button 
             variant={preferences.showTruckRoutes ? "default" : "ghost"}
             size="sm" 
-            className={cn(
-              "w-full justify-start scalable-control-button",
-              "min-h-[clamp(36px,10vw,44px)]",
-              preferences.showTruckRoutes && "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
-            )}
+            className="h-6 px-2 text-xs rounded-full"
             onClick={handleToggleTruckRoutes}
             data-testid="button-layer-truck"
           >
-            <Navigation className="scalable-control-icon-sm mr-2" />
-            <span className="scalable-control-text">Truck Routes</span>
+            Truck
           </Button>
+          
+          {/* Traffic */}
           <Button 
-            variant={preferences.showTrafficLayer ? "default" : "ghost"} 
+            variant={preferences.showTrafficLayer ? "default" : "ghost"}
             size="sm" 
-            className={cn(
-              "w-full justify-start scalable-control-button",
-              "min-h-[clamp(36px,10vw,44px)]",
-              preferences.showTrafficLayer && "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300"
-            )}
+            className="h-6 px-2 text-xs rounded-full"
             onClick={handleToggleTrafficLayer}
             data-testid="button-layer-traffic"
           >
-            <Activity className="scalable-control-icon-sm mr-2" />
-            <span className="scalable-control-text">Traffic</span>
-            {trafficConditions.length > 0 && (
-              <Badge variant="outline" className="ml-auto scalable-badge">
-                {trafficConditions.length}
-              </Badge>
-            )}
+            Traffic
           </Button>
+          
+          {/* Incidents */}
           <Button 
-            variant={preferences.showIncidents ? "default" : "ghost"} 
+            variant={preferences.showIncidents ? "default" : "ghost"}
             size="sm" 
-            className={cn(
-              "w-full justify-start scalable-control-button",
-              "min-h-[clamp(36px,10vw,44px)]",
-              preferences.showIncidents && "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-300"
-            )}
+            className="h-6 px-2 text-xs rounded-full"
             onClick={handleToggleIncidents}
             data-testid="button-layer-incidents"
           >
-            <AlertTriangle className="scalable-control-icon-sm mr-2" />
-            <span className="scalable-control-text">Incidents</span>
-            {trafficIncidents.length > 0 && (
-              <Badge variant="outline" className="ml-auto scalable-badge">
-                {trafficIncidents.length}
-              </Badge>
-            )}
+            Incidents
           </Button>
-        </Card>
       </div>
       )}
 
