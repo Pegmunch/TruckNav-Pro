@@ -632,13 +632,13 @@ const InteractiveMap = memo(function InteractiveMap({
         />
       </MapContainer>
       
-      {/* Compact Layer Controls - Positioned between toolbar and map */}
+      {/* Compact Layer Controls - Positioned away from toggle button */}
       {controlsVisible && (
         <div 
           className={cn(
             "absolute z-20 transition-all duration-300 ease-in-out",
-            // Positioned between white toolbar and map top edge
-            "top-14 left-1/2 transform -translate-x-1/2",
+            // Positioned at top-center, away from toggle button
+            "top-16 left-1/2 transform -translate-x-1/2",
             // Compact horizontal layout to fit constrained space
             "flex items-center gap-1 h-8 px-2 bg-card/95 backdrop-blur rounded-full shadow-lg border",
             // Visible state animation
@@ -725,8 +725,9 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
+          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleZoomIn}
+          onTouchStart={(e) => { e.preventDefault(); handleZoomIn(); }}
           data-testid="button-zoom-in"
         >
           <Plus className="w-5 h-5" />
@@ -736,8 +737,9 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
+          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleCurrentLocation}
+          onTouchStart={(e) => { e.preventDefault(); handleCurrentLocation(); }}
           data-testid="button-zoom-center"
         >
           <Crosshair className="w-4 h-4" />
@@ -747,8 +749,9 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors"
+          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleZoomOut}
+          onTouchStart={(e) => { e.preventDefault(); handleZoomOut(); }}
           data-testid="button-zoom-out"
         >
           <Minus className="w-5 h-5" />
