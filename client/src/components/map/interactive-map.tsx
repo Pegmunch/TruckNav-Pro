@@ -25,7 +25,11 @@ import {
   Menu,
   Shield,
   X,
-  Layers
+  Layers,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
 import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
@@ -403,6 +407,32 @@ const InteractiveMap = memo(function InteractiveMap({
     alert(facilityInfo);
   };
 
+  // Map directional movement functions
+  const handleMoveUp = () => {
+    if (!mapRef.current) return;
+    const currentCenter = mapRef.current.getCenter();
+    mapRef.current.panBy([0, -100]);
+    resetAutoHideTimer();
+  };
+
+  const handleMoveDown = () => {
+    if (!mapRef.current) return;
+    mapRef.current.panBy([0, 100]);
+    resetAutoHideTimer();
+  };
+
+  const handleMoveLeft = () => {
+    if (!mapRef.current) return;
+    mapRef.current.panBy([-100, 0]);
+    resetAutoHideTimer();
+  };
+
+  const handleMoveRight = () => {
+    if (!mapRef.current) return;
+    mapRef.current.panBy([100, 0]);
+    resetAutoHideTimer();
+  };
+
   const handleFullscreenToggle = () => {
     if (autoExpanded && onCollapseMap) {
       onCollapseMap();
@@ -708,6 +738,99 @@ const InteractiveMap = memo(function InteractiveMap({
       >
         <Crosshair className="scalable-control-icon" />
       </Button>
+
+      {/* 3-Section Zoom Control - Vertical Oval Button */}
+      <div className={cn(
+        "absolute right-4 top-1/2 transform -translate-y-1/2 z-20",
+        "bg-card shadow-xl rounded-full border border-border overflow-hidden",
+        "flex flex-col transition-all duration-300",
+        controlsVisible ? "opacity-100 translate-x-0" : "opacity-70 translate-x-1"
+      )}>
+        {/* Zoom In - Top Section */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
+          onClick={handleZoomIn}
+          data-testid="button-zoom-in"
+        >
+          <Plus className="w-5 h-5" />
+        </Button>
+        
+        {/* Current Location - Middle Section */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
+          onClick={handleCurrentLocation}
+          data-testid="button-zoom-center"
+        >
+          <Crosshair className="w-4 h-4" />
+        </Button>
+        
+        {/* Zoom Out - Bottom Section */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors"
+          onClick={handleZoomOut}
+          data-testid="button-zoom-out"
+        >
+          <Minus className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* 4-Direction Movement Control - Small Oval Vertical Button */}
+      <div className={cn(
+        "absolute right-4 bottom-32 z-20",
+        "bg-card shadow-xl rounded-full border border-border overflow-hidden",
+        "flex flex-col transition-all duration-300",
+        controlsVisible ? "opacity-100 translate-x-0" : "opacity-70 translate-x-1"
+      )}>
+        {/* Up Arrow */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
+          onClick={handleMoveUp}
+          data-testid="button-move-up"
+        >
+          <ChevronUp className="w-4 h-4" />
+        </Button>
+        
+        {/* Left and Right Arrows - Side by Side */}
+        <div className="flex border-b border-border/50">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50"
+            onClick={handleMoveLeft}
+            data-testid="button-move-left"
+          >
+            <ChevronLeft className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors"
+            onClick={handleMoveRight}
+            data-testid="button-move-right"
+          >
+            <ChevronRight className="w-3 h-3" />
+          </Button>
+        </div>
+        
+        {/* Down Arrow */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors"
+          onClick={handleMoveDown}
+          data-testid="button-move-down"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </Button>
+      </div>
       
       {/* Auto-expansion indicator */}
       {autoExpanded && (
