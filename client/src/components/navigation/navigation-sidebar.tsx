@@ -584,22 +584,22 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     onClick={handleVehicleTypeClick}
                     variant="outline"
                     size="sm"
-                    className="automotive-button flex flex-col h-16 p-2"
+                    className="flex flex-col h-20 p-3 gap-1 text-xs min-h-fit"
                     data-testid="button-vehicle-type"
                   >
-                    <Truck className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Vehicle Type</span>
+                    <Truck className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-center leading-tight">Vehicle Type</span>
                   </Button>
                   
                   <Button
                     onClick={handleVehicleSettingsClick}
                     variant="outline"
                     size="sm"
-                    className="automotive-button flex flex-col h-16 p-2"
+                    className="flex flex-col h-20 p-3 gap-1 text-xs min-h-fit"
                     data-testid="button-vehicle-settings"
                   >
-                    <Settings className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Vehicle Settings</span>
+                    <Settings className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-center leading-tight">Vehicle Settings</span>
                   </Button>
                 </div>
               </CardContent>
@@ -622,44 +622,44 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       onClick={handleTruckStopsClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-truck-stops"
                     >
-                      <Truck className="w-4 h-4 mb-1" />
-                      <span>Truck Stops</span>
+                      <Truck className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Truck Stops</span>
                     </Button>
                     
                     <Button
                       onClick={handleFuelStationsClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-fuel-stations"
                     >
-                      <Fuel className="w-4 h-4 mb-1" />
-                      <span>Fuel Stations</span>
+                      <Fuel className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Fuel Stations</span>
                     </Button>
                     
                     <Button
                       onClick={handleParkingClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-parking"
                     >
-                      <CircleParking className="w-4 h-4 mb-1" />
-                      <span>Parking</span>
+                      <CircleParking className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Parking</span>
                     </Button>
                     
                     <Button
                       onClick={handleRestaurantsClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-restaurants"
                     >
-                      <Utensils className="w-4 h-4 mb-1" />
-                      <span>Restaurants</span>
+                      <Utensils className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Restaurants</span>
                     </Button>
                   </div>
                 </div>
@@ -674,44 +674,44 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       onClick={handleWeatherClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-weather-widget"
                     >
-                      <Cloud className="w-4 h-4 mb-1" />
-                      <span>Weather</span>
+                      <Cloud className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Weather</span>
                     </Button>
                     
                     <Button
                       onClick={handleEntertainmentClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-entertainment-widget"
                     >
-                      <Music className="w-4 h-4 mb-1" />
-                      <span>Entertainment</span>
+                      <Music className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Entertainment</span>
                     </Button>
                     
                     <Button
                       onClick={handleThemeClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-theme-widget"
                     >
-                      <Palette className="w-4 h-4 mb-1" />
-                      <span>Themes</span>
+                      <Palette className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Themes</span>
                     </Button>
                     
                     <Button
                       onClick={handleVehicleSettingsClick}
                       variant="outline"
                       size="sm"
-                      className="automotive-button flex flex-col h-14 p-2 text-xs"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-settings-widget"
                     >
-                      <Settings className="w-4 h-4 mb-1" />
-                      <span>Settings</span>
+                      <Settings className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Settings</span>
                     </Button>
                   </div>
                 </div>
