@@ -168,7 +168,10 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Handle current location search
   const handleCurrentLocationSearch = () => {
+    console.log("🔵 Current location search button clicked! Input:", currentLocationInput);
+    
     if (!currentLocationInput.trim()) {
+      console.log("❌ No current location input provided");
       toast({
         title: "Please enter a location",
         description: "Enter a current location to search for",
@@ -177,6 +180,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       return;
     }
     
+    console.log("✅ Setting current location to:", currentLocationInput.trim());
     onFromLocationChange(currentLocationInput.trim());
     setCurrentLocationInput("");
     
@@ -188,7 +192,10 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Handle destination search
   const handleDestinationSearch = () => {
+    console.log("🔵 Destination search button clicked! Input:", destinationInput);
+    
     if (!destinationInput.trim()) {
+      console.log("❌ No destination input provided");
       toast({
         title: "Please enter a destination",
         description: "Enter a destination to search for",
@@ -197,6 +204,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       return;
     }
     
+    console.log("✅ Setting destination to:", destinationInput.trim());
     onToLocationChange(destinationInput.trim());
     setDestinationInput("");
     
