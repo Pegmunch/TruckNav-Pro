@@ -1075,8 +1075,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Theme Selector Modal */}
       {showThemeSelector && (
         <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md bg-background shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <Card className="w-full max-w-sm max-h-[80vh] bg-background shadow-xl flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 flex-shrink-0">
               <CardTitle className="text-lg flex items-center">
                 <Palette className="w-5 h-5 mr-2 text-primary" />
                 Theme Settings
@@ -1090,7 +1090,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 <X className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-y-auto flex-1 min-h-0">
               <ThemeSelector
                 showLabels={true}
                 showGrayscale={true}
