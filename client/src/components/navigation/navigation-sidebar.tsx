@@ -168,10 +168,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Handle current location search
   const handleCurrentLocationSearch = () => {
-    console.log("🔵 Current location search button clicked! Input:", currentLocationInput);
-    
     if (!currentLocationInput.trim()) {
-      console.log("❌ No current location input provided");
       toast({
         title: "Please enter a location",
         description: "Enter a current location to search for",
@@ -180,7 +177,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
       return;
     }
     
-    console.log("✅ Setting current location to:", currentLocationInput.trim());
     onFromLocationChange(currentLocationInput.trim());
     setCurrentLocationInput("");
     
@@ -192,10 +188,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Handle destination search
   const handleDestinationSearch = () => {
-    console.log("🔵 Destination search button clicked! Input:", destinationInput);
-    
     if (!destinationInput.trim()) {
-      console.log("❌ No destination input provided");
       toast({
         title: "Please enter a destination",
         description: "Enter a destination to search for",
@@ -204,7 +197,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
       return;
     }
     
-    console.log("✅ Setting destination to:", destinationInput.trim());
     onToLocationChange(destinationInput.trim());
     setDestinationInput("");
     
@@ -426,7 +418,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Toggle Button */}
       <div
         className={cn(
-          "fixed left-0 top-1/3 -translate-y-1/2 z-30 transition-all duration-300 ease-in-out",
+          "fixed left-0 top-1/3 -translate-y-1/2 z-[61] transition-all duration-300 ease-in-out",
           isOpen 
             ? (isCollapsed ? "left-16" : "left-80") 
             : "left-0"
@@ -455,7 +447,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-screen bg-background border-r border-border z-50 shadow-lg",
+          "fixed left-0 top-0 h-screen bg-background border-r border-border z-[60] shadow-lg",
           "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
