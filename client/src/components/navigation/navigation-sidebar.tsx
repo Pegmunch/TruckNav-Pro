@@ -486,15 +486,16 @@ const NavigationSidebar = memo(function NavigationSidebar({
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-scroll">
             <div className="flex flex-col space-y-4 p-4">
             
-            {/* 1. Current Location Section */}
+            {/* 1. Location Search Section */}
             <Card className="bg-muted/30">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center">
-                  <MapPin className="w-4 h-4 mr-2 text-green-600" />
-                  Current Location
+                  <Search className="w-4 h-4 mr-2 text-primary" />
+                  Location Search
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Current Location Input */}
                 <div className="flex space-x-2">
                   <div className="flex-1 relative">
                     <Input
@@ -521,44 +522,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     <Search className="w-4 h-4" />
                   </Button>
                 </div>
-                
-                <Button
-                  onClick={handleUseCurrentLocation}
-                  variant="outline"
-                  size="sm"
-                  className="w-full automotive-button"
-                  data-testid="button-use-current-location"
-                >
-                  <Crosshair className="w-4 h-4 mr-2" />
-                  Use GPS Location
-                </Button>
 
-                {fromLocation && (
-                  <div className="flex items-center justify-between p-2 bg-background rounded border">
-                    <span className="text-xs text-muted-foreground">From: {fromLocation}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onFromLocationChange('')}
-                      className="h-6 w-6 p-0"
-                      data-testid="button-clear-from-location"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* 2. Destination Section */}
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  <Navigation className="w-4 h-4 mr-2 text-red-600" />
-                  Destination
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+                {/* Destination Input */}
                 <div className="flex space-x-2">
                   <div className="flex-1 relative">
                     <Input
@@ -586,6 +551,21 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </Button>
                 </div>
 
+                {/* Location Status */}
+                {fromLocation && (
+                  <div className="flex items-center justify-between p-2 bg-background rounded border">
+                    <span className="text-xs text-muted-foreground">From: {fromLocation}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onFromLocationChange('')}
+                      className="h-6 w-6 p-0"
+                      data-testid="button-clear-from-location"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
                 {toLocation && (
                   <div className="flex items-center justify-between p-2 bg-background rounded border">
                     <span className="text-xs text-muted-foreground">To: {toLocation}</span>
@@ -600,6 +580,28 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     </Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* 2. GPS Location Section */}
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center">
+                  <Crosshair className="w-4 h-4 mr-2 text-green-600" />
+                  GPS Location
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handleUseCurrentLocation}
+                  variant="outline"
+                  size="sm"
+                  className="w-full automotive-button"
+                  data-testid="button-use-current-location"
+                >
+                  <Crosshair className="w-4 h-4 mr-2" />
+                  Use GPS Location
+                </Button>
               </CardContent>
             </Card>
 
