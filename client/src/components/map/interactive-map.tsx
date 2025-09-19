@@ -586,7 +586,7 @@ const InteractiveMap = memo(function InteractiveMap({
         // Thumb-reachable positioning for mobile devices
         "bottom-24 right-4 sm:bottom-20 sm:right-4 md:top-20 md:right-4",
         // Auto-hide functionality
-        controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none",
+        controlsVisible ? "opacity-100 translate-y-0" : "opacity-30 translate-y-1",
         // Ensure never overlaps guidance (guidance is at top-4 left-4 right-4)
         "max-w-[200px]"
       )} data-testid="map-controls-cluster">
@@ -762,19 +762,19 @@ const InteractiveMap = memo(function InteractiveMap({
       
       {/* Controls Visibility Hint */}
       {!controlsVisible && !isUserInteracting && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/60 text-white px-3 py-2 rounded-full text-sm opacity-70 pointer-events-none z-10 transition-opacity duration-500">
-          <span className="scalable-control-text">Tap map to show layer controls</span>
+        <div className="absolute top-16 left-4 bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm shadow-lg z-15 transition-opacity duration-500 pointer-events-none">
+          <span className="scalable-control-text">↑ Tap layers button to show controls</span>
         </div>
       )}
       
       {/* Toggle Controls Button - Always visible for easy access */}
       <Button
-        variant="outline"
+        variant={controlsVisible ? "default" : "outline"}
         size="icon"
         className={cn(
-          "absolute top-4 left-4 bg-card shadow-lg z-20 transition-all duration-300",
+          "absolute top-4 left-4 bg-card shadow-lg z-20 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
-          controlsVisible && "opacity-50"
+          controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
         )}
         onClick={() => setControlsVisible(!controlsVisible)}
         data-testid="button-toggle-layer-controls"
