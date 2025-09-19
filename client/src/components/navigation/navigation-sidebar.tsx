@@ -269,22 +269,47 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Quick Picks button handlers
   const handleVehicleTypeClick = () => {
+    console.log('Vehicle Type clicked');
+    toast({
+      title: "Vehicle Type",
+      description: "Opening vehicle type selector...",
+    });
     setShowVehicleProfileSetup(true);
   };
 
   const handleVehicleSettingsClick = () => {
+    console.log('Vehicle Settings clicked');
+    toast({
+      title: "Vehicle Settings",
+      description: "Opening vehicle settings...",
+    });
     setShowVehicleSettings(true);
   };
 
   const handleEntertainmentClick = () => {
+    console.log('Entertainment clicked');
+    toast({
+      title: "Entertainment",
+      description: "Opening entertainment panel...",
+    });
     setShowEntertainmentPanel(true);
   };
 
   const handleThemeClick = () => {
+    console.log('Theme clicked');
+    toast({
+      title: "Themes",
+      description: "Opening theme selector...",
+    });
     setShowThemeSelector(true);
   };
 
   const handleWeatherClick = () => {
+    console.log('Weather clicked');
+    toast({
+      title: "Weather",
+      description: "Opening weather widget...",
+    });
     setShowWeatherWidget(true);
   };
 
@@ -352,10 +377,41 @@ const NavigationSidebar = memo(function NavigationSidebar({
     });
   };
 
-  const handleTruckStopsClick = () => handlePOISearch("truck_stop");
-  const handleFuelStationsClick = () => handlePOISearch("fuel");
-  const handleParkingClick = () => handlePOISearch("parking");
-  const handleRestaurantsClick = () => handlePOISearch("restaurant");
+  const handleTruckStopsClick = () => {
+    console.log('Truck Stops clicked');
+    toast({
+      title: "Truck Stops",
+      description: "Searching for nearby truck stops...",
+    });
+    handlePOISearch("truck_stop");
+  };
+  
+  const handleFuelStationsClick = () => {
+    console.log('Fuel Stations clicked');
+    toast({
+      title: "Fuel Stations", 
+      description: "Searching for nearby fuel stations...",
+    });
+    handlePOISearch("fuel");
+  };
+  
+  const handleParkingClick = () => {
+    console.log('Parking clicked');
+    toast({
+      title: "Parking",
+      description: "Searching for nearby parking...",
+    });
+    handlePOISearch("parking");
+  };
+  
+  const handleRestaurantsClick = () => {
+    console.log('Restaurants clicked');
+    toast({
+      title: "Restaurants",
+      description: "Searching for nearby restaurants...",
+    });
+    handlePOISearch("restaurant");
+  };
 
   return (
     <>
