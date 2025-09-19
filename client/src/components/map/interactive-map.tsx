@@ -766,7 +766,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 scalable-control-button cursor-pointer"
+          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50"
           onClick={handleMoveUp}
           data-testid="button-move-up"
         >
@@ -778,7 +778,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 scalable-control-button cursor-pointer"
+            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50"
             onClick={handleMoveLeft}
             data-testid="button-move-left"
           >
@@ -787,7 +787,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors scalable-control-button cursor-pointer"
+            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors"
             onClick={handleMoveRight}
             data-testid="button-move-right"
           >
@@ -799,7 +799,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors scalable-control-button cursor-pointer"
+          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors"
           onClick={handleMoveDown}
           data-testid="button-move-down"
         >
