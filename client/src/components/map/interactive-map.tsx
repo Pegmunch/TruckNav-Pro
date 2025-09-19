@@ -814,7 +814,30 @@ const InteractiveMap = memo(function InteractiveMap({
         </div>
       )}
       
-      
+      {/* Toggle Controls Button - Always visible for easy access */}
+      <Button
+        variant={controlsVisible ? "default" : "outline"}
+        size="icon"
+        className={cn(
+          "absolute top-4 left-4 bg-card shadow-lg z-20 transition-all duration-300 hover:scale-105",
+          "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
+          controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
+        )}
+        onClick={() => {
+          const newVisible = !controlsVisible;
+          setControlsVisible(newVisible);
+          manualHiddenRef.current = !newVisible; // Track manual hide state
+          if (newVisible) {
+            // Clear manual hidden when user explicitly shows
+            manualHiddenRef.current = false;
+            resetAutoHideTimer();
+          }
+        }}
+        data-testid="button-toggle-layer-controls"
+        title={controlsVisible ? "Hide layer controls" : "Show layer controls"}
+      >
+        <Layers className="scalable-control-icon" />
+      </Button>
       
       {/* Enhanced Status Bar with Auto-Hide */}
       <div className={cn(
