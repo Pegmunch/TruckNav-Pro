@@ -483,8 +483,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {/* Sidebar Content */}
         {!isCollapsed && (
-          <div className="flex-1 overflow-y-auto touch-scroll">
-            <div className="flex flex-col space-y-4 p-4">
+          <div className="flex-1 h-0 overflow-y-auto overscroll-contain">
+            <div className="flex flex-col space-y-4 p-4 min-h-full">
             
             {/* 1. Current Location Section */}
             <Card className="bg-muted/30">
