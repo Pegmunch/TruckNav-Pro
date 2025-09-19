@@ -202,18 +202,29 @@ const InteractiveMap = memo(function InteractiveMap({
 
 
   const handleCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log("Current location:", position.coords.latitude, position.coords.longitude);
-          // In a real implementation, this would center the map on the user's location
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-        }
-      );
-    }
     resetAutoHideTimer();
+    
+    if (!navigator.geolocation) {
+      console.warn('Geolocation not supported');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('Current location:', { latitude, longitude });
+        
+        // Center the map on current location
+        if (mapRef.current) {
+          const currentZoom = mapRef.current.getZoom() ?? 13;
+          mapRef.current.setView([latitude, longitude], Math.max(currentZoom, 13), { animate: true });
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
   };
 
   // Auto-hide functionality with improved timing - scoped to panel only
@@ -582,8 +593,6 @@ const InteractiveMap = memo(function InteractiveMap({
       onClick={handleMapClick}
       onTouchStart={handleMapTouchStart}
       onTouchEnd={handleMapTouchEnd}
-      onPointerMove={handleMapMovement}
-      onWheel={handleMapMovement}
       data-testid="map-container"
     >
       {/* React Leaflet Map */}
@@ -591,15 +600,23 @@ const InteractiveMap = memo(function InteractiveMap({
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         className="absolute inset-0 z-0"
-        ref={(mapInstance) => {
-          if (mapInstance && mapInstance.leafletMap) {
-            mapRef.current = mapInstance.leafletMap;
-            console.log('Leaflet map instance assigned:', mapInstance.leafletMap);
-          }
-        }}
-        whenReady={(map) => {
-          mapRef.current = map.target;
-          console.log('Leaflet map ready:', map.target);
+        whenCreated={(map) => {
+          mapRef.current = map;
+          // Set up map event listeners
+          map.on('zoomend', () => {
+            const newZoom = map.getZoom();
+            setZoomLevel(newZoom);
+            const newPreferences = { ...preferences, zoomLevel: newZoom };
+            setPreferences(newPreferences);
+            saveMapPreferences(newPreferences);
+          });
+          map.on('moveend', () => {
+            resetAutoHideTimer();
+          });
+          map.on('click', () => {
+            resetAutoHideTimer();
+          });
+          console.log('Leaflet map created successfully');
         }}
         data-testid="leaflet-map"
       >
