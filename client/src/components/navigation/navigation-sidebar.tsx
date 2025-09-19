@@ -497,7 +497,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
               <CardContent className="space-y-3">
                 <div className="flex space-x-2">
                   <div className="flex-1 relative">
-                    <Crosshair className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Enter your current location..."
                       value={currentLocationInput}
@@ -508,7 +507,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           handleCurrentLocationSearch();
                         }
                       }}
-                      className="pl-10 automotive-input"
+                      className="automotive-input"
                       data-testid="input-current-location"
                     />
                   </div>
@@ -562,7 +561,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
               <CardContent className="space-y-3">
                 <div className="flex space-x-2">
                   <div className="flex-1 relative">
-                    <Navigation className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Enter your destination..."
                       value={destinationInput}
@@ -573,7 +571,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           handleDestinationSearch();
                         }
                       }}
-                      className="pl-10 automotive-input"
+                      className="automotive-input"
                       data-testid="input-destination"
                     />
                   </div>
