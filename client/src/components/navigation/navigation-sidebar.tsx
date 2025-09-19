@@ -483,7 +483,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {/* Sidebar Content */}
         {!isCollapsed && (
-          <ScrollArea className="flex-1 h-full">
+          <div className="flex-1 overflow-y-auto touch-scroll">
             <div className="flex flex-col space-y-4 p-4">
             
             {/* 1. Current Location Section */}
@@ -1021,7 +1021,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
             )}
 
             </div>
-          </ScrollArea>
+          </div>
         )}
 
         {/* Collapsed Icon State */}
