@@ -716,7 +716,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* 3-Section Zoom Control - Vertical Oval Button */}
       <div className={cn(
-        "absolute right-4 top-1/2 transform -translate-y-1/2 z-20",
+        "absolute right-4 top-1/3 transform -translate-y-1/4 z-20",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
         "flex flex-col transition-all duration-300",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-70 translate-x-1"
