@@ -573,6 +573,15 @@ export default function NavigationPage() {
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileDrawerOpen(true)}
+                className="automotive-touch-target"
+                data-testid="button-menu-mobile"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
