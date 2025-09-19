@@ -1,5 +1,8 @@
 import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -154,6 +157,7 @@ const InteractiveMap = memo(function InteractiveMap({
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const autoHideTimerRef = useRef<number | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
   
   // Touch tap detection state
   const touchStartRef = useRef<{
@@ -435,6 +439,119 @@ const InteractiveMap = memo(function InteractiveMap({
       }
     };
   }, []);
+
+  // Map initialization and style management
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    // Add a small delay to ensure the container is properly rendered
+    const initMap = () => {
+      const container = mapContainerRef.current;
+      if (!container) return;
+
+      // Verify container dimensions
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        console.warn('Map container has no dimensions, retrying...');
+        setTimeout(initMap, 100);
+        return;
+      }
+
+      console.log('Initializing map with container dimensions:', rect);
+
+      // Try using a simple well-known style URL first
+      const getMapStyle = (viewMode: 'roads' | 'satellite') => {
+        // Use simple OpenStreetMap style URLs that are known to work
+        return viewMode === 'satellite' 
+          ? 'https://demotiles.maplibre.org/style.json'
+          : 'https://demotiles.maplibre.org/style.json';
+      };
+
+      try {
+        console.log('Initializing React Leaflet map');
+        // React Leaflet initialization is handled in JSX component
+
+      } catch (error) {
+        console.error('Failed to initialize map:');
+        console.error('Error message:', error instanceof Error ? error.message : String(error));
+        console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+        console.error('Leaflet available:', !!L);
+        console.error('Container:', container);
+      }
+    };
+
+    // Start initialization
+    setTimeout(initMap, 100);
+
+    // Cleanup on unmount
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // Handle map view mode changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const getMapStyle = (viewMode: 'roads' | 'satellite') => {
+      const roadStyle = {
+        version: 8 as const,
+        sources: {
+          'osm': {
+            type: 'raster' as const,
+            tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors'
+          }
+        },
+        layers: [
+          {
+            id: 'osm',
+            type: 'raster' as const,
+            source: 'osm'
+          }
+        ]
+      };
+
+      const satelliteStyle = {
+        version: 8 as const,
+        sources: {
+          'satellite': {
+            type: 'raster' as const,
+            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tileSize: 256,
+            attribution: '© Esri, © OpenStreetMap contributors'
+          }
+        },
+        layers: [
+          {
+            id: 'satellite',
+            type: 'raster' as const,
+            source: 'satellite'
+          }
+        ]
+      };
+
+      return viewMode === 'satellite' ? satelliteStyle : roadStyle;
+    };
+
+    try {
+      mapRef.current.setStyle(getMapStyle(preferences.mapViewMode));
+      console.log(`Map style changed to: ${preferences.mapViewMode}`);
+    } catch (error) {
+      console.error('Failed to change map style:', error);
+    }
+  }, [preferences.mapViewMode]);
+
+  // Handle zoom level changes
+  useEffect(() => {
+    if (!mapRef.current || mapRef.current.getZoom() === zoomLevel) return;
+    
+    mapRef.current.setZoom(zoomLevel);
+  }, [zoomLevel]);
 
   return (
     <div 
