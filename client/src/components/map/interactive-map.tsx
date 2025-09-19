@@ -719,7 +719,7 @@ const InteractiveMap = memo(function InteractiveMap({
         "absolute right-4 top-1/3 transform -translate-y-1/4 z-20",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
         "flex flex-col transition-all duration-300",
-        controlsVisible ? "opacity-100 translate-x-0" : "opacity-70 translate-x-1"
+        "opacity-100 translate-x-0"
       )}>
         {/* Zoom In - Top Section */}
         <Button
@@ -763,7 +763,7 @@ const InteractiveMap = memo(function InteractiveMap({
         "absolute right-4 bottom-32 z-20",
         "bg-card shadow-xl rounded-full border border-border overflow-hidden",
         "flex flex-col transition-all duration-300",
-        controlsVisible ? "opacity-100 translate-x-0" : "opacity-70 translate-x-1"
+        "opacity-100 translate-x-0"
       )}>
         {/* Up Arrow */}
         <Button
@@ -1064,7 +1064,7 @@ const InteractiveMap = memo(function InteractiveMap({
       <div className={cn(
         "absolute z-30 transition-all duration-300 ease-in-out",
         "top-4 right-4", // Positioned at top right corner
-        controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
+        "opacity-100 translate-y-0"
       )}>
         <Card className="overflow-hidden shadow-2xl">
           <Button
