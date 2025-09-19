@@ -727,7 +727,7 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleZoomIn}
-          onTouchStart={(e) => { e.preventDefault(); handleZoomIn(); }}
+          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleZoomIn(); }}
           data-testid="button-zoom-in"
         >
           <Plus className="w-5 h-5" />
@@ -739,7 +739,7 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleCurrentLocation}
-          onTouchStart={(e) => { e.preventDefault(); handleCurrentLocation(); }}
+          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleCurrentLocation(); }}
           data-testid="button-zoom-center"
         >
           <Crosshair className="w-4 h-4" />
@@ -751,7 +751,7 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleZoomOut}
-          onTouchStart={(e) => { e.preventDefault(); handleZoomOut(); }}
+          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleZoomOut(); }}
           data-testid="button-zoom-out"
         >
           <Minus className="w-5 h-5" />
@@ -771,7 +771,7 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
           onClick={handleMoveUp}
-          onTouchStart={(e) => { e.preventDefault(); handleMoveUp(); }}
+          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveUp(); }}
           data-testid="button-move-up"
         >
           <ChevronUp className="w-4 h-4" />
@@ -784,7 +784,7 @@ const InteractiveMap = memo(function InteractiveMap({
             size="icon"
             className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer"
             onClick={handleMoveLeft}
-            onTouchStart={(e) => { e.preventDefault(); handleMoveLeft(); }}
+            onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveLeft(); }}
             data-testid="button-move-left"
           >
             <ChevronLeft className="w-3 h-3" />
@@ -794,7 +794,7 @@ const InteractiveMap = memo(function InteractiveMap({
             size="icon"
             className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
             onClick={handleMoveRight}
-            onTouchStart={(e) => { e.preventDefault(); handleMoveRight(); }}
+            onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveRight(); }}
             data-testid="button-move-right"
           >
             <ChevronRight className="w-3 h-3" />
@@ -807,7 +807,7 @@ const InteractiveMap = memo(function InteractiveMap({
           size="icon"
           className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
           onClick={handleMoveDown}
-          onTouchStart={(e) => { e.preventDefault(); handleMoveDown(); }}
+          onPointerDown={(e) => { if (e.pointerType === 'mouse') return; e.preventDefault(); handleMoveDown(); }}
           data-testid="button-move-down"
         >
           <ChevronDown className="w-4 h-4" />
@@ -841,7 +841,8 @@ const InteractiveMap = memo(function InteractiveMap({
             resetAutoHideTimer();
           }
         }}
-        onTouchStart={(e) => {
+        onPointerDown={(e) => {
+          if (e.pointerType === 'mouse') return;
           e.preventDefault();
           const newVisible = !controlsVisible;
           setControlsVisible(newVisible);
