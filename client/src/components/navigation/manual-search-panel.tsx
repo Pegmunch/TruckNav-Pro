@@ -127,6 +127,24 @@ export default function ManualSearchPanel({
   // Handle use current location
   const handleUseCurrentLocation = useCallback(() => {
     if ('geolocation' in navigator) {
+      // Detect browser and platform for optimal settings
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isAndroid = /android/i.test(navigator.userAgent);
+      const isChrome = /chrome|chromium|crios/i.test(navigator.userAgent);
+      const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
+      
+      // Optimize settings based on browser and platform
+      const geolocationOptions = {
+        enableHighAccuracy: isAndroid || isChrome ? true : false, // Android/Chrome work better with high accuracy
+        timeout: isSafari ? 20000 : isMobile ? 15000 : 10000, // Longer timeout for Safari and mobile
+        maximumAge: isMobile ? 300000 : 600000 // 5-10 minutes cache depending on device
+      };
+      
+      console.log('Geolocation request with options:', {
+        browser: { isSafari, isAndroid, isChrome, isMobile },
+        options: geolocationOptions
+      });
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
@@ -144,7 +162,8 @@ export default function ManualSearchPanel({
             message: error.message,
             PERMISSION_DENIED: error.code === 1,
             POSITION_UNAVAILABLE: error.code === 2,
-            TIMEOUT: error.code === 3
+            TIMEOUT: error.code === 3,
+            browser: { isSafari, isAndroid, isChrome, isMobile }
           });
           
           let errorTitle = "Location access failed";
@@ -153,15 +172,25 @@ export default function ManualSearchPanel({
           switch (error.code) {
             case 1: // PERMISSION_DENIED
               errorTitle = "Location permission denied";
-              errorDescription = "Please allow location access in your browser settings and try again";
+              if (isAndroid) {
+                errorDescription = "Please allow location access when prompted, or check your browser settings";
+              } else if (isSafari) {
+                errorDescription = "Go to Safari > Settings for This Website > Location > Allow";
+              } else {
+                errorDescription = "Please allow location access in your browser settings and try again";
+              }
               break;
             case 2: // POSITION_UNAVAILABLE
               errorTitle = "Location unavailable";
-              errorDescription = "Your location could not be determined. Please enter manually";
+              errorDescription = isMobile ? 
+                "GPS signal weak. Try moving to an open area or enter location manually" :
+                "Your location could not be determined. Please enter manually";
               break;
             case 3: // TIMEOUT
               errorTitle = "Location timeout";
-              errorDescription = "Location request timed out. Please try again or enter manually";
+              errorDescription = isMobile ?
+                "GPS is taking too long. Try again or enter your location manually" :
+                "Location request timed out. Please try again or enter manually";
               break;
           }
           
@@ -171,11 +200,7 @@ export default function ManualSearchPanel({
             variant: "destructive"
           });
         },
-        {
-          enableHighAccuracy: false, // Changed for better Safari compatibility
-          timeout: 15000, // Increased timeout for Safari
-          maximumAge: 300000 // 5 minutes cache
-        }
+        geolocationOptions
       );
     } else {
       toast({
