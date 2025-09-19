@@ -713,21 +713,6 @@ const InteractiveMap = memo(function InteractiveMap({
       </div>
       )}
 
-      {/* Scalable Current Location Button - Positioned for Thumb Reach */}
-      <Button 
-        variant="outline" 
-        size="icon" 
-        className={cn(
-          "absolute bg-card shadow-lg automotive-button scalable-control-button transition-all duration-300",
-          "bottom-32 left-4 sm:bottom-28 md:bottom-20 lg:bottom-16", // Mobile-first positioning
-          "min-h-[clamp(44px,12vw,56px)] min-w-[clamp(44px,12vw,56px)]",
-          controlsVisible ? "opacity-100 translate-y-0" : "opacity-70 translate-y-1"
-        )}
-        data-testid="button-current-location"
-        onClick={handleCurrentLocation}
-      >
-        <Crosshair className="scalable-control-icon" />
-      </Button>
 
       {/* 3-Section Zoom Control - Vertical Oval Button */}
       <div className={cn(
