@@ -38,6 +38,7 @@ import { useCountryMap } from "@/hooks/use-country-preferences";
 import { cn } from "@/lib/utils";
 import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
+import SpeedDisplay from "@/components/map/speed-display";
 
 interface InteractiveMapProps {
   currentRoute: Route | null;
@@ -145,9 +146,9 @@ const InteractiveMap = memo(function InteractiveMap({
     };
   });
   const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [vehiclePosition, setVehiclePosition] = useState<[number, number] | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  // Speed tracking state for live speed limit data
+  const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(null);
   
   // Update preferences when country changes
   useEffect(() => {
@@ -247,13 +248,18 @@ const InteractiveMap = memo(function InteractiveMap({
     }
   }, [currentRoute]);
   
-  // GPS position tracking (replaces simulation in production)
+  // GPS position tracking with speed limit detection
   useEffect(() => {
     if (currentRoute && navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           updateVehiclePosition(latitude, longitude);
+          
+          // Mock speed limit detection based on location
+          // In production, this would query a speed limit API or road database
+          const mockSpeedLimit = getMockSpeedLimit(latitude, longitude);
+          setCurrentSpeedLimit(mockSpeedLimit);
         },
         (error) => console.warn('GPS tracking error:', error),
         {
@@ -267,14 +273,18 @@ const InteractiveMap = memo(function InteractiveMap({
     }
   }, [currentRoute, updateVehiclePosition]);
   
-  // Cleanup animation frame on unmount
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
+  // Mock speed limit detection (replace with real API in production)
+  const getMockSpeedLimit = (lat: number, lng: number): number => {
+    // Basic speed limit logic based on location patterns
+    // Urban areas: 50 km/h, highways: 120 km/h, rural: 80 km/h
+    const urbanCenter = Math.abs(lat - 51.5074) < 0.01 && Math.abs(lng + 0.1278) < 0.01; // London center
+    const highway = Math.abs(lat - 51.5) < 0.1 && Math.abs(lng + 0.5) < 0.1; // Highway area
+    
+    if (urbanCenter) return 50; // Urban speed limit
+    if (highway) return 120; // Highway speed limit  
+    return 80; // Rural/default speed limit
+  };
+  
   
   // Auto-hide functionality with improved timing - scoped to panel only
   const resetAutoHideTimer = useCallback(() => {
@@ -650,7 +660,7 @@ const InteractiveMap = memo(function InteractiveMap({
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         className="absolute inset-0 z-0"
-        whenCreated={(map) => {
+        whenReady={(map: L.Map) => {
           mapRef.current = map;
           // Set up map event listeners
           map.on('zoomend', () => {
@@ -1194,6 +1204,14 @@ const InteractiveMap = memo(function InteractiveMap({
         open={isLegalDisclaimerOpen}
         onOpenChange={setIsLegalDisclaimerOpen}
       />
+      
+      {/* Speed Display - positioned at bottom center, aligned to right of toggle button */}
+      <div className="absolute bottom-[100px] left-1/2 transform -translate-x-1/2 translate-x-16 z-[1000]">
+        <SpeedDisplay 
+          speedLimit={currentSpeedLimit || undefined}
+          className="shadow-2xl"
+        />
+      </div>
 
       {/* Bottom Info Bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">
