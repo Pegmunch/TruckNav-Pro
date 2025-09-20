@@ -30,7 +30,8 @@ import {
   Utensils,
   Bed,
   Coffee,
-  Wrench
+  Wrench,
+  Camera
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import SettingsModal from "@/components/settings/settings-modal";
@@ -76,6 +77,11 @@ interface NavigationSidebarProps {
   // Search panel controls
   isSearchPanelOpen?: boolean;
   onToggleSearchPanel?: () => void;
+  
+  // AR Navigation controls
+  onToggleAR?: () => void;
+  isARMode?: boolean;
+  arSupported?: boolean;
 }
 
 const NavigationSidebar = memo(function NavigationSidebar({
@@ -100,6 +106,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
   coordinates,
   onSelectFacility,
   onNavigateToLocation,
+  onToggleAR,
+  isARMode = false,
+  arSupported = false,
 }: NavigationSidebarProps) {
   const { toast } = useToast();
   
@@ -625,6 +634,29 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </Button>
               </CardContent>
             </Card>
+
+            {/* AR Navigation Toggle - Desktop */}
+            {arSupported && isNavigating && onToggleAR && (
+              <Card className="bg-muted/30">
+                <CardContent className="p-4">
+                  <Button
+                    onClick={onToggleAR}
+                    variant={isARMode ? "default" : "outline"}
+                    size="lg"
+                    className={cn(
+                      "w-full automotive-button h-12",
+                      isARMode 
+                        ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                        : "hover:bg-primary/10"
+                    )}
+                    data-testid="button-ar-toggle-desktop"
+                  >
+                    <Camera className="w-5 h-5 mr-2" />
+                    {isARMode ? "Exit AR Mode" : "AR Navigation"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* 4. Quick Picks Section */}
             <Card className="bg-muted/30">

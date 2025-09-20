@@ -58,6 +58,7 @@ export function ARNavigation({
   const [compassCalibrated, setCompassCalibrated] = useState(false);
   const [headingOffset, setHeadingOffset] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
 
   // Handle device orientation for compass with iOS Safari support
   const handleOrientationChange = useCallback((event: DeviceOrientationEvent) => {
@@ -429,30 +430,78 @@ export function ARNavigation({
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
         }
+        // Release wake lock when hidden
+        if (wakeLock) {
+          wakeLock.release();
+          setWakeLock(null);
+        }
       } else if (document.visibilityState === 'visible' && isActive) {
         setIsPaused(false);
+        // Request wake lock when visible and active
+        requestWakeLock();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isActive]);
+  }, [isActive, wakeLock]);
+  
+  // Wake lock for drivers - prevent screen from turning off
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator && !wakeLock) {
+      try {
+        const lock = await navigator.wakeLock.request('screen');
+        setWakeLock(lock);
+        
+        lock.addEventListener('release', () => {
+          console.log('Wake lock released');
+          setWakeLock(null);
+        });
+      } catch (error) {
+        console.warn('Wake lock request failed:', error);
+      }
+    }
+  }, [wakeLock]);
 
   // Initialize camera when AR is activated
   useEffect(() => {
     if (isActive && !isPaused) {
       initializeCamera();
+      requestWakeLock();
     } else {
       stopCamera();
+      if (wakeLock) {
+        wakeLock.release();
+        setWakeLock(null);
+      }
     }
 
-    return () => stopCamera();
-  }, [isActive, isPaused, initializeCamera, stopCamera]);
+    return () => {
+      stopCamera();
+      if (wakeLock) {
+        wakeLock.release();
+        setWakeLock(null);
+      }
+    };
+  }, [isActive, isPaused, initializeCamera, stopCamera, requestWakeLock, wakeLock]);
 
   if (!isActive) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
+      {/* Accessibility - Live region for screen readers */}
+      <div 
+        aria-live="polite" 
+        aria-atomic="true" 
+        className="sr-only"
+      >
+        {currentDirection && (
+          `Next: ${currentDirection.instruction} in ${currentDirection.distance}`
+        )}
+        {route && (
+          ` Total distance: ${route.totalDistance}, estimated time: ${route.estimatedTime}`
+        )}
+      </div>
       {/* Video Feed */}
       <video
         ref={videoRef}

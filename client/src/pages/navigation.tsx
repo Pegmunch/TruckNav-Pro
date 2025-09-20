@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
 import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
+import { ARNavigation } from "@/components/navigation/ar-navigation";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -68,6 +69,10 @@ export default function NavigationPage() {
   // Legal consent state - for automatic popup display
   const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
   const [showLegalPopup, setShowLegalPopup] = useState(false);
+  
+  // AR Navigation state
+  const [isARMode, setIsARMode] = useState(false);
+  const [arSupported, setARSupported] = useState(false);
 
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
@@ -80,6 +85,61 @@ export default function NavigationPage() {
       setShowLegalPopup(true);
     }
   }, [hasAcceptedTerms, isConsentLoading]);
+  
+  // Check AR support on component mount
+  useEffect(() => {
+    const checkARSupport = async () => {
+      try {
+        const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        const hasOrientation = 'DeviceOrientationEvent' in window;
+        const hasCamera = await navigator.mediaDevices.enumerateDevices()
+          .then(devices => devices.some(device => device.kind === 'videoinput'))
+          .catch(() => false);
+        
+        setARSupported(hasMediaDevices && hasOrientation && hasCamera);
+      } catch (error) {
+        console.warn('AR support check failed:', error);
+        setARSupported(false);
+      }
+    };
+    
+    checkARSupport();
+  }, []);
+  
+  // Handle AR mode toggle
+  const handleToggleAR = useCallback(() => {
+    if (!arSupported) {
+      toast({
+        title: "AR Not Supported",
+        description: "Your device doesn't support AR navigation features.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!isNavigating) {
+      toast({
+        title: "Start Navigation First",
+        description: "Please start navigation before enabling AR mode.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsARMode(!isARMode);
+    
+    if (!isARMode) {
+      toast({
+        title: "AR Mode Activated",
+        description: "Camera will start and directions will overlay on live feed.",
+      });
+    } else {
+      toast({
+        title: "AR Mode Deactivated",
+        description: "Returning to map navigation.",
+      });
+    }
+  }, [arSupported, isNavigating, isARMode, toast]);
 
   // Live notifications system with mobile enhancements - with error handling
   const liveNotifications = useLiveNotifications({
@@ -539,6 +599,29 @@ export default function NavigationPage() {
 
   // Get current coordinates for search (fallback to London if not available)
   const currentCoordinates = { lat: 51.5074, lng: -0.1278 };
+  
+  // Generate AR direction data from current route
+  const getARDirectionData = () => {
+    if (!currentRoute || !isNavigating) return undefined;
+    
+    // Mock turn-by-turn data - in real implementation, this would come from route service
+    return {
+      instruction: "Continue straight on A40",
+      distance: "1.2 km",
+      turnDirection: "straight" as const
+    };
+  };
+  
+  // Generate AR route data
+  const getARRouteData = () => {
+    if (!currentRoute) return undefined;
+    
+    return {
+      totalDistance: currentRoute.totalDistance || "15.6 km",
+      estimatedTime: currentRoute.totalTime || "18 min",
+      nextTurn: "Right turn in 800m"
+    };
+  };
 
   if (profilesLoading) {
     return (
@@ -573,6 +656,24 @@ export default function NavigationPage() {
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
             </div>
             <div className="flex items-center gap-2">
+              {/* AR Mode Toggle - Mobile */}
+              {arSupported && isNavigating && (
+                <Button
+                  variant={isARMode ? "default" : "outline"}
+                  size="icon"
+                  onClick={handleToggleAR}
+                  className={cn(
+                    "automotive-touch-target mr-2 shadow-lg",
+                    isARMode 
+                      ? "bg-blue-600 text-white border-2 border-blue-600 hover:bg-blue-700"
+                      : "bg-background text-foreground border-2 border-primary hover:bg-primary/10"
+                  )}
+                  data-testid="button-ar-toggle-mobile"
+                >
+                  <Camera className="w-5 h-5" />
+                </Button>
+              )}
+              
               <Button
                 variant="default"
                 size="icon"
@@ -591,24 +692,39 @@ export default function NavigationPage() {
 
           {/* Mobile Fullscreen Map */}
           <div className="mobile-map-container relative">
-            <InteractiveMap
-              currentRoute={currentRoute}
-              selectedProfile={selectedProfile}
-              alternativeRoutes={alternatives}
-              previewRoute={previewRoute}
-              onOpenLaneSelection={handleOpenLaneSelection}
-              isFullscreen={isMapExpanded}
-              onToggleFullscreen={handleToggleMapExpansion}
-              autoExpanded={isMapExpanded}
-              onCollapseMap={() => {
-                setIsMapExpanded(false);
-                setIsDrawerOpen(false);
-              }}
-              onHideSidebar={() => setIsMobileDrawerOpen(false)}
-            />
+            {/* AR Navigation - Mobile */}
+            {isARMode && (
+              <ARNavigation
+                isActive={isARMode}
+                onToggleAR={handleToggleAR}
+                currentDirection={getARDirectionData()}
+                route={getARRouteData()}
+              />
+            )}
             
-            {/* Legal Ownership Section - Mobile */}
-            <MapLegalOwnership compact={true} className="sm:hidden" />
+            {/* Regular Interactive Map */}
+            {!isARMode && (
+              <>
+                <InteractiveMap
+                  currentRoute={currentRoute}
+                  selectedProfile={selectedProfile}
+                  alternativeRoutes={alternatives}
+                  previewRoute={previewRoute}
+                  onOpenLaneSelection={handleOpenLaneSelection}
+                  isFullscreen={isMapExpanded}
+                  onToggleFullscreen={handleToggleMapExpansion}
+                  autoExpanded={isMapExpanded}
+                  onCollapseMap={() => {
+                    setIsMapExpanded(false);
+                    setIsDrawerOpen(false);
+                  }}
+                  onHideSidebar={() => setIsMobileDrawerOpen(false)}
+                />
+                
+                {/* Legal Ownership Section - Mobile */}
+                <MapLegalOwnership compact={true} className="sm:hidden" />
+              </>
+            )}
           </div>
 
           {/* Mobile Route Planning Drawer */}
@@ -718,6 +834,11 @@ export default function NavigationPage() {
             coordinates={currentCoordinates}
             onSelectFacility={handleSelectFacility}
             onNavigateToLocation={handleNavigateToLocation}
+            
+            // AR Navigation props
+            onToggleAR={arSupported && isNavigating ? handleToggleAR : undefined}
+            isARMode={isARMode}
+            arSupported={arSupported}
           />
 
           {/* Desktop Map Area */}
@@ -726,27 +847,42 @@ export default function NavigationPage() {
             isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
           )}>
 
-            <InteractiveMap
-              currentRoute={currentRoute}
-              selectedProfile={selectedProfile}
-              alternativeRoutes={alternatives}
-              previewRoute={previewRoute}
-              onOpenLaneSelection={handleOpenLaneSelection}
-              isFullscreen={isMapExpanded}
-              onToggleFullscreen={handleToggleMapExpansion}
-              autoExpanded={isMapExpanded}
-              onCollapseMap={() => {
-                setIsMapExpanded(false);
-                setIsDrawerOpen(false);
-                if (!isSidebarOpen) {
-                  setIsSidebarOpen(true);
-                }
-              }}
-              onHideSidebar={() => setIsSidebarOpen(false)}
-            />
-            
-            {/* Legal Ownership Section - Desktop */}
-            <MapLegalOwnership compact={true} className="hidden sm:block" />
+            {/* AR Navigation - Desktop */}
+            {isARMode && (
+              <ARNavigation
+                isActive={isARMode}
+                onToggleAR={handleToggleAR}
+                currentDirection={getARDirectionData()}
+                route={getARRouteData()}
+              />
+            )}
+
+            {/* Regular Interactive Map */}
+            {!isARMode && (
+              <>
+                <InteractiveMap
+                  currentRoute={currentRoute}
+                  selectedProfile={selectedProfile}
+                  alternativeRoutes={alternatives}
+                  previewRoute={previewRoute}
+                  onOpenLaneSelection={handleOpenLaneSelection}
+                  isFullscreen={isMapExpanded}
+                  onToggleFullscreen={handleToggleMapExpansion}
+                  autoExpanded={isMapExpanded}
+                  onCollapseMap={() => {
+                    setIsMapExpanded(false);
+                    setIsDrawerOpen(false);
+                    if (!isSidebarOpen) {
+                      setIsSidebarOpen(true);
+                    }
+                  }}
+                  onHideSidebar={() => setIsSidebarOpen(false)}
+                />
+                
+                {/* Legal Ownership Section - Desktop */}
+                <MapLegalOwnership compact={true} className="hidden sm:block" />
+              </>
+            )}
           </div>
 
         </div>
