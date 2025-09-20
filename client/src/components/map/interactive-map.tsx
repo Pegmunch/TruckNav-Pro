@@ -762,62 +762,6 @@ const InteractiveMap = memo(function InteractiveMap({
       )}
 
 
-      {/* 3-Section Zoom Control - Vertical Oval Button */}
-      <div className={cn(
-        "absolute right-4 top-1/3 transform -translate-y-1/4 z-30",
-        "bg-card shadow-xl rounded-full border border-border overflow-hidden",
-        "flex flex-col transition-all duration-300 pointer-events-auto",
-        "opacity-100 translate-x-0"
-      )}
-      onPointerDown={(e) => { e.stopPropagation(); }}>
-        {/* Zoom In - Top Section */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
-          onClick={handleZoomIn}
-          onPointerDown={(e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            handleZoomIn(); 
-          }}
-          data-testid="button-zoom-in"
-        >
-          <Plus className="w-5 h-5" />
-        </Button>
-        
-        {/* Current Location - Middle Section */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
-          onClick={handleCurrentLocation}
-          onPointerDown={(e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            handleCurrentLocation(); 
-          }}
-          data-testid="button-zoom-center"
-        >
-          <Crosshair className="w-4 h-4" />
-        </Button>
-        
-        {/* Zoom Out - Bottom Section */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-10 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
-          onClick={handleZoomOut}
-          onPointerDown={(e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            handleZoomOut(); 
-          }}
-          data-testid="button-zoom-out"
-        >
-          <Minus className="w-5 h-5" />
-        </Button>
-      </div>
 
       {/* 4-Direction Movement Control - Small Oval Vertical Button */}
       <div className={cn(
