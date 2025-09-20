@@ -54,7 +54,6 @@ export default function ManualSearchPanel({
     }
     
     onFromLocationChange(currentLocationSearch.trim());
-    setCurrentLocationSearch("");
     
     toast({
       title: "Current location set",
@@ -74,7 +73,6 @@ export default function ManualSearchPanel({
     }
     
     onToLocationChange(destinationSearch.trim());
-    setDestinationSearch("");
     
     toast({
       title: "Destination set",
@@ -95,7 +93,6 @@ export default function ManualSearchPanel({
     
     // Use postcode as destination by default
     onToLocationChange(postcodeSearch.trim());
-    setPostcodeSearch("");
     
     toast({
       title: "Postcode search complete",

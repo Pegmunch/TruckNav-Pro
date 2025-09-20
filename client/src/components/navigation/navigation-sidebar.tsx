@@ -191,7 +191,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
     }
     
     onFromLocationChange(currentLocationInput.trim());
-    setCurrentLocationInput("");
     
     toast({
       title: "Current location set",
@@ -211,7 +210,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
     }
     
     onToLocationChange(destinationInput.trim());
-    setDestinationInput("");
     
     toast({
       title: "Destination set",
