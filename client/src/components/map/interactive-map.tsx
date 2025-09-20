@@ -660,7 +660,7 @@ const InteractiveMap = memo(function InteractiveMap({
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         className="absolute inset-0 z-0"
-        whenReady={(map: L.Map) => {
+        whenCreated={(map: L.Map) => {
           mapRef.current = map;
           // Set up map event listeners
           map.on('zoomend', () => {
