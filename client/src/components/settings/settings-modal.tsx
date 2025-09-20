@@ -499,8 +499,8 @@ const SettingsModal = memo(function SettingsModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           className={cn(
-            "max-w-4xl w-full h-[90vh] max-h-[900px]",
-            "p-0 overflow-hidden",
+            "max-w-2xl w-full h-[75vh] max-h-[600px]",
+            "p-0 overflow-hidden flex flex-col",
             "bg-background border",
             className
           )}
@@ -533,7 +533,7 @@ const SettingsModal = memo(function SettingsModal({
           </DialogHeader>
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               {/* Tab Navigation */}
               <div className="px-6 py-3 border-b bg-muted/30">
@@ -548,7 +548,7 @@ const SettingsModal = memo(function SettingsModal({
                         data-testid={`tab-${tab.id}`}
                       >
                         <Icon className="w-4 h-4" />
-                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span className="hidden md:inline">{tab.label}</span>
                       </TabsTrigger>
                     );
                   })}
