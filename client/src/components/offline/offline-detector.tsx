@@ -109,7 +109,7 @@ export function OfflineDetector({
 
       {/* Persistent Connection Indicator */}
       {showPersistentIndicator && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 -translate-y-12 z-40" data-testid="connection-indicator">
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-40" data-testid="connection-indicator">
           <Badge 
             variant={isOnline ? "secondary" : "destructive"}
             className="flex items-center gap-1 px-2 py-1 text-xs"
