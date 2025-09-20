@@ -73,6 +73,27 @@
   "author": "Bespoke Marketing.Ai Ltd",
   "copyright": "© 2025 Bespoke Marketing.Ai Ltd. All rights reserved. Patent-protected technology.",
   
+  "features": [
+    "offline-navigation",
+    "offline-maps", 
+    "gps-tracking",
+    "restriction-awareness",
+    "facility-finder",
+    "voice-guidance",
+    "background-sync"
+  ],
+  
+  "offline": {
+    "enabled": true,
+    "fallback_page": "/offline.html",
+    "cache_strategy": "cache-first",
+    "sync_background": true
+  },
+  
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  
   "custom": {
     "legal_notice": "TruckNav Pro is patent-protected intellectual property owned by Bespoke Marketing.Ai Ltd. Any replication of truck navigation features requires compensation.",
     "trademark": "TruckNav Pro and Professional Navigation are trademarks of Bespoke Marketing.Ai Ltd"
