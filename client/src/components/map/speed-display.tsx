@@ -106,9 +106,9 @@ const SpeedDisplay = memo(function SpeedDisplay({
     <div 
       className={cn(
         "flex items-center justify-between",
-        "bg-black/80 backdrop-blur-sm rounded-full",
-        "px-6 py-3 shadow-lg border border-white/20",
-        "text-white font-semibold",
+        "bg-white/90 dark:bg-black/80 backdrop-blur-sm rounded-full",
+        "px-6 py-3 shadow-lg border border-black/20 dark:border-white/20",
+        "text-black dark:text-white font-semibold",
         "min-w-[220px] h-[60px]",
         "transition-all duration-300",
         className
@@ -120,7 +120,7 @@ const SpeedDisplay = memo(function SpeedDisplay({
         <div 
           className={cn(
             "flex items-center justify-center",
-            "w-10 h-10 rounded-full border-2 bg-white",
+            "w-10 h-10 rounded-full border-2 bg-white dark:bg-gray-800",
             convertedSpeedLimit ? getSpeedLimitColor() : "border-gray-400 text-gray-400"
           )}
           data-testid="speed-limit-sign"
@@ -134,23 +134,23 @@ const SpeedDisplay = memo(function SpeedDisplay({
           )}
         </div>
         {convertedSpeedLimit && (
-          <span className="text-xs text-gray-300" data-testid="speed-limit-unit">
+          <span className="text-xs text-gray-600 dark:text-gray-300" data-testid="speed-limit-unit">
             {speedLimitUnit}
           </span>
         )}
       </div>
       
       {/* Separator */}
-      <div className="w-px h-8 bg-white/30" />
+      <div className="w-px h-8 bg-black/30 dark:bg-white/30" />
       
       {/* Vehicle Speed Section (Right) */}
       <div className="flex items-center gap-2" data-testid="vehicle-speed-section">
-        <Gauge className="w-5 h-5 text-blue-400" />
+        <Gauge className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         <div className="text-right">
           <div className="text-2xl font-bold" data-testid="vehicle-speed-value">
             {convertedSpeed}
           </div>
-          <div className="text-xs text-gray-300 -mt-1" data-testid="vehicle-speed-unit">
+          <div className="text-xs text-gray-600 dark:text-gray-300 -mt-1" data-testid="vehicle-speed-unit">
             {speedUnit}
           </div>
         </div>
