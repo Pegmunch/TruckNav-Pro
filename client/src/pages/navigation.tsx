@@ -372,10 +372,10 @@ export default function NavigationPage() {
     },
   });
 
-  const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls') => {
+  const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
     calculateRouteMutation.mutate({
-      startLocation: fromLocation,
-      endLocation: toLocation,
+      startLocation: startLoc || fromLocation,
+      endLocation: endLoc || toLocation,
       vehicleProfileId: selectedProfile?.id,
       routePreference: routePreference || 'fastest',
     });

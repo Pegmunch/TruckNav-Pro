@@ -23,7 +23,7 @@ interface ManualSearchPanelProps {
   toLocation: string;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
-  onPlanRoute: () => void;
+  onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => void;
   isCalculating: boolean;
   className?: string;
 }
@@ -250,38 +250,44 @@ export default function ManualSearchPanel({
             </Button>
           </div>
           
-          {/* Plan Route - moved above GPS location */}
-          {(fromLocation && toLocation) || (currentLocationSearch.trim() && destinationSearch.trim()) && (
-            <Button
-              onClick={() => {
-                // Auto-search if text is entered but not yet searched
-                if (currentLocationSearch.trim() && !fromLocation) {
-                  onFromLocationChange(currentLocationSearch.trim());
-                }
-                if (destinationSearch.trim() && !toLocation) {
-                  onToLocationChange(destinationSearch.trim());
-                }
-                // Then plan the route
-                onPlanRoute();
-              }}
-              disabled={isCalculating}
-              size="sm"
-              className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold"
-              data-testid="button-plan-route-manual"
-            >
-              {isCalculating ? (
-                <>
-                  <CornerUpLeft className="w-4 h-4 mr-2 animate-spin" />
-                  <strong>CALCULATING...</strong>
-                </>
-              ) : (
-                <>
-                  <CornerUpLeft className="w-4 h-4 mr-2" />
-                  <strong>START NAVIGATION</strong>
-                </>
-              )}
-            </Button>
-          )}
+          {/* START NAVIGATION Button - Always visible at top */}
+          <Button
+            onClick={() => {
+              // Compute the actual locations to use (prefer existing props, fallback to typed text)
+              const startLocation = fromLocation || currentLocationSearch.trim();
+              const endLocation = toLocation || destinationSearch.trim();
+              
+              // Update the props to keep state in sync
+              if (currentLocationSearch.trim() && !fromLocation) {
+                onFromLocationChange(currentLocationSearch.trim());
+              }
+              if (destinationSearch.trim() && !toLocation) {
+                onToLocationChange(destinationSearch.trim());
+              }
+              
+              // Call the route planning with computed locations directly to avoid race condition
+              onPlanRoute('fastest', startLocation, endLocation);
+            }}
+            disabled={isCalculating || !(
+              (fromLocation && toLocation) || 
+              (currentLocationSearch.trim() && destinationSearch.trim())
+            )}
+            size="sm"
+            className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold disabled:bg-gray-400 disabled:text-gray-200"
+            data-testid="button-start-navigation"
+          >
+            {isCalculating ? (
+              <>
+                <CornerUpLeft className="w-4 h-4 mr-2 animate-spin" />
+                <strong>CALCULATING...</strong>
+              </>
+            ) : (
+              <>
+                <CornerUpLeft className="w-4 h-4 mr-2" />
+                <strong>START NAVIGATION</strong>
+              </>
+            )}
+          </Button>
 
           {/* Use Current Location Button */}
           <Button
@@ -293,6 +299,37 @@ export default function ManualSearchPanel({
           >
             <Crosshair className="w-4 h-4 mr-2" />
             Use GPS Location
+          </Button>
+        </div>
+
+        {/* Swap Button between inputs */}
+        <div className="flex justify-center">
+          <Button
+            onClick={() => {
+              // Swap local input states
+              const tempCurrent = currentLocationSearch;
+              setCurrentLocationSearch(destinationSearch);
+              setDestinationSearch(tempCurrent);
+              
+              // Also swap the actual location props if they exist
+              if (fromLocation || toLocation) {
+                const temp = fromLocation;
+                onFromLocationChange(toLocation);
+                onToLocationChange(temp);
+              }
+              
+              toast({
+                title: "Locations swapped",
+                description: "Starting point and destination have been switched"
+              });
+            }}
+            variant="outline"
+            size="sm"
+            className="automotive-button"
+            data-testid="button-swap-locations-inline"
+            disabled={!currentLocationSearch.trim() && !destinationSearch.trim() && !fromLocation && !toLocation}
+          >
+            <ArrowUpDown className="w-4 h-4" />
           </Button>
         </div>
 
