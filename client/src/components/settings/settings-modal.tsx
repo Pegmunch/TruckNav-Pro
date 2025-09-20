@@ -32,7 +32,6 @@ import {
   Bell, 
   FileText, 
   Music, 
-  X,
   MapPin,
   Car,
   Volume2,
@@ -195,12 +194,6 @@ const SettingsModal = memo(function SettingsModal({
     saveSettings(ENTERTAINMENT_SETTINGS_KEY, entertainmentSettings);
   }, [entertainmentSettings]);
 
-  /**
-   * Handle modal close
-   */
-  const handleClose = () => {
-    onOpenChange(false);
-  };
 
   /**
    * Handle country/language change
@@ -533,15 +526,6 @@ const SettingsModal = memo(function SettingsModal({
                   </DialogDescription>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleClose}
-                className="h-8 w-8"
-                data-testid="button-close-settings"
-              >
-                <X className="w-4 h-4" />
-              </Button>
             </div>
           </DialogHeader>
 
