@@ -66,7 +66,7 @@ interface NavigationSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   isCollapsed: boolean;
-  onCollapseToggle: () => void;
+  onCollapseToggle: () => void; // Keep for AR compatibility, but won't show separate button
   
   // Search functionality props
   coordinates?: { lat: number; lng: number };
@@ -476,22 +476,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
               <h2 className="font-semibold text-foreground truncate">Navigation</h2>
             </div>
           )}
-          
-          <div className="flex items-center ml-2 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onCollapseToggle}
-              className="scalable-control-button h-9 w-9"
-              data-testid="button-collapse-navigation-sidebar"
-            >
-              {isCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronLeft className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
         </div>
 
         {/* Sidebar Content */}

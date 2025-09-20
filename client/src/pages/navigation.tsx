@@ -567,15 +567,27 @@ export default function NavigationPage() {
     }
   };
 
-  // Sidebar toggle functionality
+  // Unified sidebar toggle functionality - cycles through: closed → open → collapsed → closed
   const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-    // Auto-collapse expanded map when sidebar opens
-    if (!isSidebarOpen && isMapExpanded) {
-      setIsMapExpanded(false);
+    if (!isSidebarOpen) {
+      // Closed → Open (expanded)
+      setIsSidebarOpen(true);
+      setIsSidebarCollapsed(false);
+      // Auto-collapse expanded map when sidebar opens
+      if (isMapExpanded) {
+        setIsMapExpanded(false);
+      }
+    } else if (!isSidebarCollapsed) {
+      // Open (expanded) → Open (collapsed)
+      setIsSidebarCollapsed(true);
+    } else {
+      // Open (collapsed) → Closed
+      setIsSidebarOpen(false);
+      setIsSidebarCollapsed(false);
     }
   };
 
+  // Keep this for compatibility with existing AR toggle functionality
   const handleSidebarCollapseToggle = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
