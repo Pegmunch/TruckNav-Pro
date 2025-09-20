@@ -856,7 +856,7 @@ const InteractiveMap = memo(function InteractiveMap({
         variant={controlsVisible ? "default" : "outline"}
         size="icon"
         className={cn(
-          "absolute bottom-52 left-4 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
+          "absolute bottom-40 left-4 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
           "touch-manipulation cursor-pointer pointer-events-auto",
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
