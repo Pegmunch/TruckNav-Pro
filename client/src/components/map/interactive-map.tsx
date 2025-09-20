@@ -150,9 +150,6 @@ const InteractiveMap = memo(function InteractiveMap({
   // Speed tracking state for live speed limit data
   const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(113); // Test value - displays as 70 mph
   
-  // Cursor tracking state
-  const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
-  const [showCursor, setShowCursor] = useState(false);
   
   // Update preferences when country changes
   useEffect(() => {
@@ -338,27 +335,6 @@ const InteractiveMap = memo(function InteractiveMap({
     }
   }, [resetAutoHideTimer, onHideSidebar]);
 
-  // Handle mouse move for cursor tracking
-  const handleMouseMove = useCallback((event: React.MouseEvent) => {
-    if (!mapContainerRef.current) return;
-    
-    const rect = mapContainerRef.current.getBoundingClientRect();
-    setCursorPosition({
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    });
-  }, []);
-
-  // Handle mouse enter to show cursor
-  const handleMouseEnter = useCallback(() => {
-    setShowCursor(true);
-  }, []);
-
-  // Handle mouse leave to hide cursor
-  const handleMouseLeave = useCallback(() => {
-    setShowCursor(false);
-    setCursorPosition(null);
-  }, []);
   
   // Handle touch start - record initial touch position and time
   const handleMapTouchStart = useCallback((event: React.TouchEvent) => {
@@ -679,9 +655,6 @@ const InteractiveMap = memo(function InteractiveMap({
       onClick={handleMapClick}
       onTouchStart={handleMapTouchStart}
       onTouchEnd={handleMapTouchEnd}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       data-testid="map-container"
     >
       {/* React Leaflet Map */}
@@ -689,25 +662,8 @@ const InteractiveMap = memo(function InteractiveMap({
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         className="absolute inset-0 z-0"
-        whenCreated={(map: L.Map) => {
-          mapRef.current = map;
-          // Set up map event listeners
-          map.on('zoomend', () => {
-            const newZoom = map.getZoom();
-            setZoomLevel(newZoom);
-            const newPreferences = { ...preferences, zoomLevel: newZoom };
-            setPreferences(newPreferences);
-            saveMapPreferences(newPreferences);
-          });
-          
-          // Reset auto-hide timer on map interaction
-          map.on('moveend', () => {
-            resetAutoHideTimer();
-          });
-          map.on('click', () => {
-            resetAutoHideTimer();
-          });
-          console.log('Leaflet map created successfully');
+        whenReady={() => {
+          // Map is ready
         }}
         data-testid="leaflet-map"
       >
@@ -1238,23 +1194,6 @@ const InteractiveMap = memo(function InteractiveMap({
           className="shadow-2xl"
         />
       </div>
-      
-      {/* Cursor Indicator - Crosshair that follows cursor position */}
-      {showCursor && cursorPosition && (
-        <div 
-          className="absolute pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2"
-          style={{
-            left: cursorPosition.x,
-            top: cursorPosition.y
-          }}
-          data-testid="cursor-indicator"
-        >
-          <MapPin 
-            className="w-6 h-6 text-red-500 drop-shadow-lg"
-            fill="currentColor"
-          />
-        </div>
-      )}
 
       {/* Bottom Info Bar */}
       <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">
