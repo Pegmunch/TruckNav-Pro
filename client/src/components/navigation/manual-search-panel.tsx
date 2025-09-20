@@ -250,6 +250,29 @@ export default function ManualSearchPanel({
             </Button>
           </div>
           
+          {/* Plan Route - moved above GPS location */}
+          {fromLocation && toLocation && (
+            <Button
+              onClick={onPlanRoute}
+              disabled={isCalculating}
+              size="sm"
+              className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold"
+              data-testid="button-plan-route-manual"
+            >
+              {isCalculating ? (
+                <>
+                  <CornerUpLeft className="w-4 h-4 mr-2 animate-spin" />
+                  <strong>CALCULATING...</strong>
+                </>
+              ) : (
+                <>
+                  <CornerUpLeft className="w-4 h-4 mr-2" />
+                  <strong>START NAVIGATION</strong>
+                </>
+              )}
+            </Button>
+          )}
+
           {/* Use Current Location Button */}
           <Button
             onClick={handleUseCurrentLocation}
@@ -390,27 +413,6 @@ export default function ManualSearchPanel({
                 </Button>
               )}
               
-              {fromLocation && toLocation && (
-                <Button
-                  onClick={onPlanRoute}
-                  disabled={isCalculating}
-                  size="sm"
-                  className="flex-1 automotive-button"
-                  data-testid="button-plan-route-manual"
-                >
-                  {isCalculating ? (
-                    <>
-                      <CornerUpLeft className="w-4 h-4 mr-2 animate-spin" />
-                      Planning...
-                    </>
-                  ) : (
-                    <>
-                      <CornerUpLeft className="w-4 h-4 mr-2" />
-                      Plan Route
-                    </>
-                  )}
-                </Button>
-              )}
             </div>
           </div>
         )}
