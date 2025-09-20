@@ -689,7 +689,7 @@ const InteractiveMap = memo(function InteractiveMap({
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         className="absolute inset-0 z-0"
-        whenReady={(map: L.Map) => {
+        whenCreated={(map: L.Map) => {
           mapRef.current = map;
           // Set up map event listeners
           map.on('zoomend', () => {
@@ -701,9 +701,6 @@ const InteractiveMap = memo(function InteractiveMap({
           });
           
           // Reset auto-hide timer on map interaction
-          map.on('moveend', () => {
-            resetAutoHideTimer();
-          });
           map.on('moveend', () => {
             resetAutoHideTimer();
           });
@@ -1252,9 +1249,9 @@ const InteractiveMap = memo(function InteractiveMap({
           }}
           data-testid="cursor-indicator"
         >
-          <Crosshair 
-            className="w-8 h-8 text-primary drop-shadow-lg"
-            strokeWidth={2.5}
+          <MapPin 
+            className="w-6 h-6 text-red-500 drop-shadow-lg"
+            fill="currentColor"
           />
         </div>
       )}
