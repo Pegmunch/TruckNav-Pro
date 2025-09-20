@@ -11,6 +11,7 @@ const MAP_CACHE = `trucknav-maps-v${CACHE_VERSION}`;
 const ESSENTIAL_FILES = [
   '/',
   '/index.html',
+  '/offline.html',
   '/manifest.json',
   '/apple-touch-icon.png',
   '/favicon-32x32.png',
@@ -78,22 +79,43 @@ function initDB() {
   });
 }
 
-// Store failed request for background sync
-async function storeOfflineRequest(requestData) {
+// Store failed request for background sync (with security filtering)
+async function storeOfflineRequest(request, body = null) {
   try {
+    // Skip CSRF endpoints and sensitive requests
+    if (request.url.includes('csrf-token') || request.url.includes('auth')) {
+      console.log('[SW] Skipping sensitive endpoint for offline storage:', request.url);
+      return;
+    }
+    
     const db = await initDB();
     const transaction = db.transaction([STORES.OFFLINE_REQUESTS], 'readwrite');
     const store = transaction.objectStore(STORES.OFFLINE_REQUESTS);
     
-    await store.add({
-      url: requestData.url,
-      method: requestData.method,
-      headers: Object.fromEntries(requestData.headers.entries()),
-      body: requestData.body,
-      timestamp: Date.now()
-    });
+    // Filter out sensitive headers for security
+    const safeHeaders = {};
+    const unsafeHeaders = ['authorization', 'cookie', 'x-csrf-token'];
     
-    console.log('[SW] Stored offline request:', requestData.url);
+    for (const [key, value] of request.headers.entries()) {
+      if (!unsafeHeaders.includes(key.toLowerCase())) {
+        safeHeaders[key] = value;
+      }
+    }
+    
+    const requestData = {
+      id: Date.now() + Math.random(),
+      url: request.url,
+      method: request.method,
+      headers: safeHeaders,
+      body: body,
+      timestamp: Date.now()
+    };
+    
+    await store.add(requestData);
+    console.log('[SW] Stored offline request:', request.url);
+    
+    // Broadcast updated queue count
+    broadcastQueueCount();
   } catch (error) {
     console.error('[SW] Failed to store offline request:', error);
   }
@@ -110,9 +132,8 @@ self.addEventListener('install', (event) => {
         return cache.addAll(ESSENTIAL_FILES);
       }),
       // Initialize IndexedDB
-      initDB(),
-      // Skip waiting to activate immediately
-      self.skipWaiting()
+      initDB()
+      // Remove auto skipWaiting - rely on user-initiated updates
     ]).then(() => {
       console.log('[SW] Installation complete - Essential files cached and DB initialized');
     }).catch((error) => {
@@ -173,16 +194,51 @@ function getCachingStrategy(request) {
   return 'cache-first';
 }
 
-// Cache First Strategy - good for static assets
+// Cache management with TTL and size limits
+async function manageCacheSize(cacheName, maxEntries = 100, maxAge = 24 * 60 * 60 * 1000) {
+  const cache = await caches.open(cacheName);
+  const requests = await cache.keys();
+  
+  // Remove expired entries
+  const now = Date.now();
+  for (const request of requests) {
+    const response = await cache.match(request);
+    if (response) {
+      const dateHeader = response.headers.get('date');
+      const cacheDate = dateHeader ? new Date(dateHeader).getTime() : now;
+      if (now - cacheDate > maxAge) {
+        await cache.delete(request);
+        console.log('[SW] Removed expired cache entry:', request.url);
+      }
+    }
+  }
+  
+  // Remove oldest entries if over limit
+  const remainingRequests = await cache.keys();
+  if (remainingRequests.length > maxEntries) {
+    const toDelete = remainingRequests.slice(0, remainingRequests.length - maxEntries);
+    for (const request of toDelete) {
+      await cache.delete(request);
+      console.log('[SW] Removed old cache entry (LRU):', request.url);
+    }
+  }
+}
+
+// Cache First Strategy with cache management
 async function cacheFirstStrategy(request, cacheName = CACHE_NAME) {
   const cache = await caches.open(cacheName);
   const cachedResponse = await cache.match(request);
   
   if (cachedResponse) {
     // Serve from cache, update cache in background
-    fetch(request).then(response => {
+    fetch(request).then(async response => {
       if (response.ok) {
-        cache.put(request, response.clone());
+        await cache.put(request, response.clone());
+        
+        // Manage cache size for map tiles
+        if (cacheName === MAP_CACHE) {
+          await manageCacheSize(MAP_CACHE, 500, 7 * 24 * 60 * 60 * 1000); // 500 entries, 7 days
+        }
       }
     }).catch(() => {}); // Ignore network errors
     
@@ -192,7 +248,12 @@ async function cacheFirstStrategy(request, cacheName = CACHE_NAME) {
   try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
+      await cache.put(request, networkResponse.clone());
+      
+      // Manage cache size for map tiles
+      if (cacheName === MAP_CACHE) {
+        await manageCacheSize(MAP_CACHE, 500, 7 * 24 * 60 * 60 * 1000); // 500 entries, 7 days
+      }
     }
     return networkResponse;
   } catch (error) {
@@ -240,8 +301,13 @@ async function networkFirstStrategy(request, cacheName = CACHE_NAME) {
       );
     }
     
-    // For navigation requests, return cached index.html
+    // For navigation requests, return offline page
     if (request.mode === 'navigate') {
+      const offlinePage = await cache.match('/offline.html');
+      if (offlinePage) {
+        return offlinePage;
+      }
+      // Fallback to cached index.html
       const cachedIndex = await cache.match('/index.html') || await cache.match('/');
       if (cachedIndex) {
         return cachedIndex;
@@ -257,27 +323,32 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
-  // Skip non-GET requests for caching (but handle POST for offline storage)
+  // Handle non-GET requests
   if (request.method !== 'GET') {
-    // Store POST/PUT/DELETE requests for background sync when offline
-    if (!navigator.onLine && ['POST', 'PUT', 'DELETE'].includes(request.method)) {
-      event.respondWith(
-        storeOfflineRequest(request).then(() => {
-          return new Response(
-            JSON.stringify({ 
-              message: 'Request queued for when you\'re back online',
-              offline: true,
-              queued: true
-            }),
-            {
-              status: 202,
-              statusText: 'Accepted',
-              headers: { 'Content-Type': 'application/json' }
-            }
-          );
-        })
-      );
-    }
+    // Try to make the request first
+    event.respondWith(
+      fetch(request).catch(async () => {
+        // If network fails, store for background sync
+        console.log('[SW] Network failed for non-GET request, queueing for background sync:', request.url);
+        
+        // Read request body if present
+        const body = request.method !== 'GET' && request.body ? await request.clone().text() : null;
+        await storeOfflineRequest(request, body);
+        
+        return new Response(
+          JSON.stringify({ 
+            message: 'Request queued for when you\'re back online',
+            offline: true,
+            queued: true
+          }),
+          {
+            status: 202,
+            statusText: 'Accepted',
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      })
+    );
     return;
   }
   
@@ -314,6 +385,8 @@ self.addEventListener('fetch', (event) => {
         
         // Last resort fallbacks
         if (request.mode === 'navigate') {
+          const offlinePage = await caches.match('/offline.html');
+          if (offlinePage) return offlinePage;
           const fallback = await caches.match('/index.html') || await caches.match('/');
           if (fallback) return fallback;
         }
@@ -423,29 +496,52 @@ self.addEventListener('notificationclick', (event) => {
   }
 });
 
-// Handle service worker messages from the main thread
+// Handle messages from clients (like skip waiting)
 self.addEventListener('message', (event) => {
   console.log('[SW] Message received:', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Skip waiting requested by client');
     self.skipWaiting();
-  } else if (event.data && event.data.type === 'CACHE_URLS') {
-    // Cache specific URLs requested by the app
-    event.waitUntil(
-      caches.open(CACHE_NAME).then(cache => {
-        return cache.addAll(event.data.urls);
-      })
-    );
-  } else if (event.data && event.data.type === 'CLEAR_CACHE') {
-    // Clear all caches
-    event.waitUntil(
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => caches.delete(cacheName))
-        );
-      })
-    );
+    // Broadcast update-ready to all clients
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'UPDATE_READY' });
+      });
+    });
+  }
+  
+  // Handle queue count requests
+  if (event.data && event.data.type === 'GET_QUEUE_COUNT') {
+    getQueueCount().then(count => {
+      event.ports[0].postMessage({ count });
+    });
   }
 });
+
+// Queue management functions
+async function getQueueCount() {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction([STORES.OFFLINE_REQUESTS], 'readonly');
+    const store = transaction.objectStore(STORES.OFFLINE_REQUESTS);
+    const request = store.count();
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] Error getting queue count:', error);
+    return 0;
+  }
+}
+
+async function broadcastQueueCount() {
+  const count = await getQueueCount();
+  const clients = await self.clients.matchAll();
+  clients.forEach(client => {
+    client.postMessage({ type: 'QUEUE_COUNT_UPDATE', count });
+  });
+}
 
 console.log(`[SW] TruckNav Pro Service Worker v${CACHE_VERSION} loaded - Patent-protected by Bespoke Marketing.Ai Ltd`);

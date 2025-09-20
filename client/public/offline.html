@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - TruckNav Pro</title>
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .features {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .features h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .features ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .features li {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        
+        .features li::before {
+            content: '✓';
+            margin-right: 0.8rem;
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        .button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .button.primary {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        
+        .button.primary:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .network-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+            margin-right: 0.5rem;
+        }
+        
+        .network-status.online {
+            background: #10b981;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🚛</div>
+        
+        <h1>You're Offline</h1>
+        <p>TruckNav Pro is working in offline mode. Your navigation and core features are still available using cached data.</p>
+        
+        <div class="features">
+            <h3>Available Offline Features:</h3>
+            <ul>
+                <li>View cached vehicle profiles</li>
+                <li>Access saved routes and favorites</li>
+                <li>Browse previously loaded facilities</li>
+                <li>Use offline maps (previously viewed areas)</li>
+                <li>Access entertainment settings</li>
+                <li>View traffic restrictions data</li>
+            </ul>
+        </div>
+        
+        <div class="status" id="status">
+            <span class="network-status" id="networkStatus"></span>
+            <span id="statusText">Offline Mode Active</span>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <a href="/" class="button primary" id="reloadBtn">Return to TruckNav Pro</a>
+            <button class="button" onclick="location.reload()" id="refreshBtn">Check Connection</button>
+        </div>
+    </div>
+
+    <script>
+        // Monitor network status
+        function updateNetworkStatus() {
+            const status = document.getElementById('networkStatus');
+            const statusText = document.getElementById('statusText');
+            const reloadBtn = document.getElementById('reloadBtn');
+            
+            if (navigator.onLine) {
+                status.classList.add('online');
+                statusText.textContent = 'Connection Restored - Ready to sync';
+                reloadBtn.textContent = 'Return to TruckNav Pro';
+                reloadBtn.classList.add('primary');
+            } else {
+                status.classList.remove('online');
+                statusText.textContent = 'Offline Mode Active';
+                reloadBtn.textContent = 'Continue Offline';
+                reloadBtn.classList.remove('primary');
+            }
+        }
+        
+        // Update status on load and when network changes
+        updateNetworkStatus();
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+        
+        // Auto-refresh when back online
+        window.addEventListener('online', () => {
+            setTimeout(() => {
+                if (navigator.onLine) {
+                    window.location.href = '/';
+                }
+            }, 2000);
+        });
+        
+        // Copyright notice
+        console.log('TruckNav Pro Offline Page - Patent-protected by Bespoke Marketing.Ai Ltd');
+    </script>
+</body>
+</html>

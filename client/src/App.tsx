@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { MeasurementProvider } from "@/components/measurement/measurement-provider";
+import { OfflineDetector } from "@/components/offline/offline-detector";
+import { ServiceWorkerUpdates } from "@/components/offline/service-worker-updates";
 import NavigationPage from "@/pages/navigation";
 import LaneSelectionPage from "@/pages/lane-selection";
 import MapWindow from "@/pages/map-window";
@@ -48,9 +50,12 @@ function App() {
       <ThemeProvider defaultTheme="auto" storageKey="theme-mode">
         <MeasurementProvider>
           <TooltipProvider>
-            <Toaster />
-            {/* Main Application - Legal access via button only */}
-            <Router />
+            <OfflineDetector showPersistentIndicator={true}>
+              <Toaster />
+              <ServiceWorkerUpdates />
+              {/* Main Application with Offline Support */}
+              <Router />
+            </OfflineDetector>
           </TooltipProvider>
         </MeasurementProvider>
       </ThemeProvider>
