@@ -25,6 +25,7 @@ import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
+import SettingsModal from "@/components/settings/settings-modal";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -73,6 +74,9 @@ export default function NavigationPage() {
   // AR Navigation state
   const [isARMode, setIsARMode] = useState(false);
   const [arSupported, setARSupported] = useState(false);
+  
+  // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
+  const [showVehicleSettings, setShowVehicleSettings] = useState(false);
 
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
@@ -783,6 +787,10 @@ export default function NavigationPage() {
                   // Search panel integration - not needed on mobile since left sidebar contains search
                   isSearchPanelOpen={false}
                   onToggleSearchPanel={() => {}}
+                  
+                  // Settings modal props
+                  showVehicleSettings={showVehicleSettings}
+                  onShowVehicleSettings={setShowVehicleSettings}
                 />
               </div>
             </DrawerContent>
@@ -829,6 +837,10 @@ export default function NavigationPage() {
             // Search panel integration - not needed since left sidebar contains search
             isSearchPanelOpen={false}
             onToggleSearchPanel={() => {}}
+            
+            // Settings modal props
+            showVehicleSettings={showVehicleSettings}
+            onShowVehicleSettings={setShowVehicleSettings}
             
             // Search functionality props
             coordinates={currentCoordinates}
@@ -996,6 +1008,12 @@ export default function NavigationPage() {
           onClose={handleClosePreview}
         />
       )}
+      
+      {/* Settings Modal - rendered at page level to persist independently of sidebar state */}
+      <SettingsModal
+        open={showVehicleSettings}
+        onOpenChange={setShowVehicleSettings}
+      />
     </div>
   );
 }

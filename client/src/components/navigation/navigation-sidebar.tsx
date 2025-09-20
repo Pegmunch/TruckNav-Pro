@@ -34,7 +34,6 @@ import {
   Camera
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
-import SettingsModal from "@/components/settings/settings-modal";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
 import { ThemeSelector } from "@/components/theme/theme-selector";
 import WeatherWidget from "@/components/weather/weather-widget";
@@ -82,6 +81,10 @@ interface NavigationSidebarProps {
   onToggleAR?: () => void;
   isARMode?: boolean;
   arSupported?: boolean;
+  
+  // Settings modal controls
+  showVehicleSettings?: boolean;
+  onShowVehicleSettings?: (show: boolean) => void;
 }
 
 const NavigationSidebar = memo(function NavigationSidebar({
@@ -109,12 +112,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
   onToggleAR,
   isARMode = false,
   arSupported = false,
+  showVehicleSettings = false,
+  onShowVehicleSettings,
 }: NavigationSidebarProps) {
   const { toast } = useToast();
   
   // State for Quick Picks modal components
   const [showVehicleProfileSetup, setShowVehicleProfileSetup] = useState(false);
-  const [showVehicleSettings, setShowVehicleSettings] = useState(false);
   const [showEntertainmentPanel, setShowEntertainmentPanel] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
@@ -292,7 +296,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       title: "Vehicle Settings",
       description: "Opening vehicle settings...",
     });
-    setShowVehicleSettings(true);
+    onShowVehicleSettings?.(true);
   };
 
   const handleEntertainmentClick = () => {
@@ -1092,11 +1096,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         />
       )}
 
-      {/* Vehicle Settings Modal */}
-      <SettingsModal
-        open={showVehicleSettings}
-        onOpenChange={setShowVehicleSettings}
-      />
+      {/* Vehicle Settings Modal - now rendered in parent component */}
 
       {/* Entertainment Panel */}
       <EntertainmentPanel
