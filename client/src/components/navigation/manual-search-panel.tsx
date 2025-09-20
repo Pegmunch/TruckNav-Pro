@@ -251,9 +251,19 @@ export default function ManualSearchPanel({
           </div>
           
           {/* Plan Route - moved above GPS location */}
-          {fromLocation && toLocation && (
+          {(fromLocation && toLocation) || (currentLocationSearch.trim() && destinationSearch.trim()) && (
             <Button
-              onClick={onPlanRoute}
+              onClick={() => {
+                // Auto-search if text is entered but not yet searched
+                if (currentLocationSearch.trim() && !fromLocation) {
+                  onFromLocationChange(currentLocationSearch.trim());
+                }
+                if (destinationSearch.trim() && !toLocation) {
+                  onToLocationChange(destinationSearch.trim());
+                }
+                // Then plan the route
+                onPlanRoute();
+              }}
               disabled={isCalculating}
               size="sm"
               className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold"
