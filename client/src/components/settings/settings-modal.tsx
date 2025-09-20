@@ -700,11 +700,13 @@ const SettingsModal = memo(function SettingsModal({
         </DialogContent>
       </Dialog>
 
-      {/* Legal Disclaimer Dialog */}
-      <LegalDisclaimerDialog
-        open={isLegalDisclaimerOpen}
-        onOpenChange={setIsLegalDisclaimerOpen}
-      />
+      {/* Legal Disclaimer Dialog - only render when main modal is open */}
+      {open && (
+        <LegalDisclaimerDialog
+          open={isLegalDisclaimerOpen}
+          onOpenChange={setIsLegalDisclaimerOpen}
+        />
+      )}
     </>
   );
 });

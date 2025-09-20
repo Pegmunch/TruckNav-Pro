@@ -48,10 +48,6 @@ export default function NavigationPage() {
   // Mobile drawer state (replaces sidebar on mobile)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   
-  // Debug mobile drawer state changes
-  useEffect(() => {
-    console.log(`[DEBUG] Mobile drawer state changed: ${isMobileDrawerOpen}`);
-  }, [isMobileDrawerOpen]);
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -83,16 +79,6 @@ export default function NavigationPage() {
   // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
   const [showVehicleSettings, setShowVehicleSettings] = useState(false);
   
-  // Debug logging for settings modal state changes
-  useEffect(() => {
-    console.log(`[DEBUG] Settings modal state changed: ${showVehicleSettings}`);
-    if (showVehicleSettings) {
-      console.log(`[DEBUG] Settings modal OPENED`);
-    } else {
-      console.log(`[DEBUG] Settings modal CLOSED`);
-      console.trace(`[DEBUG] Settings modal close stack trace`);
-    }
-  }, [showVehicleSettings]);
 
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
