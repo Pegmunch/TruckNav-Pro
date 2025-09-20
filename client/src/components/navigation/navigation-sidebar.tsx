@@ -431,7 +431,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Toggle Button */}
       <div
         className={cn(
-          "fixed left-0 top-1/3 -translate-y-1/2 z-[61] transition-all duration-300 ease-in-out",
+          "fixed left-0 top-1/3 -translate-y-1/2 z-[45] transition-all duration-300 ease-in-out",
           isOpen 
             ? (isCollapsed ? "left-16" : "left-80") 
             : "left-0"
@@ -460,7 +460,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-screen bg-background border-r border-border z-[60] shadow-lg",
+          "fixed left-0 top-0 h-screen bg-background border-r border-border z-[40] shadow-lg",
           "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
