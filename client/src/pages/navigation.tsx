@@ -571,11 +571,8 @@ export default function NavigationPage() {
 
   // Unified sidebar toggle functionality - cycles through: closed → open → collapsed → closed
   const handleSidebarToggle = () => {
-    console.log('Hamburger button clicked! Current state:', { isSidebarOpen, isSidebarCollapsed });
-    
     if (!isSidebarOpen) {
       // Closed → Open (expanded)
-      console.log('State change: Closed → Open (expanded)');
       setIsSidebarOpen(true);
       setIsSidebarCollapsed(false);
       // Auto-collapse expanded map when sidebar opens
@@ -584,11 +581,9 @@ export default function NavigationPage() {
       }
     } else if (!isSidebarCollapsed) {
       // Open (expanded) → Open (collapsed)
-      console.log('State change: Open (expanded) → Open (collapsed)');
       setIsSidebarCollapsed(true);
     } else {
       // Open (collapsed) → Closed
-      console.log('State change: Open (collapsed) → Closed');
       setIsSidebarOpen(false);
       setIsSidebarCollapsed(false);
     }

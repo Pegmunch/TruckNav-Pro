@@ -16,7 +16,18 @@ interface SpeedDisplayProps {
 }
 
 // Countries that use MPH (primarily US, UK, and some territories)
-const MPH_COUNTRIES = ['US', 'GB', 'LR', 'MM', 'AS', 'GU', 'MP', 'PR', 'VI'];
+// All other countries use KPH by default
+const MPH_COUNTRIES = [
+  'US', // United States
+  'GB', // United Kingdom
+  'LR', // Liberia
+  'MM', // Myanmar (Burma)
+  'AS', // American Samoa
+  'GU', // Guam
+  'MP', // Northern Mariana Islands
+  'PR', // Puerto Rico
+  'VI'  // US Virgin Islands
+];
 
 /**
  * Speed Display Component
@@ -34,6 +45,7 @@ const SpeedDisplay = memo(function SpeedDisplay({
   const usesMPH = MPH_COUNTRIES.includes(preferences.country.code);
   const speedUnit = usesMPH ? 'MPH' : 'KPH';
   const speedLimitUnit = usesMPH ? 'MPH' : '';
+  
   
   // Convert speed from m/s to appropriate unit
   const convertSpeed = (speedMs: number): number => {
@@ -129,8 +141,8 @@ const SpeedDisplay = memo(function SpeedDisplay({
           )}
         </div>
         {convertedSpeedLimit && (
-          <span className="text-xs text-gray-600 dark:text-gray-300" data-testid="speed-limit-unit">
-            {speedLimitUnit}
+          <span className="text-xs font-semibold text-gray-800 dark:text-gray-200" data-testid="speed-limit-unit">
+            {speedUnit}
           </span>
         )}
       </div>
@@ -145,7 +157,7 @@ const SpeedDisplay = memo(function SpeedDisplay({
           <div className="text-2xl font-bold" data-testid="vehicle-speed-value">
             {convertedSpeed}
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-300 -mt-1" data-testid="vehicle-speed-unit">
+          <div className="text-sm font-bold text-blue-600 dark:text-blue-400 -mt-1" data-testid="vehicle-speed-unit">
             {speedUnit}
           </div>
         </div>
