@@ -364,6 +364,7 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   const handleMapViewModeChange = (mode: 'roads' | 'satellite') => {
+    console.log('Switching map view mode from', preferences.mapViewMode, 'to', mode);
     const newPreferences = { ...preferences, mapViewMode: mode };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
@@ -621,12 +622,13 @@ const InteractiveMap = memo(function InteractiveMap({
         data-testid="leaflet-map"
       >
         <TileLayer
+          key={preferences.mapViewMode} // Force re-render when view mode changes
           url={preferences.mapViewMode === 'satellite' 
-            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ? 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}' // Google Satellite - more distinct
             : 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
           }
           attribution={preferences.mapViewMode === 'satellite'
-            ? '© Esri, © OpenStreetMap contributors'
+            ? '© Google'
             : '© OpenStreetMap contributors'
           }
         />
