@@ -148,7 +148,7 @@ const InteractiveMap = memo(function InteractiveMap({
   const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
   const [vehiclePosition, setVehiclePosition] = useState<[number, number] | null>(null);
   // Speed tracking state for live speed limit data
-  const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(70); // Test value - 70 km/h
+  const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(113); // Test value - displays as 70 mph
   
   // Update preferences when country changes
   useEffect(() => {
