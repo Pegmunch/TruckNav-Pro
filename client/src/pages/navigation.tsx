@@ -635,8 +635,8 @@ export default function NavigationPage() {
     if (!currentRoute) return undefined;
     
     return {
-      totalDistance: currentRoute.totalDistance || "15.6 km",
-      estimatedTime: currentRoute.totalTime || "18 min",
+      totalDistance: currentRoute.distance ? String(currentRoute.distance) : "15.6 km",
+      estimatedTime: currentRoute.duration ? String(currentRoute.duration) : "18 min", 
       nextTurn: "Right turn in 800m"
     };
   };
