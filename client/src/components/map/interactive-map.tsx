@@ -1206,7 +1206,7 @@ const InteractiveMap = memo(function InteractiveMap({
       />
       
       {/* Speed Display - positioned at bottom center, moved left and up, below legal dialog z-index */}
-      <div className="absolute bottom-[120px] left-1/2 transform -translate-x-1/2 -translate-x-8 z-20">
+      <div className="absolute bottom-[120px] left-1/2 transform -translate-x-1/2 -translate-x-12 z-20">
         <SpeedDisplay 
           speedLimit={currentSpeedLimit || undefined}
           className="shadow-2xl"
