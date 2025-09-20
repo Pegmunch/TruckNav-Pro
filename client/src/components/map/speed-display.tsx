@@ -46,7 +46,6 @@ const SpeedDisplay = memo(function SpeedDisplay({
   const speedUnit = usesMPH ? 'MPH' : 'KPH';
   const speedLimitUnit = usesMPH ? 'MPH' : '';
   
-  
   // Convert speed from m/s to appropriate unit
   const convertSpeed = (speedMs: number): number => {
     if (usesMPH) {
