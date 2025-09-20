@@ -1027,6 +1027,7 @@ export default function NavigationPage() {
       <SettingsModal
         open={showVehicleSettings}
         onOpenChange={setShowVehicleSettings}
+        onCloseSidebar={isSidebarOpen ? () => setIsSidebarOpen(false) : undefined}
       />
     </div>
   );

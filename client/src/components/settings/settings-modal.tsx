@@ -66,6 +66,8 @@ interface SettingsModalProps {
   className?: string;
   /** Default tab to open */
   defaultTab?: string;
+  /** Optional callback to close sidebar when clicking in settings area */
+  onCloseSidebar?: () => void;
 }
 
 interface MapPreferences {
@@ -155,7 +157,8 @@ const SettingsModal = memo(function SettingsModal({
   open,
   onOpenChange,
   className,
-  defaultTab = "map-traffic"
+  defaultTab = "map-traffic",
+  onCloseSidebar
 }: SettingsModalProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -505,6 +508,16 @@ const SettingsModal = memo(function SettingsModal({
             className
           )}
           data-testid="dialog-settings-modal"
+          onClick={(e) => {
+            // Close sidebar when clicking anywhere in the settings area
+            // but only if the click is on non-interactive elements
+            const target = e.target as HTMLElement;
+            const isInteractive = target.closest('button, input, select, textarea, [role="button"], [role="combobox"], [role="tab"], [role="tabpanel"], [data-radix-collection-item]');
+            
+            if (!isInteractive && onCloseSidebar) {
+              onCloseSidebar();
+            }
+          }}
         >
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b">
