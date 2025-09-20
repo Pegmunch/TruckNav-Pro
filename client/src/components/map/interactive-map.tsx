@@ -145,6 +145,9 @@ const InteractiveMap = memo(function InteractiveMap({
     };
   });
   const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [vehiclePosition, setVehiclePosition] = useState<[number, number] | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   
   // Update preferences when country changes
   useEffect(() => {
@@ -227,6 +230,52 @@ const InteractiveMap = memo(function InteractiveMap({
     );
   };
 
+  // Smooth vehicle position tracking with throttled updates
+  const updateVehiclePosition = useCallback((lat: number, lng: number) => {
+    if (!mapRef.current) return;
+    
+    const newPosition: [number, number] = [lat, lng];
+    setVehiclePosition(newPosition);
+    
+    // Single smooth pan to new position during navigation
+    if (currentRoute) {
+      mapRef.current.flyTo(newPosition, mapRef.current.getZoom(), {
+        animate: true,
+        duration: 0.8,
+        easeLinearity: 0.2
+      });
+    }
+  }, [currentRoute]);
+  
+  // GPS position tracking (replaces simulation in production)
+  useEffect(() => {
+    if (currentRoute && navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          updateVehiclePosition(latitude, longitude);
+        },
+        (error) => console.warn('GPS tracking error:', error),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 5000
+        }
+      );
+      
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, [currentRoute, updateVehiclePosition]);
+  
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+  
   // Auto-hide functionality with improved timing - scoped to panel only
   const resetAutoHideTimer = useCallback(() => {
     // Only auto-show if not manually hidden
@@ -585,7 +634,7 @@ const InteractiveMap = memo(function InteractiveMap({
     <div 
       ref={mapContainerRef}
       className={cn(
-        "flex-1 relative map-container",
+        "flex-1 relative map-container transition-opacity duration-500 ease-out",
         (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
         autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
         preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
@@ -611,6 +660,11 @@ const InteractiveMap = memo(function InteractiveMap({
             setPreferences(newPreferences);
             saveMapPreferences(newPreferences);
           });
+          
+          // Reset auto-hide timer on map interaction
+          map.on('moveend', () => {
+            resetAutoHideTimer();
+          });
           map.on('moveend', () => {
             resetAutoHideTimer();
           });
@@ -622,13 +676,13 @@ const InteractiveMap = memo(function InteractiveMap({
         data-testid="leaflet-map"
       >
         <TileLayer
-          key={preferences.mapViewMode} // Force re-render when view mode changes
+          key={preferences.mapViewMode} // Stable key per view mode
           url={preferences.mapViewMode === 'satellite' 
-            ? 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}' // Google Satellite - more distinct
+            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed
             : 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
           }
           attribution={preferences.mapViewMode === 'satellite'
-            ? '© Google'
+            ? '© Esri, © OpenStreetMap contributors'
             : '© OpenStreetMap contributors'
           }
         />
