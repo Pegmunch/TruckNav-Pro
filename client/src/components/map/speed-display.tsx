@@ -89,17 +89,12 @@ const SpeedDisplay = memo(function SpeedDisplay({
   const convertedSpeed = convertSpeed(displaySpeed);
   const convertedSpeedLimit = speedLimit ? convertSpeedLimit(speedLimit) : null;
   
-  // Speed limit sign colors (European style for international use)
+  // Speed limit sign colors (Red circular sign like highway speed limits)
   const getSpeedLimitColor = () => {
-    if (!convertedSpeedLimit) return 'text-gray-400';
+    if (!convertedSpeedLimit) return 'text-gray-400 border-gray-400';
     
-    // Color coding based on speed relative to limit
-    if (convertedSpeed > convertedSpeedLimit * 1.1) {
-      return 'text-red-500 border-red-500'; // Exceeding limit
-    } else if (convertedSpeed > convertedSpeedLimit * 0.9) {
-      return 'text-orange-500 border-orange-500'; // Approaching limit
-    }
-    return 'text-blue-600 border-blue-600'; // Within safe range
+    // Standard highway speed limit sign: white background, black text, red border
+    return 'text-black border-red-600';
   };
   
   return (
@@ -120,7 +115,7 @@ const SpeedDisplay = memo(function SpeedDisplay({
         <div 
           className={cn(
             "flex items-center justify-center",
-            "w-10 h-10 rounded-full border-2 bg-white dark:bg-gray-800",
+            "w-10 h-10 rounded-full border-4 bg-white",
             convertedSpeedLimit ? getSpeedLimitColor() : "border-gray-400 text-gray-400"
           )}
           data-testid="speed-limit-sign"
