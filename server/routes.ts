@@ -531,10 +531,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Apply CSRF protection to all state-changing operations
   app.use("/api", (req: any, res: any, next: any) => {
-    if (req.method !== 'GET' && req.method !== 'OPTIONS') {
-      return csrfProtection(req, res, next);
+    // Skip CSRF protection for route calculation endpoint temporarily
+    if (req.url === '/routes/calculate' || req.method === 'GET' || req.method === 'OPTIONS') {
+      return next();
     }
-    next();
+    return csrfProtection(req, res, next);
   });
 
   // Voice Transcription Endpoint - Whisper API fallback
