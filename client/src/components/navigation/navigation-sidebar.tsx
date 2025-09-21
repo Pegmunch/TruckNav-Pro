@@ -546,6 +546,39 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </Button>
                 </div>
 
+                {/* START NAVIGATION Button - Always visible when both fields have text */}
+                {(currentLocationInput.trim() && destinationInput.trim()) && (
+                  <Button
+                    onClick={() => {
+                      // Auto-search if text is entered but not yet searched
+                      if (currentLocationInput.trim() && !fromLocation) {
+                        onFromLocationChange(currentLocationInput.trim());
+                      }
+                      if (destinationInput.trim() && !toLocation) {
+                        onToLocationChange(destinationInput.trim());
+                      }
+                      // Then plan the route
+                      onPlanRoute();
+                    }}
+                    disabled={isCalculating}
+                    size="lg"
+                    className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold h-12"
+                    data-testid="button-start-navigation"
+                  >
+                    {isCalculating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        <strong>CALCULATING...</strong>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-5 h-5 mr-2" />
+                        <strong>START NAVIGATION</strong>
+                      </>
+                    )}
+                  </Button>
+                )}
+
                 {/* Location Status */}
                 {fromLocation && (
                   <div className="flex items-center justify-between p-2 bg-background rounded border">
