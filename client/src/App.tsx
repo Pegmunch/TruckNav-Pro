@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { MeasurementProvider } from "@/components/measurement/measurement-provider";
 import { OfflineDetector } from "@/components/offline/offline-detector";
 import { ServiceWorkerUpdates } from "@/components/offline/service-worker-updates";
+import { PWAInstallPrompt } from "@/components/pwa/install-prompt";
 import NavigationPage from "@/pages/navigation";
 import LaneSelectionPage from "@/pages/lane-selection";
 import MapWindow from "@/pages/map-window";
@@ -53,7 +54,8 @@ function App() {
             <OfflineDetector showPersistentIndicator={true}>
               <Toaster />
               <ServiceWorkerUpdates />
-              {/* Main Application with Offline Support */}
+              <PWAInstallPrompt showBadge={true} />
+              {/* Main Application with PWA and Offline Support */}
               <Router />
             </OfflineDetector>
           </TooltipProvider>

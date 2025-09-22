@@ -16,9 +16,10 @@ async function initializeCSRF() {
   }
 }
 
-// Register Service Worker for PWA functionality (Production only)
+// Register Service Worker for PWA functionality 
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+// Temporarily enabled in development for PWA testing
+if ((import.meta.env.PROD || import.meta.env.DEV) && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
@@ -30,15 +31,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   });
 }
 
-// Unregister Service Worker in development to prevent cache issues
-if (import.meta.env.DEV && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    registrations.forEach((registration) => {
-      registration.unregister();
-      console.log('Unregistered service worker for development');
-    });
-  });
-}
+// Note: Service Worker now enabled in development for PWA testing
+// To disable SW in dev, change the condition above to import.meta.env.PROD only
 
 // Force cache-busting in development to ensure fresh builds
 if (import.meta.env.DEV && 'caches' in window) {
