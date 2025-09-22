@@ -458,7 +458,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         >
           <div className="flex flex-col items-center justify-center gap-1 pointer-events-none" style={{
             position: 'relative',
-            transform: 'translate(3px, -3px)'
+            transform: 'translate(6px, -6px)'
           }}>
             <Menu className="w-4 h-4" />
             <div className="text-xs font-medium leading-none">
