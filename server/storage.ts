@@ -200,7 +200,7 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.vehicleProfiles = new Map();
-    this.defaultVehicleProfileId = "default-profile"; // Class 1 as default
+    this.defaultVehicleProfileId = "550e8400-e29b-41d4-a716-446655440000"; // Class 1 as default - proper UUID
     this.restrictions = new Map();
     this.facilities = new Map();
     this.routes = new Map();
@@ -248,7 +248,7 @@ export class MemStorage implements IStorage {
   private initializeSampleData() {
     // Vehicle profiles with correct specifications - using stable IDs
     const class1Profile: VehicleProfile = {
-      id: "default-profile", // Stable ID for backward compatibility
+      id: "550e8400-e29b-41d4-a716-446655440000", // Stable UUID for backward compatibility
       name: "Class 1",
       type: "class_1_lorry",
       height: 14.0, // 14 feet 0 inches
