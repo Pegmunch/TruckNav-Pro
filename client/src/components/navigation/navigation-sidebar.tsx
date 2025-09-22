@@ -443,13 +443,14 @@ const NavigationSidebar = memo(function NavigationSidebar({
             "bg-blue-600 hover:bg-blue-700 text-white",
             "border border-border shadow-lg",
             "scalable-control-button flex flex-col items-center justify-center gap-1",
-            "transform transition-all duration-300 ease-in-out",
+            "transform transition-all duration-300 ease-in-out cursor-pointer",
+            "touch-manipulation pointer-events-auto",
             !isOpen && "hover:scale-105"
           )}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
-          <Menu className="w-4 h-4" />
-          <div className="text-xs font-medium leading-none">
+          <Menu className="w-4 h-4 pointer-events-none" />
+          <div className="text-xs font-medium leading-none pointer-events-none">
             NAV
           </div>
         </Button>
