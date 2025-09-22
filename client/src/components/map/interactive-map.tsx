@@ -875,9 +875,14 @@ const InteractiveMap = memo(function InteractiveMap({
           "absolute bottom-28 left-4 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
           "touch-manipulation cursor-pointer pointer-events-auto",
+          "border-2 border-yellow-400", // Debug border
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
         )}
-        onClick={() => {
+        onClick={(e) => {
+          console.log('LAYERS_BUTTON_CLICKED');
+          const rect = e.currentTarget.getBoundingClientRect();
+          console.log(`Click: ${e.clientX},${e.clientY} Button: ${rect.left},${rect.top},${rect.right},${rect.bottom}`);
+          
           const newVisible = !controlsVisible;
           setControlsVisible(newVisible);
           manualHiddenRef.current = !newVisible; // Track manual hide state
@@ -887,7 +892,13 @@ const InteractiveMap = memo(function InteractiveMap({
             resetAutoHideTimer();
           }
         }}
+        onMouseEnter={(e) => {
+          console.log('LAYERS_BUTTON_HOVER');
+          const rect = e.currentTarget.getBoundingClientRect();
+          console.log(`Mouse: ${e.clientX},${e.clientY} Button: ${rect.left},${rect.top},${rect.right},${rect.bottom}`);
+        }}
         onPointerDown={(e) => {
+          console.log('LAYERS_BUTTON_POINTER_DOWN');
           e.preventDefault();
           e.stopPropagation();
           const newVisible = !controlsVisible;
