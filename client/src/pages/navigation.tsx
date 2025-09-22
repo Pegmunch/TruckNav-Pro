@@ -43,14 +43,13 @@ export default function NavigationPage() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
-  // Mobile vs Desktop state management - initialize after isMobile is available
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  // Unified sidebar state management - single source of truth
+  const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>('closed');
   
-  
-  
-  // Mobile drawer state (replaces sidebar on mobile)
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  // Computed states for backward compatibility
+  const isSidebarOpen = sidebarState !== 'closed';
+  const isSidebarCollapsed = sidebarState === 'collapsed';
+  const isMobileDrawerOpen = isMobile ? isSidebarOpen : false;
   
   
   // Map expansion state - auto-expand when route is selected
@@ -86,7 +85,7 @@ export default function NavigationPage() {
 
   // Initialize sidebar state to closed for full-screen map by default
   useEffect(() => {
-    setIsSidebarOpen(false);
+    setSidebarState('closed');
   }, [isMobile]);
 
   // Check legal consent and show popup if needed
@@ -349,12 +348,12 @@ export default function NavigationPage() {
           } else {
             if (isMobile) {
               // On mobile, close drawer to show full map
-              setIsMobileDrawerOpen(false);
+              setSidebarState('closed');
             } else {
               // Use existing in-page expansion logic for desktop
               setIsMapExpanded(true);
               if (window.innerWidth < 1024) {
-                setIsSidebarOpen(false);
+                setSidebarState('closed');
               }
             }
           }
@@ -517,12 +516,12 @@ export default function NavigationPage() {
     } else {
       if (isMobile) {
         // On mobile, close drawer to show full map
-        setIsMobileDrawerOpen(false);
+        setSidebarState('closed');
       } else {
         // Use existing in-page expansion logic for desktop
         setIsMapExpanded(true);
         if (window.innerWidth < 1024) {
-          setIsSidebarOpen(false);
+          setSidebarState('closed');
         }
       }
     }
@@ -549,13 +548,13 @@ export default function NavigationPage() {
     if (currentRoute && !isMapWindowOpen()) {
       if (isMobile) {
         // On mobile, close drawer to show full map
-        setIsMobileDrawerOpen(false);
+        setSidebarState('closed');
       } else if (!isMapExpanded) {
         // Desktop: expand map temporarily
         const timer = setTimeout(() => {
           setIsMapExpanded(true);
           if (window.innerWidth < 1024) {
-            setIsSidebarOpen(false);
+            setSidebarState('closed');
           }
         }, 300);
         return () => clearTimeout(timer);
@@ -585,7 +584,7 @@ export default function NavigationPage() {
         setIsMapExpanded(true);
         // On mobile, close sidebar to give more space for map
         if (window.innerWidth < 1024) {
-          setIsSidebarOpen(false);
+          setSidebarState('closed');
         }
       }, 300);
     }
@@ -611,33 +610,37 @@ export default function NavigationPage() {
     setIsMapExpanded(!isMapExpanded);
     // When collapsing map, ensure sidebar is visible
     if (isMapExpanded && !isSidebarOpen) {
-      setIsSidebarOpen(true);
+      setSidebarState('open');
     }
   };
 
   // Unified sidebar toggle functionality - cycles through: closed → open → collapsed → closed
   const handleSidebarToggle = () => {
-    if (!isSidebarOpen) {
-      // Closed → Open (expanded)
-      setIsSidebarOpen(true);
-      setIsSidebarCollapsed(false);
-      // Auto-collapse expanded map when sidebar opens
-      if (isMapExpanded) {
-        setIsMapExpanded(false);
-      }
-    } else if (!isSidebarCollapsed) {
-      // Open (expanded) → Open (collapsed)
-      setIsSidebarCollapsed(true);
-    } else {
-      // Open (collapsed) → Closed
-      setIsSidebarOpen(false);
-      setIsSidebarCollapsed(false);
+    switch (sidebarState) {
+      case 'closed':
+        // Closed → Open (expanded)
+        setSidebarState('open');
+        // Auto-collapse expanded map when sidebar opens
+        if (isMapExpanded) {
+          setIsMapExpanded(false);
+        }
+        break;
+      case 'open':
+        // Open → Collapsed (on desktop) or Closed (on mobile)
+        setSidebarState(isMobile ? 'closed' : 'collapsed');
+        break;
+      case 'collapsed':
+        // Collapsed → Closed
+        setSidebarState('closed');
+        break;
+      default:
+        setSidebarState('closed');
     }
   };
 
   // Keep this for compatibility with existing AR toggle functionality
   const handleSidebarCollapseToggle = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    setSidebarState(isSidebarCollapsed ? 'open' : 'collapsed');
   };
 
 
@@ -741,7 +744,7 @@ export default function NavigationPage() {
               <Button
                 variant="default"
                 size="icon"
-                onClick={() => setIsMobileDrawerOpen(true)}
+                onClick={() => setSidebarState('open')}
                 className="automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
                 data-testid="button-menu-mobile"
               >
@@ -782,7 +785,7 @@ export default function NavigationPage() {
                     setIsMapExpanded(false);
                     setIsDrawerOpen(false);
                   }}
-                  onHideSidebar={() => setIsMobileDrawerOpen(false)}
+                  onHideSidebar={() => setSidebarState('closed')}
                 />
                 
                 {/* Legal Ownership Section - Mobile */}
@@ -792,7 +795,7 @@ export default function NavigationPage() {
           </div>
 
           {/* Mobile Route Planning Drawer */}
-          <Drawer open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
+          <Drawer open={isMobileDrawerOpen} onOpenChange={(open) => setSidebarState(open ? 'open' : 'closed')}>
             <DrawerContent>
               <DrawerHeader>
                 <DrawerTitle className="mobile-text-xl">Route Planning</DrawerTitle>
@@ -818,11 +821,11 @@ export default function NavigationPage() {
                   onToLocationChange={setToLocation}
                   onPlanRoute={() => {
                     handlePlanRoute();
-                    setIsMobileDrawerOpen(false); // Close drawer after planning
+                    setSidebarState('closed'); // Close drawer after planning
                   }}
                   onStartNavigation={() => {
                     handleStartNavigation();
-                    setIsMobileDrawerOpen(false); // Close drawer when starting
+                    setSidebarState('closed'); // Close drawer when starting
                   }}
                   onStopNavigation={handleStopNavigation}
                   currentRoute={currentRoute}
@@ -840,7 +843,7 @@ export default function NavigationPage() {
                   
                   // Sidebar state (always open in mobile drawer)
                   isOpen={true}
-                  onToggle={() => setIsMobileDrawerOpen(false)} // Close drawer when hamburger is clicked
+                  onToggle={() => setSidebarState('closed')} // Close drawer when hamburger is clicked
                   isCollapsed={false}
                   onCollapseToggle={() => {}}
                   
@@ -945,10 +948,10 @@ export default function NavigationPage() {
                     setIsMapExpanded(false);
                     setIsDrawerOpen(false);
                     if (!isSidebarOpen) {
-                      setIsSidebarOpen(true);
+                      setSidebarState('open');
                     }
                   }}
-                  onHideSidebar={() => setIsSidebarOpen(false)}
+                  onHideSidebar={() => setSidebarState('closed')}
                 />
                 
                 {/* Legal Ownership Section - Desktop */}
@@ -974,7 +977,7 @@ export default function NavigationPage() {
                 setIsDrawerOpen(false);
                 setIsMapExpanded(false);
                 if (!isSidebarOpen) {
-                  setIsSidebarOpen(true);
+                  setSidebarState('open');
                 }
               }}
               className="automotive-touch-target"
@@ -1002,7 +1005,7 @@ export default function NavigationPage() {
                     setIsMapExpanded(true);
                     setIsDrawerOpen(false);
                     if (window.innerWidth < 1024) {
-                      setIsSidebarOpen(false);
+                      setSidebarState('closed');
                     }
                   }}
                   className="flex-1 automotive-button automotive-text-base"
@@ -1016,7 +1019,7 @@ export default function NavigationPage() {
                     setIsDrawerOpen(false);
                     setIsMapExpanded(false);
                     if (!isSidebarOpen) {
-                      setIsSidebarOpen(true);
+                      setSidebarState('open');
                     }
                   }}
                   className="flex-1 automotive-button automotive-text-base"
@@ -1073,7 +1076,7 @@ export default function NavigationPage() {
       <SettingsModal
         open={showVehicleSettings}
         onOpenChange={setShowVehicleSettings}
-        onCloseSidebar={isSidebarOpen ? () => setIsSidebarOpen(false) : undefined}
+        onCloseSidebar={isSidebarOpen ? () => setSidebarState('closed') : undefined}
       />
     </div>
   );
