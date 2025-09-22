@@ -165,6 +165,7 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private vehicleProfiles: Map<string, VehicleProfile>;
+  private defaultVehicleProfileId: string;
   private restrictions: Map<string, Restriction>;
   private facilities: Map<string, Facility>;
   private routes: Map<string, Route>;
@@ -199,6 +200,7 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.vehicleProfiles = new Map();
+    this.defaultVehicleProfileId = "default-profile"; // Class 1 as default
     this.restrictions = new Map();
     this.facilities = new Map();
     this.routes = new Map();
@@ -244,19 +246,107 @@ export class MemStorage implements IStorage {
   }
 
   private initializeSampleData() {
-    // Sample vehicle profile
-    const defaultProfile: VehicleProfile = {
-      id: "default-profile",
-      name: "Standard HGV",
-      type: "truck",
-      height: 15.75, // 15'9"
-      width: 8.5, // 8'6"
+    // Vehicle profiles with correct specifications - using stable IDs
+    const class1Profile: VehicleProfile = {
+      id: "default-profile", // Stable ID for backward compatibility
+      name: "Class 1",
+      type: "class_1_lorry",
+      height: 14.0, // 14 feet 0 inches
+      width: 9.25, // 9 feet 3 inches
       length: 53,
-      weight: 44,
-      axles: 4,
+      weight: 44, // 44 tonnes
+      axles: 5,
       isHazmat: false,
+      maxSpeed: 70,
+      canUseResidentialRoads: false,
+      canUseMotorways: true,
+      requiresCommercialRoutes: true,
+      restrictedHours: { start: "22:00", end: "06:00" },
+      allowedRoadTypes: ["motorway", "A-road", "industrial", "commercial"],
+      restrictedAreas: ["residential_zone", "city_centre", "school_zone"],
+      region: "UK",
+      minimumLaneWidth: null,
+      turningRadius: null,
+      bridgeFormula: null,
     };
-    this.vehicleProfiles.set(defaultProfile.id, defaultProfile);
+    
+    const class2Profile: VehicleProfile = {
+      id: "vehicle-class-2",
+      name: "Class 2",
+      type: "class_2_lorry",
+      height: 14.0, // 14 feet 0 inches
+      width: 9.25, // 9 feet 3 inches
+      length: 53,
+      weight: 30, // 30 tonnes
+      axles: 2,
+      isHazmat: false,
+      maxSpeed: 60,
+      canUseResidentialRoads: false,
+      canUseMotorways: true,
+      requiresCommercialRoutes: true,
+      restrictedHours: { start: "22:00", end: "06:00" },
+      allowedRoadTypes: ["motorway", "A-road", "industrial"],
+      restrictedAreas: ["residential_zone", "city_centre", "school_zone", "narrow_roads"],
+      region: "UK",
+      minimumLaneWidth: null,
+      turningRadius: null,
+      bridgeFormula: null,
+    };
+    
+    const sevenFiveTonneProfile: VehicleProfile = {
+      id: "vehicle-7-5-tonne",
+      name: "7.5 Tonne",
+      type: "7_5_tonne",
+      height: 12.0, // 12 feet
+      width: 8.25, // 8 feet 3 inches
+      length: 26,
+      weight: 7.5, // 7.5 tonnes
+      axles: 2,
+      isHazmat: false,
+      maxSpeed: 70,
+      canUseResidentialRoads: true,
+      canUseMotorways: true,
+      requiresCommercialRoutes: false,
+      restrictedHours: null,
+      allowedRoadTypes: ["motorway", "A-road", "B-road", "residential", "industrial"],
+      restrictedAreas: ["narrow_lanes"],
+      region: "UK",
+      minimumLaneWidth: null,
+      turningRadius: null,
+      bridgeFormula: null,
+    };
+    
+    const carProfile: VehicleProfile = {
+      id: "vehicle-standard-car",
+      name: "Standard Car",
+      type: "car",
+      height: 6.0, // Standard car height
+      width: 5.91, // 1.8 meters converted to feet
+      length: 15,
+      weight: 2, // 2 tonnes
+      axles: 2,
+      isHazmat: false,
+      maxSpeed: 70,
+      canUseResidentialRoads: true,
+      canUseMotorways: true,
+      requiresCommercialRoutes: false,
+      restrictedHours: null,
+      allowedRoadTypes: ["motorway", "A-road", "B-road", "residential", "urban"],
+      restrictedAreas: [],
+      region: "UK",
+      minimumLaneWidth: null,
+      turningRadius: null,
+      bridgeFormula: null,
+    };
+
+    // Add profiles to storage - Class 1 (default-profile) is the default
+    this.vehicleProfiles.set(class1Profile.id, class1Profile);
+    this.vehicleProfiles.set(class2Profile.id, class2Profile);
+    this.vehicleProfiles.set(sevenFiveTonneProfile.id, sevenFiveTonneProfile);
+    this.vehicleProfiles.set(carProfile.id, carProfile);
+    
+    // Set default vehicle profile ID for the system
+    this.defaultVehicleProfileId = "default-profile";
 
     // Sample restrictions
     const sampleRestrictions: Restriction[] = [
