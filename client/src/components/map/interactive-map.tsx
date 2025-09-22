@@ -164,7 +164,7 @@ const InteractiveMap = memo(function InteractiveMap({
   }, [mapProvider.provider, mapProvider.tiles, mapProvider.attribution]);
   
   // Auto-hide functionality state
-  const [controlsVisible, setControlsVisible] = useState(true); // Start visible so user can access controls immediately
+  const [controlsVisible, setControlsVisible] = useState(false); // Start hidden to avoid grey overlay
   const [isUserInteracting, setIsUserInteracting] = useState(false);
   const [panelHover, setPanelHover] = useState(false);
   const manualHiddenRef = useRef(false);
