@@ -453,9 +453,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
             });
           }}
           className={cn(
-            "h-20 w-12 rounded-r-lg rounded-l-lg", // Expanded from h-16 w-8 to h-20 w-12
+            "h-16 w-8 rounded-r-lg rounded-l-lg",
             "bg-blue-600 hover:bg-blue-700 text-white",
-            "border-2 border-yellow-400", // Temporary debug border
+            "border border-border shadow-lg",
             "scalable-control-button flex flex-col items-center justify-center gap-1",
             "transform transition-all duration-300 ease-in-out cursor-pointer",
             "touch-manipulation pointer-events-auto select-none",

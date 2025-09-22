@@ -630,7 +630,13 @@ export function ARNavigation({
               Tap the button below to start the AR camera feed.
             </p>
             <Button 
-              onClick={async () => {
+              onClick={async (e) => {
+                console.log('📹 AR CAMERA BUTTON CLICKED!', {
+                  clickX: e.clientX,
+                  clickY: e.clientY,
+                  buttonBounds: e.currentTarget.getBoundingClientRect(),
+                  timestamp: new Date().toISOString()
+                });
                 if (videoRef.current) {
                   try {
                     await videoRef.current.play();
@@ -640,7 +646,14 @@ export function ARNavigation({
                   }
                 }
               }} 
-              className="w-full min-h-[48px]"
+              onMouseEnter={(e) => {
+                console.log('📹 AR CAMERA BUTTON HOVER IN', {
+                  mouseX: e.clientX,
+                  mouseY: e.clientY,
+                  buttonBounds: e.currentTarget.getBoundingClientRect()
+                });
+              }}
+              className="w-full min-h-[48px] border-2 border-yellow-400"
               data-testid="button-start-ar"
             >
               <Camera className="w-5 h-5 mr-2" />
