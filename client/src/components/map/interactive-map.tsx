@@ -494,15 +494,25 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Map directional movement functions (Leaflet API)
   const handleMoveUp = () => {
-    if (!mapRef.current) return;
+    console.log('🔝 UP button clicked! Map ref available:', !!mapRef.current);
+    if (!mapRef.current) {
+      console.error('❌ Map reference not available for UP movement');
+      return;
+    }
     const center = mapRef.current.getCenter();
+    console.log('📍 Current center:', center);
     const newCenter = L.latLng(center.lat + 0.01, center.lng);
+    console.log('📍 Moving to:', newCenter);
     mapRef.current.panTo(newCenter);
     resetAutoHideTimer();
   };
 
   const handleMoveDown = () => {
-    if (!mapRef.current) return;
+    console.log('🔽 DOWN button clicked! Map ref available:', !!mapRef.current);
+    if (!mapRef.current) {
+      console.error('❌ Map reference not available for DOWN movement');
+      return;
+    }
     const center = mapRef.current.getCenter();
     const newCenter = L.latLng(center.lat - 0.01, center.lng);
     mapRef.current.panTo(newCenter);
@@ -510,7 +520,11 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   const handleMoveLeft = () => {
-    if (!mapRef.current) return;
+    console.log('⬅️ LEFT button clicked! Map ref available:', !!mapRef.current);
+    if (!mapRef.current) {
+      console.error('❌ Map reference not available for LEFT movement');
+      return;
+    }
     const center = mapRef.current.getCenter();
     const newCenter = L.latLng(center.lat, center.lng - 0.01);
     mapRef.current.panTo(newCenter);
@@ -518,7 +532,11 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   const handleMoveRight = () => {
-    if (!mapRef.current) return;
+    console.log('➡️ RIGHT button clicked! Map ref available:', !!mapRef.current);
+    if (!mapRef.current) {
+      console.error('❌ Map reference not available for RIGHT movement');
+      return;
+    }
     const center = mapRef.current.getCenter();
     const newCenter = L.latLng(center.lat, center.lng + 0.01);
     mapRef.current.panTo(newCenter);
@@ -773,29 +791,27 @@ const InteractiveMap = memo(function InteractiveMap({
 
 
 
-      {/* 4-Direction Movement Control - Improved Oval Button with Perfect Alignment */}
+      {/* 4-Direction Movement Control - Fixed Event Handling */}
       <div className={cn(
-        "absolute right-4 bottom-32 z-30",
+        "absolute right-4 bottom-32 z-40", // Increased z-index
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         "opacity-100 translate-x-0",
         "w-16 h-28" // Fixed size for perfect oval shape
-      )}
-      onPointerDown={(e) => { e.stopPropagation(); }}>
+      )}>
         {/* Up Arrow */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center"
-          onClick={handleMoveUp}
-          onPointerDown={(e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            handleMoveUp(); 
+          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMoveUp();
           }}
           data-testid="button-move-up"
         >
-          <ChevronUp className="w-5 h-5" />
+          <ChevronUp className="w-5 h-5 pointer-events-none" />
         </Button>
         
         {/* Left and Right Arrows - Side by Side with Equal Split */}
@@ -803,30 +819,28 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer flex items-center justify-center"
-            onClick={handleMoveLeft}
-            onPointerDown={(e) => { 
-              e.preventDefault(); 
-              e.stopPropagation(); 
-              handleMoveLeft(); 
+            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleMoveLeft();
             }}
             data-testid="button-move-left"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 pointer-events-none" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center"
-            onClick={handleMoveRight}
-            onPointerDown={(e) => { 
-              e.preventDefault(); 
-              e.stopPropagation(); 
-              handleMoveRight(); 
+            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleMoveRight();
             }}
             data-testid="button-move-right"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 pointer-events-none" />
           </Button>
         </div>
         
@@ -834,16 +848,15 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center"
-          onClick={handleMoveDown}
-          onPointerDown={(e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            handleMoveDown(); 
+          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMoveDown();
           }}
           data-testid="button-move-down"
         >
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="w-5 h-5 pointer-events-none" />
         </Button>
       </div>
       
