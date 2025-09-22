@@ -219,8 +219,11 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   if (!errors.isEmpty()) {
     console.warn(`[SECURITY] Request validation failed from IP: ${req.ip}`, {
       errorTypes: errors.array().map(e => e.type),
+      errorFields: errors.array().map(e => e.path),
+      errorMessages: errors.array().map(e => e.msg),
       method: req.method,
       url: req.url,
+      requestBody: req.method === 'POST' ? req.body : undefined,
       timestamp: new Date().toISOString()
     });
     
