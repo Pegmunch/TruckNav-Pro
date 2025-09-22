@@ -114,6 +114,9 @@ export default function NavigationPage() {
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
+    console.log('AR_TOGGLE_CLICKED');
+    console.log(`AR_supported: ${arSupported}, navigating: ${isNavigating}, current_AR: ${isARMode}`);
+    
     if (!arSupported) {
       toast({
         title: "AR Not Supported",
