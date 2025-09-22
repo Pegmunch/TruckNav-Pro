@@ -87,7 +87,7 @@ export function OfflineDetector({
       {/* Offline Banner */}
       {showOfflineBanner && (
         <Alert 
-          className="fixed top-0 left-0 right-0 z-50 bg-destructive/90 text-destructive-foreground border-destructive/20 backdrop-blur-sm"
+          className="fixed top-0 left-0 right-0 z-50 bg-destructive text-destructive-foreground border-destructive/20"
           data-testid="offline-banner"
         >
           <WifiOff className="h-4 w-4" />
