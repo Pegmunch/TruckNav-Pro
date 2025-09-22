@@ -435,25 +435,31 @@ const NavigationSidebar = memo(function NavigationSidebar({
             : "left-0"
         )}
       >
-        <Button
+        <div
           onClick={onToggle}
-          variant="default"
           className={cn(
-            "h-16 w-8 rounded-r-lg rounded-l-lg px-0 py-0",
+            "h-16 w-8 rounded-r-lg rounded-l-lg",
             "bg-blue-600 hover:bg-blue-700 text-white",
             "border border-border shadow-lg",
             "scalable-control-button flex flex-col items-center justify-center gap-1",
             "transform transition-all duration-300 ease-in-out cursor-pointer",
-            "touch-manipulation pointer-events-auto",
+            "touch-manipulation pointer-events-auto select-none",
             !isOpen && "hover:scale-105"
           )}
           data-testid="button-toggle-navigation-sidebar-tab"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0',
+            margin: '0'
+          }}
         >
           <Menu className="w-4 h-4 pointer-events-none" />
           <div className="text-xs font-medium leading-none pointer-events-none">
             NAV
           </div>
-        </Button>
+        </div>
       </div>
 
       {/* Sidebar Panel */}
