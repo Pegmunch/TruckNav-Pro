@@ -23,6 +23,7 @@ import { MobileNotificationStack } from "@/components/notifications/mobile-notif
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
+import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
@@ -32,6 +33,9 @@ export default function NavigationPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  
+  // Use centralized vehicle profile management
+  const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("Manchester M1 Industrial Estate");
@@ -209,19 +213,12 @@ export default function NavigationPage() {
     refetchInterval: isNavigating ? 5000 : false, // Refetch every 5 seconds during navigation
   });
 
-  // Ensure we always have a vehicle profile selected
+  // Sync selectedProfile with activeProfile from centralized hook
   useEffect(() => {
-    if (profiles && profiles.length > 0 && !selectedProfile) {
-      setSelectedProfile(profiles[0]);
-    } else if (profiles && profiles.length === 0 && !profilesLoading) {
-      // No profiles exist, user needs to create one
-      toast({
-        title: "No vehicle profiles found",
-        description: "Please create a vehicle profile to use navigation features.",
-        variant: "destructive",
-      });
+    if (activeProfile) {
+      setSelectedProfile(activeProfile);
     }
-  }, [profiles, selectedProfile, profilesLoading]);
+  }, [activeProfile]);
 
   // Sync active journey with current journey from query
   useEffect(() => {
@@ -382,23 +379,32 @@ export default function NavigationPage() {
     },
   });
 
+  // Validate UUID format
+  const isValidUUID = (id: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  };
+
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
-    // Ensure we have a valid vehicle profile before planning route
-    if (!selectedProfile?.id) {
+    // Ensure we have a valid vehicle profile ID before planning route
+    if (!activeProfileId || !isValidUUID(activeProfileId)) {
       toast({
         title: "Vehicle profile required",
-        description: "Please select a vehicle profile before planning a route.",
+        description: "Please select a valid vehicle profile before planning a route.",
         variant: "destructive",
       });
       return;
     }
 
-    calculateRouteMutation.mutate({
+    const routeData = {
       startLocation: startLoc || fromLocation,
       endLocation: endLoc || toLocation,
-      vehicleProfileId: selectedProfile.id,
+      vehicleProfileId: activeProfileId,
       routePreference: routePreference || 'fastest',
-    });
+    };
+
+    console.log('Submitting route calculation with payload:', routeData);
+    calculateRouteMutation.mutate(routeData);
   };
 
   // Alternative routes preview handlers
