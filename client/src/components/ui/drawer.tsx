@@ -38,14 +38,14 @@ const DrawerOverlay = React.forwardRef<
     <DrawerPrimitive.Overlay
       ref={ref}
       className={cn(
-        "fixed inset-0 z-40 bg-background",
-        // Removed backdrop-blur to prevent frosted glass overlay effects
-        "",
+        "fixed inset-0 z-40",
+        // Removed background color to prevent grey overlay
         isMobile ? [
           "mobile-drawer-overlay",
           "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
-          "data-[state=open]:pointer-events-auto data-[state=closed]:pointer-events-none"
-        ] : "bg-background",
+          "data-[state=open]:pointer-events-auto data-[state=closed]:pointer-events-none",
+          "bg-black/20"
+        ] : "bg-transparent",
         className
       )}
       {...props}

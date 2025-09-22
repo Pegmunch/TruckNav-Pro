@@ -55,7 +55,7 @@ export default function NavigationPage() {
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   
-  // Legacy drawer state for navigation transitions
+  // Legacy drawer state for navigation transitions  
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   // Alternative routes panel state
