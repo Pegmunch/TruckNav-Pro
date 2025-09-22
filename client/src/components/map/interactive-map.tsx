@@ -494,11 +494,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Map directional movement functions (Leaflet API)
   const handleMoveUp = () => {
-    console.log('Move Up clicked - mapRef.current:', mapRef.current);
-    if (!mapRef.current) {
-      console.warn('Map reference not available for move up');
-      return;
-    }
+    if (!mapRef.current) return;
     const center = mapRef.current.getCenter();
     const newCenter = L.latLng(center.lat + 0.01, center.lng);
     mapRef.current.panTo(newCenter);
@@ -777,19 +773,20 @@ const InteractiveMap = memo(function InteractiveMap({
 
 
 
-      {/* 4-Direction Movement Control - Small Oval Vertical Button */}
+      {/* 4-Direction Movement Control - Improved Oval Button with Perfect Alignment */}
       <div className={cn(
         "absolute right-4 bottom-32 z-30",
-        "bg-card shadow-xl rounded-full border border-border overflow-hidden",
+        "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
-        "opacity-100 translate-x-0"
+        "opacity-100 translate-x-0",
+        "w-16 h-28" // Fixed size for perfect oval shape
       )}
       onPointerDown={(e) => { e.stopPropagation(); }}>
         {/* Up Arrow */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer"
+          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center"
           onClick={handleMoveUp}
           onPointerDown={(e) => { 
             e.preventDefault(); 
@@ -798,15 +795,15 @@ const InteractiveMap = memo(function InteractiveMap({
           }}
           data-testid="button-move-up"
         >
-          <ChevronUp className="w-4 h-4" />
+          <ChevronUp className="w-5 h-5" />
         </Button>
         
-        {/* Left and Right Arrows - Side by Side */}
-        <div className="flex border-b border-border/50">
+        {/* Left and Right Arrows - Side by Side with Equal Split */}
+        <div className="flex border-b border-border/50 h-14">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer"
+            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer flex items-center justify-center"
             onClick={handleMoveLeft}
             onPointerDown={(e) => { 
               e.preventDefault(); 
@@ -815,12 +812,12 @@ const InteractiveMap = memo(function InteractiveMap({
             }}
             data-testid="button-move-left"
           >
-            <ChevronLeft className="w-3 h-3" />
+            <ChevronLeft className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-4 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
+            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center"
             onClick={handleMoveRight}
             onPointerDown={(e) => { 
               e.preventDefault(); 
@@ -829,7 +826,7 @@ const InteractiveMap = memo(function InteractiveMap({
             }}
             data-testid="button-move-right"
           >
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
         
@@ -837,7 +834,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer"
+          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center"
           onClick={handleMoveDown}
           onPointerDown={(e) => { 
             e.preventDefault(); 
@@ -846,7 +843,7 @@ const InteractiveMap = memo(function InteractiveMap({
           }}
           data-testid="button-move-down"
         >
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-5 h-5" />
         </Button>
       </div>
       
