@@ -1,5 +1,7 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, and, gte, lte, sql, desc, asc } from "drizzle-orm";
 
 // Postcode search result type for storage layer
 export interface PostcodeResult {
@@ -2252,4 +2254,558 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  // Vehicle Profiles
+  async getVehicleProfile(id: string): Promise<VehicleProfile | undefined> {
+    const [profile] = await db.select().from(vehicleProfiles).where(eq(vehicleProfiles.id, id));
+    return profile || undefined;
+  }
+
+  async createVehicleProfile(profile: InsertVehicleProfile): Promise<VehicleProfile> {
+    const [created] = await db
+      .insert(vehicleProfiles)
+      .values(profile)
+      .returning();
+    return created;
+  }
+
+  async getAllVehicleProfiles(): Promise<VehicleProfile[]> {
+    return await db.select().from(vehicleProfiles);
+  }
+
+  // Restrictions
+  async getRestriction(id: string): Promise<Restriction | undefined> {
+    const [restriction] = await db.select().from(restrictions).where(eq(restrictions.id, id));
+    return restriction || undefined;
+  }
+
+  async createRestriction(restriction: InsertRestriction): Promise<Restriction> {
+    const [created] = await db
+      .insert(restrictions)
+      .values(restriction)
+      .returning();
+    return created;
+  }
+
+  async getRestrictionsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<Restriction[]> {
+    // For now, return all restrictions. In a real implementation, you would filter by geospatial coordinates
+    return await db.select().from(restrictions);
+  }
+
+  // Facilities
+  async getFacility(id: string): Promise<Facility | undefined> {
+    const [facility] = await db.select().from(facilities).where(eq(facilities.id, id));
+    return facility || undefined;
+  }
+
+  async createFacility(facility: InsertFacility): Promise<Facility> {
+    const [created] = await db
+      .insert(facilities)
+      .values(facility)
+      .returning();
+    return created;
+  }
+
+  async searchFacilities(params: { type?: string; coordinates?: { lat: number; lng: number }; radius?: number }): Promise<Facility[]> {
+    let query = db.select().from(facilities);
+    
+    if (params.type) {
+      query = query.where(eq(facilities.type, params.type));
+    }
+    
+    // For now, return all facilities matching type. In a real implementation, you would filter by distance
+    return await query;
+  }
+
+  // Routes
+  async getRoute(id: string): Promise<Route | undefined> {
+    const [route] = await db.select().from(routes).where(eq(routes.id, id));
+    return route || undefined;
+  }
+
+  async createRoute(route: InsertRoute): Promise<Route> {
+    const [created] = await db
+      .insert(routes)
+      .values(route)
+      .returning();
+    return created;
+  }
+
+  async getFavoriteRoutes(): Promise<Route[]> {
+    return await db.select().from(routes).where(eq(routes.isFavorite, true));
+  }
+
+  async updateRoute(id: string, updates: Partial<Route>): Promise<Route | undefined> {
+    const [updated] = await db
+      .update(routes)
+      .set(updates)
+      .where(eq(routes.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Traffic Incidents
+  async getTrafficIncident(id: string): Promise<TrafficIncident | undefined> {
+    const [incident] = await db.select().from(trafficIncidents).where(eq(trafficIncidents.id, id));
+    return incident || undefined;
+  }
+
+  async createTrafficIncident(incident: InsertTrafficIncident): Promise<TrafficIncident> {
+    const [created] = await db
+      .insert(trafficIncidents)
+      .values(incident)
+      .returning();
+    return created;
+  }
+
+  async getTrafficIncidentsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<TrafficIncident[]> {
+    // For now, return all active incidents. In a real implementation, you would filter by geospatial coordinates
+    return await db.select().from(trafficIncidents).where(eq(trafficIncidents.isActive, true));
+  }
+
+  async getActiveTrafficIncidents(): Promise<TrafficIncident[]> {
+    return await db.select().from(trafficIncidents).where(eq(trafficIncidents.isActive, true));
+  }
+
+  async updateTrafficIncident(id: string, updates: Partial<TrafficIncident>): Promise<TrafficIncident | undefined> {
+    const [updated] = await db
+      .update(trafficIncidents)
+      .set(updates)
+      .where(eq(trafficIncidents.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async resolveTrafficIncident(id: string): Promise<TrafficIncident | undefined> {
+    const [updated] = await db
+      .update(trafficIncidents)
+      .set({ isActive: false, resolvedAt: new Date() })
+      .where(eq(trafficIncidents.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async verifyTrafficIncident(id: string): Promise<TrafficIncident | undefined> {
+    const [updated] = await db
+      .update(trafficIncidents)
+      .set({ isVerified: true })
+      .where(eq(trafficIncidents.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Users
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [created] = await db
+      .insert(users)
+      .values(user)
+      .returning();
+    return created;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Subscription Plans
+  async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan || undefined;
+  }
+
+  async getSubscriptionPlanByStripeId(stripePriceId: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.stripePriceId, stripePriceId));
+    return plan || undefined;
+  }
+
+  async getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [created] = await db
+      .insert(subscriptionPlans)
+      .values(plan)
+      .returning();
+    return created;
+  }
+
+  // User Subscriptions
+  async getUserSubscription(id: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.id, id));
+    return subscription || undefined;
+  }
+
+  async getUserSubscriptionByUserId(userId: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.userId, userId));
+    return subscription || undefined;
+  }
+
+  async getUserSubscriptionByStripeId(stripeSubscriptionId: string): Promise<UserSubscription | undefined> {
+    const [subscription] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.stripeSubscriptionId, stripeSubscriptionId));
+    return subscription || undefined;
+  }
+
+  async createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription> {
+    const [created] = await db
+      .insert(userSubscriptions)
+      .values(subscription)
+      .returning();
+    return created;
+  }
+
+  async updateUserSubscription(id: string, updates: Partial<UserSubscription>): Promise<UserSubscription | undefined> {
+    const [updated] = await db
+      .update(userSubscriptions)
+      .set(updates)
+      .where(eq(userSubscriptions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async cancelUserSubscription(id: string): Promise<UserSubscription | undefined> {
+    const [updated] = await db
+      .update(userSubscriptions)
+      .set({ status: 'canceled', canceledAt: new Date() })
+      .where(eq(userSubscriptions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Locations
+  async getLocations(options?: { favorites?: boolean }): Promise<Location[]> {
+    let query = db.select().from(locations);
+    
+    if (options?.favorites) {
+      query = query.where(eq(locations.isFavorite, true));
+    }
+    
+    return await query.orderBy(desc(locations.lastUsedAt));
+  }
+
+  async createLocation(location: InsertLocation): Promise<Location> {
+    const [created] = await db
+      .insert(locations)
+      .values(location)
+      .returning();
+    return created;
+  }
+
+  async updateLocation(id: number, updates: Partial<Location>): Promise<Location | undefined> {
+    const [updated] = await db
+      .update(locations)
+      .set(updates)
+      .where(eq(locations.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async markLocationUsed(id: number): Promise<Location | undefined> {
+    const [updated] = await db
+      .update(locations)
+      .set({ 
+        useCount: sql`${locations.useCount} + 1`,
+        lastUsedAt: new Date() 
+      })
+      .where(eq(locations.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async upsertByLabelOrCoords(location: InsertLocation): Promise<Location> {
+    // For now, just create a new location. In a real implementation, you would check for existing by label or coordinates
+    return await this.createLocation(location);
+  }
+
+  // Journeys
+  async startJourney(routeId: string): Promise<Journey> {
+    const [created] = await db
+      .insert(journeys)
+      .values({ routeId, status: 'active' })
+      .returning();
+    return created;
+  }
+
+  async activateJourney(id: number): Promise<Journey | undefined> {
+    const [updated] = await db
+      .update(journeys)
+      .set({ status: 'active' })
+      .where(eq(journeys.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async completeJourney(id: number): Promise<Journey | undefined> {
+    const [updated] = await db
+      .update(journeys)
+      .set({ status: 'completed', completedAt: new Date() })
+      .where(eq(journeys.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getLastJourney(): Promise<Journey | undefined> {
+    const [journey] = await db
+      .select()
+      .from(journeys)
+      .orderBy(desc(journeys.startedAt))
+      .limit(1);
+    return journey || undefined;
+  }
+
+  async getJourneyHistory(limit?: number, offset?: number): Promise<Journey[]> {
+    let query = db.select().from(journeys).orderBy(desc(journeys.startedAt));
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    if (offset) {
+      query = query.offset(offset);
+    }
+    
+    return await query;
+  }
+
+  // Stub implementations for methods that aren't critical for basic functionality
+  // These would need to be implemented for full functionality
+  
+  async getLaneGuidance(routeId: string): Promise<LaneSegment[] | null> {
+    // Return null for now - this is a complex feature
+    return null;
+  }
+
+  async setLaneSelection(routeId: string, selections: Record<number, number>): Promise<void> {
+    // No-op for now
+  }
+
+  async generateLaneGuidance(route: Route, vehicleProfile: VehicleProfile): Promise<LaneSegment[]> {
+    // Return empty array for now
+    return [];
+  }
+
+  async searchPostcode(postcode: string, country?: string): Promise<PostcodeResult[]> {
+    // Return empty array for now - this would need external API integration
+    return [];
+  }
+
+  async geocodePostcode(postcode: string, country?: string): Promise<PostcodeResult | null> {
+    // Return null for now - this would need external API integration
+    return null;
+  }
+
+  // Traffic re-routing stubs (would be implemented later)
+  async createRouteMonitoring(monitoring: InsertRouteMonitoring): Promise<RouteMonitoring> {
+    throw new Error("Route monitoring not implemented in database storage yet");
+  }
+
+  async getRouteMonitoring(id: string): Promise<RouteMonitoring | undefined> {
+    return undefined;
+  }
+
+  async getActiveRouteMonitoring(): Promise<RouteMonitoring[]> {
+    return [];
+  }
+
+  async getRouteMonitoringByRoute(routeId: string): Promise<RouteMonitoring | undefined> {
+    return undefined;
+  }
+
+  async getRouteMonitoringByJourney(journeyId: number): Promise<RouteMonitoring | undefined> {
+    return undefined;
+  }
+
+  async updateRouteMonitoring(id: string, updates: Partial<RouteMonitoring>): Promise<RouteMonitoring | undefined> {
+    return undefined;
+  }
+
+  async stopRouteMonitoring(id: string): Promise<boolean> {
+    return true;
+  }
+
+  async createAlternativeRoute(route: InsertAlternativeRouteDB): Promise<AlternativeRouteDB> {
+    throw new Error("Alternative routes not implemented in database storage yet");
+  }
+
+  async getAlternativeRoute(id: string): Promise<AlternativeRouteDB | undefined> {
+    return undefined;
+  }
+
+  async getAlternativeRoutesByOriginal(originalRouteId: string): Promise<AlternativeRouteDB[]> {
+    return [];
+  }
+
+  async getActiveAlternativeRoutes(originalRouteId: string): Promise<AlternativeRouteDB[]> {
+    return [];
+  }
+
+  async updateAlternativeRoute(id: string, updates: Partial<AlternativeRouteDB>): Promise<AlternativeRouteDB | undefined> {
+    return undefined;
+  }
+
+  async deactivateAlternativeRoute(id: string): Promise<boolean> {
+    return true;
+  }
+
+  async cleanupExpiredAlternatives(): Promise<number> {
+    return 0;
+  }
+
+  async createReRoutingEvent(event: InsertReRoutingEventDB): Promise<ReRoutingEventDB> {
+    throw new Error("Re-routing events not implemented in database storage yet");
+  }
+
+  async getReRoutingEvent(id: string): Promise<ReRoutingEventDB | undefined> {
+    return undefined;
+  }
+
+  async getReRoutingEventsByJourney(journeyId: number): Promise<ReRoutingEventDB[]> {
+    return [];
+  }
+
+  async getReRoutingEventsByRoute(routeId: string): Promise<ReRoutingEventDB[]> {
+    return [];
+  }
+
+  async updateReRoutingEvent(id: string, updates: Partial<ReRoutingEventDB>): Promise<ReRoutingEventDB | undefined> {
+    return undefined;
+  }
+
+  async getReRoutingStats(routeId?: string, timeframe?: 'day' | 'week' | 'month'): Promise<{
+    totalEvents: number;
+    acceptedEvents: number;
+    declinedEvents: number;
+    averageTimeSavings: number;
+    effectivenessScore: number;
+  }> {
+    return {
+      totalEvents: 0,
+      acceptedEvents: 0,
+      declinedEvents: 0,
+      averageTimeSavings: 0,
+      effectivenessScore: 0,
+    };
+  }
+
+  async storeTrafficConditions(routeId: string, conditions: TrafficCondition[]): Promise<void> {
+    // No-op for now
+  }
+
+  async getTrafficConditions(routeId: string): Promise<TrafficCondition[]> {
+    return [];
+  }
+
+  async getTrafficHistory(routeId: string, hours: number): Promise<Array<{
+    timestamp: Date;
+    conditions: TrafficCondition[];
+    averageDelay: number;
+  }>> {
+    return [];
+  }
+
+  async cleanupTrafficHistory(hoursToKeep: number): Promise<number> {
+    return 0;
+  }
+
+  // Entertainment stubs (would be implemented later)
+  async getEntertainmentStation(id: string): Promise<EntertainmentStation | undefined> {
+    return undefined;
+  }
+
+  async createEntertainmentStation(station: InsertEntertainmentStation): Promise<EntertainmentStation> {
+    throw new Error("Entertainment stations not implemented in database storage yet");
+  }
+
+  async getAllEntertainmentStations(params?: { platform?: string; type?: string; trucking?: boolean; limit?: number }): Promise<EntertainmentStation[]> {
+    return [];
+  }
+
+  async searchEntertainmentStations(query: string, params?: { platform?: string; type?: string; limit?: number }): Promise<EntertainmentStation[]> {
+    return [];
+  }
+
+  async updateEntertainmentStation(id: string, updates: Partial<EntertainmentStation>): Promise<EntertainmentStation | undefined> {
+    return undefined;
+  }
+
+  async deleteEntertainmentStation(id: string): Promise<boolean> {
+    return true;
+  }
+
+  async getEntertainmentPreset(id: number): Promise<EntertainmentPreset | undefined> {
+    return undefined;
+  }
+
+  async createEntertainmentPreset(preset: InsertEntertainmentPreset): Promise<EntertainmentPreset> {
+    throw new Error("Entertainment presets not implemented in database storage yet");
+  }
+
+  async getAllEntertainmentPresets(userId?: string): Promise<EntertainmentPreset[]> {
+    return [];
+  }
+
+  async updateEntertainmentPreset(id: number, updates: Partial<EntertainmentPreset>): Promise<EntertainmentPreset | undefined> {
+    return undefined;
+  }
+
+  async deleteEntertainmentPreset(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getEntertainmentHistory(userId?: string, limit?: number): Promise<EntertainmentHistory[]> {
+    return [];
+  }
+
+  async createEntertainmentHistory(history: InsertEntertainmentHistory): Promise<EntertainmentHistory> {
+    throw new Error("Entertainment history not implemented in database storage yet");
+  }
+
+  async clearEntertainmentHistory(userId?: string): Promise<number> {
+    return 0;
+  }
+
+  async getEntertainmentPlaybackState(): Promise<EntertainmentPlaybackState | undefined> {
+    return undefined;
+  }
+
+  async updateEntertainmentPlaybackState(state: InsertEntertainmentPlaybackState): Promise<EntertainmentPlaybackState> {
+    throw new Error("Entertainment playback state not implemented in database storage yet");
+  }
+
+  async getEntertainmentSettings(): Promise<EntertainmentSettings> {
+    return {
+      defaultVolume: 0.8,
+      autoPlay: false,
+      crossfadeEnabled: false,
+      crossfadeDuration: 3,
+      backgroundPlayEnabled: true,
+      voiceControlEnabled: true,
+      showTruckingStationsFirst: true,
+      preferredGenres: ['news', 'talk', 'music'],
+      maxHistoryItems: 50,
+      audioQuality: 'medium',
+      emergencyInterruptEnabled: true,
+    };
+  }
+
+  async updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings> {
+    return await this.getEntertainmentSettings();
+  }
+}
+
+export const storage = new DatabaseStorage();

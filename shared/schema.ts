@@ -37,13 +37,13 @@ export const vehicleProfiles = pgTable("vehicle_profiles", {
   canUseResidentialRoads: boolean("can_use_residential_roads").default(true),
   canUseMotorways: boolean("can_use_motorways").default(true),
   requiresCommercialRoutes: boolean("requires_commercial_routes").default(false),
-  restrictedHours: jsonb("restricted_hours"), // e.g., {"start": "22:00", "end": "06:00"} for night driving bans
-  allowedRoadTypes: jsonb("allowed_road_types"), // ['motorway', 'A-road', 'B-road', 'residential', 'industrial']
-  restrictedAreas: jsonb("restricted_areas"), // ['city_centre', 'residential_zone', 'school_zone']
+  restrictedHours: jsonb("restricted_hours").$type<{start: string; end: string; days?: string[]}>(), // e.g., {"start": "22:00", "end": "06:00"} for night driving bans
+  allowedRoadTypes: jsonb("allowed_road_types").$type<string[]>(), // ['motorway', 'A-road', 'B-road', 'residential', 'industrial']
+  restrictedAreas: jsonb("restricted_areas").$type<string[]>(), // ['city_centre', 'residential_zone', 'school_zone']
   region: text("region").default("UK"), // 'UK', 'EU'
   minimumLaneWidth: real("minimum_lane_width"), // minimum lane width required in feet
   turningRadius: real("turning_radius"), // turning radius in feet
-  bridgeFormula: jsonb("bridge_formula"), // axle weight distribution rules
+  bridgeFormula: jsonb("bridge_formula").$type<{maxAxleWeight: number; maxGroupWeight: number; steerAxleMax?: number}>(), // axle weight distribution rules
 });
 
 export const restrictions = pgTable("restrictions", {
@@ -52,31 +52,31 @@ export const restrictions = pgTable("restrictions", {
   type: text("type").notNull(), // 'height', 'width', 'weight', 'length', 'axle_count', 'hazmat', 'vehicle_type', 'time_based', 'residential_ban', 'bridge_weight', 'tunnel_clearance'
   limit: real("limit").notNull(), // in feet or tonnes
   description: text("description"),
-  coordinates: jsonb("coordinates"), // { lat: number, lng: number }
+  coordinates: jsonb("coordinates").$type<{lat: number; lng: number}>(), // { lat: number, lng: number }
   roadName: text("road_name"),
   country: text("country").default('UK'),
   // Enhanced restriction specifications for strict enforcement
   severity: text("severity").default('medium'), // 'low', 'medium', 'high', 'absolute' - absolute means zero tolerance
-  restrictedVehicleTypes: jsonb("restricted_vehicle_types"), // ['class_2_lorry', '7_5_tonne'] etc.
-  timeRestrictions: jsonb("time_restrictions"), // {"weekdays": {"start": "07:00", "end": "19:00"}, "weekends": null}
+  restrictedVehicleTypes: jsonb("restricted_vehicle_types").$type<string[]>(), // ['class_2_lorry', '7_5_tonne'] etc.
+  timeRestrictions: jsonb("time_restrictions").$type<Record<string, {start: string; end: string} | null>>(), // {"weekdays": {"start": "07:00", "end": "19:00"}, "weekends": null}
   enforcementType: text("enforcement_type").default('advisory'), // 'advisory', 'legal', 'physical', 'strict'
-  alternativeRoutes: jsonb("alternative_routes"), // Suggested alternative route IDs or instructions
+  alternativeRoutes: jsonb("alternative_routes").$type<string[]>(), // Suggested alternative route IDs or instructions
   violationPenalty: text("violation_penalty"), // Description of penalty for violation
   isActive: boolean("is_active").default(true),
   activeSince: timestamp("active_since").default(sql`now()`),
   activeUntil: timestamp("active_until"),
-  routeSegment: jsonb("route_segment"), // Specific route segment coordinates this applies to
+  routeSegment: jsonb("route_segment").$type<{lat: number; lng: number}[]>(), // Specific route segment coordinates this applies to
   bypassAllowed: boolean("bypass_allowed").default(false), // Whether route can bypass this restriction
-  exemptions: jsonb("exemptions"), // Special exemptions (emergency vehicles, etc.)
+  exemptions: jsonb("exemptions").$type<string[]>(), // Special exemptions (emergency vehicles, etc.)
 });
 
 export const facilities = pgTable("facilities", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   type: text("type").notNull(), // 'truck_stop', 'fuel', 'parking', 'restaurant', 'hotel', 'rest_area'
-  coordinates: jsonb("coordinates").notNull(), // { lat: number, lng: number }
+  coordinates: jsonb("coordinates").$type<{lat: number; lng: number}>().notNull(), // { lat: number, lng: number }
   address: text("address"),
-  amenities: jsonb("amenities"), // array of strings
+  amenities: jsonb("amenities").$type<string[]>(), // array of strings
   rating: real("rating"),
   reviewCount: integer("review_count").default(0),
   truckParking: boolean("truck_parking").default(false),
@@ -92,16 +92,16 @@ export const routes = pgTable("routes", {
   name: text("name"),
   startLocation: text("start_location").notNull(),
   endLocation: text("end_location").notNull(),
-  startCoordinates: jsonb("start_coordinates").notNull(),
-  endCoordinates: jsonb("end_coordinates").notNull(),
+  startCoordinates: jsonb("start_coordinates").$type<{lat: number; lng: number}>().notNull(),
+  endCoordinates: jsonb("end_coordinates").$type<{lat: number; lng: number}>().notNull(),
   distance: real("distance"), // in miles
   duration: integer("duration"), // in minutes
   vehicleProfileId: varchar("vehicle_profile_id"),
-  routePath: jsonb("route_path"), // array of coordinate points
-  geometry: jsonb("geometry"), // GeoJSON LineString geometry for MapLibre GL JS animations
-  restrictionsAvoided: jsonb("restrictions_avoided"), // array of restriction IDs
-  facilitiesNearby: jsonb("facilities_nearby"), // array of facility IDs
-  laneGuidance: jsonb("lane_guidance"), // array of LaneSegment objects
+  routePath: jsonb("route_path").$type<{lat: number; lng: number}[]>(), // array of coordinate points
+  geometry: jsonb("geometry").$type<{type: "LineString"; coordinates: [number, number][]}>(), // GeoJSON LineString geometry for MapLibre GL JS animations
+  restrictionsAvoided: jsonb("restrictions_avoided").$type<string[]>(), // array of restriction IDs
+  facilitiesNearby: jsonb("facilities_nearby").$type<string[]>(), // array of facility IDs
+  laneGuidance: jsonb("lane_guidance").$type<LaneSegment[]>(), // array of LaneSegment objects
   isFavorite: boolean("is_favorite").default(false),
 });
 
@@ -111,7 +111,7 @@ export const trafficIncidents = pgTable("traffic_incidents", {
   severity: text("severity").notNull(), // 'low', 'medium', 'high', 'critical'
   title: text("title").notNull(),
   description: text("description"),
-  coordinates: jsonb("coordinates").notNull(), // { lat: number, lng: number }
+  coordinates: jsonb("coordinates").$type<{lat: number; lng: number}>().notNull(), // { lat: number, lng: number }
   roadName: text("road_name"),
   direction: text("direction"), // 'northbound', 'southbound', 'eastbound', 'westbound', 'both_directions'
   reportedBy: text("reported_by").default('user'), // 'user', 'system', 'traffic_authority'
@@ -123,9 +123,9 @@ export const trafficIncidents = pgTable("traffic_incidents", {
   estimatedClearTime: timestamp("estimated_clear_time"),
   affectedLanes: integer("affected_lanes"),
   totalLanes: integer("total_lanes"),
-  truckWarnings: jsonb("truck_warnings"), // array of truck-specific warnings
+  truckWarnings: jsonb("truck_warnings").$type<string[]>(), // array of truck-specific warnings
   trafficDelay: integer("traffic_delay"), // delay in minutes
-  alternativeRoute: jsonb("alternative_route"), // suggested alternative route data
+  alternativeRoute: jsonb("alternative_route").$type<{routePath: {lat: number; lng: number}[]; distance: number; duration: number}>(), // suggested alternative route data
   country: text("country").default('UK'),
 });
 
@@ -148,7 +148,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   priceGBP: decimal("price_gbp", { precision: 10, scale: 2 }).notNull(), // £25.99, £49.99, £99.00, £200.00
   durationMonths: integer("duration_months"), // 3, 6, 12, null for lifetime
   isLifetime: boolean("is_lifetime").default(false),
-  features: jsonb("features"), // array of feature names
+  features: jsonb("features").$type<string[]>(), // array of feature names
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -172,7 +172,7 @@ export const userSubscriptions = pgTable("user_subscriptions", {
 export const locations = pgTable("locations", {
   id: serial("id").primaryKey(),
   label: text("label").notNull(),
-  coordinates: jsonb("coordinates").notNull(), // { lat: number, lng: number }
+  coordinates: jsonb("coordinates").$type<{lat: number; lng: number}>().notNull(), // { lat: number, lng: number }
   isFavorite: boolean("is_favorite").default(false),
   useCount: integer("use_count").default(0),
   lastUsedAt: timestamp("last_used_at"),
@@ -377,22 +377,22 @@ export const routeMonitoring = pgTable("route_monitoring", {
   monitoringEnded: timestamp("monitoring_ended"),
   checkInterval: integer("check_interval").default(300), // seconds between checks (5 minutes default)
   lastTrafficCheck: timestamp("last_traffic_check"),
-  currentTrafficConditions: jsonb("current_traffic_conditions"), // TrafficCondition array
+  currentTrafficConditions: jsonb("current_traffic_conditions").$type<TrafficCondition[]>(), // TrafficCondition array
   alertThreshold: integer("alert_threshold").default(5), // minimum minutes saved to trigger alert
-  userPreferences: jsonb("user_preferences"), // auto-apply, notify-only, etc.
+  userPreferences: jsonb("user_preferences").$type<Record<string, any>>(), // auto-apply, notify-only, etc.
 });
 
 export const alternativeRoutes = pgTable("alternative_routes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   originalRouteId: varchar("original_route_id").notNull(),
-  routePath: jsonb("route_path").notNull(), // array of coordinate points
+  routePath: jsonb("route_path").$type<{lat: number; lng: number}[]>().notNull(), // array of coordinate points
   distance: real("distance").notNull(), // in miles
   duration: integer("duration").notNull(), // in minutes with current traffic
   durationWithoutTraffic: integer("duration_without_traffic").notNull(),
   timeSavingsMinutes: integer("time_savings_minutes").notNull(),
   confidenceLevel: real("confidence_level").notNull(),
-  trafficConditions: jsonb("traffic_conditions"), // TrafficCondition array
-  restrictionsAvoided: jsonb("restrictions_avoided"), // array of restriction IDs
+  trafficConditions: jsonb("traffic_conditions").$type<TrafficCondition[]>(), // TrafficCondition array
+  restrictionsAvoided: jsonb("restrictions_avoided").$type<string[]>(), // array of restriction IDs
   viabilityScore: real("viability_score"), // 0-1 score for route quality
   reasonForSuggestion: text("reason_for_suggestion").notNull(),
   calculatedAt: timestamp("calculated_at").defaultNow(),
@@ -411,8 +411,8 @@ export const reRoutingEvents = pgTable("rerouting_events", {
   responseTime: integer("response_time"), // seconds taken to respond
   appliedAt: timestamp("applied_at"),
   createdAt: timestamp("created_at").defaultNow(),
-  effectiveness: jsonb("effectiveness"), // predicted vs actual savings
-  metadata: jsonb("metadata"), // additional context data
+  effectiveness: jsonb("effectiveness").$type<{predictedSavings: number; actualSavings?: number; accuracy?: number}>(), // predicted vs actual savings
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // additional context data
 });
 
 // Insert schemas for new tables
@@ -515,7 +515,7 @@ export const entertainmentStations = pgTable("entertainment_stations", {
   streamUrl: text("stream_url").notNull(),
   artworkUrl: text("artwork_url"),
   websiteUrl: text("website_url"),
-  metadata: jsonb("metadata"), // platform-specific data
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // platform-specific data
   duration: integer("duration"), // seconds (null for live radio)
   language: text("language").default('en'),
   country: text("country").default('US'),
@@ -524,7 +524,7 @@ export const entertainmentStations = pgTable("entertainment_stations", {
   reliability: integer("reliability").default(100), // 0-100 stream reliability
   listeners: integer("listeners"),
   playCount: integer("play_count").default(0),
-  tags: jsonb("tags"), // array of strings
+  tags: jsonb("tags").$type<string[]>(), // array of strings
   isTruckingRelated: boolean("is_trucking_related").default(false),
   isDrivingFriendly: boolean("is_driving_friendly").default(false),
   isActive: boolean("is_active").default(true),
@@ -557,7 +557,7 @@ export const entertainmentHistory = pgTable("entertainment_history", {
   wasCompleted: boolean("was_completed").default(false), // finished the content
   volume: real("volume"),
   source: text("source").default('manual'), // 'manual', 'voice', 'preset'
-  metadata: jsonb("metadata"), // playback session data
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // playback session data
 });
 
 // Current playback state (single row, updated frequently)
