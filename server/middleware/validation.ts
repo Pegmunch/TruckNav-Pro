@@ -80,7 +80,13 @@ export const validateRoute = [
   body('vehicleProfileId')
     .optional()
     .isUUID()
-    .withMessage('Vehicle profile ID must be a valid UUID')
+    .withMessage('Vehicle profile ID must be a valid UUID'),
+  
+  // Route preference for different routing strategies
+  body('routePreference')
+    .optional()
+    .isIn(['fastest', 'eco', 'avoid_tolls'])
+    .withMessage('Route preference must be fastest, eco, or avoid_tolls')
 ];
 
 // Traffic incident validation
