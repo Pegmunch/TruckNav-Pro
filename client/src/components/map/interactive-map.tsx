@@ -1125,8 +1125,8 @@ const InteractiveMap = memo(function InteractiveMap({
             className={cn(
               "automotive-button floating-action-button",
               "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
-              "bg-primary hover:bg-primary/90 text-primary-foreground",
-              "border-2 border-primary-foreground/20 hover:border-primary-foreground/40",
+              "bg-red-600 hover:bg-red-700 text-white",
+              "border-2 border-red-200 hover:border-red-300",
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
               "touch-manipulation cursor-pointer pointer-events-auto",
               // Visual indicator for new users who haven't accepted terms yet
