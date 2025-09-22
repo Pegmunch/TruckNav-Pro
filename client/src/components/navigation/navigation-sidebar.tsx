@@ -426,7 +426,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   return (
     <>
-      {/* Sidebar Toggle Button */}
+      {/* Sidebar Toggle Button - Expanded clickable area */}
       <div
         className={cn(
           "fixed left-0 top-1/3 -translate-y-1/2 z-[45] transition-all duration-300 ease-in-out",
@@ -453,9 +453,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
             });
           }}
           className={cn(
-            "h-16 w-8 rounded-r-lg rounded-l-lg",
+            "h-20 w-12 rounded-r-lg rounded-l-lg", // Expanded from h-16 w-8 to h-20 w-12
             "bg-blue-600 hover:bg-blue-700 text-white",
-            "border border-border shadow-lg",
+            "border-2 border-yellow-400", // Temporary debug border
             "scalable-control-button flex flex-col items-center justify-center gap-1",
             "transform transition-all duration-300 ease-in-out cursor-pointer",
             "touch-manipulation pointer-events-auto select-none",
