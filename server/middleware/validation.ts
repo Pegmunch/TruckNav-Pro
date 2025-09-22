@@ -40,20 +40,20 @@ export const validateVehicleProfile = [
     .withMessage('Hazmat flag must be boolean')
 ];
 
-// Route validation
+// Route validation - More flexible for real-world location data
 export const validateRoute = [
   body('startLocation')
     .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('Start location must be between 3 and 200 characters')
-    .matches(/^[a-zA-Z0-9\s\-_\.,\/]+$/)
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Start location is required')
+    .matches(/^[a-zA-Z0-9\s\-_\.,\/\(\)\+\°\'\"\&\@\#\:\;]+$/)
     .withMessage('Start location contains invalid characters'),
   
   body('endLocation')
     .trim()
-    .isLength({ min: 3, max: 200 })
-    .withMessage('End location must be between 3 and 200 characters')
-    .matches(/^[a-zA-Z0-9\s\-_\.,\/]+$/)
+    .isLength({ min: 1, max: 200 })
+    .withMessage('End location is required')
+    .matches(/^[a-zA-Z0-9\s\-_\.,\/\(\)\+\°\'\"\&\@\#\:\;]+$/)
     .withMessage('End location contains invalid characters'),
   
   body('vehicleProfileId')
