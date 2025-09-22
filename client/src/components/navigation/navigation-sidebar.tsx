@@ -436,7 +436,22 @@ const NavigationSidebar = memo(function NavigationSidebar({
         )}
       >
         <div
-          onClick={onToggle}
+          onClick={(e) => {
+            console.log('🍔 HAMBURGER BUTTON CLICKED!', {
+              clickX: e.clientX,
+              clickY: e.clientY,
+              buttonBounds: e.currentTarget.getBoundingClientRect(),
+              timestamp: new Date().toISOString()
+            });
+            onToggle();
+          }}
+          onMouseEnter={(e) => {
+            console.log('🍔 HAMBURGER HOVER IN', {
+              mouseX: e.clientX,
+              mouseY: e.clientY,
+              buttonBounds: e.currentTarget.getBoundingClientRect()
+            });
+          }}
           className={cn(
             "h-16 w-8 rounded-r-lg rounded-l-lg",
             "bg-blue-600 hover:bg-blue-700 text-white",
