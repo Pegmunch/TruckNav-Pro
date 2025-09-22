@@ -209,12 +209,19 @@ export default function NavigationPage() {
     refetchInterval: isNavigating ? 5000 : false, // Refetch every 5 seconds during navigation
   });
 
-  // Set default profile
+  // Ensure we always have a vehicle profile selected
   useEffect(() => {
     if (profiles && profiles.length > 0 && !selectedProfile) {
       setSelectedProfile(profiles[0]);
+    } else if (profiles && profiles.length === 0 && !profilesLoading) {
+      // No profiles exist, user needs to create one
+      toast({
+        title: "No vehicle profiles found",
+        description: "Please create a vehicle profile to use navigation features.",
+        variant: "destructive",
+      });
     }
-  }, [profiles, selectedProfile]);
+  }, [profiles, selectedProfile, profilesLoading]);
 
   // Sync active journey with current journey from query
   useEffect(() => {
@@ -376,10 +383,20 @@ export default function NavigationPage() {
   });
 
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
+    // Ensure we have a valid vehicle profile before planning route
+    if (!selectedProfile?.id) {
+      toast({
+        title: "Vehicle profile required",
+        description: "Please select a vehicle profile before planning a route.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     calculateRouteMutation.mutate({
       startLocation: startLoc || fromLocation,
       endLocation: endLoc || toLocation,
-      vehicleProfileId: selectedProfile?.id,
+      vehicleProfileId: selectedProfile.id,
       routePreference: routePreference || 'fastest',
     });
   };
@@ -398,11 +415,21 @@ export default function NavigationPage() {
     setIsApplyingRoute(true);
     
     try {
+      // Ensure we have a valid vehicle profile before applying alternative route
+      if (!selectedProfile?.id) {
+        toast({
+          title: "Vehicle profile required",
+          description: "Please select a vehicle profile before applying alternative routes.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Apply the alternative route
       const response = await apiRequest("POST", `/api/routes/apply-alternative`, {
         routeId: currentRoute?.id,
         alternativeRouteId: route.id,
-        vehicleProfileId: selectedProfile?.id,
+        vehicleProfileId: selectedProfile.id,
       });
       
       const newRoute = await response.json();
