@@ -1829,3 +1829,60 @@ select:focus-visible,
     page-break-inside: avoid;
   }
 }
+
+/* Mobile-friendly input styling and organization */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Enhanced mobile input organization */
+  .mobile-input-spacing > * + * {
+    margin-top: 1rem;
+  }
+  
+  .mobile-field-group {
+    touch-action: manipulation; /* Improves touch responsiveness */
+  }
+  
+  .mobile-action-group {
+    padding: 1rem 0;
+    gap: 0.75rem;
+  }
+  
+  /* Better touch targets for mobile */
+  .mobile-field-group input,
+  .mobile-field-group select,
+  .mobile-field-group button {
+    min-height: 48px;
+  }
+}
+
+/* Enhanced form organization and input grouping */
+.input-group-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.field-group-enhanced {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.field-group-enhanced:last-child {
+  margin-bottom: 0;
+}
+
+.form-section-divider {
+  margin: 2rem 0;
+  border-color: hsl(var(--border));
+  opacity: 0.6;
+}
+
+/* Improved focus states for better accessibility */
+.enhanced-focus {
+  @apply focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-ring;
+}
