@@ -1125,9 +1125,10 @@ const InteractiveMap = memo(function InteractiveMap({
             className={cn(
               "automotive-button floating-action-button",
               "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
-              "bg-card hover:bg-accent border-2 border-border hover:border-primary/50",
+              "bg-primary hover:bg-primary/90 text-primary-foreground",
+              "border-2 border-primary-foreground/20 hover:border-primary-foreground/40",
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
-              "bg-card hover:bg-accent touch-manipulation cursor-pointer pointer-events-auto",
+              "touch-manipulation cursor-pointer pointer-events-auto",
               // Visual indicator for new users who haven't accepted terms yet
               !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75 animate-pulse"
             )}
