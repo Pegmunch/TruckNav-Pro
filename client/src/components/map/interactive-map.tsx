@@ -1130,7 +1130,7 @@ const InteractiveMap = memo(function InteractiveMap({
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
               "touch-manipulation cursor-pointer pointer-events-auto",
               // Visual indicator for new users who haven't accepted terms yet
-              !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75 animate-pulse"
+              !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75"
             )}
             data-testid="button-legal-disclaimer"
             aria-label={isLegalDisclaimerOpen ? "Close legal disclaimer" : "Open legal disclaimer"}
