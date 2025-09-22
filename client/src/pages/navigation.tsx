@@ -432,10 +432,20 @@ export default function NavigationPage() {
       }
 
       // Apply the alternative route
+      // Ensure we have a valid vehicle profile ID
+      if (!activeProfileId || !isValidUUID(activeProfileId)) {
+        toast({
+          title: "Vehicle profile required",
+          description: "Please select a valid vehicle profile before applying routes.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const response = await apiRequest("POST", `/api/routes/apply-alternative`, {
         routeId: currentRoute?.id,
         alternativeRouteId: route.id,
-        vehicleProfileId: selectedProfile.id,
+        vehicleProfileId: activeProfileId,
       });
       
       const newRoute = await response.json();
