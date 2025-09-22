@@ -56,6 +56,27 @@ export const validateRoute = [
     .matches(/^[a-zA-Z0-9\s\-_\.,\/\(\)\+\°\'\"\&\@\#\:\;]+$/)
     .withMessage('End location contains invalid characters'),
   
+  // Optional coordinate fields for enhanced routing
+  body('startCoordinates.lat')
+    .optional()
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('Start latitude must be between -90 and 90'),
+  
+  body('startCoordinates.lng')
+    .optional()
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('Start longitude must be between -180 and 180'),
+  
+  body('endCoordinates.lat')
+    .optional()
+    .isFloat({ min: -90, max: 90 })
+    .withMessage('End latitude must be between -90 and 90'),
+  
+  body('endCoordinates.lng')
+    .optional()
+    .isFloat({ min: -180, max: 180 })
+    .withMessage('End longitude must be between -180 and 180'),
+  
   body('vehicleProfileId')
     .optional()
     .isUUID()
