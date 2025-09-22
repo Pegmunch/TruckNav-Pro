@@ -1109,7 +1109,7 @@ const InteractiveMap = memo(function InteractiveMap({
       {/* Floating Legal Disclaimer Button - Top Right Corner */}
       <div className={cn(
         "absolute z-30 transition-all duration-300 ease-in-out pointer-events-auto",
-        "top-4 right-4", // Positioned at top right corner
+        "top-4 right-1", // Positioned at top right corner
         "opacity-100 translate-y-0"
       )}
       onPointerDown={(e) => { e.stopPropagation(); }}>
