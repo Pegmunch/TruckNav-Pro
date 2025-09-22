@@ -631,12 +631,9 @@ export function ARNavigation({
             </p>
             <Button 
               onClick={async (e) => {
-                console.log('📹 AR CAMERA BUTTON CLICKED!', {
-                  clickX: e.clientX,
-                  clickY: e.clientY,
-                  buttonBounds: e.currentTarget.getBoundingClientRect(),
-                  timestamp: new Date().toISOString()
-                });
+                console.log('AR_BUTTON_CLICKED');
+                const rect = e.currentTarget.getBoundingClientRect();
+                console.log(`Click: ${e.clientX},${e.clientY} Button: ${rect.left},${rect.top},${rect.right},${rect.bottom}`);
                 if (videoRef.current) {
                   try {
                     await videoRef.current.play();
@@ -647,11 +644,9 @@ export function ARNavigation({
                 }
               }} 
               onMouseEnter={(e) => {
-                console.log('📹 AR CAMERA BUTTON HOVER IN', {
-                  mouseX: e.clientX,
-                  mouseY: e.clientY,
-                  buttonBounds: e.currentTarget.getBoundingClientRect()
-                });
+                console.log('AR_BUTTON_HOVER');
+                const rect = e.currentTarget.getBoundingClientRect();
+                console.log(`Mouse: ${e.clientX},${e.clientY} Button: ${rect.left},${rect.top},${rect.right},${rect.bottom}`);
               }}
               className="w-full min-h-[48px] border-2 border-yellow-400"
               data-testid="button-start-ar"
