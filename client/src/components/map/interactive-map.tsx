@@ -1125,8 +1125,8 @@ const InteractiveMap = memo(function InteractiveMap({
             className={cn(
               "automotive-button floating-action-button",
               "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
-              "bg-red-600 hover:bg-red-700 text-white",
-              "border-2 border-red-200 hover:border-red-300",
+              "bg-white hover:bg-gray-50 text-gray-900",
+              "border-2 border-gray-200 hover:border-red-300",
               "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
               "touch-manipulation cursor-pointer pointer-events-auto",
               // Visual indicator for new users who haven't accepted terms yet
@@ -1137,9 +1137,8 @@ const InteractiveMap = memo(function InteractiveMap({
           >
             <div className="relative">
               <Shield className={cn(
-                "scalable-control-icon",
-                hasAcceptedTerms ? "text-primary" : "text-red-600",
-                isLegalDisclaimerOpen && "rotate-45 text-accent-foreground"
+                "scalable-control-icon text-red-600",
+                isLegalDisclaimerOpen && "rotate-45"
               )} />
               {/* Alert indicator for users who haven't accepted terms */}
               {!hasAcceptedTerms && (
