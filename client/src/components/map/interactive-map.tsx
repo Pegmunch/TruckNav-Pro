@@ -172,6 +172,18 @@ const InteractiveMap = memo(function InteractiveMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   
+  // Hook component to capture map reference
+  function MapEventHandler() {
+    const map = useMap();
+    
+    useEffect(() => {
+      mapRef.current = map;
+      console.log('Map reference captured:', map);
+    }, [map]);
+    
+    return null;
+  }
+  
   // Touch tap detection state
   const touchStartRef = useRef<{
     x: number;
@@ -482,7 +494,11 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Map directional movement functions (Leaflet API)
   const handleMoveUp = () => {
-    if (!mapRef.current) return;
+    console.log('Move Up clicked - mapRef.current:', mapRef.current);
+    if (!mapRef.current) {
+      console.warn('Map reference not available for move up');
+      return;
+    }
     const center = mapRef.current.getCenter();
     const newCenter = L.latLng(center.lat + 0.01, center.lng);
     mapRef.current.panTo(newCenter);
@@ -662,9 +678,6 @@ const InteractiveMap = memo(function InteractiveMap({
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         className="absolute inset-0 z-0"
-        whenReady={() => {
-          // Map is ready
-        }}
         data-testid="leaflet-map"
       >
         <TileLayer
@@ -678,6 +691,7 @@ const InteractiveMap = memo(function InteractiveMap({
             : '© OpenStreetMap contributors'
           }
         />
+        <MapEventHandler />
       </MapContainer>
       
       {/* Compact Layer Controls - Positioned away from toggle button */}

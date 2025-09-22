@@ -547,11 +547,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 </div>
 
                 {/* START NAVIGATION Button - Always visible when both fields have text */}
-                {(() => {
-                  console.log("Button debug - currentLocationInput:", currentLocationInput, "destinationInput:", destinationInput);
-                  console.log("Button debug - condition result:", (currentLocationInput.trim() && destinationInput.trim()));
-                  return (currentLocationInput.trim() && destinationInput.trim());
-                })() && (
+                {(currentLocationInput.trim() && destinationInput.trim()) && (
                   <Button
                     onClick={() => {
                       // Auto-search if text is entered but not yet searched
