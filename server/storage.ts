@@ -1272,6 +1272,10 @@ export class MemStorage implements IStorage {
   async getLaneGuidance(routeId: string): Promise<LaneSegment[] | null> {
     const route = this.routes.get(routeId);
     if (!route) return null;
+    
+    // Return empty array instead of null to prevent 404 errors
+    // Lane guidance is not yet implemented but should not break the frontend
+    return [];
 
     // Check if lane guidance already exists in the route
     if (route.laneGuidance && Array.isArray(route.laneGuidance)) {

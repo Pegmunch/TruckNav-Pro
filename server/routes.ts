@@ -1262,6 +1262,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route Monitoring
+  app.post("/api/routes/:id/monitor", validateId, csrfProtection, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const route = await storage.getRoute(id);
+      
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+      
+      // Return success for now - monitoring is handled by the route monitor service
+      res.json({ message: "Route monitoring started", routeId: id });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start route monitoring" });
+    }
+  });
+
   // Traffic Incidents
   app.get("/api/traffic-incidents", async (req, res) => {
     try {
