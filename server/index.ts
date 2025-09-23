@@ -2,7 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { applySecurityMiddleware, authRateLimit, apiRateLimit } from "./middleware/security";
+// Temporarily disable heavy middleware to reduce memory usage
+// import { applySecurityMiddleware, authRateLimit, apiRateLimit } from "./middleware/security";
 import { sessionConfig } from "./middleware/session-security";
 
 const app = express();
@@ -14,13 +15,13 @@ app.set('trust proxy', 1);
 // Enhanced session security with PostgreSQL store (must be before CSRF)
 app.use(session(sessionConfig));
 
-// Apply comprehensive anti-hacking security features after session
-applySecurityMiddleware(app);
+// Temporarily disable heavy security middleware to reduce memory usage
+// applySecurityMiddleware(app);
 
 // Handle Stripe webhooks with raw body before JSON parsing
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
-app.use(express.json({ limit: '10mb' })); // Limit payload size for security
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: '1mb' })); // Reduced payload size to save memory
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

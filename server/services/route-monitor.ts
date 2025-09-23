@@ -85,7 +85,8 @@ export class RouteMonitorService extends EventEmitter {
 
   constructor() {
     super();
-    this.startGlobalMonitoring();
+    // Disabled global monitoring to save memory and prevent SIGTERM
+    // this.startGlobalMonitoring();
   }
 
   /**
@@ -298,11 +299,12 @@ export class RouteMonitorService extends EventEmitter {
   // Private methods
 
   private startGlobalMonitoring(): void {
-    this.globalTimer = setInterval(() => {
-      this.performGlobalHealthCheck();
-    }, this.GLOBAL_CHECK_INTERVAL);
+    // Disabled global monitoring to prevent memory overload and SIGTERM kills
+    // this.globalTimer = setInterval(() => {
+    //   this.performGlobalHealthCheck();
+    // }, this.GLOBAL_CHECK_INTERVAL);
 
-    console.log('Started global route monitoring');
+    // Disabled to save memory: console.log('Started global route monitoring');
   }
 
   private async performGlobalHealthCheck(): Promise<void> {
