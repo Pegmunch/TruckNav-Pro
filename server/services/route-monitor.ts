@@ -283,7 +283,7 @@ export class RouteMonitorService extends EventEmitter {
    */
   shutdown(): void {
     // Stop all active sessions
-    for (const [id, session] of this.activeSessions.entries()) {
+    for (const [id] of Array.from(this.activeSessions.entries())) {
       this.stopMonitoring(id);
     }
 
