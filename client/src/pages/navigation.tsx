@@ -924,7 +924,7 @@ export default function NavigationPage() {
                   }}
                   onStartNavigation={() => {
                     handleStartNavigation();
-                    setSidebarState('collapsed'); // Collapse drawer but keep accessible
+                    // Don't auto-collapse during navigation start - let handleStartNavigation manage state
                   }}
                   onStopNavigation={handleStopNavigation}
                   currentRoute={currentRoute}
