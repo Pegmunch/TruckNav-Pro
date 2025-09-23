@@ -2,6 +2,7 @@ import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, useMap, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -15,9 +16,15 @@ import {
   EyeOff,
   Crosshair,
   MapPin,
-  Route as RouteIcon
+  Route as RouteIcon,
+  AlertTriangle,
+  Car,
+  Construction,
+  Shield,
+  TrafficCone,
+  X
 } from "lucide-react";
-import { type Route, type VehicleProfile } from "@shared/schema";
+import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
 interface EnhancedRealisticMapProps {
@@ -90,6 +97,62 @@ const createTruckIcon = (isNavigating: boolean) => {
   });
 };
 
+// Create incident icon based on incident type
+const createIncidentIcon = (incident: TrafficIncident) => {
+  const getIncidentIconAndColor = (type: string) => {
+    switch (type) {
+      case 'accident':
+        return { icon: '⚠️', color: '#EF4444', bgColor: '#FECACA' };
+      case 'construction':
+        return { icon: '🚧', color: '#F59E0B', bgColor: '#FEF3C7' };
+      case 'hazmat_spill':
+        return { icon: '☢️', color: '#8B5CF6', bgColor: '#E9D5FF' };
+      case 'road_closure':
+        return { icon: '🚫', color: '#DC2626', bgColor: '#FECACA' };
+      case 'breakdown':
+        return { icon: '🔧', color: '#6B7280', bgColor: '#F3F4F6' };
+      case 'weather':
+        return { icon: '🌧️', color: '#3B82F6', bgColor: '#DBEAFE' };
+      case 'police':
+        return { icon: '🚔', color: '#1F2937', bgColor: '#F9FAFB' };
+      case 'heavy_traffic':
+        return { icon: '🚗', color: '#F59E0B', bgColor: '#FEF3C7' };
+      case 'obstacle':
+        return { icon: '🚧', color: '#EF4444', bgColor: '#FECACA' };
+      default:
+        return { icon: '⚠️', color: '#EF4444', bgColor: '#FECACA' };
+    }
+  };
+
+  const { icon, color, bgColor } = getIncidentIconAndColor(incident.type);
+  const size = incident.severity === 'high' ? 32 : incident.severity === 'medium' ? 28 : 24;
+
+  return L.divIcon({
+    html: `
+      <div style="
+        width: ${size}px; 
+        height: ${size}px; 
+        background: ${bgColor}; 
+        border: 2px solid ${color};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        font-size: ${size * 0.6}px;
+        position: relative;
+      ">
+        ${icon}
+        ${incident.severity === 'high' ? '<div style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: #DC2626; border-radius: 50%;"></div>' : ''}
+      </div>
+    `,
+    className: 'custom-incident-marker',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2]
+  });
+};
+
 // Enhanced route styling for professional appearance
 const getRouteStyle = (routeType: 'main' | 'alternative' | 'preview' = 'main') => {
   const styles = {
@@ -133,6 +196,13 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.8787, -0.42]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+
+  // Fetch traffic incidents with real-time updates
+  const { data: incidents = [] } = useQuery<TrafficIncident[]>({
+    queryKey: ['/api/traffic-incidents'],
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+    enabled: showIncidents, // Only fetch when incidents should be shown
+  });
 
   // Auto-follow mode for navigation
   useEffect(() => {
@@ -313,6 +383,53 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
             </Popup>
           </Marker>
         )}
+
+        {/* Traffic Incidents */}
+        {showIncidents && incidents.map((incident) => (
+          <Marker
+            key={incident.id}
+            position={[incident.coordinates.lat, incident.coordinates.lng]}
+            icon={createIncidentIcon(incident)}
+          >
+            <Popup maxWidth={300}>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge 
+                    variant={incident.severity === 'high' ? 'destructive' : incident.severity === 'medium' ? 'default' : 'secondary'}
+                    className="text-xs"
+                  >
+                    {incident.severity?.toUpperCase() || 'LOW'} SEVERITY
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {incident.type.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+                
+                <div className="font-semibold text-sm">{incident.title}</div>
+                
+                {incident.description && (
+                  <div className="text-xs text-gray-600">{incident.description}</div>
+                )}
+                
+                {incident.estimatedClearanceTime && (
+                  <div className="text-xs text-blue-600">
+                    Estimated clearance: {new Date(incident.estimatedClearanceTime).toLocaleString()}
+                  </div>
+                )}
+                
+                <div className="text-xs text-gray-500 border-t pt-1">
+                  Reported: {new Date(incident.createdAt).toLocaleTimeString()}
+                  {incident.verificationStatus === 'verified' && (
+                    <span className="ml-2 text-green-600">✓ Verified</span>
+                  )}
+                  {incident.verificationStatus === 'disputed' && (
+                    <span className="ml-2 text-orange-600">⚠ Disputed</span>
+                  )}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
 
         {/* Enhanced Route Display */}
         {currentRoute?.routePath && currentRoute.routePath.length > 0 && (

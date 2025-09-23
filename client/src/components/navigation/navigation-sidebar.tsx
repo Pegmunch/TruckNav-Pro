@@ -31,7 +31,8 @@ import {
   Bed,
   Coffee,
   Wrench,
-  Camera
+  Camera,
+  AlertTriangle
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -41,6 +42,7 @@ import { type VehicleProfile, type Route, type Journey, type Facility } from "@s
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import IncidentReportingForm from "@/components/traffic/incident-reporting-form";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -123,6 +125,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [showEntertainmentPanel, setShowEntertainmentPanel] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
+  const [showIncidentReporting, setShowIncidentReporting] = useState(false);
 
   // Current location input handling
   const [currentLocationInput, setCurrentLocationInput] = useState("");
@@ -326,6 +329,15 @@ const NavigationSidebar = memo(function NavigationSidebar({
       description: "Opening weather widget...",
     });
     setShowWeatherWidget(true);
+  };
+
+  const handleIncidentReportClick = () => {
+    console.log('Incident Report clicked');
+    toast({
+      title: "Report Incident",
+      description: "Opening incident reporting form...",
+    });
+    setShowIncidentReporting(true);
   };
 
   // Filter facilities by search query with null safety
@@ -859,6 +871,17 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       <Settings className="w-4 h-4 flex-shrink-0" />
                       <span className="text-center leading-tight">Settings</span>
                     </Button>
+                    
+                    <Button
+                      onClick={handleIncidentReportClick}
+                      variant="outline"
+                      size="sm"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
+                      data-testid="button-report-incident"
+                    >
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Report</span>
+                    </Button>
                   </div>
                 </div>
 
@@ -1234,6 +1257,21 @@ const NavigationSidebar = memo(function NavigationSidebar({
         isOpen={showWeatherWidget}
         onClose={() => setShowWeatherWidget(false)}
       />
+
+      {/* Incident Reporting Form */}
+      {showIncidentReporting && (
+        <IncidentReportingForm
+          currentLocation={coordinates}
+          onClose={() => setShowIncidentReporting(false)}
+          onIncidentCreated={() => {
+            // Incident created successfully, could show success message
+            toast({
+              title: "Incident Reported",
+              description: "Your incident report has been submitted successfully.",
+            });
+          }}
+        />
+      )}
     </>
   );
 });
