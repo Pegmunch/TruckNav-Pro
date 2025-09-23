@@ -281,37 +281,20 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     now - tokenInfo.timestamp < 600000
   );
 
-  // If no valid tokens, generate a new one
+  // If no valid tokens, return error and let client fetch new token
   if (!req.session.csrfTokens.length) {
-    console.warn(`[SECURITY] No valid CSRF tokens in session - generating new token for IP: ${req.ip}`, {
+    console.warn(`[SECURITY] No valid CSRF tokens in session - client needs to fetch new token for IP: ${req.ip}`, {
       sessionId: req.sessionID ? 'exists' : 'missing',
       url: req.url,
       method: req.method,
       timestamp: new Date().toISOString()
     });
     
-    // Generate secure server token
-    const newToken = crypto.randomBytes(32).toString('hex');
-    req.session.csrfTokens = [{
-      token: newToken,
-      timestamp: now
-    }];
-    
-    // Save session synchronously and return the new token to client
-    req.session.save((err: any) => {
-      if (err) {
-        console.error('[CSRF] Failed to save new session token:', err);
-      } else {
-        console.log('[CSRF] New token saved successfully:', newToken.substring(0, 8) + '...');
-      }
-    });
-    
-    // Return new token for client to use in retry
+    // Return error without generating token here to avoid race conditions
     return res.status(403).json({
-      error: 'CSRF token required - use the provided token for retry',
+      error: 'CSRF token required - fetch from /api/csrf-token',
       code: 'CSRF_TOKEN_REQUIRED',
-      csrfToken: newToken,
-      hint: 'Include X-CSRF-Token header in your request',
+      hint: 'Request a fresh token from /api/csrf-token endpoint',
       timestamp: new Date().toISOString()
     });
   }
@@ -323,9 +306,11 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
 
   if (!token || !validToken) {
     console.warn(`[SECURITY] CSRF token validation failed - blocking request from IP: ${req.ip}`, {
-      providedToken: token ? 'provided' : 'missing',
+      providedToken: token ? token.substring(0, 8) + '...' : 'missing',
+      providedTokenFull: token ? 'provided' : 'missing',
       validTokensCount: req.session.csrfTokens.length,
-      sessionId: req.sessionID ? 'exists' : 'missing',
+      sessionId: req.sessionID ? req.sessionID.substring(0, 8) + '...' : 'missing',
+      availableTokens: req.session.csrfTokens.map((t: any) => t.token.substring(0, 8) + '...'),
       tokensMatch: token ? 'no' : 'n/a',
       url: req.url,
       method: req.method,
@@ -360,11 +345,17 @@ export const generateCSRFToken = (req: express.Request & { session?: any }, res:
     req.session.csrfTokens = [];
   }
 
+  // Clean up expired tokens first
+  const now = Date.now();
+  req.session.csrfTokens = req.session.csrfTokens.filter((tokenInfo: any) => 
+    now - tokenInfo.timestamp < 600000 // 10 minutes
+  );
+
   // Generate a new token and add it to the pool
   const newToken = crypto.randomBytes(32).toString('hex');
   req.session.csrfTokens.push({
     token: newToken,
-    timestamp: Date.now()
+    timestamp: now
   });
 
   // Keep only the last 5 tokens to prevent memory bloat
@@ -372,7 +363,7 @@ export const generateCSRFToken = (req: express.Request & { session?: any }, res:
     req.session.csrfTokens = req.session.csrfTokens.slice(-5);
   }
 
-  console.log('[SECURITY] New CSRF token generated and stored in token pool');
+  console.log(`[CSRF] New token generated for session ${req.sessionID?.substring(0, 8)}...: ${newToken.substring(0, 8)}... (pool size: ${req.session.csrfTokens.length})`);
 
   // Set CSRF token in response header for client to use
   res.setHeader('X-CSRF-Token', newToken);
