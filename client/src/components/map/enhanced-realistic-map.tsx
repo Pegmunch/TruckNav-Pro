@@ -204,28 +204,36 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     enabled: showIncidents, // Only fetch when incidents should be shown
   });
 
-  // Auto-follow mode for navigation with offset positioning
+  // Auto-follow mode for navigation with proper screen-space offset
   useEffect(() => {
     if (isNavigating && currentLocation && mapRef.current) {
-      // Offset the center point so truck appears in lower portion of screen
-      // This gives more view of the route ahead during navigation
-      const offsetLat = currentLocation.lat + 0.002; // ~200m north offset
-      mapRef.current.setView([offsetLat, currentLocation.lng], 16, {
+      const map = mapRef.current;
+      
+      // Set center first without offset
+      map.setView([currentLocation.lat, currentLocation.lng], map.getZoom(), {
+        animate: false
+      });
+      
+      // Then apply screen-space offset to move truck to lower portion
+      // This works in all directions and zoom levels
+      const containerSize = map.getSize();
+      const offsetY = containerSize.y * 0.3; // Move view up by 30% of screen height
+      map.panBy([0, -offsetY], {
         animate: true,
         duration: 1.0
       });
     }
   }, [currentLocation, isNavigating]);
 
-  // Center map on route when route changes
+  // Center map on route when route changes (only during planning, not navigation)
   useEffect(() => {
-    if (currentRoute?.routePath && currentRoute.routePath.length > 0 && mapRef.current) {
+    if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0 && mapRef.current) {
       const bounds = L.latLngBounds(
         currentRoute.routePath.map(coord => [coord.lat, coord.lng])
       );
       mapRef.current.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [currentRoute]);
+  }, [currentRoute, isNavigating]);
 
   // Get current GPS location
   useEffect(() => {

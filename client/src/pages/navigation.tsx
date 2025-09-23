@@ -727,23 +727,19 @@ export default function NavigationPage() {
     }
   };
 
-  // Simplified sidebar toggle functionality - consistent behavior regardless of mode
+  // Fixed sidebar toggle functionality - compute next state first, then apply side effects
   const handleSidebarToggle = () => {
-    // Simple toggle logic: open ↔ collapsed (never fully close during navigation)
-    if (isNavigating) {
-      // During navigation: keep sidebar accessible, just toggle size
-      setSidebarState(isSidebarCollapsed ? 'open' : 'collapsed');
-      // Auto-collapse expanded map when sidebar opens during navigation
-      if (!isSidebarCollapsed && isMapExpanded) {
-        setIsMapExpanded(false);
-      }
-    } else {
-      // During planning: simple open/close toggle
-      setSidebarState(isSidebarOpen ? 'closed' : 'open');
-      // Auto-collapse expanded map when sidebar opens
-      if (!isSidebarOpen && isMapExpanded) {
-        setIsMapExpanded(false);
-      }
+    // Compute the next state first
+    const nextState = isNavigating 
+      ? (isSidebarCollapsed ? 'open' : 'collapsed')  // During navigation: keep accessible
+      : (isSidebarOpen ? 'closed' : 'open');         // During planning: allow full close
+    
+    // Apply the state change
+    setSidebarState(nextState);
+    
+    // Apply side effects based on the NEXT state (not previous)
+    if (nextState === 'open' && isMapExpanded) {
+      setIsMapExpanded(false);
     }
   };
 
