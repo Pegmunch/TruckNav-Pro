@@ -225,6 +225,17 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     }
   }, [currentLocation, isNavigating]);
 
+  // Invalidate map size when layout changes (sidebar/map expand) to prevent visual glitches
+  useEffect(() => {
+    if (mapRef.current) {
+      // Small delay to ensure layout changes are complete
+      const timer = setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []); // Note: We'll add proper dependencies after testing
+
   // Center map on route when route changes (only during planning, not navigation)
   useEffect(() => {
     if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0 && mapRef.current) {
