@@ -40,6 +40,7 @@ import WeatherWidget from "@/components/weather/weather-widget";
 import { type VehicleProfile, type Route, type Journey, type Facility } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -132,6 +133,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Search functionality state
   const [facilitySearchInput, setFacilitySearchInput] = useState("");
   const [selectedPOICategory, setSelectedPOICategory] = useState<string>("");
+  
+  // Route preference selection
+  const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   
   // Build search query parameters for facility search
   const buildFacilitySearchParams = () => {
@@ -1063,9 +1067,49 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   )}
                 </div>
 
+                {/* Route Preferences */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Route Preference
+                  </Label>
+                  <ToggleGroup 
+                    type="single" 
+                    value={routePreference} 
+                    onValueChange={(value) => {
+                      if (value && (value === 'fastest' || value === 'eco' || value === 'avoid_tolls')) {
+                        setRoutePreference(value);
+                      }
+                    }}
+                    className="grid grid-cols-3 gap-1"
+                    data-testid="toggle-route-preferences"
+                  >
+                    <ToggleGroupItem 
+                      value="fastest" 
+                      className="text-xs py-1 px-2 h-8"
+                      data-testid="toggle-fastest"
+                    >
+                      Fastest
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="eco" 
+                      className="text-xs py-1 px-2 h-8"
+                      data-testid="toggle-eco"
+                    >
+                      Eco
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="avoid_tolls" 
+                      className="text-xs py-1 px-2 h-8"
+                      data-testid="toggle-avoid-tolls"
+                    >
+                      No Tolls
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+
                 {/* Plan Route Button */}
                 <Button
-                  onClick={() => onPlanRoute('fastest')}
+                  onClick={() => onPlanRoute(routePreference)}
                   disabled={!fromLocation || !toLocation || isCalculating}
                   variant="default"
                   size="lg"

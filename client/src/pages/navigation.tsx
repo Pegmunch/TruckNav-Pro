@@ -448,7 +448,6 @@ export default function NavigationPage() {
       activeProfileId,
       selectedProfile: selectedProfile?.id 
     });
-    alert('Route planning button clicked! Check console for details.');
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
