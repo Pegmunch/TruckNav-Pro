@@ -663,27 +663,47 @@ export default function NavigationPage() {
     }
   };
 
-  // Unified sidebar toggle functionality - cycles through: closed → open → collapsed → closed
+  // Unified sidebar toggle functionality - during navigation: open ↔ closed for max flexibility
   const handleSidebarToggle = () => {
-    switch (sidebarState) {
-      case 'closed':
-        // Closed → Open (expanded)
-        setSidebarState('open');
-        // Auto-collapse expanded map when sidebar opens
-        if (isMapExpanded) {
-          setIsMapExpanded(false);
-        }
-        break;
-      case 'open':
-        // Open → Collapsed (keep control panel accessible)
-        setSidebarState('collapsed');
-        break;
-      case 'collapsed':
-        // Collapsed → Open (expand control panel)
-        setSidebarState('open');
-        break;
-      default:
-        setSidebarState('open');
+    if (isNavigating) {
+      // During navigation: simple toggle between open and closed for maximum control
+      switch (sidebarState) {
+        case 'closed':
+          setSidebarState('open');
+          // Auto-collapse expanded map when sidebar opens during navigation
+          if (isMapExpanded) {
+            setIsMapExpanded(false);
+          }
+          break;
+        case 'open':
+        case 'collapsed':
+          setSidebarState('closed');
+          break;
+        default:
+          setSidebarState('open');
+      }
+    } else {
+      // During planning: cycle through states for different layouts
+      switch (sidebarState) {
+        case 'closed':
+          // Closed → Open (expanded)
+          setSidebarState('open');
+          // Auto-collapse expanded map when sidebar opens
+          if (isMapExpanded) {
+            setIsMapExpanded(false);
+          }
+          break;
+        case 'open':
+          // Open → Collapsed (on desktop) or Closed (on mobile)
+          setSidebarState(isMobile ? 'closed' : 'collapsed');
+          break;
+        case 'collapsed':
+          // Collapsed → Closed
+          setSidebarState('closed');
+          break;
+        default:
+          setSidebarState('open');
+      }
     }
   };
 
