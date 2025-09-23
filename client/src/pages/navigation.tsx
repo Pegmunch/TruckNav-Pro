@@ -666,21 +666,16 @@ export default function NavigationPage() {
   // Unified sidebar toggle functionality - during navigation: open ↔ closed for max flexibility
   const handleSidebarToggle = () => {
     if (isNavigating) {
-      // During navigation: simple toggle between open and closed for maximum control
-      switch (sidebarState) {
-        case 'closed':
-          setSidebarState('open');
-          // Auto-collapse expanded map when sidebar opens during navigation
-          if (isMapExpanded) {
-            setIsMapExpanded(false);
-          }
-          break;
-        case 'open':
-        case 'collapsed':
-          setSidebarState('closed');
-          break;
-        default:
-          setSidebarState('open');
+      // During navigation: clean toggle between fully open and fully closed only
+      if (sidebarState === 'closed') {
+        setSidebarState('open');
+        // Auto-collapse expanded map when sidebar opens during navigation
+        if (isMapExpanded) {
+          setIsMapExpanded(false);
+        }
+      } else {
+        // Any other state (open/collapsed) → fully closed
+        setSidebarState('closed');
       }
     } else {
       // During planning: cycle through states for different layouts
