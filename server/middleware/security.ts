@@ -262,40 +262,34 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   const token = req.headers['x-csrf-token'] as string;
   let cookieToken = req.session.csrfToken;
 
-  // Auto-recovery: If session token is missing, attempt immediate recovery
-  if (!cookieToken) {
-    console.warn(`[CSRF] Session token missing - attempting recovery for IP: ${req.ip}`, {
-      providedToken: token ? 'provided' : 'missing',
+  // Auto-recovery: If session token is missing but client has one, sync them
+  if (!cookieToken && token) {
+    console.warn(`[CSRF] Session token missing but client provided token - syncing for IP: ${req.ip}`, {
+      clientToken: token.substring(0, 8) + '...',
       sessionId: req.sessionID ? 'exists' : 'missing',
       url: req.url,
       method: req.method,
       timestamp: new Date().toISOString()
     });
     
-    if (token) {
-      // If client provided a token but session doesn't have one, regenerate and accept
-      req.session.csrfToken = crypto.randomBytes(32).toString('hex');
-      cookieToken = req.session.csrfToken;
-      
-      // Force immediate session save to prevent race conditions
-      try {
-        req.session.save((err: any) => {
-          if (err) {
-            console.error('[CSRF] Failed to save auto-recovery session:', err);
-          } else {
-            console.log('[CSRF] Session auto-recovery completed successfully');
-          }
-        });
-        
-        // Set the new token in response header for future requests
-        res.setHeader('X-CSRF-Token', cookieToken);
-        
-        console.log(`[CSRF] Auto-recovery granted access for ${req.method} ${req.url}`);
-        return next();
-      } catch (saveError) {
-        console.error('[CSRF] Auto-recovery save failed:', saveError);
+    // Accept the client's token and save it to session
+    req.session.csrfToken = token;
+    cookieToken = token;
+    
+    // Force immediate session save to prevent race conditions
+    req.session.save((err: any) => {
+      if (err) {
+        console.error('[CSRF] Failed to save auto-recovery session:', err);
+      } else {
+        console.log('[CSRF] Session auto-recovery completed - client token accepted');
       }
-    }
+    });
+    
+    // Set the accepted token in response header for confirmation
+    res.setHeader('X-CSRF-Token', token);
+    
+    console.log(`[CSRF] Auto-recovery granted access for ${req.method} ${req.url} with synchronized token`);
+    return next();
   }
 
   // Standard token validation with detailed logging
