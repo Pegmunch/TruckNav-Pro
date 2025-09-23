@@ -55,19 +55,20 @@ export const sessionConfig = {
   name: 'trucknav_session', // Don't use default session name for security
   
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Changed to true for cross-tab CSRF token sharing
   
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true, // Prevent XSS access to cookies
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as const, // Lax in dev for stability
+    sameSite: 'lax' as const, // Always use lax for cross-tab compatibility
     domain: undefined, // Let the browser set the domain
     path: '/', // Available across entire app
   },
   
   // Enhanced security options
   rolling: true, // Reset expiry on each request
+  
   
   // Custom session ID generation for enhanced security
   genid: () => {
