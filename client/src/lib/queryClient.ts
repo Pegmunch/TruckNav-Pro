@@ -3,16 +3,17 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 // Store CSRF token with persistence fallback
 let csrfToken: string | null = null;
 
-// Function to extract and persist CSRF token from response headers
+// Function to extract and persist CSRF token from response headers with efficient saving
 function extractCSRFToken(res: Response) {
   const token = res.headers.get('X-CSRF-Token');
-  if (token) {
+  if (token && token !== csrfToken) {
     csrfToken = token;
-    // Store in sessionStorage as backup
+    // Store in sessionStorage as backup (only if changed for efficiency)
     try {
       sessionStorage.setItem('csrfToken', token);
+      console.log('[CSRF] Token saved efficiently for session persistence');
     } catch (e) {
-      // Ignore storage errors
+      console.warn('[CSRF] Failed to save token to session storage:', e);
     }
   }
 }
@@ -48,20 +49,27 @@ export async function apiRequest(
   data?: unknown | undefined,
   options?: { idempotencyKey?: string }
 ): Promise<Response> {
-  // Always fetch fresh CSRF token for state-changing requests for reliability
+  // Efficiently handle CSRF tokens - only fetch if missing for state-changing requests
   if (method !== 'GET' && method !== 'OPTIONS') {
-    try {
-      const tokenResponse = await fetch('/api/csrf-token', {
-        credentials: 'include',
-        cache: 'no-cache'  // Ensure fresh token
-      });
-      if (tokenResponse.ok) {
-        extractCSRFToken(tokenResponse);
-      } else {
-        console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
+    let currentToken = getCSRFToken();
+    
+    // Only fetch fresh token if we don't have one (efficiency optimization)
+    if (!currentToken) {
+      try {
+        const tokenResponse = await fetch('/api/csrf-token', {
+          credentials: 'include',
+          cache: 'no-cache'
+        });
+        if (tokenResponse.ok) {
+          extractCSRFToken(tokenResponse);
+          currentToken = getCSRFToken();
+          console.log('[CSRF] Fresh token fetched and saved efficiently');
+        } else {
+          console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
+        }
+      } catch (error) {
+        console.warn('[CSRF] Failed to fetch CSRF token:', error);
       }
-    } catch (error) {
-      console.warn('[CSRF] Failed to fetch CSRF token:', error);
     }
   }
 
@@ -94,6 +102,41 @@ export async function apiRequest(
 
   // Extract CSRF token from response headers
   extractCSRFToken(res);
+
+  // Handle CSRF token expiration with efficient retry
+  if (res.status === 403 && method !== 'GET' && method !== 'OPTIONS') {
+    try {
+      // Fetch fresh token and retry once
+      const tokenResponse = await fetch('/api/csrf-token', {
+        credentials: 'include',
+        cache: 'no-cache'
+      });
+      
+      if (tokenResponse.ok) {
+        extractCSRFToken(tokenResponse);
+        const newToken = getCSRFToken();
+        
+        if (newToken) {
+          // Retry with fresh token and same idempotency key
+          const retryHeaders = { ...headers, 'X-CSRF-Token': newToken };
+          
+          const retryRes = await fetch(url, {
+            method,
+            headers: retryHeaders,
+            body: data ? JSON.stringify(data) : undefined,
+            credentials: "include",
+          });
+          
+          extractCSRFToken(retryRes);
+          await throwIfResNotOk(retryRes);
+          console.log('[CSRF] Successfully retried request with fresh token');
+          return retryRes;
+        }
+      }
+    } catch (retryError) {
+      console.warn('[CSRF] Failed to retry with fresh token:', retryError);
+    }
+  }
 
   await throwIfResNotOk(res);
   return res;

@@ -237,14 +237,14 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   next();
 };
 
-// CSRF protection using double submit cookie pattern
+// CSRF protection using double submit cookie pattern - optimized for efficient validation
 export const csrfProtection = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
   // Skip CSRF for GET, HEAD, and OPTIONS requests
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
     return next();
   }
 
-  // Check if session exists first
+  // Check if session exists first for efficiency
   if (!req.session) {
     console.error(`[SECURITY] No session found for CSRF validation from IP: ${req.ip}`, {
       url: req.url,
@@ -262,8 +262,9 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   const token = req.headers['x-csrf-token'] as string;
   const cookieToken = req.session.csrfToken;
 
+  // Efficient token validation with detailed logging and security enforcement
   if (!token || !cookieToken || token !== cookieToken) {
-    console.warn(`[SECURITY] CSRF token mismatch from IP: ${req.ip}`, {
+    console.warn(`[SECURITY] CSRF token validation failed - blocking request from IP: ${req.ip}`, {
       providedToken: token ? 'provided' : 'missing',
       sessionToken: cookieToken ? 'exists' : 'missing',
       sessionId: req.sessionID ? 'exists' : 'missing',
@@ -272,6 +273,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
       timestamp: new Date().toISOString()
     });
     
+    // CRITICAL: Block the request - do not call next()
     return res.status(403).json({
       error: 'CSRF token validation failed',
       code: 'CSRF_ERROR',
@@ -279,6 +281,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     });
   }
 
+  console.log(`[CSRF] Token validated efficiently for ${req.method} ${req.url}`);
   next();
 };
 

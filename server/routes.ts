@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply API rate limiting to all API routes
   app.use("/api", apiRateLimit);
   
-  // CSRF token endpoint (must come before CSRF protection middleware)
+  // CSRF token endpoint (must come before CSRF protection middleware) - optimized for efficiency
   app.get("/api/csrf-token", (req: any, res: any) => {
     // Always ensure session exists and has a CSRF token
     if (!req.session) {
@@ -510,20 +510,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Generate CSRF token if missing
     if (!req.session.csrfToken) {
       req.session.csrfToken = randomBytes(32).toString('hex');
+      console.log('[CSRF] New token generated for session');
     }
     
-    // Explicitly save the session to persist the CSRF token
+    // Efficient session saving - save immediately for reliability
     req.session.save((err: any) => {
       if (err) {
         console.error('[CSRF] Failed to save session:', err);
         return res.status(500).json({ error: 'Failed to initialize session' });
       }
       
+      console.log('[CSRF] Session saved efficiently with token persistence');
+      
       // Set CSRF token in response header AND body for frontend to extract
       res.setHeader('X-CSRF-Token', req.session.csrfToken);
       res.json({ 
         success: true,
-        csrfToken: req.session.csrfToken // Return in body too for debugging
+        csrfToken: req.session.csrfToken,
+        saved: true // Confirm efficient saving
       });
     });
   });
