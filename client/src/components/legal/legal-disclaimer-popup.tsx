@@ -51,6 +51,11 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
 
   const canAccept = acknowledgeNavigation && acknowledgeLiability && acknowledgeResponsibility && acknowledgePrivacy && acknowledgeTerms && acceptDisclaimer;
 
+  // Handle data migration from old format on component mount
+  useEffect(() => {
+    migrateOldConsentData();
+  }, []);
+
   // Use hook's hasAcceptedTerms instead of localStorage directly
   const isAlreadyAccepted = hasAcceptedTerms;
 
@@ -58,11 +63,6 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   if (isAlreadyAccepted && !isLoading) {
     return null;
   }
-
-  // Handle data migration from old format on component mount
-  useEffect(() => {
-    migrateOldConsentData();
-  }, []);
 
   const handleAccept = () => {
     if (canAccept) {
