@@ -481,65 +481,48 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
         </Card>
       </div>
 
-      {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-[60] p-4 bg-gradient-to-t from-background/95 via-background/90 to-transparent">
-        <div className="flex flex-col space-y-4 max-w-md mx-auto">
-          {/* Progress indicator */}
-          {(isAnimating || animationProgress > 0) && (
-            <div className="w-full bg-secondary rounded-full h-2">
-              <div 
-                className="bg-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${animationProgress * 100}%` }}
-              />
-            </div>
+      {/* Bottom controls - compact buttons only */}
+      <div className="absolute bottom-0 left-0 right-0 z-[60] p-2">
+        <div className="flex justify-center space-x-2 max-w-sm mx-auto">
+          {/* Play/Skip button */}
+          {!isAnimating && animationProgress === 0 && isMapLoaded && (
+            <Button
+              onClick={startAnimation}
+              size="sm"
+              className="h-8 text-sm px-3"
+              disabled={prefersReducedMotion()}
+              data-testid="button-start-preview"
+            >
+              <Play className="w-4 h-4 mr-1" />
+              {prefersReducedMotion() ? 'Disabled' : 'Preview'}
+            </Button>
+          )}
+          
+          {isAnimating && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSkip}
+              className="h-8 text-sm px-3"
+              data-testid="button-skip-preview"
+            >
+              <SkipForward className="w-4 h-4 mr-1" />
+              Skip
+            </Button>
           )}
 
-          {/* Action buttons */}
-          <div className="flex space-x-3">
-            {/* Play/Skip button */}
-            {!isAnimating && animationProgress === 0 && isMapLoaded && (
-              <Button
-                onClick={startAnimation}
-                className="flex-1 h-12 text-lg font-medium"
-                disabled={prefersReducedMotion()}
-                data-testid="button-start-preview"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                {prefersReducedMotion() ? 'Motion Disabled' : 'Preview Route'}
-              </Button>
-            )}
-            
-            {isAnimating && (
-              <Button
-                variant="outline"
-                onClick={handleSkip}
-                className="flex-1 h-12 text-lg font-medium"
-                data-testid="button-skip-preview"
-              >
-                <SkipForward className="w-5 h-5 mr-2" />
-                Skip Preview
-              </Button>
-            )}
-
-            {/* Start Navigation - always visible once route is loaded */}
-            {isMapLoaded && (
-              <Button
-                onClick={onStartNavigation}
-                variant={animationProgress === 1 || prefersReducedMotion() ? "default" : "outline"}
-                className="flex-1 h-12 text-lg font-medium"
-                data-testid="button-start-navigation"
-              >
-                <Navigation className="w-5 h-5 mr-2" />
-                Start Navigation
-              </Button>
-            )}
-          </div>
-
-          {/* Accessibility notice */}
-          {prefersReducedMotion() && (
-            <p className="text-sm text-muted-foreground text-center">
-              Route animation disabled due to motion preferences
-            </p>
+          {/* Start Navigation - always visible once route is loaded */}
+          {isMapLoaded && (
+            <Button
+              onClick={onStartNavigation}
+              variant={animationProgress === 1 || prefersReducedMotion() ? "default" : "outline"}
+              size="sm"
+              className="h-8 text-sm px-3"
+              data-testid="button-start-navigation"
+            >
+              <Navigation className="w-4 h-4 mr-1" />
+              Start Navigation
+            </Button>
           )}
         </div>
       </div>
