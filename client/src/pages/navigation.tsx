@@ -586,16 +586,11 @@ export default function NavigationPage() {
   // Enhanced auto-expand map logic - works with both in-page and window modes
   useEffect(() => {
     if (currentRoute && !isMapWindowOpen()) {
-      if (isMobile) {
-        // On mobile, close drawer to show full map
-        setSidebarState('closed');
-      } else if (!isMapExpanded) {
-        // Desktop: expand map temporarily
+      if (!isMapExpanded) {
+        // Desktop: expand map temporarily but keep sidebar open
         const timer = setTimeout(() => {
           setIsMapExpanded(true);
-          if (window.innerWidth < 1024) {
-            setSidebarState('closed');
-          }
+          // Don't auto-close sidebar - let user control it manually
         }, 300);
         return () => clearTimeout(timer);
       }
@@ -633,10 +628,7 @@ export default function NavigationPage() {
       // Auto-expand map after a short delay for smooth transition
       setTimeout(() => {
         setIsMapExpanded(true);
-        // On mobile, close sidebar to give more space for map
-        if (window.innerWidth < 1024) {
-          setSidebarState('closed');
-        }
+        // Keep sidebar open during navigation - user can manually close if needed
       }, 300);
     }
   };

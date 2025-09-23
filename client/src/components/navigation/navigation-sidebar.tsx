@@ -655,24 +655,37 @@ const NavigationSidebar = memo(function NavigationSidebar({
               </CardContent>
             </Card>
 
-            {/* 3. Start Navigation Button */}
+            {/* 3. Start Navigation / Cancel Route Button */}
             <Card className="bg-muted/30">
               <CardContent className="p-4">
-                <Button
-                  onClick={onPlanRoute}
-                  disabled={!fromLocation || !toLocation || isCalculating}
-                  variant="default"
-                  size="lg"
-                  className="w-full automotive-button h-12"
-                  data-testid="button-plan-route"
-                >
-                  {isCalculating ? (
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  ) : (
-                    <RouteIcon className="w-5 h-5 mr-2" />
-                  )}
-                  {isCalculating ? "Calculating..." : "Plan Route"}
-                </Button>
+                {isNavigating ? (
+                  <Button
+                    onClick={onStopNavigation}
+                    variant="destructive"
+                    size="lg"
+                    className="w-full automotive-button h-12 bg-red-600 hover:bg-red-700 text-white"
+                    data-testid="button-cancel-route"
+                  >
+                    <X className="w-5 h-5 mr-2" />
+                    Cancel Route
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={onPlanRoute}
+                    disabled={!fromLocation || !toLocation || isCalculating}
+                    variant="default"
+                    size="lg"
+                    className="w-full automotive-button h-12"
+                    data-testid="button-plan-route"
+                  >
+                    {isCalculating ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <RouteIcon className="w-5 h-5 mr-2" />
+                    )}
+                    {isCalculating ? "Calculating..." : "Plan Route"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
