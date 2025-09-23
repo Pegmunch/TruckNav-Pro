@@ -428,7 +428,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
     return null;
   }
   
-  console.log('Route preview overlay is rendering');
+  console.log('Route preview overlay is rendering', { route, isMapLoaded, error });
 
   return (
     <div 
