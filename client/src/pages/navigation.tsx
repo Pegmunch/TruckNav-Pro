@@ -719,9 +719,9 @@ export default function NavigationPage() {
       if (!currentRoute) {
         await new Promise<void>((resolve, reject) => {
           const unsubscribe = calculateRouteMutation.mutateAsync({
-            fromLocation,
-            toLocation,
-            vehicleProfile: selectedProfile,
+            startLocation: fromLocation,
+            endLocation: toLocation,
+            vehicleProfileId: selectedProfile?.id?.toString(),
             routePreference: 'fastest'
           }).then((routeData) => {
             unsubscribe;
