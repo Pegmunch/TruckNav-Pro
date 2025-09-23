@@ -319,7 +319,7 @@ export default function NavigationPage() {
       console.error('Failed to activate journey:', error);
       // Reset navigation state on error
       setIsNavigating(false);
-      setIsStartingJourney(false); // Ensure flag is reset on error
+      // Reset any pending state flags on error
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
       // Show user-friendly error message
