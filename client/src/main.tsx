@@ -54,23 +54,14 @@ if (import.meta.env.DEV && document) {
   document.head.appendChild(buildMarker);
 }
 
-// Initialize CSRF token before rendering
-initializeCSRF().then(() => {
-  createRoot(document.getElementById("root")!).render(
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ErrorBoundary>
-  );
-}).catch(error => {
-  console.error("Failed to initialize app:", error);
-  // Render app anyway in case of CSRF initialization failure
-  createRoot(document.getElementById("root")!).render(
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ErrorBoundary>
-  );
-});
+// Initialize CSRF token in background (don't wait for it)
+initializeCSRF();
+
+// Render app immediately
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
