@@ -51,14 +51,14 @@ export default function NavigationPage() {
   // Computed states for backward compatibility
   const isSidebarOpen = sidebarState !== 'closed';
   const isSidebarCollapsed = sidebarState === 'collapsed';
-  const isMobileDrawerOpen = isMobile ? isSidebarOpen : false;
+  // Fixed: Only open mobile drawer when sidebarState is explicitly 'open'
+  const isMobileDrawerOpen = isMobile && sidebarState === 'open';
   
   
   // Map expansion state - auto-expand when route is selected
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   
-  // Legacy drawer state for navigation transitions  
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Removed legacy isDrawerOpen - now using sidebarState as single source of truth
   
   // Alternative routes panel state
   const [isAlternativeRoutesOpen, setIsAlternativeRoutesOpen] = useState(false);
@@ -106,8 +106,7 @@ export default function NavigationPage() {
     // Reset navigation flags to safe defaults
     setIsFullscreenNav(false);       // Exit fullscreen nav mode
     setIsARMode(false);              // Exit AR mode
-    // Ensure mobile drawer follows sidebar state
-    setIsDrawerOpen(false);
+    // Mobile drawer now follows sidebarState automatically
   };
 
   // Initialize sidebar state - keep accessible in all modes as the main control panel
@@ -683,8 +682,8 @@ export default function NavigationPage() {
 
   const handleStartNavigation = () => {
     if (currentRoute) {
-      // Open swipe drawer for smooth transition
-      setIsDrawerOpen(true);
+      // Open sidebar for navigation preparation
+      setSidebarState('open');
       
       // If we already have a planned journey from route calculation, activate it
       if (activeJourney && activeJourney.status === 'planned') {
@@ -1073,8 +1072,8 @@ export default function NavigationPage() {
         </div>
       )}
 
-      {/* Swipeable Navigation Drawer */}
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+      {/* Navigation Status Drawer - removed legacy separate state */}
+      <Drawer open={false} onOpenChange={() => {}}>
         <DrawerContent className="automotive-drawer">
           <DrawerHeader className="flex items-center justify-between">
             <DrawerTitle className="automotive-text-lg">
@@ -1084,11 +1083,8 @@ export default function NavigationPage() {
               variant="ghost"
               size="icon"
               onClick={() => {
-                setIsDrawerOpen(false);
                 setIsMapExpanded(false);
-                if (!isSidebarOpen) {
-                  setSidebarState('open');
-                }
+                setSidebarState('open');
               }}
               className="automotive-touch-target"
               data-testid="button-close-drawer"
@@ -1113,7 +1109,6 @@ export default function NavigationPage() {
                 <Button
                   onClick={() => {
                     setIsMapExpanded(true);
-                    setIsDrawerOpen(false);
                     if (window.innerWidth < 1024) {
                       setSidebarState('collapsed');
                     }
@@ -1126,7 +1121,6 @@ export default function NavigationPage() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setIsDrawerOpen(false);
                     setIsMapExpanded(false);
                     // Ensure sidebar is properly set to planning mode state
                     setSidebarState('open');
