@@ -6,11 +6,19 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
 import "./i18n/config";
 
-// Initialize CSRF token on app startup
+// Initialize CSRF token on app startup - ensures fresh session
 async function initializeCSRF() {
   try {
-    await apiRequest("GET", "/api/csrf-token");
-    console.log('CSRF token initialized successfully');
+    // Fetch fresh CSRF token for the new session
+    const response = await fetch('/api/csrf-token', {
+      credentials: 'include',
+      cache: 'no-cache'
+    });
+    if (response.ok) {
+      console.log('CSRF token initialized successfully');
+    } else {
+      console.error('Failed to fetch initial CSRF token:', response.status);
+    }
   } catch (error) {
     console.error("Failed to initialize CSRF token:", error);
   }
