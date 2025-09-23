@@ -500,34 +500,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply API rate limiting to all API routes
   app.use("/api", apiRateLimit);
   
-  // CSRF token endpoint (must come before CSRF protection middleware) - optimized for efficiency
+  // CSRF token endpoint (must come before CSRF protection middleware) - optimized for reliability
   app.get("/api/csrf-token", (req: any, res: any) => {
     // Always ensure session exists and has a CSRF token
     if (!req.session) {
+      console.error('[CSRF] No session available for token generation');
       return res.status(500).json({ error: 'Session not available' });
     }
 
-    // Generate CSRF token if missing
-    if (!req.session.csrfToken) {
-      req.session.csrfToken = randomBytes(32).toString('hex');
-      console.log('[CSRF] New token generated for session');
-    }
+    // Always generate a fresh CSRF token for maximum security
+    const newToken = randomBytes(32).toString('hex');
+    req.session.csrfToken = newToken;
+    console.log(`[CSRF] New token generated for session ${req.sessionID}: ${newToken.substring(0, 8)}...`);
     
-    // Efficient session saving - save immediately for reliability
+    // Reliable session saving with enhanced error handling and verification
     req.session.save((err: any) => {
       if (err) {
         console.error('[CSRF] Failed to save session:', err);
-        return res.status(500).json({ error: 'Failed to initialize session' });
+        return res.status(500).json({ 
+          error: 'Failed to initialize session',
+          code: 'SESSION_SAVE_ERROR',
+          timestamp: new Date().toISOString()
+        });
       }
       
-      console.log('[CSRF] Session saved efficiently with token persistence');
+      // Verify token was actually saved
+      const savedToken = req.session.csrfToken;
+      console.log(`[CSRF] Session saved successfully - token verified: ${savedToken === newToken ? 'MATCH' : 'MISMATCH'}`);
       
-      // Set CSRF token in response header AND body for frontend to extract
-      res.setHeader('X-CSRF-Token', req.session.csrfToken);
+      if (savedToken !== newToken) {
+        console.error('[CSRF] CRITICAL: Token mismatch after save!', {
+          generated: newToken.substring(0, 8),
+          saved: savedToken?.substring(0, 8) || 'none'
+        });
+      }
+      
+      // Set CSRF token in response header, body, and add cache control
+      res.setHeader('X-CSRF-Token', savedToken);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
       res.json({ 
         success: true,
-        csrfToken: req.session.csrfToken,
-        saved: true // Confirm efficient saving
+        csrfToken: savedToken,
+        sessionId: req.sessionID,
+        timestamp: new Date().toISOString()
       });
     });
   });

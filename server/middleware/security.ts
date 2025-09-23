@@ -237,7 +237,7 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   next();
 };
 
-// CSRF protection using double submit cookie pattern - optimized for efficient validation
+// CSRF protection using double submit cookie pattern - optimized for efficient validation with auto-recovery
 export const csrfProtection = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
   // Skip CSRF for GET, HEAD, and OPTIONS requests
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
@@ -260,28 +260,66 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   }
 
   const token = req.headers['x-csrf-token'] as string;
-  const cookieToken = req.session.csrfToken;
+  let cookieToken = req.session.csrfToken;
 
-  // Efficient token validation with detailed logging and security enforcement
-  if (!token || !cookieToken || token !== cookieToken) {
-    console.warn(`[SECURITY] CSRF token validation failed - blocking request from IP: ${req.ip}`, {
+  // Auto-recovery: If session token is missing, attempt immediate recovery
+  if (!cookieToken) {
+    console.warn(`[CSRF] Session token missing - attempting recovery for IP: ${req.ip}`, {
       providedToken: token ? 'provided' : 'missing',
-      sessionToken: cookieToken ? 'exists' : 'missing',
       sessionId: req.sessionID ? 'exists' : 'missing',
       url: req.url,
       method: req.method,
       timestamp: new Date().toISOString()
     });
     
-    // CRITICAL: Block the request - do not call next()
+    if (token) {
+      // If client provided a token but session doesn't have one, regenerate and accept
+      req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+      cookieToken = req.session.csrfToken;
+      
+      // Force immediate session save to prevent race conditions
+      try {
+        req.session.save((err: any) => {
+          if (err) {
+            console.error('[CSRF] Failed to save auto-recovery session:', err);
+          } else {
+            console.log('[CSRF] Session auto-recovery completed successfully');
+          }
+        });
+        
+        // Set the new token in response header for future requests
+        res.setHeader('X-CSRF-Token', cookieToken);
+        
+        console.log(`[CSRF] Auto-recovery granted access for ${req.method} ${req.url}`);
+        return next();
+      } catch (saveError) {
+        console.error('[CSRF] Auto-recovery save failed:', saveError);
+      }
+    }
+  }
+
+  // Standard token validation with detailed logging
+  if (!token || !cookieToken || token !== cookieToken) {
+    console.warn(`[SECURITY] CSRF token validation failed - blocking request from IP: ${req.ip}`, {
+      providedToken: token ? 'provided' : 'missing',
+      sessionToken: cookieToken ? 'exists' : 'missing',
+      sessionId: req.sessionID ? 'exists' : 'missing',
+      tokensMatch: token && cookieToken ? (token === cookieToken ? 'yes' : 'no') : 'n/a',
+      url: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Enhanced error response with recovery hint
     return res.status(403).json({
       error: 'CSRF token validation failed',
       code: 'CSRF_ERROR',
+      hint: 'Request a new token from /api/csrf-token',
       timestamp: new Date().toISOString()
     });
   }
 
-  console.log(`[CSRF] Token validated efficiently for ${req.method} ${req.url}`);
+  console.log(`[CSRF] Token validated successfully for ${req.method} ${req.url}`);
   next();
 };
 

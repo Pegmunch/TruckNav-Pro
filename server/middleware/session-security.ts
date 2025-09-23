@@ -54,8 +54,8 @@ export const sessionConfig = {
   
   name: 'trucknav_session', // Don't use default session name for security
   
-  resave: false,
-  saveUninitialized: true, // Changed to true for cross-tab CSRF token sharing
+  resave: true, // Changed to true to ensure CSRF token modifications are always saved
+  saveUninitialized: true, // True for cross-tab CSRF token sharing
   
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
