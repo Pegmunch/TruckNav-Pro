@@ -54,6 +54,11 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   // Use hook's hasAcceptedTerms instead of localStorage directly
   const isAlreadyAccepted = hasAcceptedTerms;
 
+  // If already accepted, don't render the overlay
+  if (isAlreadyAccepted && !isLoading) {
+    return null;
+  }
+
   // Handle data migration from old format on component mount
   useEffect(() => {
     migrateOldConsentData();
