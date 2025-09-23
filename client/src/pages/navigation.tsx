@@ -433,6 +433,16 @@ export default function NavigationPage() {
   };
 
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
+    console.log('handlePlanRoute called with:', { 
+      fromLocation, 
+      toLocation, 
+      routePreference,
+      startLoc,
+      endLoc,
+      activeProfileId,
+      selectedProfile: selectedProfile?.id 
+    });
+    
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
       toast({
@@ -451,6 +461,7 @@ export default function NavigationPage() {
     };
 
     console.log('Submitting route calculation with payload:', routeData);
+    console.log('About to call calculateRouteMutation.mutate');
     calculateRouteMutation.mutate(routeData);
   };
 
