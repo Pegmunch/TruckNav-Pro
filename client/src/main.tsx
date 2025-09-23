@@ -46,29 +46,32 @@ if (import.meta.env.DEV && document) {
   document.head.appendChild(buildMarker);
 }
 
-// Test: Add visible fallback content first
-const rootElement = document.getElementById("root");
-if (rootElement) {
-  rootElement.innerHTML = '<div style="padding: 20px; background: red; color: white; font-size: 24px;">TESTING: Can you see this red text? If yes, React rendering is the issue.</div>';
-}
-
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
 
-// Try rendering after a delay to see if it's a timing issue
-setTimeout(() => {
-  try {
-    createRoot(document.getElementById("root")!).render(
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </ErrorBoundary>
-    );
-  } catch (error) {
-    console.error("React render failed:", error);
-    if (rootElement) {
-      rootElement.innerHTML = `<div style="padding: 20px; background: orange; color: black;">ERROR: React failed to render - ${error.message}</div>`;
-    }
+// Render app immediately
+try {
+  createRoot(document.getElementById("root")!).render(
+    <div style={{
+      padding: '20px',
+      backgroundColor: 'red',
+      color: 'white', 
+      fontSize: '24px',
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      zIndex: '999999',
+      width: '100%',
+      height: '100vh'
+    }}>
+      <h1>EMERGENCY TEST: Can you see this red screen?</h1>
+      <p>If you see this, React works but the app has CSS/rendering issues.</p>
+      <p>If you don't see this, there's still a JavaScript execution problem.</p>
+    </div>
+  );
+} catch (error: unknown) {
+  const rootElement = document.getElementById("root");
+  if (rootElement) {
+    rootElement.innerHTML = `<div style="padding: 20px; background: orange; color: black; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 999999;">ERROR: React failed to render - ${error instanceof Error ? error.message : String(error)}</div>`;
   }
-}, 1000);
+}

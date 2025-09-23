@@ -98,14 +98,14 @@ export const securityHeaders = helmet({
     },
   },
   crossOriginEmbedderPolicy: false, // Needed for some maps functionality
-  hsts: {
+  hsts: process.env.NODE_ENV === 'production' ? {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
-  },
-  noSniff: true,
-  frameguard: { action: 'deny' },
-  xssFilter: true,
+  } : false, // Disable HSTS in development
+  noSniff: false, // Disable in development
+  frameguard: false, // Disable X-Frame-Options in development
+  xssFilter: false, // Disable XSS filter in development
 });
 
 // CORS configuration
