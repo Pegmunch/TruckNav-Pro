@@ -657,9 +657,14 @@ export default function NavigationPage() {
     }
   }, [fromLocation, toLocation]);
 
-  // REMOVED: Auto-plan route effect - now requires explicit user action
-  // User should press Enter or click Plan Route button to trigger route calculation
-  // This prevents repeated notifications and allows proper routing to Start Navigation
+  // Auto-plan route when both locations are set
+  useEffect(() => {
+    // Only auto-plan if we have both locations and no current route
+    if (fromLocation && toLocation && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
+      console.log('[AUTO_ROUTE] Auto-planning route with:', { fromLocation, toLocation, activeProfileId });
+      handlePlanRoute();
+    }
+  }, [fromLocation, toLocation, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
 
   // Effect to automatically show alternative routes when they become available
   useEffect(() => {
