@@ -361,6 +361,18 @@ export class MemStorage implements IStorage {
         coordinates: { lat: 51.4014, lng: -1.3213 },
         roadName: "A34",
         country: "UK",
+        severity: "high",
+        restrictedVehicleTypes: ["class_1_lorry", "class_2_lorry"],
+        timeRestrictions: null,
+        enforcementType: "physical",
+        alternativeRoutes: [],
+        violationPenalty: "Vehicle damage risk",
+        isActive: true,
+        activeSince: new Date(),
+        activeUntil: null,
+        routeSegment: null,
+        bypassAllowed: false,
+        exemptions: [],
       },
       {
         id: "rest-2",
@@ -371,6 +383,18 @@ export class MemStorage implements IStorage {
         coordinates: { lat: 51.7520, lng: -1.2577 },
         roadName: "B4040",
         country: "UK",
+        severity: "medium",
+        restrictedVehicleTypes: ["class_2_lorry"],
+        timeRestrictions: null,
+        enforcementType: "advisory",
+        alternativeRoutes: [],
+        violationPenalty: null,
+        isActive: true,
+        activeSince: new Date(),
+        activeUntil: null,
+        routeSegment: null,
+        bypassAllowed: true,
+        exemptions: [],
       },
     ];
 
@@ -564,6 +588,14 @@ export class MemStorage implements IStorage {
           { lat: 52.9569, lng: -2.0642 },
           { lat: 52.4862, lng: -1.8904 }
         ],
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [-2.2426, 53.4808],
+            [-2.0642, 52.9569],
+            [-1.8904, 52.4862]
+          ]
+        },
         restrictionsAvoided: ["rest-1"],
         facilitiesNearby: ["facility-1"],
         laneGuidance: null,
@@ -960,6 +992,13 @@ export class MemStorage implements IStorage {
 
   async createRoute(insertRoute: InsertRoute): Promise<Route> {
     const id = randomUUID();
+    
+    // Generate geometry from routePath if provided
+    const geometry = insertRoute.routePath ? {
+      type: "LineString" as const,
+      coordinates: insertRoute.routePath.map(coord => [coord.lng, coord.lat] as [number, number])
+    } : null;
+    
     const route: Route = { 
       ...insertRoute, 
       id,
@@ -968,6 +1007,7 @@ export class MemStorage implements IStorage {
       duration: insertRoute.duration ?? null,
       vehicleProfileId: insertRoute.vehicleProfileId ?? null,
       routePath: insertRoute.routePath ?? null,
+      geometry: geometry,
       restrictionsAvoided: insertRoute.restrictionsAvoided ?? null,
       facilitiesNearby: insertRoute.facilitiesNearby ?? null,
       laneGuidance: insertRoute.laneGuidance ?? null,
