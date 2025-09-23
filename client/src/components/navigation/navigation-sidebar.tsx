@@ -47,7 +47,7 @@ interface NavigationSidebarProps {
   toLocation: string;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
-  onPlanRoute: () => void;
+  onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onStartNavigation: () => void;
   onStopNavigation?: () => void;
   currentRoute: Route | null;
@@ -580,7 +580,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                         onToLocationChange(destinationInput.trim());
                       }
                       // Then plan the route
-                      onPlanRoute();
+                      onPlanRoute('fastest');
                     }}
                     disabled={isCalculating}
                     size="lg"
@@ -671,7 +671,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </Button>
                 ) : (
                   <Button
-                    onClick={onPlanRoute}
+                    onClick={() => onPlanRoute('fastest')}
                     disabled={!fromLocation || !toLocation || isCalculating}
                     variant="default"
                     size="lg"
@@ -1065,7 +1065,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
                 {/* Plan Route Button */}
                 <Button
-                  onClick={onPlanRoute}
+                  onClick={() => onPlanRoute('fastest')}
                   disabled={!fromLocation || !toLocation || isCalculating}
                   variant="default"
                   size="lg"
