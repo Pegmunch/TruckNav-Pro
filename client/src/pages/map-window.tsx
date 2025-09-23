@@ -73,9 +73,9 @@ export default function MapWindow() {
 
   // Get route info for display
   const routeInfo = currentRoute ? {
-    distance: currentRoute.totalDistance || 0,
-    duration: currentRoute.estimatedDuration || 0,
-    hasRestrictions: (currentRoute.restrictions?.length || 0) > 0
+    distance: currentRoute.distance || 0,
+    duration: currentRoute.duration || 0,
+    hasRestrictions: false // No restrictions property in Route schema
   } : null;
 
   const handleCloseWindow = () => {
@@ -183,9 +183,6 @@ export default function MapWindow() {
         <div className="absolute top-16 left-4 right-4 z-30">
           <NextManeuverGuidance
             currentRoute={currentRoute}
-            activeJourney={activeJourney}
-            selectedProfile={selectedProfile}
-            variant="overlay"
           />
         </div>
       )}
