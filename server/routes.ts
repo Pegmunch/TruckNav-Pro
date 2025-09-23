@@ -1984,7 +1984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Start monitoring with route monitor service
       let journey = undefined;
       if (journeyId) {
-        journey = await storage.getJourney ? await storage.getJourney(journeyId) : undefined;
+        journey = await storage.getJourney(journeyId);
       }
 
       const monitoringId = await routeMonitorService.startMonitoring(
