@@ -452,6 +452,7 @@ export default function NavigationPage() {
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
+      alert('Validation failed: No vehicle profile');
       console.log('Route planning blocked: No valid vehicle profile');
       toast({
         title: "Vehicle profile required",
@@ -466,6 +467,7 @@ export default function NavigationPage() {
     const finalEndLoc = endLoc || toLocation;
     
     if (!finalStartLoc || !finalEndLoc) {
+      alert('Validation failed: Missing locations');
       console.log('Route planning blocked: Missing locations', { finalStartLoc, finalEndLoc, fromLocation, toLocation });
       toast({
         title: "Locations required",
@@ -474,6 +476,8 @@ export default function NavigationPage() {
       });
       return;
     }
+
+    alert('Validation passed! Calling mutation...');
 
     const routeData = {
       startLocation: finalStartLoc,
