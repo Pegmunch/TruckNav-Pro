@@ -527,9 +527,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     fromLocation: !!fromLocation,
                     toLocation: !!toLocation,
                     isStartingJourney,
-                    disabled: !currentRoute || !selectedProfile || !fromLocation || !toLocation || isStartingJourney
+                    disabled: !currentRoute || !selectedProfile || isStartingJourney
                   });
-                  if (currentRoute && selectedProfile && fromLocation && toLocation) {
+                  if (currentRoute && selectedProfile) {
                     onStartNavigation();
                   } else {
                     toast({
@@ -539,7 +539,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     });
                   }
                 }}
-                disabled={!currentRoute || !selectedProfile || !fromLocation || !toLocation || isStartingJourney}
+                disabled={!currentRoute || !selectedProfile || isStartingJourney}
                 size="lg"
                 className="bg-green-600 hover:bg-green-700 text-white w-full font-semibold h-12"
                 data-testid="button-start-navigation-top"
