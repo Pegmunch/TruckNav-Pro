@@ -237,7 +237,7 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   next();
 };
 
-// CSRF protection using double submit cookie pattern - optimized for efficient validation with auto-recovery
+// CSRF protection using double submit cookie pattern - enhanced for concurrent request handling
 export const csrfProtection = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
   // Skip CSRF for GET, HEAD, and OPTIONS requests
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
@@ -260,12 +260,30 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   }
 
   const token = req.headers['x-csrf-token'] as string;
-  let cookieToken = req.session.csrfToken;
+  
+  // Enhanced token storage to handle concurrent requests
+  if (!req.session.csrfTokens) {
+    req.session.csrfTokens = [];
+  }
+  
+  // Initialize single token if using old format
+  if (req.session.csrfToken && !req.session.csrfTokens.length) {
+    req.session.csrfTokens = [{
+      token: req.session.csrfToken,
+      timestamp: Date.now()
+    }];
+    delete req.session.csrfToken; // Clean up old format
+  }
 
-  // SECURITY: No auto-recovery - only trust server-generated tokens
-  // If session token is missing, generate a new one but require client to retry
-  if (!cookieToken) {
-    console.warn(`[SECURITY] CSRF token missing from session - generating new token for IP: ${req.ip}`, {
+  // Clean up expired tokens (older than 10 minutes)
+  const now = Date.now();
+  req.session.csrfTokens = req.session.csrfTokens.filter((tokenInfo: any) => 
+    now - tokenInfo.timestamp < 600000
+  );
+
+  // If no valid tokens, generate a new one
+  if (!req.session.csrfTokens.length) {
+    console.warn(`[SECURITY] No valid CSRF tokens in session - generating new token for IP: ${req.ip}`, {
       sessionId: req.sessionID ? 'exists' : 'missing',
       url: req.url,
       method: req.method,
@@ -273,8 +291,11 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     });
     
     // Generate secure server token
-    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
-    const newToken = req.session.csrfToken;
+    const newToken = crypto.randomBytes(32).toString('hex');
+    req.session.csrfTokens = [{
+      token: newToken,
+      timestamp: now
+    }];
     
     // Save session synchronously and return the new token to client
     req.session.save((err: any) => {
@@ -295,13 +316,17 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     });
   }
 
-  // Standard token validation with detailed logging
-  if (!token || !cookieToken || token !== cookieToken) {
+  // Enhanced token validation - check against all valid tokens
+  const validToken = req.session.csrfTokens.find((tokenInfo: any) => 
+    tokenInfo.token === token
+  );
+
+  if (!token || !validToken) {
     console.warn(`[SECURITY] CSRF token validation failed - blocking request from IP: ${req.ip}`, {
       providedToken: token ? 'provided' : 'missing',
-      sessionToken: cookieToken ? 'exists' : 'missing',
+      validTokensCount: req.session.csrfTokens.length,
       sessionId: req.sessionID ? 'exists' : 'missing',
-      tokensMatch: token && cookieToken ? (token === cookieToken ? 'yes' : 'no') : 'n/a',
+      tokensMatch: token ? 'no' : 'n/a',
       url: req.url,
       method: req.method,
       timestamp: new Date().toISOString()

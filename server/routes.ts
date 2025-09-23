@@ -500,20 +500,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply API rate limiting to all API routes
   app.use("/api", apiRateLimit);
   
-  // CSRF token endpoint (must come before CSRF protection middleware) - optimized for reliability
+  // CSRF token endpoint (must come before CSRF protection middleware) - enhanced for concurrent requests
   app.get("/api/csrf-token", (req: any, res: any) => {
-    // Always ensure session exists and has a CSRF token
+    // Always ensure session exists
     if (!req.session) {
       console.error('[CSRF] No session available for token generation');
       return res.status(500).json({ error: 'Session not available' });
     }
 
-    // Always generate a fresh CSRF token for maximum security
+    // Initialize token pool if needed
+    if (!req.session.csrfTokens) {
+      req.session.csrfTokens = [];
+    }
+
+    // Clean up expired tokens (older than 10 minutes)
+    const now = Date.now();
+    req.session.csrfTokens = req.session.csrfTokens.filter((tokenInfo: any) => 
+      now - tokenInfo.timestamp < 600000
+    );
+
+    // Generate a fresh CSRF token and add it to the pool
     const newToken = randomBytes(32).toString('hex');
-    req.session.csrfToken = newToken;
-    console.log(`[CSRF] New token generated for session ${req.sessionID}: ${newToken.substring(0, 8)}...`);
+    req.session.csrfTokens.push({
+      token: newToken,
+      timestamp: now
+    });
+
+    // Keep only the last 5 tokens to prevent memory bloat
+    if (req.session.csrfTokens.length > 5) {
+      req.session.csrfTokens = req.session.csrfTokens.slice(-5);
+    }
+
+    console.log(`[CSRF] New token generated for session ${req.sessionID}: ${newToken.substring(0, 8)}... (pool size: ${req.session.csrfTokens.length})`);
     
-    // Reliable session saving with enhanced error handling and verification
+    // Reliable session saving with enhanced error handling
     req.session.save((err: any) => {
       if (err) {
         console.error('[CSRF] Failed to save session:', err);
@@ -524,27 +544,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Verify token was actually saved
-      const savedToken = req.session.csrfToken;
-      console.log(`[CSRF] Session saved successfully - token verified: ${savedToken === newToken ? 'MATCH' : 'MISMATCH'}`);
+      console.log(`[CSRF] Session saved successfully - token pool size: ${req.session.csrfTokens?.length || 0}`);
       
-      if (savedToken !== newToken) {
-        console.error('[CSRF] CRITICAL: Token mismatch after save!', {
-          generated: newToken.substring(0, 8),
-          saved: savedToken?.substring(0, 8) || 'none'
-        });
-      }
-      
-      // Set CSRF token in response header, body, and add cache control
-      res.setHeader('X-CSRF-Token', savedToken);
+      // Set CSRF token in response header and body, add cache control
+      res.setHeader('X-CSRF-Token', newToken);
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       
       res.json({ 
         success: true,
-        csrfToken: savedToken,
+        csrfToken: newToken,
         sessionId: req.sessionID,
+        tokenPoolSize: req.session.csrfTokens?.length || 0,
         timestamp: new Date().toISOString()
       });
     });
