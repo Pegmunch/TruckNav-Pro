@@ -244,14 +244,31 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     return next();
   }
 
+  // Check if session exists first
+  if (!req.session) {
+    console.error(`[SECURITY] No session found for CSRF validation from IP: ${req.ip}`, {
+      url: req.url,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(403).json({
+      error: 'Session required for CSRF validation',
+      code: 'NO_SESSION',
+      timestamp: new Date().toISOString()
+    });
+  }
+
   const token = req.headers['x-csrf-token'] as string;
-  const cookieToken = req.session?.csrfToken;
+  const cookieToken = req.session.csrfToken;
 
   if (!token || !cookieToken || token !== cookieToken) {
     console.warn(`[SECURITY] CSRF token mismatch from IP: ${req.ip}`, {
       providedToken: token ? 'provided' : 'missing',
       sessionToken: cookieToken ? 'exists' : 'missing',
+      sessionId: req.sessionID ? 'exists' : 'missing',
       url: req.url,
+      method: req.method,
       timestamp: new Date().toISOString()
     });
     
@@ -268,11 +285,13 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
 // Generate CSRF token
 export const generateCSRFToken = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
   if (!req.session) {
+    console.warn('[SECURITY] No session found for CSRF token generation');
     return next();
   }
 
   if (!req.session.csrfToken) {
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    console.log('[SECURITY] New CSRF token generated and stored in session');
   }
 
   // Set CSRF token in response header for client to use

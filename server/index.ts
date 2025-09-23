@@ -2,8 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-// Temporarily disable heavy middleware to reduce memory usage
-// import { applySecurityMiddleware, authRateLimit, apiRateLimit } from "./middleware/security";
+// Re-enable security middleware for stable navigation functionality
+import { applySecurityMiddleware, authRateLimit, apiRateLimit } from "./middleware/security";
 import { sessionConfig } from "./middleware/session-security";
 
 const app = express();
@@ -15,8 +15,8 @@ app.set('trust proxy', 1);
 // Enhanced session security with PostgreSQL store (must be before CSRF)
 app.use(session(sessionConfig));
 
-// Temporarily disable heavy security middleware to reduce memory usage
-// applySecurityMiddleware(app);
+// Re-enable security middleware for reliable navigation functionality
+applySecurityMiddleware(app);
 
 // Handle Stripe webhooks with raw body before JSON parsing
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
