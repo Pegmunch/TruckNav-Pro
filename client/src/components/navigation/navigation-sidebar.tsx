@@ -718,21 +718,16 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     Cancel Route
                   </Button>
                 ) : (
-                  <Button
-                    onClick={() => onPlanRoute('fastest')}
-                    disabled={!fromLocation || !toLocation || isCalculating}
-                    variant="default"
-                    size="lg"
-                    className="w-full automotive-button h-12"
-                    data-testid="button-plan-route"
-                  >
+                  <div className="text-center text-sm text-muted-foreground py-4">
                     {isCalculating ? (
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Planning route automatically...
+                      </div>
                     ) : (
-                      <RouteIcon className="w-5 h-5 mr-2" />
+                      "Route planning is automatic when locations are set"
                     )}
-                    {isCalculating ? "Calculating..." : "Plan Route"}
-                  </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1078,23 +1073,23 @@ const NavigationSidebar = memo(function NavigationSidebar({
               </Card>
             )}
 
-            {/* 6. Plan Route Section */}
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  <RouteIcon className="w-4 h-4 mr-2 text-blue-600" />
-                  Plan Route
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Plan Route Simulation Window */}
-                <div className="bg-background border rounded p-3 min-h-[100px]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-muted-foreground">Route Simulation</span>
-                    <Monitor className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  
-                  {currentRoute ? (
+            {/* 6. Route Status Section */}
+            {currentRoute && (
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center">
+                    <RouteIcon className="w-4 h-4 mr-2 text-green-600" />
+                    Route Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {/* Route Summary */}
+                  <div className="bg-background border rounded p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-muted-foreground">Current Route</span>
+                      <Monitor className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Distance:</span>
@@ -1112,67 +1107,64 @@ const NavigationSidebar = memo(function NavigationSidebar({
                         Route ready for navigation
                       </div>
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-16 text-xs text-muted-foreground">
-                      {fromLocation && toLocation ? 
-                        "Click Plan Route to calculate" : 
-                        "Set locations to plan route"
-                      }
-                    </div>
-                  )}
-                </div>
+                  </div>
 
-                {/* Route Preferences */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">
-                    Route Preference
-                  </Label>
-                  <ToggleGroup 
-                    type="single" 
-                    value={routePreference} 
-                    onValueChange={(value) => {
-                      if (value && (value === 'fastest' || value === 'eco' || value === 'avoid_tolls')) {
-                        setRoutePreference(value);
-                      }
-                    }}
-                    className="grid grid-cols-3 gap-1"
-                    data-testid="toggle-route-preferences"
-                  >
-                    <ToggleGroupItem 
-                      value="fastest" 
-                      className="text-xs py-1 px-2 h-8"
-                      data-testid="toggle-fastest"
+                  {/* Route Preferences */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      Route Preference
+                    </Label>
+                    <ToggleGroup 
+                      type="single" 
+                      value={routePreference} 
+                      onValueChange={(value) => {
+                        if (value && (value === 'fastest' || value === 'eco' || value === 'avoid_tolls')) {
+                          setRoutePreference(value);
+                        }
+                      }}
+                      className="grid grid-cols-3 gap-1"
+                      data-testid="toggle-route-preferences"
                     >
-                      Fastest
-                    </ToggleGroupItem>
-                    <ToggleGroupItem 
-                      value="eco" 
-                      className="text-xs py-1 px-2 h-8"
-                      data-testid="toggle-eco"
-                    >
-                      Eco
-                    </ToggleGroupItem>
-                    <ToggleGroupItem 
-                      value="avoid_tolls" 
-                      className="text-xs py-1 px-2 h-8"
-                      data-testid="toggle-avoid-tolls"
-                    >
-                      No Tolls
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
+                      <ToggleGroupItem 
+                        value="fastest" 
+                        className="text-xs py-1 px-2 h-8"
+                        data-testid="toggle-fastest"
+                      >
+                        Fastest
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="eco" 
+                        className="text-xs py-1 px-2 h-8"
+                        data-testid="toggle-eco"
+                      >
+                        Eco
+                      </ToggleGroupItem>
+                      <ToggleGroupItem 
+                        value="avoid_tolls" 
+                        className="text-xs py-1 px-2 h-8"
+                        data-testid="toggle-avoid-tolls"
+                      >
+                        No Tolls
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-                {/* Route planning is now automatic */}
-                {isCalculating && (
+            {/* Auto Route Planning Status */}
+            {isCalculating && !currentRoute && (
+              <Card className="bg-muted/30">
+                <CardContent className="p-4">
                   <div className="text-center py-2">
                     <div className="flex items-center justify-center text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Planning route...
+                      Planning route automatically...
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Vehicle Profile Status */}
             {selectedProfile && (
