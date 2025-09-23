@@ -699,19 +699,19 @@ export default function NavigationPage() {
     }
   };
 
-  // Unified sidebar toggle functionality - during navigation: open ↔ closed for max flexibility
+  // Unified sidebar toggle functionality - keep sidebar accessible during navigation
   const handleSidebarToggle = () => {
     if (isNavigating) {
-      // During navigation: clean toggle between fully open and fully closed only
-      if (sidebarState === 'closed') {
+      // During navigation: toggle between open and collapsed to keep it accessible
+      if (sidebarState === 'closed' || sidebarState === 'collapsed') {
         setSidebarState('open');
         // Auto-collapse expanded map when sidebar opens during navigation
         if (isMapExpanded) {
           setIsMapExpanded(false);
         }
       } else {
-        // Any other state (open/collapsed) → fully closed
-        setSidebarState('closed');
+        // Open → Collapsed (keep accessible, don't fully close)
+        setSidebarState('collapsed');
       }
     } else {
       // During planning: cycle through states for different layouts
