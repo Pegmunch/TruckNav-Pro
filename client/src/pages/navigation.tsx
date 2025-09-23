@@ -46,7 +46,7 @@ export default function NavigationPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   
   // Unified sidebar state management - single source of truth
-  const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>('closed');
+  const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>('open');
   
   // Computed states for backward compatibility
   const isSidebarOpen = sidebarState !== 'closed';
@@ -91,9 +91,15 @@ export default function NavigationPage() {
   const [isFullscreenNav, setIsFullscreenNav] = useState(false);
   
 
-  // Initialize sidebar state to closed for full-screen map by default
+  // Initialize sidebar state - keep open by default for route planning and navigation
   useEffect(() => {
-    setSidebarState('closed');
+    // On mobile, close sidebar initially for better map visibility
+    // On desktop, keep sidebar open for route planning and navigation controls
+    if (isMobile) {
+      setSidebarState('closed');
+    } else {
+      setSidebarState('open');
+    }
   }, [isMobile]);
 
   // Check legal consent and show popup if needed
