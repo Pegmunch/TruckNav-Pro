@@ -219,7 +219,7 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   if (!errors.isEmpty()) {
     console.warn(`[SECURITY] Request validation failed from IP: ${req.ip}`, {
       errorTypes: errors.array().map(e => e.type),
-      errorFields: errors.array().map(e => e.path),
+      errorFields: errors.array().map(e => (e as any).path),
       errorMessages: errors.array().map(e => e.msg),
       method: req.method,
       url: req.url,
@@ -274,11 +274,14 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     
     // Generate secure server token
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+    const newToken = req.session.csrfToken;
     
-    // Save session and return the new token to client
+    // Save session synchronously and return the new token to client
     req.session.save((err: any) => {
       if (err) {
         console.error('[CSRF] Failed to save new session token:', err);
+      } else {
+        console.log('[CSRF] New token saved successfully:', newToken.substring(0, 8) + '...');
       }
     });
     
@@ -286,7 +289,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     return res.status(403).json({
       error: 'CSRF token required - use the provided token for retry',
       code: 'CSRF_TOKEN_REQUIRED',
-      csrfToken: req.session.csrfToken,
+      csrfToken: newToken,
       hint: 'Include X-CSRF-Token header in your request',
       timestamp: new Date().toISOString()
     });
