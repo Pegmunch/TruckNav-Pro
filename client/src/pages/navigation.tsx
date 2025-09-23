@@ -92,6 +92,24 @@ export default function NavigationPage() {
   const [isFullscreenNav, setIsFullscreenNav] = useState(false);
   
 
+  // Centralized UI error recovery helper - ensures consistent state after failures
+  const recoverUIOnError = () => {
+    console.log('[UI Recovery] Restoring consistent UI state after error');
+    // Use appropriate sidebar state for device - collapsed on mobile, open on desktop
+    setSidebarState(isMobile ? 'collapsed' : 'open');
+    setIsMapExpanded(false);         // Collapse any expanded map to prevent overlay conflicts  
+    setShowRoutePreview(false);      // Clear any route preview overlay that might obscure sidebar
+    setPreviewRouteData(null);       // Clear preview data
+    setIsAlternativeRoutesOpen(false); // Close alternative routes panel
+    setPreviewRoute(null);           // Clear alternative route preview
+    setIsApplyingRoute(false);       // Reset route application state
+    // Reset navigation flags to safe defaults
+    setIsFullscreenNav(false);       // Exit fullscreen nav mode
+    setIsARMode(false);              // Exit AR mode
+    // Ensure mobile drawer follows sidebar state
+    setIsDrawerOpen(false);
+  };
+
   // Initialize sidebar state - keep accessible in all modes as the main control panel
   useEffect(() => {
     // Always keep sidebar accessible - open on desktop, collapsed on mobile for space
@@ -301,8 +319,8 @@ export default function NavigationPage() {
       console.error('Failed to activate journey:', error);
       // Reset navigation state on error
       setIsNavigating(false);
-      // Reset sidebar to consistent default state to prevent UI corruption
-      setSidebarState('open');
+      // Comprehensive UI recovery to prevent state corruption
+      recoverUIOnError();
       // Show user-friendly error message
       toast({
           title: "Failed to start navigation",
@@ -323,8 +341,8 @@ export default function NavigationPage() {
     },
     onError: (error) => {
       console.error('Failed to start journey:', error);
-      // Reset sidebar to consistent state on journey creation failure
-      setSidebarState('open');
+      // Comprehensive UI recovery on journey creation failure
+      recoverUIOnError();
       // Show user-friendly error message
       toast({
           title: "Failed to start journey",
@@ -351,6 +369,8 @@ export default function NavigationPage() {
     },
     onError: (error) => {
       console.error('Failed to complete journey:', error);
+      // Comprehensive UI recovery on journey completion failure
+      recoverUIOnError();
       // Show user-friendly error message
       toast({
           title: "Failed to stop navigation",
@@ -426,10 +446,8 @@ export default function NavigationPage() {
       }
       // Clear any existing route on error
       setCurrentRoute(null);
-      // Reset sidebar to prevent UI corruption on route calculation failures
-      setSidebarState('open');
-      // Reset map expansion state to prevent overlay issues
-      setIsMapExpanded(false);
+      // Comprehensive UI recovery on route calculation failure
+      recoverUIOnError();
       // Show user-friendly error message
       toast({
           title: "Route calculation failed",
@@ -557,6 +575,8 @@ export default function NavigationPage() {
       
     } catch (error) {
       console.error('Failed to apply alternative route:', error);
+      // Comprehensive UI recovery on alternative route application failure
+      recoverUIOnError();
       toast({
         title: "Failed to apply route",
         description: "Unable to switch to alternative route. Please try again.",
