@@ -606,7 +606,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           // If route exists and we can start navigation, do that instead of searching
-                          if (currentRoute && selectedProfile && fromLocation && toLocation) {
+                          if (currentRoute && selectedProfile && fromLocation && toLocation && !isNavigating && !isStartingJourney && !isCompletingJourney) {
                             onStartNavigation();
                           } else {
                             handleCurrentLocationSearch();
@@ -639,7 +639,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           // If route exists and we can start navigation, do that instead of searching
-                          if (currentRoute && selectedProfile && fromLocation && toLocation) {
+                          if (currentRoute && selectedProfile && fromLocation && toLocation && !isNavigating && !isStartingJourney && !isCompletingJourney) {
                             onStartNavigation();
                           } else {
                             handleDestinationSearch();
