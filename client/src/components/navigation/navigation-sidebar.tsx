@@ -584,7 +584,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </Button>
                 </div>
 
-                {/* START NAVIGATION Button - Always visible when both fields have text */}
+                {/* Plan Route Button - start navigation moved to bottom */}
                 {(currentLocationInput.trim() && destinationInput.trim()) && (
                   <Button
                     onClick={() => {
@@ -596,18 +596,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
                         onToLocationChange(destinationInput.trim());
                       }
                       
-                      // If no route exists, plan it first then start navigation
-                      if (!currentRoute) {
-                        onPlanRoute('fastest');
-                      } else {
-                        // Route exists, start navigation immediately
-                        onStartNavigation();
-                      }
+                      // Plan the route
+                      onPlanRoute('fastest');
                     }}
-                    disabled={isCalculating || isStartingJourney}
+                    disabled={isCalculating}
                     size="lg"
-                    className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold h-12"
-                    data-testid="button-start-navigation"
+                    className="w-full automotive-button bg-blue-600 hover:bg-blue-700 text-white font-bold h-12"
+                    data-testid="button-plan-route"
                   >
                     {isCalculating ? (
                       <>
@@ -616,8 +611,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       </>
                     ) : (
                       <>
-                        <Navigation className="w-5 h-5 mr-2" />
-                        <strong>START NAVIGATION</strong>
+                        <MapPin className="w-5 h-5 mr-2" />
+                        <strong>PLAN ROUTE</strong>
                       </>
                     )}
                   </Button>

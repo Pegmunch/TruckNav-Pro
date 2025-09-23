@@ -250,7 +250,7 @@ export default function ManualSearchPanel({
             </Button>
           </div>
           
-          {/* START NAVIGATION Button - Always visible at top */}
+          {/* Plan Route Button - renamed since start navigation moved to bottom */}
           <Button
             onClick={() => {
               // Compute the actual locations to use (prefer existing props, fallback to typed text)
@@ -273,8 +273,8 @@ export default function ManualSearchPanel({
               (currentLocationSearch.trim() && destinationSearch.trim())
             )}
             size="sm"
-            className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold disabled:bg-gray-400 disabled:text-gray-200"
-            data-testid="button-start-navigation"
+            className="w-full automotive-button bg-blue-600 hover:bg-blue-700 text-white font-bold disabled:bg-gray-400 disabled:text-gray-200"
+            data-testid="button-plan-route"
           >
             {isCalculating ? (
               <>
@@ -284,7 +284,7 @@ export default function ManualSearchPanel({
             ) : (
               <>
                 <CornerUpLeft className="w-4 h-4 mr-2" />
-                <strong>START NAVIGATION</strong>
+                <strong>PLAN ROUTE</strong>
               </>
             )}
           </Button>

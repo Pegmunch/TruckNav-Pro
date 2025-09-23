@@ -186,23 +186,23 @@ export function MobileNotificationCard({
       data-testid={`notification-card-${notification.id}`}
     >
       <CardContent className={cn(
-        "p-3 flex items-center space-x-3",
-        isMobile ? "min-h-[60px]" : "min-h-[64px]"
+        "p-2 flex items-center space-x-2",
+        isMobile ? "min-h-[44px]" : "min-h-[48px]"
       )}>
         {/* Icon */}
         <div className={cn(
-          "flex-shrink-0 rounded-full p-2 bg-background/80",
-          isMobile ? "w-8 h-8" : "w-10 h-10"
+          "flex-shrink-0 rounded-full p-1 bg-background/80",
+          isMobile ? "w-6 h-6" : "w-8 h-8"
         )}>
           {getIcon(notification.type)}
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex-1 min-w-0 space-y-0.5">
           <div className="flex items-center justify-between">
             <h4 className={cn(
               "font-medium text-foreground truncate",
-              isMobile ? "text-sm" : "text-base"
+              isMobile ? "text-xs" : "text-sm"
             )} data-testid={`notification-title-${notification.id}`}>
               {notification.title}
             </h4>
@@ -234,8 +234,8 @@ export function MobileNotificationCard({
           </div>
           
           <p className={cn(
-            "text-muted-foreground leading-relaxed",
-            isMobile ? "text-xs line-clamp-2" : "text-sm line-clamp-2"
+            "text-muted-foreground leading-tight",
+            isMobile ? "text-xs line-clamp-1" : "text-xs line-clamp-1"
           )} data-testid={`notification-description-${notification.id}`}>
             {notification.description}
           </p>
