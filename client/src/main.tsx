@@ -46,24 +46,14 @@ if (import.meta.env.DEV && document) {
   document.head.appendChild(buildMarker);
 }
 
-// Point 12: Add immediate execution test 
-console.log('🔧 main.tsx EXECUTING - JavaScript is working!');
-console.log('🔧 Environment:', import.meta.env);
-
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
 
 // Render app immediately
-console.log('🔧 About to create React root...');
-const rootElement = document.getElementById("root");
-console.log('🔧 Root element found:', !!rootElement);
-
-createRoot(rootElement!).render(
+createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
   </ErrorBoundary>
 );
-
-console.log('🔧 React render completed!');
