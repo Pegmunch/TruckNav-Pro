@@ -281,9 +281,9 @@ export const validatePagination = [
 export const validatePostcodeSearch = [
   query('postcode')
     .trim()
-    .isLength({ min: 3, max: 10 })
-    .withMessage('Postcode must be between 3 and 10 characters')
-    .matches(/^[A-Z0-9\s\-]{3,10}$/i)
+    .isLength({ min: 2, max: 10 })
+    .withMessage('Postcode must be between 2 and 10 characters')
+    .matches(/^[A-Z0-9\s\-]{2,10}$/i)
     .withMessage('Postcode contains invalid characters'),
   
   query('country')
@@ -301,9 +301,9 @@ export const validatePostcodeSearch = [
 export const validatePostcodeGeocoding = [
   body('postcode')
     .trim()
-    .isLength({ min: 3, max: 10 })
-    .withMessage('Postcode must be between 3 and 10 characters')
-    .matches(/^[A-Z0-9\s\-]{3,10}$/i)
+    .isLength({ min: 2, max: 10 })
+    .withMessage('Postcode must be between 2 and 10 characters')
+    .matches(/^[A-Z0-9\s\-]{2,10}$/i)
     .withMessage('Postcode contains invalid characters'),
   
   body('country')
