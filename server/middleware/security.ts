@@ -81,20 +81,20 @@ export const apiRateLimit = createRateLimiter(
 
 // Helmet security headers configuration
 export const securityHeaders = helmet({
-  contentSecurityPolicy: {
+  // Completely disable CSP in development to allow Vite's inline scripts and HMR
+  contentSecurityPolicy: process.env.NODE_ENV === 'development' ? false : {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: process.env.NODE_ENV === 'production' 
-        ? ["'self'", "https://js.stripe.com"]
-        : ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+      scriptSrc: ["'self'", "https://js.stripe.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://api.stripe.com", "wss:", "ws:"],
+      connectSrc: ["'self'", "https://api.stripe.com"],
       frameSrc: ["'self'", "https://js.stripe.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       childSrc: ["'self'"],
+      workerSrc: ["'self'", "blob:"], // For map libraries
     },
   },
   crossOriginEmbedderPolicy: false, // Needed for some maps functionality
