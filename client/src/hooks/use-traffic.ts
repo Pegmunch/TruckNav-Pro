@@ -41,7 +41,8 @@ export function useTrafficIncidents(
     queryKey: ["/api/traffic-incidents", bounds?.north, bounds?.south, bounds?.east, bounds?.west],
     queryFn: async () => {
       if (!bounds) {
-        throw new Error("Bounds are required for fetching traffic incidents");
+        // If no bounds provided, return empty array instead of throwing error
+        return [];
       }
       
       const params = new URLSearchParams({
@@ -56,12 +57,13 @@ export function useTrafficIncidents(
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch traffic incidents: ${response.status}`);
+        console.warn(`Failed to fetch traffic incidents: ${response.status}`);
+        return [];
       }
       
       return response.json();
     },
-    enabled: !!bounds && enabled,
+    enabled: enabled,
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
     retry: 2,
