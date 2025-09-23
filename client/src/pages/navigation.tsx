@@ -70,38 +70,6 @@ export default function NavigationPage() {
   const [showRoutePreview, setShowRoutePreview] = useState(false);
   const [previewRouteData, setPreviewRouteData] = useState<Route | null>(null);
   
-  // TEST: Add a temporary test button to show the preview overlay
-  const showTestPreview = () => {
-    const testRoute: Route = {
-      id: "test-route",
-      startLocation: "Test Start",
-      endLocation: "Test End", 
-      startCoordinates: { lat: 51.5074, lng: -0.1278 },
-      endCoordinates: { lat: 52.5074, lng: -1.1278 },
-      distance: 100,
-      duration: 120,
-      vehicleProfileId: "test",
-      routePath: [
-        { lat: 51.5074, lng: -0.1278 },
-        { lat: 52.5074, lng: -1.1278 }
-      ],
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [-0.1278, 51.5074],
-          [-1.1278, 52.5074]
-        ]
-      },
-      restrictionsAvoided: [],
-      facilitiesNearby: [],
-      createdAt: new Date(),
-      plannedJourney: null
-    };
-    
-    console.log('TEST: Manually showing route preview with test data');
-    setPreviewRouteData(testRoute);
-    setShowRoutePreview(true);
-  };
   
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
@@ -391,8 +359,12 @@ export default function NavigationPage() {
   // Route calculation mutation
   const calculateRouteMutation = useMutation({
     mutationFn: async (routeData: { startLocation: string; endLocation: string; vehicleProfileId?: string; routePreference?: string }) => {
+      console.log('calculateRouteMutation.mutationFn called with:', routeData);
       const response = await apiRequest("POST", "/api/routes/calculate", routeData);
-      return response.json();
+      console.log('API response status:', response.status);
+      const result = await response.json();
+      console.log('API response data:', result);
+      return result;
     },
     onSuccess: (route) => {
       // Trigger live notification for new route
@@ -1189,15 +1161,6 @@ export default function NavigationPage() {
         isApplying={isApplyingRoute}
         selectedRouteId={selectedAlternativeRouteId || undefined}
       />
-
-      {/* TEST: Temporary test button for preview overlay - remove after fixing */}
-      <button 
-        onClick={showTestPreview}
-        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded"
-        data-testid="button-test-preview"
-      >
-        TEST: Show Route Preview
-      </button>
 
       {/* Route Preview Overlay */}
       {showRoutePreview && previewRouteData && (
