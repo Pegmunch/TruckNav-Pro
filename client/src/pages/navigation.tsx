@@ -91,14 +91,14 @@ export default function NavigationPage() {
   const [isFullscreenNav, setIsFullscreenNav] = useState(false);
   
 
-  // Initialize sidebar state - keep open by default for route planning and navigation
+  // Initialize sidebar state - keep accessible in all modes as the main control panel
   useEffect(() => {
-    // On mobile, close sidebar initially for better map visibility
-    // On desktop, keep sidebar open for route planning and navigation controls
+    // Always keep sidebar accessible - open on desktop, collapsed on mobile for space
+    // Never fully hide the control panel as it's essential for all operations
     if (isMobile) {
-      setSidebarState('closed');
+      setSidebarState('collapsed');  // Collapsed but still accessible on mobile
     } else {
-      setSidebarState('open');
+      setSidebarState('open');       // Fully open on desktop
     }
   }, [isMobile]);
 
@@ -393,13 +393,13 @@ export default function NavigationPage() {
             }
           } else {
             if (isMobile) {
-              // On mobile, close drawer to show full map
-              setSidebarState('closed');
+              // On mobile, collapse sidebar but keep it accessible
+              setSidebarState('collapsed');
             } else {
               // Use existing in-page expansion logic for desktop
               setIsMapExpanded(true);
               if (window.innerWidth < 1024) {
-                setSidebarState('closed');
+                setSidebarState('collapsed');
               }
             }
           }
@@ -561,13 +561,13 @@ export default function NavigationPage() {
       }
     } else {
       if (isMobile) {
-        // On mobile, close drawer to show full map
-        setSidebarState('closed');
+        // On mobile, collapse sidebar but keep it accessible
+        setSidebarState('collapsed');
       } else {
         // Use existing in-page expansion logic for desktop
         setIsMapExpanded(true);
         if (window.innerWidth < 1024) {
-          setSidebarState('closed');
+          setSidebarState('collapsed');
         }
       }
     }
@@ -675,15 +675,15 @@ export default function NavigationPage() {
         }
         break;
       case 'open':
-        // Open → Collapsed (on desktop) or Closed (on mobile)
-        setSidebarState(isMobile ? 'closed' : 'collapsed');
+        // Open → Collapsed (keep control panel accessible)
+        setSidebarState('collapsed');
         break;
       case 'collapsed':
-        // Collapsed → Closed
-        setSidebarState('closed');
+        // Collapsed → Open (expand control panel)
+        setSidebarState('open');
         break;
       default:
-        setSidebarState('closed');
+        setSidebarState('open');
     }
   };
 
@@ -857,7 +857,7 @@ export default function NavigationPage() {
           </div>
 
           {/* Mobile Route Planning Drawer */}
-          <Drawer open={isMobileDrawerOpen} onOpenChange={(open) => setSidebarState(open ? 'open' : 'closed')}>
+          <Drawer open={isMobileDrawerOpen} onOpenChange={(open) => setSidebarState(open ? 'open' : 'collapsed')}>
             <DrawerContent>
               <DrawerHeader>
                 <DrawerTitle className="mobile-text-xl">Route Planning</DrawerTitle>
@@ -883,11 +883,11 @@ export default function NavigationPage() {
                   onToLocationChange={setToLocation}
                   onPlanRoute={() => {
                     handlePlanRoute();
-                    setSidebarState('closed'); // Close drawer after planning
+                    setSidebarState('collapsed'); // Collapse drawer but keep accessible
                   }}
                   onStartNavigation={() => {
                     handleStartNavigation();
-                    setSidebarState('closed'); // Close drawer when starting
+                    setSidebarState('collapsed'); // Collapse drawer but keep accessible
                   }}
                   onStopNavigation={handleStopNavigation}
                   currentRoute={currentRoute}
@@ -905,7 +905,7 @@ export default function NavigationPage() {
                   
                   // Sidebar state (always open in mobile drawer)
                   isOpen={true}
-                  onToggle={() => setSidebarState('closed')} // Close drawer when hamburger is clicked
+                  onToggle={() => setSidebarState('collapsed')} // Collapse drawer but keep accessible
                   isCollapsed={false}
                   onCollapseToggle={() => {}}
                   
@@ -1077,7 +1077,7 @@ export default function NavigationPage() {
                     setIsMapExpanded(true);
                     setIsDrawerOpen(false);
                     if (window.innerWidth < 1024) {
-                      setSidebarState('closed');
+                      setSidebarState('collapsed');
                     }
                   }}
                   className="flex-1 automotive-button automotive-text-base"
@@ -1148,7 +1148,7 @@ export default function NavigationPage() {
       <SettingsModal
         open={showVehicleSettings}
         onOpenChange={setShowVehicleSettings}
-        onCloseSidebar={isSidebarOpen ? () => setSidebarState('closed') : undefined}
+        onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
       />
     </div>
   );
