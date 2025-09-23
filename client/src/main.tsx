@@ -49,7 +49,7 @@ if (import.meta.env.DEV && document) {
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
 
-// Render app immediately
+// Render the actual TruckNav Pro app
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
