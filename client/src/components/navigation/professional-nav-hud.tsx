@@ -32,6 +32,7 @@ interface ProfessionalNavHUDProps {
   onToggleVoice?: () => void;
   onToggleFullscreen?: () => void;
   onCancelRoute?: () => void;
+  isCancellingRoute?: boolean;
   voiceEnabled?: boolean;
   isFullscreen?: boolean;
 }
@@ -111,6 +112,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   onToggleVoice,
   onToggleFullscreen,
   onCancelRoute,
+  isCancellingRoute = false,
   voiceEnabled = true,
   isFullscreen = false
 }: ProfessionalNavHUDProps) {
@@ -147,13 +149,14 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   const currentInstruction = instructions[currentInstructionIndex];
   const nextInstruction = instructions[currentInstructionIndex + 1];
 
-  if (!isNavigating || !currentRoute || !currentInstruction) {
+  // Always show HUD header when navigating - route may be loading
+  if (!isNavigating) {
     return null;
   }
 
-  const progress = Math.min((timeElapsed * 0.5) / (currentRoute.duration || 1), 1);
-  const remainingDistance = Math.max((currentRoute.distance || 0) - ((currentRoute.distance || 0) * progress), 0);
-  const remainingTime = Math.max((currentRoute.duration || 0) - Math.floor(timeElapsed / 60), 0);
+  const progress = currentRoute ? Math.min((timeElapsed * 0.5) / (currentRoute.duration || 1), 1) : 0;
+  const remainingDistance = currentRoute ? Math.max((currentRoute.distance || 0) - ((currentRoute.distance || 0) * progress), 0) : 0;
+  const remainingTime = currentRoute ? Math.max((currentRoute.duration || 0) - Math.floor(timeElapsed / 60), 0) : 0;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[70] bg-gradient-to-b from-gray-900/95 via-gray-900/90 to-transparent backdrop-blur-sm">
@@ -184,7 +187,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
         <div className="text-center">
           <div className="text-sm text-gray-300">Arrival Time</div>
           <div className="text-xl font-bold text-white">
-            {estimatedArrival?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+            {estimatedArrival?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) || '--:--'}
           </div>
           <div className="text-xs text-gray-400">
             {remainingTime}min remaining • {remainingDistance.toFixed(1)} miles
@@ -214,10 +217,11 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
           </Button>
           
           <Button
-            variant="ghost"
+            variant="destructive"
             size="sm"
             onClick={onCancelRoute}
-            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 border-red-500/30"
+            disabled={isCancellingRoute || !onCancelRoute}
+            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border border-red-500"
             data-testid="button-cancel-route"
             title="Cancel Navigation"
           >
@@ -226,74 +230,76 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
         </div>
       </div>
 
-      {/* Main Navigation Instruction Panel */}
-      <div className="px-4 py-6">
-        <div className="max-w-4xl mx-auto">
-          <Card className="bg-gray-900/90 border-gray-700/50 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-6">
-                {/* Direction Icon */}
-                <div className="flex-shrink-0 bg-gray-800/50 rounded-xl p-4 border border-gray-600/30">
-                  {getDirectionIcon(currentInstruction.direction)}
-                </div>
+      {/* Main Navigation Instruction Panel - Only show when instructions are available */}
+      {currentInstruction && (
+        <div className="px-4 py-6">
+          <div className="max-w-4xl mx-auto">
+            <Card className="bg-gray-900/90 border-gray-700/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-6">
+                  {/* Direction Icon */}
+                  <div className="flex-shrink-0 bg-gray-800/50 rounded-xl p-4 border border-gray-600/30">
+                    {getDirectionIcon(currentInstruction.direction)}
+                  </div>
 
-                {/* Instruction Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline space-x-3 mb-2">
-                    <span className="text-3xl font-bold text-white">
-                      {currentInstruction.distance < 1 
-                        ? `${Math.round(currentInstruction.distance * 1760)} yards`
-                        : `${currentInstruction.distance.toFixed(1)} miles`
-                      }
-                    </span>
-                    <Badge variant="secondary" className="bg-blue-600/20 text-blue-300 border-blue-500/30">
-                      {currentInstruction.estimatedTime}min
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-xl text-white font-medium mb-1 leading-tight">
-                    {currentInstruction.instruction}
-                  </div>
-                  
-                  {currentInstruction.roadName && (
-                    <div className="text-lg text-blue-300 font-medium">
-                      {currentInstruction.roadName}
+                  {/* Instruction Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline space-x-3 mb-2">
+                      <span className="text-3xl font-bold text-white">
+                        {currentInstruction.distance < 1 
+                          ? `${Math.round(currentInstruction.distance * 1760)} yards`
+                          : `${currentInstruction.distance.toFixed(1)} miles`
+                        }
+                      </span>
+                      <Badge variant="secondary" className="bg-blue-600/20 text-blue-300 border-blue-500/30">
+                        {currentInstruction.estimatedTime}min
+                      </Badge>
                     </div>
-                  )}
-                </div>
-
-                {/* Route Progress */}
-                <div className="flex-shrink-0 text-right">
-                  <div className="w-24 h-2 bg-gray-700 rounded-full mb-2">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-1000"
-                      style={{ width: `${progress * 100}%` }}
-                    />
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {Math.round(progress * 100)}% Complete
-                  </div>
-                </div>
-              </div>
-
-              {/* Next Instruction Preview */}
-              {nextInstruction && (
-                <div className="mt-4 pt-4 border-t border-gray-700/50">
-                  <div className="flex items-center space-x-3 opacity-70">
-                    <div className="w-6 h-6 flex-shrink-0">
-                      {getDirectionIcon(nextInstruction.direction)}
+                    
+                    <div className="text-xl text-white font-medium mb-1 leading-tight">
+                      {currentInstruction.instruction}
                     </div>
-                    <div className="text-sm text-gray-300">
-                      <span className="font-medium">Then in {nextInstruction.distance.toFixed(1)} miles:</span>
-                      <span className="ml-2">{nextInstruction.instruction}</span>
+                    
+                    {currentInstruction.roadName && (
+                      <div className="text-lg text-blue-300 font-medium">
+                        {currentInstruction.roadName}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Route Progress */}
+                  <div className="flex-shrink-0 text-right">
+                    <div className="w-24 h-2 bg-gray-700 rounded-full mb-2">
+                      <div 
+                        className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                        style={{ width: `${progress * 100}%` }}
+                      />
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {Math.round(progress * 100)}% Complete
                     </div>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                {/* Next Instruction Preview */}
+                {nextInstruction && (
+                  <div className="mt-4 pt-4 border-t border-gray-700/50">
+                    <div className="flex items-center space-x-3 opacity-70">
+                      <div className="w-6 h-6 flex-shrink-0">
+                        {getDirectionIcon(nextInstruction.direction)}
+                      </div>
+                      <div className="text-sm text-gray-300">
+                        <span className="font-medium">Then in {nextInstruction.distance.toFixed(1)} miles:</span>
+                        <span className="ml-2">{nextInstruction.instruction}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });

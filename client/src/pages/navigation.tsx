@@ -607,7 +607,7 @@ export default function NavigationPage() {
 
   // Handle cancel route - stop navigation
   const handleCancelRoute = () => {
-    if (activeJourney && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
+    if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
       toast({
         title: "Navigation cancelled",
@@ -831,6 +831,7 @@ export default function NavigationPage() {
                 onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                 onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
                 onCancelRoute={handleCancelRoute}
+                isCancellingRoute={completeJourneyMutation.isPending}
                 voiceEnabled={professionalVoiceEnabled}
                 isFullscreen={isFullscreenNav}
               />
@@ -1006,6 +1007,7 @@ export default function NavigationPage() {
                 onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                 onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
                 onCancelRoute={handleCancelRoute}
+                isCancellingRoute={completeJourneyMutation.isPending}
                 voiceEnabled={professionalVoiceEnabled}
                 isFullscreen={isFullscreenNav}
               />
