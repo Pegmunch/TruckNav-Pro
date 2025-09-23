@@ -1,26 +1,70 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Store CSRF token in memory only (no persistence to avoid session mismatches)
-let csrfToken: string | null = null;
+// Robust CSRF token management with expiration tracking and race condition prevention
+interface CSRFTokenInfo {
+  token: string;
+  timestamp: number;
+  maxAge: number; // in milliseconds
+}
 
-// Function to extract CSRF token from response headers
+let csrfTokenInfo: CSRFTokenInfo | null = null;
+let tokenFetchPromise: Promise<string | null> | null = null;
+const TOKEN_REFRESH_THRESHOLD = 30000; // Refresh if token expires within 30 seconds
+const DEFAULT_TOKEN_MAX_AGE = 3600000; // 1 hour default
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAYS = [1000, 2000, 5000]; // Progressive delay in ms
+
+// Enhanced token extraction with expiration tracking
 function extractCSRFToken(res: Response) {
   const token = res.headers.get('X-CSRF-Token');
-  if (token && token !== csrfToken) {
-    csrfToken = token;
-    console.log('[CSRF] Token updated successfully');
+  if (!token) return;
+  
+  // Parse max-age from Cache-Control or use default
+  const cacheControl = res.headers.get('Cache-Control');
+  let maxAge = DEFAULT_TOKEN_MAX_AGE;
+  
+  if (cacheControl) {
+    const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+    if (maxAgeMatch) {
+      maxAge = parseInt(maxAgeMatch[1]) * 1000; // Convert seconds to milliseconds
+    }
+  }
+  
+  const newTokenInfo = {
+    token,
+    timestamp: Date.now(),
+    maxAge
+  };
+  
+  if (!csrfTokenInfo || csrfTokenInfo.token !== token) {
+    csrfTokenInfo = newTokenInfo;
+    console.log('[CSRF] Token updated with expiration tracking:', {
+      expiresIn: Math.round(maxAge / 1000) + 's'
+    });
   }
 }
 
-// Function to get current CSRF token
-function getCSRFToken(): string | null {
-  return csrfToken;
+// Check if token is valid and not near expiration
+function isTokenValid(): boolean {
+  if (!csrfTokenInfo) return false;
+  
+  const now = Date.now();
+  const age = now - csrfTokenInfo.timestamp;
+  const timeUntilExpiry = csrfTokenInfo.maxAge - age;
+  
+  return timeUntilExpiry > TOKEN_REFRESH_THRESHOLD;
 }
 
-// Function to clear CSRF token
+// Get current valid CSRF token
+function getCSRFToken(): string | null {
+  return isTokenValid() ? csrfTokenInfo?.token || null : null;
+}
+
+// Clear CSRF token and reset fetch promise
 function clearCSRFToken() {
-  csrfToken = null;
-  console.log('[CSRF] Token cleared');
+  csrfTokenInfo = null;
+  tokenFetchPromise = null;
+  console.log('[CSRF] Token cleared and fetch promise reset');
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -30,107 +74,298 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Function to fetch fresh CSRF token
+// Robust CSRF token fetching with race condition prevention and retry logic
 async function fetchCSRFToken(): Promise<string | null> {
+  // Prevent concurrent token fetches
+  if (tokenFetchPromise) {
+    console.log('[CSRF] Waiting for existing token fetch');
+    return await tokenFetchPromise;
+  }
+  
+  tokenFetchPromise = performTokenFetch();
+  
   try {
-    const tokenResponse = await fetch('/api/csrf-token', {
-      credentials: 'include',
-      cache: 'no-cache'
-    });
-    if (tokenResponse.ok) {
-      extractCSRFToken(tokenResponse);
-      const token = getCSRFToken();
-      console.log('[CSRF] Fresh token fetched successfully');
-      return token;
-    } else {
-      console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
-      return null;
-    }
-  } catch (error) {
-    console.warn('[CSRF] Failed to fetch CSRF token:', error);
-    return null;
+    const result = await tokenFetchPromise;
+    return result;
+  } finally {
+    tokenFetchPromise = null;
   }
 }
+
+// Perform actual token fetch with comprehensive retry logic
+async function performTokenFetch(): Promise<string | null> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++) {
+    try {
+      console.log(`[CSRF] Fetching token (attempt ${attempt + 1}/${MAX_RETRY_ATTEMPTS})`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      
+      const tokenResponse = await fetch('/api/csrf-token', {
+        credentials: 'include',
+        cache: 'no-cache',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (tokenResponse.ok) {
+        extractCSRFToken(tokenResponse);
+        const token = getCSRFToken();
+        if (token) {
+          console.log('[CSRF] Fresh token fetched successfully');
+          return token;
+        } else {
+          throw new Error('Token extracted but not valid');
+        }
+      } else if (tokenResponse.status === 429) {
+        // Rate limited - handle Retry-After properly
+        const retryAfter = tokenResponse.headers.get('Retry-After');
+        let delay = RETRY_DELAYS[attempt] * 2;
+        
+        if (retryAfter) {
+          const parsedSeconds = parseInt(retryAfter);
+          if (!isNaN(parsedSeconds) && parsedSeconds > 0) {
+            // Retry-After in seconds
+            delay = Math.min(parsedSeconds * 1000, 60000); // Cap at 60s
+          } else {
+            // Could be HTTP-date, fall back to exponential backoff
+            const retryDate = new Date(retryAfter);
+            if (retryDate.getTime() > Date.now()) {
+              delay = Math.min(retryDate.getTime() - Date.now(), 60000);
+            }
+          }
+        }
+        
+        // Add jitter to prevent thundering herd
+        delay += Math.random() * 500;
+        console.warn(`[CSRF] Rate limited, waiting ${Math.round(delay)}ms before retry`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      } else {
+        throw new Error(`HTTP ${tokenResponse.status}: ${tokenResponse.statusText}`);
+      }
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`[CSRF] Token fetch attempt ${attempt + 1} failed:`, error);
+      
+      if (attempt < MAX_RETRY_ATTEMPTS - 1) {
+        let delay = RETRY_DELAYS[attempt] || 5000;
+        
+        // Handle network errors with longer delays
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          delay = Math.min(delay * 2, 30000); // Double delay for network errors, cap at 30s
+        }
+        
+        // Add jitter
+        delay += Math.random() * 1000;
+        console.log(`[CSRF] Retrying in ${Math.round(delay)}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  console.error('[CSRF] All token fetch attempts failed:', lastError);
+  return null;
+}
+
+// Ensure we have a valid token, fetching if necessary
+async function ensureValidToken(): Promise<string | null> {
+  if (isTokenValid()) {
+    return getCSRFToken();
+  }
+  
+  console.log('[CSRF] Token invalid or near expiration, fetching fresh token');
+  return await fetchCSRFToken();
+}
+
+// Export for use in initialization
+export { fetchCSRFToken as initializeCSRFToken };
 
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-  options?: { idempotencyKey?: string }
+  options?: { idempotencyKey?: string; skipCSRF?: boolean; timeout?: number }
 ): Promise<Response> {
-  // Always fetch fresh CSRF token for state-changing requests
-  if (method !== 'GET' && method !== 'OPTIONS') {
-    await fetchCSRFToken();
+  const isStatefulRequest = method !== 'GET' && method !== 'OPTIONS' && method !== 'HEAD';
+  const requestTimeout = options?.timeout || 30000; // 30s default timeout
+  
+  // Ensure we have a valid token for state-changing requests
+  if (isStatefulRequest && !options?.skipCSRF) {
+    const token = await ensureValidToken();
+    if (!token) {
+      throw new Error('Failed to obtain valid CSRF token after multiple attempts');
+    }
   }
 
-  // Build headers
-  const headers: Record<string, string> = {};
+  return await performRequestWithRetry(method, url, data, options, requestTimeout, 0);
+}
+
+// Perform request with comprehensive retry logic
+async function performRequestWithRetry(
+  method: string,
+  url: string,
+  data?: unknown | undefined,
+  options?: { idempotencyKey?: string; skipCSRF?: boolean; timeout?: number },
+  timeout: number = 30000,
+  retryCount: number = 0
+): Promise<Response> {
+  const isStatefulRequest = method !== 'GET' && method !== 'OPTIONS' && method !== 'HEAD';
+  const maxRetries = isStatefulRequest ? 2 : 3; // More conservative for mutations
+  
+  // Build headers with current token
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+  };
   
   if (data) {
     headers["Content-Type"] = "application/json";
   }
   
-  // Include CSRF token and idempotency key for state-changing requests
-  const currentToken = getCSRFToken();
-  if (method !== 'GET' && method !== 'OPTIONS' && currentToken) {
-    headers["X-CSRF-Token"] = currentToken; // Correct capitalization
+  // Add CSRF token for stateful requests
+  if (isStatefulRequest && !options?.skipCSRF) {
+    const currentToken = getCSRFToken();
+    if (currentToken) {
+      headers["X-CSRF-Token"] = currentToken;
+    } else {
+      console.warn('[CSRF] No valid token available for stateful request!');
+    }
     
     // Add idempotency key if provided
     if (options?.idempotencyKey) {
       headers["Idempotency-Key"] = options.idempotencyKey;
     }
-  } else if (method !== 'GET' && method !== 'OPTIONS') {
-    console.warn('[CSRF] No token available for state-changing request!');
   }
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  // Setup request with timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    console.warn(`[API] Request timeout after ${timeout}ms: ${method} ${url}`);
+  }, timeout);
 
-  // Extract CSRF token from response headers
-  extractCSRFToken(res);
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+      signal: controller.signal
+    });
 
-  // Handle CSRF token issues with retry
-  if (res.status === 403 && method !== 'GET' && method !== 'OPTIONS') {
-    console.log('[CSRF] Got 403, attempting retry with fresh token');
-    try {
-      // Clear current token and fetch fresh one
-      clearCSRFToken();
-      const newToken = await fetchCSRFToken();
+    clearTimeout(timeoutId);
+    
+    // Always extract CSRF token from response
+    extractCSRFToken(res);
+
+    // Handle specific error cases with retry logic
+    if (!res.ok) {
+      return await handleErrorResponse(res, method, url, data, options, timeout, retryCount, maxRetries);
+    }
+
+    console.log(`[API] Request successful: ${method} ${url} - ${res.status}`);
+    return res;
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`[API] Request aborted: ${method} ${url}`);
       
-      if (newToken) {
-        // Rebuild headers with fresh token
-        const retryHeaders: Record<string, string> = {};
-        if (data) {
-          retryHeaders["Content-Type"] = "application/json";
-        }
-        retryHeaders["X-CSRF-Token"] = newToken;
-        if (options?.idempotencyKey) {
-          retryHeaders["Idempotency-Key"] = options.idempotencyKey;
-        }
-        
-        const retryRes = await fetch(url, {
-          method,
-          headers: retryHeaders,
-          body: data ? JSON.stringify(data) : undefined,
-          credentials: "include",
-        });
-        
-        extractCSRFToken(retryRes);
-        console.log('[CSRF] Retry completed with status:', retryRes.status);
-        await throwIfResNotOk(retryRes);
-        return retryRes;
+      if (retryCount < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        console.log(`[API] Retrying aborted request in ${delay}ms (attempt ${retryCount + 1}/${maxRetries + 1})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
       }
-    } catch (retryError) {
-      console.warn('[CSRF] Failed to retry with fresh token:', retryError);
+    }
+    
+    throw error;
+  }
+}
+
+// Handle error responses with intelligent retry strategies
+async function handleErrorResponse(
+  res: Response,
+  method: string,
+  url: string,
+  data?: unknown | undefined,
+  options?: { idempotencyKey?: string; skipCSRF?: boolean; timeout?: number },
+  timeout: number = 30000,
+  retryCount: number = 0,
+  maxRetries: number = 2
+): Promise<Response> {
+  const isStatefulRequest = method !== 'GET' && method !== 'OPTIONS' && method !== 'HEAD';
+  
+  // Handle CSRF token issues (403, 419)
+  if ((res.status === 403 || res.status === 419) && isStatefulRequest && !options?.skipCSRF) {
+    console.log(`[CSRF] Got ${res.status}, attempting token refresh and retry`);
+    
+    if (retryCount < maxRetries) {
+      try {
+        // Clear current token and fetch fresh one
+        clearCSRFToken();
+        const newToken = await fetchCSRFToken();
+        
+        if (newToken) {
+          console.log('[CSRF] Fresh token obtained, retrying request');
+          return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
+        } else {
+          console.error('[CSRF] Failed to obtain fresh token for retry');
+        }
+      } catch (tokenError) {
+        console.error('[CSRF] Token refresh failed:', tokenError);
+      }
+    } else {
+      console.error(`[CSRF] Max retries reached for ${res.status} error`);
     }
   }
-
+  
+  // Handle rate limiting (429)
+  if (res.status === 429 && retryCount < maxRetries) {
+    const retryAfter = res.headers.get('Retry-After');
+    let delay = Math.min(2000 * Math.pow(2, retryCount), 30000);
+    
+    if (retryAfter) {
+      const parsedSeconds = parseInt(retryAfter);
+      if (!isNaN(parsedSeconds) && parsedSeconds > 0) {
+        delay = Math.min(parsedSeconds * 1000, 60000);
+      } else {
+        // Could be HTTP-date
+        const retryDate = new Date(retryAfter);
+        if (retryDate.getTime() > Date.now()) {
+          delay = Math.min(retryDate.getTime() - Date.now(), 60000);
+        }
+      }
+    }
+    
+    // Add jitter
+    delay += Math.random() * 500;
+    console.log(`[API] Rate limited, waiting ${Math.round(delay)}ms before retry (attempt ${retryCount + 1}/${maxRetries + 1})`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
+  }
+  
+  // Handle server errors (5xx) with exponential backoff
+  if (res.status >= 500 && res.status < 600 && retryCount < maxRetries) {
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 15000);
+    
+    console.log(`[API] Server error ${res.status}, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries + 1})`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
+  }
+  
+  // For all other errors, throw immediately
   await throwIfResNotOk(res);
-  return res;
+  return res; // This line should never be reached
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -182,10 +417,14 @@ export const queryClient = new QueryClient({
     },
     mutations: {
       retry: (failureCount, error) => {
-        // Conservative retry for mutations on mobile
+        // Conservative retry for mutations with improved error detection
         if (failureCount >= 2) return false;
-        if (error instanceof Error && error.message.includes('network')) {
-          return true;
+        if (error instanceof Error) {
+          const msg = error.message.toLowerCase();
+          // Retry on network errors, timeout, and connection issues
+          return msg.includes('network') || msg.includes('fetch') || 
+                 msg.includes('timeout') || msg.includes('connection') ||
+                 error.name === 'AbortError' || error instanceof TypeError;
         }
         return false;
       },

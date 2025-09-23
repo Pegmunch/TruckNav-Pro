@@ -6,21 +6,20 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
 import "./i18n/config";
 
-// Initialize CSRF token on app startup - ensures fresh session
+// Initialize CSRF token on app startup with robust error handling
 async function initializeCSRF() {
   try {
-    // Fetch fresh CSRF token for the new session
-    const response = await fetch('/api/csrf-token', {
-      credentials: 'include',
-      cache: 'no-cache'
-    });
-    if (response.ok) {
-      console.log('CSRF token initialized successfully');
+    const { initializeCSRFToken } = await import('./lib/queryClient');
+    const token = await initializeCSRFToken();
+    if (token) {
+      console.log('CSRF token initialized successfully with robust management');
     } else {
-      console.error('Failed to fetch initial CSRF token:', response.status);
+      console.warn('CSRF token initialization completed but no token received');
     }
   } catch (error) {
-    console.error("Failed to initialize CSRF token:", error);
+    console.error("Failed to initialize CSRF token with robust management:", error);
+    // No fallback needed - ensureValidToken will handle token fetching when needed
+    console.log('Robust token management will fetch tokens on-demand');
   }
 }
 
