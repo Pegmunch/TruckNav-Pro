@@ -455,7 +455,8 @@ export const applySecurityMiddleware = (app: express.Application) => {
   // SQL injection prevention
   app.use(preventSQLInjection);
   
-  // CSRF token generation - removed global middleware to prevent constant regeneration
+  // CSRF protection for all state-changing operations - applied globally for robustness
+  app.use(csrfProtection);
   
-  console.log('[SECURITY] All anti-hacking security features activated');
+  console.log('[SECURITY] All anti-hacking security features activated including CSRF protection');
 };

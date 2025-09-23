@@ -550,14 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
-  // Apply CSRF protection to all state-changing operations
-  app.use("/api", (req: any, res: any, next: any) => {
-    // Skip CSRF protection for route calculation endpoint temporarily
-    if (req.url === '/routes/calculate' || req.method === 'GET' || req.method === 'OPTIONS') {
-      return next();
-    }
-    return csrfProtection(req, res, next);
-  });
+  // CSRF protection is now handled globally by security middleware - no duplicate needed
 
   // Voice Transcription Endpoint - Whisper API fallback
   app.post("/api/voice/transcribe", upload.single('audio'), async (req: Request, res: Response) => {
@@ -1284,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route Monitoring
-  app.post("/api/routes/:id/monitor", validateId, csrfProtection, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/routes/:id/monitor", validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const route = await storage.getRoute(id);
@@ -1548,7 +1541,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/journeys/start", validateJourney, csrfProtection, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
     try {
       const { routeId } = req.body;
       const idempotencyKey = req.headers['idempotency-key'] as string;
@@ -1583,7 +1576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/journeys/:id/activate", validateNumericId, csrfProtection, validateRequest, async (req: Request, res: Response) => {
+  app.patch("/api/journeys/:id/activate", validateNumericId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const idempotencyKey = req.headers['idempotency-key'] as string;
