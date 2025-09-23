@@ -124,6 +124,8 @@ export default function NavigationPage() {
   useEffect(() => {
     if (!isConsentLoading && !hasAcceptedTerms) {
       setShowLegalPopup(true);
+    } else if (!isConsentLoading && hasAcceptedTerms) {
+      setShowLegalPopup(false);
     }
   }, [hasAcceptedTerms, isConsentLoading]);
   
