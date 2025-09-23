@@ -183,7 +183,7 @@ export default function NavigationPage() {
     timeSavingsAvailable,
     rerouteReason,
     isLoadingAlternatives,
-  } = useTrafficState(currentRoute?.id || null, selectedProfile);
+  } = useTrafficState(currentRoute?.id || null, activeProfile);
 
   // Get vehicle profiles
   const { data: profiles = [], isLoading: profilesLoading } = useQuery<VehicleProfile[]>({
@@ -386,7 +386,7 @@ export default function NavigationPage() {
 
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
     // Ensure we have a valid vehicle profile ID before planning route
-    if (!activeProfileId || !isValidUUID(activeProfileId)) {
+    if (!activeProfileId || activeProfileId.trim().length === 0) {
       toast({
         title: "Vehicle profile required",
         description: "Please select a valid vehicle profile before planning a route.",
@@ -421,7 +421,7 @@ export default function NavigationPage() {
     
     try {
       // Ensure we have a valid vehicle profile before applying alternative route
-      if (!selectedProfile?.id) {
+      if (!activeProfile?.id) {
         toast({
           title: "Vehicle profile required",
           description: "Please select a vehicle profile before applying alternative routes.",
@@ -432,7 +432,7 @@ export default function NavigationPage() {
 
       // Apply the alternative route
       // Ensure we have a valid vehicle profile ID
-      if (!activeProfileId || !isValidUUID(activeProfileId)) {
+      if (!activeProfileId || activeProfileId.trim().length === 0) {
         toast({
           title: "Vehicle profile required",
           description: "Please select a valid vehicle profile before applying routes.",
