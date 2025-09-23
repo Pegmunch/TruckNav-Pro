@@ -68,14 +68,14 @@ async function callGraphHopperAPI(
         ghVehicle = 'car';
         customModel = {
           priority: [
-            { if: "road_class == MOTORWAY", multiply_by: "1.2" },
-            { if: "road_class == TRUNK", multiply_by: "1.1" },
-            { if: "road_class == PRIMARY", multiply_by: "1.0" },
-            { if: "road_class == SECONDARY", multiply_by: "0.9" },
-            { if: "road_class == RESIDENTIAL", multiply_by: "0.7" }
+            { if: "road_class == MOTORWAY", multiply_by: 1.2 },
+            { if: "road_class == TRUNK", multiply_by: 1.1 },
+            { if: "road_class == PRIMARY", multiply_by: 1.0 },
+            { if: "road_class == SECONDARY", multiply_by: 0.9 },
+            { if: "road_class == RESIDENTIAL", multiply_by: 0.7 }
           ],
           speed: [
-            { if: "true", limit_to: "60" }
+            { if: "true", limit_to: 60 }
           ]
         };
         break;
@@ -86,17 +86,19 @@ async function callGraphHopperAPI(
         const maxSpeed = vehicleProfile.maxSpeed || 70;
         customModel = {
           priority: [
-            { if: "road_class == MOTORWAY", multiply_by: "1.3" },
-            { if: "road_class == TRUNK", multiply_by: "1.2" },
-            { if: "road_class == PRIMARY", multiply_by: "1.1" },
-            { if: "road_class == SECONDARY", multiply_by: "0.8" },
-            { if: "road_class == RESIDENTIAL", multiply_by: "0.3" },
-            { if: "road_class == LIVING_STREET", multiply_by: "0.1" }
+            { if: "road_class == MOTORWAY", multiply_by: 1.3 },
+            { if: "road_class == TRUNK", multiply_by: 1.2 },
+            { if: "road_class == PRIMARY", multiply_by: 1.1 },
+            { if: "road_class == SECONDARY", multiply_by: 0.8 },
+            { if: "road_class == RESIDENTIAL", multiply_by: vehicleProfile.canUseResidentialRoads ? 0.3 : 0.05 },
+            { if: "road_class == LIVING_STREET", multiply_by: 0.1 },
+            { if: "toll == yes", multiply_by: vehicleProfile.type === 'class_2_lorry' || vehicleProfile.type === '7_5_tonne' ? 0.2 : 1.0 },
+            { if: "road_environment == FERRY", multiply_by: vehicleProfile.type === 'class_2_lorry' || vehicleProfile.type === '7_5_tonne' ? 0.1 : 1.0 }
           ],
           speed: [
-            { if: "true", limit_to: maxSpeed.toString() }
+            { if: "true", limit_to: maxSpeed }
           ],
-          distance_influence: "70"
+          distance_influence: 70
         };
         break;
     }
@@ -117,31 +119,15 @@ async function callGraphHopperAPI(
     // Add second point
     params.append('point', `${endCoords.lat},${endCoords.lng}`);
 
-    // Add custom model if needed for truck routing
+    // Add custom model and disable Contraction Hierarchies for truck routing
     if (Object.keys(customModel).length > 0) {
       params.append('custom_model', JSON.stringify(customModel));
+      // CRITICAL: Disable CH so custom_model is actually used
+      params.append('ch.disable', 'true');
     }
 
-    // Add vehicle restrictions for trucks (using car profile with custom model)
-    if (vehicleProfile.type === 'class_1_lorry' || vehicleProfile.type === 'class_2_lorry' || vehicleProfile.type === '7_5_tonne') {
-      if (heightMeters > 0) params.append('height', heightMeters.toFixed(2));
-      if (widthMeters > 0) params.append('width', widthMeters.toFixed(2));
-      if (weightKg > 0) params.append('weight', Math.round(weightKg).toString());
-      if (lengthMeters > 0) params.append('length', lengthMeters.toFixed(2));
-      
-      // Add truck-specific avoidances based on vehicle class
-      if (!vehicleProfile.canUseResidentialRoads) {
-        params.append('avoid', 'residential');
-      }
-      if (!vehicleProfile.canUseMotorways) {
-        params.append('avoid', 'motorway');
-      }
-      // Avoid tolls and ferries for commercial vehicles by default
-      if (vehicleProfile.type === 'class_2_lorry' || vehicleProfile.type === '7_5_tonne') {
-        params.append('avoid', 'toll');
-        params.append('avoid', 'ferry');
-      }
-    }
+    // REMOVED: Invalid GraphHopper parameters (height, width, weight, length, avoid)
+    // These constraints are now handled via custom_model priority rules above
 
     params.append('key', apiKey);
 

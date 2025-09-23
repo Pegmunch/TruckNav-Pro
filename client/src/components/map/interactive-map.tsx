@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from "@/components/ui/button";
@@ -697,7 +697,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
           url={preferences.mapViewMode === 'satellite' 
-            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed
+            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}.png' // Esri World Imagery - properly licensed
             : 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
           }
           attribution={preferences.mapViewMode === 'satellite'
@@ -705,6 +705,62 @@ const InteractiveMap = memo(function InteractiveMap({
             : '© OpenStreetMap contributors'
           }
         />
+        
+        {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
+        {currentRoute && currentRoute.coordinates && currentRoute.coordinates.length > 0 && (
+          <>
+            {/* Main route polyline */}
+            <Polyline
+              positions={currentRoute.coordinates.map(coord => [coord.lat, coord.lng])}
+              color="#2563eb"
+              weight={6}
+              opacity={0.8}
+              smoothFactor={1}
+              data-testid="route-polyline"
+            />
+            
+            {/* Start marker */}
+            {currentRoute.startCoordinates && (
+              <Marker 
+                position={[currentRoute.startCoordinates.lat, currentRoute.startCoordinates.lng]}
+                data-testid="route-start-marker"
+              >
+                <Popup>
+                  <div className="text-sm font-medium">
+                    Start: {currentRoute.startLocation}
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+            
+            {/* End marker */}
+            {currentRoute.endCoordinates && (
+              <Marker 
+                position={[currentRoute.endCoordinates.lat, currentRoute.endCoordinates.lng]}
+                data-testid="route-end-marker"
+              >
+                <Popup>
+                  <div className="text-sm font-medium">
+                    End: {currentRoute.endLocation}
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+          </>
+        )}
+        
+        {/* Vehicle position marker during navigation */}
+        {vehiclePosition && currentRoute && (
+          <Marker 
+            position={vehiclePosition}
+            data-testid="vehicle-position-marker"
+          >
+            <Popup>
+              <div className="text-sm font-medium">Current Position</div>
+            </Popup>
+          </Marker>
+        )}
+        
         <MapEventHandler />
       </MapContainer>
       
