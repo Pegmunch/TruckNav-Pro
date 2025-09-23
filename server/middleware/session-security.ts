@@ -3,38 +3,54 @@
 
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
+import MemoryStore from 'memorystore';
 import { neon } from '@neondatabase/serverless';
 import crypto from 'crypto';
 
 const PostgresStore = connectPgSimple(session);
+const MemStore = MemoryStore(session);
 
-// Ensure database connection exists for session store
-if (!process.env.DATABASE_URL) {
-  throw new Error('[SESSION] DATABASE_URL is required for secure session storage');
-}
+// Choose session store based on environment
+const getSessionStore = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // Ensure database connection exists for session store in production
+    if (!process.env.DATABASE_URL) {
+      throw new Error('[SESSION] DATABASE_URL is required for secure session storage');
+    }
+    
+    return new PostgresStore({
+      conString: process.env.DATABASE_URL!,
+      createTableIfMissing: true,
+      tableName: 'user_sessions',
+      pruneSessionInterval: 60 * 15,
+      ttl: 60 * 60 * 24,
+      schemaName: 'public',
+    });
+  } else {
+    // Use MemoryStore in development for session stability
+    console.log('[SESSION] Using MemoryStore for development - sessions will be stable');
+    return new MemStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
+  }
+};
 
-// Create database connection for session store
-let sql: any;
-try {
-  sql = neon(process.env.DATABASE_URL!);
-} catch (error) {
-  console.error('[SESSION] Database connection failed:', error);
-  throw new Error('[SESSION] Failed to connect to database for session storage');
-}
+// Use stable SESSION_SECRET
+const getSessionSecret = () => {
+  if (process.env.SESSION_SECRET) {
+    return process.env.SESSION_SECRET;
+  }
+  // Stable dev secret instead of random on each restart  
+  return process.env.NODE_ENV === 'production' 
+    ? crypto.randomBytes(64).toString('hex')
+    : 'dev-session-secret-stable-for-csrf-tokens-trucknav-pro';
+};
 
-// Enhanced session configuration with maximum security
+// Enhanced session configuration with stability for development
 export const sessionConfig = {
-  store: new PostgresStore({
-    conString: process.env.DATABASE_URL!,
-    createTableIfMissing: true,
-    tableName: 'user_sessions',
-    // Enhanced security settings
-    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
-    ttl: 60 * 60 * 24, // Session TTL of 24 hours
-    schemaName: 'public',
-  }),
+  store: getSessionStore(),
   
-  secret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
+  secret: getSessionSecret(),
   
   name: 'trucknav_session', // Don't use default session name for security
   
@@ -45,7 +61,7 @@ export const sessionConfig = {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true, // Prevent XSS access to cookies
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: 'strict' as const, // CSRF protection
+    sameSite: (process.env.NODE_ENV === 'production' ? 'strict' : 'lax') as const, // Lax in dev for stability
     domain: undefined, // Let the browser set the domain
     path: '/', // Available across entire app
   },
