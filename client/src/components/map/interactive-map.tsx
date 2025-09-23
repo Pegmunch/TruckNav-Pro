@@ -707,11 +707,11 @@ const InteractiveMap = memo(function InteractiveMap({
         />
         
         {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
-        {currentRoute && currentRoute.coordinates && currentRoute.coordinates.length > 0 && (
+        {currentRoute && currentRoute.routePath && currentRoute.routePath.length > 0 && (
           <>
             {/* Main route polyline */}
             <Polyline
-              positions={currentRoute.coordinates.map(coord => [coord.lat, coord.lng])}
+              positions={currentRoute.routePath.map((coord: { lat: number; lng: number }) => [coord.lat, coord.lng])}
               color="#2563eb"
               weight={6}
               opacity={0.8}

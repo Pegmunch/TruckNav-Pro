@@ -38,8 +38,8 @@ export default function NavigationPage() {
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
-  const [fromLocation, setFromLocation] = useState("Luton LU1 Distribution Centre");
-  const [toLocation, setToLocation] = useState("Milton Keynes MK1 Logistics Hub");
+  const [fromLocation, setFromLocation] = useState("Current Location");
+  const [toLocation, setToLocation] = useState("");
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
@@ -95,7 +95,7 @@ export default function NavigationPage() {
     }
   }, [hasAcceptedTerms, isConsentLoading]);
   
-  // Check AR support on component mount
+  // Check AR support and auto-detect GPS location on component mount
   useEffect(() => {
     const checkARSupport = async () => {
       try {
@@ -112,7 +112,39 @@ export default function NavigationPage() {
       }
     };
     
+    const autoDetectLocation = async () => {
+      if (!navigator.geolocation) return;
+      
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+          });
+        });
+        
+        // Get address from coordinates using postcode API
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(`/api/postcodes/reverse?lat=${latitude}&lng=${longitude}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.length > 0) {
+              setFromLocation(data[0].formatted || 'Current Location');
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to get address from coordinates:', error);
+          setFromLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        }
+      } catch (error) {
+        console.warn('Auto GPS location detection failed:', error);
+      }
+    };
+    
     checkARSupport();
+    autoDetectLocation();
   }, []);
   
   // Handle AR mode toggle
