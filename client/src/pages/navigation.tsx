@@ -680,25 +680,92 @@ export default function NavigationPage() {
     }
   };
 
-  const handleStartNavigation = () => {
-    if (currentRoute) {
+  // Production-grade robust navigation flow
+  const handleStartNavigation = async () => {
+    // Comprehensive validation
+    if (!fromLocation || !toLocation) {
+      toast({
+        title: "Missing locations",
+        description: "Please enter both start and destination locations.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedProfile) {
+      toast({
+        title: "Vehicle profile required",
+        description: "Please select a vehicle profile before starting navigation.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (startJourneyMutation.isPending || activateJourneyMutation.isPending) {
+      return; // Prevent double-clicks/race conditions
+    }
+
+    try {
       // Open sidebar for navigation preparation
       setSidebarState('open');
-      
-      // If we already have a planned journey from route calculation, activate it
-      if (activeJourney && activeJourney.status === 'planned') {
-        // Activate the existing planned journey to 'active' status
-        activateJourneyMutation.mutate(activeJourney.id);
-      } else {
-        // Create a new journey for this route if none exists (will auto-activate)
-        startJourneyMutation.mutate(currentRoute.id);
+
+      // If no route exists, plan it first then start navigation
+      if (!currentRoute) {
+        await new Promise<void>((resolve, reject) => {
+          const unsubscribe = calculateRouteMutation.mutateAsync({
+            fromLocation,
+            toLocation,
+            vehicleProfile: selectedProfile,
+            routePreference: 'fastest'
+          }).then((routeData) => {
+            unsubscribe;
+            resolve();
+          }).catch((error) => {
+            console.error('Route planning failed:', error);
+            recoverUIOnError();
+            toast({
+              title: "Route planning failed",
+              description: "Unable to calculate route. Please check locations and try again.",
+              variant: "destructive"
+            });
+            reject(error);
+          });
+        });
       }
-      
-      // Auto-expand map after a short delay for smooth transition
+
+      // Route should now exist, start navigation
+      if (!currentRoute) {
+        throw new Error('Route calculation failed');
+      }
+
+      // Start or activate journey based on current state
+      if (activeJourney && activeJourney.status === 'planned') {
+        // Activate existing planned journey
+        await activateJourneyMutation.mutateAsync(activeJourney.id);
+      } else {
+        // Create new journey (will auto-activate)
+        await startJourneyMutation.mutateAsync(currentRoute.id);
+      }
+
+      // Success - expand map after navigation starts
       setTimeout(() => {
         setIsMapExpanded(true);
-        // Keep sidebar open during navigation - user can manually close if needed
       }, 300);
+
+      toast({
+        title: "Navigation started",
+        description: "Route guidance is now active.",
+      });
+
+    } catch (error) {
+      console.error('Navigation start failed:', error);
+      recoverUIOnError();
+      
+      toast({
+        title: "Navigation failed",
+        description: "Unable to start navigation. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
