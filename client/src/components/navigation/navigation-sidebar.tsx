@@ -736,9 +736,25 @@ Calculating route...
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Route ready - Use green button above to start
                     </div>
+                  ) : fromLocation && toLocation ? (
+                    <div className="space-y-2" data-testid="status-route-awaiting">
+                      <div className="text-sm text-muted-foreground">
+                        Locations set - ready to plan route
+                      </div>
+                      <Button
+                        onClick={() => onPlanRoute(routePreference)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full automotive-button"
+                        data-testid="button-plan-route"
+                      >
+                        <RouteIcon className="w-4 h-4 mr-2" />
+                        Plan Route
+                      </Button>
+                    </div>
                   ) : (
                     <div data-testid="status-route-awaiting">
-Set both locations then press Plan Route or Enter
+                      Set both locations to plan route
                     </div>
                   )}
                 </div>
