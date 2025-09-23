@@ -474,6 +474,12 @@ export default function NavigationPage() {
       selectedProfile: selectedProfile?.id 
     });
     
+    // Guard against duplicate requests while calculating
+    if (calculateRouteMutation.isPending) {
+      console.log('Route planning blocked: Already calculating');
+      return;
+    }
+    
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
       console.log('Route planning blocked: No valid vehicle profile');
@@ -643,21 +649,9 @@ export default function NavigationPage() {
     }
   }, [fromLocation, toLocation]);
 
-  // Auto-plan route when locations and profile are set
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (fromLocation && toLocation && activeProfileId && !calculateRouteMutation.isPending && !currentRoute) {
-        console.log('[AUTO-PLAN] Triggering automatic route planning:', {
-          fromLocation,
-          toLocation,
-          activeProfileId
-        });
-        handlePlanRoute('fastest'); // Use fastest as default for auto-planning
-      }
-    }, 500); // Debounce 500ms to avoid excessive calculations
-
-    return () => clearTimeout(timer);
-  }, [fromLocation, toLocation, activeProfileId, calculateRouteMutation.isPending, currentRoute]);
+  // REMOVED: Auto-plan route effect - now requires explicit user action
+  // User should press Enter or click Plan Route button to trigger route calculation
+  // This prevents repeated notifications and allows proper routing to Start Navigation
 
   // Effect to automatically show alternative routes when they become available
   useEffect(() => {
@@ -782,6 +776,12 @@ export default function NavigationPage() {
       setTimeout(() => {
         setIsMapExpanded(true);
       }, 300);
+
+      // Dispatch navigation started event for notification system
+      const navigationStartedEvent = new CustomEvent('navigation:started', {
+        detail: { route: currentRoute, profile: selectedProfile }
+      });
+      window.dispatchEvent(navigationStartedEvent);
 
       toast({
         title: "Navigation started",

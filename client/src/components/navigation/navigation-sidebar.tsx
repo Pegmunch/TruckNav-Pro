@@ -597,7 +597,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleCurrentLocationSearch();
+                          // If route exists and we can start navigation, do that instead of searching
+                          if (currentRoute && selectedProfile && fromLocation && toLocation) {
+                            onStartNavigation();
+                          } else {
+                            handleCurrentLocationSearch();
+                          }
                         }
                       }}
                       className="automotive-input"
@@ -625,7 +630,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleDestinationSearch();
+                          // If route exists and we can start navigation, do that instead of searching
+                          if (currentRoute && selectedProfile && fromLocation && toLocation) {
+                            onStartNavigation();
+                          } else {
+                            handleDestinationSearch();
+                          }
                         }
                       }}
                       className="automotive-input"
@@ -711,7 +721,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   {isCalculating ? (
                     <div className="flex items-center justify-center" data-testid="status-route-calculating">
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Planning route automatically...
+Calculating route...
                     </div>
                   ) : currentRoute ? (
                     <div className="flex items-center justify-center text-green-600" data-testid="status-route-ready">
@@ -720,7 +730,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     </div>
                   ) : (
                     <div data-testid="status-route-awaiting">
-                      Set both locations to calculate route automatically
+Set both locations then press Plan Route or Enter
                     </div>
                   )}
                 </div>
@@ -1154,7 +1164,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   <div className="text-center py-2">
                     <div className="flex items-center justify-center text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Planning route automatically...
+Calculating route...
                     </div>
                   </div>
                 </CardContent>

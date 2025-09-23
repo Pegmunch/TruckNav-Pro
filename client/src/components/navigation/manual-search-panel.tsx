@@ -24,6 +24,9 @@ interface ManualSearchPanelProps {
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
   onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => void;
+  onStartNavigation?: () => void;
+  currentRoute?: any | null;
+  selectedProfile?: any | null;
   isCalculating: boolean;
   className?: string;
 }
@@ -34,6 +37,9 @@ export default function ManualSearchPanel({
   onFromLocationChange,
   onToLocationChange,
   onPlanRoute,
+  onStartNavigation,
+  currentRoute,
+  selectedProfile,
   isCalculating,
   className
 }: ManualSearchPanelProps) {
@@ -232,7 +238,12 @@ export default function ManualSearchPanel({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    handleCurrentLocationSearch();
+                    // If route exists and we can start navigation, do that instead of planning
+                    if (currentRoute && selectedProfile && fromLocation && toLocation && onStartNavigation) {
+                      onStartNavigation();
+                    } else {
+                      handleCurrentLocationSearch();
+                    }
                   }
                 }}
                 className="automotive-input scalable-control-button"
@@ -250,7 +261,7 @@ export default function ManualSearchPanel({
             </Button>
           </div>
           
-          {/* Route planning is now automatic when locations are set */}
+          {/* Route calculation available after locations are set */}
           {isCalculating && (
             <div className="text-center py-2">
               <div className="flex items-center justify-center text-sm text-muted-foreground">
@@ -321,7 +332,12 @@ export default function ManualSearchPanel({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    handleDestinationSearch();
+                    // If route exists and we can start navigation, do that instead of planning
+                    if (currentRoute && selectedProfile && fromLocation && toLocation && onStartNavigation) {
+                      onStartNavigation();
+                    } else {
+                      handleDestinationSearch();
+                    }
                   }
                 }}
                 className="automotive-input scalable-control-button"

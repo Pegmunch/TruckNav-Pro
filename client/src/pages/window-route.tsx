@@ -72,6 +72,9 @@ export default function RouteWindow() {
           onFromLocationChange={(value) => handleLocationChange(value, "")}
           onToLocationChange={(value) => handleLocationChange("", value)}
           onPlanRoute={handlePlanRoute}
+          onStartNavigation={handleStartNavigation}
+          currentRoute={currentRoute}
+          selectedProfile={selectedProfile}
           isCalculating={false}
         />
 

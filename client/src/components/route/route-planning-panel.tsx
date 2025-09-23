@@ -552,12 +552,12 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
             </div>
           )}
 
-          {/* Route planning is now automatic - Start Navigation button is in the sidebar */}
+          {/* Route calculation available - Start Navigation button is in the sidebar */}
           {isCalculating && (
             <div className="text-center py-3">
               <div className="flex items-center justify-center text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Calculating truck-safe route automatically...
+Calculating truck-safe route...
               </div>
             </div>
           )}
@@ -567,7 +567,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
             <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
               <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm font-medium">Truck-safe route planned</span>
+                <span className="text-sm font-medium">Truck-safe route ready</span>
               </div>
               <div className="text-xs text-green-700 dark:text-green-300 mt-1">
                 Ready for navigation
