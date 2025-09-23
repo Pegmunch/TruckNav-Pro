@@ -1526,7 +1526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/journeys/start", validateJourney, csrfProtection, validateRequest, async (req: Request, res: Response) => {
     try {
       const { routeId } = req.body;
       const idempotencyKey = req.headers['idempotency-key'] as string;
@@ -1561,7 +1561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/journeys/:id/activate", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+  app.patch("/api/journeys/:id/activate", validateNumericId, csrfProtection, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const idempotencyKey = req.headers['idempotency-key'] as string;
