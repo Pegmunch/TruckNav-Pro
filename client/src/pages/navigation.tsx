@@ -7,6 +7,8 @@ import { Truck, X, Menu, MapPin, Settings, Search, Camera } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
+import EnhancedRealisticMap from "@/components/map/enhanced-realistic-map";
+import ProfessionalNavHUD from "@/components/navigation/professional-nav-hud";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
 import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
@@ -81,6 +83,12 @@ export default function NavigationPage() {
   
   // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
   const [showVehicleSettings, setShowVehicleSettings] = useState(false);
+  
+  // Professional navigation state
+  const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [currentGPSLocation, setCurrentGPSLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
+  const [professionalVoiceEnabled, setProfessionalVoiceEnabled] = useState(true);
+  const [isFullscreenNav, setIsFullscreenNav] = useState(false);
   
 
   // Initialize sidebar state to closed for full-screen map by default
@@ -801,23 +809,34 @@ export default function NavigationPage() {
               />
             )}
             
-            {/* Regular Interactive Map */}
+            {/* Professional Navigation HUD - Mobile */}
+            {isNavigating && !isARMode && (
+              <ProfessionalNavHUD
+                currentRoute={currentRoute}
+                selectedProfile={selectedProfile || activeProfile}
+                isNavigating={isNavigating}
+                currentSpeed={currentSpeed}
+                currentLocation={currentGPSLocation || undefined}
+                onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
+                voiceEnabled={professionalVoiceEnabled}
+                isFullscreen={isFullscreenNav}
+              />
+            )}
+            
+            {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <InteractiveMap
+                <EnhancedRealisticMap
                   currentRoute={currentRoute}
-                  selectedProfile={selectedProfile}
+                  selectedProfile={selectedProfile || activeProfile}
                   alternativeRoutes={alternatives}
                   previewRoute={previewRoute}
-                  onOpenLaneSelection={handleOpenLaneSelection}
-                  isFullscreen={isMapExpanded}
-                  onToggleFullscreen={handleToggleMapExpansion}
-                  autoExpanded={isMapExpanded}
-                  onCollapseMap={() => {
-                    setIsMapExpanded(false);
-                    setIsDrawerOpen(false);
-                  }}
-                  onHideSidebar={() => setSidebarState('closed')}
+                  showTrafficLayer={true}
+                  showIncidents={true}
+                  isNavigating={isNavigating}
+                  currentLocation={currentGPSLocation || undefined}
+                  onLocationUpdate={setCurrentGPSLocation}
                 />
                 
                 {/* Legal Ownership Section - Mobile */}
@@ -964,26 +983,34 @@ export default function NavigationPage() {
               />
             )}
 
-            {/* Regular Interactive Map */}
+            {/* Professional Navigation HUD - Desktop */}
+            {isNavigating && !isARMode && (
+              <ProfessionalNavHUD
+                currentRoute={currentRoute}
+                selectedProfile={selectedProfile || activeProfile}
+                isNavigating={isNavigating}
+                currentSpeed={currentSpeed}
+                currentLocation={currentGPSLocation || undefined}
+                onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
+                voiceEnabled={professionalVoiceEnabled}
+                isFullscreen={isFullscreenNav}
+              />
+            )}
+
+            {/* Enhanced Professional Map - Desktop */}
             {!isARMode && (
               <>
-                <InteractiveMap
+                <EnhancedRealisticMap
                   currentRoute={currentRoute}
-                  selectedProfile={selectedProfile}
+                  selectedProfile={selectedProfile || activeProfile}
                   alternativeRoutes={alternatives}
                   previewRoute={previewRoute}
-                  onOpenLaneSelection={handleOpenLaneSelection}
-                  isFullscreen={isMapExpanded}
-                  onToggleFullscreen={handleToggleMapExpansion}
-                  autoExpanded={isMapExpanded}
-                  onCollapseMap={() => {
-                    setIsMapExpanded(false);
-                    setIsDrawerOpen(false);
-                    if (!isSidebarOpen) {
-                      setSidebarState('open');
-                    }
-                  }}
-                  onHideSidebar={() => setSidebarState('closed')}
+                  showTrafficLayer={true}
+                  showIncidents={true}
+                  isNavigating={isNavigating}
+                  currentLocation={currentGPSLocation || undefined}
+                  onLocationUpdate={setCurrentGPSLocation}
                 />
                 
                 {/* Legal Ownership Section - Desktop */}
