@@ -95,7 +95,7 @@ export default function NavigationPage() {
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
     console.log('[UI Recovery] Restoring consistent UI state after error');
-    // Use appropriate sidebar state for device - collapsed on mobile, open on desktop
+    // NEVER set to 'closed' - always keep sidebar accessible
     setSidebarState(isMobile ? 'collapsed' : 'open');
     setIsMapExpanded(false);         // Collapse any expanded map to prevent overlay conflicts  
     setShowRoutePreview(false);      // Clear any route preview overlay that might obscure sidebar
@@ -801,12 +801,10 @@ export default function NavigationPage() {
     }
   };
 
-  // Fixed sidebar toggle functionality - compute next state first, then apply side effects
+  // Fixed sidebar toggle functionality - NEVER allow 'closed' state to keep sidebar accessible
   const handleSidebarToggle = () => {
-    // Compute the next state first
-    const nextState = isNavigating 
-      ? (isSidebarCollapsed ? 'open' : 'collapsed')  // During navigation: keep accessible
-      : (isSidebarOpen ? 'closed' : 'open');         // During planning: allow full close
+    // Compute the next state first - NEVER set to 'closed' to maintain accessibility
+    const nextState = isSidebarCollapsed ? 'open' : 'collapsed';  // Only toggle between open and collapsed
     
     // Apply the state change
     setSidebarState(nextState);
@@ -1042,6 +1040,19 @@ export default function NavigationPage() {
           "automotive-layout desktop-sidebar"
         )}>
           
+          {/* Desktop Hamburger Menu - Always visible when sidebar is closed */}
+          {!isSidebarOpen && (
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => setSidebarState('open')}
+              className="fixed top-4 left-4 z-50 hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
+              data-testid="button-menu-desktop"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
+          
           {/* Desktop Navigation Sidebar */}
           <NavigationSidebar
             // Route planning props
@@ -1184,6 +1195,7 @@ export default function NavigationPage() {
                 <Button
                   onClick={() => {
                     setIsMapExpanded(true);
+                    // NEVER close sidebar completely - keep it collapsed but accessible
                     if (window.innerWidth < 1024) {
                       setSidebarState('collapsed');
                     }
