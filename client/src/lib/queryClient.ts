@@ -1,14 +1,38 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-// Store CSRF token in memory
+// Store CSRF token with persistence fallback
 let csrfToken: string | null = null;
 
-// Function to extract CSRF token from response headers
+// Function to extract and persist CSRF token from response headers
 function extractCSRFToken(res: Response) {
   const token = res.headers.get('X-CSRF-Token');
   if (token) {
     csrfToken = token;
+    // Store in sessionStorage as backup
+    try {
+      sessionStorage.setItem('csrfToken', token);
+    } catch (e) {
+      // Ignore storage errors
+    }
   }
+}
+
+// Function to get CSRF token from memory or fallback storage
+function getCSRFToken(): string | null {
+  if (csrfToken) return csrfToken;
+  
+  // Fallback to sessionStorage
+  try {
+    const stored = sessionStorage.getItem('csrfToken');
+    if (stored) {
+      csrfToken = stored;
+      return stored;
+    }
+  } catch (e) {
+    // Ignore storage errors
+  }
+  
+  return null;
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -23,17 +47,28 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Ensure we have a CSRF token for state-changing requests
-  if (method !== 'GET' && method !== 'OPTIONS' && !csrfToken) {
-    try {
-      const tokenResponse = await fetch('/api/csrf-token', {
-        credentials: 'include'
-      });
-      if (tokenResponse.ok) {
-        extractCSRFToken(tokenResponse);
+  // Always try to get fresh CSRF token for state-changing requests
+  if (method !== 'GET' && method !== 'OPTIONS') {
+    let token = getCSRFToken();
+    
+    // If no token or token might be stale, fetch fresh one
+    if (!token) {
+      try {
+        console.log('[CSRF] Fetching fresh CSRF token...');
+        const tokenResponse = await fetch('/api/csrf-token', {
+          credentials: 'include',
+          cache: 'no-cache'  // Ensure fresh token
+        });
+        if (tokenResponse.ok) {
+          extractCSRFToken(tokenResponse);
+          token = getCSRFToken();
+          console.log('[CSRF] Fresh token obtained');
+        } else {
+          console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
+        }
+      } catch (error) {
+        console.warn('[CSRF] Failed to fetch CSRF token:', error);
       }
-    } catch (error) {
-      console.warn('Failed to fetch CSRF token:', error);
     }
   }
 
@@ -45,8 +80,12 @@ export async function apiRequest(
   }
   
   // Include CSRF token for state-changing requests
-  if (method !== 'GET' && method !== 'OPTIONS' && csrfToken) {
-    headers["X-CSRF-Token"] = csrfToken;
+  const currentToken = getCSRFToken();
+  if (method !== 'GET' && method !== 'OPTIONS' && currentToken) {
+    headers["X-CSRF-Token"] = currentToken;
+    console.log('[CSRF] Including token in request headers');
+  } else if (method !== 'GET' && method !== 'OPTIONS') {
+    console.warn('[CSRF] No token available for state-changing request!');
   }
 
   const res = await fetch(url, {
