@@ -250,44 +250,15 @@ export default function ManualSearchPanel({
             </Button>
           </div>
           
-          {/* Plan Route Button - renamed since start navigation moved to bottom */}
-          <Button
-            onClick={() => {
-              // Compute the actual locations to use (prefer existing props, fallback to typed text)
-              const startLocation = fromLocation || currentLocationSearch.trim();
-              const endLocation = toLocation || destinationSearch.trim();
-              
-              // Update the props to keep state in sync
-              if (currentLocationSearch.trim() && !fromLocation) {
-                onFromLocationChange(currentLocationSearch.trim());
-              }
-              if (destinationSearch.trim() && !toLocation) {
-                onToLocationChange(destinationSearch.trim());
-              }
-              
-              // Call the route planning with computed locations directly to avoid race condition
-              onPlanRoute('fastest', startLocation, endLocation);
-            }}
-            disabled={isCalculating || !(
-              (fromLocation && toLocation) || 
-              (currentLocationSearch.trim() && destinationSearch.trim())
-            )}
-            size="sm"
-            className="w-full automotive-button bg-blue-600 hover:bg-blue-700 text-white font-bold disabled:bg-gray-400 disabled:text-gray-200"
-            data-testid="button-plan-route"
-          >
-            {isCalculating ? (
-              <>
+          {/* Route planning is now automatic when locations are set */}
+          {isCalculating && (
+            <div className="text-center py-2">
+              <div className="flex items-center justify-center text-sm text-muted-foreground">
                 <CornerUpLeft className="w-4 h-4 mr-2 animate-spin" />
-                <strong>CALCULATING...</strong>
-              </>
-            ) : (
-              <>
-                <CornerUpLeft className="w-4 h-4 mr-2" />
-                <strong>PLAN ROUTE</strong>
-              </>
-            )}
-          </Button>
+                <strong>CALCULATING ROUTE...</strong>
+              </div>
+            </div>
+          )}
 
           {/* Use Current Location Button */}
           <Button

@@ -335,28 +335,15 @@ export function EnhancedRouteForm({
         </TabsContent>
       </Tabs>
 
-      {/* Action Buttons */}
-      <ActionGroup alignment="center" className="pt-4">
-        <Button
-          onClick={handlePlanRoute}
-          disabled={!fromLocation.trim() || !toLocation.trim() || isCalculating}
-          size="lg"
-          className="min-w-[200px] min-h-[48px]"
-          data-testid="button-plan-route"
-        >
-          {isCalculating ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Calculating...
-            </>
-          ) : (
-            <>
-              <Route className="h-4 w-4 mr-2" />
-              Plan Route
-            </>
-          )}
-        </Button>
-      </ActionGroup>
+      {/* Route planning happens automatically - Start Navigation button is in the sidebar */}
+      {isCalculating && (
+        <div className="text-center py-4">
+          <div className="flex items-center justify-center text-sm text-muted-foreground">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+            Calculating route...
+          </div>
+        </div>
+      )}
     </div>
   );
 }

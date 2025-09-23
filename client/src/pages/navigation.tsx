@@ -29,7 +29,6 @@ import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
-import { BottomNavigationButton } from "@/components/navigation/bottom-navigation-button";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -636,6 +635,29 @@ export default function NavigationPage() {
       }
     }
   };
+
+  // Clear current route when locations change to ensure fresh planning
+  useEffect(() => {
+    if (currentRoute && (fromLocation || toLocation)) {
+      setCurrentRoute(null);
+    }
+  }, [fromLocation, toLocation]);
+
+  // Auto-plan route when locations and profile are set
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (fromLocation && toLocation && activeProfileId && !calculateRouteMutation.isPending && !currentRoute) {
+        console.log('[AUTO-PLAN] Triggering automatic route planning:', {
+          fromLocation,
+          toLocation,
+          activeProfileId
+        });
+        handlePlanRoute('fastest'); // Use fastest as default for auto-planning
+      }
+    }, 500); // Debounce 500ms to avoid excessive calculations
+
+    return () => clearTimeout(timer);
+  }, [fromLocation, toLocation, activeProfileId, calculateRouteMutation.isPending, currentRoute]);
 
   // Effect to automatically show alternative routes when they become available
   useEffect(() => {
@@ -1270,18 +1292,6 @@ export default function NavigationPage() {
         onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
       />
 
-      {/* Bottom Navigation Button - Fixed at bottom of screen */}
-      <BottomNavigationButton
-        currentRoute={currentRoute}
-        selectedProfile={selectedProfile}
-        isNavigating={isNavigating}
-        isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-        isCompletingJourney={completeJourneyMutation.isPending}
-        fromLocation={fromLocation}
-        toLocation={toLocation}
-        onStartNavigation={handleStartNavigation}
-        onStopNavigation={handleStopNavigation}
-      />
     </div>
   );
 }

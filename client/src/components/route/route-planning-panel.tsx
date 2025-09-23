@@ -552,53 +552,41 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
             </div>
           )}
 
-          {/* Plan Route Button */}
-          <div className="space-y-2">
-            <Button 
-              onClick={() => onPlanRoute?.(routePreference)}
-              disabled={(!fromLocation || !toLocation) || isCalculating}
-              className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground h-12 text-base font-semibold automotive-button shadow-lg"
-              data-testid="button-plan-route"
-            >
-              {isCalculating ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                  Calculating Truck-Safe Route...
-                </>
-              ) : (
-                <>
-                  <Route className="w-5 h-5 mr-3" />
-                  {selectedProfile ? 'Plan Truck-Safe Route' : 'Plan Route'}
-                </>
-              )}
-            </Button>
-            
-            {/* Route Status */}
-            {currentRoute && (
-              <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200">
-                  <Shield className="w-4 h-4" />
-                  <span className="text-sm font-medium">Truck-safe route planned</span>
-                </div>
-                <div className="text-xs text-green-700 dark:text-green-300 mt-1">
-                  Ready for navigation
-                </div>
+          {/* Route planning is now automatic - Start Navigation button is in the sidebar */}
+          {isCalculating && (
+            <div className="text-center py-3">
+              <div className="flex items-center justify-center text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Calculating truck-safe route automatically...
               </div>
-            )}
-            
-            {/* Route Options Row */}
-            <div className="flex justify-between items-center pt-2">
-              <Button variant="ghost" size="sm" className="text-xs" data-testid="button-route-options">
-                <MapPin className="w-3 h-3 mr-1" />
-                Route Options
-              </Button>
-              {currentRoute && (
-                <Button variant="ghost" size="sm" className="text-xs" data-testid="button-alternative-routes">
-                  <CornerUpLeft className="w-3 h-3 mr-1" />
-                  Alternatives
-                </Button>
-              )}
             </div>
+          )}
+            
+          {/* Route Status */}
+          {currentRoute && (
+            <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center justify-center space-x-2 text-green-800 dark:text-green-200">
+                <Shield className="w-4 h-4" />
+                <span className="text-sm font-medium">Truck-safe route planned</span>
+              </div>
+              <div className="text-xs text-green-700 dark:text-green-300 mt-1">
+                Ready for navigation
+              </div>
+            </div>
+          )}
+          
+          {/* Route Options Row */}
+          <div className="flex justify-between items-center pt-2">
+            <Button variant="ghost" size="sm" className="text-xs" data-testid="button-route-options">
+              <MapPin className="w-3 h-3 mr-1" />
+              Route Options
+            </Button>
+            {currentRoute && (
+              <Button variant="ghost" size="sm" className="text-xs" data-testid="button-alternative-routes">
+                <CornerUpLeft className="w-3 h-3 mr-1" />
+                Alternatives
+              </Button>
+            )}
           </div>
         </div>
       )}

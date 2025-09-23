@@ -514,6 +514,64 @@ const NavigationSidebar = memo(function NavigationSidebar({
           )}
         </div>
 
+        {/* Sticky Top Start/Stop Navigation Button */}
+        {!isCollapsed && (
+          <div className="sticky top-0 z-20 bg-background px-3 pt-3 pb-2 border-b border-border/50">
+            {!isNavigating ? (
+              <Button
+                onClick={() => {
+                  if (currentRoute && selectedProfile && fromLocation && toLocation) {
+                    onStartNavigation();
+                  } else {
+                    toast({
+                      title: "Route required",
+                      description: "Set both locations and vehicle profile to calculate a route",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                disabled={!currentRoute || !selectedProfile || !fromLocation || !toLocation || isStartingJourney}
+                size="lg"
+                className="bg-green-600 hover:bg-green-700 text-white w-full font-semibold h-12"
+                data-testid="button-start-navigation-top"
+              >
+                {isStartingJourney ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Starting Navigation...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-5 h-5 mr-2" />
+                    Start Navigation
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={onStopNavigation}
+                disabled={isCompletingJourney}
+                variant="destructive"
+                size="lg"
+                className="w-full font-semibold h-12"
+                data-testid="button-stop-navigation-top"
+              >
+                {isCompletingJourney ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Stopping Navigation...
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-5 h-5 mr-2" />
+                    Stop Navigation
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Sidebar Content */}
         {!isCollapsed && (
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-scroll">
@@ -584,38 +642,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </Button>
                 </div>
 
-                {/* Plan Route Button - start navigation moved to bottom */}
-                {(currentLocationInput.trim() && destinationInput.trim()) && (
-                  <Button
-                    onClick={() => {
-                      // Auto-search if text is entered but not yet searched
-                      if (currentLocationInput.trim() && !fromLocation) {
-                        onFromLocationChange(currentLocationInput.trim());
-                      }
-                      if (destinationInput.trim() && !toLocation) {
-                        onToLocationChange(destinationInput.trim());
-                      }
-                      
-                      // Plan the route
-                      onPlanRoute('fastest');
-                    }}
-                    disabled={isCalculating}
-                    size="lg"
-                    className="w-full automotive-button bg-blue-600 hover:bg-blue-700 text-white font-bold h-12"
-                    data-testid="button-plan-route"
-                  >
-                    {isCalculating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        <strong>CALCULATING...</strong>
-                      </>
-                    ) : (
-                      <>
-                        <MapPin className="w-5 h-5 mr-2" />
-                        <strong>PLAN ROUTE</strong>
-                      </>
-                    )}
-                  </Button>
+                {/* Auto-search and plan route when both locations are entered */}
+                {(currentLocationInput.trim() && destinationInput.trim() && !fromLocation && !toLocation) && (
+                  <div className="text-center text-sm text-muted-foreground">
+                    Press Search buttons to set locations
+                  </div>
                 )}
 
                 {/* Location Status */}
@@ -1131,27 +1162,15 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </ToggleGroup>
                 </div>
 
-                {/* Plan Route Button */}
-                <Button
-                  onClick={() => onPlanRoute(routePreference)}
-                  disabled={!fromLocation || !toLocation || isCalculating}
-                  variant="default"
-                  size="lg"
-                  className="w-full automotive-button h-12"
-                  data-testid="button-plan-route"
-                >
-                  {isCalculating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Planning Route...
-                    </>
-                  ) : (
-                    <>
-                      <RouteIcon className="w-5 h-5 mr-2" />
-                      Plan Route
-                    </>
-                  )}
-                </Button>
+                {/* Route planning is now automatic */}
+                {isCalculating && (
+                  <div className="text-center py-2">
+                    <div className="flex items-center justify-center text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Planning route...
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
