@@ -45,7 +45,7 @@ export default function NavigationPage() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
-  // Unified sidebar state management - single source of truth
+  // Unified sidebar state management - single source of truth - FORCE VISIBLE
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>('open');
   
   // Computed states for backward compatibility
@@ -808,7 +808,10 @@ export default function NavigationPage() {
               <Button
                 variant="default"
                 size="icon"
-                onClick={() => setSidebarState('open')}
+                onClick={() => {
+                  console.log('Mobile menu clicked, current state:', sidebarState);
+                  setSidebarState('open');
+                }}
                 className="automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
                 data-testid="button-menu-mobile"
               >
