@@ -14,8 +14,8 @@ interface MapLegalOwnershipProps {
 /**
  * Map Legal Ownership Component
  * 
- * A compact legal ownership notice designed to be positioned at the bottom
- * edge of the map. Contains essential ownership information and legal protections
+ * A compact legal ownership notice designed to be positioned at the bottom right
+ * corner of the map. Contains essential ownership information and legal protections
  * for TruckNav Pro while maintaining automotive design principles.
  * 
  * Features:
@@ -36,16 +36,16 @@ export default function MapLegalOwnership({
   return (
     <div 
       className={cn(
-        // Base positioning - absolute positioned at map top right corner
-        "absolute top-4 right-4 z-30",
+        // Base positioning - absolute positioned at map bottom right corner
+        "absolute bottom-4 right-4 z-20",
         // Background and styling - semi-transparent with border
         "bg-background border border-border rounded-lg shadow-lg",
         // Padding and spacing
         compact ? "px-3 py-2" : "px-4 py-3",
         // Ensure readable on any map background
         "text-foreground",
-        // Responsive adjustments - max width for top right positioning
-        "max-w-sm",
+        // Responsive adjustments - max width for bottom right positioning
+        "max-w-xs",
         // Automotive touch targets
         "automotive-legal-overlay",
         className
