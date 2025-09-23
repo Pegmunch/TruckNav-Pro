@@ -438,7 +438,6 @@ export default function NavigationPage() {
   };
 
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
-    alert('Route planning function called!');
     console.log('=== ROUTE PLANNING ATTEMPT ===');
     console.log('handlePlanRoute called with:', { 
       fromLocation, 
@@ -449,11 +448,36 @@ export default function NavigationPage() {
       activeProfileId,
       selectedProfile: selectedProfile?.id 
     });
+
+    // DEBUG: Test route preview with mock data if validation fails
+    const testRoutePreview = () => {
+      const mockRoute = {
+        id: 'test-route',
+        startLocation: 'LU2 7FG, Luton',
+        endLocation: 'M1 1AA, Manchester',
+        distance: 150000, // 150km in meters
+        duration: 7200, // 2 hours in seconds
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: [
+            [-0.4040, 51.8781], // Luton
+            [-0.3000, 51.9000], // Point 1
+            [-0.2000, 52.0000], // Point 2
+            [-0.1000, 52.1000], // Point 3
+            [-2.2426, 53.4808]  // Manchester
+          ]
+        }
+      };
+      console.log('🧪 Testing route preview with mock data');
+      setPreviewRouteData(mockRoute);
+      setShowRoutePreview(true);
+    };
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
-      alert('Validation failed: No vehicle profile');
       console.log('Route planning blocked: No valid vehicle profile');
+      console.log('🧪 Triggering test route preview to check overlay functionality');
+      testRoutePreview(); // Test the overlay
       toast({
         title: "Vehicle profile required",
         description: "Please select a valid vehicle profile before planning a route.",
@@ -467,7 +491,6 @@ export default function NavigationPage() {
     const finalEndLoc = endLoc || toLocation;
     
     if (!finalStartLoc || !finalEndLoc) {
-      alert('Validation failed: Missing locations');
       console.log('Route planning blocked: Missing locations', { finalStartLoc, finalEndLoc, fromLocation, toLocation });
       toast({
         title: "Locations required",
@@ -477,7 +500,7 @@ export default function NavigationPage() {
       return;
     }
 
-    alert('Validation passed! Calling mutation...');
+    console.log('✅ Validation passed! Calling mutation...');
 
     const routeData = {
       startLocation: finalStartLoc,
