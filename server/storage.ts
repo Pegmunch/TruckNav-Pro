@@ -2809,15 +2809,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Journeys
-  async startJourney(routeId: string): Promise<Journey> {
+  async getJourney(id: number): Promise<Journey | undefined> {
+    const [journey] = await db.select().from(journeys).where(eq(journeys.id, id));
+    return journey || undefined;
+  }
+
+  async getJourneyByIdempotencyKey(key: string, sessionId: string): Promise<Journey | undefined> {
+    const [journey] = await db.select().from(journeys)
+      .where(and(
+        eq(journeys.idempotencyKey, key),
+        eq(journeys.sessionId, sessionId)
+      ));
+    return journey || undefined;
+  }
+
+  async startJourney(routeId: string, idempotencyKey?: string, sessionId?: string): Promise<Journey> {
     const [created] = await db
       .insert(journeys)
-      .values({ routeId, status: 'planned' })
+      .values({ 
+        routeId, 
+        status: 'planned',
+        idempotencyKey,
+        sessionId,
+        startedAt: new Date()
+      })
       .returning();
     return created;
   }
 
-  async activateJourney(id: number): Promise<Journey | undefined> {
+  async activateJourney(id: number, idempotencyKey?: string, sessionId?: string): Promise<Journey | undefined> {
     const [updated] = await db
       .update(journeys)
       .set({ status: 'active' })
