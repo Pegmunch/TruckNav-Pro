@@ -278,6 +278,7 @@ export default function NavigationPage() {
 
   // Sync selectedProfile with activeProfile from centralized hook
   useEffect(() => {
+    console.log('[PROFILE_SYNC] activeProfile changed:', activeProfile);
     if (activeProfile) {
       setSelectedProfile(activeProfile);
     }
@@ -318,6 +319,7 @@ export default function NavigationPage() {
       console.error('Failed to activate journey:', error);
       // Reset navigation state on error
       setIsNavigating(false);
+      setIsStartingJourney(false); // Ensure flag is reset on error
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
       // Show user-friendly error message
@@ -398,6 +400,12 @@ export default function NavigationPage() {
       setCurrentRoute(route);
       // Update window sync with new route
       windowSync.updateRoute(route);
+      
+      // Ensure toLocation is set when route is calculated (fix for disabled Start Navigation button)
+      if (route && route.endLocation && !toLocation) {
+        console.log('[ROUTE_CALC] Setting toLocation from route:', route.endLocation);
+        setToLocation(route.endLocation);
+      }
       
       // If route calculation includes a plannedJourney (from route calculation), set it as active
       if (route.plannedJourney) {
