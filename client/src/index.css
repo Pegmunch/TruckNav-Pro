@@ -84,10 +84,13 @@ body {
   gap: 0;
 }
 
-/* Sidebar transitions and animations */
+/* Sidebar transitions and animations - Enhanced for reliability */
 .sidebar-transition {
   transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1),
-              transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+              transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Ensure proper display and pointer events during transitions */
+  will-change: width, transform, opacity;
 }
 
 /* Map expansion animations */

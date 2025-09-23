@@ -301,6 +301,8 @@ export default function NavigationPage() {
       console.error('Failed to activate journey:', error);
       // Reset navigation state on error
       setIsNavigating(false);
+      // Reset sidebar to consistent default state to prevent UI corruption
+      setSidebarState('open');
       // Show user-friendly error message
       toast({
           title: "Failed to start navigation",
@@ -321,6 +323,8 @@ export default function NavigationPage() {
     },
     onError: (error) => {
       console.error('Failed to start journey:', error);
+      // Reset sidebar to consistent state on journey creation failure
+      setSidebarState('open');
       // Show user-friendly error message
       toast({
           title: "Failed to start journey",
@@ -422,6 +426,10 @@ export default function NavigationPage() {
       }
       // Clear any existing route on error
       setCurrentRoute(null);
+      // Reset sidebar to prevent UI corruption on route calculation failures
+      setSidebarState('open');
+      // Reset map expansion state to prevent overlay issues
+      setIsMapExpanded(false);
       // Show user-friendly error message
       toast({
           title: "Route calculation failed",
