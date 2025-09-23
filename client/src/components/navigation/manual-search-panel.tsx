@@ -265,8 +265,13 @@ export default function ManualSearchPanel({
                 onToLocationChange(destinationSearch.trim());
               }
               
-              // Call the route planning with computed locations directly to avoid race condition
-              onPlanRoute('fastest', startLocation, endLocation);
+              // If no current route, plan it first then start navigation
+              if (!currentRoute) {
+                onPlanRoute('fastest', startLocation, endLocation);
+              } else {
+                // Route exists, start navigation immediately
+                onStartNavigation();
+              }
             }}
             disabled={isCalculating || !(
               (fromLocation && toLocation) || 
