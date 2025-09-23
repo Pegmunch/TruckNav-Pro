@@ -82,6 +82,7 @@ export interface IStorage {
   upsertByLabelOrCoords(location: InsertLocation): Promise<Location>;
 
   // Journey Management
+  getJourney(id: number): Promise<Journey | undefined>;
   startJourney(routeId: string): Promise<Journey>;
   activateJourney(id: number): Promise<Journey | undefined>;
   completeJourney(id: number): Promise<Journey | undefined>;

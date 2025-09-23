@@ -23,6 +23,20 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Ensure we have a CSRF token for state-changing requests
+  if (method !== 'GET' && method !== 'OPTIONS' && !csrfToken) {
+    try {
+      const tokenResponse = await fetch('/api/csrf-token', {
+        credentials: 'include'
+      });
+      if (tokenResponse.ok) {
+        extractCSRFToken(tokenResponse);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch CSRF token:', error);
+    }
+  }
+
   // Build headers
   const headers: Record<string, string> = {};
   

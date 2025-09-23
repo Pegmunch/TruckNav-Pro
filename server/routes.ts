@@ -119,12 +119,13 @@ async function callGraphHopperAPI(
     // Add second point
     params.append('point', `${endCoords.lat},${endCoords.lng}`);
 
-    // Add custom model and disable Contraction Hierarchies for truck routing
-    if (Object.keys(customModel).length > 0) {
-      params.append('custom_model', JSON.stringify(customModel));
-      // CRITICAL: Disable CH so custom_model is actually used
-      params.append('ch.disable', 'true');
-    }
+    // DISABLED: Custom models not supported in free GraphHopper tier  
+    // Free packages cannot use flexible mode, so we'll use basic profiles only
+    // Custom vehicle restrictions will be handled in post-processing
+    // if (Object.keys(customModel).length > 0) {
+    //   params.append('custom_model', JSON.stringify(customModel));
+    //   params.append('ch.disable', 'true');
+    // }
 
     // REMOVED: Invalid GraphHopper parameters (height, width, weight, length, avoid)
     // These constraints are now handled via custom_model priority rules above
