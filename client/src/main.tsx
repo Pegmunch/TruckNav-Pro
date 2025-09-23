@@ -49,11 +49,52 @@ if (import.meta.env.DEV && document) {
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
 
-// Render app immediately
-createRoot(document.getElementById("root")!).render(
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+// Debug: Check if React can render at all
+console.log('main.tsx: Starting React mount process');
+console.log('main.tsx: Root element exists:', !!document.getElementById("root"));
+
+try {
+  console.log('main.tsx: Creating root');
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error('Root element not found');
+  }
+  
+  const root = createRoot(rootElement);
+  console.log('main.tsx: Root created successfully');
+  
+  // Test with minimal content first
+  root.render(
+    <div style={{padding: '20px', backgroundColor: '#f0f0f0'}}>
+      <h1>TruckNav Pro - Test Render</h1>
+      <p>If you can see this, React is working!</p>
+    </div>
+  );
+  console.log('main.tsx: Test render completed');
+  
+  // After a delay, render the full app
+  setTimeout(() => {
+    console.log('main.tsx: Rendering full app');
+    root.render(
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    );
+  }, 1000);
+  
+} catch (error) {
+  console.error('main.tsx: Failed to render React app:', error);
+  // Fallback rendering
+  const rootEl = document.getElementById("root");
+  if (rootEl) {
+    rootEl.innerHTML = `
+      <div style="padding: 20px; background: #fee; border: 2px solid #f00; margin: 20px;">
+        <h1>TruckNav Pro - Error</h1>
+        <p>Failed to initialize React app: ${error.message}</p>
+        <pre>${error.stack}</pre>
+      </div>
+    `;
+  }
+}
