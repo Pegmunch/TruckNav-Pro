@@ -380,9 +380,11 @@ export default function NavigationPage() {
       
       // Show route preview overlay if geometry is available
       if (route.geometry) {
+        console.log('Route has geometry, showing preview overlay');
         setPreviewRouteData(route);
         setShowRoutePreview(true);
       } else {
+        console.log('Route has no geometry, showing fallback behavior');
         // Fallback to existing map expansion behavior if no geometry
         const handleMapExpansion = () => {
           if (isMapWindowOpen()) {

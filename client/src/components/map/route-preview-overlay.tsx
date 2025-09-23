@@ -423,7 +423,12 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
     };
   }, [isAnimating, animationProgress, animate]);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    console.log('Route preview overlay not visible');
+    return null;
+  }
+  
+  console.log('Route preview overlay is rendering');
 
   return (
     <div 
