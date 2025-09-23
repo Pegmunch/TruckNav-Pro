@@ -1287,7 +1287,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const incidents = await storage.getActiveTrafficIncidents();
         res.json(incidents);
       } else {
-        res.status(400).json({ message: "Either provide bounds parameters (north, south, east, west) or set active=true" });
+        // Return empty array if no parameters provided (prevents 400 errors on initial load)
+        res.json([]);
       }
     } catch (error) {
       res.status(500).json({ message: "Failed to get traffic incidents" });
