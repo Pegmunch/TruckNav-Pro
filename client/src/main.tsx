@@ -18,8 +18,8 @@ async function initializeCSRF() {
 
 // Register Service Worker for PWA functionality 
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
-// Temporarily enabled in development for PWA testing
-if ((import.meta.env.PROD || import.meta.env.DEV) && 'serviceWorker' in navigator) {
+// Disabled in development for debugging
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
@@ -34,15 +34,7 @@ if ((import.meta.env.PROD || import.meta.env.DEV) && 'serviceWorker' in navigato
 // Note: Service Worker now enabled in development for PWA testing
 // To disable SW in dev, change the condition above to import.meta.env.PROD only
 
-// Force cache-busting in development to ensure fresh builds
-if (import.meta.env.DEV && 'caches' in window) {
-  caches.keys().then((cacheNames) => {
-    cacheNames.forEach((cacheName) => {
-      caches.delete(cacheName);
-      console.log('Cleared cache:', cacheName);
-    });
-  });
-}
+// Cache clearing disabled for debugging
 
 // Build ID for verification that new code is running
 const BUILD_ID = 'build-20250917-trucknav-enhanced';
