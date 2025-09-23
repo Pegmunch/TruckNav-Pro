@@ -786,39 +786,21 @@ export default function NavigationPage() {
               <Truck className="w-6 h-6 text-primary" />
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
             </div>
-            <div className="flex items-center gap-2">
-              {/* AR Mode Toggle - Mobile */}
-              {arSupported && isNavigating && (
-                <Button
-                  variant={isARMode ? "default" : "outline"}
-                  size="icon"
-                  onClick={handleToggleAR}
-                  className={cn(
-                    "automotive-touch-target mr-2 shadow-lg",
-                    isARMode 
-                      ? "bg-blue-600 text-white border-2 border-blue-600 hover:bg-blue-700"
-                      : "bg-background text-foreground border-2 border-primary hover:bg-primary/10"
-                  )}
-                  data-testid="button-ar-toggle-mobile"
-                >
-                  <Camera className="w-5 h-5" />
-                </Button>
-              )}
-              
-              <Button
-                variant="default"
-                size="icon"
-                onClick={() => setSidebarState('open')}
-                className="automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
-                data-testid="button-menu-mobile"
-              >
-                <div className="w-6 h-6 flex flex-col justify-center items-center gap-1">
-                  <div className="w-5 h-1 bg-current rounded-sm"></div>
-                  <div className="w-5 h-1 bg-current rounded-sm"></div>
-                  <div className="w-5 h-1 bg-current rounded-sm"></div>
-                </div>
-              </Button>
-            </div>
+            
+            {/* Top Right Hamburger Button - Always visible */}
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => setSidebarState('open')}
+              className="hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
+              data-testid="button-menu-top-right"
+            >
+              <div className="w-6 h-6 flex flex-col justify-center items-center gap-1">
+                <div className="w-5 h-1 bg-current rounded-sm"></div>
+                <div className="w-5 h-1 bg-current rounded-sm"></div>
+                <div className="w-5 h-1 bg-current rounded-sm"></div>
+              </div>
+            </Button>
           </div>
 
           {/* Mobile Fullscreen Map */}
