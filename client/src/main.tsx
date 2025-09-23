@@ -46,14 +46,29 @@ if (import.meta.env.DEV && document) {
   document.head.appendChild(buildMarker);
 }
 
+// Test: Add visible fallback content first
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  rootElement.innerHTML = '<div style="padding: 20px; background: red; color: white; font-size: 24px;">TESTING: Can you see this red text? If yes, React rendering is the issue.</div>';
+}
+
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
 
-// Render app immediately
-createRoot(document.getElementById("root")!).render(
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+// Try rendering after a delay to see if it's a timing issue
+setTimeout(() => {
+  try {
+    createRoot(document.getElementById("root")!).render(
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    );
+  } catch (error) {
+    console.error("React render failed:", error);
+    if (rootElement) {
+      rootElement.innerHTML = `<div style="padding: 20px; background: orange; color: black;">ERROR: React failed to render - ${error.message}</div>`;
+    }
+  }
+}, 1000);
