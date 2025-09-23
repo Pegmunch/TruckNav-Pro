@@ -204,10 +204,13 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     enabled: showIncidents, // Only fetch when incidents should be shown
   });
 
-  // Auto-follow mode for navigation
+  // Auto-follow mode for navigation with offset positioning
   useEffect(() => {
     if (isNavigating && currentLocation && mapRef.current) {
-      mapRef.current.setView([currentLocation.lat, currentLocation.lng], 16, {
+      // Offset the center point so truck appears in lower portion of screen
+      // This gives more view of the route ahead during navigation
+      const offsetLat = currentLocation.lat + 0.002; // ~200m north offset
+      mapRef.current.setView([offsetLat, currentLocation.lng], 16, {
         animate: true,
         duration: 1.0
       });

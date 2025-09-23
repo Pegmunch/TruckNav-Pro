@@ -727,41 +727,22 @@ export default function NavigationPage() {
     }
   };
 
-  // Unified sidebar toggle functionality - keep sidebar accessible during navigation
+  // Simplified sidebar toggle functionality - consistent behavior regardless of mode
   const handleSidebarToggle = () => {
+    // Simple toggle logic: open ↔ collapsed (never fully close during navigation)
     if (isNavigating) {
-      // During navigation: toggle between open and collapsed to keep it accessible
-      if (sidebarState === 'closed' || sidebarState === 'collapsed') {
-        setSidebarState('open');
-        // Auto-collapse expanded map when sidebar opens during navigation
-        if (isMapExpanded) {
-          setIsMapExpanded(false);
-        }
-      } else {
-        // Open → Collapsed (keep accessible, don't fully close)
-        setSidebarState('collapsed');
+      // During navigation: keep sidebar accessible, just toggle size
+      setSidebarState(isSidebarCollapsed ? 'open' : 'collapsed');
+      // Auto-collapse expanded map when sidebar opens during navigation
+      if (!isSidebarCollapsed && isMapExpanded) {
+        setIsMapExpanded(false);
       }
     } else {
-      // During planning: cycle through states for different layouts
-      switch (sidebarState) {
-        case 'closed':
-          // Closed → Open (expanded)
-          setSidebarState('open');
-          // Auto-collapse expanded map when sidebar opens
-          if (isMapExpanded) {
-            setIsMapExpanded(false);
-          }
-          break;
-        case 'open':
-          // Open → Collapsed (on desktop) or Closed (on mobile)
-          setSidebarState(isMobile ? 'closed' : 'collapsed');
-          break;
-        case 'collapsed':
-          // Collapsed → Closed
-          setSidebarState('closed');
-          break;
-        default:
-          setSidebarState('open');
+      // During planning: simple open/close toggle
+      setSidebarState(isSidebarOpen ? 'closed' : 'open');
+      // Auto-collapse expanded map when sidebar opens
+      if (!isSidebarOpen && isMapExpanded) {
+        setIsMapExpanded(false);
       }
     }
   };
