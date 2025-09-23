@@ -83,8 +83,9 @@ export interface IStorage {
 
   // Journey Management
   getJourney(id: number): Promise<Journey | undefined>;
-  startJourney(routeId: string): Promise<Journey>;
-  activateJourney(id: number): Promise<Journey | undefined>;
+  getJourneyByIdempotencyKey(key: string, sessionId: string): Promise<Journey | undefined>;
+  startJourney(routeId: string, idempotencyKey?: string, sessionId?: string): Promise<Journey>;
+  activateJourney(id: number, idempotencyKey?: string, sessionId?: string): Promise<Journey | undefined>;
   completeJourney(id: number): Promise<Journey | undefined>;
   getLastJourney(): Promise<Journey | undefined>;
   getJourneyHistory(limit?: number, offset?: number): Promise<Journey[]>;
@@ -178,6 +179,7 @@ export class MemStorage implements IStorage {
   private userSubscriptions: Map<string, UserSubscription>;
   private locations: Map<number, Location>;
   private journeys: Map<number, Journey>;
+  private journeyIdempotencyKeys: Map<string, Map<string, number>>; // Maps sessionId -> idempotency key -> journey ID
   private locationIdCounter: number;
   private journeyIdCounter: number;
   private postcodeDatabase: Map<string, PostcodeResult>;
@@ -213,6 +215,7 @@ export class MemStorage implements IStorage {
     this.userSubscriptions = new Map();
     this.locations = new Map();
     this.journeys = new Map();
+    this.journeyIdempotencyKeys = new Map();
     this.locationIdCounter = 1;
     this.journeyIdCounter = 1;
     this.postcodeDatabase = new Map();
@@ -1601,7 +1604,23 @@ export class MemStorage implements IStorage {
   }
 
   // Journey Management
-  async startJourney(routeId: string): Promise<Journey> {
+  async getJourneyByIdempotencyKey(key: string, sessionId: string): Promise<Journey | undefined> {
+    const sessionKeys = this.journeyIdempotencyKeys.get(sessionId);
+    if (!sessionKeys) return undefined;
+    const journeyId = sessionKeys.get(key);
+    if (!journeyId) return undefined;
+    return this.journeys.get(journeyId);
+  }
+
+  async startJourney(routeId: string, idempotencyKey?: string, sessionId?: string): Promise<Journey> {
+    // Check for existing journey with same idempotency key (scoped to session)
+    if (idempotencyKey && sessionId) {
+      const existing = await this.getJourneyByIdempotencyKey(idempotencyKey, sessionId);
+      if (existing) {
+        return existing;
+      }
+    }
+
     // Validate that the route exists before creating a journey
     const route = this.routes.get(routeId);
     if (!route) {
@@ -1618,11 +1637,28 @@ export class MemStorage implements IStorage {
     };
     
     this.journeys.set(id, journey);
-    console.log(`[JOURNEY] Created journey ${id} with status 'planned' for route ${routeId}`);
+    
+    // Store idempotency key mapping if provided (scoped to session)
+    if (idempotencyKey && sessionId) {
+      if (!this.journeyIdempotencyKeys.has(sessionId)) {
+        this.journeyIdempotencyKeys.set(sessionId, new Map());
+      }
+      this.journeyIdempotencyKeys.get(sessionId)!.set(idempotencyKey, id);
+    }
+    
+    console.log(`[JOURNEY] Created journey ${id} with status 'planned' for route ${routeId}${idempotencyKey ? ` (idempotency: ${idempotencyKey})` : ''}`);
     return journey;
   }
 
-  async activateJourney(id: number): Promise<Journey | undefined> {
+  async activateJourney(id: number, idempotencyKey?: string, sessionId?: string): Promise<Journey | undefined> {
+    // Check for existing activation with same idempotency key (scoped to session)
+    if (idempotencyKey && sessionId) {
+      const existing = await this.getJourneyByIdempotencyKey(idempotencyKey, sessionId);
+      if (existing && existing.status === 'active') {
+        return existing;
+      }
+    }
+
     const journey = this.journeys.get(id);
     if (!journey) return undefined;
     
@@ -1642,7 +1678,16 @@ export class MemStorage implements IStorage {
     };
     
     this.journeys.set(id, activeJourney);
-    console.log(`[JOURNEY] Activated journey ${id} - status changed to 'active'`);
+    
+    // Update idempotency key mapping for activation (scoped to session)
+    if (idempotencyKey && sessionId) {
+      if (!this.journeyIdempotencyKeys.has(sessionId)) {
+        this.journeyIdempotencyKeys.set(sessionId, new Map());
+      }
+      this.journeyIdempotencyKeys.get(sessionId)!.set(idempotencyKey, id);
+    }
+    
+    console.log(`[JOURNEY] Activated journey ${id} - status changed to 'active'${idempotencyKey ? ` (idempotency: ${idempotencyKey})` : ''}`);
     return activeJourney;
   }
 

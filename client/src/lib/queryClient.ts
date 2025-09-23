@@ -46,27 +46,22 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: { idempotencyKey?: string }
 ): Promise<Response> {
-  // Always try to get fresh CSRF token for state-changing requests
+  // Always fetch fresh CSRF token for state-changing requests for reliability
   if (method !== 'GET' && method !== 'OPTIONS') {
-    let token = getCSRFToken();
-    
-    // If no token or token might be stale, fetch fresh one
-    if (!token) {
-      try {
-        const tokenResponse = await fetch('/api/csrf-token', {
-          credentials: 'include',
-          cache: 'no-cache'  // Ensure fresh token
-        });
-        if (tokenResponse.ok) {
-          extractCSRFToken(tokenResponse);
-          token = getCSRFToken();
-        } else {
-          console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
-        }
-      } catch (error) {
-        console.warn('[CSRF] Failed to fetch CSRF token:', error);
+    try {
+      const tokenResponse = await fetch('/api/csrf-token', {
+        credentials: 'include',
+        cache: 'no-cache'  // Ensure fresh token
+      });
+      if (tokenResponse.ok) {
+        extractCSRFToken(tokenResponse);
+      } else {
+        console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
       }
+    } catch (error) {
+      console.warn('[CSRF] Failed to fetch CSRF token:', error);
     }
   }
 
@@ -77,11 +72,15 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
   }
   
-  // Include CSRF token for state-changing requests
+  // Include CSRF token and idempotency key for state-changing requests
   const currentToken = getCSRFToken();
   if (method !== 'GET' && method !== 'OPTIONS' && currentToken) {
-    headers["x-csrf-token"] = currentToken;
-    console.log('[CSRF] Including token in request headers');
+    headers["X-CSRF-Token"] = currentToken; // Correct capitalization
+    
+    // Add idempotency key if provided
+    if (options?.idempotencyKey) {
+      headers["Idempotency-Key"] = options.idempotencyKey;
+    }
   } else if (method !== 'GET' && method !== 'OPTIONS') {
     console.warn('[CSRF] No token available for state-changing request!');
   }

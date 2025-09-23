@@ -1529,6 +1529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
     try {
       const { routeId } = req.body;
+      const idempotencyKey = req.headers['idempotency-key'] as string;
       
       // Validate that the route exists
       const route = await storage.getRoute(routeId);
@@ -1536,7 +1537,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Route not found" });
       }
       
-      const journey = await storage.startJourney(routeId);
+      // Check for existing journey with same route (idempotency) 
+      if (idempotencyKey) {
+        const sessionId = req.sessionID || 'anonymous';
+        const existingJourney = await storage.getJourneyByIdempotencyKey(idempotencyKey, sessionId);
+        if (existingJourney) {
+          // Validate invariant: existing journey must match requested routeId
+          if (existingJourney.routeId !== routeId) {
+            return res.status(409).json({ 
+              error: 'Idempotency key conflict: route mismatch',
+              details: `Key was used for route ${existingJourney.routeId}, but requested ${routeId}`
+            });
+          }
+          return res.json(existingJourney);
+        }
+      }
+      
+      const sessionId = req.sessionID || 'anonymous';
+      const journey = await storage.startJourney(routeId, idempotencyKey, sessionId);
       res.json(journey);
     } catch (error) {
       res.status(500).json({ message: "Failed to start journey" });
@@ -1546,8 +1564,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/journeys/:id/activate", validateNumericId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const idempotencyKey = req.headers['idempotency-key'] as string;
       
-      const journey = await storage.activateJourney(parseInt(id));
+      // Check for duplicate activation with same key
+      if (idempotencyKey) {
+        const sessionId = req.sessionID || 'anonymous';
+        const existingJourney = await storage.getJourneyByIdempotencyKey(idempotencyKey, sessionId);
+        if (existingJourney && existingJourney.status === 'active') {
+          // Validate invariant: existing journey must match requested ID
+          if (existingJourney.id !== parseInt(id)) {
+            return res.status(409).json({
+              error: 'Idempotency key conflict: journey ID mismatch', 
+              details: `Key was used for journey ${existingJourney.id}, but requested ${id}`
+            });
+          }
+          return res.json(existingJourney);
+        }
+      }
+      
+      const sessionId = req.sessionID || 'anonymous';
+      const journey = await storage.activateJourney(parseInt(id), idempotencyKey, sessionId);
       if (!journey) {
         return res.status(404).json({ message: "Journey not found" });
       }

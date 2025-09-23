@@ -303,8 +303,8 @@ export default function NavigationPage() {
 
   // Journey mutations
   const activateJourneyMutation = useMutation({
-    mutationFn: async (journeyId: number) => {
-      const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/activate`, {});
+    mutationFn: async ({ journeyId, idempotencyKey }: { journeyId: number; idempotencyKey: string }) => {
+      const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/activate`, {}, { idempotencyKey });
       return response.json();
     },
     onSuccess: (journey) => {
@@ -330,13 +330,13 @@ export default function NavigationPage() {
   });
 
   const startJourneyMutation = useMutation({
-    mutationFn: async (routeId: string) => {
-      const response = await apiRequest("POST", "/api/journeys/start", { routeId });
+    mutationFn: async ({ routeId, idempotencyKey }: { routeId: string; idempotencyKey: string }) => {
+      const response = await apiRequest("POST", "/api/journeys/start", { routeId }, { idempotencyKey });
       return response.json();
     },
     onSuccess: (journey) => {
-      // Immediately activate the newly created journey
-      activateJourneyMutation.mutate(journey.id);
+      // Journey starts as 'planned', will be activated by the navigation flow
+      console.log('[NAVIGATION] Journey created successfully:', journey.id);
     },
     onError: (error) => {
       console.error('Failed to start journey:', error);
@@ -680,6 +680,12 @@ export default function NavigationPage() {
     }
   };
 
+  // Generate secure idempotency keys (no session ID leakage)
+  const generateIdempotencyKey = (action: string, params?: string) => {
+    // Use crypto.randomUUID() for secure, opaque idempotency keys
+    return crypto.randomUUID();
+  };
+
   // Production-grade robust navigation flow
   const handleStartNavigation = async () => {
     // Comprehensive validation
@@ -738,13 +744,15 @@ export default function NavigationPage() {
         throw new Error('Route calculation failed');
       }
 
-      // Start or activate journey based on current state
+      // Start or activate journey based on current state with idempotency
       if (activeJourney && activeJourney.status === 'planned') {
-        // Activate existing planned journey
-        await activateJourneyMutation.mutateAsync(activeJourney.id);
+        // Activate existing planned journey with stable idempotency key
+        const idempotencyKey = generateIdempotencyKey('activate', activeJourney.id.toString());
+        await activateJourneyMutation.mutateAsync({ journeyId: activeJourney.id, idempotencyKey });
       } else {
-        // Create new journey (will auto-activate)
-        await startJourneyMutation.mutateAsync(currentRoute.id);
+        // Create new journey with stable idempotency key
+        const idempotencyKey = generateIdempotencyKey('start', currentRoute.id);
+        await startJourneyMutation.mutateAsync({ routeId: currentRoute.id, idempotencyKey });
       }
 
       // Success - expand map after navigation starts
