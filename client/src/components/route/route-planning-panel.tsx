@@ -497,38 +497,16 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
             </div>
           </div>
 
-          {/* Start Navigation Button - appears right after destination input */}
-          {currentRoute && !isNavigating && (
+          {/* Navigation prerequisites info - button moved to bottom of screen */}
+          {currentRoute && !isNavigating && (!selectedProfile || !fromLocation || !toLocation) && (
             <div className="mt-3 pt-3 border-t border-border">
-              <Button 
-                onClick={handleGoNavigation}
-                disabled={(!fromLocation || !toLocation) || !selectedProfile || isStartingJourney}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 text-lg font-semibold automotive-button shadow-lg"
-                data-testid="button-start-navigation"
-              >
-                {isStartingJourney ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    Starting Navigation...
-                  </>
-                ) : (
-                  <>
-                    <Navigation className="w-5 h-5 mr-3" />
-                    Start Navigation
-                  </>
-                )}
-              </Button>
-              
-              {/* Prerequisites Check */}
-              {(!selectedProfile || !fromLocation || !toLocation) && (
-                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                  <div className="text-amber-800 dark:text-amber-200 text-sm">
-                    {!selectedProfile && '• Vehicle profile required'}
-                    {!fromLocation && '• Starting location required'}
-                    {!toLocation && '• Destination required'}
-                  </div>
+              <div className="p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="text-amber-800 dark:text-amber-200 text-sm">
+                  {!selectedProfile && '• Vehicle profile required'}
+                  {!fromLocation && '• Starting location required'}
+                  {!toLocation && '• Destination required'}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>

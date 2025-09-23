@@ -29,6 +29,7 @@ import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
+import { BottomNavigationButton } from "@/components/navigation/bottom-navigation-button";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -1267,6 +1268,19 @@ export default function NavigationPage() {
         open={showVehicleSettings}
         onOpenChange={setShowVehicleSettings}
         onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
+      />
+
+      {/* Bottom Navigation Button - Fixed at bottom of screen */}
+      <BottomNavigationButton
+        currentRoute={currentRoute}
+        selectedProfile={selectedProfile}
+        isNavigating={isNavigating}
+        isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+        isCompletingJourney={completeJourneyMutation.isPending}
+        fromLocation={fromLocation}
+        toLocation={toLocation}
+        onStartNavigation={handleStartNavigation}
+        onStopNavigation={handleStopNavigation}
       />
     </div>
   );

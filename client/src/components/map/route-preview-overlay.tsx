@@ -511,19 +511,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
             </Button>
           )}
 
-          {/* Start Navigation - always visible once route is loaded */}
-          {isMapLoaded && (
-            <Button
-              onClick={onStartNavigation}
-              variant={animationProgress === 1 || prefersReducedMotion() ? "default" : "outline"}
-              size="sm"
-              className="h-8 text-sm px-3"
-              data-testid="button-start-navigation"
-            >
-              <Navigation className="w-4 h-4 mr-1" />
-              Start Navigation
-            </Button>
-          )}
+          {/* Start Navigation button moved to bottom of screen */}
         </div>
       </div>
     </div>
