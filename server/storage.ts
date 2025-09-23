@@ -2455,6 +2455,27 @@ export class DatabaseStorage implements IStorage {
         region: "Buckinghamshire",
         confidence: 0.96,
       },
+      // USER'S EXACT CURRENT LOCATION - CRITICAL FOR ACCURATE NAVIGATION
+      {
+        postcode: "LU27FG",
+        formatted: "LU2 7FG",
+        country: "UK",
+        coordinates: { lat: 51.8787, lng: -0.4200 },
+        address: "Luton, Bedfordshire",
+        city: "Luton",
+        region: "Bedfordshire",
+        confidence: 0.98,
+      },
+      {
+        postcode: "LU2",
+        formatted: "LU2",
+        country: "UK",
+        coordinates: { lat: 51.8787, lng: -0.4200 },
+        address: "Luton Central, Bedfordshire",
+        city: "Luton",
+        region: "Bedfordshire",
+        confidence: 0.97,
+      },
     ];
 
     samplePostcodes.forEach(postcode => {
