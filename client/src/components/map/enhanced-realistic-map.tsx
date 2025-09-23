@@ -191,7 +191,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   return (
     <div className="relative h-full w-full bg-gray-900">
       {/* Enhanced Map Controls */}
-      <div className="absolute top-4 right-4 z-[60] space-y-2">
+      <div className="absolute top-16 right-4 z-[40] space-y-2">
         {/* Map Style Selector */}
         <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700/50 overflow-hidden">
           <div className="grid grid-cols-2 gap-0">
