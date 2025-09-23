@@ -82,7 +82,7 @@ export async function apiRequest(
   // Include CSRF token for state-changing requests
   const currentToken = getCSRFToken();
   if (method !== 'GET' && method !== 'OPTIONS' && currentToken) {
-    headers["X-CSRF-Token"] = currentToken;
+    headers["x-csrf-token"] = currentToken;
     console.log('[CSRF] Including token in request headers');
   } else if (method !== 'GET' && method !== 'OPTIONS') {
     console.warn('[CSRF] No token available for state-changing request!');
