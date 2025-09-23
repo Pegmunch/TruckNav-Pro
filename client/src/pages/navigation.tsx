@@ -94,8 +94,11 @@ export default function NavigationPage() {
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
-    // NEVER set to 'closed' - always keep sidebar accessible
-    setSidebarState(isMobile ? 'collapsed' : 'open');
+    // NEVER auto-reset sidebar based on screen size - preserve user choice
+    // Only ensure it's not completely closed
+    if (sidebarState === 'closed') {
+      setSidebarState('collapsed');
+    }
     setIsMapExpanded(false);         // Collapse any expanded map to prevent overlay conflicts  
     setShowRoutePreview(false);      // Clear any route preview overlay that might obscure sidebar
     setPreviewRouteData(null);       // Clear preview data
@@ -108,16 +111,17 @@ export default function NavigationPage() {
     // Mobile drawer now follows sidebarState automatically
   };
 
-  // Initialize sidebar state - keep accessible in all modes as the main control panel
+  // Initialize sidebar state ONCE on mount - never auto-reset based on screen size
   useEffect(() => {
-    // Always keep sidebar accessible - open on desktop, collapsed on mobile for space
-    // Never fully hide the control panel as it's essential for all operations
-    if (isMobile) {
-      setSidebarState('collapsed');  // Collapsed but still accessible on mobile
+    // Load user preference from localStorage, or use sensible defaults
+    const savedSidebarState = localStorage.getItem('navigationSidebarState');
+    if (savedSidebarState && ['open', 'collapsed'].includes(savedSidebarState)) {
+      setSidebarState(savedSidebarState as 'open' | 'collapsed');
     } else {
-      setSidebarState('open');       // Fully open on desktop
+      // Initial default based on screen size, but never override user choice again
+      setSidebarState(isMobile ? 'collapsed' : 'open');
     }
-  }, [isMobile]);
+  }, []); // Remove isMobile dependency to prevent auto-reset
 
   // Check legal consent and show popup if needed
   useEffect(() => {
@@ -427,13 +431,18 @@ export default function NavigationPage() {
             }
           } else {
             if (isMobile) {
-              // On mobile, collapse sidebar but keep it accessible
-              setSidebarState('collapsed');
+              // On mobile, only collapse sidebar if it's currently open to make room for map
+              // But respect if user explicitly wants it open
+              if (sidebarState === 'open') {
+                setSidebarState('collapsed');
+                localStorage.setItem('navigationSidebarState', 'collapsed');
+              }
             } else {
               // Use existing in-page expansion logic for desktop
               setIsMapExpanded(true);
-              if (window.innerWidth < 1024) {
+              if (window.innerWidth < 1024 && sidebarState === 'open') {
                 setSidebarState('collapsed');
+                localStorage.setItem('navigationSidebarState', 'collapsed');
               }
             }
           }
@@ -634,13 +643,18 @@ export default function NavigationPage() {
       }
     } else {
       if (isMobile) {
-        // On mobile, collapse sidebar but keep it accessible
-        setSidebarState('collapsed');
+        // On mobile, only collapse sidebar if it's currently open to make room for map
+        // But respect if user explicitly wants it open
+        if (sidebarState === 'open') {
+          setSidebarState('collapsed');
+          localStorage.setItem('navigationSidebarState', 'collapsed');
+        }
       } else {
         // Use existing in-page expansion logic for desktop
         setIsMapExpanded(true);
-        if (window.innerWidth < 1024) {
+        if (window.innerWidth < 1024 && sidebarState === 'open') {
           setSidebarState('collapsed');
+          localStorage.setItem('navigationSidebarState', 'collapsed');
         }
       }
     }
@@ -840,6 +854,9 @@ export default function NavigationPage() {
     // Apply the state change
     setSidebarState(nextState);
     
+    // Persist user preference
+    localStorage.setItem('navigationSidebarState', nextState);
+    
     // Apply side effects based on the NEXT state (not previous)
     if (nextState === 'open' && isMapExpanded) {
       setIsMapExpanded(false);
@@ -848,7 +865,10 @@ export default function NavigationPage() {
 
   // Keep this for compatibility with existing AR toggle functionality
   const handleSidebarCollapseToggle = () => {
-    setSidebarState(isSidebarCollapsed ? 'open' : 'collapsed');
+    const nextState = isSidebarCollapsed ? 'open' : 'collapsed';
+    setSidebarState(nextState);
+    // Persist user preference
+    localStorage.setItem('navigationSidebarState', nextState);
   };
 
 
