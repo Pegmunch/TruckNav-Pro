@@ -32,7 +32,8 @@ import {
   Coffee,
   Wrench,
   Camera,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -703,32 +704,26 @@ const NavigationSidebar = memo(function NavigationSidebar({
               </CardContent>
             </Card>
 
-            {/* 3. Start Navigation / Cancel Route Button */}
+            {/* 3. Route Status Information */}
             <Card className="bg-muted/30">
               <CardContent className="p-4">
-                {isNavigating ? (
-                  <Button
-                    onClick={onStopNavigation}
-                    variant="destructive"
-                    size="lg"
-                    className="w-full automotive-button h-12 bg-red-600 hover:bg-red-700 text-white"
-                    data-testid="button-cancel-route"
-                  >
-                    <X className="w-5 h-5 mr-2" />
-                    Cancel Route
-                  </Button>
-                ) : (
-                  <div className="text-center text-sm text-muted-foreground py-4">
-                    {isCalculating ? (
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Planning route automatically...
-                      </div>
-                    ) : (
-                      "Route planning is automatic when locations are set"
-                    )}
-                  </div>
-                )}
+                <div className="text-center text-sm text-muted-foreground">
+                  {isCalculating ? (
+                    <div className="flex items-center justify-center" data-testid="status-route-calculating">
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Planning route automatically...
+                    </div>
+                  ) : currentRoute ? (
+                    <div className="flex items-center justify-center text-green-600" data-testid="status-route-ready">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Route ready - Use green button above to start
+                    </div>
+                  ) : (
+                    <div data-testid="status-route-awaiting">
+                      Set both locations to calculate route automatically
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
