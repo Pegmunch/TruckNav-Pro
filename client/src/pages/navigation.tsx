@@ -438,6 +438,7 @@ export default function NavigationPage() {
   };
 
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
+    alert('Route planning function called!');
     console.log('=== ROUTE PLANNING ATTEMPT ===');
     console.log('handlePlanRoute called with:', { 
       fromLocation, 
