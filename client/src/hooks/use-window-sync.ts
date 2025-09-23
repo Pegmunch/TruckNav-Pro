@@ -37,8 +37,8 @@ export function useWindowSync() {
         selectedProfile: null,
         activeJourney: null,
         isNavigating: false,
-        fromLocation: "Manchester M1 Industrial Estate",
-        toLocation: "Birmingham B1 Logistics Hub",
+        fromLocation: "Luton LU1 Distribution Centre",
+        toLocation: "Milton Keynes MK1 Logistics Hub",
         isMapWindowOpen: false,
         lastUpdated: Date.now()
       };
@@ -48,8 +48,8 @@ export function useWindowSync() {
         selectedProfile: null,
         activeJourney: null,
         isNavigating: false,
-        fromLocation: "Manchester M1 Industrial Estate",
-        toLocation: "Birmingham B1 Logistics Hub",
+        fromLocation: "Luton LU1 Distribution Centre",
+        toLocation: "Milton Keynes MK1 Logistics Hub",
         isMapWindowOpen: false,
         lastUpdated: Date.now()
       };

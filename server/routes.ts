@@ -1014,8 +1014,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Use provided coordinates or fallback to UK defaults
-      const startCoords = startCoordinates || { lat: 53.4808, lng: -2.2426 }; // Manchester
-      const endCoords = endCoordinates || { lat: 52.4862, lng: -1.8904 }; // Birmingham
+      const startCoords = startCoordinates || { lat: 51.8787, lng: -0.4200 }; // Luton, Bedfordshire
+      const endCoords = endCoordinates || { lat: 51.9948, lng: -0.5892 }; // Flitwick, Bedfordshire
       
       // Pre-route validation: Check if vehicle type is provided and valid
       if (vehicleProfileId && vehicleProfile) {

@@ -38,8 +38,8 @@ export default function NavigationPage() {
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
-  const [fromLocation, setFromLocation] = useState("Manchester M1 Industrial Estate");
-  const [toLocation, setToLocation] = useState("Birmingham B1 Logistics Hub");
+  const [fromLocation, setFromLocation] = useState("Luton LU1 Distribution Centre");
+  const [toLocation, setToLocation] = useState("Milton Keynes MK1 Logistics Hub");
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   
