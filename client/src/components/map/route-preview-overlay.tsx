@@ -448,7 +448,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
 
       {/* Error display */}
       {error && (
-        <div className="absolute top-4 left-4 right-4 z-10">
+        <div className="absolute top-4 left-4 right-4 z-[60]">
           <Card className="p-4 bg-destructive/10 border-destructive">
             <p className="text-destructive text-center">{error}</p>
           </Card>
@@ -460,14 +460,14 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
         variant="outline"
         size="icon"
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 bg-background border border-border shadow-lg"
+        className="absolute top-4 right-4 z-[60] bg-background border border-border shadow-lg"
         data-testid="button-close-preview"
       >
         <X className="w-4 h-4" />
       </Button>
 
       {/* Route info overlay */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute top-4 left-4 z-[60]">
         <Card className="p-3 bg-background border border-border shadow-lg">
           <div className="flex items-center space-x-2 text-sm">
             <Truck className="w-4 h-4 text-primary" />
@@ -482,7 +482,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
       </div>
 
       {/* Bottom controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-background/95 via-background/90 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 z-[60] p-4 bg-gradient-to-t from-background/95 via-background/90 to-transparent">
         <div className="flex flex-col space-y-4 max-w-md mx-auto">
           {/* Progress indicator */}
           {(isAnimating || animationProgress > 0) && (
