@@ -112,7 +112,6 @@ async function performTokenFetch(): Promise<string | null> {
         extractCSRFToken(tokenResponse);
         const token = getCSRFToken();
         if (token) {
-          console.log('[CSRF] Fresh token fetched successfully');
           return token;
         } else {
           throw new Error('Token extracted but not valid');
@@ -158,7 +157,6 @@ async function performTokenFetch(): Promise<string | null> {
         
         // Add jitter
         delay += Math.random() * 1000;
-        console.log(`[CSRF] Retrying in ${Math.round(delay)}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -174,7 +172,6 @@ async function ensureValidToken(): Promise<string | null> {
     return getCSRFToken();
   }
   
-  console.log('[CSRF] Token invalid or near expiration, fetching fresh token');
   return await fetchCSRFToken();
 }
 
@@ -264,7 +261,6 @@ async function performRequestWithRetry(
       return await handleErrorResponse(res, method, url, data, options, timeout, retryCount, maxRetries);
     }
 
-    console.log(`[API] Request successful: ${method} ${url} - ${res.status}`);
     return res;
     
   } catch (error) {
@@ -275,7 +271,6 @@ async function performRequestWithRetry(
       
       if (retryCount < maxRetries) {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-        console.log(`[API] Retrying aborted request in ${delay}ms (attempt ${retryCount + 1}/${maxRetries + 1})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
       }
@@ -300,7 +295,6 @@ async function handleErrorResponse(
   
   // Handle CSRF token issues (403, 419)
   if ((res.status === 403 || res.status === 419) && isStatefulRequest && !options?.skipCSRF) {
-    console.log(`[CSRF] Got ${res.status}, attempting token refresh and retry`);
     
     if (retryCount < maxRetries) {
       try {
@@ -309,7 +303,6 @@ async function handleErrorResponse(
         const newToken = await fetchCSRFToken();
         
         if (newToken) {
-          console.log('[CSRF] Fresh token obtained, retrying request');
           return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
         } else {
           console.error('[CSRF] Failed to obtain fresh token for retry');
@@ -342,7 +335,6 @@ async function handleErrorResponse(
     
     // Add jitter
     delay += Math.random() * 500;
-    console.log(`[API] Rate limited, waiting ${Math.round(delay)}ms before retry (attempt ${retryCount + 1}/${maxRetries + 1})`);
     await new Promise(resolve => setTimeout(resolve, delay));
     return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
   }
@@ -351,7 +343,6 @@ async function handleErrorResponse(
   if (res.status >= 500 && res.status < 600 && retryCount < maxRetries) {
     const delay = Math.min(1000 * Math.pow(2, retryCount), 15000);
     
-    console.log(`[API] Server error ${res.status}, retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries + 1})`);
     await new Promise(resolve => setTimeout(resolve, delay));
     return await performRequestWithRetry(method, url, data, options, timeout, retryCount + 1);
   }
