@@ -29,16 +29,15 @@ export function useActiveVehicleProfile(): UseActiveVehicleProfileResult {
     // Try to get stored active profile ID from localStorage
     const storedActiveId = localStorage.getItem('activeVehicleProfileId');
     
-    // Validate stored ID is a proper UUID (not 'default-profile')
-    const isValidUUID = (id: string): boolean => {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      return uuidRegex.test(id);
+    // Validate stored ID exists and is not the old 'default-profile' placeholder
+    const isValidProfileId = (id: string): boolean => {
+      return id.length > 0 && id !== 'default-profile';
     };
 
     let profileToUse: VehicleProfile | null = null;
 
     // If we have a valid stored ID, try to find that profile
-    if (storedActiveId && isValidUUID(storedActiveId)) {
+    if (storedActiveId && isValidProfileId(storedActiveId)) {
       profileToUse = profiles.find(p => p.id === storedActiveId) || null;
     }
 

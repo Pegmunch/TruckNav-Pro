@@ -79,8 +79,8 @@ export const validateRoute = [
   
   body('vehicleProfileId')
     .optional()
-    .isUUID()
-    .withMessage('Vehicle profile ID must be a valid UUID'),
+    .isLength({ min: 1 })
+    .withMessage('Vehicle profile ID must be a non-empty string'),
   
   // Route preference for different routing strategies
   body('routePreference')

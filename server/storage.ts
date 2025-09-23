@@ -904,7 +904,18 @@ export class MemStorage implements IStorage {
       weight: insertProfile.weight ?? null,
       length: insertProfile.length ?? null,
       axles: insertProfile.axles ?? null,
-      isHazmat: insertProfile.isHazmat ?? null
+      isHazmat: insertProfile.isHazmat ?? null,
+      maxSpeed: insertProfile.maxSpeed ?? null,
+      canUseResidentialRoads: insertProfile.canUseResidentialRoads ?? null,
+      canUseMotorways: insertProfile.canUseMotorways ?? null,
+      requiresCommercialRoutes: insertProfile.requiresCommercialRoutes ?? null,
+      restrictedHours: insertProfile.restrictedHours ?? null,
+      allowedRoadTypes: insertProfile.allowedRoadTypes ?? null,
+      restrictedAreas: insertProfile.restrictedAreas ?? null,
+      region: insertProfile.region ?? null,
+      minimumLaneWidth: insertProfile.minimumLaneWidth ?? null,
+      turningRadius: insertProfile.turningRadius ?? null,
+      bridgeFormula: insertProfile.bridgeFormula ?? null
     };
     this.vehicleProfiles.set(id, profile);
     return profile;
@@ -927,7 +938,19 @@ export class MemStorage implements IStorage {
       description: insertRestriction.description ?? null,
       coordinates: insertRestriction.coordinates ?? null,
       roadName: insertRestriction.roadName ?? null,
-      country: insertRestriction.country ?? null
+      country: insertRestriction.country ?? null,
+      severity: insertRestriction.severity ?? null,
+      restrictedVehicleTypes: insertRestriction.restrictedVehicleTypes ?? null,
+      timeRestrictions: insertRestriction.timeRestrictions ?? null,
+      enforcementType: insertRestriction.enforcementType ?? null,
+      alternativeRoutes: insertRestriction.alternativeRoutes ?? null,
+      violationPenalty: insertRestriction.violationPenalty ?? null,
+      isActive: insertRestriction.isActive ?? null,
+      activeSince: insertRestriction.activeSince ?? null,
+      activeUntil: insertRestriction.activeUntil ?? null,
+      routeSegment: insertRestriction.routeSegment ?? null,
+      bypassAllowed: insertRestriction.bypassAllowed ?? null,
+      exemptions: insertRestriction.exemptions ?? null
     };
     this.restrictions.set(id, restriction);
     return restriction;
