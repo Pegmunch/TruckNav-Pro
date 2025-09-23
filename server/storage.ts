@@ -2599,7 +2599,7 @@ export class DatabaseStorage implements IStorage {
   async startJourney(routeId: string): Promise<Journey> {
     const [created] = await db
       .insert(journeys)
-      .values({ routeId, status: 'active' })
+      .values({ routeId, status: 'planned' })
       .returning();
     return created;
   }

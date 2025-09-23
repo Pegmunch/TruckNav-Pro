@@ -82,7 +82,7 @@ async function callGraphHopperAPI(
       case 'class_1_lorry':
       case 'class_2_lorry':
       case '7_5_tonne':
-        ghVehicle = 'truck';
+        ghVehicle = 'car'; // Use 'car' profile for trucks since free GraphHopper doesn't support 'truck'
         const maxSpeed = vehicleProfile.maxSpeed || 70;
         customModel = {
           priority: [
@@ -122,8 +122,8 @@ async function callGraphHopperAPI(
       params.append('custom_model', JSON.stringify(customModel));
     }
 
-    // Add vehicle restrictions for trucks
-    if (ghVehicle === 'truck') {
+    // Add vehicle restrictions for trucks (using car profile with custom model)
+    if (vehicleProfile.type === 'class_1_lorry' || vehicleProfile.type === 'class_2_lorry' || vehicleProfile.type === '7_5_tonne') {
       if (heightMeters > 0) params.append('height', heightMeters.toFixed(2));
       if (widthMeters > 0) params.append('width', widthMeters.toFixed(2));
       if (weightKg > 0) params.append('weight', Math.round(weightKg).toString());
