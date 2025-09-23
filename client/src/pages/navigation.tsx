@@ -448,36 +448,10 @@ export default function NavigationPage() {
       activeProfileId,
       selectedProfile: selectedProfile?.id 
     });
-
-    // DEBUG: Test route preview with mock data if validation fails
-    const testRoutePreview = () => {
-      const mockRoute = {
-        id: 'test-route',
-        startLocation: 'LU2 7FG, Luton',
-        endLocation: 'M1 1AA, Manchester',
-        distance: 150000, // 150km in meters
-        duration: 7200, // 2 hours in seconds
-        geometry: {
-          type: 'LineString' as const,
-          coordinates: [
-            [-0.4040, 51.8781], // Luton
-            [-0.3000, 51.9000], // Point 1
-            [-0.2000, 52.0000], // Point 2
-            [-0.1000, 52.1000], // Point 3
-            [-2.2426, 53.4808]  // Manchester
-          ]
-        }
-      };
-      console.log('🧪 Testing route preview with mock data');
-      setPreviewRouteData(mockRoute);
-      setShowRoutePreview(true);
-    };
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
       console.log('Route planning blocked: No valid vehicle profile');
-      console.log('🧪 Triggering test route preview to check overlay functionality');
-      testRoutePreview(); // Test the overlay
       toast({
         title: "Vehicle profile required",
         description: "Please select a valid vehicle profile before planning a route.",

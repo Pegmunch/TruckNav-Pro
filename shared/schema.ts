@@ -236,6 +236,22 @@ export const insertRouteSchema = createInsertSchema(routes).omit({
   id: true,
 });
 
+// Lightweight schema for route planning requests (user input validation)
+export const planningRequestSchema = z.object({
+  startLocation: z.string().min(3).max(200),
+  endLocation: z.string().min(3).max(200),
+  vehicleProfileId: z.string().min(1),
+  routePreference: z.enum(['fastest', 'eco', 'avoid_tolls']).optional(),
+  startCoordinates: z.object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180)
+  }).optional(),
+  endCoordinates: z.object({
+    lat: z.number().min(-90).max(90),
+    lng: z.number().min(-180).max(180)
+  }).optional()
+});
+
 export const insertTrafficIncidentSchema = createInsertSchema(trafficIncidents).omit({
   id: true,
   reportedAt: true,
@@ -280,6 +296,7 @@ export type InsertFacility = z.infer<typeof insertFacilitySchema>;
 
 export type Route = typeof routes.$inferSelect;
 export type InsertRoute = z.infer<typeof insertRouteSchema>;
+export type PlanningRequest = z.infer<typeof planningRequestSchema>;
 
 export type TrafficIncident = typeof trafficIncidents.$inferSelect;
 export type InsertTrafficIncident = z.infer<typeof insertTrafficIncidentSchema>;

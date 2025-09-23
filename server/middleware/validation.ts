@@ -2,6 +2,7 @@
 // Patent-protected by Bespoke Marketing.Ai Ltd
 
 import { body, param, query } from 'express-validator';
+import { planningRequestSchema } from '@shared/schema';
 
 // Vehicle profile validation
 export const validateVehicleProfile = [
@@ -88,6 +89,43 @@ export const validateRoute = [
     .isIn(['fastest', 'eco', 'avoid_tolls'])
     .withMessage('Route preference must be fastest, eco, or avoid_tolls')
 ];
+
+// Lightweight route planning validation for user input
+export const validateRoutePlanningRequest = (req: any, res: any, next: any) => {
+  try {
+    const result = planningRequestSchema.safeParse(req.body);
+    
+    if (!result.success) {
+      console.warn(`[VALIDATION] Route planning request validation failed:`, {
+        errors: result.error.errors,
+        body: req.body,
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(400).json({
+        error: 'Planning request validation failed',
+        details: result.error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        })),
+        code: 'PLANNING_VALIDATION_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Replace req.body with validated data for use in route handler
+    req.body = result.data;
+    next();
+  } catch (error) {
+    console.error('Route planning validation error:', error);
+    return res.status(500).json({
+      error: 'Internal validation error',
+      code: 'VALIDATION_SYSTEM_ERROR',
+      timestamp: new Date().toISOString()
+    });
+  }
+};
 
 // Traffic incident validation
 export const validateTrafficIncident = [

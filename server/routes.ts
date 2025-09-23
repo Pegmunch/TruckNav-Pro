@@ -16,7 +16,8 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { 
   validateVehicleProfile, 
-  validateRoute, 
+  validateRoute,
+  validateRoutePlanningRequest, 
   validateTrafficIncident, 
   validateFacilitySearch, 
   validateSubscription, 
@@ -980,7 +981,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Routes with strict vehicle class enforcement
-  app.post("/api/routes/calculate", validateRoute, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/routes/calculate", validateRoutePlanningRequest, async (req: Request, res: Response) => {
     try {
       const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates } = req.body;
       
