@@ -262,34 +262,34 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   const token = req.headers['x-csrf-token'] as string;
   let cookieToken = req.session.csrfToken;
 
-  // Auto-recovery: If session token is missing but client has one, sync them
-  if (!cookieToken && token) {
-    console.warn(`[CSRF] Session token missing but client provided token - syncing for IP: ${req.ip}`, {
-      clientToken: token.substring(0, 8) + '...',
+  // SECURITY: No auto-recovery - only trust server-generated tokens
+  // If session token is missing, generate a new one but require client to retry
+  if (!cookieToken) {
+    console.warn(`[SECURITY] CSRF token missing from session - generating new token for IP: ${req.ip}`, {
       sessionId: req.sessionID ? 'exists' : 'missing',
       url: req.url,
       method: req.method,
       timestamp: new Date().toISOString()
     });
     
-    // Accept the client's token and save it to session
-    req.session.csrfToken = token;
-    cookieToken = token;
+    // Generate secure server token
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
     
-    // Force immediate session save to prevent race conditions
+    // Save session and return the new token to client
     req.session.save((err: any) => {
       if (err) {
-        console.error('[CSRF] Failed to save auto-recovery session:', err);
-      } else {
-        console.log('[CSRF] Session auto-recovery completed - client token accepted');
+        console.error('[CSRF] Failed to save new session token:', err);
       }
     });
     
-    // Set the accepted token in response header for confirmation
-    res.setHeader('X-CSRF-Token', token);
-    
-    console.log(`[CSRF] Auto-recovery granted access for ${req.method} ${req.url} with synchronized token`);
-    return next();
+    // Return new token for client to use in retry
+    return res.status(403).json({
+      error: 'CSRF token required - use the provided token for retry',
+      code: 'CSRF_TOKEN_REQUIRED',
+      csrfToken: req.session.csrfToken,
+      hint: 'Include X-CSRF-Token header in your request',
+      timestamp: new Date().toISOString()
+    });
   }
 
   // Standard token validation with detailed logging
@@ -455,8 +455,11 @@ export const applySecurityMiddleware = (app: express.Application) => {
   // SQL injection prevention
   app.use(preventSQLInjection);
   
+  // Proactive CSRF token generation for all sessions (prevents token-missing scenarios)
+  app.use(generateCSRFToken);
+  
   // CSRF protection for all state-changing operations - applied globally for robustness
   app.use(csrfProtection);
   
-  console.log('[SECURITY] All anti-hacking security features activated including CSRF protection');
+  console.log('[SECURITY] All anti-hacking security features activated including proactive CSRF protection');
 };

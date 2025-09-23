@@ -7,7 +7,7 @@ import { routeMonitorService } from "./services/route-monitor";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
-import { apiRateLimit, authRateLimit, validateRequest, csrfProtection } from "./middleware/security";
+import { apiRateLimit, authRateLimit, validateRequest } from "./middleware/security";
 import OpenAI from "openai";
 import multer from "multer";
 import { createReadStream } from "fs";
