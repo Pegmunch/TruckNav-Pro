@@ -34,6 +34,17 @@ export function BottomNavigationButton({
   const canStartNavigation = currentRoute && selectedProfile && fromLocation && toLocation && !isNavigating;
   const canStopNavigation = isNavigating && onStopNavigation;
 
+  // Debug logging to see what's missing
+  console.log('[BottomNavigationButton] Debug status:', {
+    currentRoute: !!currentRoute,
+    selectedProfile: !!selectedProfile, 
+    fromLocation: !!fromLocation,
+    toLocation: !!toLocation,
+    isNavigating,
+    canStartNavigation,
+    canStopNavigation
+  });
+
   if (!canStartNavigation && !canStopNavigation) {
     return null;
   }
