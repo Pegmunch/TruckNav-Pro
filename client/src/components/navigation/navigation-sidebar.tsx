@@ -521,6 +521,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
             {!isNavigating ? (
               <Button
                 onClick={() => {
+                  console.log('[START_NAV_DEBUG]', { 
+                    currentRoute: !!currentRoute, 
+                    selectedProfile: !!selectedProfile, 
+                    fromLocation: !!fromLocation, 
+                    toLocation: !!toLocation,
+                    isStartingJourney
+                  });
                   if (currentRoute && selectedProfile && fromLocation && toLocation) {
                     onStartNavigation();
                   } else {

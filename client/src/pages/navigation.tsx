@@ -38,7 +38,7 @@ export default function NavigationPage() {
   
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
-  const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("Current Location");
   const [toLocation, setToLocation] = useState("");
