@@ -341,6 +341,9 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     });
   }
 
+  // Update timestamp for this token to keep it fresh
+  validToken.timestamp = Date.now();
+  
   console.log(`[CSRF] Token validated successfully for ${req.method} ${req.url}`);
   next();
 };
@@ -352,13 +355,27 @@ export const generateCSRFToken = (req: express.Request & { session?: any }, res:
     return next();
   }
 
-  if (!req.session.csrfToken) {
-    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
-    console.log('[SECURITY] New CSRF token generated and stored in session');
+  // Initialize token pool if needed
+  if (!req.session.csrfTokens) {
+    req.session.csrfTokens = [];
   }
 
+  // Generate a new token and add it to the pool
+  const newToken = crypto.randomBytes(32).toString('hex');
+  req.session.csrfTokens.push({
+    token: newToken,
+    timestamp: Date.now()
+  });
+
+  // Keep only the last 5 tokens to prevent memory bloat
+  if (req.session.csrfTokens.length > 5) {
+    req.session.csrfTokens = req.session.csrfTokens.slice(-5);
+  }
+
+  console.log('[SECURITY] New CSRF token generated and stored in token pool');
+
   // Set CSRF token in response header for client to use
-  res.setHeader('X-CSRF-Token', req.session.csrfToken);
+  res.setHeader('X-CSRF-Token', newToken);
   next();
 };
 
