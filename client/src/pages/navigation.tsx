@@ -605,6 +605,17 @@ export default function NavigationPage() {
 
 
 
+  // Handle cancel route - stop navigation
+  const handleCancelRoute = () => {
+    if (activeJourney && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
+      completeJourneyMutation.mutate(activeJourney.id);
+      toast({
+        title: "Navigation cancelled",
+        description: "Route has been cancelled successfully",
+      });
+    }
+  };
+
   const handleStartNavigation = () => {
     if (currentRoute) {
       // Open swipe drawer for smooth transition
@@ -819,6 +830,7 @@ export default function NavigationPage() {
                 currentLocation={currentGPSLocation || undefined}
                 onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                 onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
+                onCancelRoute={handleCancelRoute}
                 voiceEnabled={professionalVoiceEnabled}
                 isFullscreen={isFullscreenNav}
               />
@@ -993,6 +1005,7 @@ export default function NavigationPage() {
                 currentLocation={currentGPSLocation || undefined}
                 onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                 onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
+                onCancelRoute={handleCancelRoute}
                 voiceEnabled={professionalVoiceEnabled}
                 isFullscreen={isFullscreenNav}
               />

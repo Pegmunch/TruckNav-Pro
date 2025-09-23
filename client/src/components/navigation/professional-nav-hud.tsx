@@ -17,7 +17,8 @@ import {
   Settings,
   Maximize2,
   Eye,
-  Compass
+  Compass,
+  X
 } from "lucide-react";
 import { type Route, type VehicleProfile } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ interface ProfessionalNavHUDProps {
   currentLocation?: { lat: number; lng: number };
   onToggleVoice?: () => void;
   onToggleFullscreen?: () => void;
+  onCancelRoute?: () => void;
   voiceEnabled?: boolean;
   isFullscreen?: boolean;
 }
@@ -108,6 +110,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   currentLocation,
   onToggleVoice,
   onToggleFullscreen,
+  onCancelRoute,
   voiceEnabled = true,
   isFullscreen = false
 }: ProfessionalNavHUDProps) {
@@ -208,6 +211,17 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
             data-testid="button-toggle-fullscreen"
           >
             {isFullscreen ? <Eye className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCancelRoute}
+            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 border-red-500/30"
+            data-testid="button-cancel-route"
+            title="Cancel Navigation"
+          >
+            <X className="w-4 h-4" />
           </Button>
         </div>
       </div>
