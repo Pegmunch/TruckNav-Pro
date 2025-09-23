@@ -18,7 +18,7 @@ async function initializeCSRF() {
 
 // Register Service Worker for PWA functionality 
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
-// Disabled in development for debugging
+// Disabled in development to prevent caching interference with debugging
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
