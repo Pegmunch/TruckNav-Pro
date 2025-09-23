@@ -94,7 +94,6 @@ export default function NavigationPage() {
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
-    console.log('[UI Recovery] Restoring consistent UI state after error');
     // NEVER set to 'closed' - always keep sidebar accessible
     setSidebarState(isMobile ? 'collapsed' : 'open');
     setIsMapExpanded(false);         // Collapse any expanded map to prevent overlay conflicts  
@@ -183,8 +182,6 @@ export default function NavigationPage() {
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
-    console.log('AR_TOGGLE_CLICKED');
-    console.log(`AR_supported: ${arSupported}, navigating: ${isNavigating}, current_AR: ${isARMode}`);
     
     if (!arSupported) {
       toast({
@@ -280,7 +277,6 @@ export default function NavigationPage() {
 
   // Sync selectedProfile with activeProfile from centralized hook
   useEffect(() => {
-    console.log('[PROFILE_SYNC] activeProfile changed:', activeProfile);
     if (activeProfile) {
       setSelectedProfile(activeProfile);
     }
@@ -663,7 +659,6 @@ export default function NavigationPage() {
   useEffect(() => {
     // Only auto-plan if we have both locations and no current route
     if (fromLocation && toLocation && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
-      console.log('[AUTO_ROUTE] Auto-planning route with:', { fromLocation, toLocation, activeProfileId });
       handlePlanRoute();
     }
   }, [fromLocation, toLocation, activeProfileId, currentRoute, calculateRouteMutation.isPending]);

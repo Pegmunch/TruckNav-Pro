@@ -12,14 +12,12 @@ async function initializeCSRF() {
     const { initializeCSRFToken } = await import('./lib/queryClient');
     const token = await initializeCSRFToken();
     if (token) {
-      console.log('CSRF token initialized successfully with robust management');
     } else {
       console.warn('CSRF token initialization completed but no token received');
     }
   } catch (error) {
     console.error("Failed to initialize CSRF token with robust management:", error);
     // No fallback needed - ensureValidToken will handle token fetching when needed
-    console.log('Robust token management will fetch tokens on-demand');
   }
 }
 
@@ -30,10 +28,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('TruckNav Pro SW registered successfully:', registration.scope);
       })
       .catch((error) => {
-        console.log('TruckNav Pro SW registration failed:', error);
+        console.error('TruckNav Pro SW registration failed:', error);
       });
   });
 }
@@ -45,7 +42,6 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
 // Build ID for verification that new code is running
 const BUILD_ID = 'build-20250917-trucknav-enhanced';
-console.log('TruckNav Pro BUILD_ID:', BUILD_ID);
 if (import.meta.env.DEV && document) {
   const buildMarker = document.createElement('meta');
   buildMarker.name = 'trucknav-build-id';

@@ -38,9 +38,6 @@ function extractCSRFToken(res: Response) {
   
   if (!csrfTokenInfo || csrfTokenInfo.token !== token) {
     csrfTokenInfo = newTokenInfo;
-    console.log('[CSRF] Token updated with expiration tracking:', {
-      expiresIn: Math.round(maxAge / 1000) + 's'
-    });
   }
 }
 
@@ -64,7 +61,6 @@ function getCSRFToken(): string | null {
 function clearCSRFToken() {
   csrfTokenInfo = null;
   tokenFetchPromise = null;
-  console.log('[CSRF] Token cleared and fetch promise reset');
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -78,7 +74,6 @@ async function throwIfResNotOk(res: Response) {
 async function fetchCSRFToken(): Promise<string | null> {
   // Prevent concurrent token fetches
   if (tokenFetchPromise) {
-    console.log('[CSRF] Waiting for existing token fetch');
     return await tokenFetchPromise;
   }
   
@@ -98,8 +93,6 @@ async function performTokenFetch(): Promise<string | null> {
   
   for (let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++) {
     try {
-      console.log(`[CSRF] Fetching token (attempt ${attempt + 1}/${MAX_RETRY_ATTEMPTS})`);
-      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
       
