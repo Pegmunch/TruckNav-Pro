@@ -1105,9 +1105,8 @@ export default function NavigationPage() {
                   onClick={() => {
                     setIsDrawerOpen(false);
                     setIsMapExpanded(false);
-                    if (!isSidebarOpen) {
-                      setSidebarState('open');
-                    }
+                    // Ensure sidebar is properly set to planning mode state
+                    setSidebarState('open');
                   }}
                   className="flex-1 automotive-button automotive-text-base"
                   data-testid="button-back-to-planning"
