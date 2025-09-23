@@ -502,19 +502,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // CSRF token endpoint (must come before CSRF protection middleware)
   app.get("/api/csrf-token", (req: any, res: any) => {
-    // Ensure the session has a CSRF token
-    if (!req.session?.csrfToken) {
-      if (req.session) {
-        req.session.csrfToken = randomBytes(32).toString('hex');
+    // Always ensure session exists and has a CSRF token
+    if (!req.session) {
+      return res.status(500).json({ error: 'Session not available' });
+    }
+
+    // Generate CSRF token if missing
+    if (!req.session.csrfToken) {
+      req.session.csrfToken = randomBytes(32).toString('hex');
+    }
+    
+    // Explicitly save the session to persist the CSRF token
+    req.session.save((err: any) => {
+      if (err) {
+        console.error('[CSRF] Failed to save session:', err);
+        return res.status(500).json({ error: 'Failed to initialize session' });
       }
-    }
-    
-    // Set CSRF token in response header for frontend to extract
-    if (req.session?.csrfToken) {
+      
+      // Set CSRF token in response header AND body for frontend to extract
       res.setHeader('X-CSRF-Token', req.session.csrfToken);
-    }
-    
-    res.json({ success: true });
+      res.json({ 
+        success: true,
+        csrfToken: req.session.csrfToken // Return in body too for debugging
+      });
+    });
   });
   
   // Apply CSRF protection to all state-changing operations

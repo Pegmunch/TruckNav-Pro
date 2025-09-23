@@ -50,25 +50,25 @@ export async function apiRequest(
   // Always try to get fresh CSRF token for state-changing requests
   if (method !== 'GET' && method !== 'OPTIONS') {
     let token = getCSRFToken();
+    console.log('[CSRF DEBUG] Method:', method, 'Current token:', token ? 'exists' : 'missing');
     
-    // If no token or token might be stale, fetch fresh one
-    if (!token) {
-      try {
-        console.log('[CSRF] Fetching fresh CSRF token...');
-        const tokenResponse = await fetch('/api/csrf-token', {
-          credentials: 'include',
-          cache: 'no-cache'  // Ensure fresh token
-        });
-        if (tokenResponse.ok) {
-          extractCSRFToken(tokenResponse);
-          token = getCSRFToken();
-          console.log('[CSRF] Fresh token obtained');
-        } else {
-          console.warn('[CSRF] Failed to fetch token, response not ok:', tokenResponse.status);
-        }
-      } catch (error) {
-        console.warn('[CSRF] Failed to fetch CSRF token:', error);
+    // ALWAYS fetch fresh token for debugging - force token refresh
+    console.log('[CSRF] Forcing fresh CSRF token fetch...');
+    try {
+      const tokenResponse = await fetch('/api/csrf-token', {
+        credentials: 'include',
+        cache: 'no-cache'  // Ensure fresh token
+      });
+      if (tokenResponse.ok) {
+        extractCSRFToken(tokenResponse);
+        const newToken = getCSRFToken();
+        console.log('[CSRF] Token fetch result:', newToken ? 'success' : 'failed');
+        token = newToken;
+      } else {
+        console.warn('[CSRF] Token endpoint failed:', tokenResponse.status, tokenResponse.statusText);
       }
+    } catch (error) {
+      console.warn('[CSRF] Token fetch error:', error);
     }
   }
 

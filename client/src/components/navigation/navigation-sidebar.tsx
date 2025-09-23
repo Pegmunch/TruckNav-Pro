@@ -595,10 +595,16 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       if (destinationInput.trim() && !toLocation) {
                         onToLocationChange(destinationInput.trim());
                       }
-                      // Then plan the route
-                      onPlanRoute('fastest');
+                      
+                      // If no route exists, plan it first then start navigation
+                      if (!currentRoute) {
+                        onPlanRoute('fastest');
+                      } else {
+                        // Route exists, start navigation immediately
+                        onStartNavigation();
+                      }
                     }}
-                    disabled={isCalculating}
+                    disabled={isCalculating || isStartingJourney}
                     size="lg"
                     className="w-full automotive-button bg-green-600 hover:bg-green-700 text-white font-bold h-12"
                     data-testid="button-start-navigation"
