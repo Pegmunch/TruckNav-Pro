@@ -1274,73 +1274,7 @@ export default function NavigationPage() {
         </div>
       )}
 
-      {/* Navigation Status Drawer - removed legacy separate state */}
-      <Drawer open={false} onOpenChange={() => {}}>
-        <DrawerContent className="automotive-drawer">
-          <DrawerHeader className="flex items-center justify-between">
-            <DrawerTitle className="automotive-text-lg">
-              {isNavigating ? 'Navigation Active' : 'Starting Navigation...'}
-            </DrawerTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setIsMapExpanded(false);
-                setSidebarState('open');
-              }}
-              className="automotive-touch-target"
-              data-testid="button-close-drawer"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </DrawerHeader>
-          <div className="p-6">
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="automotive-text-base text-muted-foreground mb-2">
-                  Route: {fromLocation} → {toLocation}
-                </div>
-                {currentRoute && (
-                  <div className="text-sm text-muted-foreground">
-                    Distance: {Math.round((currentRoute.distance || 0) / 1000)} km • 
-                    Duration: {Math.round((currentRoute.duration || 0) / 60)} min
-                  </div>
-                )}
-              </div>
-              <div className="flex space-x-3">
-                <Button
-                  onClick={() => {
-                    setIsMapExpanded(true);
-                    // NEVER close sidebar completely - keep it collapsed but accessible
-                    if (window.innerWidth < 1024) {
-                      setSidebarState('collapsed');
-                    }
-                  }}
-                  className="flex-1 automotive-button automotive-text-base"
-                  data-testid="button-expand-map"
-                >
-                  View Full Map
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsMapExpanded(false);
-                    // Ensure sidebar is properly set to planning mode state
-                    setSidebarState('open');
-                  }}
-                  className="flex-1 automotive-button automotive-text-base"
-                  data-testid="button-back-to-planning"
-                >
-                  Back to Planning
-                </Button>
-              </div>
-              <div className="text-center text-xs text-muted-foreground">
-                Swipe down to dismiss or tap outside
-              </div>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {/* Removed unused Navigation Status Drawer that was creating grey overlay */}
 
       {/* Mobile Notification Stack - Overlay for all layouts with error boundary */}
       {Array.isArray(activeNotifications) && activeNotifications.length > 0 ? (
