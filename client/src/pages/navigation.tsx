@@ -962,6 +962,12 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
+                {/* DIRECT TEST - SHOULD ALWAYS BE VISIBLE */}
+                <div className="absolute top-10 left-10 bg-yellow-500 text-black p-4 rounded shadow-lg z-[9999]">
+                  <h3 className="text-black font-bold text-2xl">MAP CONTAINER TEST</h3>
+                  <p className="text-black text-xl">AR Mode: {String(isARMode)}</p>
+                  <p className="text-black text-xl">Mobile: {String(isMobile)}</p>
+                </div>
                 <div className="absolute inset-0 h-full w-full">
                   <InteractiveMap
                     currentRoute={currentRoute}
