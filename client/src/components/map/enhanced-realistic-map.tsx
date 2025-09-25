@@ -281,7 +281,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   const displayLocation = userLocation || currentLocation || { lat: mapCenter[0], lng: mapCenter[1] };
 
   return (
-    <div className="relative h-full w-full bg-gray-900">
+    <div className="relative h-full w-full bg-transparent">
       {/* Enhanced Map Controls */}
       <div className="absolute top-16 right-4 z-[40] space-y-2">
         {/* Map Style Selector */}

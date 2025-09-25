@@ -44,6 +44,12 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // CRITICAL FIX: Enable overlay safe mode to eliminate persistent grey overlays
+    document.documentElement.classList.add("overlay-safe-mode");
+    console.log("🛡️ OVERLAY SAFE MODE ENABLED - All overlays forced transparent");
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="auto" storageKey="theme-mode">
       <MeasurementProvider>

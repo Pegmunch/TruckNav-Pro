@@ -88,7 +88,7 @@ body {
 /* Enhanced Automotive Sidebar Layout with Optimized Spacing */
 .automotive-layout {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   gap: 0;
 }
@@ -185,7 +185,7 @@ body {
   position: fixed;
   left: 0;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
   z-index: 50;
   border-right: 1px solid hsl(var(--border));
 }
@@ -1279,7 +1279,7 @@ select:focus-visible,
 .mobile-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   height: 100dvh; /* Dynamic viewport height for mobile */
   overflow: hidden;
   position: relative;
@@ -1515,7 +1515,6 @@ select:focus-visible,
     position: relative;
     width: 100%;
     /* EXTENDED DEPTH: Use calculated height for consistency with container sizing */
-    height: calc(100vh - 100px);
     height: calc(100dvh - 100px); /* Dynamic viewport height with extended depth */
     border-radius: 0;
     border: none;
@@ -1599,7 +1598,7 @@ select:focus-visible,
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
   .mobile-layout {
-    height: 100vh;
+    height: 100dvh;
     height: -webkit-fill-available;
   }
   
@@ -1897,4 +1896,18 @@ select:focus-visible,
 /* Improved focus states for better accessibility */
 .enhanced-focus {
   @apply focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-ring;
+}
+
+/* Global overlay debug kill-switch - force all overlays transparent */
+html.overlay-safe-mode [class*="Overlay"], 
+html.overlay-safe-mode [data-radix-portal], 
+html.overlay-safe-mode [class*="backdrop"], 
+html.overlay-safe-mode [class*="overlay"], 
+html.overlay-safe-mode ::backdrop {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: none !important;
+  animation: none !important;
 }
