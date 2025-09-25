@@ -3089,6 +3089,182 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Convoy Management Routes
+  app.post("/api/social/convoys", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertConvoySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid convoy data",
+          errors: result.error.errors
+        });
+      }
+
+      const convoy = await storage.createConvoy(result.data);
+      res.status(201).json(convoy);
+    } catch (error) {
+      console.error('Error creating convoy:', error);
+      res.status(500).json({ message: "Failed to create convoy" });
+    }
+  });
+
+  app.get("/api/social/convoys/:id", async (req: Request, res: Response) => {
+    try {
+      const convoy = await storage.getConvoy(req.params.id);
+      if (!convoy) {
+        return res.status(404).json({ message: "Convoy not found" });
+      }
+      res.json(convoy);
+    } catch (error) {
+      console.error('Error getting convoy:', error);
+      res.status(500).json({ message: "Failed to get convoy" });
+    }
+  });
+
+  app.put("/api/social/convoys/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const updates = req.body;
+      const convoy = await storage.updateConvoy(req.params.id, updates);
+      if (!convoy) {
+        return res.status(404).json({ message: "Convoy not found" });
+      }
+      res.json(convoy);
+    } catch (error) {
+      console.error('Error updating convoy:', error);
+      res.status(500).json({ message: "Failed to update convoy" });
+    }
+  });
+
+  app.delete("/api/social/convoys/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const success = await storage.deleteConvoy(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Convoy not found" });
+      }
+      res.json({ message: "Convoy deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting convoy:', error);
+      res.status(500).json({ message: "Failed to delete convoy" });
+    }
+  });
+
+  app.get("/api/social/convoys", async (req: Request, res: Response) => {
+    try {
+      const { status, leaderId, limit, search } = req.query;
+      
+      if (search) {
+        // Search convoys by name/description
+        const convoys = await storage.searchConvoys(search as string, {
+          limit: limit ? parseInt(limit as string) : undefined
+        });
+        return res.json(convoys);
+      }
+      
+      // List convoys with filters
+      const convoys = await storage.getConvoys({
+        status: status as string,
+        leaderId: leaderId as string,
+        limit: limit ? parseInt(limit as string) : undefined
+      });
+      res.json(convoys);
+    } catch (error) {
+      console.error('Error getting convoys:', error);
+      res.status(500).json({ message: "Failed to get convoys" });
+    }
+  });
+
+  // Convoy Member Management Routes
+  app.post("/api/social/convoys/:id/members", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const convoyId = req.params.id;
+      const result = insertConvoyMemberSchema.safeParse({
+        ...req.body,
+        convoyId
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid member data",
+          errors: result.error.errors
+        });
+      }
+
+      const member = await storage.createConvoyMember(result.data);
+      res.status(201).json(member);
+    } catch (error) {
+      console.error('Error adding convoy member:', error);
+      res.status(500).json({ message: "Failed to add convoy member" });
+    }
+  });
+
+  app.get("/api/social/convoys/:id/members", async (req: Request, res: Response) => {
+    try {
+      const convoyId = req.params.id;
+      const members = await storage.getConvoyMembers(convoyId);
+      res.json(members);
+    } catch (error) {
+      console.error('Error getting convoy members:', error);
+      res.status(500).json({ message: "Failed to get convoy members" });
+    }
+  });
+
+  app.put("/api/social/convoy-members/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const updates = req.body;
+      const member = await storage.updateConvoyMember(req.params.id, updates);
+      if (!member) {
+        return res.status(404).json({ message: "Convoy member not found" });
+      }
+      res.json(member);
+    } catch (error) {
+      console.error('Error updating convoy member:', error);
+      res.status(500).json({ message: "Failed to update convoy member" });
+    }
+  });
+
+  app.delete("/api/social/convoy-members/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const success = await storage.removeConvoyMember(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Convoy member not found" });
+      }
+      res.json({ message: "Successfully left convoy" });
+    } catch (error) {
+      console.error('Error removing convoy member:', error);
+      res.status(500).json({ message: "Failed to remove convoy member" });
+    }
+  });
+
+  app.post("/api/social/convoys/:id/join-request", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const convoyId = req.params.id;
+      const { driverId } = req.body;
+      
+      if (!driverId) {
+        return res.status(400).json({ message: "Driver ID is required" });
+      }
+
+      const member = await storage.joinConvoyRequest(convoyId, driverId);
+      res.status(201).json(member);
+    } catch (error) {
+      console.error('Error creating join request:', error);
+      res.status(500).json({ message: "Failed to create join request" });
+    }
+  });
+
+  app.get("/api/social/convoy-members/:id", async (req: Request, res: Response) => {
+    try {
+      const member = await storage.getConvoyMember(req.params.id);
+      if (!member) {
+        return res.status(404).json({ message: "Convoy member not found" });
+      }
+      res.json(member);
+    } catch (error) {
+      console.error('Error getting convoy member:', error);
+      res.status(500).json({ message: "Failed to get convoy member" });
+    }
+  });
+
   // =============================================================================
   // END SOCIAL NETWORKING SYSTEM API ROUTES  
   // =============================================================================

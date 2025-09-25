@@ -4010,8 +4010,21 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select().from(convoys).where(eq(convoys.id, id)).limit(1);
     return result[0];
   }
-  async createConvoy(convoy: InsertConvoy): Promise<Convoy> { throw new Error("Not implemented yet"); }
-  async updateConvoy(id: string, updates: Partial<Convoy>): Promise<Convoy | undefined> { return undefined; }
+  async createConvoy(convoy: InsertConvoy): Promise<Convoy> {
+    const result = await db.insert(convoys).values({
+      ...convoy,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+  async updateConvoy(id: string, updates: Partial<Convoy>): Promise<Convoy | undefined> {
+    const result = await db.update(convoys).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(convoys.id, id)).returning();
+    return result[0];
+  }
   async deleteConvoy(id: string): Promise<boolean> { return false; }
   async getConvoys(params: { status?: string; leaderId?: string; limit?: number }): Promise<Convoy[]> { return []; }
   async searchConvoys(query: string, params?: { limit?: number }): Promise<Convoy[]> { return []; }
@@ -4020,11 +4033,52 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select().from(convoyMembers).where(eq(convoyMembers.id, id)).limit(1);
     return result[0];
   }
-  async createConvoyMember(member: InsertConvoyMember): Promise<ConvoyMember> { throw new Error("Not implemented yet"); }
-  async updateConvoyMember(id: string, updates: Partial<ConvoyMember>): Promise<ConvoyMember | undefined> { return undefined; }
-  async removeConvoyMember(id: string): Promise<boolean> { return false; }
-  async getConvoyMembers(convoyId: string): Promise<ConvoyMember[]> { return []; }
-  async joinConvoyRequest(convoyId: string, driverId: string): Promise<ConvoyMember> { throw new Error("Not implemented yet"); }
+  async createConvoyMember(member: InsertConvoyMember): Promise<ConvoyMember> {
+    const result = await db.insert(convoyMembers).values({
+      ...member,
+      joinedAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+  async updateConvoyMember(id: string, updates: Partial<ConvoyMember>): Promise<ConvoyMember | undefined> {
+    const result = await db.update(convoyMembers).set({
+      ...updates,
+    }).where(eq(convoyMembers.id, id)).returning();
+    return result[0];
+  }
+  async removeConvoyMember(id: string): Promise<boolean> {
+    const result = await db.update(convoyMembers).set({
+      leftAt: new Date(),
+      status: 'left',
+    }).where(eq(convoyMembers.id, id));
+    return result.rowCount > 0;
+  }
+  async getConvoyMembers(convoyId: string): Promise<ConvoyMember[]> {
+    const result = await db.select().from(convoyMembers)
+      .where(
+        and(
+          eq(convoyMembers.convoyId, convoyId),
+          sql`${convoyMembers.leftAt} IS NULL OR ${convoyMembers.status} != 'left'`
+        )
+      )
+      .orderBy(convoyMembers.position, convoyMembers.joinedAt);
+    return result;
+  }
+  async joinConvoyRequest(convoyId: string, driverId: string): Promise<ConvoyMember> {
+    const memberData: InsertConvoyMember = {
+      convoyId,
+      driverId,
+      role: 'member',
+      status: 'pending',
+    };
+    
+    const result = await db.insert(convoyMembers).values({
+      ...memberData,
+      joinedAt: new Date(),
+    }).returning();
+    
+    return result[0];
+  }
 
   async getDriverLocation(driverId: string): Promise<DriverLocation | undefined> {
     const result = await db.select().from(driverLocations).where(eq(driverLocations.driverId, driverId)).limit(1);
