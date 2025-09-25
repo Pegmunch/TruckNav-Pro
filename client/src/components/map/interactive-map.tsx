@@ -691,6 +691,7 @@ const InteractiveMap = memo(function InteractiveMap({
       <MapContainer 
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
+        style={{ height: '100%', width: '100%' }}
         className="absolute inset-0 z-0"
         data-testid="leaflet-map"
       >
