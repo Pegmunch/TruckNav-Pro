@@ -39,6 +39,8 @@ const DrawerOverlay = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed inset-0 z-40",
+        // CRITICAL FIX: Force transparent in overlay safe mode and remove all backgrounds
+        "overlay-safe-mode:bg-transparent overlay-safe-mode:backdrop-blur-none",
         // Removed background color to prevent grey overlay
         isMobile ? [
           "mobile-drawer-overlay",

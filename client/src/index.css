@@ -1903,7 +1903,10 @@ html.overlay-safe-mode [class*="Overlay"],
 html.overlay-safe-mode [data-radix-portal], 
 html.overlay-safe-mode [class*="backdrop"], 
 html.overlay-safe-mode [class*="overlay"], 
-html.overlay-safe-mode ::backdrop {
+html.overlay-safe-mode ::backdrop,
+html.overlay-safe-mode [data-vaul-drawer-wrapper],
+html.overlay-safe-mode [data-vaul-overlay],
+html.overlay-safe-mode [data-vaul-drawer] {
   background: transparent !important;
   backdrop-filter: none !important;
   opacity: 0 !important;
