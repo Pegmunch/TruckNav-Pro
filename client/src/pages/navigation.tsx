@@ -1015,8 +1015,8 @@ export default function NavigationPage() {
                   />
                 </div>
                 
-                {/* Legal Ownership Section - Mobile */}
-                <MapLegalOwnership compact={true} className="sm:hidden" />
+                {/* Legal Ownership Section - Mobile - DISABLED TO FIX GREY OVERLAY */}
+                {/* <MapLegalOwnership compact={true} className="sm:hidden" /> */}
               </>
             )}
           </div>
@@ -1203,8 +1203,8 @@ export default function NavigationPage() {
                   />
                 </div>
                 
-                {/* Legal Ownership Section - Desktop */}
-                <MapLegalOwnership compact={true} className="hidden sm:block" />
+                {/* Legal Ownership Section - Desktop - DISABLED TO FIX GREY OVERLAY */}
+                {/* <MapLegalOwnership compact={true} className="hidden sm:block" /> */}
               </>
             )}
           </div>
