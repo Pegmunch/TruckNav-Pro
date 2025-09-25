@@ -25,6 +25,7 @@ function Router() {
       <div className="flex-1">
         <Switch>
           <Route path="/" component={NavigationPage} />
+          <Route path="/navigation" component={NavigationPage} />
           <Route path="/lane-selection/:id" component={LaneSelectionPage} />
           <Route path="/lane-selection" component={LaneSelectionPage} />
           <Route path="/lanes/:routeId" component={LaneSelectionPage} />
