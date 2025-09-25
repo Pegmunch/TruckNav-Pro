@@ -961,18 +961,32 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0">
-                  <EnhancedRealisticMap
-                    currentRoute={currentRoute}
-                    selectedProfile={selectedProfile || activeProfile}
-                    alternativeRoutes={alternatives}
-                    previewRoute={previewRoute}
-                    showTrafficLayer={true}
-                    showIncidents={true}
-                    isNavigating={isNavigating}
-                    currentLocation={currentGPSLocation || undefined}
-                    onLocationUpdate={setCurrentGPSLocation}
-                  />
+                <div className="absolute inset-0" style={{height: '100dvh', width: '100%'}}>
+                  {/* DEBUG: Simple MapContainer test */}
+                  <div className="h-full w-full bg-blue-100 border-4 border-red-500">
+                    <p className="text-black text-lg p-4">MAP CONTAINER DEBUG - Should see OpenStreetMap tiles here</p>
+                    {React.createElement(() => {
+                      const { MapContainer, TileLayer } = require('react-leaflet');
+                      return React.createElement(MapContainer, {
+                        center: [51.505, -0.09],
+                        zoom: 13,
+                        style: { height: '100%', width: '100%' },
+                        whenCreated: (map) => {
+                          console.log('DEBUG: Leaflet map created with size:', map.getSize());
+                          console.log('DEBUG: Map container element:', map.getContainer());
+                          setTimeout(() => {
+                            console.log('DEBUG: Calling invalidateSize after delay');
+                            map.invalidateSize();
+                          }, 100);
+                        }
+                      }, React.createElement(TileLayer, {
+                        attribution: '&copy; OpenStreetMap contributors',
+                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        onAdd: () => console.log('DEBUG: TileLayer added'),
+                        onLoad: () => console.log('DEBUG: TileLayer loaded')
+                      }));
+                    })}
+                  </div>
                 </div>
                 
                 {/* Legal Ownership Section - Mobile */}
