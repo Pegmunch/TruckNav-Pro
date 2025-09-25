@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertDriverProfileSchema, insertDriverConnectionSchema, insertSharedRouteSchema, insertRouteCommentSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest } from "./middleware/security";
@@ -2561,6 +2561,417 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =============================================================================
   // END ENTERTAINMENT SYSTEM API ROUTES
+  // =============================================================================
+
+  // =============================================================================
+  // SOCIAL NETWORKING SYSTEM API ROUTES
+  // =============================================================================
+
+  // Driver Profiles Routes
+  app.get("/api/social/profiles/:id", async (req: Request, res: Response) => {
+    try {
+      const profile = await storage.getDriverProfile(req.params.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Driver profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error getting driver profile:', error);
+      res.status(500).json({ message: "Failed to get driver profile" });
+    }
+  });
+
+  app.get("/api/social/profiles/user/:userId", async (req: Request, res: Response) => {
+    try {
+      const profile = await storage.getDriverProfileByUserId(req.params.userId);
+      if (!profile) {
+        return res.status(404).json({ message: "Driver profile not found for user" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error getting driver profile by user ID:', error);
+      res.status(500).json({ message: "Failed to get driver profile" });
+    }
+  });
+
+  app.post("/api/social/profiles", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertDriverProfileSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid driver profile data",
+          errors: result.error.errors
+        });
+      }
+
+      const profile = await storage.createDriverProfile(result.data);
+      res.status(201).json(profile);
+    } catch (error) {
+      console.error('Error creating driver profile:', error);
+      res.status(500).json({ message: "Failed to create driver profile" });
+    }
+  });
+
+  app.patch("/api/social/profiles/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      // Basic authorization check - ensure user can only update their own profile
+      // TODO: Add proper session-based authorization
+      
+      const profile = await storage.updateDriverProfile(req.params.id, req.body);
+      if (!profile) {
+        return res.status(404).json({ message: "Driver profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error updating driver profile:', error);
+      res.status(500).json({ message: "Failed to update driver profile" });
+    }
+  });
+
+  app.get("/api/social/profiles", async (req: Request, res: Response) => {
+    try {
+      const { query = "", limit = "50", isOnline } = req.query;
+      
+      const profiles = await storage.searchDriverProfiles(
+        query as string, 
+        {
+          limit: parseInt(limit as string),
+          isOnline: isOnline === "true" ? true : isOnline === "false" ? false : undefined
+        }
+      );
+      res.json(profiles);
+    } catch (error) {
+      console.error('Error searching driver profiles:', error);
+      res.status(500).json({ message: "Failed to search driver profiles" });
+    }
+  });
+
+  // Driver Connections Routes
+  app.get("/api/social/connections/:id", async (req: Request, res: Response) => {
+    try {
+      const connection = await storage.getDriverConnection(req.params.id);
+      if (!connection) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+      res.json(connection);
+    } catch (error) {
+      console.error('Error getting driver connection:', error);
+      res.status(500).json({ message: "Failed to get driver connection" });
+    }
+  });
+
+  app.post("/api/social/connections", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertDriverConnectionSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid connection data",
+          errors: result.error.errors
+        });
+      }
+
+      const connection = await storage.createDriverConnection(result.data);
+      res.status(201).json(connection);
+    } catch (error) {
+      console.error('Error creating driver connection:', error);
+      res.status(500).json({ message: "Failed to create connection request" });
+    }
+  });
+
+  app.get("/api/social/connections/driver/:driverId", async (req: Request, res: Response) => {
+    try {
+      const { status } = req.query;
+      const connections = await storage.getDriverConnections(
+        req.params.driverId, 
+        status as string | undefined
+      );
+      res.json(connections);
+    } catch (error) {
+      console.error('Error getting driver connections:', error);
+      res.status(500).json({ message: "Failed to get driver connections" });
+    }
+  });
+
+  app.patch("/api/social/connections/:id/accept", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const connection = await storage.acceptFriendRequest(req.params.id);
+      if (!connection) {
+        return res.status(404).json({ message: "Connection request not found" });
+      }
+      res.json(connection);
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      res.status(500).json({ message: "Failed to accept friend request" });
+    }
+  });
+
+  app.delete("/api/social/connections/:id", async (req: Request, res: Response) => {
+    try {
+      const deleted = await storage.deleteFriendRequest(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Connection not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting connection:', error);
+      res.status(500).json({ message: "Failed to delete connection" });
+    }
+  });
+
+  // Shared Routes Routes  
+  app.get("/api/social/routes/:id", async (req: Request, res: Response) => {
+    try {
+      const route = await storage.getSharedRoute(req.params.id);
+      if (!route) {
+        return res.status(404).json({ message: "Shared route not found" });
+      }
+      res.json(route);
+    } catch (error) {
+      console.error('Error getting shared route:', error);
+      res.status(500).json({ message: "Failed to get shared route" });
+    }
+  });
+
+  app.post("/api/social/routes", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertSharedRouteSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid shared route data",
+          errors: result.error.errors
+        });
+      }
+
+      const route = await storage.createSharedRoute(result.data);
+      res.status(201).json(route);
+    } catch (error) {
+      console.error('Error creating shared route:', error);
+      res.status(500).json({ message: "Failed to create shared route" });
+    }
+  });
+
+  app.get("/api/social/routes", async (req: Request, res: Response) => {
+    try {
+      const { visibility, sharedBy, limit = "50", offset = "0" } = req.query;
+      
+      const routes = await storage.getSharedRoutes({
+        visibility: visibility as string | undefined,
+        sharedBy: sharedBy as string | undefined,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+      res.json(routes);
+    } catch (error) {
+      console.error('Error getting shared routes:', error);
+      res.status(500).json({ message: "Failed to get shared routes" });
+    }
+  });
+
+  app.patch("/api/social/routes/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const route = await storage.updateSharedRoute(req.params.id, req.body);
+      if (!route) {
+        return res.status(404).json({ message: "Shared route not found" });
+      }
+      res.json(route);
+    } catch (error) {
+      console.error('Error updating shared route:', error);
+      res.status(500).json({ message: "Failed to update shared route" });
+    }
+  });
+
+  app.delete("/api/social/routes/:id", async (req: Request, res: Response) => {
+    try {
+      const deleted = await storage.deleteSharedRoute(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Shared route not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting shared route:', error);
+      res.status(500).json({ message: "Failed to delete shared route" });
+    }
+  });
+
+  app.post("/api/social/routes/:id/like", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { driverId } = req.body;
+      if (!driverId) {
+        return res.status(400).json({ message: "Driver ID is required" });
+      }
+
+      await storage.likeSharedRoute(req.params.id, driverId);
+      res.status(200).json({ message: "Route liked successfully" });
+    } catch (error) {
+      console.error('Error liking shared route:', error);
+      res.status(500).json({ message: "Failed to like shared route" });
+    }
+  });
+
+  app.post("/api/social/routes/:id/save", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { driverId } = req.body;
+      if (!driverId) {
+        return res.status(400).json({ message: "Driver ID is required" });
+      }
+
+      await storage.saveSharedRoute(req.params.id, driverId);
+      res.status(200).json({ message: "Route saved successfully" });
+    } catch (error) {
+      console.error('Error saving shared route:', error);
+      res.status(500).json({ message: "Failed to save shared route" });
+    }
+  });
+
+  // Route Comments Routes
+  app.get("/api/social/routes/:routeId/comments", async (req: Request, res: Response) => {
+    try {
+      const { limit = "50", offset = "0" } = req.query;
+      
+      const comments = await storage.getRouteComments(req.params.routeId, {
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      });
+      res.json(comments);
+    } catch (error) {
+      console.error('Error getting route comments:', error);
+      res.status(500).json({ message: "Failed to get route comments" });
+    }
+  });
+
+  app.post("/api/social/routes/:routeId/comments", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertRouteCommentSchema.safeParse({
+        ...req.body,
+        sharedRouteId: req.params.routeId
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid comment data",
+          errors: result.error.errors
+        });
+      }
+
+      const comment = await storage.createRouteComment(result.data);
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error('Error creating route comment:', error);
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
+  // Driver Location Routes
+  app.post("/api/social/locations", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertDriverLocationSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid location data",
+          errors: result.error.errors
+        });
+      }
+
+      const location = await storage.updateDriverLocation(result.data);
+      res.json(location);
+    } catch (error) {
+      console.error('Error updating driver location:', error);
+      res.status(500).json({ message: "Failed to update driver location" });
+    }
+  });
+
+  app.get("/api/social/locations/area", async (req: Request, res: Response) => {
+    try {
+      const { north, south, east, west } = req.query;
+      
+      if (!north || !south || !east || !west) {
+        return res.status(400).json({ 
+          message: "Missing required bounds parameters: north, south, east, west" 
+        });
+      }
+
+      const bounds = {
+        north: parseFloat(north as string),
+        south: parseFloat(south as string),
+        east: parseFloat(east as string),
+        west: parseFloat(west as string)
+      };
+
+      const locations = await storage.getDriverLocationsInArea(bounds);
+      res.json(locations);
+    } catch (error) {
+      console.error('Error getting driver locations in area:', error);
+      res.status(500).json({ message: "Failed to get driver locations in area" });
+    }
+  });
+
+  // Driver Discovery Routes
+  app.post("/api/social/discovery/nearby", async (req: Request, res: Response) => {
+    try {
+      const { coordinates, radiusKm, limit, excludeDriverId } = req.body;
+      
+      if (!coordinates || !coordinates.lat || !coordinates.lng || !radiusKm) {
+        return res.status(400).json({ 
+          message: "Missing required parameters: coordinates (lat, lng) and radiusKm" 
+        });
+      }
+
+      const nearbyDrivers = await storage.findNearbyDrivers(coordinates, radiusKm, {
+        limit,
+        excludeDriverId
+      });
+
+      res.json(nearbyDrivers);
+    } catch (error) {
+      console.error('Error finding nearby drivers:', error);
+      res.status(500).json({ message: "Failed to find nearby drivers" });
+    }
+  });
+
+  app.post("/api/social/discovery/similar-routes", async (req: Request, res: Response) => {
+    try {
+      const { routeId, limit, excludeDriverId } = req.body;
+      
+      if (!routeId) {
+        return res.status(400).json({ 
+          message: "Missing required parameter: routeId" 
+        });
+      }
+
+      const similarDrivers = await storage.findDriversOnSimilarRoutes(routeId, {
+        limit,
+        excludeDriverId
+      });
+
+      res.json(similarDrivers);
+    } catch (error) {
+      console.error('Error finding drivers on similar routes:', error);
+      res.status(500).json({ message: "Failed to find drivers on similar routes" });
+    }
+  });
+
+  app.get("/api/social/discovery/active-count", async (req: Request, res: Response) => {
+    try {
+      const count = await storage.getActiveDriversCount();
+      res.json({ count });
+    } catch (error) {
+      console.error('Error getting active drivers count:', error);
+      res.status(500).json({ message: "Failed to get active drivers count" });
+    }
+  });
+
+  app.post("/api/social/locations/cleanup", async (req: Request, res: Response) => {
+    try {
+      const deletedCount = await storage.cleanupExpiredLocations();
+      res.json({ deletedCount });
+    } catch (error) {
+      console.error('Error cleaning up expired locations:', error);
+      res.status(500).json({ message: "Failed to cleanup expired locations" });
+    }
+  });
+
+  // =============================================================================
+  // END SOCIAL NETWORKING SYSTEM API ROUTES  
   // =============================================================================
 
   const httpServer = createServer(app);

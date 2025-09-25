@@ -234,6 +234,11 @@ export interface IStorage {
   getDriverLocationsInArea(bounds: {north: number; south: number; east: number; west: number}): Promise<DriverLocation[]>;
   cleanupExpiredLocations(): Promise<number>;
 
+  // Driver Discovery
+  findNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]>;
+  findDriversOnSimilarRoutes(routeId: string, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]>;
+  getActiveDriversCount(): Promise<number>;
+
   // Driver Activity
   getDriverActivity(id: string): Promise<DriverActivity | undefined>;
   createDriverActivity(activity: InsertDriverActivity): Promise<DriverActivity>;
@@ -278,6 +283,17 @@ export class MemStorage implements IStorage {
   private presetIdCounter: number;
   private historyIdCounter: number;
 
+  // Social networking system storage
+  private driverProfiles: Map<string, DriverProfile>;
+  private driverConnections: Map<string, DriverConnection>;
+  private sharedRoutes: Map<string, SharedRoute>;
+  private routeComments: Map<string, RouteComment>;
+  private driverMessages: Map<string, DriverMessage>;
+  private convoys: Map<string, Convoy>;
+  private convoyMembers: Map<string, ConvoyMember>;
+  private driverLocations: Map<string, DriverLocation>;
+  private driverActivity: Map<string, DriverActivity>;
+
   constructor() {
     this.vehicleProfiles = new Map();
     this.defaultVehicleProfileId = "550e8400-e29b-41d4-a716-446655440000"; // Class 1 as default - proper UUID
@@ -321,6 +337,17 @@ export class MemStorage implements IStorage {
     };
     this.presetIdCounter = 1;
     this.historyIdCounter = 1;
+
+    // Initialize social networking system storage
+    this.driverProfiles = new Map();
+    this.driverConnections = new Map();
+    this.sharedRoutes = new Map();
+    this.routeComments = new Map();
+    this.driverMessages = new Map();
+    this.convoys = new Map();
+    this.convoyMembers = new Map();
+    this.driverLocations = new Map();
+    this.driverActivity = new Map();
     
     // Initialize with sample data
     this.initializeSampleData();
@@ -2481,6 +2508,433 @@ export class MemStorage implements IStorage {
     
     return { ...this.entertainmentSettings };
   }
+
+  // ===== SOCIAL NETWORKING METHODS =====
+
+  // Driver Profiles
+  async getDriverProfile(id: string): Promise<DriverProfile | undefined> {
+    return this.driverProfiles.get(id);
+  }
+
+  async getDriverProfileByUserId(userId: string): Promise<DriverProfile | undefined> {
+    for (const profile of this.driverProfiles.values()) {
+      if (profile.userId === userId) {
+        return profile;
+      }
+    }
+    return undefined;
+  }
+
+  async createDriverProfile(profile: InsertDriverProfile): Promise<DriverProfile> {
+    const id = randomUUID();
+    const now = new Date();
+    const newProfile: DriverProfile = {
+      id,
+      userId: profile.userId,
+      displayName: profile.displayName,
+      avatar: profile.avatar || null,
+      bio: profile.bio || null,
+      yearsExperience: profile.yearsExperience || null,
+      favoriteRoutes: profile.favoriteRoutes || null,
+      safetyRating: profile.safetyRating || 5.0,
+      totalTrips: profile.totalTrips || 0,
+      milesLogged: profile.milesLogged || 0,
+      sharingSettings: profile.sharingSettings || {
+        shareLocation: true,
+        shareRoutes: true,
+        shareStatus: true,
+        allowMessages: true,
+        visibleToPublic: true,
+      },
+      isOnline: false,
+      currentStatus: 'offline',
+      createdAt: now,
+      updatedAt: now,
+      lastSeen: now,
+    };
+    
+    this.driverProfiles.set(id, newProfile);
+    return newProfile;
+  }
+
+  async updateDriverProfile(id: string, updates: Partial<DriverProfile>): Promise<DriverProfile | undefined> {
+    const profile = this.driverProfiles.get(id);
+    if (!profile) return undefined;
+
+    const updatedProfile = {
+      ...profile,
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    this.driverProfiles.set(id, updatedProfile);
+    return updatedProfile;
+  }
+
+  async searchDriverProfiles(query: string, params?: { limit?: number; isOnline?: boolean }): Promise<DriverProfile[]> {
+    const profiles = Array.from(this.driverProfiles.values());
+    const filteredProfiles = profiles.filter(profile => {
+      const matchesQuery = !query || 
+        profile.displayName.toLowerCase().includes(query.toLowerCase()) ||
+        (profile.bio && profile.bio.toLowerCase().includes(query.toLowerCase()));
+      
+      const matchesOnline = params?.isOnline === undefined || profile.isOnline === params.isOnline;
+      
+      return matchesQuery && matchesOnline;
+    });
+
+    return filteredProfiles.slice(0, params?.limit || 50);
+  }
+
+  async getNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number): Promise<DriverProfile[]> {
+    // This would need actual location data - for now return empty array
+    return [];
+  }
+
+  // Shared Routes
+  async getSharedRoute(id: string): Promise<SharedRoute | undefined> {
+    return this.sharedRoutes.get(id);
+  }
+
+  async createSharedRoute(sharedRoute: InsertSharedRoute): Promise<SharedRoute> {
+    const id = randomUUID();
+    const now = new Date();
+    const newRoute: SharedRoute = {
+      id,
+      originalRouteId: sharedRoute.originalRouteId,
+      sharedBy: sharedRoute.sharedBy,
+      title: sharedRoute.title || null,
+      description: sharedRoute.description || null,
+      visibility: sharedRoute.visibility || 'friends',
+      difficulty: sharedRoute.difficulty || 'easy',
+      estimatedDuration: sharedRoute.estimatedDuration || null,
+      distance: sharedRoute.distance || null,
+      tags: sharedRoute.tags || [],
+      likesCount: 0,
+      savesCount: 0,
+      commentsCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.sharedRoutes.set(id, newRoute);
+    return newRoute;
+  }
+
+  async updateSharedRoute(id: string, updates: Partial<SharedRoute>): Promise<SharedRoute | undefined> {
+    const route = this.sharedRoutes.get(id);
+    if (!route) return undefined;
+
+    const updatedRoute = {
+      ...route,
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    this.sharedRoutes.set(id, updatedRoute);
+    return updatedRoute;
+  }
+
+  async deleteSharedRoute(id: string): Promise<boolean> {
+    return this.sharedRoutes.delete(id);
+  }
+
+  async getSharedRoutes(params: { visibility?: string; sharedBy?: string; limit?: number; offset?: number }): Promise<SharedRoute[]> {
+    const routes = Array.from(this.sharedRoutes.values());
+    const filteredRoutes = routes.filter(route => {
+      const matchesVisibility = !params.visibility || route.visibility === params.visibility;
+      const matchesSharedBy = !params.sharedBy || route.sharedBy === params.sharedBy;
+      return matchesVisibility && matchesSharedBy;
+    });
+
+    const start = params.offset || 0;
+    const limit = params.limit || 50;
+    return filteredRoutes.slice(start, start + limit);
+  }
+
+  async getFriendSharedRoutes(driverId: string, limit?: number): Promise<SharedRoute[]> {
+    // For now, return public routes - would need friend connections to filter properly
+    const routes = Array.from(this.sharedRoutes.values())
+      .filter(route => route.visibility === 'public' || route.visibility === 'friends');
+    return routes.slice(0, limit || 50);
+  }
+
+  async likeSharedRoute(routeId: string, driverId: string): Promise<void> {
+    const route = this.sharedRoutes.get(routeId);
+    if (route) {
+      route.likesCount += 1;
+      this.sharedRoutes.set(routeId, route);
+    }
+  }
+
+  async saveSharedRoute(routeId: string, driverId: string): Promise<void> {
+    const route = this.sharedRoutes.get(routeId);
+    if (route) {
+      route.savesCount += 1;
+      this.sharedRoutes.set(routeId, route);
+    }
+  }
+
+  // Placeholder methods for other social features (minimal implementations)
+  async getDriverConnection(id: string): Promise<DriverConnection | undefined> {
+    return this.driverConnections.get(id);
+  }
+
+  async createDriverConnection(connection: InsertDriverConnection): Promise<DriverConnection> {
+    const id = randomUUID();
+    const now = new Date();
+    const newConnection: DriverConnection = {
+      id,
+      requesterId: connection.requesterId,
+      targetId: connection.targetId,
+      status: connection.status || 'pending',
+      connectionType: connection.connectionType || 'friend',
+      requestedAt: now,
+      respondedAt: null,
+    };
+    
+    this.driverConnections.set(id, newConnection);
+    return newConnection;
+  }
+
+  async updateDriverConnection(id: string, updates: Partial<DriverConnection>): Promise<DriverConnection | undefined> {
+    const connection = this.driverConnections.get(id);
+    if (!connection) return undefined;
+
+    const updatedConnection = {
+      ...connection,
+      ...updates,
+      respondedAt: updates.status ? new Date() : connection.respondedAt,
+    };
+
+    this.driverConnections.set(id, updatedConnection);
+    return updatedConnection;
+  }
+
+  async getDriverConnections(driverId: string, status?: string): Promise<DriverConnection[]> {
+    return Array.from(this.driverConnections.values()).filter(connection => 
+      (connection.requesterId === driverId || connection.targetId === driverId) &&
+      (!status || connection.status === status)
+    );
+  }
+
+  async getFriendRequests(driverId: string): Promise<DriverConnection[]> {
+    return Array.from(this.driverConnections.values()).filter(connection => 
+      connection.targetId === driverId && connection.status === 'pending'
+    );
+  }
+
+  async acceptFriendRequest(connectionId: string): Promise<DriverConnection | undefined> {
+    return this.updateDriverConnection(connectionId, { status: 'accepted' });
+  }
+
+  async deleteFriendRequest(connectionId: string): Promise<boolean> {
+    return this.driverConnections.delete(connectionId);
+  }
+
+  // Minimal implementations for other required methods
+  async getRouteComment(id: string): Promise<RouteComment | undefined> { return this.routeComments.get(id); }
+  async createRouteComment(comment: InsertRouteComment): Promise<RouteComment> { throw new Error("Not implemented yet"); }
+  async updateRouteComment(id: string, updates: Partial<RouteComment>): Promise<RouteComment | undefined> { return undefined; }
+  async deleteRouteComment(id: string): Promise<boolean> { return false; }
+  async getRouteComments(sharedRouteId: string, params?: { limit?: number; offset?: number }): Promise<RouteComment[]> { return []; }
+
+  async getDriverMessage(id: string): Promise<DriverMessage | undefined> { return this.driverMessages.get(id); }
+  async createDriverMessage(message: InsertDriverMessage): Promise<DriverMessage> { throw new Error("Not implemented yet"); }
+  async updateDriverMessage(id: string, updates: Partial<DriverMessage>): Promise<DriverMessage | undefined> { return undefined; }
+  async deleteDriverMessage(id: string): Promise<boolean> { return false; }
+  async getConversation(driverId1: string, driverId2: string, limit?: number): Promise<DriverMessage[]> { return []; }
+  async getDriverConversations(driverId: string): Promise<{recipientId: string; lastMessage: DriverMessage; unreadCount: number}[]> { return []; }
+  async markMessageAsRead(messageId: string): Promise<DriverMessage | undefined> { return undefined; }
+  async getUnreadMessageCount(driverId: string): Promise<number> { return 0; }
+
+  async getConvoy(id: string): Promise<Convoy | undefined> { return this.convoys.get(id); }
+  async createConvoy(convoy: InsertConvoy): Promise<Convoy> { throw new Error("Not implemented yet"); }
+  async updateConvoy(id: string, updates: Partial<Convoy>): Promise<Convoy | undefined> { return undefined; }
+  async deleteConvoy(id: string): Promise<boolean> { return false; }
+  async getConvoys(params: { status?: string; leaderId?: string; limit?: number }): Promise<Convoy[]> { return []; }
+  async searchConvoys(query: string, params?: { limit?: number }): Promise<Convoy[]> { return []; }
+
+  async getConvoyMember(id: string): Promise<ConvoyMember | undefined> { return this.convoyMembers.get(id); }
+  async createConvoyMember(member: InsertConvoyMember): Promise<ConvoyMember> { throw new Error("Not implemented yet"); }
+  async updateConvoyMember(id: string, updates: Partial<ConvoyMember>): Promise<ConvoyMember | undefined> { return undefined; }
+  async removeConvoyMember(id: string): Promise<boolean> { return false; }
+  async getConvoyMembers(convoyId: string): Promise<ConvoyMember[]> { return []; }
+  async joinConvoyRequest(convoyId: string, driverId: string): Promise<ConvoyMember> { throw new Error("Not implemented yet"); }
+
+  async getDriverLocation(driverId: string): Promise<DriverLocation | undefined> { 
+    return this.driverLocations.get(driverId); 
+  }
+
+  async updateDriverLocation(location: InsertDriverLocation): Promise<DriverLocation> {
+    const newLocation: DriverLocation = {
+      id: `loc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...location,
+      lastUpdate: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+    };
+    
+    // Clean up previous location for this driver
+    for (const [key, existingLocation] of this.driverLocations) {
+      if (existingLocation.driverId === location.driverId) {
+        this.driverLocations.delete(key);
+        break;
+      }
+    }
+    
+    this.driverLocations.set(newLocation.id, newLocation);
+    return newLocation;
+  }
+
+  async getDriverLocationsInArea(bounds: {north: number; south: number; east: number; west: number}): Promise<DriverLocation[]> {
+    const result: DriverLocation[] = [];
+    const now = new Date();
+    
+    for (const location of this.driverLocations.values()) {
+      // Skip expired locations
+      if (location.expiresAt && location.expiresAt < now) continue;
+      
+      const lat = location.coordinates.lat;
+      const lng = location.coordinates.lng;
+      
+      // Check if location is within bounds
+      if (lat <= bounds.north && lat >= bounds.south && 
+          lng <= bounds.east && lng >= bounds.west) {
+        result.push(location);
+      }
+    }
+    
+    return result;
+  }
+
+  async cleanupExpiredLocations(): Promise<number> {
+    const now = new Date();
+    const toDelete: string[] = [];
+    
+    for (const [id, location] of this.driverLocations) {
+      if (location.expiresAt && location.expiresAt < now) {
+        toDelete.push(id);
+      }
+    }
+    
+    toDelete.forEach(id => this.driverLocations.delete(id));
+    return toDelete.length;
+  }
+
+  // Driver Discovery methods
+  async findNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]> {
+    const result: DriverLocation[] = [];
+    const now = new Date();
+    const limit = options?.limit || 50;
+    
+    for (const location of this.driverLocations.values()) {
+      // Skip expired locations
+      if (location.expiresAt && location.expiresAt < now) continue;
+      
+      // Skip excluded driver
+      if (options?.excludeDriverId && location.driverId === options.excludeDriverId) continue;
+      
+      // Calculate distance using Haversine formula
+      const distance = this.calculateDistance(coordinates, location.coordinates);
+      
+      if (distance <= radiusKm) {
+        result.push(location);
+      }
+    }
+    
+    // Sort by distance and limit results
+    result.sort((a, b) => {
+      const distA = this.calculateDistance(coordinates, a.coordinates);
+      const distB = this.calculateDistance(coordinates, b.coordinates);
+      return distA - distB;
+    });
+    
+    return result.slice(0, limit);
+  }
+
+  async findDriversOnSimilarRoutes(routeId: string, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]> {
+    const result: DriverLocation[] = [];
+    const now = new Date();
+    const limit = options?.limit || 20;
+    
+    // Get the route to compare against
+    const targetRoute = this.routes.get(routeId);
+    if (!targetRoute) return [];
+    
+    for (const location of this.driverLocations.values()) {
+      // Skip expired locations
+      if (location.expiresAt && location.expiresAt < now) continue;
+      
+      // Skip excluded driver
+      if (options?.excludeDriverId && location.driverId === options.excludeDriverId) continue;
+      
+      // Only include drivers who have an active route
+      if (location.activeRouteId) {
+        const driverRoute = this.routes.get(location.activeRouteId);
+        if (driverRoute && this.routesAreSimilar(targetRoute, driverRoute)) {
+          result.push(location);
+        }
+      }
+    }
+    
+    return result.slice(0, limit);
+  }
+
+  async getActiveDriversCount(): Promise<number> {
+    const now = new Date();
+    let count = 0;
+    
+    for (const location of this.driverLocations.values()) {
+      // Skip expired locations
+      if (location.expiresAt && location.expiresAt < now) continue;
+      
+      // Count only drivers with 'available' or 'driving' status
+      if (location.currentStatus === 'available' || location.currentStatus === 'driving') {
+        count++;
+      }
+    }
+    
+    return count;
+  }
+
+  // Helper method to calculate distance between two coordinates (Haversine formula)
+  private calculateDistance(coord1: {lat: number; lng: number}, coord2: {lat: number; lng: number}): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.degreesToRadians(coord2.lat - coord1.lat);
+    const dLng = this.degreesToRadians(coord2.lng - coord1.lng);
+    
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.degreesToRadians(coord1.lat)) * Math.cos(this.degreesToRadians(coord2.lat)) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  private degreesToRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  // Helper method to check if two routes are similar
+  private routesAreSimilar(route1: Route, route2: Route): boolean {
+    // Simple similarity check based on start/end coordinates
+    if (!route1.startCoordinates || !route2.startCoordinates || 
+        !route1.endCoordinates || !route2.endCoordinates) {
+      return false;
+    }
+    
+    const startDistance = this.calculateDistance(route1.startCoordinates, route2.startCoordinates);
+    const endDistance = this.calculateDistance(route1.endCoordinates, route2.endCoordinates);
+    
+    // Routes are similar if start points are within 50km and end points are within 50km
+    return startDistance <= 50 && endDistance <= 50;
+  }
+
+  async getDriverActivity(id: string): Promise<DriverActivity | undefined> { return this.driverActivity.get(id); }
+  async createDriverActivity(activity: InsertDriverActivity): Promise<DriverActivity> { throw new Error("Not implemented yet"); }
+  async getDriverActivities(driverId: string, params?: { limit?: number; visibility?: string }): Promise<DriverActivity[]> { return []; }
+  async getFriendActivities(driverId: string, limit?: number): Promise<DriverActivity[]> { return []; }
+  async likeDriverActivity(activityId: string, driverId: string): Promise<void> { return; }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3255,6 +3709,364 @@ export class DatabaseStorage implements IStorage {
   async updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings> {
     return await this.getEntertainmentSettings();
   }
+
+  // ===== SOCIAL NETWORKING METHODS (DATABASE IMPLEMENTATION) =====
+
+  // Driver Profiles
+  async getDriverProfile(id: string): Promise<DriverProfile | undefined> {
+    const result = await db.select().from(driverProfiles).where(eq(driverProfiles.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getDriverProfileByUserId(userId: string): Promise<DriverProfile | undefined> {
+    const result = await db.select().from(driverProfiles).where(eq(driverProfiles.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async createDriverProfile(profile: InsertDriverProfile): Promise<DriverProfile> {
+    const result = await db.insert(driverProfiles).values(profile).returning();
+    return result[0];
+  }
+
+  async updateDriverProfile(id: string, updates: Partial<DriverProfile>): Promise<DriverProfile | undefined> {
+    const result = await db.update(driverProfiles).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(driverProfiles.id, id)).returning();
+    return result[0];
+  }
+
+  async searchDriverProfiles(query: string, params?: { limit?: number; isOnline?: boolean }): Promise<DriverProfile[]> {
+    let dbQuery = db.select().from(driverProfiles);
+    
+    if (query) {
+      dbQuery = dbQuery.where(sql`${driverProfiles.displayName} ILIKE ${`%${query}%`} OR ${driverProfiles.bio} ILIKE ${`%${query}%`}`);
+    }
+    
+    if (params?.isOnline !== undefined) {
+      dbQuery = dbQuery.where(eq(driverProfiles.isOnline, params.isOnline));
+    }
+
+    return await dbQuery.limit(params?.limit || 50);
+  }
+
+  async getNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number): Promise<DriverProfile[]> {
+    // This would require PostGIS extension for proper geospatial queries
+    // For now, return empty array
+    return [];
+  }
+
+  // Driver Connections
+  async getDriverConnection(id: string): Promise<DriverConnection | undefined> {
+    const result = await db.select().from(driverConnections).where(eq(driverConnections.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createDriverConnection(connection: InsertDriverConnection): Promise<DriverConnection> {
+    const result = await db.insert(driverConnections).values(connection).returning();
+    return result[0];
+  }
+
+  async updateDriverConnection(id: string, updates: Partial<DriverConnection>): Promise<DriverConnection | undefined> {
+    const result = await db.update(driverConnections).set({
+      ...updates,
+      respondedAt: updates.status ? new Date() : undefined,
+    }).where(eq(driverConnections.id, id)).returning();
+    return result[0];
+  }
+
+  async getDriverConnections(driverId: string, status?: string): Promise<DriverConnection[]> {
+    let query = db.select().from(driverConnections).where(
+      sql`${driverConnections.requesterId} = ${driverId} OR ${driverConnections.targetId} = ${driverId}`
+    );
+    
+    if (status) {
+      query = query.where(eq(driverConnections.status, status));
+    }
+
+    return await query;
+  }
+
+  async getFriendRequests(driverId: string): Promise<DriverConnection[]> {
+    return await db.select().from(driverConnections).where(
+      and(
+        eq(driverConnections.targetId, driverId),
+        eq(driverConnections.status, 'pending')
+      )
+    );
+  }
+
+  async acceptFriendRequest(connectionId: string): Promise<DriverConnection | undefined> {
+    return await this.updateDriverConnection(connectionId, { status: 'accepted' });
+  }
+
+  async deleteFriendRequest(connectionId: string): Promise<boolean> {
+    const result = await db.delete(driverConnections).where(eq(driverConnections.id, connectionId));
+    return result.rowCount > 0;
+  }
+
+  // Shared Routes
+  async getSharedRoute(id: string): Promise<SharedRoute | undefined> {
+    const result = await db.select().from(sharedRoutes).where(eq(sharedRoutes.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createSharedRoute(sharedRoute: InsertSharedRoute): Promise<SharedRoute> {
+    const result = await db.insert(sharedRoutes).values(sharedRoute).returning();
+    return result[0];
+  }
+
+  async updateSharedRoute(id: string, updates: Partial<SharedRoute>): Promise<SharedRoute | undefined> {
+    const result = await db.update(sharedRoutes).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(sharedRoutes.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteSharedRoute(id: string): Promise<boolean> {
+    const result = await db.delete(sharedRoutes).where(eq(sharedRoutes.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getSharedRoutes(params: { visibility?: string; sharedBy?: string; limit?: number; offset?: number }): Promise<SharedRoute[]> {
+    let query = db.select().from(sharedRoutes);
+
+    if (params.visibility) {
+      query = query.where(eq(sharedRoutes.visibility, params.visibility));
+    }
+    
+    if (params.sharedBy) {
+      query = query.where(eq(sharedRoutes.sharedBy, params.sharedBy));
+    }
+
+    query = query.orderBy(desc(sharedRoutes.createdAt));
+
+    if (params.offset) {
+      query = query.offset(params.offset);
+    }
+
+    return await query.limit(params.limit || 50);
+  }
+
+  async getFriendSharedRoutes(driverId: string, limit?: number): Promise<SharedRoute[]> {
+    // This would need to join with friend connections to get actual friend routes
+    // For now, return public and friend-visible routes
+    return await db.select().from(sharedRoutes)
+      .where(sql`${sharedRoutes.visibility} IN ('public', 'friends')`)
+      .orderBy(desc(sharedRoutes.createdAt))
+      .limit(limit || 50);
+  }
+
+  async likeSharedRoute(routeId: string, driverId: string): Promise<void> {
+    await db.update(sharedRoutes)
+      .set({ likesCount: sql`${sharedRoutes.likesCount} + 1` })
+      .where(eq(sharedRoutes.id, routeId));
+  }
+
+  async saveSharedRoute(routeId: string, driverId: string): Promise<void> {
+    await db.update(sharedRoutes)
+      .set({ savesCount: sql`${sharedRoutes.savesCount} + 1` })
+      .where(eq(sharedRoutes.id, routeId));
+  }
+
+  // Placeholder implementations for other social features
+  async getRouteComment(id: string): Promise<RouteComment | undefined> {
+    const result = await db.select().from(routeComments).where(eq(routeComments.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createRouteComment(comment: InsertRouteComment): Promise<RouteComment> {
+    const result = await db.insert(routeComments).values(comment).returning();
+    return result[0];
+  }
+
+  async updateRouteComment(id: string, updates: Partial<RouteComment>): Promise<RouteComment | undefined> {
+    const result = await db.update(routeComments).set({
+      ...updates,
+      updatedAt: new Date(),
+    }).where(eq(routeComments.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteRouteComment(id: string): Promise<boolean> {
+    const result = await db.delete(routeComments).where(eq(routeComments.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getRouteComments(sharedRouteId: string, params?: { limit?: number; offset?: number }): Promise<RouteComment[]> {
+    let query = db.select().from(routeComments)
+      .where(eq(routeComments.sharedRouteId, sharedRouteId))
+      .orderBy(desc(routeComments.createdAt));
+
+    if (params?.offset) {
+      query = query.offset(params.offset);
+    }
+
+    return await query.limit(params?.limit || 50);
+  }
+
+  // Minimal implementations for other required methods
+  async getDriverMessage(id: string): Promise<DriverMessage | undefined> {
+    const result = await db.select().from(driverMessages).where(eq(driverMessages.id, id)).limit(1);
+    return result[0];
+  }
+  async createDriverMessage(message: InsertDriverMessage): Promise<DriverMessage> { throw new Error("Not implemented yet"); }
+  async updateDriverMessage(id: string, updates: Partial<DriverMessage>): Promise<DriverMessage | undefined> { return undefined; }
+  async deleteDriverMessage(id: string): Promise<boolean> { return false; }
+  async getConversation(driverId1: string, driverId2: string, limit?: number): Promise<DriverMessage[]> { return []; }
+  async getDriverConversations(driverId: string): Promise<{recipientId: string; lastMessage: DriverMessage; unreadCount: number}[]> { return []; }
+  async markMessageAsRead(messageId: string): Promise<DriverMessage | undefined> { return undefined; }
+  async getUnreadMessageCount(driverId: string): Promise<number> { return 0; }
+
+  async getConvoy(id: string): Promise<Convoy | undefined> {
+    const result = await db.select().from(convoys).where(eq(convoys.id, id)).limit(1);
+    return result[0];
+  }
+  async createConvoy(convoy: InsertConvoy): Promise<Convoy> { throw new Error("Not implemented yet"); }
+  async updateConvoy(id: string, updates: Partial<Convoy>): Promise<Convoy | undefined> { return undefined; }
+  async deleteConvoy(id: string): Promise<boolean> { return false; }
+  async getConvoys(params: { status?: string; leaderId?: string; limit?: number }): Promise<Convoy[]> { return []; }
+  async searchConvoys(query: string, params?: { limit?: number }): Promise<Convoy[]> { return []; }
+
+  async getConvoyMember(id: string): Promise<ConvoyMember | undefined> {
+    const result = await db.select().from(convoyMembers).where(eq(convoyMembers.id, id)).limit(1);
+    return result[0];
+  }
+  async createConvoyMember(member: InsertConvoyMember): Promise<ConvoyMember> { throw new Error("Not implemented yet"); }
+  async updateConvoyMember(id: string, updates: Partial<ConvoyMember>): Promise<ConvoyMember | undefined> { return undefined; }
+  async removeConvoyMember(id: string): Promise<boolean> { return false; }
+  async getConvoyMembers(convoyId: string): Promise<ConvoyMember[]> { return []; }
+  async joinConvoyRequest(convoyId: string, driverId: string): Promise<ConvoyMember> { throw new Error("Not implemented yet"); }
+
+  async getDriverLocation(driverId: string): Promise<DriverLocation | undefined> {
+    const result = await db.select().from(driverLocations).where(eq(driverLocations.driverId, driverId)).limit(1);
+    return result[0];
+  }
+
+  async updateDriverLocation(location: InsertDriverLocation): Promise<DriverLocation> {
+    // Upsert - delete existing location for this driver, then insert new one
+    await db.delete(driverLocations).where(eq(driverLocations.driverId, location.driverId));
+    
+    const result = await db.insert(driverLocations).values({
+      ...location,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+    }).returning();
+    
+    return result[0];
+  }
+
+  async getDriverLocationsInArea(bounds: {north: number; south: number; east: number; west: number}): Promise<DriverLocation[]> {
+    // Using raw SQL for spatial queries since PostgreSQL supports it better
+    const result = await db.select().from(driverLocations).where(
+      sql`
+        (${driverLocations.coordinates}->>'lat')::numeric BETWEEN ${bounds.south} AND ${bounds.north}
+        AND (${driverLocations.coordinates}->>'lng')::numeric BETWEEN ${bounds.west} AND ${bounds.east}
+        AND (${driverLocations.expiresAt} IS NULL OR ${driverLocations.expiresAt} > NOW())
+      `
+    );
+    
+    return result;
+  }
+
+  async cleanupExpiredLocations(): Promise<number> {
+    const result = await db.delete(driverLocations).where(
+      sql`${driverLocations.expiresAt} < NOW()`
+    );
+    
+    return result.rowCount || 0;
+  }
+
+  // Driver Discovery methods
+  async findNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]> {
+    const limit = options?.limit || 50;
+    
+    let query = db.select().from(driverLocations).where(
+      sql`
+        (${driverLocations.expiresAt} IS NULL OR ${driverLocations.expiresAt} > NOW())
+        AND ST_DWithin(
+          ST_Point((${driverLocations.coordinates}->>'lng')::numeric, (${driverLocations.coordinates}->>'lat')::numeric)::geography,
+          ST_Point(${coordinates.lng}, ${coordinates.lat})::geography,
+          ${radiusKm * 1000}
+        )
+      `
+    );
+
+    if (options?.excludeDriverId) {
+      query = query.where(sql`${driverLocations.driverId} != ${options.excludeDriverId}`);
+    }
+
+    const result = await query
+      .orderBy(
+        sql`ST_Distance(
+          ST_Point((${driverLocations.coordinates}->>'lng')::numeric, (${driverLocations.coordinates}->>'lat')::numeric)::geography,
+          ST_Point(${coordinates.lng}, ${coordinates.lat})::geography
+        )`
+      )
+      .limit(limit);
+
+    return result;
+  }
+
+  async findDriversOnSimilarRoutes(routeId: string, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]> {
+    const limit = options?.limit || 20;
+    
+    // Get the target route
+    const targetRouteResult = await db.select().from(routes).where(eq(routes.id, routeId)).limit(1);
+    const targetRoute = targetRouteResult[0];
+    
+    if (!targetRoute || !targetRoute.startCoordinates || !targetRoute.endCoordinates) {
+      return [];
+    }
+
+    let query = db.select().from(driverLocations)
+      .innerJoin(routes, eq(routes.id, driverLocations.activeRouteId))
+      .where(
+        sql`
+          (${driverLocations.expiresAt} IS NULL OR ${driverLocations.expiresAt} > NOW())
+          AND ${driverLocations.activeRouteId} IS NOT NULL
+          AND ST_DWithin(
+            ST_Point((${routes.startCoordinates}->>'lng')::numeric, (${routes.startCoordinates}->>'lat')::numeric)::geography,
+            ST_Point(${targetRoute.startCoordinates.lng}, ${targetRoute.startCoordinates.lat})::geography,
+            50000
+          )
+          AND ST_DWithin(
+            ST_Point((${routes.endCoordinates}->>'lng')::numeric, (${routes.endCoordinates}->>'lat')::numeric)::geography,
+            ST_Point(${targetRoute.endCoordinates.lng}, ${targetRoute.endCoordinates.lat})::geography,
+            50000
+          )
+        `
+      );
+
+    if (options?.excludeDriverId) {
+      query = query.where(sql`${driverLocations.driverId} != ${options.excludeDriverId}`);
+    }
+
+    const result = await query.limit(limit);
+    return result.map(row => row.driver_locations);
+  }
+
+  async getActiveDriversCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(driverLocations)
+      .where(
+        sql`
+          (${driverLocations.expiresAt} IS NULL OR ${driverLocations.expiresAt} > NOW())
+          AND ${driverLocations.currentStatus} IN ('available', 'driving')
+        `
+      );
+
+    return result[0]?.count || 0;
+  }
+
+  async getDriverActivity(id: string): Promise<DriverActivity | undefined> {
+    const result = await db.select().from(driverActivity).where(eq(driverActivity.id, id)).limit(1);
+    return result[0];
+  }
+  async createDriverActivity(activity: InsertDriverActivity): Promise<DriverActivity> { throw new Error("Not implemented yet"); }
+  async getDriverActivities(driverId: string, params?: { limit?: number; visibility?: string }): Promise<DriverActivity[]> { return []; }
+  async getFriendActivities(driverId: string, limit?: number): Promise<DriverActivity[]> { return []; }
+  async likeDriverActivity(activityId: string, driverId: string): Promise<void> { return; }
 }
 
 export const storage = new DatabaseStorage();
