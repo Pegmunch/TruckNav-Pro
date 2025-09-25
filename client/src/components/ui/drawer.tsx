@@ -45,9 +45,9 @@ const DrawerOverlay = React.forwardRef<
         isMobile ? [
           "mobile-drawer-overlay",
           "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
-          "data-[state=open]:pointer-events-auto data-[state=closed]:pointer-events-none",
+          "pointer-events-none",  // CRITICAL FIX: Always disable pointer events to prevent blocking map/sidebar
           "bg-transparent"
-        ] : "bg-transparent",
+        ] : "bg-transparent pointer-events-none",
         className
       )}
       {...props}
