@@ -895,14 +895,6 @@ export default function NavigationPage() {
 
   return (
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
-      {/* CRITICAL DEBUG: Simple Tailwind approach */}
-      <div className="fixed inset-0 z-[9999] bg-red-500 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg border-4 border-black shadow-2xl">
-          <h1 className="text-black text-4xl font-bold mb-4">DEBUG VISIBLE</h1>
-          <p className="text-black text-2xl">Page is rendering!</p>
-          <p className="text-black text-lg">Mobile: {String(isMobile)}</p>
-        </div>
-      </div>
 
       {/* Legal Disclaimer Popup */}
       {showLegalPopup && (
@@ -970,15 +962,18 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0" style={{height: '100dvh', width: '100%', zIndex: 1000}}>
-                  {/* DEBUG: Basic visibility test - this should be clearly visible */}
-                  <div className="h-full w-full bg-red-500 flex items-center justify-center">
-                    <div className="bg-white p-8 rounded-lg shadow-lg border-4 border-black">
-                      <h1 className="text-black text-4xl font-bold mb-4">LAYOUT DEBUG</h1>
-                      <p className="text-black text-2xl">If you can see this, the mobile layout is working!</p>
-                      <p className="text-black text-lg mt-2">Check console for any map-related errors</p>
-                    </div>
-                  </div>
+                <div className="absolute inset-0 h-full w-full">
+                  <EnhancedRealisticMap
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile || activeProfile}
+                    alternativeRoutes={alternatives}
+                    previewRoute={previewRoute}
+                    showTrafficLayer={true}
+                    showIncidents={true}
+                    isNavigating={isNavigating}
+                    currentLocation={currentGPSLocation || undefined}
+                    onLocationUpdate={setCurrentGPSLocation}
+                  />
                 </div>
                 
                 {/* Legal Ownership Section - Mobile */}
