@@ -905,7 +905,7 @@ export default function NavigationPage() {
       )}
       {/* Mobile-First Layout */}
       {isMobile ? (
-        <div className="mobile-layout" style={{background: "transparent"}}>
+        <div className="mobile-layout h-screen flex flex-col" style={{background: "transparent"}}>
           {/* Mobile Header with Menu Button */}
           <div className="mobile-nav-header flex items-center justify-between" style={{background: "transparent"}}>
             <div className="flex items-center gap-2">
