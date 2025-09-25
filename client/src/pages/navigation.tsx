@@ -895,6 +895,18 @@ export default function NavigationPage() {
 
   return (
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
+      {/* CRITICAL DEBUG: Positioned at top level outside all conditionals */}
+      <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: 'red'}}>
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>
+          <div style={{backgroundColor: 'white', padding: '2rem', borderRadius: '8px', border: '4px solid black'}}>
+            <h1 style={{color: 'black', fontSize: '2rem', marginBottom: '1rem'}}>CRITICAL DEBUG</h1>
+            <p style={{color: 'black', fontSize: '1.5rem'}}>This should ALWAYS be visible</p>
+            <p style={{color: 'black', fontSize: '1rem'}}>Mobile: {isMobile ? 'YES' : 'NO'}</p>
+            <p style={{color: 'black', fontSize: '1rem'}}>Legal: {showLegalPopup ? 'POPUP SHOWING' : 'NO POPUP'}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Legal Disclaimer Popup */}
       {showLegalPopup && (
         <LegalDisclaimerPopup 
