@@ -930,7 +930,7 @@ export default function NavigationPage() {
           </div>
 
           {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent"}}>
+          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent", height: "100%", minHeight: "100%"}}>
             {/* AR Navigation - Mobile */}
             {isARMode && (
               <ARNavigation
