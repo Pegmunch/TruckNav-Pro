@@ -42,11 +42,11 @@ export function BottomNavigationButton({
   return (
     <div className={cn(
       "fixed bottom-0 left-0 right-0 z-50 p-4",
-      // CRITICAL FIX: Make background transparent in overlay safe mode to eliminate grey overlay
-      "overlay-safe-mode:bg-transparent bg-gradient-to-t from-background/95 to-transparent backdrop-blur-sm"
+      // CRITICAL FIX: Remove gradient and backdrop blur, make wrapper non-interactive
+      "bg-transparent overlay-safe-mode:bg-none overlay-safe-mode:backdrop-blur-0 pointer-events-none"
     )}>
       <Card className={cn(
-        "mx-auto max-w-lg shadow-lg border-2",
+        "mx-auto max-w-lg shadow-lg border-2 pointer-events-auto",
         isMobile ? "border-primary/20" : "border-primary/30"
       )}>
         <div className="p-4">
