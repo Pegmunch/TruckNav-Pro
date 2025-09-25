@@ -963,17 +963,29 @@ export default function NavigationPage() {
             {!isARMode && (
               <>
                 <div className="absolute inset-0 h-full w-full">
-                  <EnhancedRealisticMap
-                    currentRoute={currentRoute}
-                    selectedProfile={selectedProfile || activeProfile}
-                    alternativeRoutes={alternatives}
-                    previewRoute={previewRoute}
-                    showTrafficLayer={true}
-                    showIncidents={true}
-                    isNavigating={isNavigating}
-                    currentLocation={currentGPSLocation || undefined}
-                    onLocationUpdate={setCurrentGPSLocation}
-                  />
+                  {/* SIMPLE MAP TEST - If this shows, map container works */}
+                  <div className="h-full w-full bg-blue-500 relative">
+                    <div className="absolute top-4 left-4 bg-white p-4 rounded shadow-lg">
+                      <h3 className="text-black font-bold">Map Container Test</h3>
+                      <p className="text-black">Container is rendering correctly!</p>
+                      <p className="text-black text-sm">Height: 100%, Width: 100%</p>
+                    </div>
+                    
+                    {/* Try to load the actual map behind this test */}
+                    <div className="absolute inset-0 z-0">
+                      <EnhancedRealisticMap
+                        currentRoute={currentRoute}
+                        selectedProfile={selectedProfile || activeProfile}
+                        alternativeRoutes={alternatives}
+                        previewRoute={previewRoute}
+                        showTrafficLayer={true}
+                        showIncidents={true}
+                        isNavigating={isNavigating}
+                        currentLocation={currentGPSLocation || undefined}
+                        onLocationUpdate={setCurrentGPSLocation}
+                      />
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Legal Ownership Section - Mobile */}
