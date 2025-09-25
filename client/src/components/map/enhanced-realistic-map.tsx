@@ -285,13 +285,13 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
       {/* Enhanced Map Controls */}
       <div className="absolute top-16 right-4 z-[40] space-y-2">
         {/* Map Style Selector */}
-        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700/50 overflow-hidden">
+        <div className="bg-transparent backdrop-blur-sm rounded-lg border border-gray-700/50 overflow-hidden">
           <div className="grid grid-cols-2 gap-0">
             <Button
               variant={mapProvider === 'openstreetmap' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setMapProvider('openstreetmap')}
-              className="rounded-none border-r border-gray-700/50 text-white hover:bg-gray-800"
+              className="rounded-none border-r border-gray-700/50 text-white hover:bg-transparent"
               data-testid="button-map-road"
             >
               <MapIcon className="w-4 h-4" />
@@ -300,7 +300,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
               variant={mapProvider === 'satellite' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setMapProvider('satellite')}
-              className="rounded-none text-white hover:bg-gray-800"
+              className="rounded-none text-white hover:bg-transparent"
               data-testid="button-map-satellite"
             >
               <Satellite className="w-4 h-4" />
@@ -309,12 +309,12 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         </div>
 
         {/* Zoom Controls */}
-        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700/50 overflow-hidden">
+        <div className="bg-transparent backdrop-blur-sm rounded-lg border border-gray-700/50 overflow-hidden">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => mapRef.current?.zoomIn()}
-            className="rounded-none border-b border-gray-700/50 text-white hover:bg-gray-800"
+            className="rounded-none border-b border-gray-700/50 text-white hover:bg-transparent"
             data-testid="button-zoom-in"
           >
             <Plus className="w-4 h-4" />
@@ -323,7 +323,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
             variant="ghost"
             size="sm"
             onClick={() => mapRef.current?.zoomOut()}
-            className="rounded-none text-white hover:bg-gray-800"
+            className="rounded-none text-white hover:bg-transparent"
             data-testid="button-zoom-out"
           >
             <Minus className="w-4 h-4" />
@@ -339,7 +339,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
               mapRef.current.setView([displayLocation.lat, displayLocation.lng], 16);
             }
           }}
-          className="bg-gray-900/90 backdrop-blur-sm text-white hover:bg-gray-800 border border-gray-700/50"
+          className="bg-transparent backdrop-blur-sm text-white hover:bg-transparent border border-gray-700/50"
           data-testid="button-center-location"
         >
           <Crosshair className="w-4 h-4" />
@@ -351,7 +351,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         <div className="absolute bottom-4 left-4 z-[60]">
           <Badge 
             variant="secondary" 
-            className="bg-gray-900/90 backdrop-blur-sm text-white border-gray-700/50 px-4 py-2 text-sm"
+            className="bg-transparent backdrop-blur-sm text-white border-gray-700/50 px-4 py-2 text-sm"
           >
             <RouteIcon className="w-4 h-4 mr-2" />
             {(currentRoute.distance || 0).toFixed(1)} miles • {currentRoute.duration}min
