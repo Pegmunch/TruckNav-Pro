@@ -932,7 +932,7 @@ export default function NavigationPage() {
   }
 
   return (
-    <div className="bg-transparent">
+    <div className="bg-transparent h-screen flex flex-col">
       {/* Legal Disclaimer Popup - shown automatically on first visit */}
       {showLegalPopup && (
         <div className="fixed inset-0 z-50 bg-background">
@@ -970,7 +970,7 @@ export default function NavigationPage() {
           </div>
 
           {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container relative">
+          <div className="mobile-map-container relative flex-1 min-h-0">
             {/* AR Navigation - Mobile */}
             {isARMode && (
               <ARNavigation
@@ -1001,17 +1001,19 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <EnhancedRealisticMap
-                  currentRoute={currentRoute}
-                  selectedProfile={selectedProfile || activeProfile}
-                  alternativeRoutes={alternatives}
-                  previewRoute={previewRoute}
-                  showTrafficLayer={true}
-                  showIncidents={true}
-                  isNavigating={isNavigating}
-                  currentLocation={currentGPSLocation || undefined}
-                  onLocationUpdate={setCurrentGPSLocation}
-                />
+                <div className="absolute inset-0">
+                  <EnhancedRealisticMap
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile || activeProfile}
+                    alternativeRoutes={alternatives}
+                    previewRoute={previewRoute}
+                    showTrafficLayer={true}
+                    showIncidents={true}
+                    isNavigating={isNavigating}
+                    currentLocation={currentGPSLocation || undefined}
+                    onLocationUpdate={setCurrentGPSLocation}
+                  />
+                </div>
                 
                 {/* Legal Ownership Section - Mobile */}
                 <MapLegalOwnership compact={true} className="sm:hidden" />
@@ -1155,10 +1157,7 @@ export default function NavigationPage() {
           />
 
           {/* Desktop Map Area */}
-          <div className={cn(
-            "flex-1 relative transition-all duration-300 ease-in-out",
-            isMapExpanded ? "fixed inset-0 z-40 bg-background" : "min-h-screen"
-          )}>
+          <div className="relative flex-1 min-h-0">
 
             {/* AR Navigation - Desktop */}
             {isARMode && (
@@ -1190,17 +1189,19 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Desktop */}
             {!isARMode && (
               <>
-                <EnhancedRealisticMap
-                  currentRoute={currentRoute}
-                  selectedProfile={selectedProfile || activeProfile}
-                  alternativeRoutes={alternatives}
-                  previewRoute={previewRoute}
-                  showTrafficLayer={true}
-                  showIncidents={true}
-                  isNavigating={isNavigating}
-                  currentLocation={currentGPSLocation || undefined}
-                  onLocationUpdate={setCurrentGPSLocation}
-                />
+                <div className="absolute inset-0">
+                  <EnhancedRealisticMap
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile || activeProfile}
+                    alternativeRoutes={alternatives}
+                    previewRoute={previewRoute}
+                    showTrafficLayer={true}
+                    showIncidents={true}
+                    isNavigating={isNavigating}
+                    currentLocation={currentGPSLocation || undefined}
+                    onLocationUpdate={setCurrentGPSLocation}
+                  />
+                </div>
                 
                 {/* Legal Ownership Section - Desktop */}
                 <MapLegalOwnership compact={true} className="hidden sm:block" />
