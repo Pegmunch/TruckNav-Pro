@@ -475,7 +475,7 @@ const SearchSidebar = memo(function SearchSidebar({
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/20 z-20 lg:hidden overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none"
           onClick={onToggle}
           data-testid="search-sidebar-overlay"
         />

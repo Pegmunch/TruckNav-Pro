@@ -577,7 +577,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       {/* Overlay backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden" 
+          className="fixed inset-0 bg-black/20 z-40 lg:hidden overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none" 
           onClick={onClose}
           data-testid="unified-search-panel-backdrop"
         />

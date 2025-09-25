@@ -196,7 +196,7 @@ const HistoryFavoritesPanel = memo(function HistoryFavoritesPanel({
       {/* Overlay backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden" 
+          className="fixed inset-0 bg-black/20 z-40 lg:hidden overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none" 
           onClick={onClose}
           data-testid="history-favorites-backdrop"
         />
