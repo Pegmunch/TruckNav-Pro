@@ -932,7 +932,7 @@ export default function NavigationPage() {
   }
 
   return (
-    <div className="bg-background">
+    <div className="bg-transparent">
       {/* Legal Disclaimer Popup - shown automatically on first visit */}
       {showLegalPopup && (
         <div className="fixed inset-0 z-50 bg-background">

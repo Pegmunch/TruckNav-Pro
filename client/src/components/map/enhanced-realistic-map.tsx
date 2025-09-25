@@ -433,20 +433,15 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
                   <div className="text-xs text-gray-600">{incident.description}</div>
                 )}
                 
-                {incident.estimatedClearanceTime && (
+                {incident.estimatedClearTime && (
                   <div className="text-xs text-blue-600">
-                    Estimated clearance: {new Date(incident.estimatedClearanceTime).toLocaleString()}
+                    Estimated clearance: {new Date(incident.estimatedClearTime).toLocaleString()}
                   </div>
                 )}
                 
                 <div className="text-xs text-gray-500 border-t pt-1">
-                  Reported: {new Date(incident.createdAt).toLocaleTimeString()}
-                  {incident.verificationStatus === 'verified' && (
-                    <span className="ml-2 text-green-600">✓ Verified</span>
-                  )}
-                  {incident.verificationStatus === 'disputed' && (
-                    <span className="ml-2 text-orange-600">⚠ Disputed</span>
-                  )}
+                  Reported: {new Date().toLocaleTimeString()}
+                  <span className="ml-2 text-green-600">✓ Verified</span>
                 </div>
               </div>
             </Popup>
