@@ -44,7 +44,7 @@ const DrawerOverlay = React.forwardRef<
           "mobile-drawer-overlay",
           "data-[state=open]:opacity-100 data-[state=closed]:opacity-0",
           "data-[state=open]:pointer-events-auto data-[state=closed]:pointer-events-none",
-          "bg-black/20"
+          "bg-transparent"
         ] : "bg-transparent",
         className
       )}

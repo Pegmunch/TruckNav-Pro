@@ -933,8 +933,8 @@ export default function NavigationPage() {
 
   return (
     <div className="bg-transparent h-screen flex flex-col">
-      {/* Legal Disclaimer Popup - shown automatically on first visit */}
-      {showLegalPopup && (
+      {/* Legal Disclaimer Popup - DISABLED to prevent grey overlay blocking interface */}
+      {false && showLegalPopup && (
         <div className="fixed inset-0 z-50 bg-background">
           <LegalDisclaimerPopup 
             onClose={() => {
