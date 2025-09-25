@@ -961,31 +961,14 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0" style={{height: '100dvh', width: '100%'}}>
-                  {/* DEBUG: Simple MapContainer test */}
-                  <div className="h-full w-full bg-blue-100 border-4 border-red-500">
-                    <p className="text-black text-lg p-4">MAP CONTAINER DEBUG - Should see OpenStreetMap tiles here</p>
-                    {React.createElement(() => {
-                      const { MapContainer, TileLayer } = require('react-leaflet');
-                      return React.createElement(MapContainer, {
-                        center: [51.505, -0.09],
-                        zoom: 13,
-                        style: { height: '100%', width: '100%' },
-                        whenCreated: (map) => {
-                          console.log('DEBUG: Leaflet map created with size:', map.getSize());
-                          console.log('DEBUG: Map container element:', map.getContainer());
-                          setTimeout(() => {
-                            console.log('DEBUG: Calling invalidateSize after delay');
-                            map.invalidateSize();
-                          }, 100);
-                        }
-                      }, React.createElement(TileLayer, {
-                        attribution: '&copy; OpenStreetMap contributors',
-                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        onAdd: () => console.log('DEBUG: TileLayer added'),
-                        onLoad: () => console.log('DEBUG: TileLayer loaded')
-                      }));
-                    })}
+                <div className="absolute inset-0" style={{height: '100dvh', width: '100%', zIndex: 1000}}>
+                  {/* DEBUG: Basic visibility test - this should be clearly visible */}
+                  <div className="h-full w-full bg-red-500 flex items-center justify-center">
+                    <div className="bg-white p-8 rounded-lg shadow-lg border-4 border-black">
+                      <h1 className="text-black text-4xl font-bold mb-4">LAYOUT DEBUG</h1>
+                      <p className="text-black text-2xl">If you can see this, the mobile layout is working!</p>
+                      <p className="text-black text-lg mt-2">Check console for any map-related errors</p>
+                    </div>
                   </div>
                 </div>
                 
