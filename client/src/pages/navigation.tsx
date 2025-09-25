@@ -715,6 +715,10 @@ export default function NavigationPage() {
 
   // Handle cancel route - stop navigation
   const handleCancelRoute = () => {
+    // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
+    document.body.classList.remove('navigation-active');
+    document.documentElement.classList.remove('overlay-safe-mode');
+    
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
       toast({
@@ -756,6 +760,10 @@ export default function NavigationPage() {
     }
 
     try {
+      // ACTIVATE OVERLAY KILL-SWITCH: Force all overlays transparent during navigation
+      document.body.classList.add('navigation-active');
+      document.documentElement.classList.add('overlay-safe-mode');
+
       // DEBUG: Run overlay inspector when navigation starts
       if (overlayInspector) {
         console.log('🚛 NAVIGATION STARTING - Running overlay inspection...');

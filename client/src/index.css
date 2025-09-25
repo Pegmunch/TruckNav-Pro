@@ -1898,7 +1898,7 @@ select:focus-visible,
   @apply focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-ring;
 }
 
-/* Global overlay debug kill-switch - force all overlays transparent */
+/* COMPREHENSIVE OVERLAY KILL-SWITCH - Force all overlays transparent during navigation */
 html.overlay-safe-mode [class*="Overlay"], 
 html.overlay-safe-mode [data-radix-portal], 
 html.overlay-safe-mode [class*="backdrop"], 
@@ -1906,11 +1906,43 @@ html.overlay-safe-mode [class*="overlay"],
 html.overlay-safe-mode ::backdrop,
 html.overlay-safe-mode [data-vaul-drawer-wrapper],
 html.overlay-safe-mode [data-vaul-overlay],
-html.overlay-safe-mode [data-vaul-drawer] {
+html.overlay-safe-mode [data-vaul-drawer],
+body.navigation-active .fixed.inset-0,
+body.navigation-active [data-state="open"][role="dialog"],
+body.navigation-active [data-state="open"][role="alertdialog"],
+body.navigation-active .vaul-drawer-wrapper,
+body.navigation-active .vaul-overlay,
+body.navigation-active [data-testid*="overlay"],
+body.navigation-active [data-testid*="drawer"],
+body.navigation-active .drawer-overlay,
+body.navigation-active .sheet-overlay,
+body.navigation-active .dialog-overlay,
+body.navigation-active [class*="DialogOverlay"],
+body.navigation-active [class*="SheetOverlay"],
+body.navigation-active [class*="DrawerOverlay"] {
   background: transparent !important;
   backdrop-filter: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
   transition: none !important;
   animation: none !important;
+  z-index: -1 !important;
+}
+
+/* FORCE MAP INTERACTION DURING NAVIGATION */
+body.navigation-active .maplibregl-canvas,
+body.navigation-active .maplibregl-map,
+body.navigation-active .leaflet-container,
+body.navigation-active [data-testid*="map"] {
+  pointer-events: auto !important;
+  z-index: 1 !important;
+}
+
+/* PRESERVE CRITICAL NAVIGATION CONTROLS */
+body.navigation-active [data-testid="button-hamburger"],
+body.navigation-active [data-testid="button-start-navigation"],
+body.navigation-active .navigation-controls,
+body.navigation-active [data-testid*="button-"] {
+  pointer-events: auto !important;
+  z-index: 50 !important;
 }
