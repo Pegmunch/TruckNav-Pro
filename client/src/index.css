@@ -368,7 +368,7 @@ body {
 
 /* Sidebar-specific styling */
 .sidebar-backdrop {
-  background: rgba(0, 0, 0, 0.3); /* Increased opacity for solid background visibility */
+  background: transparent; /* DISABLED TO PREVENT OVERLAY */
   transition: opacity 200ms ease-in-out;
 }
 
@@ -1343,7 +1343,7 @@ select:focus-visible,
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7); /* Increased opacity for solid background visibility */
+  background: transparent; /* COMPLETELY DISABLED TO PREVENT GREY OVERLAY */
   /* Default opacity 0 to prevent stuck overlays */
   opacity: 0;
   pointer-events: none;
@@ -1673,8 +1673,8 @@ select:focus-visible,
   /* backdrop-filter: blur(8px) saturate(120%); - Removed to prevent frosted glass overlay effects */
   /* -webkit-backdrop-filter: blur(8px) saturate(120%); - Removed to prevent frosted glass overlay effects */
   
-  /* Automotive-grade contrast and readability */
-  background: hsla(var(--background), 0.95);
+  /* Automotive-grade contrast and readability - DISABLED OVERLAY */
+  background: transparent;
   border: 1px solid hsla(var(--border), 0.8);
   
   /* Automotive spacing and safe areas */
