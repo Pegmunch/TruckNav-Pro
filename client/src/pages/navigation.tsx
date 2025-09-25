@@ -55,7 +55,7 @@ export default function NavigationPage() {
   const isMobileDrawerOpen = isMobile && sidebarState === 'open';
   
   
-  // Map expansion state - auto-expand when route is selected
+  // Map expansion state - DISABLED to prevent grey overlay blocking interface
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   
   // Removed legacy isDrawerOpen - now using sidebarState as single source of truth
@@ -446,12 +446,10 @@ export default function NavigationPage() {
                 localStorage.setItem('navigationSidebarState', 'collapsed');
               }
             } else {
-              // Use existing in-page expansion logic for desktop
-              setIsMapExpanded(true);
-              if (window.innerWidth < 1024 && sidebarState === 'open') {
-                setSidebarState('collapsed');
-                localStorage.setItem('navigationSidebarState', 'collapsed');
-              }
+              // DISABLED: Don't auto-expand map to prevent grey overlay
+              // setIsMapExpanded(true);
+              // Map will stay in normal embedded view instead of full-screen overlay
+              console.log('[MAP] Route calculated - keeping map in normal view to prevent grey overlay');
             }
           }
         };
@@ -658,12 +656,10 @@ export default function NavigationPage() {
           localStorage.setItem('navigationSidebarState', 'collapsed');
         }
       } else {
-        // Use existing in-page expansion logic for desktop
-        setIsMapExpanded(true);
-        if (window.innerWidth < 1024 && sidebarState === 'open') {
-          setSidebarState('collapsed');
-          localStorage.setItem('navigationSidebarState', 'collapsed');
-        }
+        // DISABLED: Don't auto-expand map to prevent grey overlay
+        // setIsMapExpanded(true);
+        // Map will stay in normal embedded view instead of full-screen overlay
+        console.log('[MAP] Route preview - keeping map in normal view to prevent grey overlay');
       }
     }
   };
@@ -699,19 +695,17 @@ export default function NavigationPage() {
     }
   }, [alternatives.length, shouldReroute, timeSavingsAvailable, triggerLiveNotification]);
 
-  // Enhanced auto-expand map logic - works with both in-page and window modes
-  useEffect(() => {
-    if (currentRoute && !isMapWindowOpen()) {
-      if (!isMapExpanded) {
-        // Desktop: expand map temporarily but keep sidebar open
-        const timer = setTimeout(() => {
-          setIsMapExpanded(true);
-          // Don't auto-close sidebar - let user control it manually
-        }, 300);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [currentRoute, isMapExpanded, isMobile]);
+  // DISABLED: Auto-expand map to prevent grey overlay blocking interface
+  // useEffect(() => {
+  //   if (currentRoute && !isMapWindowOpen()) {
+  //     if (!isMapExpanded) {
+  //       const timer = setTimeout(() => {
+  //         setIsMapExpanded(true);
+  //       }, 300);
+  //       return () => clearTimeout(timer);
+  //     }
+  //   }
+  // }, [currentRoute, isMapExpanded, isMobile]);
 
 
 
@@ -802,10 +796,10 @@ export default function NavigationPage() {
         await startJourneyMutation.mutateAsync({ routeId: currentRoute.id, idempotencyKey });
       }
 
-      // Success - expand map after navigation starts
-      setTimeout(() => {
-        setIsMapExpanded(true);
-      }, 300);
+      // DISABLED: Don't auto-expand map to prevent grey overlay
+      // setTimeout(() => {
+      //   setIsMapExpanded(true);
+      // }, 300);
 
       // Dispatch navigation started event for notification system
       const navigationStartedEvent = new CustomEvent('navigation:started', {
