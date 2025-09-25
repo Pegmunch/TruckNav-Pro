@@ -895,15 +895,12 @@ export default function NavigationPage() {
 
   return (
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
-      {/* CRITICAL DEBUG: Positioned at top level outside all conditionals */}
-      <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: 'red'}}>
-        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}>
-          <div style={{backgroundColor: 'white', padding: '2rem', borderRadius: '8px', border: '4px solid black'}}>
-            <h1 style={{color: 'black', fontSize: '2rem', marginBottom: '1rem'}}>CRITICAL DEBUG</h1>
-            <p style={{color: 'black', fontSize: '1.5rem'}}>This should ALWAYS be visible</p>
-            <p style={{color: 'black', fontSize: '1rem'}}>Mobile: {isMobile ? 'YES' : 'NO'}</p>
-            <p style={{color: 'black', fontSize: '1rem'}}>Legal: {showLegalPopup ? 'POPUP SHOWING' : 'NO POPUP'}</p>
-          </div>
+      {/* CRITICAL DEBUG: Simple Tailwind approach */}
+      <div className="fixed inset-0 z-[9999] bg-red-500 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg border-4 border-black shadow-2xl">
+          <h1 className="text-black text-4xl font-bold mb-4">DEBUG VISIBLE</h1>
+          <p className="text-black text-2xl">Page is rendering!</p>
+          <p className="text-black text-lg">Mobile: {String(isMobile)}</p>
         </div>
       </div>
 
