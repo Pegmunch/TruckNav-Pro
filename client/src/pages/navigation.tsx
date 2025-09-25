@@ -46,7 +46,9 @@ export default function NavigationPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   
   // Unified sidebar state management - single source of truth
-  const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>('open');
+  const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
+    isMobile ? 'closed' : 'open'
+  );
   
   // Computed states for backward compatibility
   const isSidebarOpen = sidebarState !== 'closed';
