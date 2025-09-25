@@ -930,68 +930,17 @@ export default function NavigationPage() {
             </Button>
           </div>
 
-          {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent", height: "100%", minHeight: "100%"}}>
-            {/* AR Navigation - Mobile */}
-            {isARMode && (
-              <ARNavigation
-                isActive={isARMode}
-                onToggleAR={handleToggleAR}
-                currentDirection={getARDirectionData()}
-                route={getARRouteData()}
-              />
-            )}
-            
-            {/* Professional Navigation HUD - Mobile */}
-            {isNavigating && !isARMode && (
-              <ProfessionalNavHUD
-                currentRoute={currentRoute}
-                selectedProfile={selectedProfile || activeProfile}
-                isNavigating={isNavigating}
-                currentSpeed={currentSpeed}
-                currentLocation={currentGPSLocation || undefined}
-                onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
-                onCancelRoute={handleCancelRoute}
-                isCancellingRoute={completeJourneyMutation.isPending}
-                voiceEnabled={professionalVoiceEnabled}
-                isFullscreen={isFullscreenNav}
-              />
-            )}
-            
-            {/* Enhanced Professional Map - Mobile */}
-            {!isARMode && (
-              <>
-                <div className="absolute inset-0 h-full w-full">
-                  {/* SIMPLE MAP TEST - If this shows, map container works */}
-                  <div className="h-full w-full bg-blue-500 relative">
-                    <div className="absolute top-4 left-4 bg-white p-4 rounded shadow-lg">
-                      <h3 className="text-black font-bold">Map Container Test</h3>
-                      <p className="text-black">Container is rendering correctly!</p>
-                      <p className="text-black text-sm">Height: 100%, Width: 100%</p>
-                    </div>
-                    
-                    {/* Try to load the actual map behind this test */}
-                    <div className="absolute inset-0 z-0">
-                      <EnhancedRealisticMap
-                        currentRoute={currentRoute}
-                        selectedProfile={selectedProfile || activeProfile}
-                        alternativeRoutes={alternatives}
-                        previewRoute={previewRoute}
-                        showTrafficLayer={true}
-                        showIncidents={true}
-                        isNavigating={isNavigating}
-                        currentLocation={currentGPSLocation || undefined}
-                        onLocationUpdate={setCurrentGPSLocation}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Legal Ownership Section - Mobile */}
-                <MapLegalOwnership compact={true} className="sm:hidden" />
-              </>
-            )}
+          {/* Mobile Fullscreen Map - UNCONDITIONAL TEST */}
+          <div className="mobile-map-container relative flex-1 min-h-0 bg-red-500" style={{height: "100%", minHeight: "100%"}}>
+            {/* BYPASS ALL CONDITIONS - DIRECT TEST */}
+            <div className="absolute inset-0 h-full w-full bg-green-500">
+              <div className="absolute top-4 left-4 bg-white p-4 rounded shadow-lg z-50">
+                <h3 className="text-black font-bold text-2xl">DIRECT TEST</h3>
+                <p className="text-black text-xl">No conditionals!</p>
+                <p className="text-black text-lg">Mobile: {String(isMobile)}</p>
+                <p className="text-black text-lg">AR Mode: {String(isARMode)}</p>
+              </div>
+            </div>
           </div>
 
           {/* Mobile Route Planning Drawer */}
