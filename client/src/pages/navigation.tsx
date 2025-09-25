@@ -760,16 +760,22 @@ export default function NavigationPage() {
     }
 
     try {
-      // ACTIVATE OVERLAY KILL-SWITCH: Force all overlays transparent during navigation
+      console.log('🚛 [SIMPLE NAVIGATION] Starting direct navigation process...');
+      
+      // SIMPLE APPROACH: Clear all potential blocking elements immediately
       document.body.classList.add('navigation-active');
       document.documentElement.classList.add('overlay-safe-mode');
-
-      // DEBUG: Run overlay inspector when navigation starts
-      if (overlayInspector) {
-        console.log('🚛 NAVIGATION STARTING - Running overlay inspection...');
-        const report = overlayInspector.generateReport();
-        console.log('📋 Inspection Report:', report);
-      }
+      
+      // Remove any potential blocking overlays with brute force
+      const allElements = document.querySelectorAll('*');
+      allElements.forEach(el => {
+        const computed = window.getComputedStyle(el);
+        if (computed.position === 'fixed' && computed.zIndex !== 'auto' && parseInt(computed.zIndex) > 10) {
+          if (!el.closest('[data-testid="button-hamburger"]') && !el.closest('.navigation-controls')) {
+            (el as HTMLElement).style.display = 'none';
+          }
+        }
+      });
 
       // Open sidebar for navigation preparation
       setSidebarState('open');
@@ -803,15 +809,78 @@ export default function NavigationPage() {
         throw new Error('Route calculation failed');
       }
 
-      // Start or activate journey based on current state with idempotency
+      // SIMPLIFIED NAVIGATION: Start or activate journey with direct API calls (bypasses complex mutation logic)
       if (activeJourney && activeJourney.status === 'planned') {
-        // Activate existing planned journey with stable idempotency key
+        // Activate existing planned journey with direct fetch
+        console.log('[SIMPLE NAVIGATION] Activating existing planned journey:', activeJourney.id);
         const idempotencyKey = generateIdempotencyKey('activate', activeJourney.id.toString());
-        await activateJourneyMutation.mutateAsync({ journeyId: activeJourney.id, idempotencyKey });
+        
+        const activateResponse = await apiRequest(
+          'PATCH',
+          `/api/journeys/${activeJourney.id}/activate`,
+          {},
+          { idempotencyKey }
+        );
+        
+        if (!activateResponse.ok) {
+          const errorText = await activateResponse.text();
+          throw new Error(`Failed to activate journey: ${activateResponse.status} - ${errorText}`);
+        }
+        
+        const activatedJourney = await activateResponse.json();
+        console.log('[SIMPLE NAVIGATION] Journey activated successfully:', activatedJourney.id);
+        setActiveJourney(activatedJourney);
+        setIsNavigating(true);
+        localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
+        
+        // Invalidate journey cache to keep UI synchronized
+        await queryClient.invalidateQueries({ queryKey: ['/api/journeys'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/journeys', 'active'] });
+        
       } else {
-        // Create new journey with stable idempotency key
-        const idempotencyKey = generateIdempotencyKey('start', currentRoute.id);
-        await startJourneyMutation.mutateAsync({ routeId: currentRoute.id, idempotencyKey });
+        // Create and activate new journey with direct fetch calls
+        console.log('[SIMPLE NAVIGATION] Creating new journey for route:', currentRoute.id);
+        const createKey = generateIdempotencyKey('start', currentRoute.id);
+        
+        // Step 1: Create journey
+        const createResponse = await apiRequest(
+          'POST',
+          '/api/journeys/start',
+          { routeId: currentRoute.id },
+          { idempotencyKey: createKey }
+        );
+        
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          throw new Error(`Failed to create journey: ${createResponse.status} - ${errorText}`);
+        }
+        
+        const newJourney = await createResponse.json();
+        console.log('[SIMPLE NAVIGATION] Journey created, activating:', newJourney.id);
+        
+        // Step 2: Activate journey
+        const activateKey = generateIdempotencyKey('activate', newJourney.id.toString());
+        const activateResponse = await apiRequest(
+          'PATCH',
+          `/api/journeys/${newJourney.id}/activate`,
+          {},
+          { idempotencyKey: activateKey }
+        );
+        
+        if (!activateResponse.ok) {
+          const errorText = await activateResponse.text();
+          throw new Error(`Failed to activate journey: ${activateResponse.status} - ${errorText}`);
+        }
+        
+        const activatedJourney = await activateResponse.json();
+        console.log('[SIMPLE NAVIGATION] Journey activated successfully:', activatedJourney.id);
+        setActiveJourney(activatedJourney);
+        setIsNavigating(true);
+        localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
+        
+        // Invalidate journey cache to keep UI synchronized
+        await queryClient.invalidateQueries({ queryKey: ['/api/journeys'] });
+        await queryClient.invalidateQueries({ queryKey: ['/api/journeys', 'active'] });
       }
 
       // DISABLED: Don't auto-expand map to prevent grey overlay
