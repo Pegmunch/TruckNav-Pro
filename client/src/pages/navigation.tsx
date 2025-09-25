@@ -930,8 +930,8 @@ export default function NavigationPage() {
             </Button>
           </div>
 
-          {/* Mobile Fullscreen Map - Fixed height to prevent zero height container */}
-          <div className="mobile-map-container relative" style={{background: "transparent", height: "calc(100vh - 60px)", minHeight: "400px"}}>
+          {/* Mobile Fullscreen Map */}
+          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent"}}>
             {/* AR Navigation - Mobile */}
             {isARMode && (
               <ARNavigation
@@ -1114,8 +1114,8 @@ export default function NavigationPage() {
             arSupported={arSupported}
           />
 
-          {/* Desktop Map Area - Fixed height to prevent zero height container */}
-          <div className="relative" style={{height: "100vh", minHeight: "500px"}}>
+          {/* Desktop Map Area */}
+          <div className="relative flex-1 min-h-0">
 
             {/* AR Navigation - Desktop */}
             {isARMode && (
