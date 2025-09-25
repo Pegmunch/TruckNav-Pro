@@ -676,7 +676,7 @@ const InteractiveMap = memo(function InteractiveMap({
     <div 
       ref={mapContainerRef}
       className={cn(
-        "flex-1 relative map-container transition-opacity duration-500 ease-out",
+        "flex-1 relative map-container transition-opacity duration-500 ease-out z-0",
         (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
         autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
         preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
