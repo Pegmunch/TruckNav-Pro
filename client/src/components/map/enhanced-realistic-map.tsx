@@ -374,6 +374,8 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
             mapRef.current = map;
             map.options.zoomAnimation = true;
             map.options.markerZoomAnimation = true;
+            // Force resize to ensure proper rendering
+            setTimeout(() => map.invalidateSize(), 0);
           }
         }}
         className="leaflet-container-enhanced"
