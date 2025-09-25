@@ -991,16 +991,7 @@ export default function NavigationPage() {
     };
   };
 
-  if (profilesLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Truck className="w-12 h-12 text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading vehicle profiles...</p>
-        </div>
-      </div>
-    );
-  }
+  // Don't block the entire interface for profile loading - show interface with loading states instead
 
   return (
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
