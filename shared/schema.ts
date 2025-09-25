@@ -105,6 +105,138 @@ export const routes = pgTable("routes", {
   isFavorite: boolean("is_favorite").default(false),
 });
 
+// Social trucking network tables
+export const driverProfiles = pgTable("driver_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  displayName: text("display_name").notNull(),
+  realName: text("real_name"),
+  avatarUrl: text("avatar_url"),
+  companyName: text("company_name"),
+  licenseNumber: text("license_number"),
+  experienceYears: integer("experience_years"),
+  currentStatus: text("current_status").default('available'), // 'available', 'driving', 'resting', 'offline'
+  currentLocation: jsonb("current_location").$type<{lat: number; lng: number; timestamp: string}>(),
+  homeBase: jsonb("home_base").$type<{lat: number; lng: number; address: string}>(),
+  specializations: jsonb("specializations").$type<string[]>(), // ['hazmat', 'oversized_loads', 'refrigerated', 'livestock']
+  languages: jsonb("languages").$type<string[]>().default(sql`'["en"]'`),
+  rating: real("rating").default(5.0),
+  totalTrips: integer("total_trips").default(0),
+  milesLogged: real("miles_logged").default(0),
+  isOnline: boolean("is_online").default(false),
+  lastSeen: timestamp("last_seen").defaultNow(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  privacySettings: jsonb("privacy_settings").$type<{
+    shareLocation: boolean;
+    shareRoute: boolean;
+    allowMessages: boolean;
+    showOnline: boolean;
+  }>().default(sql`'{"shareLocation": true, "shareRoute": true, "allowMessages": true, "showOnline": true}'`),
+  verificationStatus: text("verification_status").default('unverified'), // 'unverified', 'pending', 'verified'
+});
+
+export const driverConnections = pgTable("driver_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requesterId: varchar("requester_id").notNull(),
+  targetId: varchar("target_id").notNull(),
+  status: text("status").notNull().default('pending'), // 'pending', 'accepted', 'blocked'
+  requestedAt: timestamp("requested_at").defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+  notes: text("notes"),
+});
+
+export const sharedRoutes = pgTable("shared_routes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  originalRouteId: varchar("original_route_id").notNull(),
+  sharedByDriverId: varchar("shared_by_driver_id").notNull(),
+  sharedWithDriverId: varchar("shared_with_driver_id"),
+  isPublic: boolean("is_public").default(false),
+  title: text("title").notNull(),
+  description: text("description"),
+  tags: jsonb("tags").$type<string[]>(),
+  difficulty: text("difficulty").default('easy'), // 'easy', 'moderate', 'difficult', 'expert'
+  hazards: jsonb("hazards").$type<string[]>(), // ['construction', 'heavy_traffic', 'narrow_roads']
+  bestTimeToTravel: jsonb("best_time_to_travel").$type<{
+    timeOfDay: string[];
+    daysOfWeek: string[];
+    seasons: string[];
+  }>(),
+  fuelCostEstimate: real("fuel_cost_estimate"),
+  tollCostEstimate: real("toll_cost_estimate"),
+  recommendedBreaks: jsonb("recommended_breaks").$type<{
+    coordinates: {lat: number; lng: number};
+    name: string;
+    type: 'rest' | 'fuel' | 'meal' | 'mandatory';
+    duration: number;
+  }[]>(),
+  likes: integer("likes").default(0),
+  saves: integer("saves").default(0),
+  views: integer("views").default(0),
+  sharedAt: timestamp("shared_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
+export const driverMessages = pgTable("driver_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromDriverId: varchar("from_driver_id").notNull(),
+  toDriverId: varchar("to_driver_id").notNull(),
+  conversationId: varchar("conversation_id").notNull(),
+  content: text("content").notNull(),
+  messageType: text("message_type").default('text'), // 'text', 'route_share', 'location_share', 'emergency'
+  attachments: jsonb("attachments").$type<{
+    type: string;
+    url: string;
+    name: string;
+  }[]>(),
+  isRead: boolean("is_read").default(false),
+  sentAt: timestamp("sent_at").defaultNow(),
+  readAt: timestamp("read_at"),
+});
+
+export const convoys = pgTable("convoys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadDriverId: varchar("lead_driver_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  routeId: varchar("route_id").notNull(),
+  maxDrivers: integer("max_drivers").default(5),
+  currentDriverCount: integer("current_driver_count").default(1),
+  status: text("status").default('forming'), // 'forming', 'active', 'completed', 'cancelled'
+  startTime: timestamp("start_time").notNull(),
+  estimatedEndTime: timestamp("estimated_end_time"),
+  actualEndTime: timestamp("actual_end_time"),
+  convoyRules: jsonb("convoy_rules").$type<{
+    maxSpeedLimit: number;
+    followDistance: number;
+    breakSchedule: string;
+    communicationChannel: string;
+  }>(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const convoyMembers = pgTable("convoy_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  convoyId: varchar("convoy_id").notNull(),
+  driverId: varchar("driver_id").notNull(),
+  position: integer("position"), // 1 = lead, 2 = second, etc.
+  status: text("status").default('pending'), // 'pending', 'accepted', 'active', 'left'
+  joinedAt: timestamp("joined_at").defaultNow(),
+  leftAt: timestamp("left_at"),
+});
+
+export const socialFeed = pgTable("social_feed", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull(),
+  type: text("type").notNull(), // 'route_complete', 'convoy_formed', 'achievement', 'status_update', 'route_share'
+  content: text("content").notNull(),
+  data: jsonb("data").$type<Record<string, any>>(), // Additional structured data
+  visibility: text("visibility").default('connections'), // 'public', 'connections', 'private'
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  shares: integer("shares").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
 export const trafficIncidents = pgTable("traffic_incidents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   type: text("type").notNull(), // 'police', 'accident', 'road_closure', 'construction', 'heavy_traffic', 'obstacle', 'hazmat_spill'
@@ -116,6 +248,7 @@ export const trafficIncidents = pgTable("traffic_incidents", {
   direction: text("direction"), // 'northbound', 'southbound', 'eastbound', 'westbound', 'both_directions'
   reportedBy: text("reported_by").default('user'), // 'user', 'system', 'traffic_authority'
   reporterName: text("reporter_name"),
+  reportedByDriverId: varchar("reported_by_driver_id"), // Reference to driver who reported
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
   reportedAt: timestamp("reported_at").defaultNow(),
