@@ -185,6 +185,8 @@ export const journeys = pgTable("journeys", {
   status: text("status").notNull(), // 'planned', 'active', 'completed'
   startedAt: timestamp("started_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
+  idempotencyKey: varchar("idempotency_key"), // for duplicate detection
+  sessionId: varchar("session_id"), // for session-based idempotency
 });
 
 export const insertVehicleProfileSchema = createInsertSchema(vehicleProfiles).omit({
