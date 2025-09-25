@@ -3911,13 +3911,100 @@ export class DatabaseStorage implements IStorage {
     const result = await db.select().from(driverMessages).where(eq(driverMessages.id, id)).limit(1);
     return result[0];
   }
-  async createDriverMessage(message: InsertDriverMessage): Promise<DriverMessage> { throw new Error("Not implemented yet"); }
-  async updateDriverMessage(id: string, updates: Partial<DriverMessage>): Promise<DriverMessage | undefined> { return undefined; }
-  async deleteDriverMessage(id: string): Promise<boolean> { return false; }
-  async getConversation(driverId1: string, driverId2: string, limit?: number): Promise<DriverMessage[]> { return []; }
-  async getDriverConversations(driverId: string): Promise<{recipientId: string; lastMessage: DriverMessage; unreadCount: number}[]> { return []; }
-  async markMessageAsRead(messageId: string): Promise<DriverMessage | undefined> { return undefined; }
-  async getUnreadMessageCount(driverId: string): Promise<number> { return 0; }
+  async createDriverMessage(message: InsertDriverMessage): Promise<DriverMessage> {
+    const result = await db.insert(driverMessages).values(message).returning();
+    return result[0];
+  }
+  async updateDriverMessage(id: string, updates: Partial<DriverMessage>): Promise<DriverMessage | undefined> {
+    const result = await db.update(driverMessages).set({
+      ...updates,
+      editedAt: new Date(),
+    }).where(eq(driverMessages.id, id)).returning();
+    return result[0];
+  }
+  async deleteDriverMessage(id: string): Promise<boolean> {
+    const result = await db.update(driverMessages).set({
+      isDeleted: true,
+    }).where(eq(driverMessages.id, id));
+    return result.rowCount > 0;
+  }
+  async getConversation(driverId1: string, driverId2: string, limit?: number): Promise<DriverMessage[]> {
+    const result = await db.select().from(driverMessages).where(
+      and(
+        or(
+          and(eq(driverMessages.senderId, driverId1), eq(driverMessages.recipientId, driverId2)),
+          and(eq(driverMessages.senderId, driverId2), eq(driverMessages.recipientId, driverId1))
+        ),
+        eq(driverMessages.isDeleted, false)
+      )
+    ).orderBy(desc(driverMessages.sentAt)).limit(limit || 50);
+    return result;
+  }
+  async getDriverConversations(driverId: string): Promise<{recipientId: string; lastMessage: DriverMessage; unreadCount: number}[]> {
+    // Get all unique conversation partners
+    const conversations = await db.select({
+      recipientId: sql<string>`CASE 
+        WHEN ${driverMessages.senderId} = ${driverId} THEN ${driverMessages.recipientId}
+        ELSE ${driverMessages.senderId}
+      END`,
+      lastSentAt: sql<Date>`MAX(${driverMessages.sentAt})`
+    }).from(driverMessages)
+    .where(
+      and(
+        or(
+          eq(driverMessages.senderId, driverId),
+          eq(driverMessages.recipientId, driverId)
+        ),
+        eq(driverMessages.isDeleted, false)
+      )
+    ).groupBy(sql`recipientId`)
+    .orderBy(sql`lastSentAt DESC`);
+
+    // Get the last message and unread count for each conversation
+    const result = [];
+    for (const conv of conversations) {
+      const lastMessage = await this.getConversation(driverId, conv.recipientId, 1);
+      const unreadCount = await db.select({ count: sql<number>`count(*)` })
+        .from(driverMessages)
+        .where(
+          and(
+            eq(driverMessages.senderId, conv.recipientId),
+            eq(driverMessages.recipientId, driverId),
+            eq(driverMessages.isRead, false),
+            eq(driverMessages.isDeleted, false)
+          )
+        );
+      
+      if (lastMessage[0]) {
+        result.push({
+          recipientId: conv.recipientId,
+          lastMessage: lastMessage[0],
+          unreadCount: unreadCount[0]?.count || 0
+        });
+      }
+    }
+    
+    return result;
+  }
+  async markMessageAsRead(messageId: string): Promise<DriverMessage | undefined> {
+    const result = await db.update(driverMessages).set({
+      isRead: true,
+      readAt: new Date(),
+    }).where(eq(driverMessages.id, messageId)).returning();
+    return result[0];
+  }
+  async getUnreadMessageCount(driverId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(driverMessages)
+      .where(
+        and(
+          eq(driverMessages.recipientId, driverId),
+          eq(driverMessages.isRead, false),
+          eq(driverMessages.isDeleted, false)
+        )
+      );
+    return result[0]?.count || 0;
+  }
 
   async getConvoy(id: string): Promise<Convoy | undefined> {
     const result = await db.select().from(convoys).where(eq(convoys.id, id)).limit(1);

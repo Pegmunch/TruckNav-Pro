@@ -2970,6 +2970,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Driver Messaging Routes
+  app.post("/api/social/messages", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertDriverMessageSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({
+          message: "Invalid message data",
+          errors: result.error.errors
+        });
+      }
+
+      const message = await storage.createDriverMessage(result.data);
+      res.status(201).json(message);
+    } catch (error) {
+      console.error('Error creating message:', error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  app.get("/api/social/messages/:id", async (req: Request, res: Response) => {
+    try {
+      const message = await storage.getDriverMessage(req.params.id);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      res.json(message);
+    } catch (error) {
+      console.error('Error getting message:', error);
+      res.status(500).json({ message: "Failed to get message" });
+    }
+  });
+
+  app.put("/api/social/messages/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const updates = req.body;
+      const message = await storage.updateDriverMessage(req.params.id, updates);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      res.json(message);
+    } catch (error) {
+      console.error('Error updating message:', error);
+      res.status(500).json({ message: "Failed to update message" });
+    }
+  });
+
+  app.delete("/api/social/messages/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const success = await storage.deleteDriverMessage(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      res.json({ message: "Message deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      res.status(500).json({ message: "Failed to delete message" });
+    }
+  });
+
+  app.get("/api/social/conversations/:driverId", async (req: Request, res: Response) => {
+    try {
+      const { driverId } = req.params;
+      const { limit } = req.query;
+      
+      if (!driverId) {
+        return res.status(400).json({ message: "Driver ID is required" });
+      }
+
+      // For now, using a placeholder for current user ID. In production, get from session
+      const currentDriverId = "current-driver-id"; // TODO: Get from authenticated session
+      
+      const messages = await storage.getConversation(currentDriverId, driverId, 
+        limit ? parseInt(limit as string) : undefined);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error getting conversation:', error);
+      res.status(500).json({ message: "Failed to get conversation" });
+    }
+  });
+
+  app.get("/api/social/conversations", async (req: Request, res: Response) => {
+    try {
+      // For now, using a placeholder for current user ID. In production, get from session
+      const currentDriverId = "current-driver-id"; // TODO: Get from authenticated session
+      
+      const conversations = await storage.getDriverConversations(currentDriverId);
+      res.json(conversations);
+    } catch (error) {
+      console.error('Error getting conversations:', error);
+      res.status(500).json({ message: "Failed to get conversations" });
+    }
+  });
+
+  app.put("/api/social/messages/:id/read", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const message = await storage.markMessageAsRead(req.params.id);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      res.json(message);
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      res.status(500).json({ message: "Failed to mark message as read" });
+    }
+  });
+
+  app.get("/api/social/messages/unread-count", async (req: Request, res: Response) => {
+    try {
+      // For now, using a placeholder for current user ID. In production, get from session
+      const currentDriverId = "current-driver-id"; // TODO: Get from authenticated session
+      
+      const count = await storage.getUnreadMessageCount(currentDriverId);
+      res.json({ count });
+    } catch (error) {
+      console.error('Error getting unread message count:', error);
+      res.status(500).json({ message: "Failed to get unread message count" });
+    }
+  });
+
   // =============================================================================
   // END SOCIAL NETWORKING SYSTEM API ROUTES  
   // =============================================================================
