@@ -29,6 +29,7 @@ import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
+import { overlayInspector } from "@/lib/overlay-inspector";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -755,6 +756,13 @@ export default function NavigationPage() {
     }
 
     try {
+      // DEBUG: Run overlay inspector when navigation starts
+      if (overlayInspector) {
+        console.log('🚛 NAVIGATION STARTING - Running overlay inspection...');
+        const report = overlayInspector.generateReport();
+        console.log('📋 Inspection Report:', report);
+      }
+
       // Open sidebar for navigation preparation
       setSidebarState('open');
 
