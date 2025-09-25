@@ -715,8 +715,22 @@ const InteractiveMap = memo(function InteractiveMap({
       onTouchStart={handleMapTouchStart}
       onTouchEnd={handleMapTouchEnd}
       data-testid="map-container"
-      style={{ height: '100%', width: '100%', minHeight: '400px' }}
+      style={{ height: '100%', width: '100%', minHeight: '400px', backgroundColor: 'red' }} // Debug styling
     >
+      {/* Debug: Always show a visible element */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '20px', 
+        left: '20px', 
+        background: 'yellow', 
+        padding: '10px', 
+        zIndex: 1000,
+        color: 'black',
+        fontSize: '14px'
+      }}>
+        MAP CONTAINER DEBUG - Container visible: {mapContainerRef.current ? 'YES' : 'NO'}
+        <br />Map ref exists: {mapRef.current ? 'YES' : 'NO'}
+      </div>
       {/* React Leaflet Map */}
       <MapContainer 
         center={[52.5, -1.5]} 
@@ -728,8 +742,8 @@ const InteractiveMap = memo(function InteractiveMap({
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
           url={preferences.mapViewMode === 'satellite' 
-            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}.png'
-            : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}.png' // Esri World Imagery - properly licensed
+            : 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
           }
           attribution={preferences.mapViewMode === 'satellite'
             ? '© Esri, © OpenStreetMap contributors'
