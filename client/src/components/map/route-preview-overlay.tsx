@@ -433,7 +433,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
   return (
     <div 
       className={cn(
-        "fixed inset-0 z-50 bg-black", // Solid background - no backdrop blur to prevent frosted glass overlay
+        "fixed inset-0 z-50 bg-black overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none", // Solid background - no backdrop blur to prevent frosted glass overlay
         "flex flex-col",
         "touch-none" // Prevent touch scrolling
       )}
