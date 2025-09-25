@@ -406,8 +406,8 @@ export default function NavigationPage() {
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
-      // Show route preview overlay
-      if (route.geometry) {
+      // Show route preview overlay only if not currently navigating
+      if (route.geometry && !isNavigating) {
         setShowRoutePreview(true);
         setPreviewRouteData(route);
       } else {
