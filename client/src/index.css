@@ -6,6 +6,8 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* CRITICAL: Ensure full height for map rendering */
+  height: 100%;
   /* Use theme-aware background instead of forced white */
   background-color: hsl(var(--background));
   /* Safe area handling is managed at component level to prevent double spacing */
@@ -16,11 +18,18 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* CRITICAL: Ensure full height for map rendering */
+  height: 100%;
   /* Theme-aware background color */
   background-color: hsl(var(--background)) !important;
   color: hsl(var(--foreground));
   /* Larger base font size for automotive visibility */
   font-size: 16px;
+}
+
+/* CRITICAL: Ensure root container has full height for map rendering */
+#root {
+  height: 100%;
 }
 
 /* Automotive-optimized touch scrolling */
