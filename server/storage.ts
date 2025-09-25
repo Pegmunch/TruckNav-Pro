@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type DriverProfile, type InsertDriverProfile, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type DriverMessage, type InsertDriverMessage, type Convoy, type InsertConvoy, type ConvoyMember, type InsertConvoyMember, type DriverLocation, type InsertDriverLocation, type DriverActivity, type InsertDriverActivity, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, driverProfiles, driverConnections, sharedRoutes, routeComments, driverMessages, convoys, convoyMembers, driverLocations, driverActivity } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc } from "drizzle-orm";
@@ -165,6 +165,81 @@ export interface IStorage {
   // Entertainment Settings
   getEntertainmentSettings(): Promise<EntertainmentSettings>;
   updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings>;
+
+  // ===== SOCIAL NETWORKING INTERFACE =====
+
+  // Driver Profiles
+  getDriverProfile(id: string): Promise<DriverProfile | undefined>;
+  getDriverProfileByUserId(userId: string): Promise<DriverProfile | undefined>;
+  createDriverProfile(profile: InsertDriverProfile): Promise<DriverProfile>;
+  updateDriverProfile(id: string, updates: Partial<DriverProfile>): Promise<DriverProfile | undefined>;
+  searchDriverProfiles(query: string, params?: { limit?: number; isOnline?: boolean }): Promise<DriverProfile[]>;
+  getNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number): Promise<DriverProfile[]>;
+
+  // Driver Connections
+  getDriverConnection(id: string): Promise<DriverConnection | undefined>;
+  createDriverConnection(connection: InsertDriverConnection): Promise<DriverConnection>;
+  updateDriverConnection(id: string, updates: Partial<DriverConnection>): Promise<DriverConnection | undefined>;
+  getDriverConnections(driverId: string, status?: string): Promise<DriverConnection[]>;
+  getFriendRequests(driverId: string): Promise<DriverConnection[]>;
+  acceptFriendRequest(connectionId: string): Promise<DriverConnection | undefined>;
+  deleteFriendRequest(connectionId: string): Promise<boolean>;
+
+  // Shared Routes
+  getSharedRoute(id: string): Promise<SharedRoute | undefined>;
+  createSharedRoute(sharedRoute: InsertSharedRoute): Promise<SharedRoute>;
+  updateSharedRoute(id: string, updates: Partial<SharedRoute>): Promise<SharedRoute | undefined>;
+  deleteSharedRoute(id: string): Promise<boolean>;
+  getSharedRoutes(params: { visibility?: string; sharedBy?: string; limit?: number; offset?: number }): Promise<SharedRoute[]>;
+  getFriendSharedRoutes(driverId: string, limit?: number): Promise<SharedRoute[]>;
+  likeSharedRoute(routeId: string, driverId: string): Promise<void>;
+  saveSharedRoute(routeId: string, driverId: string): Promise<void>;
+
+  // Route Comments
+  getRouteComment(id: string): Promise<RouteComment | undefined>;
+  createRouteComment(comment: InsertRouteComment): Promise<RouteComment>;
+  updateRouteComment(id: string, updates: Partial<RouteComment>): Promise<RouteComment | undefined>;
+  deleteRouteComment(id: string): Promise<boolean>;
+  getRouteComments(sharedRouteId: string, params?: { limit?: number; offset?: number }): Promise<RouteComment[]>;
+
+  // Driver Messages
+  getDriverMessage(id: string): Promise<DriverMessage | undefined>;
+  createDriverMessage(message: InsertDriverMessage): Promise<DriverMessage>;
+  updateDriverMessage(id: string, updates: Partial<DriverMessage>): Promise<DriverMessage | undefined>;
+  deleteDriverMessage(id: string): Promise<boolean>;
+  getConversation(driverId1: string, driverId2: string, limit?: number): Promise<DriverMessage[]>;
+  getDriverConversations(driverId: string): Promise<{recipientId: string; lastMessage: DriverMessage; unreadCount: number}[]>;
+  markMessageAsRead(messageId: string): Promise<DriverMessage | undefined>;
+  getUnreadMessageCount(driverId: string): Promise<number>;
+
+  // Convoys
+  getConvoy(id: string): Promise<Convoy | undefined>;
+  createConvoy(convoy: InsertConvoy): Promise<Convoy>;
+  updateConvoy(id: string, updates: Partial<Convoy>): Promise<Convoy | undefined>;
+  deleteConvoy(id: string): Promise<boolean>;
+  getConvoys(params: { status?: string; leaderId?: string; limit?: number }): Promise<Convoy[]>;
+  searchConvoys(query: string, params?: { limit?: number }): Promise<Convoy[]>;
+
+  // Convoy Members
+  getConvoyMember(id: string): Promise<ConvoyMember | undefined>;
+  createConvoyMember(member: InsertConvoyMember): Promise<ConvoyMember>;
+  updateConvoyMember(id: string, updates: Partial<ConvoyMember>): Promise<ConvoyMember | undefined>;
+  removeConvoyMember(id: string): Promise<boolean>;
+  getConvoyMembers(convoyId: string): Promise<ConvoyMember[]>;
+  joinConvoyRequest(convoyId: string, driverId: string): Promise<ConvoyMember>;
+
+  // Driver Locations
+  getDriverLocation(driverId: string): Promise<DriverLocation | undefined>;
+  updateDriverLocation(location: InsertDriverLocation): Promise<DriverLocation>;
+  getDriverLocationsInArea(bounds: {north: number; south: number; east: number; west: number}): Promise<DriverLocation[]>;
+  cleanupExpiredLocations(): Promise<number>;
+
+  // Driver Activity
+  getDriverActivity(id: string): Promise<DriverActivity | undefined>;
+  createDriverActivity(activity: InsertDriverActivity): Promise<DriverActivity>;
+  getDriverActivities(driverId: string, params?: { limit?: number; visibility?: string }): Promise<DriverActivity[]>;
+  getFriendActivities(driverId: string, limit?: number): Promise<DriverActivity[]>;
+  likeDriverActivity(activityId: string, driverId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {

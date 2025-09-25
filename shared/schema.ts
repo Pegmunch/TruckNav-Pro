@@ -480,6 +480,189 @@ export const trafficSettingsSchema = z.object({
 
 export type TrafficSettings = z.infer<typeof trafficSettingsSchema>;
 
+// ===== SOCIAL TRUCKING NETWORK SCHEMAS =====
+
+// Driver profiles for social features
+export const driverProfiles = pgTable("driver_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // references users table
+  displayName: text("display_name").notNull(),
+  truckModel: text("truck_model"),
+  yearsExperience: integer("years_experience"),
+  homeBase: text("home_base"), // home location/depot
+  bio: text("bio"),
+  profilePhoto: text("profile_photo"), // URL to profile image
+  isOnline: boolean("is_online").default(false),
+  lastSeen: timestamp("last_seen").defaultNow(),
+  sharingSettings: jsonb("sharing_settings").$type<{
+    shareLocation: boolean;
+    shareRoutes: boolean;
+    shareStatus: boolean;
+    allowMessages: boolean;
+    visibleToPublic: boolean;
+  }>().default({shareLocation: true, shareRoutes: true, shareStatus: true, allowMessages: true, visibleToPublic: true}),
+  safetyRating: real("safety_rating").default(5.0), // 1-5 star rating
+  responseTime: integer("response_time"), // average response time in minutes
+  totalTrips: integer("total_trips").default(0),
+  helpfulVotes: integer("helpful_votes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Driver connections (friend/follow system)
+export const driverConnections = pgTable("driver_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requesterId: varchar("requester_id").notNull(), // driver who sent request
+  recipientId: varchar("recipient_id").notNull(), // driver who received request
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'blocked'
+  connectionType: text("connection_type").default("friend"), // 'friend', 'follow', 'trusted'
+  requestedAt: timestamp("requested_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // extra connection data
+});
+
+// Shared routes within social network
+export const sharedRoutes = pgTable("shared_routes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  routeId: varchar("route_id").notNull(), // references routes table
+  sharedBy: varchar("shared_by").notNull(), // references driver_profiles
+  title: text("title"),
+  description: text("description"),
+  visibility: text("visibility").default("friends"), // 'public', 'friends', 'convoy'
+  tags: jsonb("tags").$type<string[]>(), // route tags like ['fuel-stops', 'scenic', 'fast']
+  difficulty: text("difficulty").default("easy"), // 'easy', 'moderate', 'challenging'
+  conditions: text("conditions"), // road/weather conditions when shared
+  estimatedDuration: integer("estimated_duration"), // in minutes
+  fuelEfficiency: real("fuel_efficiency"), // mpg or l/100km
+  tollCosts: real("toll_costs"), // estimated toll costs
+  likes: integer("likes").default(0),
+  shares: integer("shares").default(0),
+  saves: integer("saves").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Route comments and interactions
+export const routeComments = pgTable("route_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sharedRouteId: varchar("shared_route_id").notNull(), // references shared_routes
+  authorId: varchar("author_id").notNull(), // references driver_profiles
+  content: text("content").notNull(),
+  parentCommentId: varchar("parent_comment_id"), // for replies
+  likes: integer("likes").default(0),
+  isEdited: boolean("is_edited").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Driver-to-driver messaging
+export const driverMessages = pgTable("driver_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull(), // references driver_profiles
+  recipientId: varchar("recipient_id").notNull(), // references driver_profiles
+  conversationId: varchar("conversation_id"), // group messages by conversation
+  content: text("content").notNull(),
+  messageType: text("message_type").default("text"), // 'text', 'route_share', 'location', 'alert'
+  attachmentData: jsonb("attachment_data").$type<{
+    type?: string;
+    routeId?: string;
+    coordinates?: {lat: number; lng: number};
+    fileName?: string;
+    fileUrl?: string;
+  }>(),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  editedAt: timestamp("edited_at"),
+  isDeleted: boolean("is_deleted").default(false),
+});
+
+// Convoy/group travel coordination
+export const convoys = pgTable("convoys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  leaderId: varchar("leader_id").notNull(), // references driver_profiles
+  routeId: varchar("route_id"), // references routes table
+  maxMembers: integer("max_members").default(10),
+  currentMembers: integer("current_members").default(1),
+  departureTime: timestamp("departure_time"),
+  estimatedArrival: timestamp("estimated_arrival"),
+  meetingPoint: jsonb("meeting_point").$type<{
+    name: string;
+    coordinates: {lat: number; lng: number};
+    notes?: string;
+  }>(),
+  status: text("status").default("forming"), // 'forming', 'active', 'completed', 'cancelled'
+  convoyType: text("convoy_type").default("informal"), // 'informal', 'official', 'emergency'
+  requirements: jsonb("requirements").$type<{
+    minExperience?: number;
+    vehicleTypes?: string[];
+    certifications?: string[];
+  }>(),
+  safetyLevel: text("safety_level").default("standard"), // 'relaxed', 'standard', 'strict'
+  communicationChannel: text("communication_channel"), // CB channel, frequency
+  rules: text("rules"), // convoy rules and expectations
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Convoy membership
+export const convoyMembers = pgTable("convoy_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  convoyId: varchar("convoy_id").notNull(), // references convoys
+  driverId: varchar("driver_id").notNull(), // references driver_profiles
+  role: text("role").default("member"), // 'leader', 'co-leader', 'member', 'backup'
+  status: text("status").default("pending"), // 'pending', 'approved', 'declined', 'kicked'
+  position: integer("position"), // order in convoy
+  vehicleInfo: jsonb("vehicle_info").$type<{
+    model?: string;
+    plateNumber?: string;
+    color?: string;
+    specialEquipment?: string[];
+  }>(),
+  emergencyContact: jsonb("emergency_contact").$type<{
+    name: string;
+    phone: string;
+    relationship: string;
+  }>(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  leftAt: timestamp("left_at"),
+});
+
+// Real-time driver locations (temporary data for live tracking)
+export const driverLocations = pgTable("driver_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull(), // references driver_profiles
+  coordinates: jsonb("coordinates").$type<{lat: number; lng: number}>().notNull(),
+  heading: real("heading"), // compass direction 0-360
+  speed: real("speed"), // current speed in mph/kmh
+  altitude: real("altitude"),
+  accuracy: real("accuracy"), // GPS accuracy in meters
+  isOnDuty: boolean("is_on_duty").default(false),
+  currentStatus: text("current_status").default("available"), // 'available', 'driving', 'resting', 'loading', 'offline'
+  routeId: varchar("route_id"), // current route if any
+  convoyId: varchar("convoy_id"), // current convoy if any
+  lastUpdate: timestamp("last_update").defaultNow(),
+  expiresAt: timestamp("expires_at").default(sql`now() + interval '1 hour'`), // auto-cleanup old locations
+});
+
+// Driver activity feed (social posts, route shares, achievements)
+export const driverActivity = pgTable("driver_activity", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  driverId: varchar("driver_id").notNull(), // references driver_profiles
+  activityType: text("activity_type").notNull(), // 'route_completed', 'route_shared', 'milestone', 'safety_award'
+  title: text("title").notNull(),
+  content: text("content"),
+  relatedId: varchar("related_id"), // ID of related route, convoy, etc.
+  relatedType: text("related_type"), // 'route', 'convoy', 'achievement'
+  visibility: text("visibility").default("friends"), // 'public', 'friends', 'private'
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // achievement details, stats, etc.
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // ===== ENTERTAINMENT SCHEMAS =====
 
 // Entertainment content types and platform schemas
@@ -668,3 +851,135 @@ export type EntertainmentPlaybackState = typeof entertainmentPlaybackState.$infe
 export type InsertEntertainmentPlaybackState = z.infer<typeof insertEntertainmentPlaybackStateSchema>;
 
 export type EntertainmentSettings = z.infer<typeof entertainmentSettingsSchema>;
+
+// ===== SOCIAL NETWORKING INSERT SCHEMAS =====
+
+export const insertDriverProfileSchema = createInsertSchema(driverProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastSeen: true,
+}).extend({
+  displayName: z.string().min(2).max(50),
+  yearsExperience: z.number().min(0).max(50).optional(),
+  bio: z.string().max(500).optional(),
+  safetyRating: z.number().min(1).max(5).default(5.0),
+  sharingSettings: z.object({
+    shareLocation: z.boolean().default(true),
+    shareRoutes: z.boolean().default(true),
+    shareStatus: z.boolean().default(true),
+    allowMessages: z.boolean().default(true),
+    visibleToPublic: z.boolean().default(true),
+  }).default({shareLocation: true, shareRoutes: true, shareStatus: true, allowMessages: true, visibleToPublic: true}),
+});
+
+export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({
+  id: true,
+  requestedAt: true,
+  respondedAt: true,
+}).extend({
+  status: z.enum(['pending', 'accepted', 'blocked']).default('pending'),
+  connectionType: z.enum(['friend', 'follow', 'trusted']).default('friend'),
+});
+
+export const insertSharedRouteSchema = createInsertSchema(sharedRoutes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  title: z.string().max(100).optional(),
+  description: z.string().max(1000).optional(),
+  visibility: z.enum(['public', 'friends', 'convoy']).default('friends'),
+  difficulty: z.enum(['easy', 'moderate', 'challenging']).default('easy'),
+  tags: z.array(z.string()).max(10).default([]),
+});
+
+export const insertRouteCommentSchema = createInsertSchema(routeComments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  content: z.string().min(1).max(1000),
+});
+
+export const insertDriverMessageSchema = createInsertSchema(driverMessages).omit({
+  id: true,
+  sentAt: true,
+  readAt: true,
+  editedAt: true,
+}).extend({
+  content: z.string().min(1).max(2000),
+  messageType: z.enum(['text', 'route_share', 'location', 'alert']).default('text'),
+});
+
+export const insertConvoySchema = createInsertSchema(convoys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  name: z.string().min(3).max(100),
+  description: z.string().max(1000).optional(),
+  maxMembers: z.number().min(2).max(50).default(10),
+  status: z.enum(['forming', 'active', 'completed', 'cancelled']).default('forming'),
+  convoyType: z.enum(['informal', 'official', 'emergency']).default('informal'),
+  safetyLevel: z.enum(['relaxed', 'standard', 'strict']).default('standard'),
+});
+
+export const insertConvoyMemberSchema = createInsertSchema(convoyMembers).omit({
+  id: true,
+  joinedAt: true,
+  leftAt: true,
+}).extend({
+  role: z.enum(['leader', 'co-leader', 'member', 'backup']).default('member'),
+  status: z.enum(['pending', 'approved', 'declined', 'kicked']).default('pending'),
+});
+
+export const insertDriverLocationSchema = createInsertSchema(driverLocations).omit({
+  id: true,
+  lastUpdate: true,
+  expiresAt: true,
+}).extend({
+  currentStatus: z.enum(['available', 'driving', 'resting', 'loading', 'offline']).default('available'),
+  heading: z.number().min(0).max(360).optional(),
+  speed: z.number().min(0).max(200).optional(),
+});
+
+export const insertDriverActivitySchema = createInsertSchema(driverActivity).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  activityType: z.enum(['route_completed', 'route_shared', 'milestone', 'safety_award']),
+  title: z.string().min(5).max(100),
+  content: z.string().max(1000).optional(),
+  visibility: z.enum(['public', 'friends', 'private']).default('friends'),
+  relatedType: z.enum(['route', 'convoy', 'achievement']).optional(),
+});
+
+// ===== SOCIAL NETWORKING TYPE EXPORTS =====
+
+export type DriverProfile = typeof driverProfiles.$inferSelect;
+export type InsertDriverProfile = z.infer<typeof insertDriverProfileSchema>;
+
+export type DriverConnection = typeof driverConnections.$inferSelect;
+export type InsertDriverConnection = z.infer<typeof insertDriverConnectionSchema>;
+
+export type SharedRoute = typeof sharedRoutes.$inferSelect;
+export type InsertSharedRoute = z.infer<typeof insertSharedRouteSchema>;
+
+export type RouteComment = typeof routeComments.$inferSelect;
+export type InsertRouteComment = z.infer<typeof insertRouteCommentSchema>;
+
+export type DriverMessage = typeof driverMessages.$inferSelect;
+export type InsertDriverMessage = z.infer<typeof insertDriverMessageSchema>;
+
+export type Convoy = typeof convoys.$inferSelect;
+export type InsertConvoy = z.infer<typeof insertConvoySchema>;
+
+export type ConvoyMember = typeof convoyMembers.$inferSelect;
+export type InsertConvoyMember = z.infer<typeof insertConvoyMemberSchema>;
+
+export type DriverLocation = typeof driverLocations.$inferSelect;
+export type InsertDriverLocation = z.infer<typeof insertDriverLocationSchema>;
+
+export type DriverActivity = typeof driverActivity.$inferSelect;
+export type InsertDriverActivity = z.infer<typeof insertDriverActivitySchema>;
