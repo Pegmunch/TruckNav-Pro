@@ -166,6 +166,85 @@ export interface IStorage {
   getEntertainmentSettings(): Promise<EntertainmentSettings>;
   updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings>;
 
+  // ===== SOCIAL NETWORKING INTERFACE =====
+
+  // Driver Profiles
+  getDriverProfile(id: string): Promise<DriverProfile | undefined>;
+  getDriverProfileByUserId(userId: string): Promise<DriverProfile | undefined>;
+  createDriverProfile(profile: InsertDriverProfile): Promise<DriverProfile>;
+  updateDriverProfile(id: string, updates: Partial<DriverProfile>): Promise<DriverProfile | undefined>;
+  searchDriverProfiles(query: string, params?: { limit?: number; isOnline?: boolean }): Promise<DriverProfile[]>;
+  getNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number): Promise<DriverProfile[]>;
+
+  // Driver Connections
+  getDriverConnection(id: string): Promise<DriverConnection | undefined>;
+  createDriverConnection(connection: InsertDriverConnection): Promise<DriverConnection>;
+  updateDriverConnection(id: string, updates: Partial<DriverConnection>): Promise<DriverConnection | undefined>;
+  getDriverConnections(driverId: string, status?: string): Promise<DriverConnection[]>;
+  getFriendRequests(driverId: string): Promise<DriverConnection[]>;
+  acceptFriendRequest(connectionId: string): Promise<DriverConnection | undefined>;
+  deleteFriendRequest(connectionId: string): Promise<boolean>;
+
+  // Shared Routes
+  getSharedRoute(id: string): Promise<SharedRoute | undefined>;
+  createSharedRoute(sharedRoute: InsertSharedRoute): Promise<SharedRoute>;
+  updateSharedRoute(id: string, updates: Partial<SharedRoute>): Promise<SharedRoute | undefined>;
+  deleteSharedRoute(id: string): Promise<boolean>;
+  getSharedRoutes(params: { visibility?: string; sharedBy?: string; limit?: number; offset?: number }): Promise<SharedRoute[]>;
+  getFriendSharedRoutes(driverId: string, limit?: number): Promise<SharedRoute[]>;
+  likeSharedRoute(routeId: string, driverId: string): Promise<void>;
+  saveSharedRoute(routeId: string, driverId: string): Promise<void>;
+
+  // Route Comments
+  getRouteComment(id: string): Promise<RouteComment | undefined>;
+  createRouteComment(comment: InsertRouteComment): Promise<RouteComment>;
+  updateRouteComment(id: string, updates: Partial<RouteComment>): Promise<RouteComment | undefined>;
+  deleteRouteComment(id: string): Promise<boolean>;
+  getRouteComments(sharedRouteId: string, params?: { limit?: number; offset?: number }): Promise<RouteComment[]>;
+
+  // Driver Messages
+  getDriverMessage(id: string): Promise<DriverMessage | undefined>;
+  createDriverMessage(message: InsertDriverMessage): Promise<DriverMessage>;
+  updateDriverMessage(id: string, updates: Partial<DriverMessage>): Promise<DriverMessage | undefined>;
+  deleteDriverMessage(id: string): Promise<boolean>;
+  getConversation(driverId1: string, driverId2: string, limit?: number): Promise<DriverMessage[]>;
+  getDriverConversations(driverId: string): Promise<{recipientId: string; lastMessage: DriverMessage; unreadCount: number}[]>;
+  markMessageAsRead(messageId: string): Promise<DriverMessage | undefined>;
+  getUnreadMessageCount(driverId: string): Promise<number>;
+
+  // Convoys
+  getConvoy(id: string): Promise<Convoy | undefined>;
+  createConvoy(convoy: InsertConvoy): Promise<Convoy>;
+  updateConvoy(id: string, updates: Partial<Convoy>): Promise<Convoy | undefined>;
+  deleteConvoy(id: string): Promise<boolean>;
+  getConvoys(params: { status?: string; leaderId?: string; limit?: number }): Promise<Convoy[]>;
+  searchConvoys(query: string, params?: { limit?: number }): Promise<Convoy[]>;
+
+  // Convoy Members
+  getConvoyMember(id: string): Promise<ConvoyMember | undefined>;
+  createConvoyMember(member: InsertConvoyMember): Promise<ConvoyMember>;
+  updateConvoyMember(id: string, updates: Partial<ConvoyMember>): Promise<ConvoyMember | undefined>;
+  removeConvoyMember(id: string): Promise<boolean>;
+  getConvoyMembers(convoyId: string): Promise<ConvoyMember[]>;
+  joinConvoyRequest(convoyId: string, driverId: string): Promise<ConvoyMember>;
+
+  // Driver Locations
+  getDriverLocation(driverId: string): Promise<DriverLocation | undefined>;
+  updateDriverLocation(location: InsertDriverLocation): Promise<DriverLocation>;
+  getDriverLocationsInArea(bounds: {north: number; south: number; east: number; west: number}): Promise<DriverLocation[]>;
+  cleanupExpiredLocations(): Promise<number>;
+
+  // Driver Discovery
+  findNearbyDrivers(coordinates: {lat: number; lng: number}, radiusKm: number, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]>;
+  findDriversOnSimilarRoutes(routeId: string, options?: { limit?: number; excludeDriverId?: string }): Promise<DriverLocation[]>;
+  getActiveDriversCount(): Promise<number>;
+
+  // Driver Activity
+  getDriverActivity(id: string): Promise<DriverActivity | undefined>;
+  createDriverActivity(activity: InsertDriverActivity): Promise<DriverActivity>;
+  getDriverActivities(driverId: string, params?: { limit?: number; visibility?: string }): Promise<DriverActivity[]>;
+  getFriendActivities(driverId: string, limit?: number): Promise<DriverActivity[]>;
+  likeDriverActivity(activityId: string, driverId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {

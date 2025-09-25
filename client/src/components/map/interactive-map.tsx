@@ -1220,8 +1220,8 @@ const InteractiveMap = memo(function InteractiveMap({
         />
       </div>
 
-      {/* Bottom Info Bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">
+      {/* Bottom Info Bar - Fixed height to prevent map covering */}
+      <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-30">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Map Provider Info */}
