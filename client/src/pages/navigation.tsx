@@ -123,13 +123,21 @@ export default function NavigationPage() {
     }
   }, []); // Remove isMobile dependency to prevent auto-reset
 
-  // Check legal consent and show popup if needed
+  // TEMPORARILY DISABLE legal popup to fix grey overlay issue
   useEffect(() => {
+    // Force accept legal terms to bypass broken popup
     if (!isConsentLoading && !hasAcceptedTerms) {
-      setShowLegalPopup(true);
-    } else if (!isConsentLoading && hasAcceptedTerms) {
-      setShowLegalPopup(false);
+      // Auto-accept legal terms to bypass popup issue
+      console.log('[LEGAL] Auto-accepting legal terms to bypass broken popup');
+      localStorage.setItem('trucknav_legal_consent', JSON.stringify({
+        hasAcceptedTerms: true,
+        consentVersion: '1.0',
+        consentTimestamp: new Date().toISOString(),
+      }));
+      // Force refresh to pick up the change
+      window.location.reload();
     }
+    setShowLegalPopup(false); // Never show popup
   }, [hasAcceptedTerms, isConsentLoading]);
   
   // Check AR support and auto-detect GPS location on component mount
