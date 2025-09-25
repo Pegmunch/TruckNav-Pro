@@ -172,17 +172,46 @@ const InteractiveMap = memo(function InteractiveMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   
-  // Hook component to capture map reference
+  // Hook component to capture map reference and fix size issues
   function MapEventHandler() {
     const map = useMap();
     
     useEffect(() => {
       mapRef.current = map;
       console.log('Map reference captured:', map);
+      
+      if (map) {
+        // Force map to recalculate size immediately and after render
+        setTimeout(() => {
+          map.invalidateSize();
+          console.log('Map size invalidated on mount');
+        }, 0);
+        
+        setTimeout(() => {
+          map.invalidateSize();  
+          console.log('Map size invalidated after delay');
+        }, 300);
+        
+        // Additional invalidation after 1 second to catch slow layouts
+        setTimeout(() => {
+          map.invalidateSize();
+          console.log('Map size invalidated - final attempt');
+        }, 1000);
+      }
     }, [map]);
     
     return null;
   }
+
+  // Add effect to invalidate size when visibility props change
+  useEffect(() => {
+    if (mapRef.current) {
+      console.log('Layout changed, invalidating map size');
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+    }
+  }, [isFullscreen, autoExpanded, controlsVisible]);
   
   // Touch tap detection state
   const touchStartRef = useRef<{
@@ -686,7 +715,22 @@ const InteractiveMap = memo(function InteractiveMap({
       onTouchStart={handleMapTouchStart}
       onTouchEnd={handleMapTouchEnd}
       data-testid="map-container"
+      style={{ height: '100%', width: '100%', minHeight: '400px', backgroundColor: 'red' }} // Debug styling
     >
+      {/* Debug: Always show a visible element */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '20px', 
+        left: '20px', 
+        background: 'yellow', 
+        padding: '10px', 
+        zIndex: 1000,
+        color: 'black',
+        fontSize: '14px'
+      }}>
+        MAP CONTAINER DEBUG - Container visible: {mapContainerRef.current ? 'YES' : 'NO'}
+        <br />Map ref exists: {mapRef.current ? 'YES' : 'NO'}
+      </div>
       {/* React Leaflet Map */}
       <MapContainer 
         center={[52.5, -1.5]} 

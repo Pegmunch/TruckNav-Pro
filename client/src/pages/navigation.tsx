@@ -962,7 +962,7 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0 w-full z-0" style={{height: "100%"}}>
+                <div className="absolute inset-0 w-full z-0" style={{height: "100%", minHeight: "400px"}}>
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
