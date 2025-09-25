@@ -1221,7 +1221,7 @@ Calculating route...
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-20 lg:hidden overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none"
+          className="fixed inset-0 bg-transparent z-20 lg:hidden pointer-events-auto"
           onClick={onToggle}
           data-testid="navigation-sidebar-overlay"
         />
@@ -1248,7 +1248,7 @@ Calculating route...
 
       {/* Theme Selector Modal */}
       {showThemeSelector && (
-        <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4 overlay-safe-mode:bg-transparent">
+        <div className="fixed inset-0 bg-transparent z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-sm max-h-[80vh] bg-background shadow-xl flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between pb-2 flex-shrink-0">
               <CardTitle className="text-lg flex items-center">
