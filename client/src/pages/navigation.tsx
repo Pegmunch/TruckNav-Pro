@@ -930,8 +930,8 @@ export default function NavigationPage() {
             </Button>
           </div>
 
-          {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent", height: "100%", minHeight: "100%"}}>
+          {/* Mobile Fullscreen Map - Fixed height to prevent zero height container */}
+          <div className="mobile-map-container relative" style={{background: "transparent", height: "calc(100vh - 60px)", minHeight: "400px"}}>
             {/* AR Navigation - Mobile */}
             {isARMode && (
               <ARNavigation
@@ -962,7 +962,7 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0 h-full w-full z-0">
+                <div className="absolute inset-0 w-full z-0" style={{height: "100%"}}>
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1114,8 +1114,8 @@ export default function NavigationPage() {
             arSupported={arSupported}
           />
 
-          {/* Desktop Map Area */}
-          <div className="relative flex-1 min-h-0">
+          {/* Desktop Map Area - Fixed height to prevent zero height container */}
+          <div className="relative" style={{height: "100vh", minHeight: "500px"}}>
 
             {/* AR Navigation - Desktop */}
             {isARMode && (
