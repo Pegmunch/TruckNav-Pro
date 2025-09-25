@@ -36,8 +36,8 @@ export default function MapLegalOwnership({
   return (
     <div 
       className={cn(
-        // Base positioning - absolute positioned at map bottom right corner
-        "absolute bottom-4 right-4 z-20",
+        // Base positioning - absolute positioned at map bottom right corner  
+        "absolute bottom-4 right-4 z-10 pointer-events-none",
         // Background and styling - semi-transparent with border
         "bg-background border border-border rounded-lg shadow-lg",
         // Padding and spacing
@@ -88,7 +88,7 @@ export default function MapLegalOwnership({
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-6 px-2 text-xs hover:bg-accent automotive-touch-target"
+                  className="h-6 px-2 text-xs hover:bg-accent automotive-touch-target pointer-events-auto"
                   data-testid="button-view-legal-terms"
                 >
                   <ExternalLink className="w-3 h-3 mr-1" />

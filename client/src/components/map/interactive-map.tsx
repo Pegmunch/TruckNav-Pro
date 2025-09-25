@@ -687,12 +687,6 @@ const InteractiveMap = memo(function InteractiveMap({
       onTouchEnd={handleMapTouchEnd}
       data-testid="map-container"
     >
-      {/* VISIBILITY TEST */}
-      <div className="absolute top-4 left-4 bg-red-500 text-white p-4 rounded shadow-lg z-[9999]">
-        <h3 className="text-white font-bold text-2xl">InteractiveMap Container Test</h3>
-        <p className="text-white text-xl">This should be visible!</p>
-      </div>
-      
       {/* React Leaflet Map */}
       <MapContainer 
         center={[52.5, -1.5]} 
