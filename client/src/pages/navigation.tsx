@@ -897,13 +897,11 @@ export default function NavigationPage() {
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
       {/* Legal Disclaimer Popup */}
       {showLegalPopup && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <LegalDisclaimerPopup 
-            onClose={() => {
-              setShowLegalPopup(false);
-            }}
-          />
-        </div>
+        <LegalDisclaimerPopup 
+          onClose={() => {
+            setShowLegalPopup(false);
+          }}
+        />
       )}
       {/* Mobile-First Layout */}
       {isMobile ? (
