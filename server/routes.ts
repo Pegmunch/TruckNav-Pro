@@ -1617,7 +1617,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(journey);
     } catch (error) {
-      res.status(500).json({ message: "Failed to activate journey" });
+      const journeyId = req.params.id;
+      console.error(`[JOURNEY ACTIVATION ERROR] Journey ${journeyId}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[JOURNEY ACTIVATION ERROR] Details: ${errorMessage}`);
+      res.status(500).json({ 
+        message: "Failed to activate journey",
+        error: errorMessage 
+      });
     }
   });
 
