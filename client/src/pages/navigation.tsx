@@ -895,6 +895,13 @@ export default function NavigationPage() {
 
   return (
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
+      
+      {/* ABSOLUTE TOP LEVEL TEST - SHOULD ALWAYS BE VISIBLE */}
+      <div className="fixed top-0 left-0 w-full h-20 bg-yellow-500 z-[9999] flex items-center justify-center">
+        <div className="bg-black p-2 rounded text-white font-bold">
+          TOP LEVEL TEST - Mobile: {String(isMobile)}
+        </div>
+      </div>
 
       {/* Legal Disclaimer Popup */}
       {showLegalPopup && (
