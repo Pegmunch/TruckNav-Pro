@@ -58,7 +58,7 @@ export default function NavigationPage() {
   const isMobileDrawerOpen = isMobile && sidebarState === 'open';
   
   
-  // Map expansion state - DISABLED to prevent grey overlay blocking interface
+  // Map expansion state
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   
   // Removed legacy isDrawerOpen - now using sidebarState as single source of truth
@@ -335,7 +335,6 @@ export default function NavigationPage() {
     },
     onSuccess: (journey) => {
       // Journey starts as 'planned', will be activated by the navigation flow
-      console.log('[NAVIGATION] Journey created successfully:', journey.id);
     },
     onError: (error) => {
       console.error('Failed to start journey:', error);
@@ -381,11 +380,8 @@ export default function NavigationPage() {
   // Route calculation mutation
   const calculateRouteMutation = useMutation({
     mutationFn: async (routeData: { startLocation: string; endLocation: string; vehicleProfileId?: string; routePreference?: string }) => {
-      console.log('calculateRouteMutation.mutationFn called with:', routeData);
       const response = await apiRequest("POST", "/api/routes/calculate", routeData);
-      console.log('API response status:', response.status);
       const result = await response.json();
-      console.log('API response data:', result);
       return result;
     },
     onSuccess: (route) => {
@@ -398,9 +394,8 @@ export default function NavigationPage() {
       // Update window sync with new route
       windowSync.updateRoute(route);
       
-      // Ensure toLocation is set when route is calculated (fix for disabled Start Navigation button)
+      // Ensure toLocation is set when route is calculated
       if (route && route.endLocation && !toLocation) {
-        console.log('[ROUTE_CALC] Setting toLocation from route:', route.endLocation);
         setToLocation(route.endLocation);
       }
       
@@ -411,10 +406,10 @@ export default function NavigationPage() {
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
-      // NOTE: Route preview overlay disabled - show route directly on main map instead
-      // The overlay was blocking the map interface with a solid black background
+      // Show route preview overlay
       if (route.geometry) {
-        // Route will be displayed on the main map instead of in an overlay
+        setShowRoutePreview(true);
+        setPreviewRouteData(route);
       } else {
         // Fallback to existing map expansion behavior if no geometry
         const handleMapExpansion = () => {
@@ -433,10 +428,8 @@ export default function NavigationPage() {
                 localStorage.setItem('navigationSidebarState', 'collapsed');
               }
             } else {
-              // DISABLED: Don't auto-expand map to prevent grey overlay
-              // setIsMapExpanded(true);
-              // Map will stay in normal embedded view instead of full-screen overlay
-              console.log('[MAP] Route calculated - keeping map in normal view to prevent grey overlay');
+              // Auto-expand map for better route visibility
+              setIsMapExpanded(true);
             }
           }
         };
@@ -469,26 +462,13 @@ export default function NavigationPage() {
   };
 
   const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
-    console.log('=== ROUTE PLANNING ATTEMPT ===');
-    console.log('handlePlanRoute called with:', { 
-      fromLocation, 
-      toLocation, 
-      routePreference,
-      startLoc,
-      endLoc,
-      activeProfileId,
-      selectedProfile: selectedProfile?.id 
-    });
-    
     // Guard against duplicate requests while calculating
     if (calculateRouteMutation.isPending) {
-      console.log('Route planning blocked: Already calculating');
       return;
     }
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
-      console.log('Route planning blocked: No valid vehicle profile');
       toast({
         title: "Vehicle profile required",
         description: "Please select a valid vehicle profile before planning a route.",
@@ -502,7 +482,6 @@ export default function NavigationPage() {
     const finalEndLoc = endLoc || toLocation;
     
     if (!finalStartLoc || !finalEndLoc) {
-      console.log('Route planning blocked: Missing locations', { finalStartLoc, finalEndLoc, fromLocation, toLocation });
       toast({
         title: "Locations required",
         description: "Please enter both start and destination locations before planning a route.",
@@ -511,8 +490,6 @@ export default function NavigationPage() {
       return;
     }
 
-    console.log('✅ Validation passed! Calling mutation...');
-
     const routeData = {
       startLocation: finalStartLoc,
       endLocation: finalEndLoc,
@@ -520,8 +497,6 @@ export default function NavigationPage() {
       routePreference: routePreference || 'fastest',
     };
 
-    console.log('Submitting route calculation with payload:', routeData);
-    console.log('About to call calculateRouteMutation.mutate');
     calculateRouteMutation.mutate(routeData);
   };
 
@@ -643,10 +618,8 @@ export default function NavigationPage() {
           localStorage.setItem('navigationSidebarState', 'collapsed');
         }
       } else {
-        // DISABLED: Don't auto-expand map to prevent grey overlay
-        // setIsMapExpanded(true);
-        // Map will stay in normal embedded view instead of full-screen overlay
-        console.log('[MAP] Route preview - keeping map in normal view to prevent grey overlay');
+        // Auto-expand map for route preview
+        setIsMapExpanded(true);
       }
     }
   };
@@ -682,17 +655,17 @@ export default function NavigationPage() {
     }
   }, [alternatives.length, shouldReroute, timeSavingsAvailable, triggerLiveNotification]);
 
-  // DISABLED: Auto-expand map to prevent grey overlay blocking interface
-  // useEffect(() => {
-  //   if (currentRoute && !isMapWindowOpen()) {
-  //     if (!isMapExpanded) {
-  //       const timer = setTimeout(() => {
-  //         setIsMapExpanded(true);
-  //       }, 300);
-  //       return () => clearTimeout(timer);
-  //     }
-  //   }
-  // }, [currentRoute, isMapExpanded, isMobile]);
+  // Auto-expand map when route is calculated
+  useEffect(() => {
+    if (currentRoute && !isMapWindowOpen()) {
+      if (!isMapExpanded) {
+        const timer = setTimeout(() => {
+          setIsMapExpanded(true);
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentRoute, isMapExpanded, isMobile]);
 
 
 
@@ -744,133 +717,60 @@ export default function NavigationPage() {
     }
 
     try {
-      console.log('🚛 [SIMPLE NAVIGATION] Starting direct navigation process...');
       
-      // SIMPLE APPROACH: Clear all potential blocking elements immediately
+      // Set navigation active state for CSS styling
       document.body.classList.add('navigation-active');
       document.documentElement.classList.add('overlay-safe-mode');
       
-      // Remove any potential blocking overlays with brute force
-      const allElements = document.querySelectorAll('*');
-      allElements.forEach(el => {
-        const computed = window.getComputedStyle(el);
-        if (computed.position === 'fixed' && computed.zIndex !== 'auto' && parseInt(computed.zIndex) > 10) {
-          if (!el.closest('[data-testid="button-hamburger"]') && !el.closest('.navigation-controls')) {
-            (el as HTMLElement).style.display = 'none';
-          }
-        }
-      });
-
-      // Open sidebar for navigation preparation
+      // Close all known overlay components using proper state management
+      setShowRoutePreview(false);
+      setIsAlternativeRoutesOpen(false);
+      setShowLegalPopup(false);
+      
+      // Prepare navigation interface
       setSidebarState('open');
 
-      // If no route exists, plan it first then start navigation
-      if (!currentRoute) {
-        await new Promise<void>((resolve, reject) => {
-          const unsubscribe = calculateRouteMutation.mutateAsync({
-            startLocation: fromLocation,
-            endLocation: toLocation,
-            vehicleProfileId: selectedProfile?.id?.toString(),
-            routePreference: 'fastest'
-          }).then((routeData) => {
-            unsubscribe;
-            resolve();
-          }).catch((error) => {
-            console.error('Route planning failed:', error);
-            recoverUIOnError();
-            toast({
-              title: "Route planning failed",
-              description: "Unable to calculate route. Please check locations and try again.",
-              variant: "destructive"
-            });
-            reject(error);
-          });
-        });
-      }
-
-      // Route should now exist, start navigation
-      if (!currentRoute) {
+      // Generate idempotency key for this navigation start
+      const idempotencyKey = generateIdempotencyKey('start');
+      
+      // Ensure we have a route (calculate if needed, use returned value not state)
+      const route = currentRoute ?? await calculateRouteMutation.mutateAsync({
+        startLocation: fromLocation,
+        endLocation: toLocation,
+        vehicleProfileId: selectedProfile?.id?.toString(),
+        routePreference: 'fastest'
+      });
+      
+      if (!route?.id) {
         throw new Error('Route calculation failed');
       }
 
-      // SIMPLIFIED NAVIGATION: Start or activate journey with direct API calls (bypasses complex mutation logic)
-      if (activeJourney && activeJourney.status === 'planned') {
-        // Activate existing planned journey with direct fetch
-        console.log('[SIMPLE NAVIGATION] Activating existing planned journey:', activeJourney.id);
-        const idempotencyKey = generateIdempotencyKey('activate', activeJourney.id.toString());
-        
-        const activateResponse = await apiRequest(
-          'PATCH',
-          `/api/journeys/${activeJourney.id}/activate`,
-          {},
-          { idempotencyKey }
-        );
-        
-        if (!activateResponse.ok) {
-          const errorText = await activateResponse.text();
-          throw new Error(`Failed to activate journey: ${activateResponse.status} - ${errorText}`);
-        }
-        
-        const activatedJourney = await activateResponse.json();
-        console.log('[SIMPLE NAVIGATION] Journey activated successfully:', activatedJourney.id);
-        setActiveJourney(activatedJourney);
-        setIsNavigating(true);
-        localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
-        
-        // Invalidate journey cache to keep UI synchronized
-        await queryClient.invalidateQueries({ queryKey: ['/api/journeys'] });
-        await queryClient.invalidateQueries({ queryKey: ['/api/journeys', 'active'] });
-        
+      // Single linear navigation flow with proper mutation sequence
+      let journeyId: number;
+      if (activeJourney?.status === 'planned') {
+        journeyId = activeJourney.id;
       } else {
-        // Create and activate new journey with direct fetch calls
-        console.log('[SIMPLE NAVIGATION] Creating new journey for route:', currentRoute.id);
-        const createKey = generateIdempotencyKey('start', currentRoute.id);
-        
-        // Step 1: Create journey
-        const createResponse = await apiRequest(
-          'POST',
-          '/api/journeys/start',
-          { routeId: currentRoute.id },
-          { idempotencyKey: createKey }
-        );
-        
-        if (!createResponse.ok) {
-          const errorText = await createResponse.text();
-          throw new Error(`Failed to create journey: ${createResponse.status} - ${errorText}`);
-        }
-        
-        const newJourney = await createResponse.json();
-        console.log('[SIMPLE NAVIGATION] Journey created, activating:', newJourney.id);
-        
-        // Step 2: Activate journey
-        const activateKey = generateIdempotencyKey('activate', newJourney.id.toString());
-        const activateResponse = await apiRequest(
-          'PATCH',
-          `/api/journeys/${newJourney.id}/activate`,
-          {},
-          { idempotencyKey: activateKey }
-        );
-        
-        if (!activateResponse.ok) {
-          const errorText = await activateResponse.text();
-          throw new Error(`Failed to activate journey: ${activateResponse.status} - ${errorText}`);
-        }
-        
-        const activatedJourney = await activateResponse.json();
-        console.log('[SIMPLE NAVIGATION] Journey activated successfully:', activatedJourney.id);
-        setActiveJourney(activatedJourney);
-        setIsNavigating(true);
-        localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
-        
-        // Invalidate journey cache to keep UI synchronized
-        await queryClient.invalidateQueries({ queryKey: ['/api/journeys'] });
-        await queryClient.invalidateQueries({ queryKey: ['/api/journeys', 'active'] });
+        const newJourney = await startJourneyMutation.mutateAsync({ 
+          routeId: route.id, 
+          idempotencyKey 
+        });
+        journeyId = newJourney.id;
+      }
+      
+      await activateJourneyMutation.mutateAsync({ 
+        journeyId, 
+        idempotencyKey 
+      });
+      
+      // Update navigation state after successful activation
+      setIsNavigating(true);
+      if (route.id) {
+        localStorage.setItem('activeRouteId', route.id.toString());
       }
 
-      // DISABLED: Don't auto-expand map to prevent grey overlay
-      // setTimeout(() => {
-      //   setIsMapExpanded(true);
-      // }, 300);
+      setTimeout(() => {
+        setIsMapExpanded(true);
+      }, 300);
 
       // Dispatch navigation started event for notification system
       const navigationStartedEvent = new CustomEvent('navigation:started', {
@@ -995,8 +895,8 @@ export default function NavigationPage() {
 
   return (
     <div className="h-screen flex flex-col" style={{background: "transparent"}}>
-      {/* Legal Disclaimer Popup - DISABLED to prevent grey overlay blocking interface */}
-      {false && showLegalPopup && (
+      {/* Legal Disclaimer Popup */}
+      {showLegalPopup && (
         <div className="fixed inset-0 z-50 bg-background">
           <LegalDisclaimerPopup 
             onClose={() => {
@@ -1077,8 +977,8 @@ export default function NavigationPage() {
                   />
                 </div>
                 
-                {/* Legal Ownership Section - Mobile - DISABLED TO FIX GREY OVERLAY */}
-                {/* <MapLegalOwnership compact={true} className="sm:hidden" /> */}
+                {/* Legal Ownership Section - Mobile */}
+                <MapLegalOwnership compact={true} className="sm:hidden" />
               </>
             )}
           </div>
@@ -1265,8 +1165,8 @@ export default function NavigationPage() {
                   />
                 </div>
                 
-                {/* Legal Ownership Section - Desktop - DISABLED TO FIX GREY OVERLAY */}
-                {/* <MapLegalOwnership compact={true} className="hidden sm:block" /> */}
+                {/* Legal Ownership Section - Desktop */}
+                <MapLegalOwnership compact={true} className="hidden sm:block" />
               </>
             )}
           </div>
