@@ -932,7 +932,7 @@ export default function NavigationPage() {
   }
 
   return (
-    <div className="bg-transparent h-screen flex flex-col">
+    <div className="h-screen flex flex-col" style={{background: "transparent"}}>
       {/* Legal Disclaimer Popup - DISABLED to prevent grey overlay blocking interface */}
       {false && showLegalPopup && (
         <div className="fixed inset-0 z-50 bg-background">
@@ -945,9 +945,9 @@ export default function NavigationPage() {
       )}
       {/* Mobile-First Layout */}
       {isMobile ? (
-        <div className="mobile-layout">
+        <div className="mobile-layout" style={{background: "transparent"}}>
           {/* Mobile Header with Menu Button */}
-          <div className="mobile-nav-header flex items-center justify-between">
+          <div className="mobile-nav-header flex items-center justify-between" style={{background: "transparent"}}>
             <div className="flex items-center gap-2">
               <Truck className="w-6 h-6 text-primary" />
               <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
@@ -970,7 +970,7 @@ export default function NavigationPage() {
           </div>
 
           {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container relative flex-1 min-h-0">
+          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent"}}>
             {/* AR Navigation - Mobile */}
             {isARMode && (
               <ARNavigation
