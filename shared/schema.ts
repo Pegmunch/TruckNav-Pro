@@ -670,7 +670,3 @@ export type InsertEntertainmentPlaybackState = z.infer<typeof insertEntertainmen
 
 export type EntertainmentSettings = z.infer<typeof entertainmentSettingsSchema>;
 
-
-export const insertRouteCommentSchema = createInsertSchema(routeComments).omit({
-  id: true,
-  createdAt: true,
