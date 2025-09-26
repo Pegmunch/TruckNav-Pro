@@ -33,7 +33,8 @@ import {
   Wrench,
   Camera,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Eye
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -43,6 +44,7 @@ import { type VehicleProfile, type Route, type Journey, type Facility } from "@s
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Switch } from "@/components/ui/switch";
 import IncidentReportingForm from "@/components/traffic/incident-reporting-form";
 
 interface NavigationSidebarProps {
@@ -65,6 +67,10 @@ interface NavigationSidebarProps {
   isNavigating?: boolean;
   isStartingJourney?: boolean;
   isCompletingJourney?: boolean;
+  
+  // Route preview toggle
+  showRoutePreview?: boolean;
+  onRoutePreviewToggle?: (enabled: boolean) => void;
   
   // Sidebar state
   isOpen: boolean;
@@ -118,6 +124,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
   arSupported = false,
   showVehicleSettings = false,
   onShowVehicleSettings,
+  showRoutePreview = true,
+  onRoutePreviewToggle,
 }: NavigationSidebarProps) {
   const { toast } = useToast();
   
@@ -577,6 +585,26 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   </>
                 )}
               </Button>
+            )}
+            
+            {/* Route Preview Toggle - Only show during navigation */}
+            {isNavigating && typeof onRoutePreviewToggle === 'function' && (
+              <div className="mt-3 px-3 pb-2">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                    <Label htmlFor="route-preview-toggle" className="text-sm font-medium">
+                      Route Preview
+                    </Label>
+                  </div>
+                  <Switch
+                    id="route-preview-toggle"
+                    checked={showRoutePreview || false}
+                    onCheckedChange={(checked) => onRoutePreviewToggle?.(checked)}
+                    data-testid="switch-route-preview"
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}

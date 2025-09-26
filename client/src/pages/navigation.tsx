@@ -45,6 +45,7 @@ export default function NavigationPage() {
   const [toLocation, setToLocation] = useState("");
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showRoutePreview, setShowRoutePreview] = useState(true);
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -1000,6 +1001,10 @@ export default function NavigationPage() {
                   isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                   isCompletingJourney={completeJourneyMutation.isPending}
                   
+                  // Route preview toggle
+                  showRoutePreview={showRoutePreview}
+                  onRoutePreviewToggle={setShowRoutePreview}
+                  
                   // Sidebar state (always open in mobile drawer)
                   isOpen={true}
                   onToggle={() => setSidebarState('collapsed')} // Collapse drawer but keep accessible
@@ -1062,6 +1067,10 @@ export default function NavigationPage() {
             isNavigating={isNavigating}
             isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
             isCompletingJourney={completeJourneyMutation.isPending}
+            
+            // Route preview toggle
+            showRoutePreview={showRoutePreview}
+            onRoutePreviewToggle={setShowRoutePreview}
             
             // Sidebar state
             isOpen={isSidebarOpen}
@@ -1184,7 +1193,7 @@ export default function NavigationPage() {
       {/* Route Preview Popup - Only visible during active navigation */}
       <RoutePreviewPopup
         currentRoute={currentRoute}
-        isNavigating={isNavigating}
+        isNavigating={isNavigating && showRoutePreview}
         currentLocation={currentGPSLocation || undefined}
       />
 
