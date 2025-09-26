@@ -729,11 +729,11 @@ const InteractiveMap = memo(function InteractiveMap({
           key={preferences.mapViewMode} // Stable key per view mode
           url={preferences.mapViewMode === 'satellite' 
             ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed  
-            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+            : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}' // Esri Street Map
           }
           attribution={preferences.mapViewMode === 'satellite'
             ? '© Esri, © OpenStreetMap contributors'
-            : '© OpenStreetMap contributors, © CARTO'
+            : '© Esri, © OpenStreetMap contributors'
           }
         />
         
