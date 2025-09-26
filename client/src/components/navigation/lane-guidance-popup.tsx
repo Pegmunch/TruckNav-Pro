@@ -151,10 +151,10 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
 
   // Calculate responsive size (1/4 of screen)
   const popupStyle = {
-    width: 'min(calc(100vw / 4), calc(100vh / 4))', // 1/4 screen size, responsive to both width and height
+    width: 'calc(25vw)', // True 1/4 screen width
     height: 'auto',
-    minWidth: '120px',
-    maxWidth: '200px',
+    minWidth: '150px', // Reasonable minimum for readability
+    minHeight: '120px',
   };
 
   return (

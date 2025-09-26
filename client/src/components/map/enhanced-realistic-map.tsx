@@ -414,7 +414,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
             position={[displayLocation.lat, displayLocation.lng]}
             icon={createTruckIcon(isNavigating)}
           >
-            <Popup>
+            <Popup closeOnClick={true} autoClose={true}>
               <div className="text-center">
                 <div className="font-semibold">Current Location</div>
                 <div className="text-sm text-gray-600">

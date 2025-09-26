@@ -28,6 +28,7 @@ import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
+import RoutePreviewPopup from "@/components/navigation/route-preview-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
 
 export default function NavigationPage() {
@@ -1178,6 +1179,13 @@ export default function NavigationPage() {
         open={showVehicleSettings}
         onOpenChange={setShowVehicleSettings}
         onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
+      />
+
+      {/* Route Preview Popup - Only visible during active navigation */}
+      <RoutePreviewPopup
+        currentRoute={currentRoute}
+        isNavigating={isNavigating}
+        currentLocation={currentGPSLocation || undefined}
       />
 
     </div>
