@@ -149,9 +149,9 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   const selectedLaneIndex = savedSelections[nextManeuver.stepIndex] ?? null;
   const hasLaneSelection = selectedLaneIndex !== null;
 
-  // Calculate responsive size (1/16 of screen)
+  // Calculate responsive size (1/4 of screen)
   const popupStyle = {
-    width: 'min(calc(100vw / 16), calc(100vh / 16))', // 1/16 screen size, responsive to both width and height
+    width: 'min(calc(100vw / 4), calc(100vh / 4))', // 1/4 screen size, responsive to both width and height
     height: 'auto',
     minWidth: '120px',
     maxWidth: '200px',
