@@ -706,7 +706,7 @@ const InteractiveMap = memo(function InteractiveMap({
       ref={mapContainerRef}
       className={cn(
         "flex-1 relative map-container transition-opacity duration-500 ease-out z-0",
-        (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-white", // Enhanced automotive fullscreen
+        (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-background", // Enhanced automotive fullscreen
         autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
         preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
         "cursor-pointer" // Indicate interactive map
@@ -799,7 +799,7 @@ const InteractiveMap = memo(function InteractiveMap({
       {controlsVisible && (
         <div 
           className={cn(
-            "absolute z-20 transition-all duration-300 ease-in-out",
+            "absolute z-[1000] transition-all duration-300 ease-in-out",
             // Positioned at top-center, away from toggle button
             "top-16 left-1/2 transform -translate-x-1/2",
             // Compact horizontal layout to fit constrained space
@@ -880,7 +880,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* 4-Direction Movement Control - Fixed Event Handling */}
       <div className={cn(
-        "absolute right-4 bottom-32 z-40", // Increased z-index
+        "absolute right-4 bottom-32 z-[1100]", // Control panel z-index
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         "opacity-100 translate-x-0",
@@ -993,7 +993,7 @@ const InteractiveMap = memo(function InteractiveMap({
       
       {/* Enhanced Status Bar with Auto-Hide */}
       <div className={cn(
-        "absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 shadow-lg z-10 transition-all duration-300",
+        "absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 shadow-lg z-[1200] transition-all duration-300",
         controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       )}>
         <div className="flex items-center space-x-3">
@@ -1185,7 +1185,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Next Maneuver Guidance Overlay */}
       {currentRoute && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 right-4 z-20">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 right-4 z-[1050]">
           <NextManeuverGuidance
             currentRoute={currentRoute}
             onOpenLaneSelection={onOpenLaneSelection}
@@ -1243,7 +1243,7 @@ const InteractiveMap = memo(function InteractiveMap({
       />
       
       {/* Speed Display - positioned at bottom center, moved left and up, below legal dialog z-index */}
-      <div className="absolute bottom-[120px] left-1/2 transform -translate-x-1/2 -translate-x-20 z-20">
+      <div className="absolute bottom-[120px] left-1/2 transform -translate-x-1/2 -translate-x-20 z-[1150]">
         <SpeedDisplay 
           speedLimit={currentSpeedLimit || undefined}
           className="shadow-2xl"
@@ -1251,7 +1251,7 @@ const InteractiveMap = memo(function InteractiveMap({
       </div>
 
       {/* Bottom Info Bar - Fixed height to prevent map covering */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-30">
+      <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-[1300]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Map Provider Info */}
