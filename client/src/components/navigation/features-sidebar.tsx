@@ -151,7 +151,7 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-screen bg-background border-l border-border z-30 shadow-lg",
+          "fixed right-0 top-0 h-screen bg-card border-l border-border z-30 shadow-lg",
           "automotive-layout sidebar-transition",
           isOpen ? "translate-x-0" : "translate-x-full",
           isCollapsed ? "w-16" : "w-80",

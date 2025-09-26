@@ -285,7 +285,7 @@ const SearchSidebar = memo(function SearchSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-screen bg-background border-l border-border z-30 shadow-lg",
+          "fixed right-0 top-0 h-screen bg-card border-l border-border z-30 shadow-lg",
           "automotive-layout sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
