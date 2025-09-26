@@ -84,7 +84,7 @@ const defaultMapPreferences: MapPreferences = {
   showTruckRoutes: true,
   zoomLevel: 10,
   provider: 'openstreetmap',
-  tiles: 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  tiles: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '© OpenStreetMap contributors'
 };
 
@@ -728,8 +728,8 @@ const InteractiveMap = memo(function InteractiveMap({
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
           url={preferences.mapViewMode === 'satellite' 
-            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}.png' // Esri World Imagery - properly licensed
-            : 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed  
+            : preferences.tiles || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
           }
           attribution={preferences.mapViewMode === 'satellite'
             ? '© Esri, © OpenStreetMap contributors'
