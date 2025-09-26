@@ -1,3 +1,5 @@
+import { apiRequest } from './queryClient';
+
 export interface NavigationRoute {
   id: string;
   name: string;
@@ -297,13 +299,7 @@ export class TruckNavigationService {
       };
 
       // Store the temporary vehicle profile
-      const profileResponse = await fetch('/api/vehicle-profiles', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(vehicleProfile)
-      });
+      const profileResponse = await apiRequest('POST', '/api/vehicle-profiles', vehicleProfile);
 
       if (!profileResponse.ok) {
         console.error('Failed to create temporary vehicle profile');
@@ -313,18 +309,12 @@ export class TruckNavigationService {
       const createdProfile = await profileResponse.json();
 
       // Calculate route using server-side API
-      const routeResponse = await fetch('/api/routes/calculate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          startLocation: `${start.lat}, ${start.lng}`,
-          endLocation: `${end.lat}, ${end.lng}`,
-          startCoordinates: start,
-          endCoordinates: end,
-          vehicleProfileId: createdProfile.id
-        })
+      const routeResponse = await apiRequest('POST', '/api/routes/calculate', {
+        startLocation: `${start.lat}, ${start.lng}`,
+        endLocation: `${end.lat}, ${end.lng}`,
+        startCoordinates: start,
+        endCoordinates: end,
+        vehicleProfileId: createdProfile.id
       });
 
       if (!routeResponse.ok) {
@@ -359,9 +349,7 @@ export class TruckNavigationService {
       };
 
       // Clean up temporary vehicle profile
-      await fetch(`/api/vehicle-profiles/${createdProfile.id}`, {
-        method: 'DELETE'
-      }).catch(() => {
+      await apiRequest('DELETE', `/api/vehicle-profiles/${createdProfile.id}`).catch(() => {
         // Ignore cleanup errors
       });
 
