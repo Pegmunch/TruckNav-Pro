@@ -395,12 +395,14 @@ const StreetView = memo(function StreetView({
     if (mode === 'navigation' && isNavigating) {
       // Navigation mode - optimized for mobile and desktop
       classes += "w-full h-full md:w-[40%] md:h-full ";
-      classes += "mobile:h-[50vh] mobile:w-full ";
-      // Mobile-specific optimizations
+      classes += "max-h-[50vh] sm:max-h-[60vh] md:max-h-full ";
+      // Mobile-specific optimizations  
       classes += "touch-manipulation overflow-hidden ";
+      classes += "min-h-[300px] sm:min-h-[400px] "; // Ensure minimum usable size
     } else if (mode === 'preview') {
       // Preview mode - enhanced for cross-platform
       classes += "h-full w-full touch-manipulation overflow-hidden ";
+      classes += "min-h-[250px] sm:min-h-[300px] "; // Minimum preview size
     } else {
       // Off mode - hidden
       classes += "hidden ";
@@ -408,6 +410,8 @@ const StreetView = memo(function StreetView({
     
     // Add mobile browser compatibility classes
     classes += "android-chrome-fix ios-safari-fix ";
+    // Additional mobile viewport fixes
+    classes += "will-change-transform backface-visibility-hidden ";
     
     return cn(classes, className);
   };

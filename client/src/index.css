@@ -836,6 +836,26 @@ html body div[style*="transform"],
     transform: translateZ(0) !important;
     will-change: transform !important;
   }
+  
+  /* Enhanced mobile map container performance */
+  .map-container,
+  .mobile-map-container {
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-overflow-scrolling: touch !important;
+    overflow-scrolling: touch !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+  }
+  
+  /* Mobile direction button enhancements */
+  .direction-button-panel {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation !important;
+  }
 }
 
 /* Enhanced Focus Indicators for Accessibility and Safety */

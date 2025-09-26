@@ -1176,19 +1176,19 @@ const InteractiveMap = memo(function InteractiveMap({
 
 
 
-      {/* 4-Direction Movement Control - Fixed Event Handling */}
+      {/* 4-Direction Movement Control - Mobile-Optimized */}
       <div className={cn(
         "absolute right-4 bottom-32 z-[1100]", // Control panel z-index
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
-        "flex flex-col transition-all duration-300 pointer-events-auto",
+        "flex flex-col transition-all duration-300 pointer-events-auto direction-button-panel",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-16 h-28" // Fixed size for perfect oval shape
+        "w-24 h-36 md:w-16 md:h-28" // Mobile: 144px tall for 48px per button (44px+ touch targets)
       )}>
         {/* Up Arrow */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
+          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation flex items-center justify-center pointer-events-auto md:h-7"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1200,12 +1200,12 @@ const InteractiveMap = memo(function InteractiveMap({
           <ChevronUp className="w-5 h-5 pointer-events-none" />
         </Button>
         
-        {/* Left and Right Arrows - Side by Side with Equal Split */}
-        <div className="flex border-b border-border/50 h-14">
+        {/* Left and Right Arrows - Side by Side with Proper Touch Targets */}
+        <div className="flex border-b border-border/50 h-12">
           <Button
             variant="ghost"
             size="icon"
-            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
+            className="h-full w-12 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation flex items-center justify-center pointer-events-auto md:w-8"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -1219,7 +1219,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
+            className="h-full w-12 rounded-none hover:bg-primary/10 transition-colors touch-manipulation flex items-center justify-center pointer-events-auto md:w-8"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -1236,7 +1236,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
+          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation flex items-center justify-center pointer-events-auto md:h-7"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1249,19 +1249,19 @@ const InteractiveMap = memo(function InteractiveMap({
         </Button>
       </div>
 
-      {/* Zoom Controls - Enhanced for mobile */}
+      {/* Zoom Controls - Mobile-Optimized */}
       <div className={cn(
         "absolute right-4 bottom-72 z-[1100]",
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-16 h-20" // Compact size for zoom controls
+        "w-24 h-24 md:w-16 md:h-20" // Mobile: 96px wide for better touch targets
       )}>
         {/* Zoom In */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto min-h-[44px] min-w-[44px]"
+          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1277,7 +1277,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto min-h-[44px] min-w-[44px]"
+          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1296,12 +1296,12 @@ const InteractiveMap = memo(function InteractiveMap({
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-16 h-12" // Single button container
+        "w-24 h-14 md:w-16 md:h-12" // Mobile: 96px wide for consistent sizing
       )}>
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto min-h-[44px] min-w-[44px]"
+          className="h-14 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto md:h-12"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
