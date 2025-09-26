@@ -39,6 +39,7 @@ interface StreetViewProps {
   isVisible?: boolean;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  onClick?: () => void;
 }
 
 interface StreetViewPreferences {
@@ -91,7 +92,8 @@ const StreetView = memo(function StreetView({
   className,
   isVisible = true,
   isFullscreen = false,
-  onToggleFullscreen
+  onToggleFullscreen,
+  onClick
 }: StreetViewProps) {
   const streetViewRef = useRef<HTMLDivElement>(null);
   const panoramaRef = useRef<any>(null);
@@ -347,12 +349,16 @@ const StreetView = memo(function StreetView({
   }
 
   return (
-    <div className={cn("relative h-full w-full bg-background", className)}>
+    <div 
+      className={cn("relative h-full w-full bg-background", className)}
+      onClick={!isFullscreen && onClick ? onClick : undefined}
+      style={{ cursor: !isFullscreen && onClick ? 'pointer' : 'default' }}
+    >
       {/* Street View Container */}
       <div 
         ref={streetViewRef}
         className="h-full w-full rounded-lg overflow-hidden"
-        style={{ minHeight: '300px' }}
+        style={{ minHeight: isFullscreen ? '300px' : '150px' }}
       />
 
       {/* Loading Overlay */}
@@ -390,8 +396,8 @@ const StreetView = memo(function StreetView({
         </div>
       )}
 
-      {/* Street View Controls - Mobile responsive positioning */}
-      {apiLoaded && isAvailable && controlsVisible && (
+      {/* Street View Controls - Show different controls for preview vs fullscreen */}
+      {apiLoaded && isAvailable && controlsVisible && isFullscreen && (
         <div className="absolute top-4 right-4 z-20 space-y-2 md:space-y-2 sm:space-y-1">
           {/* Fullscreen Toggle - Mobile responsive */}
           {onToggleFullscreen && (
@@ -469,17 +475,19 @@ const StreetView = memo(function StreetView({
         </div>
       )}
 
-      {/* Controls Toggle - Mobile responsive */}
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={toggleControls}
-        className="absolute top-4 left-4 z-20 bg-background/80 backdrop-blur-sm hover:bg-background/90 touch-manipulation min-h-[44px] min-w-[44px]"
-        data-testid="button-toggle-street-view-controls"
-        aria-label={controlsVisible ? "Hide street view controls" : "Show street view controls"}
-      >
-        {controlsVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-      </Button>
+      {/* Controls Toggle - Only show in fullscreen mode */}
+      {isFullscreen && (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={toggleControls}
+          className="absolute top-4 left-4 z-20 bg-background/80 backdrop-blur-sm hover:bg-background/90 touch-manipulation min-h-[44px] min-w-[44px]"
+          data-testid="button-toggle-street-view-controls"
+          aria-label={controlsVisible ? "Hide street view controls" : "Show street view controls"}
+        >
+          {controlsVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </Button>
+      )}
 
       {/* Location Badge */}
       {isAvailable && (

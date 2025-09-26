@@ -862,13 +862,15 @@ const InteractiveMap = memo(function InteractiveMap({
         <MapEventHandler />
       </MapContainer>
       
-      {/* Street View Overlay */}
-      {preferences.showStreetView && streetViewPosition && (
+      {/* Street View Preview Panel */}
+      {preferences.showStreetView && streetViewPosition && !isStreetViewFullscreen && (
         <div className={cn(
-          "absolute inset-0 z-[500] bg-background",
-          isStreetViewFullscreen && "z-[1000]"
+          "absolute bottom-44 right-4 z-[500]",
+          "w-64 h-36 md:w-80 md:h-48 lg:w-96 lg:h-52",
+          "bg-background border border-border rounded-lg shadow-lg overflow-hidden",
+          "transition-all duration-300 ease-in-out"
         )}>
-          {/* Street View Component */}
+          {/* Street View Component in Preview Mode */}
           <StreetView
             lat={streetViewPosition.lat}
             lng={streetViewPosition.lng}
@@ -876,21 +878,84 @@ const InteractiveMap = memo(function InteractiveMap({
             onLocationChange={handleStreetViewLocationChange}
             onHeadingChange={handleStreetViewHeadingChange}
             isVisible={preferences.showStreetView}
-            isFullscreen={isStreetViewFullscreen}
+            isFullscreen={false}
+            onToggleFullscreen={handleStreetViewFullscreenToggle}
+            className="h-full w-full cursor-pointer"
+            onClick={handleStreetViewFullscreenToggle}
+          />
+          
+          {/* Preview Panel Controls */}
+          <div className="absolute top-2 right-2 z-10 flex gap-1">
+            {/* Expand Button */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStreetViewFullscreenToggle();
+              }}
+              className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              data-testid="button-expand-street-view"
+              title="Expand to fullscreen"
+            >
+              <Maximize className="w-3 h-3" />
+            </Button>
+            
+            {/* Close Button */}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleStreetView();
+              }}
+              className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              data-testid="button-close-street-view-preview"
+              title="Close street view"
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+          
+          {/* Preview Label */}
+          <div className="absolute bottom-2 left-2 z-10">
+            <Badge 
+              variant="secondary" 
+              className="text-xs bg-background/80 backdrop-blur-sm"
+            >
+              <Camera className="w-3 h-3 mr-1" />
+              Street View
+            </Badge>
+          </div>
+        </div>
+      )}
+
+      {/* Street View Fullscreen Overlay */}
+      {isStreetViewFullscreen && streetViewPosition && (
+        <div className="absolute inset-0 z-[1000] bg-background">
+          {/* Street View Component in Fullscreen Mode */}
+          <StreetView
+            lat={streetViewPosition.lat}
+            lng={streetViewPosition.lng}
+            heading={streetViewHeading}
+            onLocationChange={handleStreetViewLocationChange}
+            onHeadingChange={handleStreetViewHeadingChange}
+            isVisible={true}
+            isFullscreen={true}
             onToggleFullscreen={handleStreetViewFullscreenToggle}
             className="h-full w-full"
           />
           
-          {/* Street View Close Button */}
+          {/* Fullscreen Close Button */}
           <Button
             variant="secondary"
             size="sm"
-            onClick={handleToggleStreetView}
+            onClick={handleStreetViewFullscreenToggle}
             className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-            data-testid="button-close-street-view"
+            data-testid="button-exit-street-view-fullscreen"
           >
-            <X className="w-4 h-4 mr-2" />
-            Exit Street View
+            <Minimize className="w-4 h-4 mr-2" />
+            Exit Fullscreen
           </Button>
           
           {/* Map Location Sync Button */}
@@ -899,7 +964,7 @@ const InteractiveMap = memo(function InteractiveMap({
             size="sm"
             onClick={updateStreetViewFromMap}
             className="absolute top-4 right-4 z-10 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-            data-testid="button-sync-map-location"
+            data-testid="button-sync-map-location-fullscreen"
           >
             <MapPin className="w-4 h-4 mr-2" />
             Sync Location
