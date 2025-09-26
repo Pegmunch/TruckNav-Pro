@@ -39,12 +39,28 @@ body {
   overscroll-behavior: contain;
 }
 
-/* Automotive button sizing - minimum 44px touch targets */
+/* Enhanced Automotive button sizing - minimum 44px touch targets */
 .automotive-button {
   min-width: 44px;
   min-height: 44px;
   font-size: 16px;
   padding: 12px 16px;
+  /* Cross-platform compatibility */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Hardware acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  /* Consistent appearance across browsers */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
 }
 
 /* Automotive text sizing for dashboard visibility */
@@ -118,7 +134,7 @@ body {
   }
 }
 
-/* Scalable Map Controls - Mobile-First Design with clamp() */
+/* Enhanced Scalable Map Controls - Mobile-First Design with clamp() */
 .scalable-control-button {
   /* Scalable button sizing - 44px minimum for accessibility */
   min-width: clamp(44px, 12vw, 64px);
@@ -126,13 +142,48 @@ body {
   font-size: clamp(14px, 3.5vw, 18px);
   padding: clamp(8px, 2vw, 16px);
   border-radius: clamp(8px, 2vw, 12px);
-  /* Enhanced touch interaction */
+  /* Enhanced touch interaction for all devices */
   transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
   touch-action: manipulation;
   /* Prevent text selection on mobile */
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* Enhanced mobile browser support */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Hardware acceleration for smooth animations */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+  /* Improved focus handling for mobile */
+  outline: none;
+  border: 2px solid transparent;
+}
+
+/* Enhanced touch feedback for all mobile devices */
+.scalable-control-button:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsla(var(--primary), 0.3);
+}
+
+/* Android-specific touch optimizations */
+@media screen and (-webkit-min-device-pixel-ratio: 1) and (pointer: coarse) {
+  .scalable-control-button {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 12px;
+  }
+}
+
+/* iOS-specific touch optimizations */
+@supports (-webkit-touch-callout: none) {
+  .scalable-control-button {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+  }
 }
 
 .scalable-control-button:hover {
@@ -731,11 +782,60 @@ body {
   50% { opacity: 0.7; }
 }
 
-/* Chrome Street View Fix - Resolves Chrome-specific webkit transform rendering issue */
-/* This fixes invisible Street View controls in Chrome while maintaining Safari compatibility */
-html body div[style*="transform"] {
+/* Enhanced Cross-Browser Street View Fixes */
+/* Comprehensive webkit transform fixes for Chrome, Safari, Edge, and mobile browsers */
+
+/* Fix for Google Street View controls across all webkit browsers */
+html body div[style*="transform"],
+.gmnoprint div[style*="transform"],
+[class*="gm-"] div[style*="transform"] {
   -webkit-transform: scale(1) translateZ(0) !important;
+  -moz-transform: scale(1) translateZ(0) !important;
+  -ms-transform: scale(1) translateZ(0) !important;
   transform: scale(1) translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+  -webkit-perspective: 1000px !important;
+  perspective: 1000px !important;
+}
+
+/* Fix for Street View panorama container specifically */
+.gm-style,
+.gm-style div,
+.gm-style-pbc,
+[data-capture-injected="true"] {
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+}
+
+/* Android Chrome specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+  .android-chrome-fix {
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .ios-safari-fix {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* Mobile browser compatibility layer */
+@media (max-width: 768px) {
+  .gm-style,
+  .gm-style div,
+  [class*="street-view"] {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+  }
 }
 
 /* Enhanced Focus Indicators for Accessibility and Safety */

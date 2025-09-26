@@ -163,7 +163,9 @@ const StreetView = memo(function StreetView({
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
-      delete window.initStreetView;
+      if (window.initStreetView) {
+        window.initStreetView = (() => {}) as any;
+      }
     };
   }, [apiKey]);
 
@@ -386,20 +388,26 @@ const StreetView = memo(function StreetView({
     return null;
   }
 
-  // Get responsive sizing classes based on mode
+  // Enhanced responsive sizing classes with mobile optimizations
   const getContainerClasses = () => {
     let classes = "relative bg-background transition-all duration-300 ";
     
     if (mode === 'navigation' && isNavigating) {
-      // Navigation mode - larger display
-      classes += "w-full h-full md:w-[40%] md:h-full mobile:h-[50vh] mobile:w-full ";
+      // Navigation mode - optimized for mobile and desktop
+      classes += "w-full h-full md:w-[40%] md:h-full ";
+      classes += "mobile:h-[50vh] mobile:w-full ";
+      // Mobile-specific optimizations
+      classes += "touch-manipulation overflow-hidden ";
     } else if (mode === 'preview') {
-      // Preview mode - standard sizing
-      classes += "h-full w-full ";
+      // Preview mode - enhanced for cross-platform
+      classes += "h-full w-full touch-manipulation overflow-hidden ";
     } else {
       // Off mode - hidden
       classes += "hidden ";
     }
+    
+    // Add mobile browser compatibility classes
+    classes += "android-chrome-fix ios-safari-fix ";
     
     return cn(classes, className);
   };
@@ -410,11 +418,18 @@ const StreetView = memo(function StreetView({
       onClick={!isFullscreen && onClick ? onClick : undefined}
       style={{ cursor: !isFullscreen && onClick ? 'pointer' : 'default' }}
     >
-      {/* Street View Container */}
+      {/* Street View Container - Enhanced for mobile browsers */}
       <div 
         ref={streetViewRef}
-        className="h-full w-full rounded-lg overflow-hidden"
-        style={{ minHeight: isFullscreen ? '300px' : '150px' }}
+        className="h-full w-full rounded-lg overflow-hidden android-chrome-fix ios-safari-fix"
+        style={{ 
+          minHeight: isFullscreen ? '300px' : '150px',
+          // Enhanced webkit compatibility
+          WebkitTransform: 'translateZ(0)',
+          transform: 'translateZ(0)',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
+        }}
       />
 
       {/* Loading Overlay */}
@@ -555,7 +570,7 @@ const StreetView = memo(function StreetView({
               variant="ghost"
               size="sm"
               onClick={handleRotateLeft}
-              className="rounded-none border-b border-border/50 touch-manipulation min-h-[44px] min-w-[44px]"
+              className="rounded-none border-b border-border/50 automotive-button scalable-control-button min-h-[44px] min-w-[44px]"
               data-testid="button-rotate-left"
               aria-label="Rotate street view left"
             >
@@ -565,7 +580,7 @@ const StreetView = memo(function StreetView({
               variant="ghost"
               size="sm"
               onClick={handleRotateRight}
-              className="rounded-none touch-manipulation min-h-[44px] min-w-[44px]"
+              className="rounded-none automotive-button scalable-control-button min-h-[44px] min-w-[44px]"
               data-testid="button-rotate-right"
               aria-label="Rotate street view right"
             >
@@ -579,7 +594,7 @@ const StreetView = memo(function StreetView({
               variant="ghost"
               size="sm"
               onClick={handleZoomIn}
-              className="rounded-none border-b border-border/50 touch-manipulation min-h-[44px] min-w-[44px]"
+              className="rounded-none border-b border-border/50 automotive-button scalable-control-button min-h-[44px] min-w-[44px]"
               data-testid="button-street-view-zoom-in"
               aria-label="Zoom in street view"
             >
@@ -589,7 +604,7 @@ const StreetView = memo(function StreetView({
               variant="ghost"
               size="sm"
               onClick={handleZoomOut}
-              className="rounded-none touch-manipulation min-h-[44px] min-w-[44px]"
+              className="rounded-none automotive-button scalable-control-button min-h-[44px] min-w-[44px]"
               data-testid="button-street-view-zoom-out"
               aria-label="Zoom out street view"
             >

@@ -213,12 +213,11 @@ const InteractiveMap = memo(function InteractiveMap({
     setCurrentManeuver(mockNavigationData);
 
     // Auto-activate navigation mode when approaching decision points
+    const importantManeuvers = ['left', 'right', 'uturn'] as const;
     const shouldActivateNavigationMode = 
       distanceToNextTurn <= 500 && // Within 500m of next turn
       preferences.streetViewMode !== 'off' && // Street view not disabled
-      (mockNavigationData.direction === 'left' || 
-       mockNavigationData.direction === 'right' || 
-       mockNavigationData.direction === 'uturn'); // Important maneuvers only
+      importantManeuvers.includes(mockNavigationData.direction as any); // Important maneuvers only
 
     if (shouldActivateNavigationMode && preferences.streetViewMode !== 'navigation') {
       const newPreferences = { ...preferences, streetViewMode: 'navigation' as const, showStreetView: true };
@@ -351,6 +350,7 @@ const InteractiveMap = memo(function InteractiveMap({
       { enableHighAccuracy: true, timeout: 5000 }
     );
   };
+
 
   // Smooth vehicle position tracking with throttled updates
   const updateVehiclePosition = useCallback((lat: number, lng: number) => {
@@ -592,7 +592,7 @@ const InteractiveMap = memo(function InteractiveMap({
       ...preferences, 
       showStreetView: newShowStreetView,
       // When toggling on, start in preview mode unless navigating
-      streetViewMode: newShowStreetView ? (isNavigating ? 'navigation' : 'preview') : 'off'
+      streetViewMode: newShowStreetView ? (isNavigating ? 'navigation' as const : 'preview' as const) : 'off' as const
     };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
@@ -981,7 +981,7 @@ const InteractiveMap = memo(function InteractiveMap({
             onClick={handleStreetViewFullscreenToggle}
             mode={preferences.streetViewMode}
             isNavigating={isNavigating}
-            currentRoute={currentRoute}
+            currentRoute={currentRoute || undefined}
             nextManeuver={currentManeuver}
             onModeChange={handleStreetViewModeChange}
           />
@@ -1048,7 +1048,7 @@ const InteractiveMap = memo(function InteractiveMap({
             className="h-full w-full"
             mode={preferences.streetViewMode}
             isNavigating={isNavigating}
-            currentRoute={currentRoute}
+            currentRoute={currentRoute || undefined}
             nextManeuver={currentManeuver}
             onModeChange={handleStreetViewModeChange}
           />
@@ -1181,20 +1181,21 @@ const InteractiveMap = memo(function InteractiveMap({
         "absolute right-4 bottom-32 z-[1100]", // Control panel z-index
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
-        "opacity-100 translate-x-0",
+        controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
         "w-16 h-28" // Fixed size for perfect oval shape
       )}>
         {/* Up Arrow */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             handleMoveUp();
           }}
           data-testid="button-move-up"
+          aria-label="Move map up"
         >
           <ChevronUp className="w-5 h-5 pointer-events-none" />
         </Button>
@@ -1204,26 +1205,28 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button
             variant="ghost"
             size="icon"
-            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleMoveLeft();
             }}
             data-testid="button-move-left"
+            aria-label="Move map left"
           >
             <ChevronLeft className="w-4 h-4 pointer-events-none" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+            className="h-full w-8 rounded-none hover:bg-primary/10 transition-colors automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleMoveRight();
             }}
             data-testid="button-move-right"
+            aria-label="Move map right"
           >
             <ChevronRight className="w-4 h-4 pointer-events-none" />
           </Button>
@@ -1233,15 +1236,81 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-7 w-full rounded-none hover:bg-primary/10 transition-colors automotive-button scalable-control-button min-h-[44px] min-w-[44px] flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             handleMoveDown();
           }}
           data-testid="button-move-down"
+          aria-label="Move map down"
         >
           <ChevronDown className="w-5 h-5 pointer-events-none" />
+        </Button>
+      </div>
+
+      {/* Zoom Controls - Enhanced for mobile */}
+      <div className={cn(
+        "absolute right-4 bottom-72 z-[1100]",
+        "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
+        "flex flex-col transition-all duration-300 pointer-events-auto",
+        controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
+        "w-16 h-20" // Compact size for zoom controls
+      )}>
+        {/* Zoom In */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto min-h-[44px] min-w-[44px]"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleZoomIn();
+          }}
+          data-testid="button-zoom-in"
+          aria-label="Zoom in"
+        >
+          <Plus className="w-5 h-5 pointer-events-none" />
+        </Button>
+        
+        {/* Zoom Out */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto min-h-[44px] min-w-[44px]"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleZoomOut();
+          }}
+          data-testid="button-zoom-out"
+          aria-label="Zoom out"
+        >
+          <Minus className="w-5 h-5 pointer-events-none" />
+        </Button>
+      </div>
+
+      {/* Location Centering Button */}
+      <div className={cn(
+        "absolute right-4 bottom-96 z-[1100]",
+        "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
+        "transition-all duration-300 pointer-events-auto",
+        controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
+        "w-16 h-12" // Single button container
+      )}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto min-h-[44px] min-w-[44px]"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleCurrentLocation();
+          }}
+          data-testid="button-center-location"
+          aria-label="Center on current location"
+        >
+          <Crosshair className="w-5 h-5 pointer-events-none" />
         </Button>
       </div>
       
