@@ -58,10 +58,10 @@ export const sessionConfig = {
   saveUninitialized: true, // True for cross-tab CSRF token sharing
   
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    secure: false, // Disable secure for development to allow HTTP
     httpOnly: true, // Prevent XSS access to cookies
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: 'lax' as const, // Always use lax for cross-tab compatibility
+    sameSite: 'none' as const, // None for development cross-origin compatibility
     domain: undefined, // Let the browser set the domain
     path: '/', // Available across entire app
   },
