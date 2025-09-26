@@ -1,0 +1,507 @@
+import { memo, useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  RotateCcw, 
+  RotateCw, 
+  Plus, 
+  Minus, 
+  Navigation,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  MapPin,
+  Loader2,
+  X,
+  Maximize2,
+  Minimize2
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Google Street View API configuration
+declare global {
+  interface Window {
+    google: any;
+    initStreetView: () => void;
+  }
+}
+
+interface StreetViewProps {
+  lat: number;
+  lng: number;
+  heading?: number;
+  pitch?: number;
+  zoom?: number;
+  onLocationChange?: (location: { lat: number; lng: number }) => void;
+  onHeadingChange?: (heading: number) => void;
+  className?: string;
+  isVisible?: boolean;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+}
+
+interface StreetViewPreferences {
+  heading: number;
+  pitch: number;
+  zoom: number;
+  showControls: boolean;
+}
+
+const STREET_VIEW_PREFERENCES_KEY = 'trucknav_streetview_preferences';
+
+const defaultPreferences: StreetViewPreferences = {
+  heading: 0,
+  pitch: 0,
+  zoom: 1,
+  showControls: true
+};
+
+// Load street view preferences from localStorage
+function loadStreetViewPreferences(): StreetViewPreferences {
+  try {
+    const stored = localStorage.getItem(STREET_VIEW_PREFERENCES_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...defaultPreferences, ...parsed };
+    }
+  } catch (error) {
+    console.warn('Failed to load street view preferences:', error);
+  }
+  return defaultPreferences;
+}
+
+// Save street view preferences to localStorage
+function saveStreetViewPreferences(preferences: StreetViewPreferences): void {
+  try {
+    localStorage.setItem(STREET_VIEW_PREFERENCES_KEY, JSON.stringify(preferences));
+  } catch (error) {
+    console.warn('Failed to save street view preferences:', error);
+  }
+}
+
+const StreetView = memo(function StreetView({
+  lat,
+  lng,
+  heading = 0,
+  pitch = 0,
+  zoom = 1,
+  onLocationChange,
+  onHeadingChange,
+  className,
+  isVisible = true,
+  isFullscreen = false,
+  onToggleFullscreen
+}: StreetViewProps) {
+  const streetViewRef = useRef<HTMLDivElement>(null);
+  const panoramaRef = useRef<any>(null);
+  const streetViewServiceRef = useRef<any>(null);
+  
+  const [preferences, setPreferences] = useState<StreetViewPreferences>(loadStreetViewPreferences);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [apiLoaded, setApiLoaded] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(preferences.showControls);
+  
+  // Check for Google Street View API key
+  const apiKey = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY;
+  
+  // Load Google Street View API
+  useEffect(() => {
+    if (window.google && window.google.maps) {
+      setApiLoaded(true);
+      return;
+    }
+
+    if (!apiKey) {
+      setError('Google Street View API key is required. Please set VITE_GOOGLE_STREET_VIEW_API_KEY environment variable.');
+      return;
+    }
+
+    // Create callback function for API loading
+    window.initStreetView = () => {
+      setApiLoaded(true);
+    };
+
+    // Load Google Maps API with Street View
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=streetview&callback=initStreetView`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      setError('Failed to load Google Street View API. Please check your API key and network connection.');
+    };
+    
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+      delete window.initStreetView;
+    };
+  }, [apiKey]);
+
+  // Initialize Street View when API is loaded and component is visible
+  useEffect(() => {
+    if (!apiLoaded || !streetViewRef.current || !isVisible) {
+      return;
+    }
+
+    initializeStreetView();
+  }, [apiLoaded, lat, lng, isVisible]);
+
+  // Update street view position when coordinates change
+  useEffect(() => {
+    if (panoramaRef.current && isVisible && apiLoaded) {
+      updateStreetViewPosition();
+    }
+  }, [lat, lng, isVisible, apiLoaded]);
+
+  const initializeStreetView = useCallback(() => {
+    if (!streetViewRef.current || !window.google) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Initialize Street View service for location checking
+      streetViewServiceRef.current = new window.google.maps.StreetViewService();
+      
+      // Check if Street View is available at this location
+      checkStreetViewAvailability();
+      
+    } catch (err) {
+      console.error('Error initializing Street View:', err);
+      setError('Failed to initialize Street View');
+      setIsLoading(false);
+    }
+  }, [lat, lng]);
+
+  const checkStreetViewAvailability = useCallback(() => {
+    if (!streetViewServiceRef.current) return;
+
+    const position = new window.google.maps.LatLng(lat, lng);
+
+    streetViewServiceRef.current.getPanorama({
+      location: position,
+      radius: 50 // Search within 50 meters
+    }, (data: any, status: any) => {
+      if (status === 'OK' && data) {
+        setIsAvailable(true);
+        createPanorama(data.location.latLng);
+      } else {
+        setIsAvailable(false);
+        setError('Street View is not available for this location');
+      }
+      setIsLoading(false);
+    });
+  }, [lat, lng]);
+
+  const createPanorama = useCallback((position: any) => {
+    if (!streetViewRef.current || !window.google) return;
+
+    try {
+      const panoramaOptions = {
+        position: position,
+        pov: {
+          heading: preferences.heading + heading,
+          pitch: preferences.pitch + pitch
+        },
+        zoom: preferences.zoom + zoom,
+        // Professional truck navigation styling
+        addressControl: false,
+        showRoadLabels: true,
+        zoomControl: false,
+        panControl: false,
+        motionTracking: true,
+        motionTrackingControl: false,
+        fullscreenControl: false,
+        imageDateControl: false,
+        linksControl: true
+      };
+
+      panoramaRef.current = new window.google.maps.StreetViewPanorama(
+        streetViewRef.current,
+        panoramaOptions
+      );
+
+      // Add event listeners for navigation feedback
+      panoramaRef.current.addListener('pov_changed', () => {
+        const pov = panoramaRef.current.getPov();
+        const newPreferences = { ...preferences, heading: pov.heading, pitch: pov.pitch };
+        setPreferences(newPreferences);
+        saveStreetViewPreferences(newPreferences);
+        onHeadingChange?.(pov.heading);
+      });
+
+      panoramaRef.current.addListener('position_changed', () => {
+        const position = panoramaRef.current.getPosition();
+        if (position) {
+          onLocationChange?.({
+            lat: position.lat(),
+            lng: position.lng()
+          });
+        }
+      });
+
+      panoramaRef.current.addListener('zoom_changed', () => {
+        const newZoom = panoramaRef.current.getZoom();
+        const newPreferences = { ...preferences, zoom: newZoom };
+        setPreferences(newPreferences);
+        saveStreetViewPreferences(newPreferences);
+      });
+
+    } catch (err) {
+      console.error('Error creating panorama:', err);
+      setError('Failed to create Street View panorama');
+    }
+  }, [preferences, heading, pitch, zoom, onLocationChange, onHeadingChange]);
+
+  const updateStreetViewPosition = useCallback(() => {
+    if (!panoramaRef.current || !window.google) return;
+
+    setIsLoading(true);
+    const newPosition = new window.google.maps.LatLng(lat, lng);
+    
+    // Check if Street View is available at new location
+    streetViewServiceRef.current.getPanorama({
+      location: newPosition,
+      radius: 50
+    }, (data: any, status: any) => {
+      if (status === 'OK' && data) {
+        panoramaRef.current.setPosition(data.location.latLng);
+        setIsAvailable(true);
+        setError(null);
+      } else {
+        setIsAvailable(false);
+        setError('Street View not available at this location');
+      }
+      setIsLoading(false);
+    });
+  }, [lat, lng]);
+
+  // Control handlers
+  const handleRotateLeft = () => {
+    if (!panoramaRef.current) return;
+    const pov = panoramaRef.current.getPov();
+    panoramaRef.current.setPov({ ...pov, heading: pov.heading - 90 });
+  };
+
+  const handleRotateRight = () => {
+    if (!panoramaRef.current) return;
+    const pov = panoramaRef.current.getPov();
+    panoramaRef.current.setPov({ ...pov, heading: pov.heading + 90 });
+  };
+
+  const handleZoomIn = () => {
+    if (!panoramaRef.current) return;
+    const currentZoom = panoramaRef.current.getZoom();
+    panoramaRef.current.setZoom(Math.min(currentZoom + 1, 5));
+  };
+
+  const handleZoomOut = () => {
+    if (!panoramaRef.current) return;
+    const currentZoom = panoramaRef.current.getZoom();
+    panoramaRef.current.setZoom(Math.max(currentZoom - 1, 0));
+  };
+
+  const handleResetView = () => {
+    if (!panoramaRef.current) return;
+    panoramaRef.current.setPov({
+      heading: 0,
+      pitch: 0
+    });
+    panoramaRef.current.setZoom(1);
+  };
+
+  const toggleControls = () => {
+    const newShowControls = !controlsVisible;
+    setControlsVisible(newShowControls);
+    const newPreferences = { ...preferences, showControls: newShowControls };
+    setPreferences(newPreferences);
+    saveStreetViewPreferences(newPreferences);
+  };
+
+  if (!apiKey) {
+    return (
+      <Card className="h-full flex items-center justify-center bg-muted">
+        <CardContent className="text-center space-y-4">
+          <AlertCircle className="w-12 h-12 mx-auto text-yellow-500" />
+          <div>
+            <h3 className="text-lg font-semibold">API Key Required</h3>
+            <p className="text-muted-foreground">
+              Google Street View API key is needed to display street view imagery.
+              Please configure VITE_GOOGLE_STREET_VIEW_API_KEY.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isVisible) {
+    return null;
+  }
+
+  return (
+    <div className={cn("relative h-full w-full bg-background", className)}>
+      {/* Street View Container */}
+      <div 
+        ref={streetViewRef}
+        className="h-full w-full rounded-lg overflow-hidden"
+        style={{ minHeight: '300px' }}
+      />
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="text-center space-y-2">
+            <Loader2 className="w-6 h-6 mx-auto animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading Street View...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <div className="absolute inset-0 bg-muted flex items-center justify-center z-10">
+          <Card className="max-w-sm mx-4">
+            <CardContent className="text-center space-y-4 pt-6">
+              <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-semibold">Street View Unavailable</h3>
+                <p className="text-muted-foreground text-sm">{error}</p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setError(null);
+                  checkStreetViewAvailability();
+                }}
+                data-testid="button-retry-street-view"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Street View Controls - Mobile responsive positioning */}
+      {apiLoaded && isAvailable && controlsVisible && (
+        <div className="absolute top-4 right-4 z-20 space-y-2 md:space-y-2 sm:space-y-1">
+          {/* Fullscreen Toggle - Mobile responsive */}
+          {onToggleFullscreen && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onToggleFullscreen}
+              className="bg-background/80 backdrop-blur-sm hover:bg-background/90 touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-street-view-fullscreen"
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </Button>
+          )}
+
+          {/* Rotation Controls - Mobile responsive */}
+          <div className="bg-background/80 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRotateLeft}
+              className="rounded-none border-b border-border/50 touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-rotate-left"
+              aria-label="Rotate street view left"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRotateRight}
+              className="rounded-none touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-rotate-right"
+              aria-label="Rotate street view right"
+            >
+              <RotateCw className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Zoom Controls - Mobile responsive */}
+          <div className="bg-background/80 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleZoomIn}
+              className="rounded-none border-b border-border/50 touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-street-view-zoom-in"
+              aria-label="Zoom in street view"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleZoomOut}
+              className="rounded-none touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-street-view-zoom-out"
+              aria-label="Zoom out street view"
+            >
+              <Minus className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Reset View - Mobile responsive */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleResetView}
+            className="bg-background/80 backdrop-blur-sm hover:bg-background/90 touch-manipulation min-h-[44px] min-w-[44px]"
+            data-testid="button-reset-street-view"
+            aria-label="Reset street view to default position"
+          >
+            <Navigation className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Controls Toggle - Mobile responsive */}
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={toggleControls}
+        className="absolute top-4 left-4 z-20 bg-background/80 backdrop-blur-sm hover:bg-background/90 touch-manipulation min-h-[44px] min-w-[44px]"
+        data-testid="button-toggle-street-view-controls"
+        aria-label={controlsVisible ? "Hide street view controls" : "Show street view controls"}
+      >
+        {controlsVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </Button>
+
+      {/* Location Badge */}
+      {isAvailable && (
+        <Badge 
+          variant="secondary" 
+          className="absolute bottom-4 left-4 z-20 bg-background/80 backdrop-blur-sm"
+        >
+          <MapPin className="w-3 h-3 mr-1" />
+          {lat.toFixed(4)}, {lng.toFixed(4)}
+        </Badge>
+      )}
+
+      {/* Street View Attribution (Google requirement) */}
+      {apiLoaded && isAvailable && (
+        <div className="absolute bottom-4 right-4 z-20">
+          <Badge variant="outline" className="text-xs bg-background/80 backdrop-blur-sm">
+            Google Street View
+          </Badge>
+        </div>
+      )}
+    </div>
+  );
+});
+
+export default StreetView;

@@ -18,6 +18,7 @@ import {
   Activity,
   Eye,
   EyeOff,
+  Camera,
   Route as RouteIcon,
   Clock,
   Maximize,
@@ -39,6 +40,7 @@ import { cn } from "@/lib/utils";
 import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import SpeedDisplay from "@/components/map/speed-display";
+import StreetView from "@/components/map/street-view";
 
 interface InteractiveMapProps {
   currentRoute: Route | null;
@@ -66,10 +68,11 @@ interface InteractiveMapProps {
 const MAP_PREFERENCES_KEY = 'trucknav_map_preferences';
 
 interface MapPreferences {
-  mapViewMode: 'roads' | 'satellite';
+  mapViewMode: 'roads' | 'satellite' | 'street-view';
   showTrafficLayer: boolean;
   showIncidents: boolean;
   showTruckRoutes: boolean;
+  showStreetView: boolean;
   zoomLevel: number;
   // Extended with country-specific provider info
   provider?: string;
@@ -82,6 +85,7 @@ const defaultMapPreferences: MapPreferences = {
   showTrafficLayer: true,
   showIncidents: true,
   showTruckRoutes: true,
+  showStreetView: false,
   zoomLevel: 10,
   provider: 'openstreetmap',
   tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -150,6 +154,11 @@ const InteractiveMap = memo(function InteractiveMap({
   // Speed tracking state for live speed limit data
   const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(113); // Test value - displays as 70 mph
   
+  // Street View state management
+  const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [streetViewHeading, setStreetViewHeading] = useState(0);
+  const [isStreetViewFullscreen, setIsStreetViewFullscreen] = useState(false);
+  
   
   // Update preferences when country changes
   useEffect(() => {
@@ -162,6 +171,14 @@ const InteractiveMap = memo(function InteractiveMap({
     setPreferences(updatedPreferences);
     saveMapPreferences(updatedPreferences);
   }, [mapProvider.provider, mapProvider.tiles, mapProvider.attribution]);
+  
+  // Initialize street view position when component mounts or location changes
+  useEffect(() => {
+    if (preferences.showStreetView && !streetViewPosition && mapRef.current) {
+      const center = mapRef.current.getCenter();
+      setStreetViewPosition({ lat: center.lat, lng: center.lng });
+    }
+  }, [preferences.showStreetView, streetViewPosition]);
   
   // Auto-hide functionality state
   const [controlsVisible, setControlsVisible] = useState(true); // Start visible so buttons are immediately available
@@ -467,7 +484,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
   const handleMapViewModeChange = (mode: 'roads' | 'satellite') => {
     console.log('🔄 Switching map view mode from', preferences.mapViewMode, 'to', mode);
-    const newPreferences = { ...preferences, mapViewMode: mode };
+    const newPreferences = { ...preferences, mapViewMode: mode, showStreetView: false };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
     resetAutoHideTimer();
@@ -499,6 +516,51 @@ const InteractiveMap = memo(function InteractiveMap({
     saveMapPreferences(newPreferences);
     resetAutoHideTimer();
   };
+
+  const handleToggleStreetView = () => {
+    const newShowStreetView = !preferences.showStreetView;
+    const newMapViewMode = newShowStreetView ? 'street-view' : 'roads';
+    const newPreferences = { 
+      ...preferences, 
+      showStreetView: newShowStreetView,
+      mapViewMode: newMapViewMode
+    };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
+    
+    // Set street view position to current map center if enabling
+    if (newShowStreetView && mapRef.current) {
+      const center = mapRef.current.getCenter();
+      setStreetViewPosition({ lat: center.lat, lng: center.lng });
+    }
+    
+    resetAutoHideTimer();
+  };
+
+  // Handle street view position synchronization
+  const handleStreetViewLocationChange = useCallback((location: { lat: number; lng: number }) => {
+    setStreetViewPosition(location);
+    if (mapRef.current) {
+      mapRef.current.panTo([location.lat, location.lng]);
+    }
+  }, []);
+
+  const handleStreetViewHeadingChange = useCallback((heading: number) => {
+    setStreetViewHeading(heading);
+  }, []);
+
+  const handleStreetViewFullscreenToggle = () => {
+    setIsStreetViewFullscreen(!isStreetViewFullscreen);
+    resetAutoHideTimer();
+  };
+
+  // Update street view position when map center changes
+  const updateStreetViewFromMap = useCallback(() => {
+    if (preferences.showStreetView && mapRef.current) {
+      const center = mapRef.current.getCenter();
+      setStreetViewPosition({ lat: center.lat, lng: center.lng });
+    }
+  }, [preferences.showStreetView]);
 
   const handleFacilityDetails = (facility: any) => {
     if (!facility) return;
@@ -710,6 +772,7 @@ const InteractiveMap = memo(function InteractiveMap({
         (isFullscreen || autoExpanded) && "fixed inset-0 z-50 bg-background", // Enhanced automotive fullscreen
         autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
         preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
+        preferences.showStreetView && "opacity-50", // Dim map when street view is active
         "cursor-pointer" // Indicate interactive map
       )}
       onClick={handleMapClick}
@@ -799,6 +862,51 @@ const InteractiveMap = memo(function InteractiveMap({
         <MapEventHandler />
       </MapContainer>
       
+      {/* Street View Overlay */}
+      {preferences.showStreetView && streetViewPosition && (
+        <div className={cn(
+          "absolute inset-0 z-[500] bg-background",
+          isStreetViewFullscreen && "z-[1000]"
+        )}>
+          {/* Street View Component */}
+          <StreetView
+            lat={streetViewPosition.lat}
+            lng={streetViewPosition.lng}
+            heading={streetViewHeading}
+            onLocationChange={handleStreetViewLocationChange}
+            onHeadingChange={handleStreetViewHeadingChange}
+            isVisible={preferences.showStreetView}
+            isFullscreen={isStreetViewFullscreen}
+            onToggleFullscreen={handleStreetViewFullscreenToggle}
+            className="h-full w-full"
+          />
+          
+          {/* Street View Close Button */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleToggleStreetView}
+            className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+            data-testid="button-close-street-view"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Exit Street View
+          </Button>
+          
+          {/* Map Location Sync Button */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={updateStreetViewFromMap}
+            className="absolute top-4 right-4 z-10 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+            data-testid="button-sync-map-location"
+          >
+            <MapPin className="w-4 h-4 mr-2" />
+            Sync Location
+          </Button>
+        </div>
+      )}
+      
       {/* Compact Layer Controls - Positioned away from toggle button */}
       {controlsVisible && (
         <div 
@@ -876,6 +984,18 @@ const InteractiveMap = memo(function InteractiveMap({
             data-testid="button-layer-incidents"
           >
             Incidents
+          </Button>
+          
+          {/* Street View */}
+          <Button 
+            variant={preferences.showStreetView ? "default" : "ghost"}
+            size="sm" 
+            className="h-6 px-2 text-xs rounded-full"
+            onClick={handleToggleStreetView}
+            data-testid="button-street-view"
+          >
+            <Camera className="w-3 h-3 mr-1" />
+            Street
           </Button>
       </div>
       )}
