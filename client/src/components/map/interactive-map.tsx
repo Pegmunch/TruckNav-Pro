@@ -73,6 +73,7 @@ interface MapPreferences {
   showIncidents: boolean;
   showTruckRoutes: boolean;
   showStreetView: boolean;
+  streetViewMode: 'preview' | 'navigation' | 'off';
   zoomLevel: number;
   // Extended with country-specific provider info
   provider?: string;
@@ -86,6 +87,7 @@ const defaultMapPreferences: MapPreferences = {
   showIncidents: true,
   showTruckRoutes: true,
   showStreetView: false,
+  streetViewMode: 'off',
   zoomLevel: 10,
   provider: 'openstreetmap',
   tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -101,6 +103,10 @@ function loadMapPreferences(): MapPreferences {
       // Sanitize legacy 'street-view' mapViewMode values
       if (parsed.mapViewMode === 'street-view') {
         parsed.mapViewMode = 'roads';
+      }
+      // Ensure streetViewMode is valid
+      if (!['preview', 'navigation', 'off'].includes(parsed.streetViewMode)) {
+        parsed.streetViewMode = 'off';
       }
       return { ...defaultMapPreferences, ...parsed };
     }
@@ -163,6 +169,11 @@ const InteractiveMap = memo(function InteractiveMap({
   const [streetViewHeading, setStreetViewHeading] = useState(0);
   const [isStreetViewFullscreen, setIsStreetViewFullscreen] = useState(false);
   
+  // Navigation mode state for auto-activation
+  const [currentManeuver, setCurrentManeuver] = useState<any>(null);
+  const [distanceToNextTurn, setDistanceToNextTurn] = useState<number>(1000); // meters
+  const [isNavigating, setIsNavigating] = useState(false);
+  
   
   // Update preferences when country changes
   useEffect(() => {
@@ -183,6 +194,51 @@ const InteractiveMap = memo(function InteractiveMap({
       setStreetViewPosition({ lat: center.lat, lng: center.lng });
     }
   }, [preferences.showStreetView, streetViewPosition]);
+
+  // Smart auto-activation logic for navigation mode
+  useEffect(() => {
+    if (!isNavigating || !currentRoute) {
+      return;
+    }
+
+    // Simulate navigation progress and distance calculation
+    // In a real app, this would come from GPS and route progress tracking
+    const mockNavigationData = {
+      currentInstruction: "At the roundabout, take the 2nd exit onto M1",
+      direction: 'straight' as const,
+      distance: distanceToNextTurn,
+      targetHeading: 45
+    };
+
+    setCurrentManeuver(mockNavigationData);
+
+    // Auto-activate navigation mode when approaching decision points
+    const shouldActivateNavigationMode = 
+      distanceToNextTurn <= 500 && // Within 500m of next turn
+      preferences.streetViewMode !== 'off' && // Street view not disabled
+      (mockNavigationData.direction === 'left' || 
+       mockNavigationData.direction === 'right' || 
+       mockNavigationData.direction === 'uturn'); // Important maneuvers only
+
+    if (shouldActivateNavigationMode && preferences.streetViewMode !== 'navigation') {
+      const newPreferences = { ...preferences, streetViewMode: 'navigation' as const, showStreetView: true };
+      setPreferences(newPreferences);
+      saveMapPreferences(newPreferences);
+    }
+
+    // Simulate distance decreasing over time (for demo purposes)
+    const timer = setInterval(() => {
+      setDistanceToNextTurn(prev => Math.max(0, prev - 10));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isNavigating, currentRoute, distanceToNextTurn, preferences.streetViewMode]);
+
+  // Sync with actual navigation state from route data
+  useEffect(() => {
+    // This would typically come from useWindowSync or navigation state management
+    setIsNavigating(!!currentRoute && preferences.streetViewMode !== 'off');
+  }, [currentRoute, preferences.streetViewMode]);
   
   // Auto-hide functionality state
   const [controlsVisible, setControlsVisible] = useState(true); // Start visible so buttons are immediately available
@@ -534,8 +590,9 @@ const InteractiveMap = memo(function InteractiveMap({
     // Keep mapViewMode independent - don't change it when toggling street view
     const newPreferences = { 
       ...preferences, 
-      showStreetView: newShowStreetView
-      // mapViewMode remains unchanged (roads/satellite only)
+      showStreetView: newShowStreetView,
+      // When toggling on, start in preview mode unless navigating
+      streetViewMode: newShowStreetView ? (isNavigating ? 'navigation' : 'preview') : 'off'
     };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
@@ -547,6 +604,19 @@ const InteractiveMap = memo(function InteractiveMap({
     }
     
     // Mark that user has interacted
+    setHasUserInteracted(true);
+    resetAutoHideTimer();
+  };
+
+  // Handle street view mode changes
+  const handleStreetViewModeChange = (mode: 'preview' | 'navigation' | 'off') => {
+    const newPreferences = { 
+      ...preferences, 
+      streetViewMode: mode,
+      showStreetView: mode !== 'off'
+    };
+    setPreferences(newPreferences);
+    saveMapPreferences(newPreferences);
     setHasUserInteracted(true);
     resetAutoHideTimer();
   };
@@ -880,10 +950,20 @@ const InteractiveMap = memo(function InteractiveMap({
       {preferences.showStreetView && streetViewPosition && !isStreetViewFullscreen && (
         <div 
           className={cn(
-            "absolute bottom-48 right-4 z-[500]",
-            "w-64 h-36 md:w-80 md:h-48 lg:w-96 lg:h-52",
+            "absolute z-[500] transition-all duration-300 ease-in-out",
             "bg-background border border-border rounded-lg shadow-lg overflow-hidden",
-            "transition-all duration-300 ease-in-out"
+            // Responsive sizing based on mode
+            preferences.streetViewMode === 'navigation' && isNavigating ? [
+              // Navigation mode - larger display for better visibility during driving
+              "top-4 right-4 bottom-32", // Larger vertical space, avoiding bottom controls
+              "w-[40%] max-w-lg min-w-[320px]", // 40% width on desktop, constrained
+              "md:w-[40%] sm:w-[50%] mobile:w-[95%]", // Responsive width adjustments
+              "mobile:h-[50vh] mobile:top-4 mobile:right-2 mobile:left-2 mobile:bottom-auto" // Mobile: 50% height, nearly full width
+            ] : [
+              // Preview mode - smaller, traditional positioning
+              "bottom-48 right-4",
+              "w-64 h-36 md:w-80 md:h-48 lg:w-96 lg:h-52"
+            ]
           )}
           data-testid="container-street-view-preview"
         >
@@ -899,6 +979,11 @@ const InteractiveMap = memo(function InteractiveMap({
             onToggleFullscreen={handleStreetViewFullscreenToggle}
             className="h-full w-full cursor-pointer"
             onClick={handleStreetViewFullscreenToggle}
+            mode={preferences.streetViewMode}
+            isNavigating={isNavigating}
+            currentRoute={currentRoute}
+            nextManeuver={currentManeuver}
+            onModeChange={handleStreetViewModeChange}
           />
           
           {/* Preview Panel Controls */}
@@ -961,6 +1046,11 @@ const InteractiveMap = memo(function InteractiveMap({
             isFullscreen={true}
             onToggleFullscreen={handleStreetViewFullscreenToggle}
             className="h-full w-full"
+            mode={preferences.streetViewMode}
+            isNavigating={isNavigating}
+            currentRoute={currentRoute}
+            nextManeuver={currentManeuver}
+            onModeChange={handleStreetViewModeChange}
           />
           
           {/* Fullscreen Close Button */}

@@ -18,6 +18,7 @@ import {
   Minimize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type Route } from "@shared/schema";
 
 // Google Street View API configuration
 declare global {
@@ -40,6 +41,17 @@ interface StreetViewProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   onClick?: () => void;
+  // Navigation mode props
+  mode?: 'preview' | 'navigation' | 'off';
+  isNavigating?: boolean;
+  currentRoute?: Route;
+  nextManeuver?: {
+    direction: 'left' | 'right' | 'straight' | 'uturn';
+    distance: number;
+    instruction: string;
+    targetHeading?: number;
+  };
+  onModeChange?: (mode: 'preview' | 'navigation' | 'off') => void;
 }
 
 interface StreetViewPreferences {
@@ -93,7 +105,12 @@ const StreetView = memo(function StreetView({
   isVisible = true,
   isFullscreen = false,
   onToggleFullscreen,
-  onClick
+  onClick,
+  mode = 'preview',
+  isNavigating = false,
+  currentRoute,
+  nextManeuver,
+  onModeChange
 }: StreetViewProps) {
   const streetViewRef = useRef<HTMLDivElement>(null);
   const panoramaRef = useRef<any>(null);
@@ -105,6 +122,10 @@ const StreetView = memo(function StreetView({
   const [error, setError] = useState<string | null>(null);
   const [apiLoaded, setApiLoaded] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(preferences.showControls);
+  
+  // Navigation mode state
+  const [autoOrientEnabled, setAutoOrientEnabled] = useState(mode === 'navigation');
+  const [navigationOverlayVisible, setNavigationOverlayVisible] = useState(mode === 'navigation');
   
   // Check for Google Street View API key
   const apiKey = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY;
@@ -161,6 +182,23 @@ const StreetView = memo(function StreetView({
       updateStreetViewPosition();
     }
   }, [lat, lng, isVisible, apiLoaded]);
+
+  // Auto-orientation for navigation mode
+  useEffect(() => {
+    if (mode === 'navigation' && autoOrientEnabled && nextManeuver?.targetHeading !== undefined && panoramaRef.current) {
+      const pov = panoramaRef.current.getPov();
+      panoramaRef.current.setPov({
+        ...pov,
+        heading: nextManeuver.targetHeading
+      });
+    }
+  }, [mode, autoOrientEnabled, nextManeuver?.targetHeading]);
+
+  // Update navigation overlay visibility when mode changes
+  useEffect(() => {
+    setNavigationOverlayVisible(mode === 'navigation');
+    setAutoOrientEnabled(mode === 'navigation');
+  }, [mode]);
 
   const initializeStreetView = useCallback(() => {
     if (!streetViewRef.current || !window.google) return;
@@ -348,9 +386,27 @@ const StreetView = memo(function StreetView({
     return null;
   }
 
+  // Get responsive sizing classes based on mode
+  const getContainerClasses = () => {
+    let classes = "relative bg-background transition-all duration-300 ";
+    
+    if (mode === 'navigation' && isNavigating) {
+      // Navigation mode - larger display
+      classes += "w-full h-full md:w-[40%] md:h-full mobile:h-[50vh] mobile:w-full ";
+    } else if (mode === 'preview') {
+      // Preview mode - standard sizing
+      classes += "h-full w-full ";
+    } else {
+      // Off mode - hidden
+      classes += "hidden ";
+    }
+    
+    return cn(classes, className);
+  };
+
   return (
     <div 
-      className={cn("relative h-full w-full bg-background", className)}
+      className={getContainerClasses()}
       onClick={!isFullscreen && onClick ? onClick : undefined}
       style={{ cursor: !isFullscreen && onClick ? 'pointer' : 'default' }}
     >
@@ -393,6 +449,86 @@ const StreetView = memo(function StreetView({
               </Button>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Navigation Mode Overlay - Show turn-by-turn guidance */}
+      {navigationOverlayVisible && nextManeuver && isNavigating && (
+        <div className="absolute top-4 left-4 right-4 z-20">
+          <Card className="bg-gray-900/90 border-gray-700/50 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-4">
+                {/* Direction Icon */}
+                <div className="flex-shrink-0 bg-blue-600/20 rounded-lg p-3 border border-blue-500/30">
+                  <Navigation className="w-6 h-6 text-blue-400" />
+                </div>
+                
+                {/* Navigation Instructions */}
+                <div className="flex-1 min-w-0">
+                  <div className="text-lg font-bold text-white mb-1">
+                    {nextManeuver.instruction}
+                  </div>
+                  <div className="text-sm text-gray-300">
+                    in {nextManeuver.distance}m
+                  </div>
+                </div>
+                
+                {/* Auto-Orient Toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAutoOrientEnabled(!autoOrientEnabled)}
+                  className={cn(
+                    "text-gray-300 hover:text-white hover:bg-gray-800",
+                    autoOrientEnabled && "bg-blue-600/20 text-blue-400"
+                  )}
+                  data-testid="button-auto-orient"
+                  title="Auto-orient to next turn"
+                >
+                  <Navigation className={cn("w-4 h-4", autoOrientEnabled && "animate-pulse")} />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Mode Switching Controls - Top right */}
+      {onModeChange && (
+        <div className="absolute top-4 right-4 z-20">
+          <div className="bg-background/80 backdrop-blur-sm rounded-lg border border-border/50 overflow-hidden">
+            <Button
+              variant={mode === 'off' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onModeChange('off')}
+              className="rounded-none border-r border-border/50 touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-street-view-off"
+              title="Turn off Street View"
+            >
+              <EyeOff className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={mode === 'preview' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onModeChange('preview')}
+              className="rounded-none border-r border-border/50 touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-street-view-preview"
+              title="Preview Mode"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={mode === 'navigation' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onModeChange('navigation')}
+              className="rounded-none touch-manipulation min-h-[44px] min-w-[44px]"
+              data-testid="button-street-view-navigation"
+              title="Navigation Mode"
+              disabled={!isNavigating}
+            >
+              <Navigation className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       )}
 
