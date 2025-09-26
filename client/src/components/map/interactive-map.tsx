@@ -466,11 +466,12 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   const handleMapViewModeChange = (mode: 'roads' | 'satellite') => {
-    console.log('Switching map view mode from', preferences.mapViewMode, 'to', mode);
+    console.log('🔄 Switching map view mode from', preferences.mapViewMode, 'to', mode);
     const newPreferences = { ...preferences, mapViewMode: mode };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
     resetAutoHideTimer();
+    console.log('✅ New preferences set:', newPreferences);
   };
 
   const handleToggleTrafficLayer = () => {
@@ -727,10 +728,13 @@ const InteractiveMap = memo(function InteractiveMap({
       >
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
-          url={preferences.mapViewMode === 'satellite' 
-            ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed  
-            : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}' // Esri Street Map
-          }
+          url={(() => {
+            const url = preferences.mapViewMode === 'satellite' 
+              ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed  
+              : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'; // Esri Street Map
+            console.log('🗺️ TileLayer URL for', preferences.mapViewMode, 'mode:', url);
+            return url;
+          })()}
           attribution={preferences.mapViewMode === 'satellite'
             ? '© Esri, © OpenStreetMap contributors'
             : '© Esri, © OpenStreetMap contributors'
