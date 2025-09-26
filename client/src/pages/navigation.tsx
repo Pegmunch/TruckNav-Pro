@@ -11,7 +11,6 @@ import EnhancedRealisticMap from "@/components/map/enhanced-realistic-map";
 import ProfessionalNavHUD from "@/components/navigation/professional-nav-hud";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
-import RoutePreviewOverlay from "@/components/map/route-preview-overlay";
 import { ARNavigation } from "@/components/navigation/ar-navigation";
 import { type VehicleProfile, type Route, type Journey, type AlternativeRoute } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -69,9 +68,6 @@ export default function NavigationPage() {
   const [selectedAlternativeRouteId, setSelectedAlternativeRouteId] = useState<string | null>(null);
   const [isApplyingRoute, setIsApplyingRoute] = useState(false);
   
-  // Route preview overlay state
-  const [showRoutePreview, setShowRoutePreview] = useState(false);
-  const [previewRouteData, setPreviewRouteData] = useState<Route | null>(null);
   
   
   // Window sync for cross-window communication
@@ -102,9 +98,7 @@ export default function NavigationPage() {
     if (sidebarState === 'closed') {
       setSidebarState('collapsed');
     }
-    setIsMapExpanded(false);         // Collapse any expanded map to prevent overlay conflicts  
-    setShowRoutePreview(false);      // Clear any route preview overlay that might obscure sidebar
-    setPreviewRouteData(null);       // Clear preview data
+    setIsMapExpanded(false);         // Collapse any expanded map to prevent overlay conflicts
     setIsAlternativeRoutesOpen(false); // Close alternative routes panel
     setPreviewRoute(null);           // Clear alternative route preview
     setIsApplyingRoute(false);       // Reset route application state
@@ -406,37 +400,31 @@ export default function NavigationPage() {
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
-      // Show route preview overlay only if not currently navigating
-      if (route.geometry && !isNavigating) {
-        setShowRoutePreview(true);
-        setPreviewRouteData(route);
-      } else {
-        // Fallback to existing map expansion behavior if no geometry
-        const handleMapExpansion = () => {
-          if (isMapWindowOpen()) {
-            // Focus the map window and let it handle auto-expansion
-            focusMapWindow();
-            if (import.meta.env.DEV) {
-              console.log('Route calculated: focusing map window for auto-expansion');
+      // Skip route preview - directly expand map for better route visibility
+      const handleMapExpansion = () => {
+        if (isMapWindowOpen()) {
+          // Focus the map window and let it handle auto-expansion
+          focusMapWindow();
+          if (import.meta.env.DEV) {
+            console.log('Route calculated: focusing map window for auto-expansion');
+          }
+        } else {
+          if (isMobile) {
+            // On mobile, only collapse sidebar if it's currently open to make room for map
+            // But respect if user explicitly wants it open
+            if (sidebarState === 'open') {
+              setSidebarState('collapsed');
+              localStorage.setItem('navigationSidebarState', 'collapsed');
             }
           } else {
-            if (isMobile) {
-              // On mobile, only collapse sidebar if it's currently open to make room for map
-              // But respect if user explicitly wants it open
-              if (sidebarState === 'open') {
-                setSidebarState('collapsed');
-                localStorage.setItem('navigationSidebarState', 'collapsed');
-              }
-            } else {
-              // Auto-expand map for better route visibility
-              setIsMapExpanded(true);
-            }
+            // Auto-expand map for better route visibility
+            setIsMapExpanded(true);
           }
-        };
+        }
+      };
 
-        // Small delay to allow route state to update
-        setTimeout(handleMapExpansion, 200);
-      }
+      // Small delay to allow route state to update
+      setTimeout(handleMapExpansion, 200);
     },
     onError: (error) => {
       if (import.meta.env.DEV) {
@@ -580,26 +568,6 @@ export default function NavigationPage() {
     setSelectedAlternativeRouteId(null);
   };
 
-  // Route preview overlay handlers
-  const handleSkipPreview = () => {
-    setShowRoutePreview(false);
-    setPreviewRouteData(null);
-    // Show the regular map view after skipping
-    handleMapExpansionAfterPreview();
-  };
-
-  const handleStartNavigationFromPreview = () => {
-    setShowRoutePreview(false);
-    setPreviewRouteData(null);
-    // Start navigation immediately
-    handleStartNavigation();
-  };
-
-  const handleClosePreview = () => {
-    setShowRoutePreview(false);
-    setPreviewRouteData(null);
-    // Don't expand map, just return to planning view
-  };
 
   // Helper function for map expansion after preview
   const handleMapExpansionAfterPreview = () => {
@@ -723,7 +691,6 @@ export default function NavigationPage() {
       document.documentElement.classList.add('overlay-safe-mode');
       
       // Close all known overlay components using proper state management
-      setShowRoutePreview(false);
       setIsAlternativeRoutesOpen(false);
       setShowLegalPopup(false);
       
@@ -1203,16 +1170,6 @@ export default function NavigationPage() {
         selectedRouteId={selectedAlternativeRouteId || undefined}
       />
 
-      {/* Route Preview Overlay */}
-      {showRoutePreview && previewRouteData && (
-        <RoutePreviewOverlay
-          route={previewRouteData}
-          isVisible={showRoutePreview}
-          onSkip={handleSkipPreview}
-          onStartNavigation={handleStartNavigationFromPreview}
-          onClose={handleClosePreview}
-        />
-      )}
       
       {/* Settings Modal - rendered at page level to persist independently of sidebar state */}
       <SettingsModal
