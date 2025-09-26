@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 
 interface EnhancedRealisticMapProps {
   currentRoute: Route | null;
@@ -496,6 +497,12 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
           />
         )}
       </MapContainer>
+
+      {/* Lane Guidance Popup */}
+      <LaneGuidancePopup 
+        currentRoute={currentRoute}
+        isNavigating={isNavigating}
+      />
 
       {/* Professional Map Styling */}
       <style>{`
