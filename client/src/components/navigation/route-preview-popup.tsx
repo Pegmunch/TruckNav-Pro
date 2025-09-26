@@ -116,15 +116,15 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
   currentLocation,
   className
 }: RoutePreviewPopupProps) {
+  // Don't render if not navigating or no route - MUST be before hooks
+  if (!isNavigating || !currentRoute || !currentRoute.routePath || currentRoute.routePath.length === 0) {
+    return null;
+  }
+
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 }); // Top-left default position
   const dragRef = useRef<HTMLDivElement>(null);
-  
-  // Don't render if not navigating or no route
-  if (!isNavigating || !currentRoute || !currentRoute.routePath || currentRoute.routePath.length === 0) {
-    return null;
-  }
   
   const routePath = currentRoute.routePath;
   const startPoint = routePath[0];
