@@ -224,7 +224,7 @@ export const preventSQLInjection = (req: express.Request, res: express.Response,
 };
 
 // Request validation middleware
-// Session bridge middleware for cookie-resistant environments
+// Session bridge middleware for cookie-resistant environments with CSRF token transfer
 export const sessionBridge = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
   const sessionFromHeader = req.headers['x-session-id'] as string;
   const sessionFromStorage = req.headers['x-storage-session'] as string;
@@ -237,20 +237,68 @@ export const sessionBridge = (req: express.Request & { session?: any }, res: exp
     if (clientSessionId !== currentSessionId) {
       console.log(`[SESSION-BRIDGE] Bridging session from ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
       
-      // Copy session data to maintain continuity
+      // Copy session data to maintain continuity and transfer CSRF tokens
       if (req.session) {
         req.session.bridgedFrom = clientSessionId;
         req.session.bridgeTimestamp = Date.now();
         req.session.bridgeReason = sessionFromHeader ? 'header' : 'storage';
         
-        // Force session save to persist bridge information
-        req.session.save((err: any) => {
-          if (err) {
-            console.error('[SESSION-BRIDGE] Failed to save bridged session:', err);
-          } else {
-            console.log(`[SESSION-BRIDGE] Successfully bridged session ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
-          }
-        });
+        // Get the session store to access source session data for CSRF token transfer
+        const sessionStore = req.sessionStore;
+        
+        if (sessionStore) {
+          // Try to get the source session data to transfer CSRF tokens
+          sessionStore.get(clientSessionId, (err: any, sourceSessionData: any) => {
+            if (!err && sourceSessionData && sourceSessionData.csrfTokens) {
+              // Initialize target session CSRF tokens if not exists
+              if (!req.session.csrfTokens) {
+                req.session.csrfTokens = [];
+              }
+              
+              // Filter valid tokens from source session (not expired)
+              const now = Date.now();
+              const TOKEN_EXPIRY_MS = 600000; // 10 minutes
+              const validSourceTokens = sourceSessionData.csrfTokens.filter((tokenInfo: any) => 
+                tokenInfo && tokenInfo.token && (now - tokenInfo.timestamp < TOKEN_EXPIRY_MS)
+              );
+              
+              // Transfer valid tokens from source to target session
+              if (validSourceTokens.length > 0) {
+                // Merge tokens, keeping unique ones and preventing duplicates
+                const existingTokens = new Set(req.session.csrfTokens.map((t: any) => t.token));
+                const newTokens = validSourceTokens.filter((t: any) => !existingTokens.has(t.token));
+                
+                req.session.csrfTokens = [...req.session.csrfTokens, ...newTokens];
+                
+                // Keep only the last 10 tokens to prevent memory bloat
+                if (req.session.csrfTokens.length > 10) {
+                  req.session.csrfTokens = req.session.csrfTokens.slice(-10);
+                }
+                
+                console.log(`[SESSION-BRIDGE-CSRF] Transferred ${newTokens.length} valid CSRF tokens from source session (total pool: ${req.session.csrfTokens.length})`);
+              }
+            }
+            
+            // Force session save to persist bridge information and transferred tokens
+            req.session.save((saveErr: any) => {
+              if (saveErr) {
+                console.error('[SESSION-BRIDGE] Failed to save bridged session:', saveErr);
+              } else {
+                console.log(`[SESSION-BRIDGE] Successfully bridged session ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
+              }
+            });
+          });
+        } else {
+          console.warn('[SESSION-BRIDGE] No session store available for CSRF token transfer');
+          // Force session save to persist bridge information even without token transfer
+          req.session.save((err: any) => {
+            if (err) {
+              console.error('[SESSION-BRIDGE] Failed to save bridged session:', err);
+            } else {
+              console.log(`[SESSION-BRIDGE] Successfully bridged session ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
+            }
+          });
+        }
       }
     }
   }
@@ -640,6 +688,9 @@ export const applySecurityMiddleware = (app: express.Application) => {
   
   // Ensure all requests have valid sessions
   app.use(ensureSessionExists);
+  
+  // Session bridging for cookie-resistant environments (must come after session creation)
+  app.use(sessionBridge);
   
   // Input sanitization
   app.use(sanitizeInput);
