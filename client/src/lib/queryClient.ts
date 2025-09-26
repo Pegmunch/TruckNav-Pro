@@ -7,14 +7,26 @@ interface CSRFTokenInfo {
   maxAge: number; // in milliseconds
 }
 
+// Enhanced session management for cookie-resistant environments
+interface SessionInfo {
+  sessionId: string;
+  timestamp: number;
+  source: 'cookie' | 'header' | 'storage' | 'new';
+  cookieWorking: boolean;
+  fallbackActive: boolean;
+}
+
 let csrfTokenInfo: CSRFTokenInfo | null = null;
 let tokenFetchPromise: Promise<string | null> | null = null;
+let currentSession: SessionInfo | null = null;
 const TOKEN_REFRESH_THRESHOLD = 30000; // Refresh if token expires within 30 seconds
 const DEFAULT_TOKEN_MAX_AGE = 600000; // 10 minutes default (aligned with server expiry)
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAYS = [1000, 2000, 5000]; // Progressive delay in ms
+const SESSION_STORAGE_KEY = 'trucknav_session_id';
+const SESSION_COOKIE_STATUS_KEY = 'trucknav_cookie_status';
 
-// Enhanced token extraction with expiration tracking
+// Enhanced token and session extraction with comprehensive persistence
 function extractCSRFToken(res: Response) {
   const token = res.headers.get('X-CSRF-Token');
   if (!token) return;
@@ -39,6 +51,104 @@ function extractCSRFToken(res: Response) {
   if (!csrfTokenInfo || csrfTokenInfo.token !== token) {
     csrfTokenInfo = newTokenInfo;
   }
+}
+
+// Extract and persist session information from server responses
+function extractAndPersistSession(res: Response) {
+  const sessionId = res.headers.get('X-Session-ID');
+  const cookieStatus = res.headers.get('X-Session-Cookie-Status');
+  const sessionSource = res.headers.get('X-Session-Source');
+  
+  if (sessionId) {
+    const sessionInfo: SessionInfo = {
+      sessionId,
+      timestamp: Date.now(),
+      source: (sessionSource as any) || 'header',
+      cookieWorking: cookieStatus === 'received',
+      fallbackActive: cookieStatus !== 'received'
+    };
+    
+    // Update current session
+    currentSession = sessionInfo;
+    
+    // Persist session in multiple storage locations for maximum resilience
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+      localStorage.setItem(SESSION_COOKIE_STATUS_KEY, JSON.stringify({
+        cookieWorking: sessionInfo.cookieWorking,
+        timestamp: sessionInfo.timestamp,
+        fallbackActive: sessionInfo.fallbackActive
+      }));
+      
+      // Also store in sessionStorage as backup
+      sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+      sessionStorage.setItem('trucknav_session_backup', JSON.stringify(sessionInfo));
+      
+      console.log(`[SESSION-CLIENT] Persisted session ${sessionId.substring(0, 8)}... (Cookie working: ${sessionInfo.cookieWorking}, Fallback: ${sessionInfo.fallbackActive})`);
+    } catch (error) {
+      console.warn('[SESSION-CLIENT] Failed to persist session to storage:', error);
+    }
+  }
+}
+
+// Get the best available session ID from multiple sources
+function getBestSessionId(): string | null {
+  // Priority: current session > localStorage > sessionStorage > cookie
+  if (currentSession && isSessionValid(currentSession)) {
+    return currentSession.sessionId;
+  }
+  
+  try {
+    // Try localStorage first
+    const storedSessionId = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (storedSessionId) {
+      console.log(`[SESSION-CLIENT] Using stored session from localStorage: ${storedSessionId.substring(0, 8)}...`);
+      return storedSessionId;
+    }
+    
+    // Try sessionStorage as backup
+    const sessionStorageId = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (sessionStorageId) {
+      console.log(`[SESSION-CLIENT] Using session from sessionStorage: ${sessionStorageId.substring(0, 8)}...`);
+      return sessionStorageId;
+    }
+    
+    // Try extracting from document.cookie as last resort
+    const cookieMatch = document.cookie.match(/trucknav_session=([^;]+)/);
+    if (cookieMatch) {
+      const cookieSessionId = decodeURIComponent(cookieMatch[1]).replace(/^s:/, '').split('.')[0];
+      console.log(`[SESSION-CLIENT] Extracted session from cookie: ${cookieSessionId.substring(0, 8)}...`);
+      return cookieSessionId;
+    }
+  } catch (error) {
+    console.warn('[SESSION-CLIENT] Error accessing session storage:', error);
+  }
+  
+  return null;
+}
+
+// Check if session is still valid (not too old)
+function isSessionValid(session: SessionInfo): boolean {
+  const SESSION_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+  return Date.now() - session.timestamp < SESSION_MAX_AGE;
+}
+
+// Get cookie working status from storage
+function getCookieStatus(): { cookieWorking: boolean; fallbackActive: boolean } {
+  try {
+    const statusStr = localStorage.getItem(SESSION_COOKIE_STATUS_KEY);
+    if (statusStr) {
+      const status = JSON.parse(statusStr);
+      return {
+        cookieWorking: status.cookieWorking || false,
+        fallbackActive: status.fallbackActive || true
+      };
+    }
+  } catch (error) {
+    console.warn('[SESSION-CLIENT] Error reading cookie status:', error);
+  }
+  
+  return { cookieWorking: false, fallbackActive: true };
 }
 
 // Check if token is valid and not near expiration
@@ -96,14 +206,25 @@ async function performTokenFetch(): Promise<string | null> {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
       
+      // Build headers with session persistence for token requests
+      const tokenHeaders: Record<string, string> = {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      };
+      
+      // Add session persistence headers
+      const bestSessionId = getBestSessionId();
+      if (bestSessionId) {
+        tokenHeaders['X-Session-ID'] = bestSessionId;
+        tokenHeaders['X-Storage-Session'] = bestSessionId;
+        console.log(`[CSRF] Using stored session for token request: ${bestSessionId.substring(0, 8)}...`);
+      }
+      
       const tokenResponse = await fetch('/api/csrf-token', {
         credentials: 'include',
         cache: 'no-cache',
         signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
+        headers: tokenHeaders
       });
       
       clearTimeout(timeoutId);
@@ -111,7 +232,9 @@ async function performTokenFetch(): Promise<string | null> {
       if (tokenResponse.ok) {
         extractCSRFToken(tokenResponse);
         
-        // Enhanced session monitoring
+        // Enhanced session monitoring and extraction
+        extractAndPersistSession(tokenResponse);
+        
         try {
           const responseData = await tokenResponse.json();
           console.log(`[CSRF] Token response from session: ${responseData.sessionId?.substring(0, 8)}..., cookieReceived: ${responseData.cookieReceived}`);
@@ -220,7 +343,7 @@ async function performRequestWithRetry(
   const isStatefulRequest = method !== 'GET' && method !== 'OPTIONS' && method !== 'HEAD';
   const maxRetries = isStatefulRequest ? 2 : 3; // More conservative for mutations
   
-  // Build headers with current token
+  // Build headers with current token and session information
   const headers: Record<string, string> = {
     'Accept': 'application/json',
     'X-Requested-With': 'XMLHttpRequest'
@@ -229,6 +352,19 @@ async function performRequestWithRetry(
   if (data) {
     headers["Content-Type"] = "application/json";
   }
+  
+  // Add session persistence headers for maximum compatibility
+  const bestSessionId = getBestSessionId();
+  if (bestSessionId) {
+    headers['X-Session-ID'] = bestSessionId;
+    headers['X-Storage-Session'] = bestSessionId;
+    console.log(`[SESSION-CLIENT] Adding session headers: ${bestSessionId.substring(0, 8)}...`);
+  }
+  
+  // Add cookie status information
+  const cookieStatus = getCookieStatus();
+  headers['X-Client-Cookie-Status'] = cookieStatus.cookieWorking ? 'working' : 'failed';
+  headers['X-Client-Fallback-Active'] = cookieStatus.fallbackActive ? 'true' : 'false';
   
   // Add CSRF token for stateful requests
   if (isStatefulRequest && !options?.skipCSRF) {
@@ -263,8 +399,9 @@ async function performRequestWithRetry(
 
     clearTimeout(timeoutId);
     
-    // Always extract CSRF token from response
+    // Always extract CSRF token and session information from response
     extractCSRFToken(res);
+    extractAndPersistSession(res);
 
     // Handle specific error cases with retry logic
     if (!res.ok) {
@@ -368,12 +505,24 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Build headers with session persistence for GET requests
+    const queryHeaders: Record<string, string> = {};
+    
+    // Add session persistence headers
+    const bestSessionId = getBestSessionId();
+    if (bestSessionId) {
+      queryHeaders['X-Session-ID'] = bestSessionId;
+      queryHeaders['X-Storage-Session'] = bestSessionId;
+    }
+    
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers: queryHeaders
     });
 
-    // Extract CSRF token from response headers (for GET requests)
+    // Extract CSRF token and session information from response headers (for GET requests)
     extractCSRFToken(res);
+    extractAndPersistSession(res);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

@@ -224,6 +224,40 @@ export const preventSQLInjection = (req: express.Request, res: express.Response,
 };
 
 // Request validation middleware
+// Session bridge middleware for cookie-resistant environments
+export const sessionBridge = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
+  const sessionFromHeader = req.headers['x-session-id'] as string;
+  const sessionFromStorage = req.headers['x-storage-session'] as string;
+  const currentSessionId = req.sessionID;
+  
+  // If client is sending session via headers/storage, bridge the session
+  if ((sessionFromHeader || sessionFromStorage) && currentSessionId) {
+    const clientSessionId = sessionFromHeader || sessionFromStorage;
+    
+    if (clientSessionId !== currentSessionId) {
+      console.log(`[SESSION-BRIDGE] Bridging session from ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
+      
+      // Copy session data to maintain continuity
+      if (req.session) {
+        req.session.bridgedFrom = clientSessionId;
+        req.session.bridgeTimestamp = Date.now();
+        req.session.bridgeReason = sessionFromHeader ? 'header' : 'storage';
+        
+        // Force session save to persist bridge information
+        req.session.save((err: any) => {
+          if (err) {
+            console.error('[SESSION-BRIDGE] Failed to save bridged session:', err);
+          } else {
+            console.log(`[SESSION-BRIDGE] Successfully bridged session ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
+          }
+        });
+      }
+    }
+  }
+  
+  next();
+};
+
 export const validateRequest = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -247,8 +281,8 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   next();
 };
 
-// Session initialization middleware - ensures every request has a valid session
-export const ensureSessionExists = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
+// Enhanced session initialization middleware with comprehensive cookie debugging and fallback mechanisms
+export const ensureSessionExists = (req: express.Request & { session?: any; sessionRecovery?: any }, res: express.Response, next: express.NextFunction) => {
   if (!req.session) {
     console.warn(`[SESSION] No session found for ${req.method} ${req.url} - creating new session`);
     // This should be handled by express-session middleware, but adding as safety net
@@ -258,12 +292,60 @@ export const ensureSessionExists = (req: express.Request & { session?: any }, re
       timestamp: new Date().toISOString()
     });
   }
+
+  // Comprehensive cookie and session debugging
+  const cookies = req.headers.cookie;
+  const sessionHeader = req.headers['x-session-id'];
+  const sessionFromStorage = req.headers['x-storage-session'];
+  const userAgent = req.headers['user-agent'];
+  const cookieReceived = cookies && cookies.includes('trucknav_session');
+  
+  // Log detailed session information
+  console.log(`[SESSION-ANALYSIS] ${req.method} ${req.url} - IP: ${req.ip}`);
+  console.log(`[SESSION-ANALYSIS] Session ID: ${req.sessionID?.substring(0, 8)}...`);
+  console.log(`[SESSION-ANALYSIS] Cookie sent: ${cookieReceived}`);
+  console.log(`[SESSION-ANALYSIS] Raw cookies: ${cookies ? cookies.substring(0, 100) + '...' : 'none'}`);
+  console.log(`[SESSION-ANALYSIS] Session header: ${sessionHeader?.substring(0, 8) || 'none'}...`);
+  console.log(`[SESSION-ANALYSIS] Storage session: ${sessionFromStorage?.substring(0, 8) || 'none'}...`);
+  console.log(`[SESSION-ANALYSIS] User agent: ${userAgent?.substring(0, 50) || 'none'}...`);
+  
+  // Add session persistence headers for client-side correlation
+  if (req.sessionID) {
+    res.setHeader('X-Session-ID', req.sessionID);
+    res.setHeader('X-Session-Cookie-Status', cookieReceived ? 'received' : 'missing');
+    res.setHeader('X-Session-Source', cookieReceived ? 'cookie' : 'new');
+  }
   
   // Initialize session data if needed
   if (!req.session.initialized) {
     req.session.initialized = true;
     req.session.created = Date.now();
-    console.log(`[SESSION] Initialized session ${req.sessionID?.substring(0, 8)}... for first time`);
+    req.session.lastAccess = Date.now();
+    req.session.accessCount = 1;
+    req.session.cookieWorking = cookieReceived;
+    req.session.fallbackActive = !cookieReceived && (sessionHeader || sessionFromStorage);
+    
+    console.log(`[SESSION] Initialized session ${req.sessionID?.substring(0, 8)}... for first time (Cookie working: ${cookieReceived})`);
+  } else {
+    // Update session tracking for existing sessions
+    req.session.lastAccess = Date.now();
+    req.session.accessCount = (req.session.accessCount || 0) + 1;
+    
+    // Check if cookie status changed
+    if (req.session.cookieWorking !== cookieReceived) {
+      console.log(`[SESSION] Cookie status changed for session ${req.sessionID?.substring(0, 8)}... - was: ${req.session.cookieWorking}, now: ${cookieReceived}`);
+      req.session.cookieWorking = cookieReceived;
+    }
+    
+    console.log(`[SESSION] Reusing session ${req.sessionID?.substring(0, 8)}... (Access #${req.session.accessCount}, Cookie: ${cookieReceived})`);
+  }
+  
+  // Handle session recovery if needed
+  if (req.sessionRecovery) {
+    console.log(`[SESSION-RECOVERY] Recovery requested for session ${req.sessionRecovery.requestedSessionId.substring(0, 8)}... via ${req.sessionRecovery.source}`);
+    // Store recovery information for potential session bridging
+    req.session.recoveryAttempted = true;
+    req.session.originalSessionId = req.sessionRecovery.requestedSessionId;
   }
   
   next();

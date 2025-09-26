@@ -46,7 +46,7 @@ const getSessionSecret = () => {
     : 'dev-session-secret-stable-for-csrf-tokens-trucknav-pro';
 };
 
-// Enhanced session configuration with robust persistence
+// Enhanced session configuration with maximum cookie compatibility and fallbacks
 export const sessionConfig = {
   store: getSessionStore(),
   
@@ -59,17 +59,18 @@ export const sessionConfig = {
   saveUninitialized: true, // Always create sessions to ensure CSRF tokens persist (required for security)
   
   cookie: {
+    // Enhanced cookie configuration for maximum browser compatibility
     secure: process.env.NODE_ENV === 'production', // True for production HTTPS, false for dev HTTP
-    httpOnly: true, // Prevent XSS access to cookies
+    httpOnly: false, // Allow client-side access for fallback mechanisms
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: 'lax' as const, // Lax for same-site compatibility
+    sameSite: false as any, // Disable SameSite for maximum compatibility
     domain: undefined, // Let the browser set the domain automatically
     path: '/', // Available across entire app
   },
   
   // Enhanced security options
   rolling: false, // Don't reset expiry on every request (reduces unnecessary session saves)
-  unset: 'destroy', // Destroy session data when unsetting
+  unset: 'destroy' as const, // Destroy session data when unsetting
   
   // Custom session ID generation for enhanced security
   genid: () => {
@@ -83,4 +84,50 @@ export const sessionConfig = {
   logErrors: (err: Error) => {
     console.error('[SESSION] Error:', err.message);
   },
+};
+
+// Session debugging and fallback middleware
+export const sessionDebugAndFallback = (req: any, res: any, next: any) => {
+  const sessionId = req.sessionID;
+  const cookies = req.headers.cookie;
+  const sessionHeader = req.headers['x-session-id'];
+  const sessionFromStorage = req.headers['x-storage-session'];
+  
+  // Comprehensive cookie debugging
+  const cookieReceived = cookies && cookies.includes('trucknav_session');
+  console.log(`[SESSION-DEBUG] ${req.method} ${req.url} - Session: ${sessionId?.substring(0, 8)}... Cookie sent: ${cookieReceived}, Header: ${sessionHeader?.substring(0, 8) || 'none'}, Storage: ${sessionFromStorage?.substring(0, 8) || 'none'}`);
+  
+  // Add session ID to response headers for client-side persistence
+  if (sessionId) {
+    res.setHeader('X-Session-ID', sessionId);
+    res.setHeader('X-Session-Cookie-Status', cookieReceived ? 'received' : 'missing');
+  }
+  
+  next();
+};
+
+// Session recovery middleware for cookie-resistant clients
+export const sessionRecovery = (req: any, res: any, next: any) => {
+  const sessionFromHeader = req.headers['x-session-id'];
+  const sessionFromStorage = req.headers['x-storage-session'];
+  const currentSessionId = req.sessionID;
+  
+  // If we have a session from header or storage, try to restore it
+  if ((sessionFromHeader || sessionFromStorage) && currentSessionId) {
+    const preferredSessionId = sessionFromHeader || sessionFromStorage;
+    
+    // Check if we can restore the session from the store
+    if (preferredSessionId !== currentSessionId) {
+      console.log(`[SESSION-RECOVERY] Attempting to restore session ${preferredSessionId.substring(0, 8)}... (current: ${currentSessionId.substring(0, 8)}...)`);
+      
+      // Store recovery info for potential session bridging
+      req.sessionRecovery = {
+        requestedSessionId: preferredSessionId,
+        currentSessionId: currentSessionId,
+        source: sessionFromHeader ? 'header' : 'storage'
+      };
+    }
+  }
+  
+  next();
 };

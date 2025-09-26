@@ -3,8 +3,8 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 // Re-enable security middleware for stable navigation functionality
-import { applySecurityMiddleware, authRateLimit, apiRateLimit } from "./middleware/security";
-import { sessionConfig } from "./middleware/session-security";
+import { applySecurityMiddleware, authRateLimit, apiRateLimit, sessionBridge } from "./middleware/security";
+import { sessionConfig, sessionDebugAndFallback, sessionRecovery } from "./middleware/session-security";
 
 const app = express();
 
@@ -12,8 +12,13 @@ const app = express();
 // Replit runs behind a proxy even in development
 app.set('trust proxy', 1);
 
-// Enhanced session security with PostgreSQL store (must be before CSRF)
+// Enhanced session security with PostgreSQL store and comprehensive debugging
 app.use(session(sessionConfig));
+
+// Add session debugging and fallback mechanisms
+app.use(sessionDebugAndFallback);
+app.use(sessionRecovery);
+app.use(sessionBridge);
 
 // Re-enable security middleware for reliable navigation functionality
 applySecurityMiddleware(app);
