@@ -10,7 +10,7 @@ interface CSRFTokenInfo {
 let csrfTokenInfo: CSRFTokenInfo | null = null;
 let tokenFetchPromise: Promise<string | null> | null = null;
 const TOKEN_REFRESH_THRESHOLD = 30000; // Refresh if token expires within 30 seconds
-const DEFAULT_TOKEN_MAX_AGE = 3600000; // 1 hour default
+const DEFAULT_TOKEN_MAX_AGE = 600000; // 10 minutes default (aligned with server expiry)
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAYS = [1000, 2000, 5000]; // Progressive delay in ms
 

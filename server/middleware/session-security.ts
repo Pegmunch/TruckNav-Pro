@@ -59,7 +59,7 @@ export const sessionConfig = {
   saveUninitialized: true, // Always create sessions to ensure CSRF tokens persist (required for security)
   
   cookie: {
-    secure: false, // HTTP for development (HTTPS would require secure: true)
+    secure: process.env.NODE_ENV === 'production', // True for production HTTPS, false for dev HTTP
     httpOnly: true, // Prevent XSS access to cookies
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     sameSite: 'lax' as const, // Lax for same-site compatibility

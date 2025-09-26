@@ -303,9 +303,10 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   }
 
   // Clean up expired tokens (older than 10 minutes)
+  const TOKEN_EXPIRY_MS = 600000; // 10 minutes
   const now = Date.now();
   req.session.csrfTokens = req.session.csrfTokens.filter((tokenInfo: any) => 
-    now - tokenInfo.timestamp < 600000
+    now - tokenInfo.timestamp < TOKEN_EXPIRY_MS
   );
 
   // If no valid tokens, generate one automatically for robustness
