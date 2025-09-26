@@ -46,7 +46,7 @@ const getSessionSecret = () => {
     : 'dev-session-secret-stable-for-csrf-tokens-trucknav-pro';
 };
 
-// Enhanced session configuration with stability for development
+// Enhanced session configuration with robust persistence
 export const sessionConfig = {
   store: getSessionStore(),
   
@@ -54,27 +54,33 @@ export const sessionConfig = {
   
   name: 'trucknav_session', // Don't use default session name for security
   
-  resave: true, // Changed to true to ensure CSRF token modifications are always saved
-  saveUninitialized: true, // True for cross-tab CSRF token sharing
+  // Enhanced session persistence settings for robust CSRF support
+  resave: false, // Only save when session is modified (prevents unnecessary saves)
+  saveUninitialized: true, // Always create sessions to ensure CSRF tokens persist (required for security)
   
   cookie: {
-    secure: false, // Disable secure for development to allow HTTP
+    secure: false, // HTTP for development (HTTPS would require secure: true)
     httpOnly: true, // Prevent XSS access to cookies
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    sameSite: 'none' as const, // None for development cross-origin compatibility
-    domain: undefined, // Let the browser set the domain
+    sameSite: 'lax' as const, // Lax for same-site compatibility
+    domain: undefined, // Let the browser set the domain automatically
     path: '/', // Available across entire app
   },
   
   // Enhanced security options
-  rolling: true, // Reset expiry on each request
-  
+  rolling: false, // Don't reset expiry on every request (reduces unnecessary session saves)
+  unset: 'destroy', // Destroy session data when unsetting
   
   // Custom session ID generation for enhanced security
   genid: () => {
     return crypto.randomBytes(32).toString('hex');
   },
   
-  // Proxy trust settings for production deployment
-  proxy: process.env.NODE_ENV === 'production',
+  // Trust proxy settings - always enabled for Replit deployment
+  proxy: true,
+  
+  // Add session debugging and monitoring
+  logErrors: (err: Error) => {
+    console.error('[SESSION] Error:', err.message);
+  },
 };

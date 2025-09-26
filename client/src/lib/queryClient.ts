@@ -110,8 +110,18 @@ async function performTokenFetch(): Promise<string | null> {
       
       if (tokenResponse.ok) {
         extractCSRFToken(tokenResponse);
+        
+        // Enhanced session monitoring
+        try {
+          const responseData = await tokenResponse.json();
+          console.log(`[CSRF] Token response from session: ${responseData.sessionId?.substring(0, 8)}..., cookieReceived: ${responseData.cookieReceived}`);
+        } catch (e) {
+          console.warn('[CSRF] Failed to parse token response for monitoring');
+        }
+        
         const token = getCSRFToken();
         if (token) {
+          console.log(`[CSRF] Successfully fetched token: ${token.substring(0, 8)}...`);
           return token;
         } else {
           throw new Error('Token extracted but not valid');

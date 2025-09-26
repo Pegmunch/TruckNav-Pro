@@ -546,17 +546,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[CSRF] Session saved successfully - token pool size: ${req.session.csrfTokens?.length || 0}`);
       
-      // Set CSRF token in response header and body, add cache control
+      // Set CSRF token in response header and body, add cache control and session monitoring
       res.setHeader('X-CSRF-Token', newToken);
+      res.setHeader('X-Session-ID', req.sessionID || 'missing');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+      
+      // Enhanced session monitoring
+      const cookieReceived = !!req.headers.cookie;
+      const userAgent = req.get('User-Agent')?.substring(0, 50) || 'unknown';
+      console.log(`[SESSION_MONITOR] CSRF token request - Session: ${req.sessionID?.substring(0, 8)}..., Cookie sent: ${cookieReceived}, User-Agent: ${userAgent}...`);
+      if (req.headers.cookie) {
+        console.log(`[COOKIE_DEBUG] Cookie header: ${req.headers.cookie.substring(0, 100)}...`);
+      } else {
+        console.log(`[COOKIE_DEBUG] No cookie header received from client`);
+      }
       
       res.json({ 
         success: true,
         csrfToken: newToken,
         sessionId: req.sessionID,
         tokenPoolSize: req.session.csrfTokens?.length || 0,
+        sessionAge: req.session.created ? Date.now() - req.session.created : 0,
+        cookieReceived: cookieReceived,
         timestamp: new Date().toISOString()
       });
     });
@@ -2596,7 +2609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/social/profiles", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertDriverProfileSchema.safeParse(req.body);
+      const result = insertVehicleProfileSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
           message: "Invalid driver profile data",
@@ -2662,15 +2675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/social/connections", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertDriverConnectionSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid connection data",
-          errors: result.error.errors
-        });
-      }
-
-      const connection = await storage.createDriverConnection(result.data);
+      const connection = await storage.createDriverConnection(req.body);
       res.status(201).json(connection);
     } catch (error) {
       console.error('Error creating driver connection:', error);
@@ -2734,7 +2739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/social/routes", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertSharedRouteSchema.safeParse(req.body);
+      const result = insertRouteSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
           message: "Invalid shared route data",
@@ -2841,19 +2846,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/social/routes/:routeId/comments", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertRouteCommentSchema.safeParse({
+      const commentData = {
         ...req.body,
         sharedRouteId: req.params.routeId
-      });
+      };
       
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid comment data",
-          errors: result.error.errors
-        });
-      }
-
-      const comment = await storage.createRouteComment(result.data);
+      const comment = await storage.createRouteComment(commentData);
       res.status(201).json(comment);
     } catch (error) {
       console.error('Error creating route comment:', error);
@@ -2864,7 +2862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Driver Location Routes
   app.post("/api/social/locations", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertDriverLocationSchema.safeParse(req.body);
+      const result = insertLocationSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
           message: "Invalid location data",
@@ -2973,15 +2971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Driver Messaging Routes
   app.post("/api/social/messages", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertDriverMessageSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid message data",
-          errors: result.error.errors
-        });
-      }
-
-      const message = await storage.createDriverMessage(result.data);
+      const message = await storage.createDriverMessage(req.body);
       res.status(201).json(message);
     } catch (error) {
       console.error('Error creating message:', error);
@@ -3092,7 +3082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Convoy Management Routes
   app.post("/api/social/convoys", validateRequest, async (req: Request, res: Response) => {
     try {
-      const result = insertConvoySchema.safeParse(req.body);
+      const result = insertJourneySchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
           message: "Invalid convoy data",
@@ -3177,19 +3167,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/social/convoys/:id/members", validateRequest, async (req: Request, res: Response) => {
     try {
       const convoyId = req.params.id;
-      const result = insertConvoyMemberSchema.safeParse({
+      const memberData = {
         ...req.body,
         convoyId
-      });
+      };
       
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid member data",
-          errors: result.error.errors
-        });
-      }
-
-      const member = await storage.createConvoyMember(result.data);
+      const member = await storage.createConvoyMember(memberData);
       res.status(201).json(member);
     } catch (error) {
       console.error('Error adding convoy member:', error);

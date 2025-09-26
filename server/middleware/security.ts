@@ -247,6 +247,28 @@ export const validateRequest = (req: express.Request, res: express.Response, nex
   next();
 };
 
+// Session initialization middleware - ensures every request has a valid session
+export const ensureSessionExists = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
+  if (!req.session) {
+    console.warn(`[SESSION] No session found for ${req.method} ${req.url} - creating new session`);
+    // This should be handled by express-session middleware, but adding as safety net
+    return res.status(500).json({
+      error: 'Session initialization failed',
+      code: 'SESSION_ERROR',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  // Initialize session data if needed
+  if (!req.session.initialized) {
+    req.session.initialized = true;
+    req.session.created = Date.now();
+    console.log(`[SESSION] Initialized session ${req.sessionID?.substring(0, 8)}... for first time`);
+  }
+  
+  next();
+};
+
 // CSRF protection using double submit cookie pattern - enhanced for concurrent request handling
 export const csrfProtection = (req: express.Request & { session?: any }, res: express.Response, next: express.NextFunction) => {
   // Skip CSRF for GET, HEAD, and OPTIONS requests
@@ -254,23 +276,12 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     return next();
   }
 
-  // Temporarily disable CSRF protection in development to resolve session persistence issues
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[CSRF] DEVELOPMENT MODE - Skipping CSRF validation for ${req.method} ${req.url}`);
-    return next();
-  }
-
-  // Check if session exists first for efficiency
+  // Session should already exist due to ensureSessionExists middleware
   if (!req.session) {
-    console.error(`[SECURITY] No session found for CSRF validation from IP: ${req.ip}`, {
-      url: req.url,
-      method: req.method,
-      timestamp: new Date().toISOString()
-    });
-    
-    return res.status(403).json({
-      error: 'Session required for CSRF validation',
-      code: 'NO_SESSION',
+    console.error(`[CSRF] Critical error: No session found after session middleware for ${req.method} ${req.url}`);
+    return res.status(500).json({
+      error: 'Session system failure',
+      code: 'SESSION_FAILURE',
       timestamp: new Date().toISOString()
     });
   }
@@ -297,21 +308,36 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     now - tokenInfo.timestamp < 600000
   );
 
-  // If no valid tokens, return error and let client fetch new token
+  // If no valid tokens, generate one automatically for robustness
   if (!req.session.csrfTokens.length) {
-    console.warn(`[SECURITY] No valid CSRF tokens in session - client needs to fetch new token for IP: ${req.ip}`, {
-      sessionId: req.sessionID ? 'exists' : 'missing',
+    console.warn(`[CSRF] No valid CSRF tokens in session - auto-generating token for recovery`, {
+      sessionId: req.sessionID ? req.sessionID.substring(0, 8) + '...' : 'missing',
       url: req.url,
       method: req.method,
+      sessionAge: req.session.created ? Date.now() - req.session.created : 'unknown',
       timestamp: new Date().toISOString()
     });
     
-    // Return error without generating token here to avoid race conditions
-    return res.status(403).json({
-      error: 'CSRF token required - fetch from /api/csrf-token',
-      code: 'CSRF_TOKEN_REQUIRED',
-      hint: 'Request a fresh token from /api/csrf-token endpoint',
-      timestamp: new Date().toISOString()
+    // Auto-generate token for seamless recovery
+    const newToken = require('crypto').randomBytes(32).toString('hex');
+    req.session.csrfTokens = [{
+      token: newToken,
+      timestamp: Date.now()
+    }];
+    
+    // Force session save to ensure token persists
+    req.session.save((err: any) => {
+      if (err) {
+        console.error('[CSRF] Failed to save session during token recovery:', err);
+        return res.status(500).json({
+          error: 'Failed to save CSRF token',
+          code: 'CSRF_SAVE_ERROR',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log(`[CSRF] Auto-generated recovery token for session ${req.sessionID?.substring(0, 8)}... - saved successfully`);
+        // Continue to token validation below
+      }
     });
   }
 
@@ -321,19 +347,38 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   );
 
   if (!token || !validToken) {
-    console.warn(`[SECURITY] CSRF token validation failed - blocking request from IP: ${req.ip}`, {
-      providedToken: token ? token.substring(0, 8) + '...' : 'missing',
-      providedTokenFull: token ? 'provided' : 'missing',
+    // For robust recovery, try auto-generating a fresh token
+    if (!token) {
+      console.warn(`[CSRF] No token provided for ${req.method} ${req.url} - generating recovery token`);
+      const recoveryToken = require('crypto').randomBytes(32).toString('hex');
+      req.session.csrfTokens.push({
+        token: recoveryToken,
+        timestamp: Date.now()
+      });
+      
+      // Set the recovery token in response headers for client to use
+      res.setHeader('X-CSRF-Token-Recovery', recoveryToken);
+      
+      console.log(`[CSRF] Recovery token generated for session ${req.sessionID?.substring(0, 8)}...`);
+      
+      // Return recovery response
+      return res.status(409).json({
+        error: 'CSRF token missing - recovery token provided',
+        code: 'CSRF_TOKEN_MISSING',
+        recovery_token: recoveryToken,
+        hint: 'Use the recovery token in X-CSRF-Token-Recovery header for the next request',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    console.warn(`[CSRF] Token validation failed for ${req.method} ${req.url}`, {
+      providedToken: token.substring(0, 8) + '...',
+      sessionId: req.sessionID?.substring(0, 8) + '...',
       validTokensCount: req.session.csrfTokens.length,
-      sessionId: req.sessionID ? req.sessionID.substring(0, 8) + '...' : 'missing',
-      availableTokens: req.session.csrfTokens.map((t: any) => t.token.substring(0, 8) + '...'),
-      tokensMatch: token ? 'no' : 'n/a',
-      url: req.url,
-      method: req.method,
       timestamp: new Date().toISOString()
     });
     
-    // Enhanced error response with recovery hint
+    // Return standard validation error
     return res.status(403).json({
       error: 'CSRF token validation failed',
       code: 'CSRF_ERROR',
@@ -345,7 +390,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
   // Update timestamp for this token to keep it fresh
   validToken.timestamp = Date.now();
   
-  console.log(`[CSRF] Token validated successfully for ${req.method} ${req.url}`);
+  console.log(`[CSRF] Token validated successfully for ${req.method} ${req.url} (session: ${req.sessionID?.substring(0, 8)}...)`);
   next();
 };
 
@@ -509,6 +554,9 @@ export const applySecurityMiddleware = (app: express.Application) => {
   
   // Apply general rate limiting
   app.use(generalRateLimit);
+  
+  // Ensure all requests have valid sessions
+  app.use(ensureSessionExists);
   
   // Input sanitization
   app.use(sanitizeInput);
