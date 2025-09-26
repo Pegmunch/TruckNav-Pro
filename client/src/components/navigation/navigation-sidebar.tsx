@@ -1107,7 +1107,7 @@ Calculating route...
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Distance:</span>
                         <span className="font-medium" data-testid="text-route-distance">
-                          {currentRoute.distance ? (currentRoute.distance / 1000).toFixed(1) : '0'} km
+                          {currentRoute.distance ? `${currentRoute.distance.toFixed(1)} miles` : '0 miles'}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">

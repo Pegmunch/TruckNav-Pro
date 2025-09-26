@@ -1131,6 +1131,8 @@ export default function NavigationPage() {
                     isNavigating={isNavigating}
                     currentLocation={currentGPSLocation || undefined}
                     onLocationUpdate={setCurrentGPSLocation}
+                    isMapExpanded={isMapExpanded}
+                    sidebarState={sidebarState}
                   />
                 </div>
                 

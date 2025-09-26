@@ -37,6 +37,8 @@ interface EnhancedRealisticMapProps {
   isNavigating?: boolean;
   currentLocation?: { lat: number; lng: number };
   onLocationUpdate?: (location: { lat: number; lng: number }) => void;
+  isMapExpanded?: boolean;
+  sidebarState?: 'closed' | 'open' | 'collapsed';
 }
 
 // Professional map tile providers for realistic navigation
@@ -188,7 +190,9 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   showIncidents = false,
   isNavigating = false,
   currentLocation,
-  onLocationUpdate
+  onLocationUpdate,
+  isMapExpanded,
+  sidebarState
 }: EnhancedRealisticMapProps) {
   const [mapProvider, setMapProvider] = useState<keyof typeof mapProviders>('openstreetmap');
   const [zoomLevel, setZoomLevel] = useState(12);
@@ -225,16 +229,31 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     }
   }, [currentLocation, isNavigating]);
 
-  // Invalidate map size when layout changes (sidebar/map expand) to prevent visual glitches
+  // Invalidate map size when layout changes (sidebar/map expand/provider switch) to prevent visual glitches
   useEffect(() => {
     if (mapRef.current) {
-      // Small delay to ensure layout changes are complete
-      const timer = setTimeout(() => {
-        mapRef.current?.invalidateSize();
-      }, 100);
-      return () => clearTimeout(timer);
+      // Multiple invalidation attempts to handle different timing scenarios
+      const invalidateMap = () => {
+        if (mapRef.current) {
+          mapRef.current.invalidateSize();
+          // Re-center on route if available and not navigating
+          if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0) {
+            const bounds = L.latLngBounds(
+              currentRoute.routePath.map(coord => [coord.lat, coord.lng])
+            );
+            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+          }
+        }
+      };
+
+      // Immediate invalidation
+      requestAnimationFrame(() => {
+        invalidateMap();
+        // Second attempt after CSS transitions
+        setTimeout(invalidateMap, 250);
+      });
     }
-  }, []); // Note: We'll add proper dependencies after testing
+  }, [mapProvider, isMapExpanded, sidebarState, isNavigating, currentRoute]);
 
   // Center map on route when route changes (only during planning, not navigation)
   useEffect(() => {
