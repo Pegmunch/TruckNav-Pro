@@ -195,6 +195,28 @@ const InteractiveMap = memo(function InteractiveMap({
     }
   }, [preferences.showStreetView, streetViewPosition]);
 
+  // Listen for navigation start event to automatically enable street view
+  useEffect(() => {
+    const handleStreetViewActivation = (event: CustomEvent) => {
+      if (event.type === 'activate_street_view_navigation') {
+        // Automatically enable street view in navigation mode
+        const newPreferences = { 
+          ...preferences, 
+          streetViewMode: 'navigation' as const, 
+          showStreetView: true 
+        };
+        setPreferences(newPreferences);
+        saveMapPreferences(newPreferences);
+      }
+    };
+
+    window.addEventListener('activate_street_view_navigation', handleStreetViewActivation as EventListener);
+    
+    return () => {
+      window.removeEventListener('activate_street_view_navigation', handleStreetViewActivation as EventListener);
+    };
+  }, [preferences]);
+
   // Smart auto-activation logic for navigation mode
   useEffect(() => {
     if (!isNavigating || !currentRoute) {

@@ -129,6 +129,7 @@ const StreetView = memo(function StreetView({
   
   // Check for Google Street View API key
   const apiKey = import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY;
+  const [fallbackMode, setFallbackMode] = useState(false);
   
   // Load Google Street View API
   useEffect(() => {
@@ -139,6 +140,7 @@ const StreetView = memo(function StreetView({
 
     if (!apiKey) {
       setError('Google Street View API key is required. Please set VITE_GOOGLE_STREET_VIEW_API_KEY environment variable.');
+      setFallbackMode(true);
       return;
     }
 
@@ -154,6 +156,7 @@ const StreetView = memo(function StreetView({
     script.defer = true;
     script.onerror = () => {
       setError('Failed to load Google Street View API. Please check your API key and network connection.');
+      setFallbackMode(true);
     };
     
     document.head.appendChild(script);
@@ -446,26 +449,48 @@ const StreetView = memo(function StreetView({
         </div>
       )}
 
-      {/* Error State */}
+      {/* Error State with Navigation Fallback */}
       {error && !isLoading && (
         <div className="absolute inset-0 bg-muted flex items-center justify-center z-10">
-          <Card className="max-w-sm mx-4">
+          <Card className="max-w-sm mx-4" data-testid="street-view-navigation-fallback">
             <CardContent className="text-center space-y-4 pt-6">
-              <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground" />
-              <div>
-                <h3 className="text-lg font-semibold">Street View Unavailable</h3>
-                <p className="text-muted-foreground text-sm">{error}</p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setError(null);
-                  checkStreetViewAvailability();
-                }}
-                data-testid="button-retry-street-view"
-              >
-                Try Again
-              </Button>
+              {(mode === 'navigation' || isNavigating) ? (
+                <>
+                  <div className="p-4 bg-blue-100 dark:bg-blue-900 rounded-full w-fit mx-auto">
+                    <Navigation className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Navigation Mode Active</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Ground view would be available here with Google Street View API key configured.
+                    </p>
+                    {isNavigating && nextManeuver && (
+                      <div className="mt-3 p-3 bg-background/50 rounded border text-left">
+                        <p className="text-sm font-medium">Next: {nextManeuver.instruction}</p>
+                        <p className="text-xs text-muted-foreground">{nextManeuver.distance}m ahead</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground" />
+                  <div>
+                    <h3 className="text-lg font-semibold">Street View Unavailable</h3>
+                    <p className="text-muted-foreground text-sm">{error}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setError(null);
+                      checkStreetViewAvailability();
+                    }}
+                    data-testid="button-retry-street-view"
+                  >
+                    Try Again
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

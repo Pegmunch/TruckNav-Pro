@@ -768,6 +768,12 @@ export default function NavigationPage() {
         localStorage.setItem('activeRouteId', route.id.toString());
       }
 
+      // Automatically enable street view in navigation mode when navigation starts
+      const streetViewActivationEvent = new CustomEvent('activate_street_view_navigation', {
+        detail: { route: route, profile: selectedProfile }
+      });
+      window.dispatchEvent(streetViewActivationEvent);
+
       setTimeout(() => {
         setIsMapExpanded(true);
       }, 300);
