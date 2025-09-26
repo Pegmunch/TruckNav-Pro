@@ -731,6 +731,13 @@ body {
   50% { opacity: 0.7; }
 }
 
+/* Chrome Street View Fix - Resolves Chrome-specific webkit transform rendering issue */
+/* This fixes invisible Street View controls in Chrome while maintaining Safari compatibility */
+html body div[style*="transform"] {
+  -webkit-transform: scale(1) translateZ(0) !important;
+  transform: scale(1) translateZ(0) !important;
+}
+
 /* Enhanced Focus Indicators for Accessibility and Safety */
 .navigation-focus:focus,
 button:focus-visible,
