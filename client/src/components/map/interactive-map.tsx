@@ -68,7 +68,7 @@ interface InteractiveMapProps {
 const MAP_PREFERENCES_KEY = 'trucknav_map_preferences';
 
 interface MapPreferences {
-  mapViewMode: 'roads' | 'satellite' | 'street-view';
+  mapViewMode: 'roads' | 'satellite';
   showTrafficLayer: boolean;
   showIncidents: boolean;
   showTruckRoutes: boolean;
@@ -98,6 +98,10 @@ function loadMapPreferences(): MapPreferences {
     const stored = localStorage.getItem(MAP_PREFERENCES_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+      // Sanitize legacy 'street-view' mapViewMode values
+      if (parsed.mapViewMode === 'street-view') {
+        parsed.mapViewMode = 'roads';
+      }
       return { ...defaultMapPreferences, ...parsed };
     }
   } catch (error) {
@@ -183,6 +187,7 @@ const InteractiveMap = memo(function InteractiveMap({
   // Auto-hide functionality state
   const [controlsVisible, setControlsVisible] = useState(true); // Start visible so buttons are immediately available
   const [isUserInteracting, setIsUserInteracting] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false); // Track if user has interacted to prevent premature auto-hide
   const [panelHover, setPanelHover] = useState(false);
   const manualHiddenRef = useRef(false);
   const autoHideTimerRef = useRef<number | null>(null);
@@ -265,6 +270,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
 
   const handleCurrentLocation = () => {
+    setHasUserInteracted(true);
     resetAutoHideTimer();
     
     if (!navigator.geolocation) {
@@ -357,16 +363,19 @@ const InteractiveMap = memo(function InteractiveMap({
       clearTimeout(autoHideTimerRef.current);
     }
     
-    autoHideTimerRef.current = window.setTimeout(() => {
-      if (!panelHover) {
-        setControlsVisible(false);
-        setIsUserInteracting(false);
-      } else {
-        // Reschedule if still hovering
-        resetAutoHideTimer();
-      }
-    }, AUTO_HIDE_DELAY);
-  }, [panelHover]);
+    // Only auto-hide if user has already interacted at least once
+    if (hasUserInteracted) {
+      autoHideTimerRef.current = window.setTimeout(() => {
+        if (!panelHover) {
+          setControlsVisible(false);
+          setIsUserInteracting(false);
+        } else {
+          // Reschedule if still hovering
+          resetAutoHideTimer();
+        }
+      }, AUTO_HIDE_DELAY);
+    }
+  }, [panelHover, hasUserInteracted]);
 
   // Handle legal disclaimer toggle
   const handleToggleLegalDisclaimer = useCallback(() => {
@@ -470,6 +479,7 @@ const InteractiveMap = memo(function InteractiveMap({
     const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
+    setHasUserInteracted(true);
     resetAutoHideTimer();
   };
 
@@ -479,6 +489,7 @@ const InteractiveMap = memo(function InteractiveMap({
     const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
+    setHasUserInteracted(true);
     resetAutoHideTimer();
   };
 
@@ -487,6 +498,7 @@ const InteractiveMap = memo(function InteractiveMap({
     const newPreferences = { ...preferences, mapViewMode: mode, showStreetView: false };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
+    setHasUserInteracted(true);
     resetAutoHideTimer();
     console.log('✅ New preferences set:', newPreferences);
   };
@@ -519,11 +531,11 @@ const InteractiveMap = memo(function InteractiveMap({
 
   const handleToggleStreetView = () => {
     const newShowStreetView = !preferences.showStreetView;
-    const newMapViewMode = newShowStreetView ? 'street-view' : 'roads';
+    // Keep mapViewMode independent - don't change it when toggling street view
     const newPreferences = { 
       ...preferences, 
-      showStreetView: newShowStreetView,
-      mapViewMode: newMapViewMode
+      showStreetView: newShowStreetView
+      // mapViewMode remains unchanged (roads/satellite only)
     };
     setPreferences(newPreferences);
     saveMapPreferences(newPreferences);
@@ -534,6 +546,8 @@ const InteractiveMap = memo(function InteractiveMap({
       setStreetViewPosition({ lat: center.lat, lng: center.lng });
     }
     
+    // Mark that user has interacted
+    setHasUserInteracted(true);
     resetAutoHideTimer();
   };
 
@@ -864,12 +878,15 @@ const InteractiveMap = memo(function InteractiveMap({
       
       {/* Street View Preview Panel */}
       {preferences.showStreetView && streetViewPosition && !isStreetViewFullscreen && (
-        <div className={cn(
-          "absolute bottom-44 right-4 z-[500]",
-          "w-64 h-36 md:w-80 md:h-48 lg:w-96 lg:h-52",
-          "bg-background border border-border rounded-lg shadow-lg overflow-hidden",
-          "transition-all duration-300 ease-in-out"
-        )}>
+        <div 
+          className={cn(
+            "absolute bottom-48 right-4 z-[500]",
+            "w-64 h-36 md:w-80 md:h-48 lg:w-96 lg:h-52",
+            "bg-background border border-border rounded-lg shadow-lg overflow-hidden",
+            "transition-all duration-300 ease-in-out"
+          )}
+          data-testid="container-street-view-preview"
+        >
           {/* Street View Component in Preview Mode */}
           <StreetView
             lat={streetViewPosition.lat}
@@ -895,7 +912,7 @@ const InteractiveMap = memo(function InteractiveMap({
                 handleStreetViewFullscreenToggle();
               }}
               className="h-6 w-6 p-0 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-              data-testid="button-expand-street-view"
+              data-testid="button-expand-street-view-preview"
               title="Expand to fullscreen"
             >
               <Maximize className="w-3 h-3" />
@@ -1058,6 +1075,8 @@ const InteractiveMap = memo(function InteractiveMap({
             className="h-6 px-2 text-xs rounded-full"
             onClick={handleToggleStreetView}
             data-testid="button-street-view"
+            disabled={!import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY}
+            title={!import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY ? "Street View requires API key configuration" : "Toggle street view"}
           >
             <Camera className="w-3 h-3 mr-1" />
             Street
