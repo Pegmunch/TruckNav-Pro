@@ -698,8 +698,8 @@ export default function NavigationPage() {
       setIsAlternativeRoutesOpen(false);
       setShowLegalPopup(false);
       
-      // Prepare navigation interface
-      setSidebarState('open');
+      // Prepare navigation interface - collapse sidebar for maximum map visibility during navigation
+      setSidebarState('collapsed');
 
       // Generate idempotency key for this navigation start
       const idempotencyKey = generateIdempotencyKey('start');
