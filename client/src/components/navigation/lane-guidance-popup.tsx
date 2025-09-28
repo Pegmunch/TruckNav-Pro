@@ -219,8 +219,8 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   return (
     <div 
       className={cn(
-        "fixed right-4 bottom-4 z-50 transition-all duration-300 ease-in-out",
-        "sm:right-6 sm:bottom-6", // Slightly more spacing on larger screens
+        "fixed right-4 bottom-32 z-50 transition-all duration-300 ease-in-out",
+        "sm:right-6 sm:bottom-36", // Slightly more spacing on larger screens, moved up by panel height
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
         className
       )}
