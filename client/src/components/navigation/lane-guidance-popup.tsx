@@ -24,10 +24,11 @@ interface LaneIndicatorProps {
   isRecommended: boolean;
   isRestricted: boolean;
   compact?: boolean;
+  onClick?: (laneIndex: number) => void;
 }
 
 // Extracted and optimized LaneIndicator component for the popup
-function LaneIndicator({ lane, isSelected, isRecommended, isRestricted, compact = false }: LaneIndicatorProps) {
+function LaneIndicator({ lane, isSelected, isRecommended, isRestricted, compact = false, onClick }: LaneIndicatorProps) {
   const getDirectionIcon = () => {
     const iconSize = compact ? "w-2 h-2" : "w-3 h-3";
     
@@ -64,7 +65,13 @@ function LaneIndicator({ lane, isSelected, isRecommended, isRestricted, compact 
 
   return (
     <div className="flex flex-col items-center space-y-0.5">
-      <div className={getClasses()}>
+      <button 
+        className={cn(getClasses(), "cursor-pointer hover:scale-105 active:scale-95 disabled:cursor-not-allowed")} 
+        onClick={() => !isRestricted && onClick?.(lane.index)}
+        disabled={isRestricted}
+        data-testid={`lane-option-${lane.index + 1}`}
+        aria-label={`Select lane ${lane.index + 1}`}
+      >
         {getDirectionIcon()}
         {isSelected && (
           <CheckCircle className={`absolute -top-1 -right-1 ${compact ? "w-2 h-2" : "w-3 h-3"} text-primary-foreground bg-primary rounded-full`} />
@@ -72,7 +79,7 @@ function LaneIndicator({ lane, isSelected, isRecommended, isRestricted, compact 
         {isRecommended && !isSelected && (
           <div className={`absolute -top-1 -right-1 ${compact ? "w-1.5 h-1.5" : "w-2 h-2"} bg-green-500 rounded-full`} />
         )}
-      </div>
+      </button>
       <div className={`${compact ? "text-[8px]" : "text-[10px]"} text-muted-foreground`}>
         {lane.index + 1}
       </div>
@@ -148,13 +155,32 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
 
   const selectedLaneIndex = savedSelections[nextManeuver.stepIndex] ?? null;
   const hasLaneSelection = selectedLaneIndex !== null;
+  
+  // Handle lane selection
+  const handleLaneSelection = (laneIndex: number) => {
+    const newSelections = {
+      ...savedSelections,
+      [nextManeuver.stepIndex]: laneIndex
+    };
+    
+    setSavedSelections(newSelections);
+    
+    // Save to localStorage
+    if (currentRoute?.id) {
+      try {
+        localStorage.setItem(`lane-selections-${currentRoute.id}`, JSON.stringify(newSelections));
+      } catch (error) {
+        console.error('Failed to save lane selection:', error);
+      }
+    }
+  };
 
-  // Calculate responsive size (1/4 of screen)
+  // Calculate responsive size (1/8 of screen)
   const popupStyle = {
-    width: 'calc(25vw)', // True 1/4 screen width
+    width: 'calc(12.5vw)', // True 1/8 screen width
     height: 'auto',
-    minWidth: '150px', // Reasonable minimum for readability
-    minHeight: '120px',
+    minWidth: '120px', // Reasonable minimum for readability
+    minHeight: '100px',
   };
 
   return (
@@ -196,6 +222,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
                     isRecommended={isRecommended}
                     isRestricted={isRestricted}
                     compact={true}
+                    onClick={handleLaneSelection}
                   />
                 );
               })}
