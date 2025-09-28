@@ -31,6 +31,7 @@ import SettingsModal from "@/components/settings/settings-modal";
 import RoutePreviewPopup from "@/components/navigation/route-preview-popup";
 import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
+import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-handler";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -301,6 +302,77 @@ export default function NavigationPage() {
       refetchCurrentJourney();
     }
   }, []);
+
+  // Android hardware back button handling for professional truck navigation
+  useAndroidBackHandlerWithPriority(() => {
+    // Handle different UI states with priority order
+    
+    // Highest priority: Close critical modals/popups
+    if (showLegalPopup) {
+      setShowLegalPopup(false);
+      console.log('🔙 Android back: Closed legal popup');
+      return true;
+    }
+    
+    if (showVehicleSettings) {
+      setShowVehicleSettings(false);
+      console.log('🔙 Android back: Closed vehicle settings');
+      return true;
+    }
+    
+    // High priority: Exit special navigation modes
+    if (isARMode) {
+      setIsARMode(false);
+      toast({
+        title: "AR Mode Disabled",
+        description: "Returning to normal navigation view",
+      });
+      console.log('🔙 Android back: Exited AR mode');
+      return true;
+    }
+    
+    if (isFullscreenNav) {
+      setIsFullscreenNav(false);
+      console.log('🔙 Android back: Exited fullscreen navigation');
+      return true;
+    }
+    
+    // Medium priority: Close panels and overlays
+    if (isAlternativeRoutesOpen) {
+      setIsAlternativeRoutesOpen(false);
+      setPreviewRoute(null);
+      console.log('🔙 Android back: Closed alternative routes panel');
+      return true;
+    }
+    
+    if (isMapExpanded) {
+      setIsMapExpanded(false);
+      console.log('🔙 Android back: Collapsed expanded map');
+      return true;
+    }
+    
+    // Lower priority: Sidebar management for mobile
+    if (isMobile && sidebarState === 'open') {
+      setSidebarState('closed');
+      console.log('🔙 Android back: Closed mobile sidebar');
+      return true;
+    }
+    
+    // Professional truck navigation: Don't exit app during navigation
+    if (isNavigating) {
+      toast({
+        title: "Navigation Active",
+        description: "Please stop navigation before going back. Safety first!",
+        variant: "destructive",
+      });
+      console.log('🔙 Android back: Prevented exit during navigation');
+      return true;
+    }
+    
+    // Allow normal back behavior when no special state is active
+    console.log('🔙 Android back: Allowing normal navigation');
+    return false;
+  }, 100, true); // High priority handler
 
   // Journey mutations
   const activateJourneyMutation = useMutation({
