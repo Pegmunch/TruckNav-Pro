@@ -2067,3 +2067,116 @@ body.navigation-active [data-testid*="button-"] {
   pointer-events: auto !important;
   z-index: 50 !important;
 }
+
+/* ============================================
+   ENHANCED GLOVE CURSOR FEATURE FOR MAP DRAGGING
+   ============================================ */
+
+/* Professional map interaction cursors */
+.leaflet-container {
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  cursor: -moz-grab !important;
+}
+
+.leaflet-container:active,
+.leaflet-container.leaflet-dragging {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+  cursor: -moz-grabbing !important;
+}
+
+/* Enhanced map dragging feedback */
+.leaflet-container.leaflet-dragging {
+  background-color: rgba(59, 130, 246, 0.02) !important;
+  transition: background-color 0.1s ease;
+}
+
+/* Professional touch feedback for mobile */
+.leaflet-container:active {
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}
+
+/* Override any conflicting Leaflet cursor styles */
+.leaflet-container .leaflet-marker-draggable {
+  cursor: move !important;
+}
+
+.leaflet-container .leaflet-marker-draggable:hover {
+  cursor: move !important;
+}
+
+/* Ensure map controls maintain proper cursor */
+.leaflet-control-zoom a,
+.leaflet-control-layers-toggle {
+  cursor: pointer !important;
+}
+
+/* Enhanced visual feedback for professional truck navigation */
+.map-container {
+  position: relative;
+}
+
+.map-container::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.map-container::after {
+  content: '🧤';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  z-index: 1001;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+/* Show glove icon on hover for desktop */
+@media (hover: hover) {
+  .map-container:hover::before,
+  .map-container:hover::after {
+    opacity: 1;
+  }
+}
+
+/* Professional map interaction for truck drivers */
+.cursor-grab {
+  cursor: grab !important;
+  cursor: -webkit-grab !important;
+  cursor: -moz-grab !important;
+}
+
+.cursor-grab:active,
+.active\:cursor-grabbing:active {
+  cursor: grabbing !important;
+  cursor: -webkit-grabbing !important;
+  cursor: -moz-grabbing !important;
+}
+
+/* Enhanced mobile touch response */
+@media (pointer: coarse) {
+  .leaflet-container {
+    touch-action: pan-x pan-y !important;
+  }
+}

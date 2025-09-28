@@ -390,12 +390,27 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         zoomControl={false}
         attributionControl={false}
         ref={(map) => {
-          if (map) {
+          if (map && map.getContainer && map.getContainer()) {
             mapRef.current = map;
-            map.options.zoomAnimation = true;
-            map.options.markerZoomAnimation = true;
-            // Force resize to ensure proper rendering
-            setTimeout(() => map.invalidateSize(), 0);
+            
+            // Safely set options only if map is properly initialized
+            try {
+              map.options.zoomAnimation = true;
+              map.options.markerZoomAnimation = true;
+              
+              // Only call invalidateSize if the map is fully ready
+              setTimeout(() => {
+                if (map && map.invalidateSize && typeof map.invalidateSize === 'function') {
+                  try {
+                    map.invalidateSize();
+                  } catch (error) {
+                    console.warn('Map invalidateSize failed:', error);
+                  }
+                }
+              }, 100); // Increased timeout to ensure map is fully rendered
+            } catch (error) {
+              console.warn('Map initialization failed:', error);
+            }
           }
         }}
         className="leaflet-container-enhanced"

@@ -981,31 +981,32 @@ const InteractiveMap = memo(function InteractiveMap({
         autoExpanded && "automotive-map-expanded", // Additional class for auto-expansion styling
         preferences.mapViewMode === 'satellite' && "satellite-view", // Satellite view styling
         preferences.showStreetView && "opacity-50", // Dim map when street view is active
-        "cursor-pointer" // Indicate interactive map
+        "cursor-grab active:cursor-grabbing" // Glove cursor for dragging feedback
       )}
       onClick={handleMapClick}
-      onTouchStart={handleMapTouchStart}
-      onTouchEnd={handleMapTouchEnd}
       data-testid="map-container"
       style={{ height: '100%', width: '100%', minHeight: '400px' }}
     >
       {/* React Leaflet Map */}
       <MapContainer 
-        key={`map-container-${Math.random()}`}
+        key="stable-map-container"
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         style={{ height: '100%', width: '100%' }}
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 cursor-grab"
         data-testid="leaflet-map"
-        // Enhanced mobile touch settings for better gesture control
+        // Enhanced gesture control for professional truck navigation
         dragging={true}
         touchZoom={true}
-        scrollWheelZoom={!L.Browser.mobile}
+        scrollWheelZoom={true}
         doubleClickZoom={true}
         worldCopyJump={false}
         bounceAtZoomLimits={true}
         zoomControl={false}
         attributionControl={false}
+        // Professional map interaction settings
+        keyboard={true}
+        boxZoom={true}
       >
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
