@@ -122,6 +122,7 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
   }
 
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 }); // Top-left default position
   const dragRef = useRef<HTMLDivElement>(null);
@@ -166,7 +167,7 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
     <Card 
       className={cn(
         "fixed z-50 shadow-2xl border-2 transition-all duration-300 select-none",
-        isMinimized ? "w-12 h-10" : "w-56 h-40",
+        isFullscreen ? "inset-0 w-full h-full" : isMinimized ? "w-12 h-10" : "w-[12.5vw] h-[12.5vw] min-w-[150px] min-h-[150px]",
         className
       )}
       style={{
@@ -188,12 +189,32 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
           {isMinimized ? "" : "Route Overview"}
         </span>
         <div className="flex items-center gap-1">
+          {!isMinimized && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 text-white hover:bg-white/20"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              data-testid={isFullscreen ? "exit-fullscreen-preview" : "fullscreen-route-preview"}
+              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-3 h-3" />
+              ) : (
+                <Maximize2 className="w-3 h-3" />
+              )}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
             className="h-5 w-5 p-0 text-white hover:bg-white/20"
-            onClick={() => setIsMinimized(!isMinimized)}
+            onClick={() => {
+              if (isFullscreen) setIsFullscreen(false);
+              setIsMinimized(!isMinimized);
+            }}
             data-testid={isMinimized ? "maximize-route-preview" : "minimize-route-preview"}
+            title={isMinimized ? "Restore" : "Minimize"}
           >
             {isMinimized ? (
               <Maximize2 className="w-3 h-3" />
