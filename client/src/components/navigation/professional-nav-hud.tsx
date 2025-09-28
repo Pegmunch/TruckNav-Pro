@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { type Route, type VehicleProfile } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 
 interface ProfessionalNavHUDProps {
   currentRoute: Route | null;
@@ -121,6 +122,9 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   const [instructions, setInstructions] = useState<NavigationInstruction[]>([]);
   const [estimatedArrival, setEstimatedArrival] = useState<Date | null>(null);
 
+  // Screen wake lock to keep display on during navigation
+  const wakeLock = useWakeLock();
+
   // Generate turn-by-turn instructions when route changes
   useEffect(() => {
     if (currentRoute && isNavigating) {
@@ -145,6 +149,19 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
 
     return () => clearInterval(timer);
   }, [isNavigating]);
+
+  // Manage screen wake lock during navigation
+  useEffect(() => {
+    if (isNavigating) {
+      // Acquire wake lock when navigation starts
+      wakeLock.acquire();
+      console.log('🔒 Screen wake lock activated for navigation - screen will stay on');
+    } else {
+      // Release wake lock when navigation stops
+      wakeLock.release();
+      console.log('🔓 Screen wake lock released - normal power management restored');
+    }
+  }, [isNavigating, wakeLock]);
 
   const currentInstruction = instructions[currentInstructionIndex];
   const nextInstruction = instructions[currentInstructionIndex + 1];
