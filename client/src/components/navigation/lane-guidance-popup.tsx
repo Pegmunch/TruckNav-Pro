@@ -7,7 +7,8 @@ import {
   ArrowUpRight, 
   ArrowRight, 
   CheckCircle,
-  Navigation
+  Navigation,
+  Hand
 } from "lucide-react";
 import { type LaneSegment, type LaneOption, type Route } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -96,6 +97,11 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
 }: LaneGuidancePopupProps) {
   const [savedSelections, setSavedSelections] = useState<Record<number, number>>({});
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Drag functionality state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Load saved lane selections from localStorage
   useEffect(() => {
@@ -208,6 +214,58 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
     }
   };
 
+  // Drag functionality handlers
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    setDragOffset({
+      x: clientX - dragPosition.x,
+      y: clientY - dragPosition.y
+    });
+  };
+
+  const handleDragMove = (e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return;
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    setDragPosition({
+      x: clientX - dragOffset.x,
+      y: clientY - dragOffset.y
+    });
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Add global event listeners for drag functionality
+  useEffect(() => {
+    if (isDragging) {
+      const handleMouseMove = (e: MouseEvent) => handleDragMove(e);
+      const handleMouseUp = () => handleDragEnd();
+      const handleTouchMove = (e: TouchEvent) => handleDragMove(e);
+      const handleTouchEnd = () => handleDragEnd();
+      
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchend', handleTouchEnd);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [isDragging, dragOffset]);
+
   // Calculate responsive size (1/8 of screen)
   const popupStyle = {
     width: 'calc(12.5vw)', // True 1/8 screen width
@@ -219,22 +277,37 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   return (
     <div 
       className={cn(
-        "fixed right-4 bottom-32 z-50 transition-all duration-300 ease-in-out",
-        "sm:right-6 sm:bottom-36", // Slightly more spacing on larger screens, moved up by panel height
+        "fixed z-50 transition-all duration-300 ease-in-out",
+        isDragging ? "cursor-grabbing" : "cursor-grab",
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
         className
       )}
-      style={popupStyle}
+      style={{
+        ...popupStyle,
+        right: dragPosition.x > 0 ? 'auto' : '16px',
+        bottom: dragPosition.y > 0 ? 'auto' : '128px',
+        left: dragPosition.x > 0 ? `${dragPosition.x}px` : 'auto',
+        top: dragPosition.y > 0 ? `${dragPosition.y}px` : 'auto',
+        transform: isDragging ? 'scale(1.05)' : 'scale(1)'
+      }}
       data-testid="popup-lane-indicators"
     >
       <Card className="shadow-xl border-2 border-primary/30 backdrop-blur-sm bg-background/95">
         <CardContent className="p-3">
           <div className="space-y-2">
-            {/* Header */}
+            {/* Header with Drag Handle */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
-                <Navigation className="w-3 h-3 text-primary" />
-                <span className="text-xs font-medium text-foreground">Lane Guide</span>
+                <div 
+                  className="flex items-center space-x-1 cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={handleDragStart}
+                  onTouchStart={handleDragStart}
+                  data-testid="drag-handle"
+                >
+                  <Hand className="w-3 h-3 text-muted-foreground hover:text-primary transition-colors" />
+                  <Navigation className="w-3 h-3 text-primary" />
+                  <span className="text-xs font-medium text-foreground">Lane Guide</span>
+                </div>
               </div>
               <Badge variant="secondary" className="text-xs px-1 py-0">
                 {currentManeuver.laneOptions?.length || 4}
