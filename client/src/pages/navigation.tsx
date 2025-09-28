@@ -146,10 +146,16 @@ export default function NavigationPage() {
       if (!navigator.geolocation) return;
       
       try {
+        // Safari-friendly geolocation with permission check
+        const permission = await navigator.permissions?.query({name: 'geolocation'}).catch(() => null);
+        if (permission && permission.state === 'denied') {
+          return;
+        }
+        
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
+            enableHighAccuracy: false, // Safari works better with this disabled
+            timeout: 15000, // Longer timeout for Safari
             maximumAge: 300000
           });
         });
@@ -165,11 +171,10 @@ export default function NavigationPage() {
             }
           }
         } catch (error) {
-          console.warn('Failed to get address from coordinates:', error);
           setFromLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
         }
       } catch (error) {
-        console.warn('Auto GPS location detection failed:', error);
+        // Silent handling for Safari - don't log errors that users can't fix
       }
     };
     

@@ -62,12 +62,22 @@ const SpeedDisplay = memo(function SpeedDisplay({
     return speedKmh; // already in km/h
   };
   
-  // Live speed tracking using GPS
+  // Live speed tracking using GPS with Safari compatibility
   useEffect(() => {
     let watchId: number;
     
-    const startSpeedTracking = () => {
-      if ('geolocation' in navigator) {
+    const startSpeedTracking = async () => {
+      if (!('geolocation' in navigator)) {
+        return;
+      }
+      
+      try {
+        // Safari requires explicit permission request
+        const permission = await navigator.permissions?.query({name: 'geolocation'});
+        if (permission && permission.state === 'denied') {
+          return;
+        }
+        
         watchId = navigator.geolocation.watchPosition(
           (position) => {
             // Use GPS speed if available, otherwise calculate from position changes
@@ -75,14 +85,35 @@ const SpeedDisplay = memo(function SpeedDisplay({
             setLiveSpeed(Math.max(0, speed)); // Ensure non-negative speed
           },
           (error) => {
-            console.warn('Speed tracking error:', error);
+            // Silently handle geolocation errors in Safari
+            if (error.code !== error.PERMISSION_DENIED) {
+              console.debug('Speed tracking unavailable:', error.message);
+            }
           },
           {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 1000
+            enableHighAccuracy: false, // Less demanding for Safari
+            timeout: 15000, // Longer timeout for Safari
+            maximumAge: 5000 // More caching for Safari
           }
         );
+      } catch (error) {
+        // Permission API not supported in all Safari versions
+        try {
+          watchId = navigator.geolocation.watchPosition(
+            (position) => {
+              const speed = position.coords.speed || 0;
+              setLiveSpeed(Math.max(0, speed));
+            },
+            () => {}, // Silent error handling for Safari
+            {
+              enableHighAccuracy: false,
+              timeout: 15000,
+              maximumAge: 5000
+            }
+          );
+        } catch (fallbackError) {
+          // Geolocation completely unavailable
+        }
       }
     };
     
