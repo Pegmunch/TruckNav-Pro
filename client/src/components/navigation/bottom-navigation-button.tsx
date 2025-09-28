@@ -41,9 +41,10 @@ export function BottomNavigationButton({
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 z-50 p-4",
+      "fixed z-50 start-nav-button-safe professional-nav-interface",
       // CRITICAL FIX: Remove gradient and backdrop blur, make wrapper non-interactive
-      "bg-transparent overlay-safe-mode:bg-none overlay-safe-mode:backdrop-blur-0 pointer-events-none"
+      "bg-transparent overlay-safe-mode:bg-none overlay-safe-mode:backdrop-blur-0 pointer-events-none",
+      "p-4"
     )}>
       <Card className={cn(
         "mx-auto max-w-lg shadow-lg border-2 pointer-events-auto",

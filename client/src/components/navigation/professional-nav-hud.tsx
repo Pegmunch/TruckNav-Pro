@@ -176,7 +176,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   const remainingTime = currentRoute ? Math.max((currentRoute.duration || 0) - Math.floor(timeElapsed / 60), 0) : 0;
 
   return (
-    <div className="fixed bottom-20 right-4 z-[60] bg-transparent w-auto max-w-lg">
+    <div className="fixed nav-hud-safe-area z-[60] bg-transparent w-auto max-w-lg professional-nav-interface">
       {/* Professional HUD Header */}
       <div className="flex items-center justify-between p-4 bg-gray-900/95 border-b border-gray-700/50">
         {/* Left: Current Speed & Status */}
