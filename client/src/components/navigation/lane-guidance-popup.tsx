@@ -219,12 +219,13 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   return (
     <div 
       className={cn(
-        "fixed right-4 top-1/2 -translate-y-1/2 z-50 transition-all duration-300 ease-in-out",
+        "fixed right-4 bottom-4 z-50 transition-all duration-300 ease-in-out",
+        "sm:right-6 sm:bottom-6", // Slightly more spacing on larger screens
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
         className
       )}
       style={popupStyle}
-      data-testid="lane-guidance-popup"
+      data-testid="popup-lane-indicators"
     >
       <Card className="shadow-xl border-2 border-primary/30 backdrop-blur-sm bg-background/95">
         <CardContent className="p-3">
@@ -241,7 +242,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
             </div>
 
             {/* Lane indicators */}
-            <div className="flex justify-center space-x-1" data-testid="popup-lane-indicators">
+            <div className="flex justify-center space-x-1">
               {currentManeuver.laneOptions.map((lane) => {
                 const isSelected = selectedLaneIndex === lane.index;
                 const isRecommended = Boolean(lane.recommended && !lane.restrictions?.length);
