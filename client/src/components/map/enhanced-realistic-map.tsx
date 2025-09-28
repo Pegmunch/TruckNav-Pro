@@ -214,19 +214,44 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     if (isNavigating && currentLocation && mapRef.current) {
       const map = mapRef.current;
       
-      // Set center first without offset
-      map.setView([currentLocation.lat, currentLocation.lng], map.getZoom(), {
-        animate: false
-      });
-      
-      // Then apply screen-space offset to move truck to lower portion
-      // This works in all directions and zoom levels
-      const containerSize = map.getSize();
-      const offsetY = containerSize.y * 0.3; // Move view up by 30% of screen height
-      map.panBy([0, -offsetY], {
-        animate: true,
-        duration: 1.0
-      });
+      try {
+        // Ensure map is fully initialized before making positioning calls
+        // Add extra checks for container and initialization state
+        const container = map.getContainer && map.getContainer();
+        if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
+            map.setView && map.getZoom && map.getSize && map.panBy && map._loaded !== false) {
+          
+          // Additional safety check for map size
+          let containerSize;
+          try {
+            containerSize = map.getSize();
+            if (!containerSize || containerSize.x <= 0 || containerSize.y <= 0) {
+              console.warn('Invalid map size, skipping positioning');
+              return;
+            }
+          } catch (sizeError) {
+            console.warn('Failed to get map size:', sizeError);
+            return;
+          }
+          
+          // Set center first without offset
+          map.setView([currentLocation.lat, currentLocation.lng], map.getZoom(), {
+            animate: false
+          });
+          
+          // Then apply screen-space offset to move truck to lower portion
+          // This works in all directions and zoom levels
+          const offsetY = containerSize.y * 0.3; // Move view up by 30% of screen height
+          map.panBy([0, -offsetY], {
+            animate: true,
+            duration: 1.0
+          });
+        } else {
+          console.warn('Map not ready for positioning - container or methods unavailable');
+        }
+      } catch (error) {
+        console.warn('Auto-follow navigation positioning failed:', error);
+      }
     }
   }, [currentLocation, isNavigating]);
 
@@ -235,15 +260,35 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     if (mapRef.current) {
       // Multiple invalidation attempts to handle different timing scenarios
       const invalidateMap = () => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize();
-          // Re-center on route if available and not navigating
-          if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0) {
-            const bounds = L.latLngBounds(
-              currentRoute.routePath.map(coord => [coord.lat, coord.lng])
-            );
-            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+        try {
+          if (!mapRef.current) return;
+          
+          const map = mapRef.current;
+          const container = map.getContainer && map.getContainer();
+          
+          // Enhanced container and map state validation
+          if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
+              typeof map.invalidateSize === 'function' && map._loaded !== false) {
+            
+            map.invalidateSize();
+            
+            // Re-center on route if available and not navigating
+            if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0 && 
+                typeof map.fitBounds === 'function') {
+              try {
+                const bounds = L.latLngBounds(
+                  currentRoute.routePath.map(coord => [coord.lat, coord.lng])
+                );
+                map.fitBounds(bounds, { padding: [50, 50] });
+              } catch (boundsError) {
+                console.warn('Failed to fit route bounds:', boundsError);
+              }
+            }
+          } else {
+            console.warn('Map not ready for invalidation - container or state invalid');
           }
+        } catch (error) {
+          console.warn('Map invalidation failed:', error);
         }
       };
 
@@ -259,10 +304,22 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   // Center map on route when route changes (only during planning, not navigation)
   useEffect(() => {
     if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0 && mapRef.current) {
-      const bounds = L.latLngBounds(
-        currentRoute.routePath.map(coord => [coord.lat, coord.lng])
-      );
-      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      try {
+        const map = mapRef.current;
+        const container = map.getContainer && map.getContainer();
+        
+        if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
+            typeof map.fitBounds === 'function' && map._loaded !== false) {
+          const bounds = L.latLngBounds(
+            currentRoute.routePath.map(coord => [coord.lat, coord.lng])
+          );
+          map.fitBounds(bounds, { padding: [50, 50] });
+        } else {
+          console.warn('Map not ready for route centering - container or state invalid');
+        }
+      } catch (error) {
+        console.warn('Route centering failed:', error);
+      }
     }
   }, [currentRoute, isNavigating]);
 

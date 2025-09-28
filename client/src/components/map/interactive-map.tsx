@@ -318,24 +318,28 @@ const InteractiveMap = memo(function InteractiveMap({
             const absX = Math.abs(deltaX);
             const absY = Math.abs(deltaY);
             
-            if (absX > absY) {
-              // Horizontal swipe - pan map left/right
-              if (deltaX > 0) {
-                console.log('Swipe right detected');
-                map.panBy([-50, 0], { animate: true, duration: 0.3 });
+            try {
+              if (absX > absY) {
+                // Horizontal swipe - pan map left/right
+                if (deltaX > 0) {
+                  console.log('Swipe right detected');
+                  if (map.panBy) map.panBy([-50, 0], { animate: true, duration: 0.3 });
+                } else {
+                  console.log('Swipe left detected');
+                  if (map.panBy) map.panBy([50, 0], { animate: true, duration: 0.3 });
+                }
               } else {
-                console.log('Swipe left detected');
-                map.panBy([50, 0], { animate: true, duration: 0.3 });
+                // Vertical swipe - pan map up/down
+                if (deltaY > 0) {
+                  console.log('Swipe down detected');
+                  if (map.panBy) map.panBy([0, -50], { animate: true, duration: 0.3 });
+                } else {
+                  console.log('Swipe up detected');
+                  if (map.panBy) map.panBy([0, 50], { animate: true, duration: 0.3 });
+                }
               }
-            } else {
-              // Vertical swipe - pan map up/down
-              if (deltaY > 0) {
-                console.log('Swipe down detected');
-                map.panBy([0, -50], { animate: true, duration: 0.3 });
-              } else {
-                console.log('Swipe up detected');
-                map.panBy([0, 50], { animate: true, duration: 0.3 });
-              }
+            } catch (error) {
+              console.warn('Touch gesture panning failed:', error);
             }
             
             // Reset touch tracking
@@ -363,7 +367,7 @@ const InteractiveMap = memo(function InteractiveMap({
       };
       
       // Add touch event listeners to map container
-      const mapContainer = map.getContainer();
+      const mapContainer = map.getContainer && map.getContainer();
       if (mapContainer) {
         mapContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
         mapContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -469,9 +473,13 @@ const InteractiveMap = memo(function InteractiveMap({
         console.log('Current location:', { latitude, longitude });
         
         // Center the map on current location
-        if (mapRef.current) {
-          const currentZoom = mapRef.current.getZoom() ?? 13;
-          mapRef.current.setView([latitude, longitude], Math.max(currentZoom, 13), { animate: true });
+        try {
+          if (mapRef.current && mapRef.current.getContainer && mapRef.current.getContainer() && mapRef.current.setView && mapRef.current.getZoom) {
+            const currentZoom = mapRef.current.getZoom() ?? 13;
+            mapRef.current.setView([latitude, longitude], Math.max(currentZoom, 13), { animate: true });
+          }
+        } catch (error) {
+          console.warn('Current location centering failed:', error);
         }
       },
       (error) => {
@@ -490,12 +498,16 @@ const InteractiveMap = memo(function InteractiveMap({
     setVehiclePosition(newPosition);
     
     // Single smooth pan to new position during navigation
-    if (currentRoute) {
-      mapRef.current.flyTo(newPosition, mapRef.current.getZoom(), {
-        animate: true,
-        duration: 0.8,
-        easeLinearity: 0.2
-      });
+    try {
+      if (currentRoute && mapRef.current && mapRef.current.getContainer && mapRef.current.getContainer() && mapRef.current.flyTo && mapRef.current.getZoom) {
+        mapRef.current.flyTo(newPosition, mapRef.current.getZoom(), {
+          animate: true,
+          duration: 0.8,
+          easeLinearity: 0.2
+        });
+      }
+    } catch (error) {
+      console.warn('Vehicle position update failed:', error);
     }
   }, [currentRoute]);
   
@@ -754,8 +766,12 @@ const InteractiveMap = memo(function InteractiveMap({
   // Handle street view position synchronization
   const handleStreetViewLocationChange = useCallback((location: { lat: number; lng: number }) => {
     setStreetViewPosition(location);
-    if (mapRef.current) {
-      mapRef.current.panTo([location.lat, location.lng]);
+    try {
+      if (mapRef.current && mapRef.current.getContainer && mapRef.current.getContainer() && mapRef.current.panTo) {
+        mapRef.current.panTo([location.lat, location.lng]);
+      }
+    } catch (error) {
+      console.warn('Street view location sync failed:', error);
     }
   }, []);
 
@@ -770,9 +786,13 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Update street view position when map center changes
   const updateStreetViewFromMap = useCallback(() => {
-    if (preferences.showStreetView && mapRef.current) {
-      const center = mapRef.current.getCenter();
-      setStreetViewPosition({ lat: center.lat, lng: center.lng });
+    try {
+      if (preferences.showStreetView && mapRef.current && mapRef.current.getContainer && mapRef.current.getContainer() && mapRef.current.getCenter) {
+        const center = mapRef.current.getCenter();
+        setStreetViewPosition({ lat: center.lat, lng: center.lng });
+      }
+    } catch (error) {
+      console.warn('Street view map sync failed:', error);
     }
   }, [preferences.showStreetView]);
 
@@ -801,52 +821,68 @@ const InteractiveMap = memo(function InteractiveMap({
   // Map directional movement functions (Leaflet API)
   const handleMoveUp = () => {
     console.log('🔝 UP button clicked! Map ref available:', !!mapRef.current);
-    if (!mapRef.current) {
-      console.error('❌ Map reference not available for UP movement');
-      return;
+    try {
+      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
+        console.error('❌ Map reference not available for UP movement');
+        return;
+      }
+      const center = mapRef.current.getCenter();
+      console.log('📍 Current center:', center);
+      const newCenter = L.latLng(center.lat + 0.01, center.lng);
+      console.log('📍 Moving to:', newCenter);
+      mapRef.current.panTo(newCenter);
+      resetAutoHideTimer();
+    } catch (error) {
+      console.warn('Move up failed:', error);
     }
-    const center = mapRef.current.getCenter();
-    console.log('📍 Current center:', center);
-    const newCenter = L.latLng(center.lat + 0.01, center.lng);
-    console.log('📍 Moving to:', newCenter);
-    mapRef.current.panTo(newCenter);
-    resetAutoHideTimer();
   };
 
   const handleMoveDown = () => {
     console.log('🔽 DOWN button clicked! Map ref available:', !!mapRef.current);
-    if (!mapRef.current) {
-      console.error('❌ Map reference not available for DOWN movement');
-      return;
+    try {
+      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
+        console.error('❌ Map reference not available for DOWN movement');
+        return;
+      }
+      const center = mapRef.current.getCenter();
+      const newCenter = L.latLng(center.lat - 0.01, center.lng);
+      mapRef.current.panTo(newCenter);
+      resetAutoHideTimer();
+    } catch (error) {
+      console.warn('Move down failed:', error);
     }
-    const center = mapRef.current.getCenter();
-    const newCenter = L.latLng(center.lat - 0.01, center.lng);
-    mapRef.current.panTo(newCenter);
-    resetAutoHideTimer();
   };
 
   const handleMoveLeft = () => {
     console.log('⬅️ LEFT button clicked! Map ref available:', !!mapRef.current);
-    if (!mapRef.current) {
-      console.error('❌ Map reference not available for LEFT movement');
-      return;
+    try {
+      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
+        console.error('❌ Map reference not available for LEFT movement');
+        return;
+      }
+      const center = mapRef.current.getCenter();
+      const newCenter = L.latLng(center.lat, center.lng - 0.01);
+      mapRef.current.panTo(newCenter);
+      resetAutoHideTimer();
+    } catch (error) {
+      console.warn('Move left failed:', error);
     }
-    const center = mapRef.current.getCenter();
-    const newCenter = L.latLng(center.lat, center.lng - 0.01);
-    mapRef.current.panTo(newCenter);
-    resetAutoHideTimer();
   };
 
   const handleMoveRight = () => {
     console.log('➡️ RIGHT button clicked! Map ref available:', !!mapRef.current);
-    if (!mapRef.current) {
-      console.error('❌ Map reference not available for RIGHT movement');
-      return;
+    try {
+      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
+        console.error('❌ Map reference not available for RIGHT movement');
+        return;
+      }
+      const center = mapRef.current.getCenter();
+      const newCenter = L.latLng(center.lat, center.lng + 0.01);
+      mapRef.current.panTo(newCenter);
+      resetAutoHideTimer();
+    } catch (error) {
+      console.warn('Move right failed:', error);
     }
-    const center = mapRef.current.getCenter();
-    const newCenter = L.latLng(center.lat, center.lng + 0.01);
-    mapRef.current.panTo(newCenter);
-    resetAutoHideTimer();
   };
 
   const handleFullscreenToggle = () => {

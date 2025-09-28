@@ -167,36 +167,8 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
     setIsVisible(shouldShow);
   }, [isNavigating, currentRoute, nextManeuver, forceVisible]);
 
-  // Don't render anything if not visible
-  if (!isVisible) {
-    return null;
-  }
-
-  // Create demo lane data when forced visible but no real data
-  const demoLaneSegment = {
-    stepIndex: 0,
-    instruction: "Keep right to continue on highway",
-    distance: 500,
-    laneOptions: [
-      { index: 0, direction: 'left' as const, recommended: false, restrictions: ['no_trucks'] },
-      { index: 1, direction: 'straight' as const, recommended: true, restrictions: [] },
-      { index: 2, direction: 'straight' as const, recommended: true, restrictions: [] },
-      { index: 3, direction: 'right' as const, recommended: false, restrictions: [] }
-    ]
-  };
-
-  // Use demo data when forced visible but no real navigation data
-  const currentManeuver = forceVisible && !nextManeuver ? demoLaneSegment : nextManeuver;
-  
-  if (!currentManeuver) {
-    return null;
-  }
-
-  const selectedLaneIndex = savedSelections[currentManeuver.stepIndex] ?? null;
-  const hasLaneSelection = selectedLaneIndex !== null;
-  
   // Handle lane selection
-  const handleLaneSelection = (laneIndex: number) => {
+  const handleLaneSelection = (laneIndex: number, currentManeuver: any) => {
     const newSelections = {
       ...savedSelections,
       [currentManeuver.stepIndex]: laneIndex
@@ -266,6 +238,34 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
     }
   }, [isDragging, dragOffset]);
 
+  // Don't render anything if not visible
+  if (!isVisible) {
+    return null;
+  }
+
+  // Create demo lane data when forced visible but no real data
+  const demoLaneSegment = {
+    stepIndex: 0,
+    instruction: "Keep right to continue on highway",
+    distance: 500,
+    laneOptions: [
+      { index: 0, direction: 'left' as const, recommended: false, restrictions: ['no_trucks'] },
+      { index: 1, direction: 'straight' as const, recommended: true, restrictions: [] },
+      { index: 2, direction: 'straight' as const, recommended: true, restrictions: [] },
+      { index: 3, direction: 'right' as const, recommended: false, restrictions: [] }
+    ]
+  };
+
+  // Use demo data when forced visible but no real navigation data
+  const currentManeuver = forceVisible && !nextManeuver ? demoLaneSegment : nextManeuver;
+  
+  if (!currentManeuver) {
+    return null;
+  }
+
+  const selectedLaneIndex = savedSelections[currentManeuver.stepIndex] ?? null;
+  const hasLaneSelection = selectedLaneIndex !== null;
+
   // Calculate responsive size (1/8 of screen)
   const popupStyle = {
     width: 'calc(12.5vw)', // True 1/8 screen width
@@ -329,7 +329,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
                     isRecommended={isRecommended}
                     isRestricted={isRestricted}
                     compact={true}
-                    onClick={handleLaneSelection}
+                    onClick={(laneIndex: number) => handleLaneSelection(laneIndex, currentManeuver)}
                   />
                 );
               })}
