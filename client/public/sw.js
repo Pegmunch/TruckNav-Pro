@@ -26,7 +26,11 @@ const OFFLINE_API_PATTERNS = [
   '/api/facilities',
   '/api/restrictions',
   '/api/entertainment/stations',
-  '/api/entertainment/settings'
+  '/api/entertainment/settings',
+  '/api/journeys',
+  '/api/routes',
+  '/api/traffic-incidents',
+  '/api/postcodes'
 ];
 
 // Map and tile patterns for offline maps
@@ -34,16 +38,74 @@ const MAP_PATTERNS = [
   /^https:\/\/.*\.tile\.openstreetmap\.org/,
   /^https:\/\/.*\.tile\.thunderforest\.com/,
   /^https:\/\/api\.mapbox\.com/,
-  /^https:\/\/.*\.googleapis\.com\/maps/
+  /^https:\/\/.*\.googleapis\.com\/maps/,
+  /^https:\/\/server\.arcgisonline\.com/,
+  /^https:\/\/.*\.arcgis\.com/
 ];
+
+// Mobile network detection and quality assessment
+function detectNetworkQuality() {
+  if (!navigator.connection) {
+    return { type: 'unknown', quality: 'unknown', effective: '4g' };
+  }
+  
+  const connection = navigator.connection;
+  const effective = connection.effectiveType || '4g';
+  const downlink = connection.downlink || 10;
+  
+  let quality = 'good';
+  if (effective === 'slow-2g' || downlink < 0.5) {
+    quality = 'poor';
+  } else if (effective === '2g' || downlink < 1.5) {
+    quality = 'slow';
+  } else if (effective === '3g' || downlink < 5) {
+    quality = 'medium';
+  }
+  
+  return {
+    type: connection.type || 'unknown',
+    quality,
+    effective,
+    downlink,
+    rtt: connection.rtt || 0
+  };
+}
+
+// Enhanced caching for mobile networks
+function getMobileCacheStrategy(request) {
+  const networkQuality = detectNetworkQuality();
+  const url = new URL(request.url);
+  
+  // For poor network conditions, prioritize cache more heavily
+  if (networkQuality.quality === 'poor') {
+    if (url.pathname.startsWith('/api/')) {
+      return 'cache-first-mobile';
+    }
+    return 'cache-first';
+  }
+  
+  // For medium quality, use balanced approach
+  if (networkQuality.quality === 'medium') {
+    if (MAP_PATTERNS.some(pattern => pattern.test(request.url))) {
+      return 'cache-first-maps';
+    }
+    return 'network-first-mobile';
+  }
+  
+  // Good network - normal strategies
+  return getCachingStrategy(request);
+}
 
 // IndexedDB setup for offline data storage
 const DB_NAME = 'TruckNavOfflineDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for new mobile features
 const STORES = {
   OFFLINE_REQUESTS: 'offlineRequests',
   CACHED_DATA: 'cachedData',
-  USER_PREFERENCES: 'userPreferences'
+  USER_PREFERENCES: 'userPreferences',
+  ROUTE_CACHE: 'routeCache',
+  NAVIGATION_STATE: 'navigationState',
+  MOBILE_NETWORK_LOGS: 'mobileNetworkLogs'
 };
 
 // Initialize IndexedDB
@@ -74,6 +136,26 @@ function initDB() {
       // Store for user preferences and settings
       if (!db.objectStoreNames.contains(STORES.USER_PREFERENCES)) {
         db.createObjectStore(STORES.USER_PREFERENCES, { keyPath: 'key' });
+      }
+      
+      // New mobile-specific stores
+      if (!db.objectStoreNames.contains(STORES.ROUTE_CACHE)) {
+        const routeStore = db.createObjectStore(STORES.ROUTE_CACHE, { keyPath: 'id' });
+        routeStore.createIndex('timestamp', 'timestamp');
+        routeStore.createIndex('active', 'active');
+      }
+      
+      if (!db.objectStoreNames.contains(STORES.NAVIGATION_STATE)) {
+        db.createObjectStore(STORES.NAVIGATION_STATE, { keyPath: 'key' });
+      }
+      
+      if (!db.objectStoreNames.contains(STORES.MOBILE_NETWORK_LOGS)) {
+        const networkStore = db.createObjectStore(STORES.MOBILE_NETWORK_LOGS, { 
+          keyPath: 'id', 
+          autoIncrement: true 
+        });
+        networkStore.createIndex('timestamp', 'timestamp');
+        networkStore.createIndex('quality', 'quality');
       }
     };
   });

@@ -4,7 +4,7 @@
   "description": "Professional truck navigation for HGVs with height restrictions, facility finder, and live traffic updates. Patent-protected technology by Bespoke Marketing.Ai Ltd.",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "theme_color": "#2563eb",
   "background_color": "#ffffff",
   "scope": "/",
