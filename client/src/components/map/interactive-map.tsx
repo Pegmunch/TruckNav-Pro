@@ -373,7 +373,7 @@ const InteractiveMap = memo(function InteractiveMap({
       // Wait for DOM to be ready before invalidating size
       const invalidateMapSize = () => {
         try {
-          if (map && map.getContainer()) {
+          if (map && map.getContainer && map.getContainer() && typeof map.invalidateSize === 'function') {
             map.invalidateSize();
             console.log('Map size invalidated on mount');
           }
@@ -409,7 +409,13 @@ const InteractiveMap = memo(function InteractiveMap({
     if (mapRef.current) {
       console.log('Layout changed, invalidating map size');
       setTimeout(() => {
-        mapRef.current?.invalidateSize();
+        try {
+          if (mapRef.current && typeof mapRef.current.invalidateSize === 'function') {
+            mapRef.current.invalidateSize();
+          }
+        } catch (error) {
+          console.warn('Map size invalidation failed on layout change:', error);
+        }
       }, 100);
     }
   }, [isFullscreen, autoExpanded, controlsVisible]);
