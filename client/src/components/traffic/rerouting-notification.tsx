@@ -129,10 +129,10 @@ const ReroutingNotification = memo(function ReroutingNotification({
         return {
           icon: <AlertCircle className="w-5 h-5" />,
           title: "Route Update Failed",
-          bgColor: "bg-red-50 dark:bg-red-950/30",
-          borderColor: "border-red-200 dark:border-red-800",
-          textColor: "text-red-900 dark:text-red-100",
-          accentColor: "bg-red-500",
+          bgColor: "bg-red-50/20 dark:bg-red-950/10 backdrop-blur-sm",
+          borderColor: "border-red-200/30 dark:border-red-800/30",
+          textColor: "text-red-900/80 dark:text-red-100/80",
+          accentColor: "bg-red-500/50",
         };
       default:
         return {
@@ -153,7 +153,7 @@ const ReroutingNotification = memo(function ReroutingNotification({
   return (
     <div 
       className={cn(
-        "fixed top-4 right-4 z-50 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300 ease-in-out",
+        "fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-96 max-w-[calc(100vw-2rem)] transition-all duration-300 ease-in-out",
         isAnimatingOut && "opacity-0 transform translate-x-full"
       )}
       data-testid="rerouting-notification"
