@@ -939,7 +939,7 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0 w-full z-0" style={{height: "100%", minHeight: "400px"}}>
+                <div className="absolute inset-0 w-full z-0 sm:hidden" style={{height: "100%", minHeight: "400px"}}>
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1138,7 +1138,7 @@ export default function NavigationPage() {
             {/* Enhanced Professional Map - Desktop */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0">
+                <div className="absolute inset-0 hidden sm:block">
                   <EnhancedRealisticMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
