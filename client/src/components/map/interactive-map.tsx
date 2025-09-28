@@ -276,27 +276,31 @@ const InteractiveMap = memo(function InteractiveMap({
     const map = useMap();
     
     useEffect(() => {
+      if (!map) return;
+      
       mapRef.current = map;
       console.log('Map reference captured successfully');
       
-      if (map) {
-        // Force map to recalculate size immediately and after render
-        setTimeout(() => {
-          map.invalidateSize();
-          console.log('Map size invalidated on mount');
-        }, 0);
+      // Wait for DOM to be ready before invalidating size
+      const invalidateMapSize = () => {
+        try {
+          if (map && map.getContainer()) {
+            map.invalidateSize();
+            console.log('Map size invalidated on mount');
+          }
+        } catch (error) {
+          console.warn('Map size invalidation failed:', error);
+        }
+      };
+      
+      // Use requestAnimationFrame for better timing
+      requestAnimationFrame(() => {
+        invalidateMapSize();
         
-        setTimeout(() => {
-          map.invalidateSize();  
-          console.log('Map size invalidated after delay');
-        }, 300);
-        
-        // Additional invalidation after 1 second to catch slow layouts
-        setTimeout(() => {
-          map.invalidateSize();
-          console.log('Map size invalidated - final attempt');
-        }, 1000);
-      }
+        // Additional delayed invalidation for slow layouts
+        setTimeout(invalidateMapSize, 300);
+        setTimeout(invalidateMapSize, 1000);
+      });
     }, [map]);
     
     return null;
