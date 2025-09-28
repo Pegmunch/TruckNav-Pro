@@ -919,22 +919,6 @@ export default function NavigationPage() {
               />
             )}
             
-            {/* Professional Navigation HUD - Mobile */}
-            {isNavigating && !isARMode && (
-              <ProfessionalNavHUD
-                currentRoute={currentRoute}
-                selectedProfile={selectedProfile || activeProfile}
-                isNavigating={isNavigating}
-                currentSpeed={currentSpeed}
-                currentLocation={currentGPSLocation || undefined}
-                onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
-                onCancelRoute={handleCancelRoute}
-                isCancellingRoute={completeJourneyMutation.isPending}
-                voiceEnabled={professionalVoiceEnabled}
-                isFullscreen={isFullscreenNav}
-              />
-            )}
             
             {/* Enhanced Professional Map - Mobile */}
             {!isARMode && (
@@ -1118,22 +1102,6 @@ export default function NavigationPage() {
               />
             )}
 
-            {/* Professional Navigation HUD - Desktop */}
-            {isNavigating && !isARMode && (
-              <ProfessionalNavHUD
-                currentRoute={currentRoute}
-                selectedProfile={selectedProfile || activeProfile}
-                isNavigating={isNavigating}
-                currentSpeed={currentSpeed}
-                currentLocation={currentGPSLocation || undefined}
-                onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
-                onCancelRoute={handleCancelRoute}
-                isCancellingRoute={completeJourneyMutation.isPending}
-                voiceEnabled={professionalVoiceEnabled}
-                isFullscreen={isFullscreenNav}
-              />
-            )}
 
             {/* Enhanced Professional Map - Desktop */}
             {!isARMode && (
@@ -1161,6 +1129,23 @@ export default function NavigationPage() {
           </div>
 
         </div>
+      )}
+
+      {/* Professional Navigation HUD - Positioned outside relative containers */}
+      {isNavigating && !isARMode && (
+        <ProfessionalNavHUD
+          currentRoute={currentRoute}
+          selectedProfile={selectedProfile || activeProfile}
+          isNavigating={isNavigating}
+          currentSpeed={currentSpeed}
+          currentLocation={currentGPSLocation || undefined}
+          onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+          onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
+          onCancelRoute={handleCancelRoute}
+          isCancellingRoute={completeJourneyMutation.isPending}
+          voiceEnabled={professionalVoiceEnabled}
+          isFullscreen={isFullscreenNav}
+        />
       )}
 
       {/* Removed unused Navigation Status Drawer that was creating grey overlay */}
