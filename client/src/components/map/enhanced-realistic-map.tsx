@@ -219,7 +219,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         // Add extra checks for container and initialization state
         const container = map.getContainer && map.getContainer();
         if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
-            map.setView && map.getZoom && map.getSize && map.panBy && map._loaded !== false) {
+            map.setView && map.getZoom && map.getSize && map.panBy) {
           
           // Additional safety check for map size
           let containerSize;
@@ -268,7 +268,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
           
           // Enhanced container and map state validation
           if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
-              typeof map.invalidateSize === 'function' && map._loaded !== false) {
+              typeof map.invalidateSize === 'function') {
             
             map.invalidateSize();
             
@@ -309,7 +309,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         const container = map.getContainer && map.getContainer();
         
         if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
-            typeof map.fitBounds === 'function' && map._loaded !== false) {
+            typeof map.fitBounds === 'function') {
           const bounds = L.latLngBounds(
             currentRoute.routePath.map(coord => [coord.lat, coord.lng])
           );
