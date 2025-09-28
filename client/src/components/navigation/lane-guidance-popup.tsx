@@ -16,6 +16,7 @@ interface LaneGuidancePopupProps {
   currentRoute: Route | null;
   isNavigating: boolean;
   className?: string;
+  forceVisible?: boolean;
 }
 
 interface LaneIndicatorProps {
@@ -90,24 +91,30 @@ function LaneIndicator({ lane, isSelected, isRecommended, isRestricted, compact 
 const LaneGuidancePopup = memo(function LaneGuidancePopup({
   currentRoute,
   isNavigating,
-  className
+  className,
+  forceVisible = false
 }: LaneGuidancePopupProps) {
   const [savedSelections, setSavedSelections] = useState<Record<number, number>>({});
   const [isVisible, setIsVisible] = useState(false);
 
   // Load saved lane selections from localStorage
   useEffect(() => {
-    if (currentRoute?.id) {
-      const saved = localStorage.getItem(`lane-selections-${currentRoute.id}`);
+    const storageKey = currentRoute?.id ? `lane-selections-${currentRoute.id}` : 'lane-selections-demo';
+    
+    try {
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
-        try {
-          setSavedSelections(JSON.parse(saved));
-        } catch (error) {
-          console.error('Failed to load saved lane selections:', error);
-        }
+        const parsedSelections = JSON.parse(saved);
+        setSavedSelections(parsedSelections);
+        console.log('Lane selections loaded from storage key:', storageKey, parsedSelections);
+      } else {
+        setSavedSelections({});
       }
+    } catch (error) {
+      console.error('Failed to load lane selections:', error);
+      setSavedSelections({});
     }
-  }, [currentRoute?.id]);
+  }, [currentRoute?.id, forceVisible]);
 
   // Fetch lane guidance for the current route
   const { data: laneGuidance = [] } = useQuery<LaneSegment[]>({
@@ -128,6 +135,12 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
 
   // Auto show/hide logic: show when navigating, has route, has maneuver, and has multiple usable lanes
   useEffect(() => {
+    // If forced to be visible (manual trigger), always show
+    if (forceVisible) {
+      setIsVisible(true);
+      return;
+    }
+    
     if (!isNavigating || !currentRoute || !nextManeuver) {
       setIsVisible(false);
       return;
@@ -146,32 +159,52 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
     );
     
     setIsVisible(shouldShow);
-  }, [isNavigating, currentRoute, nextManeuver]);
+  }, [isNavigating, currentRoute, nextManeuver, forceVisible]);
 
   // Don't render anything if not visible
-  if (!isVisible || !nextManeuver) {
+  if (!isVisible) {
     return null;
   }
 
-  const selectedLaneIndex = savedSelections[nextManeuver.stepIndex] ?? null;
+  // Create demo lane data when forced visible but no real data
+  const demoLaneSegment = {
+    stepIndex: 0,
+    instruction: "Keep right to continue on highway",
+    distance: 500,
+    laneOptions: [
+      { index: 0, direction: 'left' as const, recommended: false, restrictions: ['no_trucks'] },
+      { index: 1, direction: 'straight' as const, recommended: true, restrictions: [] },
+      { index: 2, direction: 'straight' as const, recommended: true, restrictions: [] },
+      { index: 3, direction: 'right' as const, recommended: false, restrictions: [] }
+    ]
+  };
+
+  // Use demo data when forced visible but no real navigation data
+  const currentManeuver = forceVisible && !nextManeuver ? demoLaneSegment : nextManeuver;
+  
+  if (!currentManeuver) {
+    return null;
+  }
+
+  const selectedLaneIndex = savedSelections[currentManeuver.stepIndex] ?? null;
   const hasLaneSelection = selectedLaneIndex !== null;
   
   // Handle lane selection
   const handleLaneSelection = (laneIndex: number) => {
     const newSelections = {
       ...savedSelections,
-      [nextManeuver.stepIndex]: laneIndex
+      [currentManeuver.stepIndex]: laneIndex
     };
     
     setSavedSelections(newSelections);
     
-    // Save to localStorage
-    if (currentRoute?.id) {
-      try {
-        localStorage.setItem(`lane-selections-${currentRoute.id}`, JSON.stringify(newSelections));
-      } catch (error) {
-        console.error('Failed to save lane selection:', error);
-      }
+    // Save to localStorage (use demo key when no current route)
+    const storageKey = currentRoute?.id ? `lane-selections-${currentRoute.id}` : 'lane-selections-demo';
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(newSelections));
+      console.log('Lane selection saved:', laneIndex + 1, 'to storage key:', storageKey);
+    } catch (error) {
+      console.error('Failed to save lane selection:', error);
     }
   };
 
@@ -203,13 +236,13 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
                 <span className="text-xs font-medium text-foreground">Lane Guide</span>
               </div>
               <Badge variant="secondary" className="text-xs px-1 py-0">
-                {nextManeuver.totalLanes}
+                {currentManeuver.laneOptions?.length || 4}
               </Badge>
             </div>
 
             {/* Lane indicators */}
             <div className="flex justify-center space-x-1" data-testid="popup-lane-indicators">
-              {nextManeuver.laneOptions.map((lane) => {
+              {currentManeuver.laneOptions.map((lane) => {
                 const isSelected = selectedLaneIndex === lane.index;
                 const isRecommended = Boolean(lane.recommended && !lane.restrictions?.length);
                 const isRestricted = Boolean(lane.restrictions && lane.restrictions.length > 0);
@@ -245,9 +278,9 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
             {/* Distance indicator */}
             <div className="text-center">
               <span className="text-xs font-medium text-foreground">
-                {nextManeuver.distance < 1 
-                  ? `${Math.round(nextManeuver.distance * 5280)} ft`
-                  : `${nextManeuver.distance.toFixed(1)} mi`
+                {currentManeuver.distance < 1000 
+                  ? `${Math.round(currentManeuver.distance)} m`
+                  : `${(currentManeuver.distance / 1000).toFixed(1)} km`
                 }
               </span>
             </div>

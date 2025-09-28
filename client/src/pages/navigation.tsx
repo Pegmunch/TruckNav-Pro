@@ -29,6 +29,7 @@ import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
 import RoutePreviewPopup from "@/components/navigation/route-preview-popup";
+import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
 
 export default function NavigationPage() {
@@ -46,6 +47,7 @@ export default function NavigationPage() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showRoutePreview, setShowRoutePreview] = useState(true);
+  const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -1018,6 +1020,9 @@ export default function NavigationPage() {
                   // Settings modal props
                   showVehicleSettings={showVehicleSettings}
                   onShowVehicleSettings={setShowVehicleSettings}
+                  
+                  // Lane guidance props
+                  onShowLaneGuidance={() => setShowLaneGuidance(true)}
                 />
               </div>
             </DrawerContent>
@@ -1095,6 +1100,9 @@ export default function NavigationPage() {
             onToggleAR={arSupported && isNavigating ? handleToggleAR : undefined}
             isARMode={isARMode}
             arSupported={arSupported}
+            
+            // Lane guidance props
+            onShowLaneGuidance={() => setShowLaneGuidance(true)}
           />
 
           {/* Desktop Map Area */}
@@ -1195,6 +1203,13 @@ export default function NavigationPage() {
         currentRoute={currentRoute}
         isNavigating={isNavigating && showRoutePreview}
         currentLocation={currentGPSLocation || undefined}
+      />
+
+      {/* Lane Guidance Popup - Can be triggered manually or during navigation */}
+      <LaneGuidancePopup
+        currentRoute={currentRoute}
+        isNavigating={isNavigating}
+        forceVisible={showLaneGuidance}
       />
 
     </div>

@@ -95,6 +95,9 @@ interface NavigationSidebarProps {
   isARMode?: boolean;
   arSupported?: boolean;
   
+  // Lane guidance controls
+  onShowLaneGuidance?: () => void;
+  
   // Settings modal controls
   showVehicleSettings?: boolean;
   onShowVehicleSettings?: (show: boolean) => void;
@@ -125,6 +128,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   onToggleAR,
   isARMode = false,
   arSupported = false,
+  onShowLaneGuidance,
   showVehicleSettings = false,
   onShowVehicleSettings,
   showRoutePreview = true,
@@ -300,12 +304,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Quick Picks button handlers
   const handleVehicleTypeClick = () => {
-    console.log('Vehicle Type clicked');
+    console.log('Lane Guidance clicked');
+    onShowLaneGuidance?.();
     toast({
-      title: "Vehicle Type",
-      description: "Opening vehicle type selector...",
+      title: "Lane Guidance",
+      description: "Opening lane guidance popup...",
     });
-    setShowVehicleProfileSetup(true);
   };
 
   const handleVehicleSettingsClick = () => {
@@ -1250,13 +1254,22 @@ Calculating route...
         )}
       </div>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Only block clicks outside sidebar area */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-transparent z-20 lg:hidden pointer-events-auto"
-          onClick={onToggle}
+          className="fixed inset-0 bg-transparent z-20 lg:hidden"
+          style={{ pointerEvents: 'none' }}
           data-testid="navigation-sidebar-overlay"
-        />
+        >
+          <div 
+            className="absolute inset-0"
+            style={{ 
+              left: isCollapsed ? '64px' : '320px', 
+              pointerEvents: 'auto' 
+            }}
+            onClick={onToggle}
+          />
+        </div>
       )}
 
       {/* Quick Picks Modal Components */}

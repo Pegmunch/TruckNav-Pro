@@ -277,7 +277,7 @@ const InteractiveMap = memo(function InteractiveMap({
     
     useEffect(() => {
       mapRef.current = map;
-      console.log('Map reference captured:', map);
+      console.log('Map reference captured successfully');
       
       if (map) {
         // Force map to recalculate size immediately and after render
@@ -889,6 +889,7 @@ const InteractiveMap = memo(function InteractiveMap({
     >
       {/* React Leaflet Map */}
       <MapContainer 
+        key={`map-container-${Math.random()}`}
         center={[52.5, -1.5]} 
         zoom={zoomLevel} 
         style={{ height: '100%', width: '100%' }}
