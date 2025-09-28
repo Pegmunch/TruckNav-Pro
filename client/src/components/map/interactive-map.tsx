@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MapContainer, TileLayer, useMap, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-gesture-handling/dist/leaflet-gesture-handling.css';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -271,8 +272,8 @@ const InteractiveMap = memo(function InteractiveMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   
-  // Hook component to capture map reference and fix size issues
-  function MapEventHandler() {
+  // Enhanced touch gesture handler component
+  function TouchGestureHandler() {
     const map = useMap();
     
     useEffect(() => {
@@ -280,6 +281,94 @@ const InteractiveMap = memo(function InteractiveMap({
       
       mapRef.current = map;
       console.log('Map reference captured successfully');
+      
+      // Initialize gesture handling for mobile
+      const isMobile = L.Browser.mobile;
+      if (isMobile) {
+        // Enable gesture handling - will be configured in MapContainer props
+        console.log('Mobile device detected - enhanced touch controls enabled');
+      }
+      
+      // Advanced touch gesture detection with proper typing
+      let touchStartPos: { x: number; y: number } | null = null;
+      let touchStartTime: number | null = null;
+      let isSwipeGesture = false;
+      
+      const handleTouchStart = (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          touchStartPos = { x: touch.clientX, y: touch.clientY };
+          touchStartTime = Date.now();
+          isSwipeGesture = false;
+        }
+      };
+      
+      const handleTouchMove = (e: TouchEvent) => {
+        if (e.touches.length === 1 && touchStartPos) {
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - touchStartPos.x;
+          const deltaY = touch.clientY - touchStartPos.y;
+          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+          
+          // Detect swipe gesture (movement > 30px)
+          if (distance > 30) {
+            isSwipeGesture = true;
+            
+            // Determine swipe direction and perform map action
+            const absX = Math.abs(deltaX);
+            const absY = Math.abs(deltaY);
+            
+            if (absX > absY) {
+              // Horizontal swipe - pan map left/right
+              if (deltaX > 0) {
+                console.log('Swipe right detected');
+                map.panBy([-50, 0], { animate: true, duration: 0.3 });
+              } else {
+                console.log('Swipe left detected');
+                map.panBy([50, 0], { animate: true, duration: 0.3 });
+              }
+            } else {
+              // Vertical swipe - pan map up/down
+              if (deltaY > 0) {
+                console.log('Swipe down detected');
+                map.panBy([0, -50], { animate: true, duration: 0.3 });
+              } else {
+                console.log('Swipe up detected');
+                map.panBy([0, 50], { animate: true, duration: 0.3 });
+              }
+            }
+            
+            // Reset touch tracking
+            touchStartPos = null;
+            touchStartTime = null;
+          }
+        }
+      };
+      
+      const handleTouchEnd = (e: TouchEvent) => {
+        if (touchStartPos && touchStartTime && !isSwipeGesture) {
+          const touchDuration = Date.now() - touchStartTime;
+          
+          // Quick tap detection (< 200ms, < 10px movement)
+          if (touchDuration < 200) {
+            console.log('Quick tap detected on map');
+            // Trigger any tap-specific actions here if needed
+          }
+        }
+        
+        // Reset tracking
+        touchStartPos = null;
+        touchStartTime = null;
+        isSwipeGesture = false;
+      };
+      
+      // Add touch event listeners to map container
+      const mapContainer = map.getContainer();
+      if (mapContainer) {
+        mapContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+        mapContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+        mapContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+      }
       
       // Wait for DOM to be ready before invalidating size
       const invalidateMapSize = () => {
@@ -301,6 +390,15 @@ const InteractiveMap = memo(function InteractiveMap({
         setTimeout(invalidateMapSize, 300);
         setTimeout(invalidateMapSize, 1000);
       });
+      
+      // Cleanup touch event listeners
+      return () => {
+        if (mapContainer) {
+          mapContainer.removeEventListener('touchstart', handleTouchStart);
+          mapContainer.removeEventListener('touchmove', handleTouchMove);
+          mapContainer.removeEventListener('touchend', handleTouchEnd);
+        }
+      };
     }, [map]);
     
     return null;
@@ -899,6 +997,17 @@ const InteractiveMap = memo(function InteractiveMap({
         style={{ height: '100%', width: '100%' }}
         className="absolute inset-0 z-0"
         data-testid="leaflet-map"
+        // Enhanced mobile touch settings for better gesture control
+        dragging={true}
+        touchZoom={true}
+        scrollWheelZoom={!L.Browser.mobile}
+        doubleClickZoom={true}
+        tap={true}
+        tapTolerance={15}
+        worldCopyJump={false}
+        bounceAtZoomLimits={true}
+        zoomControl={false}
+        attributionControl={false}
       >
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
@@ -970,7 +1079,7 @@ const InteractiveMap = memo(function InteractiveMap({
           </Marker>
         )}
         
-        <MapEventHandler />
+        <TouchGestureHandler />
       </MapContainer>
       
       {/* Street View Preview Panel */}

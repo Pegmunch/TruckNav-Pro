@@ -68,6 +68,7 @@
     "i18next-http-backend": "^3.0.2",
     "input-otp": "^1.4.2",
     "leaflet": "^1.9.4",
+    "leaflet-gesture-handling": "^1.2.2",
     "lucide-react": "^0.453.0",
     "maplibre-gl": "^5.7.2",
     "memorystore": "^1.6.7",
