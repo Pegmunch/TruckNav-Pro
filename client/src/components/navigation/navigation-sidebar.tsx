@@ -34,12 +34,15 @@ import {
   Camera,
   AlertTriangle,
   CheckCircle,
-  Eye
+  Eye,
+  Mic,
+  MessageCircle
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
 import { ThemeSelector } from "@/components/theme/theme-selector";
 import WeatherWidget from "@/components/weather/weather-widget";
+import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
 import { type VehicleProfile, type Route, type Journey, type Facility } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -135,6 +138,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [showIncidentReporting, setShowIncidentReporting] = useState(false);
+  const [showVoiceNavigation, setShowVoiceNavigation] = useState(false);
 
   // Current location input handling
   const [currentLocationInput, setCurrentLocationInput] = useState("");
