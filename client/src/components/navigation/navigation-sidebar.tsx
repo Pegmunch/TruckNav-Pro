@@ -818,11 +818,11 @@ Calculating route...
                     onClick={handleVehicleTypeClick}
                     variant="outline"
                     size="sm"
-                    className="flex flex-col h-20 p-3 gap-1 text-xs min-h-fit"
+                    className="flex flex-col h-20 p-3 gap-1 text-xs min-h-fit bg-blue-50 hover:bg-blue-100 border-blue-200 dark:bg-blue-950/30 dark:hover:bg-blue-950/50 dark:border-blue-800"
                     data-testid="button-vehicle-type"
                   >
-                    <Truck className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-center leading-tight">Vehicle Type</span>
+                    <div className="text-2xl">🚛</div>
+                    <span className="text-center leading-tight font-semibold text-blue-700 dark:text-blue-300">Lane Guide</span>
                   </Button>
                   
                   <Button
