@@ -1054,14 +1054,14 @@ const InteractiveMap = memo(function InteractiveMap({
           key={preferences.mapViewMode} // Stable key per view mode
           url={(() => {
             const url = preferences.mapViewMode === 'satellite' 
-              ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - properly licensed  
-              : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'; // Esri Street Map
+              ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - satellite view
+              : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'; // OpenStreetMap - consistent with desktop
             console.log('🗺️ TileLayer URL for', preferences.mapViewMode, 'mode:', url);
             return url;
           })()}
           attribution={preferences.mapViewMode === 'satellite'
-            ? '© Esri, © OpenStreetMap contributors'
-            : '© Esri, © OpenStreetMap contributors'
+            ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
+            : '© OpenStreetMap contributors'
           }
         />
         

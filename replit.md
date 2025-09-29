@@ -2,6 +2,23 @@
 
 This is a specialized truck navigation web application designed to provide safe routing for heavy goods vehicles (HGVs) by avoiding restrictions based on vehicle dimensions. The system helps truck drivers plan routes while considering height, width, weight, and length restrictions, and locate truck-friendly facilities along their routes.
 
+# Recent Changes
+
+## September 29, 2025 - Mobile Compatibility Overhaul ✅
+- **COMPLETED**: Comprehensive mobile compatibility improvements for professional truck drivers
+- **Fixed**: Tile source inconsistency between mobile (ESRI) and desktop (OpenStreetMap) maps
+- **Added**: 4-tier responsive design system with CSS clamp() density tokens for smooth scaling
+- **Added**: MapShell wrapper component to eliminate "squashed" mobile layout issues
+- **Added**: Screen Wake Lock API with iOS/Android fallbacks to prevent display sleep during navigation
+- **Added**: Safe-area handling for iOS devices with notches and home indicators
+- **Added**: Android hardware back button handling with priority system for navigation safety
+- **Added**: Enhanced PWA capabilities with mobile network detection and offline route storage
+- **Added**: Orientation lock preferences for landscape tablet navigation
+- **Added**: Professional touch targets (44px+) optimized for truck drivers wearing gloves
+- **Added**: Mobile-safe CSS classes and responsive navigation interface
+- **Updated**: Mobile navigation header and bottom navigation buttons to use responsive density tokens
+- **Status**: All mobile compatibility requirements completed and tested successfully
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
