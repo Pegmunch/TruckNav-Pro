@@ -324,6 +324,234 @@ body {
   gap: clamp(8px, 2vw, 12px);
 }
 
+/* === PROFESSIONAL TRUCK NAVIGATION RESPONSIVE DESIGN SYSTEM === */
+
+/* Mobile-safe positioning utilities */
+.mobile-safe-bottom {
+  bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+}
+
+.mobile-safe-top {
+  top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
+}
+
+.mobile-safe-left {
+  left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+}
+
+.mobile-safe-right {
+  right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+}
+
+/* Enhanced responsive design system */
+:root {
+  /* HUD and overlay heights for map calculations */
+  --hud-height: 0px;
+  --bottom-bar-height: 0px;
+  --nav-header-height: 0px;
+  
+  /* Device tier breakpoints */
+  --breakpoint-phone-sm: 360px;   /* Small phones */
+  --breakpoint-phone-reg: 400px;  /* Regular phones */
+  --breakpoint-phone-lg: 600px;   /* Large phones/phablets */
+  --breakpoint-tablet-sm: 840px;  /* Small tablets */
+  --breakpoint-tablet-lg: 1024px; /* Large tablets */
+  
+  /* Responsive density tokens using clamp for smooth scaling */
+  --density-icon-sm: clamp(16px, 4vw, 20px);
+  --density-icon-md: clamp(20px, 5vw, 28px);
+  --density-icon-lg: clamp(24px, 6vw, 32px);
+  --density-icon-xl: clamp(28px, 7vw, 40px);
+  
+  --density-touch-target: clamp(44px, 12vw, 56px);
+  --density-touch-target-sm: clamp(36px, 10vw, 48px);
+  --density-touch-target-lg: clamp(52px, 14vw, 64px);
+  
+  --density-spacing-xs: clamp(4px, 1vw, 8px);
+  --density-spacing-sm: clamp(8px, 2vw, 12px);
+  --density-spacing-md: clamp(12px, 3vw, 16px);
+  --density-spacing-lg: clamp(16px, 4vw, 24px);
+  --density-spacing-xl: clamp(20px, 5vw, 32px);
+  
+  --density-text-xs: clamp(12px, 3.5vw, 14px);
+  --density-text-sm: clamp(14px, 4vw, 16px);
+  --density-text-md: clamp(16px, 4.5vw, 18px);
+  --density-text-lg: clamp(18px, 5vw, 20px);
+  --density-text-xl: clamp(20px, 5.5vw, 24px);
+  
+  /* Map container sizing */
+  --map-container-height: calc(100svh - var(--hud-height) - var(--bottom-bar-height) - var(--nav-header-height));
+}
+
+/* Device-specific adjustments */
+@media (max-width: 360px) {
+  :root {
+    /* Compact mode for small phones */
+    --density-icon-sm: 14px;
+    --density-icon-md: 18px;
+    --density-icon-lg: 22px;
+    --density-touch-target: 44px;
+    --density-spacing-sm: 6px;
+    --density-spacing-md: 8px;
+    --density-text-sm: 13px;
+    --density-text-md: 14px;
+  }
+}
+
+@media (min-width: 600px) {
+  :root {
+    /* Enhanced mode for tablets */
+    --density-icon-lg: 28px;
+    --density-icon-xl: 36px;
+    --density-touch-target: 52px;
+    --density-touch-target-lg: 64px;
+    --density-spacing-lg: 20px;
+    --density-spacing-xl: 28px;
+  }
+}
+
+@media (min-width: 840px) {
+  :root {
+    /* Desktop-like mode for large tablets */
+    --density-icon-xl: 40px;
+    --density-touch-target-lg: 72px;
+    --density-spacing-xl: 32px;
+  }
+}
+
+/* Map shell wrapper for consistent sizing across devices */
+.map-shell {
+  height: var(--map-container-height);
+  min-height: 300px;
+  max-height: 100svh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  
+  /* Safe area handling */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  /* Bottom padding handled by bottom bar component */
+}
+
+.map-shell .leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Professional navigation interface scaling */
+.professional-nav-interface {
+  /* Use density tokens for consistent scaling */
+  font-size: var(--density-text-md);
+}
+
+.professional-nav-interface .nav-button {
+  min-height: var(--density-touch-target);
+  min-width: var(--density-touch-target);
+  padding: var(--density-spacing-sm) var(--density-spacing-md);
+  font-size: var(--density-text-sm);
+}
+
+.professional-nav-interface .nav-icon {
+  width: var(--density-icon-md);
+  height: var(--density-icon-md);
+}
+
+.professional-nav-interface .nav-icon-lg {
+  width: var(--density-icon-lg);
+  height: var(--density-icon-lg);
+}
+
+/* HUD scaling for different screen sizes */
+.professional-nav-hud {
+  padding: var(--density-spacing-md);
+  gap: var(--density-spacing-sm);
+}
+
+.professional-nav-hud .hud-button {
+  min-height: var(--density-touch-target-sm);
+  padding: var(--density-spacing-xs) var(--density-spacing-sm);
+  font-size: var(--density-text-sm);
+}
+
+.professional-nav-hud .hud-icon {
+  width: var(--density-icon-sm);
+  height: var(--density-icon-sm);
+}
+
+/* Lane guidance popup scaling */
+.lane-guidance-safe {
+  /* Ensure proper safe area handling */
+  margin: var(--density-spacing-md);
+}
+
+.lane-guidance-safe .guidance-icon {
+  width: var(--density-icon-md);
+  height: var(--density-icon-md);
+}
+
+/* Bottom navigation button scaling */
+.bottom-nav-safe {
+  padding: var(--density-spacing-md);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav-safe .nav-button-primary {
+  min-height: var(--density-touch-target-lg);
+  padding: var(--density-spacing-md) var(--density-spacing-lg);
+  font-size: var(--density-text-lg);
+  font-weight: 600;
+}
+
+/* Responsive map controls */
+.map-controls {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.map-controls > * {
+  pointer-events: auto;
+}
+
+.map-controls .control-button {
+  min-height: var(--density-touch-target);
+  min-width: var(--density-touch-target);
+  padding: var(--density-spacing-sm);
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-controls .control-icon {
+  width: var(--density-icon-md);
+  height: var(--density-icon-md);
+}
+
+/* Orientation-aware layouts */
+@media (orientation: landscape) and (max-width: 840px) {
+  .professional-nav-hud {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .bottom-nav-safe {
+    padding: var(--density-spacing-sm) var(--density-spacing-lg);
+  }
+}
+
+/* High DPI display adjustments */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  .professional-nav-interface {
+    /* Slightly reduce sizes on high DPI to account for visual density */
+    --density-icon-md: clamp(18px, 4.5vw, 26px);
+    --density-text-md: clamp(15px, 4.2vw, 17px);
+  }
+}
+
 /* Ensure map controls avoid sidebar on desktop layouts */
 @media (min-width: 1024px) {
   .desktop-sidebar ~ * .map-controls-cluster {

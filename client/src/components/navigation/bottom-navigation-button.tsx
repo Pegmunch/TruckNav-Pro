@@ -41,37 +41,55 @@ export function BottomNavigationButton({
 
   return (
     <div className={cn(
-      "fixed z-50 start-nav-button-safe professional-nav-interface",
+      "fixed z-50 bottom-nav-safe professional-nav-interface",
       // CRITICAL FIX: Remove gradient and backdrop blur, make wrapper non-interactive
-      "bg-transparent overlay-safe-mode:bg-none overlay-safe-mode:backdrop-blur-0 pointer-events-none",
-      "p-4"
-    )}>
+      "bg-transparent overlay-safe-mode:bg-none overlay-safe-mode:backdrop-blur-0 pointer-events-none"
+    )}
+    style={{
+      padding: "var(--density-spacing-md)",
+      left: "50%",
+      transform: "translateX(-50%)",
+      bottom: "env(safe-area-inset-bottom, 0px)"
+    }}>
       <Card className={cn(
         "mx-auto max-w-lg shadow-lg border-2 pointer-events-auto",
         isMobile ? "border-primary/20" : "border-primary/30"
       )}>
-        <div className="p-4">
+        <div style={{ padding: "var(--density-spacing-md)" }}>
           {canStartNavigation && (
             <Button
               onClick={onStartNavigation}
               disabled={isStartingJourney || isCompletingJourney}
-              size={isMobile ? "lg" : "default"}
               className={cn(
-                "w-full font-semibold",
-                isMobile ? "h-14 text-lg" : "h-12 text-base",
+                "w-full font-semibold nav-button-primary",
                 "bg-primary hover:bg-primary/90 text-primary-foreground",
                 "shadow-md hover:shadow-lg transition-all duration-200"
               )}
+              style={{
+                minHeight: "var(--density-touch-target-lg)",
+                padding: "var(--density-spacing-md) var(--density-spacing-lg)",
+                fontSize: "var(--density-text-lg)"
+              }}
               data-testid="button-start-navigation-bottom"
             >
               {isStartingJourney ? (
                 <>
-                  <Loader2 className={cn("animate-spin", isMobile ? "w-6 h-6 mr-3" : "w-5 h-5 mr-2")} />
+                  <Loader2 className="animate-spin nav-icon-lg" 
+                           style={{ 
+                             width: "var(--density-icon-lg)", 
+                             height: "var(--density-icon-lg)",
+                             marginRight: "var(--density-spacing-sm)"
+                           }} />
                   Starting Navigation...
                 </>
               ) : (
                 <>
-                  <Navigation className={cn(isMobile ? "w-6 h-6 mr-3" : "w-5 h-5 mr-2")} />
+                  <Navigation className="nav-icon-lg" 
+                             style={{ 
+                               width: "var(--density-icon-lg)", 
+                               height: "var(--density-icon-lg)",
+                               marginRight: "var(--density-spacing-sm)"
+                             }} />
                   Start Navigation
                 </>
               )}
@@ -83,22 +101,35 @@ export function BottomNavigationButton({
               onClick={onStopNavigation}
               disabled={isCompletingJourney}
               variant="destructive"
-              size={isMobile ? "lg" : "default"}
               className={cn(
-                "w-full font-semibold",
-                isMobile ? "h-14 text-lg" : "h-12 text-base",
+                "w-full font-semibold nav-button-primary",
                 "shadow-md hover:shadow-lg transition-all duration-200"
               )}
+              style={{
+                minHeight: "var(--density-touch-target-lg)",
+                padding: "var(--density-spacing-md) var(--density-spacing-lg)",
+                fontSize: "var(--density-text-lg)"
+              }}
               data-testid="button-stop-navigation-bottom"
             >
               {isCompletingJourney ? (
                 <>
-                  <Loader2 className={cn("animate-spin", isMobile ? "w-6 h-6 mr-3" : "w-5 h-5 mr-2")} />
+                  <Loader2 className="animate-spin nav-icon-lg" 
+                           style={{ 
+                             width: "var(--density-icon-lg)", 
+                             height: "var(--density-icon-lg)",
+                             marginRight: "var(--density-spacing-sm)"
+                           }} />
                   Stopping Navigation...
                 </>
               ) : (
                 <>
-                  <StopCircle className={cn(isMobile ? "w-6 h-6 mr-3" : "w-5 h-5 mr-2")} />
+                  <StopCircle className="nav-icon-lg" 
+                             style={{ 
+                               width: "var(--density-icon-lg)", 
+                               height: "var(--density-icon-lg)",
+                               marginRight: "var(--density-spacing-sm)"
+                             }} />
                   Stop Navigation
                 </>
               )}
@@ -106,10 +137,11 @@ export function BottomNavigationButton({
           )}
 
           {currentRoute && (
-            <div className={cn(
-              "mt-2 text-center text-muted-foreground",
-              isMobile ? "text-sm" : "text-xs"
-            )}>
+            <div className="mt-2 text-center text-muted-foreground"
+                 style={{ 
+                   fontSize: "var(--density-text-sm)",
+                   marginTop: "var(--density-spacing-sm)"
+                 }}>
               <span className="font-medium">{(currentRoute.distance || 0).toFixed(1)} miles</span>
               {" • "}
               <span>{Math.round(currentRoute.duration || 0)} min</span>

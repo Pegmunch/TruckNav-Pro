@@ -116,14 +116,14 @@ export function useOrientationLock(options: OrientationLockOptions = {}) {
   }, [getCurrentOrientation, handleOrientationChange]);
 
   // Lock orientation
-  const lockOrientation = useCallback(async (orientation: OrientationLockType = preferredOrientation) => {
+  const lockOrientation = useCallback(async (orientation: 'landscape' | 'portrait' | 'landscape-primary' | 'landscape-secondary' | 'portrait-primary' | 'portrait-secondary' = preferredOrientation) => {
     if (!isSupported) {
       setLockError('Orientation lock not supported on this device');
       return false;
     }
 
     try {
-      await screen.orientation.lock(orientation);
+      await (screen.orientation as any).lock(orientation);
       setIsLocked(true);
       setLockError(null);
       console.log('📱 Orientation locked to:', orientation);
@@ -144,7 +144,7 @@ export function useOrientationLock(options: OrientationLockOptions = {}) {
     }
 
     try {
-      await screen.orientation.unlock();
+      await (screen.orientation as any).unlock();
       setIsLocked(false);
       setLockError(null);
       console.log('📱 Orientation unlocked');

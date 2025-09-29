@@ -32,6 +32,7 @@ import RoutePreviewPopup from "@/components/navigation/route-preview-popup";
 import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
 import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-handler";
+import { MapShell } from "@/components/map/map-shell";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -961,31 +962,55 @@ export default function NavigationPage() {
       {/* Mobile-First Layout */}
       {isMobile ? (
         <div className="mobile-layout h-screen flex flex-col" style={{background: "transparent"}}>
-          {/* Mobile Header with Menu Button */}
-          <div className="mobile-nav-header flex items-center justify-between" style={{background: "transparent"}}>
+          {/* Mobile Header with Menu Button - Responsive Design */}
+          <div className="mobile-nav-header nav-header flex items-center justify-between professional-nav-interface mobile-safe-top" 
+               style={{
+                 background: "transparent",
+                 padding: "var(--density-spacing-md)",
+                 minHeight: "var(--density-touch-target-lg)"
+               }}>
             <div className="flex items-center gap-2">
-              <Truck className="w-6 h-6 text-primary" />
-              <span className="mobile-text-lg font-semibold">TruckNav Pro</span>
+              <Truck className="nav-icon text-primary" style={{ width: 'var(--density-icon-lg)', height: 'var(--density-icon-lg)' }} />
+              <span className="nav-text font-semibold" style={{ fontSize: 'var(--density-text-lg)' }}>TruckNav Pro</span>
             </div>
             
-            {/* Top Right Hamburger Button - Always visible */}
+            {/* Top Right Hamburger Button - Responsive */}
             <Button
               variant="default"
               size="icon"
               onClick={() => setSidebarState('open')}
-              className="hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
+              className="hamburger-menu-button nav-button bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
+              style={{
+                minWidth: 'var(--density-touch-target)',
+                minHeight: 'var(--density-touch-target)',
+                padding: 'var(--density-spacing-sm)'
+              }}
               data-testid="button-menu-top-right"
             >
-              <div className="w-6 h-6 flex flex-col justify-center items-center gap-1">
-                <div className="w-5 h-1 bg-current rounded-sm"></div>
-                <div className="w-5 h-1 bg-current rounded-sm"></div>
-                <div className="w-5 h-1 bg-current rounded-sm"></div>
+              <div className="nav-icon flex flex-col justify-center items-center" 
+                   style={{ 
+                     width: 'var(--density-icon-md)', 
+                     height: 'var(--density-icon-md)',
+                     gap: 'var(--density-spacing-xs)'
+                   }}>
+                <div className="bg-current rounded-sm" style={{ 
+                  width: 'calc(var(--density-icon-md) * 0.8)', 
+                  height: '2px' 
+                }}></div>
+                <div className="bg-current rounded-sm" style={{ 
+                  width: 'calc(var(--density-icon-md) * 0.8)', 
+                  height: '2px' 
+                }}></div>
+                <div className="bg-current rounded-sm" style={{ 
+                  width: 'calc(var(--density-icon-md) * 0.8)', 
+                  height: '2px' 
+                }}></div>
               </div>
             </Button>
           </div>
 
-          {/* Mobile Fullscreen Map */}
-          <div className="mobile-map-container relative flex-1 min-h-0" style={{background: "transparent"}}>
+          {/* Mobile Fullscreen Map with Responsive Design */}
+          <div className="mobile-map-container relative flex-1 min-h-0 professional-nav-interface" style={{background: "transparent"}}>
             {/* AR Navigation - Mobile */}
             {isARMode && (
               <ARNavigation
@@ -996,11 +1021,22 @@ export default function NavigationPage() {
               />
             )}
             
-            
-            {/* Enhanced Professional Map - Mobile */}
+            {/* Enhanced Professional Map - Mobile with MapShell */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0 w-full z-0 sm:hidden" style={{height: "100%", minHeight: "400px"}}>
+                <MapShell 
+                  className="sm:hidden"
+                  onSizeChange={(dimensions) => {
+                    console.log('📐 Mobile map resized:', dimensions);
+                    // Store map instance for invalidation
+                    setTimeout(() => {
+                      const mapContainer = document.querySelector('.leaflet-container');
+                      if (mapContainer && (mapContainer as any)._leaflet_map) {
+                        (window as any).mapInstance = (mapContainer as any)._leaflet_map;
+                      }
+                    }, 100);
+                  }}
+                >
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1009,7 +1045,7 @@ export default function NavigationPage() {
                     showTrafficLayer={true}
                     showIncidents={true}
                   />
-                </div>
+                </MapShell>
                 
                 {/* Legal Ownership Section - Mobile */}
                 <MapLegalOwnership compact={true} className="sm:hidden" />
@@ -1166,8 +1202,8 @@ export default function NavigationPage() {
             onShowLaneGuidance={() => setShowLaneGuidance(true)}
           />
 
-          {/* Desktop Map Area */}
-          <div className="relative flex-1 min-h-0">
+          {/* Desktop Map Area with Responsive Design */}
+          <div className="relative flex-1 min-h-0 professional-nav-interface">
 
             {/* AR Navigation - Desktop */}
             {isARMode && (
@@ -1179,11 +1215,22 @@ export default function NavigationPage() {
               />
             )}
 
-
-            {/* Enhanced Professional Map - Desktop */}
+            {/* Enhanced Professional Map - Desktop with MapShell */}
             {!isARMode && (
               <>
-                <div className="absolute inset-0 hidden sm:block">
+                <MapShell 
+                  className="hidden sm:block desktop-sidebar"
+                  onSizeChange={(dimensions) => {
+                    console.log('📐 Desktop map resized:', dimensions);
+                    // Store map instance for invalidation
+                    setTimeout(() => {
+                      const mapContainer = document.querySelector('.leaflet-container');
+                      if (mapContainer && (mapContainer as any)._leaflet_map) {
+                        (window as any).mapInstance = (mapContainer as any)._leaflet_map;
+                      }
+                    }, 100);
+                  }}
+                >
                   <EnhancedRealisticMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1197,7 +1244,7 @@ export default function NavigationPage() {
                     isMapExpanded={isMapExpanded}
                     sidebarState={sidebarState}
                   />
-                </div>
+                </MapShell>
                 
                 {/* Legal Ownership Section - Desktop */}
                 <MapLegalOwnership compact={true} className="hidden sm:block" />
