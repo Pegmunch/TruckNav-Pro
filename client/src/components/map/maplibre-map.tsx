@@ -330,13 +330,43 @@ const MapLibreMap = memo(function MapLibreMap({
   };
 
   const handleRecenter = () => {
-    if (map.current && currentRoute?.routePath) {
-      const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
-      const bounds = new maplibregl.LngLatBounds();
-      routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-      map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
-    } else if (map.current) {
-      map.current.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+    if (!map.current) return;
+    
+    // Get current GPS location and center map there
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.current?.flyTo({ 
+            center: [longitude, latitude], 
+            zoom: 16, 
+            duration: 1000 
+          });
+        },
+        (error) => {
+          console.warn('Could not get current location:', error);
+          // Fallback: center on route or default position
+          if (currentRoute?.routePath) {
+            const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+            const bounds = new maplibregl.LngLatBounds();
+            routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
+            map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
+          } else {
+            map.current?.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+          }
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      // Geolocation not available, fallback to route or default
+      if (currentRoute?.routePath) {
+        const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+        const bounds = new maplibregl.LngLatBounds();
+        routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
+        map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+      } else {
+        map.current.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+      }
     }
   };
 
