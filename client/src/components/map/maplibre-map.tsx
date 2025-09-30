@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Minus, Crosshair, Layers } from "lucide-react";
 import { type Route, type VehicleProfile } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import SpeedDisplay from "@/components/map/speed-display";
 
 interface MapLibreMapProps {
   currentRoute: Route | null;
@@ -387,6 +388,13 @@ const MapLibreMap = memo(function MapLibreMap({
         >
           <Layers className="h-4 w-4" />
         </Button>
+      </div>
+
+      {/* Speed Display - positioned above MapLibre legal text at bottom */}
+      <div className="absolute bottom-14 left-[48%] transform -translate-x-1/2 z-[1150]">
+        <SpeedDisplay 
+          className="shadow-2xl"
+        />
       </div>
 
       <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">

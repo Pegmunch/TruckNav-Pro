@@ -4,6 +4,23 @@ This is a specialized truck navigation web application designed to provide safe 
 
 # Recent Changes
 
+## September 30, 2025 - SpeedDisplay Component Restoration & UI Adjustments ✅
+- **COMPLETED**: Restored functioning speedometer with GPS-based speed tracking to MapLibre map
+- **Added**: SpeedDisplay component with full working features
+  - GPS-based live speed tracking using geolocation API with Safari compatibility
+  - Speed limit display with circular red-border sign (highway style)
+  - Current vehicle speed display with gauge icon and large digits
+  - Automatic MPH/KPH unit conversion based on country preferences (US/UK use MPH, others use KPH)
+  - Positioned at bottom-center (bottom-14 left-[48%]) for optimal visibility during navigation
+  - High accuracy GPS tracking with 1-second fresh data updates
+- **Adjusted**: Map zoom control buttons (Plus, Minus, Recenter, Layers)
+  - Moved from top-4 to bottom-24 position on right side for better mobile thumb access
+  - Changed to white background (bg-white hover:bg-white/90) for better visibility
+  - Maintained consistent gap-2 spacing between all 4 buttons
+- **Adjusted**: MobileFAB speed-dial buttons
+  - Repositioned from bottom-32 to bottom-24 in preview mode for better accessibility
+- **Status**: All UI adjustments completed with speedometer fully functional
+
 ## September 30, 2025 - MapLibre GL JS Tile Loading Architecture ✅
 - **COMPLETED**: Production-grade MapLibre implementation with zero tile loss during pan/zoom operations
 - **Architecture**: Persistent tile source design eliminates cache flushing
