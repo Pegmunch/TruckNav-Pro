@@ -26,7 +26,7 @@ This is a specialized truck navigation web application designed to provide safe 
   - Export/import alignment for proper component mounting
 - **Integration**: Conditional rendering in all navigation modes (plan, preview, navigate)
 - **Design**: Parallel implementation reduces risk - both engines fully functional for A/B testing
-- **Status**: Leaflet remains default (stable), MapLibre available as experimental option
+- **Status**: MapLibre now set as default (GPU-accelerated), Leaflet available as fallback option
 
 ## September 30, 2025 - Mobile Overlay & Scaling Fixes ✅
 - **COMPLETED**: Eliminated transparent overlay and fixed mobile scaling issues for optimal visibility
@@ -175,9 +175,9 @@ Preferred communication style: Simple, everyday language.
 - **Geolocation APIs**: Browser-based location services for current position
 
 ## Mapping Libraries
-- **Leaflet**: Default map rendering library with proven stability
+- **MapLibre GL JS**: Default GPU-accelerated vector map engine with 3D support
+- **Leaflet**: Fallback map rendering library with proven stability
 - **React-Leaflet**: React bindings for Leaflet maps
-- **MapLibre GL JS**: Experimental GPU-accelerated vector map engine with 3D support
 - **Tile Sources**: Google Maps (3D), OpenStreetMap, Esri satellite imagery
 
 ## Form and Data Validation

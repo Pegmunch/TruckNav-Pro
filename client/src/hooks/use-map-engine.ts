@@ -15,9 +15,9 @@ export function useMapEngine() {
     } catch (error) {
       console.warn('Failed to load map engine preference:', error);
     }
-    // Default to Leaflet (stable, proven implementation)
-    console.log('🗺️ Using default map engine: leaflet');
-    return 'leaflet';
+    // Default to MapLibre (GPU-accelerated)
+    console.log('🗺️ Using default map engine: maplibre');
+    return 'maplibre';
   });
 
   useEffect(() => {
