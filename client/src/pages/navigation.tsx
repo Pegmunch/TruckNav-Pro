@@ -707,8 +707,8 @@ export default function NavigationPage() {
 
   // Auto-plan route when both locations are set
   useEffect(() => {
-    // Only auto-plan if we have both locations and no current route
-    if (fromLocation && toLocation && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
+    // Only auto-plan if we have both locations (min 3 chars each) and no current route
+    if (fromLocation && fromLocation.length >= 3 && toLocation && toLocation.length >= 3 && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
       handlePlanRoute(routePreference);
     }
   }, [fromLocation, toLocation, routePreference, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
