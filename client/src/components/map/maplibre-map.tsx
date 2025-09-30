@@ -350,8 +350,8 @@ const MapLibreMap = memo(function MapLibreMap({
           routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
           map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
         } else {
-          console.log('Fallback: centering on default position');
-          map.current?.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+          console.log('Fallback: centering on default position with zoom out');
+          map.current?.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
         }
       }, 3000);
       
@@ -377,8 +377,8 @@ const MapLibreMap = memo(function MapLibreMap({
             routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
             map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
           } else {
-            console.log('Fallback: centering on default position');
-            map.current?.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+            console.log('Fallback: centering on default position with zoom out');
+            map.current?.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
           }
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
@@ -392,7 +392,7 @@ const MapLibreMap = memo(function MapLibreMap({
         routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
         map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
       } else {
-        map.current.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+        map.current.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
       }
     }
   };
