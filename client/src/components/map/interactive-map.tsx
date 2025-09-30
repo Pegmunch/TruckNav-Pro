@@ -983,17 +983,27 @@ const InteractiveMap = memo(function InteractiveMap({
         maxZoom={19}
       >
         <TileLayer
-          key={preferences.mapViewMode} // Stable key per view mode
+          key={`${preferences.mapViewMode}-${zoomLevel >= 17 ? '3d' : '2d'}`} // Dynamic key for 2D/3D switching
           url={(() => {
+            // Use 3D perspective tiles when zoomed in close (17+) for street-level detail
+            if (zoomLevel >= 17 && preferences.mapViewMode === 'roads') {
+              // Google Maps with 3D buildings rendered
+              return 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+            }
+            
+            // Standard tiles for normal zoom levels
             const url = preferences.mapViewMode === 'satellite' 
               ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - satellite view
               : (preferences.tiles || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'); // Use country-based provider or fallback to OpenStreetMap
-            console.log('🗺️ TileLayer URL for', preferences.mapViewMode, 'mode:', url, '| Provider:', preferences.provider);
+            console.log('🗺️ TileLayer URL for', preferences.mapViewMode, 'mode (zoom:', zoomLevel, '):', url, '| Provider:', preferences.provider);
             return url;
           })()}
-          attribution={preferences.mapViewMode === 'satellite'
-            ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
-            : (preferences.attribution || '© OpenStreetMap contributors')
+          attribution={
+            zoomLevel >= 17 && preferences.mapViewMode === 'roads'
+              ? '© Google Maps with 3D Buildings'
+              : preferences.mapViewMode === 'satellite'
+                ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
+                : (preferences.attribution || '© OpenStreetMap contributors')
           }
           minZoom={3}
           maxZoom={19}
@@ -1418,6 +1428,12 @@ const InteractiveMap = memo(function InteractiveMap({
           )}
           <span className="text-muted-foreground scalable-control-text-xs">•</span>
           <span className="scalable-control-text-xs">{preferences.mapViewMode}</span>
+          {zoomLevel >= 17 && preferences.mapViewMode === 'roads' && (
+            <>
+              <span className="text-muted-foreground scalable-control-text-xs">•</span>
+              <span className="text-green-600 font-semibold scalable-control-text-xs">3D View</span>
+            </>
+          )}
         </div>
       </div>
 
