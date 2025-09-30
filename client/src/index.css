@@ -2335,6 +2335,16 @@ select:focus-visible,
   @apply focus-within:ring-2 focus-within:ring-offset-1 focus-within:ring-ring;
 }
 
+/* GLOBAL FIX: Hide vaul drawer wrapper/overlay when not actively open */
+[data-vaul-drawer-wrapper],
+[data-vaul-overlay],
+.vaul-drawer-wrapper,
+.vaul-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
+}
+
 /* COMPREHENSIVE OVERLAY KILL-SWITCH - Force all overlays transparent during navigation */
 html.overlay-safe-mode [class*="Overlay"], 
 html.overlay-safe-mode [data-radix-portal], 
