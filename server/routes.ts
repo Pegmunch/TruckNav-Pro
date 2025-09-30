@@ -1543,6 +1543,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Speed Limit Lookup using OpenStreetMap Overpass API
+  app.get("/api/speed-limit", async (req: Request, res: Response) => {
+    try {
+      const { lat, lng } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "Latitude and longitude are required" });
+      }
+      
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ message: "Invalid coordinates" });
+      }
+      
+      // Query OpenStreetMap Overpass API for speed limits
+      const radius = 50; // meters
+      const query = `
+        [out:json][timeout:5];
+        way[highway][maxspeed](around:${radius},${latitude},${longitude});
+        out tags;
+      `;
+      
+      const overpassResponse = await fetch(
+        'https://overpass-api.de/api/interpreter',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `data=${encodeURIComponent(query)}`
+        }
+      );
+      
+      if (!overpassResponse.ok) {
+        console.warn('Overpass API error:', overpassResponse.status);
+        return res.json({ speedLimit: null, source: 'unavailable' });
+      }
+      
+      const data = await overpassResponse.json();
+      
+      // Extract speed limit from nearest road
+      if (data.elements && data.elements.length > 0) {
+        // Find first element with maxspeed tag
+        const roadWithSpeed = data.elements.find((element: any) => element.tags?.maxspeed);
+        
+        if (roadWithSpeed?.tags?.maxspeed) {
+          const maxspeed = roadWithSpeed.tags.maxspeed;
+          
+          // Parse speed limit (handles formats like "50", "50 mph", "50 km/h")
+          let speedKmh: number | null = null;
+          
+          if (maxspeed === 'none' || maxspeed === 'signals') {
+            // No speed limit or variable speed limit
+            speedKmh = null;
+          } else if (maxspeed.includes('mph')) {
+            // Convert mph to km/h
+            const mph = parseInt(maxspeed.replace(/[^0-9]/g, ''));
+            speedKmh = Math.round(mph * 1.60934);
+          } else {
+            // Assume km/h
+            speedKmh = parseInt(maxspeed.replace(/[^0-9]/g, ''));
+          }
+          
+          return res.json({
+            speedLimit: speedKmh,
+            source: 'openstreetmap',
+            roadType: roadWithSpeed.tags.highway,
+            roadName: roadWithSpeed.tags.name || 'Unknown Road'
+          });
+        }
+      }
+      
+      // No speed limit found - return null
+      res.json({ speedLimit: null, source: 'not_found' });
+      
+    } catch (error) {
+      console.error("Speed limit lookup error:", error);
+      res.status(500).json({ message: "Failed to get speed limit", speedLimit: null });
+    }
+  });
+
   // Journey Management
   app.get("/api/journeys", validatePagination, validateRequest, async (req: Request, res: Response) => {
     try {

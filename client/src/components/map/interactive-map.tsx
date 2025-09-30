@@ -158,8 +158,8 @@ const InteractiveMap = memo(function InteractiveMap({
   });
   const [zoomLevel, setZoomLevel] = useState(preferences.zoomLevel);
   const [vehiclePosition, setVehiclePosition] = useState<[number, number] | null>(null);
-  // Speed tracking state for live speed limit data
-  const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(113); // Test value - displays as 70 mph
+  // Speed tracking state for real-time speed limit data from OpenStreetMap
+  const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(null);
   
   // Street View state management
   const [streetViewPosition, setStreetViewPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -507,18 +507,31 @@ const InteractiveMap = memo(function InteractiveMap({
     }
   }, [currentRoute]);
   
-  // GPS position tracking with speed limit detection
+  // GPS position tracking with real-time speed limit detection
   useEffect(() => {
     if (currentRoute && navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
           updateVehiclePosition(latitude, longitude);
           
-          // Mock speed limit detection based on location
-          // In production, this would query a speed limit API or road database
-          const mockSpeedLimit = getMockSpeedLimit(latitude, longitude);
-          setCurrentSpeedLimit(mockSpeedLimit);
+          // Fetch real speed limit from OpenStreetMap via backend API
+          try {
+            const response = await fetch(`/api/speed-limit?lat=${latitude}&lng=${longitude}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.speedLimit) {
+                setCurrentSpeedLimit(data.speedLimit);
+                console.log(`Speed limit: ${data.speedLimit} km/h on ${data.roadName || 'road'}`);
+              } else {
+                // Fallback to default speed limits by road type if available
+                setCurrentSpeedLimit(null);
+              }
+            }
+          } catch (error) {
+            console.warn('Speed limit lookup failed:', error);
+            // Keep previous speed limit on error
+          }
         },
         (error) => console.warn('GPS tracking error:', error),
         {
@@ -531,18 +544,6 @@ const InteractiveMap = memo(function InteractiveMap({
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, [currentRoute, updateVehiclePosition]);
-  
-  // Mock speed limit detection (replace with real API in production)
-  const getMockSpeedLimit = (lat: number, lng: number): number => {
-    // Basic speed limit logic based on location patterns
-    // Urban areas: 50 km/h, highways: 120 km/h, rural: 80 km/h
-    const urbanCenter = Math.abs(lat - 51.5074) < 0.01 && Math.abs(lng + 0.1278) < 0.01; // London center
-    const highway = Math.abs(lat - 51.5) < 0.1 && Math.abs(lng + 0.5) < 0.1; // Highway area
-    
-    if (urbanCenter) return 50; // Urban speed limit
-    if (highway) return 120; // Highway speed limit  
-    return 80; // Rural/default speed limit
-  };
   
   
   // Auto-hide functionality with improved timing - scoped to panel only
