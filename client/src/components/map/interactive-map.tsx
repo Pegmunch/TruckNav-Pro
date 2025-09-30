@@ -1195,11 +1195,11 @@ const InteractiveMap = memo(function InteractiveMap({
       {controlsVisible && (
         <div 
           className={cn(
-            "absolute z-[1000] transition-all duration-300 ease-in-out",
+            "hidden md:block absolute z-[1000] transition-all duration-300 ease-in-out",
             // Positioned at top-center, away from toggle button
             "top-16 left-1/2 transform -translate-x-1/2",
-            // Compact horizontal layout to fit constrained space - 3x smaller on mobile
-            "flex items-center gap-0.5 h-3 px-1 md:gap-1 md:h-8 md:px-2 bg-card/95 backdrop-blur rounded-full shadow-lg border",
+            // Compact horizontal layout to fit constrained space
+            "flex items-center gap-1 h-8 px-2 bg-card/95 backdrop-blur rounded-full shadow-lg border",
             // Visible state animation
             "opacity-100 translate-y-0"
           )} 
@@ -1600,7 +1600,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Floating Legal Disclaimer Button - Top Right Corner */}
       <div className={cn(
-        "absolute z-[80] transition-all duration-300 ease-in-out pointer-events-auto",
+        "absolute z-[1200] transition-all duration-300 ease-in-out pointer-events-auto",
         "top-4 right-4", // Positioned at top right corner
         "opacity-100 translate-y-0"
       )}
