@@ -27,11 +27,7 @@ import {
   Menu,
   Shield,
   X,
-  Layers,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight
+  Layers
 } from "lucide-react";
 import { type Route, type VehicleProfile, type Restriction, type Facility, type AlternativeRoute, type TrafficIncident } from "@shared/schema";
 import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-traffic";
@@ -818,73 +814,6 @@ const InteractiveMap = memo(function InteractiveMap({
     alert(facilityInfo);
   };
 
-  // Map directional movement functions (Leaflet API)
-  const handleMoveUp = () => {
-    console.log('🔝 UP button clicked! Map ref available:', !!mapRef.current);
-    try {
-      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
-        console.error('❌ Map reference not available for UP movement');
-        return;
-      }
-      const center = mapRef.current.getCenter();
-      console.log('📍 Current center:', center);
-      const newCenter = L.latLng(center.lat + 0.01, center.lng);
-      console.log('📍 Moving to:', newCenter);
-      mapRef.current.panTo(newCenter);
-      resetAutoHideTimer();
-    } catch (error) {
-      console.warn('Move up failed:', error);
-    }
-  };
-
-  const handleMoveDown = () => {
-    console.log('🔽 DOWN button clicked! Map ref available:', !!mapRef.current);
-    try {
-      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
-        console.error('❌ Map reference not available for DOWN movement');
-        return;
-      }
-      const center = mapRef.current.getCenter();
-      const newCenter = L.latLng(center.lat - 0.01, center.lng);
-      mapRef.current.panTo(newCenter);
-      resetAutoHideTimer();
-    } catch (error) {
-      console.warn('Move down failed:', error);
-    }
-  };
-
-  const handleMoveLeft = () => {
-    console.log('⬅️ LEFT button clicked! Map ref available:', !!mapRef.current);
-    try {
-      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
-        console.error('❌ Map reference not available for LEFT movement');
-        return;
-      }
-      const center = mapRef.current.getCenter();
-      const newCenter = L.latLng(center.lat, center.lng - 0.01);
-      mapRef.current.panTo(newCenter);
-      resetAutoHideTimer();
-    } catch (error) {
-      console.warn('Move left failed:', error);
-    }
-  };
-
-  const handleMoveRight = () => {
-    console.log('➡️ RIGHT button clicked! Map ref available:', !!mapRef.current);
-    try {
-      if (!mapRef.current || !mapRef.current.getContainer || !mapRef.current.getContainer() || !mapRef.current.getCenter || !mapRef.current.panTo) {
-        console.error('❌ Map reference not available for RIGHT movement');
-        return;
-      }
-      const center = mapRef.current.getCenter();
-      const newCenter = L.latLng(center.lat, center.lng + 0.01);
-      mapRef.current.panTo(newCenter);
-      resetAutoHideTimer();
-    } catch (error) {
-      console.warn('Move right failed:', error);
-    }
-  };
-
   const handleFullscreenToggle = () => {
     if (autoExpanded && onCollapseMap) {
       onCollapseMap();
@@ -1352,83 +1281,9 @@ const InteractiveMap = memo(function InteractiveMap({
       )}
 
 
-
-      {/* 4-Direction Movement Control - Mobile-Optimized */}
-      <div className={cn(
-        "absolute right-4 bottom-32 z-[1100]", // Control panel z-index
-        "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
-        "flex flex-col transition-all duration-300 pointer-events-auto direction-button-panel",
-        controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-24 h-36 md:w-16 md:h-28" // Mobile: 144px tall for 48px per button (44px+ touch targets)
-      )}>
-        {/* Up Arrow */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation flex items-center justify-center pointer-events-auto md:h-7"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleMoveUp();
-          }}
-          data-testid="button-move-up"
-          aria-label="Move map up"
-        >
-          <ChevronUp className="w-5 h-5 pointer-events-none" />
-        </Button>
-        
-        {/* Left and Right Arrows - Side by Side with Proper Touch Targets */}
-        <div className="flex border-b border-border/50 h-12">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-full w-12 rounded-none hover:bg-primary/10 transition-colors border-r border-border/50 touch-manipulation flex items-center justify-center pointer-events-auto md:w-8"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleMoveLeft();
-            }}
-            data-testid="button-move-left"
-            aria-label="Move map left"
-          >
-            <ChevronLeft className="w-4 h-4 pointer-events-none" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-full w-12 rounded-none hover:bg-primary/10 transition-colors touch-manipulation flex items-center justify-center pointer-events-auto md:w-8"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleMoveRight();
-            }}
-            data-testid="button-move-right"
-            aria-label="Move map right"
-          >
-            <ChevronRight className="w-4 h-4 pointer-events-none" />
-          </Button>
-        </div>
-        
-        {/* Down Arrow */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation flex items-center justify-center pointer-events-auto md:h-7"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleMoveDown();
-          }}
-          data-testid="button-move-down"
-          aria-label="Move map down"
-        >
-          <ChevronDown className="w-5 h-5 pointer-events-none" />
-        </Button>
-      </div>
-
       {/* Zoom Controls - Mobile-Optimized */}
       <div className={cn(
-        "absolute right-4 bottom-72 z-[1100]",
+        "absolute right-4 bottom-32 z-[1100]",
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
@@ -1469,7 +1324,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Location Centering Button */}
       <div className={cn(
-        "absolute right-4 bottom-96 z-[1100]",
+        "absolute right-4 bottom-60 z-[1100]",
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
