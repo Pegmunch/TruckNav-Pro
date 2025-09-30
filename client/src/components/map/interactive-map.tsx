@@ -1599,8 +1599,7 @@ const InteractiveMap = memo(function InteractiveMap({
         "opacity-100 translate-y-0"
       )}
       onPointerDown={(e) => { e.stopPropagation(); }}>
-        <Card className="overflow-hidden shadow-2xl">
-          <Button
+        <Button
             onClick={handleToggleLegalDisclaimer}
             onPointerDown={(e) => {
               e.preventDefault();
@@ -1632,7 +1631,6 @@ const InteractiveMap = memo(function InteractiveMap({
               )}
             </div>
           </Button>
-        </Card>
       </div>
       
       {/* Legal Disclaimer Dialog */}
