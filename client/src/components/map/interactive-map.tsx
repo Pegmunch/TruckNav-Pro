@@ -1333,7 +1333,7 @@ const InteractiveMap = memo(function InteractiveMap({
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-12 md:h-16 md:w-16 rounded-none hover:bg-primary/20 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-12 w-12 md:h-16 md:w-16 rounded-none hover:bg-primary/20 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto p-0"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
