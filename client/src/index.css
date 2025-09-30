@@ -421,18 +421,16 @@ body {
 
 /* Map shell wrapper for consistent sizing across devices */
 .map-shell {
-  height: var(--map-container-height);
+  /* Default fallback height - overridden by parent flex container */
+  height: 100%;
   min-height: 300px;
-  max-height: 100svh;
   width: 100%;
   position: relative;
   overflow: hidden;
   
-  /* Safe area handling */
-  padding-top: env(safe-area-inset-top, 0px);
+  /* Safe area handling for map edges */
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
-  /* Bottom padding handled by bottom bar component */
 }
 
 .map-shell .leaflet-container {

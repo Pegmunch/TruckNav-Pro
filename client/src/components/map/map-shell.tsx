@@ -144,11 +144,6 @@ export function MapShell({ children, className, onSizeChange, id = 'map-containe
         'bg-background',
         className
       )}
-      style={{
-        height: 'var(--map-container-height)',
-        minHeight: '300px',
-        maxHeight: '100svh',
-      }}
       data-testid="map-shell"
     >
       {children}

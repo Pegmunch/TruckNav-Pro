@@ -966,7 +966,7 @@ export default function NavigationPage() {
   // Don't block the entire interface for profile loading - show interface with loading states instead
 
   return (
-    <div className="h-screen flex flex-col" style={{background: "transparent"}}>
+    <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
 
       {/* Legal Disclaimer Popup */}
       {showLegalPopup && (
@@ -978,7 +978,7 @@ export default function NavigationPage() {
       )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
-        <div className="mobile-layout h-screen flex flex-col bg-background">
+        <div className="mobile-layout min-h-[100svh] flex flex-col bg-background">
           
           {/* PLAN MODE: Route Planning Focus */}
           {mobileNavMode === 'plan' && !isARMode && (
@@ -1003,7 +1003,7 @@ export default function NavigationPage() {
               {/* Background Map (Dimmed) */}
               <div className="relative flex-1">
                 <div className="absolute inset-0 opacity-30">
-                  <MapShell key="plan-mode-map">
+                  <MapShell key="plan-mode-map" className="h-full">
                     <InteractiveMap
                       currentRoute={null}
                       selectedProfile={selectedProfile || activeProfile}
@@ -1064,7 +1064,7 @@ export default function NavigationPage() {
 
               {/* Map with Route */}
               <div className="relative flex-1">
-                <MapShell key="preview-mode-map">
+                <MapShell key="preview-mode-map" className="h-full">
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1112,7 +1112,7 @@ export default function NavigationPage() {
             <>
               {/* Minimal Top Strip - ETA & Next Maneuver */}
               {currentRoute && (
-                <div className="absolute top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b shadow-lg mobile-safe-top">
+                <div className="bg-background/95 backdrop-blur-sm border-b shadow-lg mobile-safe-top shrink-0">
                   <div className="p-3 flex items-center justify-between">
                     <div className="flex-1">
                       <div className="text-sm font-medium text-primary">
@@ -1131,8 +1131,8 @@ export default function NavigationPage() {
               )}
 
               {/* Full-Screen Map */}
-              <div className="absolute inset-0">
-                <MapShell key="navigate-mode-map">
+              <div className="relative flex-1">
+                <MapShell key="navigate-mode-map" className="h-full">
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1142,24 +1142,26 @@ export default function NavigationPage() {
                     showIncidents={true}
                   />
                 </MapShell>
-              </div>
 
-              {/* Stop Button - Bottom Right */}
-              <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
-                <Button
-                  onClick={handleStopNavigation}
-                  disabled={completeJourneyMutation.isPending}
-                  variant="destructive"
-                  className="h-14 px-6 shadow-2xl"
-                  data-testid="button-stop-navigation"
-                >
-                  <X className="w-5 h-5 mr-2" />
-                  Stop
-                </Button>
-              </div>
+                {/* Stop Button - Bottom Right (Floating over map) */}
+                <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
+                  <Button
+                    onClick={handleStopNavigation}
+                    disabled={completeJourneyMutation.isPending}
+                    variant="destructive"
+                    className="h-14 px-6 shadow-2xl"
+                    data-testid="button-stop-navigation"
+                  >
+                    <X className="w-5 h-5 mr-2" />
+                    Stop
+                  </Button>
+                </div>
 
-              {/* Legal Ownership */}
-              <MapLegalOwnership compact={true} className="sm:hidden" />
+                {/* Legal Ownership */}
+                <div className="absolute bottom-2 left-2 z-10">
+                  <MapLegalOwnership compact={true} className="sm:hidden" />
+                </div>
+              </div>
             </>
           )}
 
