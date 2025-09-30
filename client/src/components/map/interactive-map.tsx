@@ -1353,12 +1353,12 @@ const InteractiveMap = memo(function InteractiveMap({
         </div>
       )}
       
-      {/* Toggle Controls Button - Always visible for easy access */}
+      {/* Toggle Controls Button - Hidden on mobile */}
       <Button
         variant={controlsVisible ? "default" : "outline"}
         size="icon"
         className={cn(
-          "absolute bottom-28 left-1 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
+          "hidden md:block absolute bottom-28 left-1 bg-card shadow-lg z-30 transition-all duration-300 hover:scale-105",
           "min-h-[clamp(40px,10vw,48px)] min-w-[clamp(40px,10vw,48px)]",
           "touch-manipulation cursor-pointer pointer-events-auto",
           controlsVisible ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border-2 border-primary/20 hover:border-primary"
@@ -1390,9 +1390,9 @@ const InteractiveMap = memo(function InteractiveMap({
         <Layers className="scalable-control-icon" />
       </Button>
       
-      {/* Enhanced Status Bar with Auto-Hide */}
+      {/* Enhanced Status Bar with Auto-Hide - Hidden on mobile */}
       <div className={cn(
-        "absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 shadow-lg z-[1200] transition-all duration-300",
+        "hidden md:block absolute bottom-4 left-4 bg-card border border-border rounded px-3 py-2 shadow-lg z-[1200] transition-all duration-300",
         controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       )}>
         <div className="flex items-center space-x-3">
