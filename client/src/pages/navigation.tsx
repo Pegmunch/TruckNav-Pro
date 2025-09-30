@@ -982,7 +982,7 @@ export default function NavigationPage() {
       )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
-        <div className="mobile-layout min-h-[100svh] flex flex-col bg-background">
+        <div className="mobile-layout min-h-[100svh] flex flex-col">
           
           {/* PLAN MODE: Route Planning Focus */}
           {mobileNavMode === 'plan' && !isARMode && (
