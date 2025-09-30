@@ -34,6 +34,7 @@ import { overlayInspector } from "@/lib/overlay-inspector";
 import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-handler";
 import { MapShell } from "@/components/map/map-shell";
 import { MobileFAB } from "@/components/navigation/mobile-fab";
+import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -1097,24 +1098,14 @@ export default function NavigationPage() {
           {/* NAVIGATE MODE: Full-Screen Navigation */}
           {mobileNavMode === 'navigate' && !isARMode && (
             <>
-              {/* Minimal Top Strip - ETA & Next Maneuver */}
+              {/* Compact Trip Strip */}
               {currentRoute && (
-                <div className="bg-background/95 backdrop-blur-sm border-b shadow-lg mobile-safe-top shrink-0">
-                  <div className="p-3 flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-primary">
-                        ETA {Math.round((currentRoute.duration || 0))} min
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {(currentRoute.distance || 0).toFixed(1)} mi remaining
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">Next: Turn Right</div>
-                      <div className="text-xs text-muted-foreground">in 0.8 mi</div>
-                    </div>
-                  </div>
-                </div>
+                <CompactTripStrip
+                  eta={Math.round(currentRoute.duration || 0)}
+                  distanceRemaining={currentRoute.distance || 0}
+                  nextManeuver="Turn Right"
+                  nextDistance={0.8}
+                />
               )}
 
               {/* Full-Screen Map */}
