@@ -1092,7 +1092,7 @@ export default function NavigationPage() {
                   data-testid="button-start-navigation-preview"
                 >
                   <Navigation className="w-6 h-6 mr-3" />
-                  Start Navigation
+                  NAV
                 </Button>
               </div>
             </>
