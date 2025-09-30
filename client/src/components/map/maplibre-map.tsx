@@ -346,12 +346,12 @@ const MapLibreMap = memo(function MapLibreMap({
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+      <div className="absolute bottom-24 right-4 flex flex-col gap-2 z-10">
         <Button
           size="icon"
           variant="secondary"
           onClick={handleZoomIn}
-          className="h-10 w-10 shadow-lg"
+          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
@@ -361,7 +361,7 @@ const MapLibreMap = memo(function MapLibreMap({
           size="icon"
           variant="secondary"
           onClick={handleZoomOut}
-          className="h-10 w-10 shadow-lg"
+          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
@@ -371,7 +371,7 @@ const MapLibreMap = memo(function MapLibreMap({
           size="icon"
           variant="secondary"
           onClick={handleRecenter}
-          className="h-10 w-10 shadow-lg"
+          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
@@ -381,7 +381,7 @@ const MapLibreMap = memo(function MapLibreMap({
           size="icon"
           variant="secondary"
           onClick={toggleMapView}
-          className="h-10 w-10 shadow-lg"
+          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
