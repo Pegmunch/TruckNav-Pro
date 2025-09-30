@@ -1151,9 +1151,7 @@ export default function NavigationPage() {
                 />
 
                 {/* Legal Ownership */}
-                <div className="absolute bottom-2 left-2 z-10">
-                  <MapLegalOwnership compact={true} className="sm:hidden" />
-                </div>
+                <MapLegalOwnership compact={true} className="sm:hidden" />
               </div>
             </>
           )}
