@@ -57,6 +57,17 @@ const MapLibreMap = memo(function MapLibreMap({
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const preferencesRef = useRef(preferences);
+  const currentZoomRef = useRef(currentZoom);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    preferencesRef.current = preferences;
+  }, [preferences]);
+  
+  useEffect(() => {
+    currentZoomRef.current = currentZoom;
+  }, [currentZoom]);
 
   const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number) => {
     if (!mapInstance.isStyleLoaded()) return;
@@ -83,9 +94,10 @@ const MapLibreMap = memo(function MapLibreMap({
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
+    try {
+      map.current = new maplibregl.Map({
+        container: mapContainer.current,
+        style: {
         version: 8,
         sources: {
           'roads-2d': {
@@ -159,64 +171,78 @@ const MapLibreMap = memo(function MapLibreMap({
             }
           }
         ]
-      },
-      center: preferences.center,
-      zoom: preferences.zoomLevel,
-      minZoom: 3,
-      maxZoom: 19,
-      attributionControl: false,
-      refreshExpiredTiles: false,
-      fadeDuration: 100,
-      maxTileCacheSize: 500
-    });
-
-    map.current.addControl(new maplibregl.NavigationControl({
-      visualizePitch: true,
-      showCompass: true,
-      showZoom: false
-    }), 'top-right');
-
-    if (onMapClick) {
-      map.current.on('click', (e) => {
-        onMapClick(e.lngLat.lat, e.lngLat.lng);
+        },
+        center: preferences.center,
+        zoom: preferences.zoomLevel,
+        minZoom: 3,
+        maxZoom: 19,
+        attributionControl: false,
+        refreshExpiredTiles: false,
+        fadeDuration: 100,
+        maxTileCacheSize: 500
       });
-    }
 
-    map.current.on('moveend', () => {
-      if (!map.current) return;
-      
-      const center = map.current.getCenter();
-      const zoom = Math.round(map.current.getZoom());
-      const prevZoom = currentZoom;
-      
-      setCurrentZoom(zoom);
-      
-      const zoomThresholdCrossed = (prevZoom < 17 && zoom >= 17) || (prevZoom >= 17 && zoom < 17);
-      if (zoomThresholdCrossed) {
-        updateLayerVisibility(map.current, preferences.mapViewMode, zoom);
-      }
+      map.current.addControl(new maplibregl.NavigationControl({
+        visualizePitch: true,
+        showCompass: true,
+        showZoom: false
+      }), 'top-right');
 
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      
-      saveTimeoutRef.current = setTimeout(() => {
-        setPreferences(prevPrefs => {
-          const newPrefs: MapPreferences = {
-            ...prevPrefs,
-            center: [center.lng, center.lat] as [number, number],
-            zoomLevel: zoom
-          };
-          saveMapPreferences(newPrefs);
-          return newPrefs;
+      if (onMapClick) {
+        map.current.on('click', (e) => {
+          onMapClick(e.lngLat.lat, e.lngLat.lng);
         });
-      }, 500);
-    });
+      }
 
-    map.current.once('load', () => {
-      setIsLoaded(true);
-      console.log('✅ MapLibre GL loaded with persistent tile sources');
-    });
+      map.current.on('moveend', () => {
+        if (!map.current) return;
+        
+        const center = map.current.getCenter();
+        const zoom = Math.round(map.current.getZoom());
+        const prevZoom = currentZoomRef.current;
+        const currentPrefs = preferencesRef.current;
+        
+        setCurrentZoom(zoom);
+        
+        const zoomThresholdCrossed = (prevZoom < 17 && zoom >= 17) || (prevZoom >= 17 && zoom < 17);
+        if (zoomThresholdCrossed) {
+          updateLayerVisibility(map.current, currentPrefs.mapViewMode, zoom);
+        }
+
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        
+        saveTimeoutRef.current = setTimeout(() => {
+          setPreferences(prevPrefs => {
+            const newPrefs: MapPreferences = {
+              ...prevPrefs,
+              center: [center.lng, center.lat] as [number, number],
+              zoomLevel: zoom
+            };
+            saveMapPreferences(newPrefs);
+            return newPrefs;
+          });
+        }, 500);
+      });
+
+      map.current.once('load', () => {
+        setIsLoaded(true);
+        console.log('✅ MapLibre GL loaded with persistent tile sources');
+      });
+
+      map.current.on('error', (e) => {
+        console.error('MapLibre GL error:', e);
+      });
+
+    } catch (error) {
+      console.error('Failed to initialize MapLibre GL:', error);
+      console.log('💡 Falling back to Leaflet - refresh and set localStorage.setItem("trucknav_map_engine", "leaflet")');
+      // Notify parent component about the failure
+      if (onMapClick) {
+        console.warn('MapLibre initialization failed - please use Leaflet instead');
+      }
+    }
 
     return () => {
       if (saveTimeoutRef.current) {

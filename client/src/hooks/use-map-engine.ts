@@ -8,22 +8,35 @@ export function useMapEngine() {
   const [mapEngine, setMapEngine] = useState<MapEngine>(() => {
     try {
       const stored = localStorage.getItem(MAP_ENGINE_KEY);
-      // Force migration to MapLibre as default (override old 'leaflet' settings)
-      if (!stored || stored === 'leaflet') {
-        console.log('🗺️ Migrating to MapLibre (new default, GPU-accelerated)');
+      
+      // Check WebGL support before defaulting to MapLibre
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      const hasWebGL = !!gl;
+      
+      if (!hasWebGL) {
+        console.log('🗺️ WebGL not available - using Leaflet fallback');
+        localStorage.setItem(MAP_ENGINE_KEY, 'leaflet');
+        return 'leaflet';
+      }
+      
+      // Prefer MapLibre if WebGL is available
+      if (!stored) {
+        console.log('🗺️ Using default map engine: MapLibre (GPU-accelerated)');
         localStorage.setItem(MAP_ENGINE_KEY, 'maplibre');
         return 'maplibre';
       }
-      if (stored === 'maplibre') {
-        console.log('🗺️ Map engine preference loaded: maplibre');
-        return 'maplibre';
+      
+      if (stored === 'leaflet' || stored === 'maplibre') {
+        console.log(`🗺️ Map engine preference loaded: ${stored}`);
+        return stored;
       }
     } catch (error) {
       console.warn('Failed to load map engine preference:', error);
     }
-    // Fallback default
-    console.log('🗺️ Using default map engine: maplibre');
-    return 'maplibre';
+    // Fallback to Leaflet for safety
+    console.log('🗺️ Using fallback map engine: leaflet');
+    return 'leaflet';
   });
 
   useEffect(() => {
