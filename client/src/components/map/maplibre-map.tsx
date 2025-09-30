@@ -394,59 +394,59 @@ const MapLibreMap = memo(function MapLibreMap({
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      <div className="absolute bottom-24 right-4 flex flex-col gap-2 z-10">
+      <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
         <Button
           size="icon"
           variant="secondary"
           onClick={handleZoomIn}
-          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
+          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
         </Button>
         <Button
           size="icon"
           variant="secondary"
           onClick={handleZoomOut}
-          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
+          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus className="h-4 w-4" />
+          <Minus className="h-3.5 w-3.5" />
         </Button>
         <Button
           size="icon"
           variant="secondary"
           onClick={handleRecenter}
-          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
+          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair className="h-4 w-4" />
+          <Crosshair className="h-3.5 w-3.5" />
         </Button>
         <Button
           size="icon"
           variant="secondary"
           onClick={toggle3DMode}
           className={cn(
-            "h-10 w-10 shadow-lg transition-colors",
-            is3DMode ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-white hover:bg-white/90"
+            "h-8 w-8 md:h-8 md:w-8 shadow-lg transition-colors",
+            is3DMode ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-white hover:bg-white/90 text-gray-700"
           )}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box className="h-4 w-4" />
+          <Box className="h-3.5 w-3.5" />
         </Button>
         <Button
           size="icon"
           variant="secondary"
           onClick={toggleMapView}
-          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
+          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Layers className="h-4 w-4" />
+          <Layers className="h-3.5 w-3.5" />
         </Button>
       </div>
 
