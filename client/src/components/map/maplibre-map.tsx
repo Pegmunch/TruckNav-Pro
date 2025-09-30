@@ -330,64 +330,33 @@ const MapLibreMap = memo(function MapLibreMap({
   };
 
   const handleRecenter = () => {
-    console.log('🎯 Recenter button clicked');
-    if (!map.current) {
-      console.warn('Map not initialized');
-      return;
-    }
+    if (!map.current) return;
     
     // Get current GPS location and center map there
     if ('geolocation' in navigator) {
-      console.log('📍 Requesting current GPS location...');
-      
-      const timeoutId = setTimeout(() => {
-        console.warn('⏱️ GPS request timed out after 3 seconds - using fallback');
-        // Timeout fallback
-        if (currentRoute?.routePath) {
-          console.log('Fallback: centering on route');
-          const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
-          const bounds = new maplibregl.LngLatBounds();
-          routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-          map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
-        } else {
-          console.log('Fallback: centering on default position with zoom out');
-          console.log('Current map zoom:', map.current?.getZoom());
-          console.log('Current map center:', map.current?.getCenter());
-          console.log('Flying to:', preferences.center, 'zoom:', 6);
-          map.current?.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
-        }
-      }, 3000);
-      
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          clearTimeout(timeoutId);
           const { latitude, longitude } = position.coords;
-          console.log(`✅ Got location: ${latitude}, ${longitude}`);
           map.current?.flyTo({ 
             center: [longitude, latitude], 
             zoom: 16, 
             duration: 1000 
           });
         },
-        (error) => {
-          clearTimeout(timeoutId);
-          console.warn('❌ Could not get current location:', error.message, error.code);
+        () => {
           // Fallback: center on route or default position
           if (currentRoute?.routePath) {
-            console.log('Fallback: centering on route');
             const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
             const bounds = new maplibregl.LngLatBounds();
             routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
             map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
           } else {
-            console.log('Fallback: centering on default position with zoom out');
-            map.current?.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
+            map.current?.flyTo({ center: preferences.center, zoom: 12, duration: 1000 });
           }
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
       );
     } else {
-      console.warn('Geolocation not available in this browser');
       // Geolocation not available, fallback to route or default
       if (currentRoute?.routePath) {
         const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
@@ -395,7 +364,7 @@ const MapLibreMap = memo(function MapLibreMap({
         routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
         map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
       } else {
-        map.current.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
+        map.current.flyTo({ center: preferences.center, zoom: 12, duration: 1000 });
       }
     }
   };
