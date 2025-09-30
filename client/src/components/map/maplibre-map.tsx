@@ -351,6 +351,9 @@ const MapLibreMap = memo(function MapLibreMap({
           map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
         } else {
           console.log('Fallback: centering on default position with zoom out');
+          console.log('Current map zoom:', map.current?.getZoom());
+          console.log('Current map center:', map.current?.getCenter());
+          console.log('Flying to:', preferences.center, 'zoom:', 6);
           map.current?.flyTo({ center: preferences.center, zoom: 6, duration: 1000 });
         }
       }, 3000);
