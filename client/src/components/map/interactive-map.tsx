@@ -1281,19 +1281,19 @@ const InteractiveMap = memo(function InteractiveMap({
       )}
 
 
-      {/* Zoom Controls - Mobile-Optimized */}
+      {/* Zoom Controls - Well-spaced same-size buttons */}
       <div className={cn(
         "absolute right-4 bottom-28 md:bottom-32 z-[1100]",
         "bg-card/95 backdrop-blur-sm shadow-2xl rounded-2xl border-2 border-primary/30 overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-10 h-10 md:w-16 md:h-20" // Mobile: 40px (clearer), Desktop: 64px x 80px
+        "w-12 h-24 md:w-16 md:h-32" // Mobile: 48px x 96px (2 buttons), Desktop: 64px x 128px
       )}>
         {/* Zoom In */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-full md:h-10 rounded-none hover:bg-primary/20 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-12 w-12 md:h-16 md:w-16 rounded-none hover:bg-primary/20 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1302,14 +1302,14 @@ const InteractiveMap = memo(function InteractiveMap({
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus className="w-3 h-3 md:w-5 md:h-5 pointer-events-none stroke-[3]" />
+          <Plus className="w-5 h-5 md:w-6 md:h-6 pointer-events-none stroke-[3]" />
         </Button>
         
         {/* Zoom Out */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-full md:h-10 rounded-none hover:bg-primary/20 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-12 w-12 md:h-16 md:w-16 rounded-none hover:bg-primary/20 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1318,22 +1318,22 @@ const InteractiveMap = memo(function InteractiveMap({
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus className="w-3 h-3 md:w-5 md:h-5 pointer-events-none stroke-[3]" />
+          <Minus className="w-5 h-5 md:w-6 md:h-6 pointer-events-none stroke-[3]" />
         </Button>
       </div>
 
       {/* Location Centering Button */}
       <div className={cn(
-        "absolute right-4 bottom-32 md:bottom-60 z-[1100]",
+        "absolute right-4 bottom-40 md:bottom-72 z-[1100]",
         "bg-card/95 backdrop-blur-sm shadow-2xl rounded-2xl border-2 border-primary/30 overflow-hidden",
         "transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-10 h-6 md:w-16 md:h-12" // Mobile: 40px x 24px (clearer), Desktop: original size
+        "w-12 h-12 md:w-16 md:h-16" // Mobile: 48px square, Desktop: 64px square
       )}>
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-full md:h-12 rounded-none hover:bg-primary/20 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-12 w-12 md:h-16 md:w-16 rounded-none hover:bg-primary/20 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1342,7 +1342,7 @@ const InteractiveMap = memo(function InteractiveMap({
           data-testid="button-center-location"
           aria-label="Center on current location"
         >
-          <Crosshair className="w-3 h-3 md:w-5 md:h-5 pointer-events-none stroke-[3]" />
+          <Crosshair className="w-5 h-5 md:w-6 md:h-6 pointer-events-none stroke-[3]" />
         </Button>
       </div>
       
