@@ -1018,6 +1018,18 @@ export default function NavigationPage() {
                     />
                   </MapShell>
                 </div>
+
+                {/* Plan Route FAB - Small button to open drawer */}
+                <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
+                  <Button
+                    onClick={() => setSidebarState('open')}
+                    size="lg"
+                    className="h-14 w-14 rounded-full shadow-2xl"
+                    data-testid="button-plan-route-fab"
+                  >
+                    <MapPin className="w-6 h-6" />
+                  </Button>
+                </div>
               </div>
 
               {/* Legal Ownership */}
@@ -1156,24 +1168,26 @@ export default function NavigationPage() {
           )}
 
           {/* Simplified Route Planning Drawer - Mobile Only */}
-          <Drawer open={isMobileDrawerOpen} onOpenChange={(open) => setSidebarState(open ? 'open' : 'collapsed')}>
-            <DrawerContent>
-              <DrawerHeader>
-                <DrawerTitle className="text-xl">Plan Route</DrawerTitle>
-              </DrawerHeader>
-              <div className="p-6 max-h-[70vh] overflow-y-auto">
-                <SimplifiedRouteDrawer
-                  fromLocation={fromLocation}
-                  toLocation={toLocation}
-                  onFromLocationChange={setFromLocation}
-                  onToLocationChange={setToLocation}
-                  routePreference={routePreference}
-                  onRoutePreferenceChange={setRoutePreference}
-                  onUseCurrentLocation={() => setFromLocation('Current Location')}
-                />
-              </div>
-            </DrawerContent>
-          </Drawer>
+          {isMobileDrawerOpen && (
+            <Drawer open={true} onOpenChange={(open) => !open && setSidebarState('collapsed')}>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle className="text-xl">Plan Route</DrawerTitle>
+                </DrawerHeader>
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                  <SimplifiedRouteDrawer
+                    fromLocation={fromLocation}
+                    toLocation={toLocation}
+                    onFromLocationChange={setFromLocation}
+                    onToLocationChange={setToLocation}
+                    routePreference={routePreference}
+                    onRoutePreferenceChange={setRoutePreference}
+                    onUseCurrentLocation={() => setFromLocation('Current Location')}
+                  />
+                </div>
+              </DrawerContent>
+            </Drawer>
+          )}
 
         </div>
       ) : (

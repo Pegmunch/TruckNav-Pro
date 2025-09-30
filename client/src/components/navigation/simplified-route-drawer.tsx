@@ -29,7 +29,7 @@ export function SimplifiedRouteDrawer({
       {/* Route Inputs */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="from-location" className="text-base font-medium">
+          <Label htmlFor="from-location" className="text-sm font-medium">
             From
           </Label>
           <div className="flex gap-2">
@@ -45,7 +45,7 @@ export function SimplifiedRouteDrawer({
               variant="outline"
               size="icon"
               onClick={onUseCurrentLocation}
-              className="h-12 w-12 shrink-0"
+              className="h-10 w-10 shrink-0"
               data-testid="button-current-location"
             >
               <Crosshair className="w-5 h-5" />
@@ -54,7 +54,7 @@ export function SimplifiedRouteDrawer({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="to-location" className="text-base font-medium">
+          <Label htmlFor="to-location" className="text-sm font-medium">
             To
           </Label>
           <AddressAutocomplete
@@ -71,7 +71,7 @@ export function SimplifiedRouteDrawer({
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-muted-foreground">Route Preferences</h3>
         <Tabs value={routePreference} onValueChange={(value) => onRoutePreferenceChange(value as 'fastest' | 'eco' | 'avoid_tolls')} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-12">
+          <TabsList className="grid w-full grid-cols-3 h-10">
             <TabsTrigger value="fastest" className="text-sm" data-testid="tab-fastest">
               Fastest
             </TabsTrigger>
