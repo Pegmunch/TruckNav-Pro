@@ -1,8 +1,8 @@
 import { Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 
 interface SimplifiedRouteDrawerProps {
   fromLocation: string;
@@ -33,13 +33,13 @@ export function SimplifiedRouteDrawer({
             From
           </Label>
           <div className="flex gap-2">
-            <Input
+            <AddressAutocomplete
               id="from-location"
               value={fromLocation}
-              onChange={(e) => onFromLocationChange(e.target.value)}
-              placeholder="Start location"
-              className="h-12 text-base"
-              data-testid="input-from-location"
+              onChange={onFromLocationChange}
+              placeholder="Start location or postcode"
+              testId="input-from-location"
+              className="flex-1"
             />
             <Button
               variant="outline"
@@ -57,13 +57,12 @@ export function SimplifiedRouteDrawer({
           <Label htmlFor="to-location" className="text-base font-medium">
             To
           </Label>
-          <Input
+          <AddressAutocomplete
             id="to-location"
             value={toLocation}
-            onChange={(e) => onToLocationChange(e.target.value)}
-            placeholder="Destination"
-            className="h-12 text-base"
-            data-testid="input-to-location"
+            onChange={onToLocationChange}
+            placeholder="Destination or postcode"
+            testId="input-to-location"
           />
         </div>
       </div>
