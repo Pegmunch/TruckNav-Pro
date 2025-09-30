@@ -1317,19 +1317,26 @@ export default function NavigationPage() {
                     }, 100);
                   }}
                 >
-                  <EnhancedRealisticMap
-                    currentRoute={currentRoute}
-                    selectedProfile={selectedProfile || activeProfile}
-                    alternativeRoutes={alternatives}
-                    previewRoute={previewRoute}
-                    showTrafficLayer={true}
-                    showIncidents={true}
-                    isNavigating={isNavigating}
-                    currentLocation={currentGPSLocation || undefined}
-                    onLocationUpdate={setCurrentGPSLocation}
-                    isMapExpanded={isMapExpanded}
-                    sidebarState={sidebarState}
-                  />
+                  {isMapLibre ? (
+                    <MapLibreMap
+                      currentRoute={currentRoute}
+                      selectedProfile={selectedProfile || activeProfile}
+                    />
+                  ) : (
+                    <EnhancedRealisticMap
+                      currentRoute={currentRoute}
+                      selectedProfile={selectedProfile || activeProfile}
+                      alternativeRoutes={alternatives}
+                      previewRoute={previewRoute}
+                      showTrafficLayer={true}
+                      showIncidents={true}
+                      isNavigating={isNavigating}
+                      currentLocation={currentGPSLocation || undefined}
+                      onLocationUpdate={setCurrentGPSLocation}
+                      isMapExpanded={isMapExpanded}
+                      sidebarState={sidebarState}
+                    />
+                  )}
                 </MapShell>
                 
                 {/* Legal Ownership Section - Desktop */}

@@ -4,6 +4,30 @@ This is a specialized truck navigation web application designed to provide safe 
 
 # Recent Changes
 
+## September 30, 2025 - MapLibre GL JS Parallel Map Engine ✅
+- **COMPLETED**: Implemented MapLibre GL JS as experimental GPU-accelerated map engine alongside stable Leaflet
+- **Added**: MapLibreMap component (`client/src/components/map/maplibre-map.tsx`)
+  - GPU-accelerated vector tile rendering with MapLibre GL JS v5
+  - Automatic 2D/3D tile switching at zoom level 17+
+  - Uses Google Maps 3D tiles (roads/satellite) at high zoom for enhanced detail
+  - Custom zoom controls, layer toggle, and recenter button
+  - Route rendering with GeoJSON LineString geometry
+  - Persistent map preferences (center, zoom, mapViewMode) via localStorage
+  - Real-time zoom indicator and 3D mode badge
+- **Added**: Feature toggle system (`client/src/hooks/use-map-engine.ts`)
+  - Switch between Leaflet (default) and MapLibre via localStorage
+  - Persistent preference with console logging for developer testing
+  - Usage: `localStorage.setItem('trucknav_map_engine', 'maplibre')` then reload
+- **Fixed**: Critical bugs in MapLibre implementation
+  - Zoom-triggered tile swapping using currentZoom state tracking
+  - Preference closure bugs using functional setState updates
+  - Proper style reloading with map.setStyle() API instead of source mutation
+  - Route persistence after style changes using styledata event listener
+  - Export/import alignment for proper component mounting
+- **Integration**: Conditional rendering in all navigation modes (plan, preview, navigate)
+- **Design**: Parallel implementation reduces risk - both engines fully functional for A/B testing
+- **Status**: Leaflet remains default (stable), MapLibre available as experimental option
+
 ## September 30, 2025 - Mobile Overlay & Scaling Fixes ✅
 - **COMPLETED**: Eliminated transparent overlay and fixed mobile scaling issues for optimal visibility
 - **Fixed**: Transparent drawer overlay removal
@@ -149,6 +173,12 @@ Preferred communication style: Simple, everyday language.
 ## Routing and Navigation Services
 - **Wouter**: Lightweight client-side routing library
 - **Geolocation APIs**: Browser-based location services for current position
+
+## Mapping Libraries
+- **Leaflet**: Default map rendering library with proven stability
+- **React-Leaflet**: React bindings for Leaflet maps
+- **MapLibre GL JS**: Experimental GPU-accelerated vector map engine with 3D support
+- **Tile Sources**: Google Maps (3D), OpenStreetMap, Esri satellite imagery
 
 ## Form and Data Validation
 - **Zod**: Runtime type validation and schema definition
