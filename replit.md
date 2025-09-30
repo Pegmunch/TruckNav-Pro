@@ -4,6 +4,29 @@ This is a specialized truck navigation web application designed to provide safe 
 
 # Recent Changes
 
+## September 30, 2025 - Mobile Overlay & Scaling Fixes ✅
+- **COMPLETED**: Eliminated transparent overlay and fixed mobile scaling issues for optimal visibility
+- **Fixed**: Transparent drawer overlay removal
+  - Changed Drawer to conditional rendering: only renders when `isMobileDrawerOpen` is true
+  - Eliminates persistent transparent overlay that was dimming the map when drawer was closed
+  - Map now fully visible and interactive in PLAN mode with no visual obstruction
+- **Fixed**: Mobile font and button scaling to prevent overlapping
+  - Reduced label fonts from `text-base` to `text-sm` in SimplifiedRouteDrawer (From/To labels)
+  - Reduced current location button from `h-12 w-12` to `h-10 w-10` for compact mobile layout
+  - Reduced route preference tab buttons from `h-12` to `h-10` for better spacing
+  - All buttons maintain 44px tap target size for optimal mobile accessibility
+- **Added**: Small FAB button in PLAN mode to access route planning
+  - Circular button (h-14 w-14) with MapPin icon positioned bottom-right
+  - Opens SimplifiedRouteDrawer when tapped
+  - Replaces removed blue "Plan Your Route" overlay button with cleaner, non-intrusive design
+  - Includes safe-area handling for modern mobile devices
+- **Testing**: All mobile UI improvements verified via automated Playwright testing
+  - No transparent overlay detected in PLAN mode
+  - All elements properly sized with no overlapping
+  - Drawer opens/closes smoothly with no residual overlay
+  - Map remains fully interactive throughout all modes
+- **Status**: All mobile overlay and scaling issues resolved successfully
+
 ## September 30, 2025 - Address Autocomplete & Mobile Theme Fix ✅
 - **COMPLETED**: Address autocomplete with postcode suggestions and mobile theme improvements
 - **Added**: AddressAutocomplete component with dropdown suggestions
