@@ -69,8 +69,8 @@ export default function LegalDisclaimerDialog({
           "z-50",
           // Mobile optimization
           "sm:max-h-[90vh]",
-          // Custom styling
-          "bg-background border-0 sm:border",
+          // Custom styling - solid white background
+          "bg-white border-0 sm:border",
           className
         )}
         data-testid="dialog-legal-disclaimer"
@@ -80,7 +80,7 @@ export default function LegalDisclaimerDialog({
         aria-describedby="legal-disclaimer-description"
       >
         {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 sm:px-6">
+        <div className="sticky top-0 z-10 bg-white border-b border-border px-4 py-3 sm:px-6">
           <DialogHeader className="flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -169,7 +169,7 @@ export default function LegalDisclaimerDialog({
         </div>
 
         {/* Footer with Close Action */}
-        <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 sm:px-6">
+        <div className="sticky bottom-0 bg-white border-t border-border px-4 py-3 sm:px-6">
           <div className="flex justify-end">
             <Button
               onClick={handleClose}
