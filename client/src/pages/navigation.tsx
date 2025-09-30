@@ -1080,7 +1080,7 @@ export default function NavigationPage() {
                     setMobileNavMode('plan');
                   }}
                   onMenuClick={() => setSidebarState('open')}
-                  className="bottom-32 right-6 mobile-safe-bottom"
+                  className="bottom-24 right-6 mobile-safe-bottom"
                 />
               </div>
 
