@@ -7,7 +7,9 @@ import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation } from "lu
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
+import MapLibreMap from "@/components/map/maplibre-map";
 import EnhancedRealisticMap from "@/components/map/enhanced-realistic-map";
+import { useMapEngine } from "@/hooks/use-map-engine";
 import ProfessionalNavHUD from "@/components/navigation/professional-nav-hud";
 import NavigationSidebar from "@/components/navigation/navigation-sidebar";
 import AlternativeRoutesPanel from "@/components/traffic/alternative-routes-panel";
@@ -42,6 +44,7 @@ export default function NavigationPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const { mapEngine, toggleMapEngine, isMapLibre } = useMapEngine();
   
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
@@ -1008,14 +1011,21 @@ export default function NavigationPage() {
               <div className="relative flex-1">
                 <div className="absolute inset-0">
                   <MapShell key="plan-mode-map" className="h-full">
-                    <InteractiveMap
-                      currentRoute={null}
-                      selectedProfile={selectedProfile || activeProfile}
-                      alternativeRoutes={[]}
-                      previewRoute={null}
-                      showTrafficLayer={false}
-                      showIncidents={false}
-                    />
+                    {isMapLibre ? (
+                      <MapLibreMap
+                        currentRoute={null}
+                        selectedProfile={selectedProfile || activeProfile}
+                      />
+                    ) : (
+                      <InteractiveMap
+                        currentRoute={null}
+                        selectedProfile={selectedProfile || activeProfile}
+                        alternativeRoutes={[]}
+                        previewRoute={null}
+                        showTrafficLayer={false}
+                        showIncidents={false}
+                      />
+                    )}
                   </MapShell>
                 </div>
 
@@ -1044,14 +1054,21 @@ export default function NavigationPage() {
               {/* Map with Route - Full Height */}
               <div className="relative flex-1">
                 <MapShell key="preview-mode-map" className="h-full">
-                  <InteractiveMap
-                    currentRoute={currentRoute}
-                    selectedProfile={selectedProfile || activeProfile}
-                    alternativeRoutes={alternatives}
-                    previewRoute={previewRoute}
-                    showTrafficLayer={true}
-                    showIncidents={true}
-                  />
+                  {isMapLibre ? (
+                    <MapLibreMap
+                      currentRoute={currentRoute}
+                      selectedProfile={selectedProfile || activeProfile}
+                    />
+                  ) : (
+                    <InteractiveMap
+                      currentRoute={currentRoute}
+                      selectedProfile={selectedProfile || activeProfile}
+                      alternativeRoutes={alternatives}
+                      previewRoute={previewRoute}
+                      showTrafficLayer={true}
+                      showIncidents={true}
+                    />
+                  )}
                 </MapShell>
 
                 {/* FAB for secondary controls - Positioned above route summary */}
@@ -1114,14 +1131,21 @@ export default function NavigationPage() {
               {/* Full-Screen Map */}
               <div className="relative flex-1">
                 <MapShell key="navigate-mode-map" className="h-full">
-                  <InteractiveMap
-                    currentRoute={currentRoute}
-                    selectedProfile={selectedProfile || activeProfile}
-                    alternativeRoutes={[]}
-                    previewRoute={null}
-                    showTrafficLayer={true}
-                    showIncidents={true}
-                  />
+                  {isMapLibre ? (
+                    <MapLibreMap
+                      currentRoute={currentRoute}
+                      selectedProfile={selectedProfile || activeProfile}
+                    />
+                  ) : (
+                    <InteractiveMap
+                      currentRoute={currentRoute}
+                      selectedProfile={selectedProfile || activeProfile}
+                      alternativeRoutes={[]}
+                      previewRoute={null}
+                      showTrafficLayer={true}
+                      showIncidents={true}
+                    />
+                  )}
                 </MapShell>
 
                 {/* Stop Button - Bottom Left for balance */}
