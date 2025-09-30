@@ -1067,7 +1067,7 @@ const InteractiveMap = memo(function InteractiveMap({
               "mobile:h-[50vh] mobile:top-4 mobile:right-2 mobile:left-2 mobile:bottom-auto" // Mobile: 50% height, nearly full width
             ] : [
               // Preview mode - smaller, traditional positioning
-              "bottom-48 right-4",
+              "bottom-52 right-4",
               "w-64 h-36 md:w-80 md:h-48 lg:w-96 lg:h-52"
             ]
           )}
