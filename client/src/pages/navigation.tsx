@@ -33,6 +33,7 @@ import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
 import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-handler";
 import { MapShell } from "@/components/map/map-shell";
+import { MobileFAB } from "@/components/navigation/mobile-fab";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -1036,33 +1037,7 @@ export default function NavigationPage() {
           {/* PREVIEW MODE: Route Overview */}
           {mobileNavMode === 'preview' && !isARMode && currentRoute && (
             <>
-              {/* Minimal Header with Back */}
-              <div className="flex items-center justify-between p-3 border-b mobile-safe-top bg-background/95 backdrop-blur-sm">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setCurrentRoute(null);
-                    setMobileNavMode('plan');
-                  }}
-                  className="h-10"
-                  data-testid="button-back-to-plan"
-                >
-                  <X className="w-5 h-5 mr-2" />
-                  Clear Route
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSidebarState('open')}
-                  className="h-10 w-10"
-                  data-testid="button-menu-preview"
-                >
-                  <Menu className="w-5 h-5" />
-                </Button>
-              </div>
-
-              {/* Map with Route */}
+              {/* Map with Route - Full Height */}
               <div className="relative flex-1">
                 <MapShell key="preview-mode-map" className="h-full">
                   <InteractiveMap
@@ -1074,6 +1049,18 @@ export default function NavigationPage() {
                     showIncidents={true}
                   />
                 </MapShell>
+
+                {/* FAB for secondary controls - Positioned above route summary */}
+                <MobileFAB
+                  mode="preview"
+                  onSettingsClick={() => setShowVehicleSettings(true)}
+                  onClearRoute={() => {
+                    setCurrentRoute(null);
+                    setMobileNavMode('plan');
+                  }}
+                  onMenuClick={() => setSidebarState('open')}
+                  className="bottom-32 right-6 mobile-safe-bottom"
+                />
               </div>
 
               {/* Route Summary Card + Start CTA */}
@@ -1143,19 +1130,31 @@ export default function NavigationPage() {
                   />
                 </MapShell>
 
-                {/* Stop Button - Bottom Right (Floating over map) */}
-                <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
+                {/* Stop Button - Bottom Left for balance */}
+                <div className="absolute bottom-6 left-6 z-20 mobile-safe-bottom">
                   <Button
                     onClick={handleStopNavigation}
                     disabled={completeJourneyMutation.isPending}
                     variant="destructive"
-                    className="h-14 px-6 shadow-2xl"
+                    className="h-16 px-8 shadow-2xl text-lg font-semibold"
                     data-testid="button-stop-navigation"
                   >
-                    <X className="w-5 h-5 mr-2" />
+                    <X className="w-6 h-6 mr-2" />
                     Stop
                   </Button>
                 </div>
+
+                {/* FAB for secondary controls - Bottom Right for thumb access */}
+                <MobileFAB
+                  mode="navigate"
+                  onSettingsClick={() => setShowVehicleSettings(true)}
+                  onClearRoute={() => {
+                    setCurrentRoute(null);
+                    setMobileNavMode('plan');
+                  }}
+                  onMenuClick={() => setSidebarState('open')}
+                  className="bottom-6 right-6 mobile-safe-bottom"
+                />
 
                 {/* Legal Ownership */}
                 <div className="absolute bottom-2 left-2 z-10">
