@@ -8,14 +8,20 @@ export function useMapEngine() {
   const [mapEngine, setMapEngine] = useState<MapEngine>(() => {
     try {
       const stored = localStorage.getItem(MAP_ENGINE_KEY);
-      if (stored === 'leaflet' || stored === 'maplibre') {
-        console.log(`🗺️ Map engine preference loaded: ${stored}`);
-        return stored;
+      // Force migration to MapLibre as default (override old 'leaflet' settings)
+      if (!stored || stored === 'leaflet') {
+        console.log('🗺️ Migrating to MapLibre (new default, GPU-accelerated)');
+        localStorage.setItem(MAP_ENGINE_KEY, 'maplibre');
+        return 'maplibre';
+      }
+      if (stored === 'maplibre') {
+        console.log('🗺️ Map engine preference loaded: maplibre');
+        return 'maplibre';
       }
     } catch (error) {
       console.warn('Failed to load map engine preference:', error);
     }
-    // Default to MapLibre (GPU-accelerated)
+    // Fallback default
     console.log('🗺️ Using default map engine: maplibre');
     return 'maplibre';
   });

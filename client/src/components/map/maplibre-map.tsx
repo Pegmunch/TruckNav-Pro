@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, memo, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ interface MapPreferences {
 const defaultPreferences: MapPreferences = {
   mapViewMode: 'roads',
   zoomLevel: 10,
-  center: [-1.5, 52.5], // [lng, lat] for MapLibre
+  center: [-1.5, 52.5],
 };
 
 const loadMapPreferences = (): MapPreferences => {
@@ -56,51 +56,107 @@ const MapLibreMap = memo(function MapLibreMap({
   const [preferences, setPreferences] = useState<MapPreferences>(loadMapPreferences);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get tile URL based on preferences
-  const getTileUrl = (viewMode: 'roads' | 'satellite', zoom: number) => {
-    // Use 3D tiles at zoom 17+
-    if (zoom >= 17) {
-      if (viewMode === 'roads') {
-        return 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-      } else {
-        return 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
-      }
-    }
+  const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number) => {
+    if (!mapInstance.isStyleLoaded()) return;
+
+    const is3D = zoom >= 17;
     
-    // Standard tiles for lower zoom
-    return viewMode === 'satellite'
-      ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  };
+    try {
+      if (viewMode === 'roads') {
+        mapInstance.setLayoutProperty('roads-2d-layer', 'visibility', is3D ? 'none' : 'visible');
+        mapInstance.setLayoutProperty('roads-3d-layer', 'visibility', is3D ? 'visible' : 'none');
+        mapInstance.setLayoutProperty('satellite-2d-layer', 'visibility', 'none');
+        mapInstance.setLayoutProperty('satellite-3d-layer', 'visibility', 'none');
+      } else {
+        mapInstance.setLayoutProperty('roads-2d-layer', 'visibility', 'none');
+        mapInstance.setLayoutProperty('roads-3d-layer', 'visibility', 'none');
+        mapInstance.setLayoutProperty('satellite-2d-layer', 'visibility', is3D ? 'none' : 'visible');
+        mapInstance.setLayoutProperty('satellite-3d-layer', 'visibility', is3D ? 'visible' : 'none');
+      }
+    } catch (error) {
+      console.warn('Failed to update layer visibility:', error);
+    }
+  }, []);
 
-  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-
-    const tileUrl = getTileUrl(preferences.mapViewMode, preferences.zoomLevel);
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: {
         version: 8,
         sources: {
-          'raster-tiles': {
+          'roads-2d': {
             type: 'raster',
-            tiles: [tileUrl],
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
             tileSize: 256,
-            attribution: preferences.mapViewMode === 'satellite'
-              ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics'
-              : '© OpenStreetMap contributors'
+            maxzoom: 19,
+            attribution: '© OpenStreetMap contributors'
+          },
+          'roads-3d': {
+            type: 'raster',
+            tiles: ['https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'],
+            tileSize: 256,
+            maxzoom: 20,
+            attribution: '© Google Maps with 3D Buildings'
+          },
+          'satellite-2d': {
+            type: 'raster',
+            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: '© Esri, DigitalGlobe, GeoEye'
+          },
+          'satellite-3d': {
+            type: 'raster',
+            tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+            tileSize: 256,
+            maxzoom: 20,
+            attribution: '© Google Satellite with 3D Terrain'
           }
         },
         layers: [
           {
-            id: 'simple-tiles',
+            id: 'roads-2d-layer',
             type: 'raster',
-            source: 'raster-tiles',
+            source: 'roads-2d',
             minzoom: 0,
-            maxzoom: 22
+            maxzoom: 22,
+            layout: {
+              visibility: preferences.mapViewMode === 'roads' ? 'visible' : 'none'
+            }
+          },
+          {
+            id: 'roads-3d-layer',
+            type: 'raster',
+            source: 'roads-3d',
+            minzoom: 0,
+            maxzoom: 22,
+            layout: {
+              visibility: 'none'
+            }
+          },
+          {
+            id: 'satellite-2d-layer',
+            type: 'raster',
+            source: 'satellite-2d',
+            minzoom: 0,
+            maxzoom: 22,
+            layout: {
+              visibility: preferences.mapViewMode === 'satellite' ? 'visible' : 'none'
+            }
+          },
+          {
+            id: 'satellite-3d-layer',
+            type: 'raster',
+            source: 'satellite-3d',
+            minzoom: 0,
+            maxzoom: 22,
+            layout: {
+              visibility: 'none'
+            }
           }
         ]
       },
@@ -108,29 +164,43 @@ const MapLibreMap = memo(function MapLibreMap({
       zoom: preferences.zoomLevel,
       minZoom: 3,
       maxZoom: 19,
-      attributionControl: false
+      attributionControl: false,
+      refreshExpiredTiles: false,
+      fadeDuration: 100,
+      maxTileCacheSize: 500
     });
 
-    // Add navigation controls
     map.current.addControl(new maplibregl.NavigationControl({
       visualizePitch: true,
       showCompass: true,
       showZoom: false
     }), 'top-right');
 
-    // Handle click events
     if (onMapClick) {
       map.current.on('click', (e) => {
         onMapClick(e.lngLat.lat, e.lngLat.lng);
       });
     }
 
-    // Save preferences on move/zoom with functional update to avoid closure issues
     map.current.on('moveend', () => {
-      if (map.current) {
-        const center = map.current.getCenter();
-        const zoom = Math.round(map.current.getZoom());
-        setCurrentZoom(zoom);
+      if (!map.current) return;
+      
+      const center = map.current.getCenter();
+      const zoom = Math.round(map.current.getZoom());
+      const prevZoom = currentZoom;
+      
+      setCurrentZoom(zoom);
+      
+      const zoomThresholdCrossed = (prevZoom < 17 && zoom >= 17) || (prevZoom >= 17 && zoom < 17);
+      if (zoomThresholdCrossed) {
+        updateLayerVisibility(map.current, preferences.mapViewMode, zoom);
+      }
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      saveTimeoutRef.current = setTimeout(() => {
         setPreferences(prevPrefs => {
           const newPrefs: MapPreferences = {
             ...prevPrefs,
@@ -140,15 +210,18 @@ const MapLibreMap = memo(function MapLibreMap({
           saveMapPreferences(newPrefs);
           return newPrefs;
         });
-      }
+      }, 500);
     });
 
-    map.current.on('load', () => {
+    map.current.once('load', () => {
       setIsLoaded(true);
-      console.log('✅ MapLibre GL loaded successfully');
+      console.log('✅ MapLibre GL loaded with persistent tile sources');
     });
 
     return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -156,79 +229,16 @@ const MapLibreMap = memo(function MapLibreMap({
     };
   }, []);
 
-  // Update tiles when view mode or zoom threshold changes
   useEffect(() => {
     if (!map.current || !isLoaded) return;
+    updateLayerVisibility(map.current, preferences.mapViewMode, currentZoom);
+  }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom]);
 
-    const tileUrl = getTileUrl(preferences.mapViewMode, currentZoom);
-    const attribution = currentZoom >= 17
-      ? (preferences.mapViewMode === 'satellite' ? '© Google Satellite with 3D Terrain' : '© Google Maps with 3D Buildings')
-      : (preferences.mapViewMode === 'satellite' ? '© Esri, DigitalGlobe' : '© OpenStreetMap contributors');
-
-    // Rebuild the entire style to properly update tiles
-    map.current.setStyle({
-      version: 8,
-      sources: {
-        'raster-tiles': {
-          type: 'raster',
-          tiles: [tileUrl],
-          tileSize: 256,
-          attribution
-        }
-      },
-      layers: [
-        {
-          id: 'simple-tiles',
-          type: 'raster',
-          source: 'raster-tiles',
-          minzoom: 0,
-          maxzoom: 22
-        }
-      ]
-    });
-
-    // Re-add route after style reload
-    map.current.once('styledata', () => {
-      if (currentRoute?.routePath && map.current) {
-        const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
-        
-        map.current!.addSource('route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates: routeCoordinates
-            }
-          }
-        });
-
-        map.current!.addLayer({
-          id: 'route-line',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': '#2563eb',
-            'line-width': 6,
-            'line-opacity': 0.8
-          }
-        });
-      }
-    });
-  }, [preferences.mapViewMode, currentZoom >= 17, isLoaded]);
-
-  // Render route on map
   useEffect(() => {
     if (!map.current || !isLoaded || !currentRoute?.routePath) return;
 
     const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
-    // Add route source if it doesn't exist
     if (!map.current.getSource('route')) {
       map.current.addSource('route', {
         type: 'geojson',
@@ -257,26 +267,25 @@ const MapLibreMap = memo(function MapLibreMap({
         }
       });
     } else {
-      // Update existing route
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
-      source.setData({
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: routeCoordinates
-        }
-      });
+      if (source && source.setData) {
+        source.setData({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: routeCoordinates
+          }
+        });
+      }
     }
 
-    // Fit bounds to route
     const bounds = new maplibregl.LngLatBounds();
     routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
     map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
 
   }, [currentRoute, isLoaded]);
 
-  // Handle zoom controls
   const handleZoomIn = () => {
     if (map.current) {
       map.current.zoomIn({ duration: 300 });
@@ -311,7 +320,6 @@ const MapLibreMap = memo(function MapLibreMap({
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      {/* Custom Zoom Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
         <Button
           size="icon"
@@ -355,7 +363,6 @@ const MapLibreMap = memo(function MapLibreMap({
         </Button>
       </div>
 
-      {/* Map info badge */}
       <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
         <span className="text-muted-foreground">MapLibre GL</span>
         <span className="text-muted-foreground mx-1">•</span>
