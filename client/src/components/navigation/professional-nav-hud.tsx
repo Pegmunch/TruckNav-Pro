@@ -178,23 +178,23 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   return (
     <div className="fixed nav-hud-safe-area z-[60] bg-transparent w-auto max-w-lg professional-nav-interface">
       {/* Professional HUD Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-900/95 border-b border-gray-700/50">
+      <div className="flex items-center justify-between px-3 py-2 md:px-4 md:py-2.5 bg-gray-900/95 border-b border-gray-700/50">
         {/* Left: Current Speed & Status */}
-        <div className="flex items-center space-x-4">
-          <div className="bg-blue-600/20 rounded-lg p-3 border border-blue-500/30">
-            <div className="flex items-center space-x-2">
-              <Gauge className="w-5 h-5 text-blue-400" />
+        <div className="flex items-center space-x-2 md:space-x-3">
+          <div className="bg-blue-600/20 rounded-lg p-1.5 md:p-2 border border-blue-500/30">
+            <div className="flex items-center space-x-1 md:space-x-1.5">
+              <Gauge className="w-3 h-3 md:w-4 md:h-4 text-blue-400" />
               <div className="text-right">
-                <div className="text-2xl font-mono font-bold text-white">{Math.round(currentSpeed)}</div>
-                <div className="text-xs text-blue-300">MPH</div>
+                <div className="text-lg md:text-xl font-mono font-bold text-white leading-tight">{Math.round(currentSpeed)}</div>
+                <div className="text-[10px] md:text-xs text-blue-300 leading-none">MPH</div>
               </div>
             </div>
           </div>
           
-          <div className="text-left">
-            <div className="text-sm text-gray-300">Navigation Active</div>
-            <div className="text-xs text-green-400 flex items-center">
-              <Compass className="w-3 h-3 mr-1" />
+          <div className="text-left hidden sm:block">
+            <div className="text-xs md:text-sm text-gray-300 leading-tight">Navigation Active</div>
+            <div className="text-[10px] md:text-xs text-green-400 flex items-center">
+              <Compass className="w-2.5 h-2.5 md:w-3 md:h-3 mr-0.5 md:mr-1" />
               GPS Connected
             </div>
           </div>
@@ -202,35 +202,35 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
 
         {/* Center: Arrival Info */}
         <div className="text-center">
-          <div className="text-sm text-gray-300">Arrival Time</div>
-          <div className="text-xl font-bold text-white">
+          <div className="text-[10px] md:text-xs text-gray-300 leading-tight">Arrival</div>
+          <div className="text-base md:text-lg font-bold text-white leading-tight">
             {estimatedArrival?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) || '--:--'}
           </div>
-          <div className="text-xs text-gray-400">
-            {remainingTime}min remaining • {remainingDistance.toFixed(1)} miles
+          <div className="text-[9px] md:text-xs text-gray-400 leading-none">
+            {remainingTime}min • {remainingDistance.toFixed(1)}mi
           </div>
         </div>
 
         {/* Right: Controls */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 md:space-x-1.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggleVoice}
-            className="text-gray-300 hover:text-white hover:bg-gray-800"
+            className="text-gray-300 hover:text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8 p-0"
             data-testid="button-toggle-voice"
           >
-            {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-3.5 md:h-3.5" /> : <VolumeX className="w-3 h-3 md:w-3.5 md:h-3.5" />}
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggleFullscreen}
-            className="text-gray-300 hover:text-white hover:bg-gray-800"
+            className="text-gray-300 hover:text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8 p-0"
             data-testid="button-toggle-fullscreen"
           >
-            {isFullscreen ? <Eye className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isFullscreen ? <Eye className="w-3 h-3 md:w-3.5 md:h-3.5" /> : <Maximize2 className="w-3 h-3 md:w-3.5 md:h-3.5" />}
           </Button>
           
           <Button
@@ -238,11 +238,11 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
             size="sm"
             onClick={onCancelRoute}
             disabled={isCancellingRoute || !onCancelRoute}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border border-red-500"
+            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border border-red-500 h-7 w-7 md:h-8 md:w-8 p-0"
             data-testid="button-cancel-route"
             title="Cancel Navigation"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 md:w-3.5 md:h-3.5" />
           </Button>
         </div>
       </div>
