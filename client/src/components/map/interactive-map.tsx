@@ -1192,8 +1192,8 @@ const InteractiveMap = memo(function InteractiveMap({
             "absolute z-[1000] transition-all duration-300 ease-in-out",
             // Positioned at top-center, away from toggle button
             "top-16 left-1/2 transform -translate-x-1/2",
-            // Compact horizontal layout to fit constrained space
-            "flex items-center gap-1 h-8 px-2 bg-card/95 backdrop-blur rounded-full shadow-lg border",
+            // Compact horizontal layout to fit constrained space - 3x smaller on mobile
+            "flex items-center gap-0.5 h-3 px-1 md:gap-1 md:h-8 md:px-2 bg-card/95 backdrop-blur rounded-full shadow-lg border",
             // Visible state animation
             "opacity-100 translate-y-0"
           )} 
@@ -1213,7 +1213,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button 
             variant={preferences.mapViewMode === 'roads' ? "default" : "ghost"}
             size="sm" 
-            className="h-6 px-2 text-xs rounded-full"
+            className="h-2 px-1 text-[8px] md:h-6 md:px-2 md:text-xs rounded-full"
             onClick={() => handleMapViewModeChange('roads')}
             data-testid="button-layer-roads"
           >
@@ -1224,7 +1224,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button 
             variant={preferences.mapViewMode === 'satellite' ? "default" : "ghost"}
             size="sm" 
-            className="h-6 px-2 text-xs rounded-full"
+            className="h-2 px-1 text-[8px] md:h-6 md:px-2 md:text-xs rounded-full"
             onClick={() => handleMapViewModeChange('satellite')}
             data-testid="button-layer-satellite"
           >
@@ -1235,7 +1235,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button 
             variant={preferences.showTruckRoutes ? "default" : "ghost"}
             size="sm" 
-            className="h-6 px-2 text-xs rounded-full"
+            className="h-2 px-1 text-[8px] md:h-6 md:px-2 md:text-xs rounded-full"
             onClick={handleToggleTruckRoutes}
             data-testid="button-layer-truck"
           >
@@ -1246,7 +1246,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button 
             variant={preferences.showTrafficLayer ? "default" : "ghost"}
             size="sm" 
-            className="h-6 px-2 text-xs rounded-full"
+            className="h-2 px-1 text-[8px] md:h-6 md:px-2 md:text-xs rounded-full"
             onClick={handleToggleTrafficLayer}
             data-testid="button-layer-traffic"
           >
@@ -1257,7 +1257,7 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button 
             variant={preferences.showIncidents ? "default" : "ghost"}
             size="sm" 
-            className="h-6 px-2 text-xs rounded-full"
+            className="h-2 px-1 text-[8px] md:h-6 md:px-2 md:text-xs rounded-full"
             onClick={handleToggleIncidents}
             data-testid="button-layer-incidents"
           >
@@ -1268,13 +1268,13 @@ const InteractiveMap = memo(function InteractiveMap({
           <Button 
             variant={preferences.showStreetView ? "default" : "ghost"}
             size="sm" 
-            className="h-6 px-2 text-xs rounded-full"
+            className="h-2 px-1 text-[8px] md:h-6 md:px-2 md:text-xs rounded-full"
             onClick={handleToggleStreetView}
             data-testid="button-street-view"
             disabled={!import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY}
             title={!import.meta.env.VITE_GOOGLE_STREET_VIEW_API_KEY ? "Street View requires API key configuration" : "Toggle street view"}
           >
-            <Camera className="w-3 h-3 mr-1" />
+            <Camera className="w-1 h-1 mr-0.5 md:w-3 md:h-3 md:mr-1" />
             Street
           </Button>
       </div>
