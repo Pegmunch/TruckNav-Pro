@@ -141,7 +141,6 @@ export function MapShell({ children, className, onSizeChange, id = 'map-containe
       className={cn(
         'map-shell',
         'relative w-full overflow-hidden',
-        'bg-background',
         className
       )}
       data-testid="map-shell"
