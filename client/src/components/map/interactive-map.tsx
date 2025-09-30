@@ -1009,9 +1009,14 @@ const InteractiveMap = memo(function InteractiveMap({
           key={`${preferences.mapViewMode}-${zoomLevel >= 17 ? '3d' : '2d'}`} // Dynamic key for 2D/3D switching
           url={(() => {
             // Use 3D perspective tiles when zoomed in close (17+) for street-level detail
-            if (zoomLevel >= 17 && preferences.mapViewMode === 'roads') {
-              // Google Maps with 3D buildings rendered
-              return 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+            if (zoomLevel >= 17) {
+              if (preferences.mapViewMode === 'roads') {
+                // Google Maps with 3D buildings rendered
+                return 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+              } else if (preferences.mapViewMode === 'satellite') {
+                // Google Satellite with 3D buildings and terrain
+                return 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+              }
             }
             
             // Standard tiles for normal zoom levels
@@ -1022,8 +1027,10 @@ const InteractiveMap = memo(function InteractiveMap({
             return url;
           })()}
           attribution={
-            zoomLevel >= 17 && preferences.mapViewMode === 'roads'
-              ? '© Google Maps with 3D Buildings'
+            zoomLevel >= 17
+              ? preferences.mapViewMode === 'satellite'
+                ? '© Google Satellite with 3D Terrain'
+                : '© Google Maps with 3D Buildings'
               : preferences.mapViewMode === 'satellite'
                 ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
                 : (preferences.attribution || '© OpenStreetMap contributors')
@@ -1458,7 +1465,7 @@ const InteractiveMap = memo(function InteractiveMap({
           )}
           <span className="text-muted-foreground scalable-control-text-xs">•</span>
           <span className="scalable-control-text-xs">{preferences.mapViewMode}</span>
-          {zoomLevel >= 17 && preferences.mapViewMode === 'roads' && (
+          {zoomLevel >= 17 && (
             <>
               <span className="text-muted-foreground scalable-control-text-xs">•</span>
               <span className="text-green-600 font-semibold scalable-control-text-xs">3D View</span>
