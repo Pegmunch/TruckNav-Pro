@@ -49,6 +49,7 @@ export default function NavigationPage() {
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("Current Location");
   const [toLocation, setToLocation] = useState("");
+  const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showRoutePreview, setShowRoutePreview] = useState(true);
@@ -705,9 +706,9 @@ export default function NavigationPage() {
   useEffect(() => {
     // Only auto-plan if we have both locations and no current route
     if (fromLocation && toLocation && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
-      handlePlanRoute();
+      handlePlanRoute(routePreference);
     }
-  }, [fromLocation, toLocation, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
+  }, [fromLocation, toLocation, routePreference, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
 
   // Effect to automatically show alternative routes when they become available
   useEffect(() => {
@@ -1178,11 +1179,8 @@ export default function NavigationPage() {
                   toLocation={toLocation}
                   onFromLocationChange={setFromLocation}
                   onToLocationChange={setToLocation}
-                  onPlanRoute={(routePreference) => {
-                    handlePlanRoute(routePreference);
-                    setSidebarState('collapsed');
-                  }}
-                  isCalculating={calculateRouteMutation.isPending}
+                  routePreference={routePreference}
+                  onRoutePreferenceChange={setRoutePreference}
                   onUseCurrentLocation={() => setFromLocation('Current Location')}
                 />
               </div>

@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { MapPin, Crosshair, Loader2 } from 'lucide-react';
+import { Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +9,8 @@ interface SimplifiedRouteDrawerProps {
   toLocation: string;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
-  onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls') => void;
-  isCalculating: boolean;
+  routePreference: 'fastest' | 'eco' | 'avoid_tolls';
+  onRoutePreferenceChange: (value: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onUseCurrentLocation?: () => void;
 }
 
@@ -20,11 +19,10 @@ export function SimplifiedRouteDrawer({
   toLocation,
   onFromLocationChange,
   onToLocationChange,
-  onPlanRoute,
-  isCalculating,
+  routePreference,
+  onRoutePreferenceChange,
   onUseCurrentLocation
 }: SimplifiedRouteDrawerProps) {
-  const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
 
   return (
     <div className="space-y-6">
@@ -73,7 +71,7 @@ export function SimplifiedRouteDrawer({
       {/* Route Preferences */}
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-muted-foreground">Route Preferences</h3>
-        <Tabs value={routePreference} onValueChange={(value) => setRoutePreference(value as any)} className="w-full">
+        <Tabs value={routePreference} onValueChange={(value) => onRoutePreferenceChange(value as 'fastest' | 'eco' | 'avoid_tolls')} className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-12">
             <TabsTrigger value="fastest" className="text-sm" data-testid="tab-fastest">
               Fastest
@@ -87,26 +85,6 @@ export function SimplifiedRouteDrawer({
           </TabsList>
         </Tabs>
       </div>
-
-      {/* Calculate Route Button */}
-      <Button
-        onClick={() => onPlanRoute(routePreference)}
-        disabled={!toLocation || isCalculating}
-        className="w-full h-14 text-lg font-semibold"
-        data-testid="button-calculate-route"
-      >
-        {isCalculating ? (
-          <>
-            <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-            Calculating...
-          </>
-        ) : (
-          <>
-            <MapPin className="w-5 h-5 mr-3" />
-            Calculate Route
-          </>
-        )}
-      </Button>
     </div>
   );
 }

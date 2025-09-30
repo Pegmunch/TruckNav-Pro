@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ThemeProvider, useTheme } from "@/components/theme/theme-provider";
 import { MeasurementProvider } from "@/components/measurement/measurement-provider";
 import { OfflineDetector } from "@/components/offline/offline-detector";
 import { ServiceWorkerUpdates } from "@/components/offline/service-worker-updates";
@@ -18,6 +18,22 @@ import EntertainmentWindow from "@/pages/window-entertainment";
 import ThemesWindow from "@/pages/window-themes";
 import HistoryWindow from "@/pages/window-history";
 import SettingsWindow from "@/pages/window-settings";
+
+function MobileThemeEnforcer() {
+  const { currentTheme, setTheme } = useTheme();
+  
+  useEffect(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile && (currentTheme === 'auto' || currentTheme === 'night')) {
+      localStorage.setItem('theme-mode', 'day');
+      setTheme('day');
+      console.log('Mobile device detected - forcing day theme for better visibility');
+    }
+  }, []);
+  
+  return null;
+}
 
 function Router() {
   return (
@@ -46,7 +62,8 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="auto" storageKey="theme-mode">
+    <ThemeProvider defaultTheme="day" storageKey="theme-mode">
+      <MobileThemeEnforcer />
       <MeasurementProvider>
         <TooltipProvider>
           <OfflineDetector showPersistentIndicator={true}>
