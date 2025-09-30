@@ -146,13 +146,6 @@ export function MapShell({ children, className, onSizeChange, id = 'map-containe
       data-testid="map-shell"
     >
       {children}
-      
-      {/* Debug info for development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-2 right-2 z-50 bg-black/70 text-white text-xs p-2 rounded pointer-events-none">
-          {dimensions.width}×{dimensions.height}
-        </div>
-      )}
     </div>
   );
 }
