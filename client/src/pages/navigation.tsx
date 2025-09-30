@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -96,6 +96,10 @@ export default function NavigationPage() {
   const [professionalVoiceEnabled, setProfessionalVoiceEnabled] = useState(true);
   const [isFullscreenNav, setIsFullscreenNav] = useState(false);
   
+  // Mobile navigation mode state - clean 3-mode workflow
+  type MobileNavMode = 'plan' | 'preview' | 'navigate';
+  const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('plan');
+  
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
@@ -183,6 +187,19 @@ export default function NavigationPage() {
     checkARSupport();
     autoDetectLocation();
   }, []);
+  
+  // Auto-update mobile navigation mode based on state
+  useEffect(() => {
+    if (!isMobile) return; // Only applies to mobile
+    
+    if (isNavigating) {
+      setMobileNavMode('navigate');
+    } else if (currentRoute) {
+      setMobileNavMode('preview');
+    } else {
+      setMobileNavMode('plan');
+    }
+  }, [isMobile, isNavigating, currentRoute]);
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
@@ -959,84 +976,95 @@ export default function NavigationPage() {
           }}
         />
       )}
-      {/* Mobile-First Layout */}
+      {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
-        <div className="mobile-layout h-screen flex flex-col" style={{background: "transparent"}}>
-          {/* Mobile Header with Menu Button - Responsive Design */}
-          <div className="mobile-nav-header nav-header flex items-center justify-between professional-nav-interface mobile-safe-top" 
-               style={{
-                 background: "transparent",
-                 padding: "var(--density-spacing-md)",
-                 minHeight: "var(--density-touch-target-lg)"
-               }}>
-            <div className="flex items-center gap-2">
-              <Truck className="nav-icon text-primary" style={{ width: 'var(--density-icon-lg)', height: 'var(--density-icon-lg)' }} />
-              <span className="nav-text font-semibold" style={{ fontSize: 'var(--density-text-lg)' }}>TruckNav Pro</span>
-            </div>
-            
-            {/* Top Right Hamburger Button - Responsive */}
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => setSidebarState('open')}
-              className="hamburger-menu-button nav-button bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
-              style={{
-                minWidth: 'var(--density-touch-target)',
-                minHeight: 'var(--density-touch-target)',
-                padding: 'var(--density-spacing-sm)'
-              }}
-              data-testid="button-menu-top-right"
-            >
-              <div className="nav-icon flex flex-col justify-center items-center" 
-                   style={{ 
-                     width: 'var(--density-icon-md)', 
-                     height: 'var(--density-icon-md)',
-                     gap: 'var(--density-spacing-xs)'
-                   }}>
-                <div className="bg-current rounded-sm" style={{ 
-                  width: 'calc(var(--density-icon-md) * 0.8)', 
-                  height: '2px' 
-                }}></div>
-                <div className="bg-current rounded-sm" style={{ 
-                  width: 'calc(var(--density-icon-md) * 0.8)', 
-                  height: '2px' 
-                }}></div>
-                <div className="bg-current rounded-sm" style={{ 
-                  width: 'calc(var(--density-icon-md) * 0.8)', 
-                  height: '2px' 
-                }}></div>
-              </div>
-            </Button>
-          </div>
-
-          {/* Mobile Fullscreen Map with Responsive Design */}
-          <div className="mobile-map-container relative flex-1 min-h-0 professional-nav-interface" style={{background: "transparent"}}>
-            {/* AR Navigation - Mobile */}
-            {isARMode && (
-              <ARNavigation
-                isActive={isARMode}
-                onToggleAR={handleToggleAR}
-                currentDirection={getARDirectionData()}
-                route={getARRouteData()}
-              />
-            )}
-            
-            {/* Enhanced Professional Map - Mobile with MapShell */}
-            {!isARMode && (
-              <>
-                <MapShell 
-                  className="sm:hidden"
-                  onSizeChange={(dimensions) => {
-                    console.log('📐 Mobile map resized:', dimensions);
-                    // Store map instance for invalidation
-                    setTimeout(() => {
-                      const mapContainer = document.querySelector('.leaflet-container');
-                      if (mapContainer && (mapContainer as any)._leaflet_map) {
-                        (window as any).mapInstance = (mapContainer as any)._leaflet_map;
-                      }
-                    }, 100);
-                  }}
+        <div className="mobile-layout h-screen flex flex-col bg-background">
+          
+          {/* PLAN MODE: Route Planning Focus */}
+          {mobileNavMode === 'plan' && !isARMode && (
+            <>
+              {/* Simple Header */}
+              <div className="flex items-center justify-between p-4 border-b mobile-safe-top">
+                <div className="flex items-center gap-3">
+                  <Truck className="w-7 h-7 text-primary" />
+                  <span className="text-xl font-semibold">TruckNav Pro</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowVehicleSettings(true)}
+                  className="h-12 w-12"
+                  data-testid="button-settings"
                 >
+                  <Settings className="w-6 h-6" />
+                </Button>
+              </div>
+
+              {/* Background Map (Dimmed) */}
+              <div className="relative flex-1">
+                <div className="absolute inset-0 opacity-30">
+                  <MapShell key="plan-mode-map">
+                    <InteractiveMap
+                      currentRoute={null}
+                      selectedProfile={selectedProfile || activeProfile}
+                      alternativeRoutes={[]}
+                      previewRoute={null}
+                      showTrafficLayer={false}
+                      showIncidents={false}
+                    />
+                  </MapShell>
+                </div>
+
+                {/* Plan Route CTA - Center of Screen */}
+                <div className="absolute inset-0 flex items-center justify-center p-6">
+                  <Button
+                    onClick={() => setSidebarState('open')}
+                    className="h-20 px-12 text-lg font-semibold shadow-2xl"
+                    data-testid="button-plan-route-main"
+                  >
+                    <MapPin className="w-7 h-7 mr-3" />
+                    Plan Your Route
+                  </Button>
+                </div>
+              </div>
+
+              {/* Legal Ownership */}
+              <MapLegalOwnership compact={true} className="sm:hidden" />
+            </>
+          )}
+
+          {/* PREVIEW MODE: Route Overview */}
+          {mobileNavMode === 'preview' && !isARMode && currentRoute && (
+            <>
+              {/* Minimal Header with Back */}
+              <div className="flex items-center justify-between p-3 border-b mobile-safe-top bg-background/95 backdrop-blur-sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCurrentRoute(null);
+                    setMobileNavMode('plan');
+                  }}
+                  className="h-10"
+                  data-testid="button-back-to-plan"
+                >
+                  <X className="w-5 h-5 mr-2" />
+                  Clear Route
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarState('open')}
+                  className="h-10 w-10"
+                  data-testid="button-menu-preview"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Map with Route */}
+              <div className="relative flex-1">
+                <MapShell key="preview-mode-map">
                   <InteractiveMap
                     currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
@@ -1046,51 +1074,125 @@ export default function NavigationPage() {
                     showIncidents={true}
                   />
                 </MapShell>
-                
-                {/* Legal Ownership Section - Mobile */}
-                <MapLegalOwnership compact={true} className="sm:hidden" />
-              </>
-            )}
-          </div>
+              </div>
 
-          {/* Mobile Route Planning Drawer */}
+              {/* Route Summary Card + Start CTA */}
+              <div className="p-4 border-t bg-background mobile-safe-bottom">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold text-primary">
+                      {(currentRoute.distance || 0).toFixed(1)} mi
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {Math.round(currentRoute.duration || 0)} minutes
+                    </div>
+                  </div>
+                  {selectedProfile && (
+                    <div className="text-right text-sm text-muted-foreground">
+                      <div>{selectedProfile.name}</div>
+                      <div>{selectedProfile.height}ft H × {selectedProfile.width}ft W</div>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={handleStartNavigation}
+                  disabled={startJourneyMutation.isPending}
+                  className="w-full h-16 text-lg font-semibold"
+                  data-testid="button-start-navigation-preview"
+                >
+                  <Navigation className="w-6 h-6 mr-3" />
+                  Start Navigation
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* NAVIGATE MODE: Full-Screen Navigation */}
+          {mobileNavMode === 'navigate' && !isARMode && (
+            <>
+              {/* Minimal Top Strip - ETA & Next Maneuver */}
+              {currentRoute && (
+                <div className="absolute top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b shadow-lg mobile-safe-top">
+                  <div className="p-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-primary">
+                        ETA {Math.round((currentRoute.duration || 0))} min
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {(currentRoute.distance || 0).toFixed(1)} mi remaining
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium">Next: Turn Right</div>
+                      <div className="text-xs text-muted-foreground">in 0.8 mi</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Full-Screen Map */}
+              <div className="absolute inset-0">
+                <MapShell key="navigate-mode-map">
+                  <InteractiveMap
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile || activeProfile}
+                    alternativeRoutes={[]}
+                    previewRoute={null}
+                    showTrafficLayer={true}
+                    showIncidents={true}
+                  />
+                </MapShell>
+              </div>
+
+              {/* Stop Button - Bottom Right */}
+              <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
+                <Button
+                  onClick={handleStopNavigation}
+                  disabled={completeJourneyMutation.isPending}
+                  variant="destructive"
+                  className="h-14 px-6 shadow-2xl"
+                  data-testid="button-stop-navigation"
+                >
+                  <X className="w-5 h-5 mr-2" />
+                  Stop
+                </Button>
+              </div>
+
+              {/* Legal Ownership */}
+              <MapLegalOwnership compact={true} className="sm:hidden" />
+            </>
+          )}
+
+          {/* AR Mode (unchanged) */}
+          {isARMode && (
+            <ARNavigation
+              isActive={isARMode}
+              onToggleAR={handleToggleAR}
+              currentDirection={getARDirectionData()}
+              route={getARRouteData()}
+            />
+          )}
+
+          {/* Route Planning Drawer - Available in all modes */}
           <Drawer open={isMobileDrawerOpen} onOpenChange={(open) => setSidebarState(open ? 'open' : 'collapsed')}>
             <DrawerContent>
               <DrawerHeader>
-                <DrawerTitle className="mobile-text-xl">Route Planning</DrawerTitle>
+                <DrawerTitle className="text-xl">Route Planning</DrawerTitle>
               </DrawerHeader>
-              <div className="drawer-content space-y-4">
-                {/* Notification Controls */}
-                <DNDControls
-                  dndState={dndState}
-                  onUpdateDndState={updateDndState}
-                  voiceEnabled={voiceEnabled}
-                  onVoiceEnabledChange={setVoiceEnabled}
-                  isNavigating={isNavigating}
-                  notificationCount={queueLength}
-                  onTestNotification={() => triggerLiveNotification()}
-                />
-                
-                {/* Navigation Sidebar */}
+              <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
                 <NavigationSidebar
-                  // Route planning props
                   fromLocation={fromLocation}
                   toLocation={toLocation}
                   onFromLocationChange={setFromLocation}
                   onToLocationChange={setToLocation}
                   onPlanRoute={() => {
                     handlePlanRoute();
-                    setSidebarState('collapsed'); // Collapse drawer but keep accessible
+                    setSidebarState('collapsed');
                   }}
-                  onStartNavigation={() => {
-                    handleStartNavigation();
-                    // Don't auto-collapse during navigation start - let handleStartNavigation manage state
-                  }}
+                  onStartNavigation={handleStartNavigation}
                   onStopNavigation={handleStopNavigation}
                   currentRoute={currentRoute}
                   isCalculating={calculateRouteMutation.isPending}
-                  
-                  // Vehicle profile props
                   selectedProfile={selectedProfile}
                   onProfileSelect={(profile) => {
                     setSelectedProfile(profile);
@@ -1099,32 +1201,21 @@ export default function NavigationPage() {
                   isNavigating={isNavigating}
                   isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                   isCompletingJourney={completeJourneyMutation.isPending}
-                  
-                  // Route preview toggle
                   showRoutePreview={showRoutePreview}
                   onRoutePreviewToggle={setShowRoutePreview}
-                  
-                  // Sidebar state (always open in mobile drawer)
                   isOpen={true}
-                  onToggle={() => setSidebarState('collapsed')} // Collapse drawer but keep accessible
+                  onToggle={() => setSidebarState('collapsed')}
                   isCollapsed={false}
                   onCollapseToggle={() => {}}
-                  
-                  // Search panel integration - not needed on mobile since left sidebar contains search
                   isSearchPanelOpen={false}
                   onToggleSearchPanel={() => {}}
-                  
-                  // Settings modal props
                   showVehicleSettings={showVehicleSettings}
                   onShowVehicleSettings={setShowVehicleSettings}
-                  
-                  // Lane guidance props
                   onShowLaneGuidance={() => setShowLaneGuidance(true)}
                 />
               </div>
             </DrawerContent>
           </Drawer>
-
 
         </div>
       ) : (
