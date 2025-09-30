@@ -4,6 +4,23 @@ This is a specialized truck navigation web application designed to provide safe 
 
 # Recent Changes
 
+## September 30, 2025 - Address Autocomplete & Mobile Theme Fix ✅
+- **COMPLETED**: Address autocomplete with postcode suggestions and mobile theme improvements
+- **Added**: AddressAutocomplete component with dropdown suggestions
+  - Debounced search (300ms) to prevent excessive API calls
+  - Dropdown shows matching postcodes and addresses as user types (2+ characters)
+  - Selection from dropdown auto-fills input field
+  - Supports UK, US, CA, AU, DE, and FR postcodes via /api/postcodes/search endpoint
+  - Loading indicator while fetching suggestions
+  - Integrated into From and To location inputs in SimplifiedRouteDrawer
+- **Fixed**: Mobile interface now enforces day (light) theme for better visibility
+  - MobileThemeEnforcer automatically switches mobile devices to day theme on startup
+  - Prevents poor visibility from auto/night mode on mobile screens
+- **Fixed**: Removed "Plan Route" button - route planning now automatic when destination entered
+  - Route preferences (Fastest, Eco, No Tolls) automatically applied to route calculation
+  - Cleaner mobile interface without manual planning trigger
+- **Status**: All address autocomplete and mobile UX improvements completed successfully
+
 ## September 30, 2025 - Mobile UX Enhancement & Workflow Simplification ✅
 - **COMPLETED**: Mobile UX improvements with clean 3-mode workflow and focused mobile interface
 - **Added**: 3-mode mobile workflow (Plan → Preview → Navigate) with dedicated UI states and automatic transitions
