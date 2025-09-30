@@ -1642,7 +1642,7 @@ const InteractiveMap = memo(function InteractiveMap({
       />
       
       {/* Speed Display - positioned above TruckNav Pro legal text at bottom */}
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-[1150]">
+      <div className="absolute bottom-14 left-[48%] transform -translate-x-1/2 z-[1150]">
         <SpeedDisplay 
           speedLimit={currentSpeedLimit || undefined}
           className="shadow-2xl"
