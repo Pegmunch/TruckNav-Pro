@@ -1,129 +1,6 @@
 # Overview
 
-This is a specialized truck navigation web application designed to provide safe routing for heavy goods vehicles (HGVs) by avoiding restrictions based on vehicle dimensions. The system helps truck drivers plan routes while considering height, width, weight, and length restrictions, and locate truck-friendly facilities along their routes.
-
-# Recent Changes
-
-## September 30, 2025 - SpeedDisplay Component Restoration & UI Adjustments ✅
-- **COMPLETED**: Restored functioning speedometer with GPS-based speed tracking to MapLibre map
-- **Added**: SpeedDisplay component with full working features
-  - GPS-based live speed tracking using geolocation API with Safari compatibility
-  - Speed limit display with circular red-border sign (highway style)
-  - Current vehicle speed display with gauge icon and large digits
-  - Automatic MPH/KPH unit conversion based on country preferences (US/UK use MPH, others use KPH)
-  - Positioned at bottom-center (bottom-14 left-[48%]) for optimal visibility during navigation
-  - High accuracy GPS tracking with 1-second fresh data updates
-- **Adjusted**: Map zoom control buttons (Plus, Minus, Recenter, Layers)
-  - Moved from top-4 to bottom-24 position on right side for better mobile thumb access
-  - Changed to white background (bg-white hover:bg-white/90) for better visibility
-  - Maintained consistent gap-2 spacing between all 4 buttons
-- **Adjusted**: MobileFAB speed-dial buttons
-  - Repositioned from bottom-32 to bottom-24 in preview mode for better accessibility
-- **Status**: All UI adjustments completed with speedometer fully functional
-
-## September 30, 2025 - MapLibre GL JS Tile Loading Architecture ✅
-- **COMPLETED**: Production-grade MapLibre implementation with zero tile loss during pan/zoom operations
-- **Architecture**: Persistent tile source design eliminates cache flushing
-  - All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined upfront at initialization
-  - Layer visibility switching replaces destructive map.setStyle() calls that were flushing tile cache
-  - Automatic 2D/3D tile switching at zoom level 17+ using visibility toggling
-  - Routes persist across all operations via getSource() checks before re-adding
-- **Performance**: Aggressive caching configuration for flawless tile loading
-  - maxTileCacheSize: 500 (large pre-fetch buffer)
-  - refreshExpiredTiles: false (prevent unnecessary reloads)
-  - fadeDuration: 100ms (smooth visual transitions)
-- **Robustness**: WebGL detection with automatic Leaflet fallback
-  - Pre-flight WebGL canvas test in useMapEngine hook
-  - Graceful degradation for older devices/testing environments without GPU
-  - Try-catch wrapped MapLibre initialization with error logging
-  - MapLibre is default for WebGL-capable devices, Leaflet auto-selected otherwise
-- **Bug Fixes**: Critical closure bug resolved in moveend handler
-  - Refs (preferencesRef, currentZoomRef) prevent stale state reads
-  - Zoom threshold crossings now respect latest view mode (roads/satellite)
-  - Layer visibility updates work correctly across all user interactions
-- **Integration**: Conditional rendering in all navigation modes (plan, preview, navigate)
-- **Status**: Production-ready with zero tile loss during zoom/pan operations
-
-## September 30, 2025 - Mobile Overlay & Scaling Fixes ✅
-- **COMPLETED**: Eliminated transparent overlay and fixed mobile scaling issues for optimal visibility
-- **Fixed**: Transparent drawer overlay removal
-  - Changed Drawer to conditional rendering: only renders when `isMobileDrawerOpen` is true
-  - Eliminates persistent transparent overlay that was dimming the map when drawer was closed
-  - Map now fully visible and interactive in PLAN mode with no visual obstruction
-- **Fixed**: Mobile font and button scaling to prevent overlapping
-  - Reduced label fonts from `text-base` to `text-sm` in SimplifiedRouteDrawer (From/To labels)
-  - Reduced current location button from `h-12 w-12` to `h-10 w-10` for compact mobile layout
-  - Reduced route preference tab buttons from `h-12` to `h-10` for better spacing
-  - All buttons maintain 44px tap target size for optimal mobile accessibility
-- **Added**: Small FAB button in PLAN mode to access route planning
-  - Circular button (h-14 w-14) with MapPin icon positioned bottom-right
-  - Opens SimplifiedRouteDrawer when tapped
-  - Replaces removed blue "Plan Your Route" overlay button with cleaner, non-intrusive design
-  - Includes safe-area handling for modern mobile devices
-  - Added aria-label="Open route planner" for screen reader accessibility
-- **Polish**: Code cleanup and state consistency improvements
-  - Removed unused DrawerTrigger import for cleaner codebase
-  - Fixed sidebar state consistency: both drawer close and Android back button now use 'collapsed' state
-  - Ensures consistent UI behavior across all mobile close interactions
-- **Testing**: All mobile UI improvements verified via automated Playwright testing
-  - No transparent overlay detected in PLAN mode
-  - All elements properly sized with no overlapping
-  - Drawer opens/closes smoothly with no residual overlay
-  - Map remains fully interactive throughout all modes
-  - FAB button accessibility verified with proper aria-label
-- **Status**: All mobile overlay and scaling issues resolved successfully
-
-## September 30, 2025 - Address Autocomplete & Mobile Theme Fix ✅
-- **COMPLETED**: Address autocomplete with postcode suggestions and mobile theme improvements
-- **Added**: AddressAutocomplete component with dropdown suggestions
-  - Debounced search (300ms) to prevent excessive API calls
-  - Dropdown shows matching postcodes and addresses as user types (2+ characters)
-  - Selection from dropdown auto-fills input field
-  - Supports UK, US, CA, AU, DE, and FR postcodes via /api/postcodes/search endpoint
-  - Loading indicator while fetching suggestions
-  - Integrated into From and To location inputs in SimplifiedRouteDrawer
-- **Fixed**: Mobile interface now enforces day (light) theme for better visibility
-  - MobileThemeEnforcer automatically switches mobile devices to day theme on startup
-  - Prevents poor visibility from auto/night mode on mobile screens
-- **Fixed**: Removed "Plan Route" button - route planning now automatic when destination entered
-  - Route preferences (Fastest, Eco, No Tolls) automatically applied to route calculation
-  - Cleaner mobile interface without manual planning trigger
-- **Status**: All address autocomplete and mobile UX improvements completed successfully
-
-## September 30, 2025 - Mobile UX Enhancement & Workflow Simplification ✅
-- **COMPLETED**: Mobile UX improvements with clean 3-mode workflow and focused mobile interface
-- **Added**: 3-mode mobile workflow (Plan → Preview → Navigate) with dedicated UI states and automatic transitions
-  - PLAN mode: Main "Plan Your Route" button opens simplified drawer for route setup
-  - PREVIEW mode: Route displayed with compact trip strip and FAB menu access
-  - NAVIGATE mode: Full-screen minimal UI with trip strip showing ETA/distance/maneuver
-- **Fixed**: MapShell height calculations using flexbox (h-full) instead of CSS calc() for reliable cross-device rendering
-- **Added**: MobileFAB component with speed-dial pattern positioned bottom-right for one-handed gloved operation
-  - 64px primary button with expandable secondary actions (Settings, Menu, Clear Route)
-  - Safe-area handling and consistent touch targets across all devices
-- **Added**: CompactTripStrip component for stable navigation data display
-  - Single-line layout with Route icon, ETA, distance, and next maneuver
-  - Overflow handling and max-width constraints for text stability
-- **Added**: SimplifiedRouteDrawer component replacing complex NavigationSidebar on mobile
-  - Focused on essential route planning: from/to inputs, current location button, route preferences
-  - Wired route preference tabs (Fastest, Eco, No Tolls) with proper state management
-  - Reduced complexity from 20+ props to 6 essential props for streamlined mobile experience
-- **Technical**: Unique map component keys per mode prevent container reuse errors and ensure clean state
-- **Status**: All mobile UX enhancement tasks completed successfully
-
-## September 29, 2025 - Mobile Compatibility Overhaul ✅
-- **COMPLETED**: Comprehensive mobile compatibility improvements for professional truck drivers
-- **Fixed**: Tile source inconsistency between mobile (ESRI) and desktop (OpenStreetMap) maps
-- **Added**: 4-tier responsive design system with CSS clamp() density tokens for smooth scaling
-- **Added**: MapShell wrapper component to eliminate "squashed" mobile layout issues
-- **Added**: Screen Wake Lock API with iOS/Android fallbacks to prevent display sleep during navigation
-- **Added**: Safe-area handling for iOS devices with notches and home indicators
-- **Added**: Android hardware back button handling with priority system for navigation safety
-- **Added**: Enhanced PWA capabilities with mobile network detection and offline route storage
-- **Added**: Orientation lock preferences for landscape tablet navigation
-- **Added**: Professional touch targets (44px+) optimized for truck drivers wearing gloves
-- **Added**: Mobile-safe CSS classes and responsive navigation interface
-- **Updated**: Mobile navigation header and bottom navigation buttons to use responsive density tokens
-- **Status**: All mobile compatibility requirements completed and tested successfully
+This project is a specialized web application for truck navigation, designed to provide safe and efficient routing for heavy goods vehicles (HGVs). Its primary purpose is to help truck drivers plan routes that avoid restrictions based on vehicle dimensions (height, width, weight, length) and to locate truck-friendly facilities along their journey. The system aims to enhance safety and efficiency for professional drivers by offering intelligent route planning and real-time information.
 
 # User Preferences
 
@@ -132,77 +9,80 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-- **Framework**: React with TypeScript using Vite for build tooling
-- **UI Library**: Shadcn/ui components built on Radix UI primitives for accessibility
-- **Styling**: Tailwind CSS with CSS variables for theming
-- **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack React Query for server state and caching
-- **Forms**: React Hook Form with Zod validation for type-safe form handling
+- **Framework**: React with TypeScript and Vite.
+- **UI/UX**: Shadcn/ui components (built on Radix UI) for accessibility, styled with Tailwind CSS and CSS variables.
+- **Routing**: Wouter for client-side routing.
+- **State Management**: TanStack React Query for server state and caching; React Context for local UI state.
+- **Forms**: React Hook Form with Zod validation.
+- **UI/UX Decisions**:
+    - Mobile-first approach with a clean, 3-mode workflow (Plan → Preview → Navigate).
+    - Dedicated full-screen route planner for mobile with a hamburger menu.
+    - Compact trip strip for navigation data.
+    - MobileFAB component with speed-dial for one-handed operation.
+    - Professional touch targets (44px+) optimized for gloved use.
+    - Day (light) theme enforced on mobile for better visibility.
+    - Responsive design using CSS clamp() density tokens.
+    - Screen Wake Lock API to prevent display sleep during navigation.
 
 ## Backend Architecture
-- **Runtime**: Node.js with Express.js REST API
-- **Language**: TypeScript with ESM modules
-- **Database ORM**: Drizzle ORM with PostgreSQL dialect
-- **Session Storage**: PostgreSQL-based session store using connect-pg-simple
-- **API Design**: RESTful endpoints for vehicle profiles, restrictions, facilities, and routes
+- **Runtime**: Node.js with Express.js.
+- **Language**: TypeScript with ESM modules.
+- **Database ORM**: Drizzle ORM with PostgreSQL dialect.
+- **API Design**: RESTful endpoints for vehicle profiles, restrictions, facilities, and routes.
+- **Authentication**: Express sessions with PostgreSQL storage.
 
 ## Data Storage Solutions
-- **Primary Database**: PostgreSQL with Neon serverless driver
-- **Schema Management**: Drizzle Kit for migrations and schema management
-- **In-Memory Fallback**: Memory storage implementation for development/testing
-- **Session Storage**: PostgreSQL-based sessions for user state persistence
+- **Primary Database**: PostgreSQL with Neon serverless driver.
+- **Schema Management**: Drizzle Kit for migrations.
+- **Session Storage**: PostgreSQL-based session store using `connect-pg-simple`.
 
 ## Core Data Models
-- **Vehicle Profiles**: Store truck dimensions (height, width, length, weight), axle count, and hazmat status
-- **Restrictions**: Geographic restrictions with coordinates, type (height/width/weight), and limits
-- **Facilities**: Truck stops, fuel stations, parking areas with amenities and coordinates
-- **Routes**: Saved routes with start/end locations, coordinates, and calculated paths
+- **Vehicle Profiles**: Dimensions (height, width, length, weight), axle count, hazmat status.
+- **Restrictions**: Geographic coordinates, type (height/width/weight), limits.
+- **Facilities**: Truck stops, fuel stations, parking areas with amenities.
+- **Routes**: Saved routes including start/end, coordinates, and calculated paths.
 
-## Authentication and Authorization
-- **Session Management**: Express sessions with PostgreSQL storage
-- **Security**: CORS configuration and request logging middleware
-- **Error Handling**: Centralized error handling with status code mapping
-
-## Key Features
-- **Smart Route Planning**: Route calculation that avoids restrictions based on vehicle profile
-- **Restriction Awareness**: Real-time restriction checking against vehicle dimensions
-- **Facility Discovery**: Search for truck-friendly facilities by type and location
-- **Vehicle Profile Management**: Multiple vehicle configurations with dimension validation
-- **Interactive Mapping**: Map-based route visualization and facility location display
+## Technical Implementations & System Design
+- **Smart Route Planning**: Calculates routes avoiding restrictions based on vehicle profiles.
+- **Restriction Awareness**: Real-time checking of restrictions against vehicle dimensions.
+- **Facility Discovery**: Search for truck-friendly facilities by type and location.
+- **Interactive Mapping**:
+    - **Map Engines**: MapLibre GL JS (default, GPU-accelerated, 3D support); Leaflet (fallback for non-WebGL devices).
+    - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization to eliminate tile loss during pan/zoom.
+    - **Performance**: Aggressive caching (maxTileCacheSize: 500) and smooth transitions (fadeDuration: 100ms).
+    - **Speedometer**: GPS-based live speed tracking with speed limit display and auto MPH/KPH conversion.
+- **Address Autocomplete**: Debounced search with postcode suggestions for UK, US, CA, AU, DE, and FR.
+- **Mobile Compatibility**:
+    - Screen Wake Lock API.
+    - Safe-area handling for iOS.
+    - Android hardware back button handling.
+    - Enhanced PWA capabilities with offline route storage.
+    - Orientation lock preferences.
 
 # External Dependencies
 
 ## Database Services
-- **Neon Database**: Serverless PostgreSQL hosting with connection pooling
-- **Drizzle ORM**: Type-safe database queries and schema management
+- **Neon Database**: Serverless PostgreSQL hosting.
+- **Drizzle ORM**: Type-safe database queries and schema management.
 
 ## UI and Styling
-- **Radix UI**: Accessible component primitives for complex UI elements
-- **Tailwind CSS**: Utility-first CSS framework with custom design tokens
-- **Lucide React**: Icon library for consistent iconography
-
-## Development Tools
-- **Vite**: Fast development server and build tool with React plugin
-- **TypeScript**: Static type checking across the entire application
-- **ESLint/Prettier**: Code quality and formatting (implied by structure)
+- **Radix UI**: Accessible component primitives.
+- **Tailwind CSS**: Utility-first CSS framework.
+- **Lucide React**: Icon library.
 
 ## Routing and Navigation Services
-- **Wouter**: Lightweight client-side routing library
-- **Geolocation APIs**: Browser-based location services for current position
+- **Wouter**: Lightweight client-side routing.
+- **Geolocation APIs**: Browser-based location services.
 
 ## Mapping Libraries
-- **MapLibre GL JS**: Default GPU-accelerated vector map engine with 3D support
-- **Leaflet**: Fallback map rendering library with proven stability
-- **React-Leaflet**: React bindings for Leaflet maps
-- **Tile Sources**: Google Maps (3D), OpenStreetMap, Esri satellite imagery
+- **MapLibre GL JS**: Primary vector map engine.
+- **Leaflet**: Fallback map rendering library.
+- **React-Leaflet**: React bindings for Leaflet.
+- **Tile Sources**: Google Maps (3D), OpenStreetMap, Esri satellite imagery.
 
 ## Form and Data Validation
-- **Zod**: Runtime type validation and schema definition
-- **React Hook Form**: Performant forms with minimal re-renders
-- **Drizzle Zod**: Integration between Drizzle schemas and Zod validation
+- **Zod**: Runtime type validation and schema definition.
+- **React Hook Form**: Forms management.
 
 ## State Management
-- **TanStack React Query**: Server state caching, synchronization, and background updates
-- **React Context**: Local state management for UI components
-
-The architecture prioritizes type safety, performance, and user experience while maintaining a clean separation between client and server concerns. The system is designed to be scalable and maintainable with proper error handling and validation throughout the stack.
+- **TanStack React Query**: Server state management.

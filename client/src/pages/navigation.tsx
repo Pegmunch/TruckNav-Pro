@@ -1029,7 +1029,7 @@ export default function NavigationPage() {
                   </MapShell>
                 </div>
 
-                {/* Plan Route FAB - Small button to open drawer */}
+                {/* Plan Route FAB - Hamburger button to open panel */}
                 <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
                   <Button
                     onClick={() => setSidebarState('open')}
@@ -1038,7 +1038,7 @@ export default function NavigationPage() {
                     data-testid="button-plan-route-fab"
                     aria-label="Open route planner"
                   >
-                    <MapPin className="w-6 h-6" />
+                    <Menu className="w-6 h-6" />
                   </Button>
                 </div>
               </div>
@@ -1190,26 +1190,36 @@ export default function NavigationPage() {
             />
           )}
 
-          {/* Simplified Route Planning Drawer - Mobile Only */}
+          {/* Full-Screen Route Planning Panel - Mobile Only */}
           {isMobileDrawerOpen && (
-            <Drawer open={true} onOpenChange={(open) => !open && setSidebarState('collapsed')}>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle className="text-xl">Plan Route</DrawerTitle>
-                </DrawerHeader>
-                <div className="p-6 max-h-[70vh] overflow-y-auto">
-                  <SimplifiedRouteDrawer
-                    fromLocation={fromLocation}
-                    toLocation={toLocation}
-                    onFromLocationChange={setFromLocation}
-                    onToLocationChange={setToLocation}
-                    routePreference={routePreference}
-                    onRoutePreferenceChange={setRoutePreference}
-                    onUseCurrentLocation={() => setFromLocation('Current Location')}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
+            <div className="fixed inset-0 z-50 bg-white flex flex-col">
+              {/* Header with close button */}
+              <div className="flex items-center justify-between p-4 border-b mobile-safe-top">
+                <h2 className="text-xl font-semibold">Plan Route</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSidebarState('collapsed')}
+                  className="h-10 w-10"
+                  data-testid="button-close-panel"
+                >
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
+              
+              {/* Panel content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <SimplifiedRouteDrawer
+                  fromLocation={fromLocation}
+                  toLocation={toLocation}
+                  onFromLocationChange={setFromLocation}
+                  onToLocationChange={setToLocation}
+                  routePreference={routePreference}
+                  onRoutePreferenceChange={setRoutePreference}
+                  onUseCurrentLocation={() => setFromLocation('Current Location')}
+                />
+              </div>
+            </div>
           )}
 
         </div>
