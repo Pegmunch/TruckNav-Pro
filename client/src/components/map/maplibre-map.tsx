@@ -339,8 +339,25 @@ const MapLibreMap = memo(function MapLibreMap({
     // Get current GPS location and center map there
     if ('geolocation' in navigator) {
       console.log('📍 Requesting current GPS location...');
+      
+      const timeoutId = setTimeout(() => {
+        console.warn('⏱️ GPS request timed out after 3 seconds - using fallback');
+        // Timeout fallback
+        if (currentRoute?.routePath) {
+          console.log('Fallback: centering on route');
+          const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+          const bounds = new maplibregl.LngLatBounds();
+          routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
+          map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
+        } else {
+          console.log('Fallback: centering on default position');
+          map.current?.flyTo({ center: preferences.center, zoom: preferences.zoomLevel, duration: 1000 });
+        }
+      }, 3000);
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          clearTimeout(timeoutId);
           const { latitude, longitude } = position.coords;
           console.log(`✅ Got location: ${latitude}, ${longitude}`);
           map.current?.flyTo({ 
@@ -350,7 +367,8 @@ const MapLibreMap = memo(function MapLibreMap({
           });
         },
         (error) => {
-          console.warn('❌ Could not get current location:', error.message);
+          clearTimeout(timeoutId);
+          console.warn('❌ Could not get current location:', error.message, error.code);
           // Fallback: center on route or default position
           if (currentRoute?.routePath) {
             console.log('Fallback: centering on route');
