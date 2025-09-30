@@ -1283,7 +1283,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Zoom Controls - Mobile-Optimized */}
       <div className={cn(
-        "absolute right-4 bottom-32 z-[1100]",
+        "absolute right-4 bottom-20 md:bottom-32 z-[1100]",
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
@@ -1324,16 +1324,16 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Location Centering Button */}
       <div className={cn(
-        "absolute right-4 bottom-60 z-[1100]",
+        "absolute right-4 bottom-24 md:bottom-60 z-[1100]",
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-24 h-14 md:w-16 md:h-12" // Mobile: 96px wide for consistent sizing
+        "w-8 h-4 md:w-16 md:h-12" // Mobile: 32px x 16px (3x smaller), Desktop: original size
       )}>
         <Button
           variant="ghost"
           size="icon"
-          className="h-14 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto md:h-12"
+          className="h-4 w-full md:h-12 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1342,7 +1342,7 @@ const InteractiveMap = memo(function InteractiveMap({
           data-testid="button-center-location"
           aria-label="Center on current location"
         >
-          <Crosshair className="w-5 h-5 pointer-events-none" />
+          <Crosshair className="w-2 h-2 md:w-5 md:h-5 pointer-events-none" />
         </Button>
       </div>
       
