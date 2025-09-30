@@ -55,6 +55,7 @@ export const MapLibreMap = memo(function MapLibreMap({
   const map = useRef<maplibregl.Map | null>(null);
   const [preferences, setPreferences] = useState<MapPreferences>(loadMapPreferences);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
 
   // Get tile URL based on preferences
   const getTileUrl = (viewMode: 'roads' | 'satellite', zoom: number) => {
@@ -124,18 +125,21 @@ export const MapLibreMap = memo(function MapLibreMap({
       });
     }
 
-    // Save preferences on move/zoom
+    // Save preferences on move/zoom with functional update to avoid closure issues
     map.current.on('moveend', () => {
       if (map.current) {
         const center = map.current.getCenter();
         const zoom = Math.round(map.current.getZoom());
-        const newPrefs = {
-          ...preferences,
-          center: [center.lng, center.lat] as [number, number],
-          zoomLevel: zoom
-        };
-        setPreferences(newPrefs);
-        saveMapPreferences(newPrefs);
+        setCurrentZoom(zoom);
+        setPreferences(prevPrefs => {
+          const newPrefs: MapPreferences = {
+            ...prevPrefs,
+            center: [center.lng, center.lat] as [number, number],
+            zoomLevel: zoom
+          };
+          saveMapPreferences(newPrefs);
+          return newPrefs;
+        });
       }
     });
 
@@ -152,21 +156,71 @@ export const MapLibreMap = memo(function MapLibreMap({
     };
   }, []);
 
-  // Update tiles when view mode or zoom changes
+  // Update tiles when view mode or zoom threshold changes
   useEffect(() => {
     if (!map.current || !isLoaded) return;
 
-    const zoom = map.current.getZoom();
-    const tileUrl = getTileUrl(preferences.mapViewMode, Math.round(zoom));
+    const tileUrl = getTileUrl(preferences.mapViewMode, currentZoom);
+    const attribution = currentZoom >= 17
+      ? (preferences.mapViewMode === 'satellite' ? '© Google Satellite with 3D Terrain' : '© Google Maps with 3D Buildings')
+      : (preferences.mapViewMode === 'satellite' ? '© Esri, DigitalGlobe' : '© OpenStreetMap contributors');
 
-    const source = map.current.getSource('raster-tiles') as maplibregl.RasterTileSource;
-    if (source) {
-      // Update tile URL
-      source.tiles = [tileUrl];
-      // Force reload
-      map.current.triggerRepaint();
-    }
-  }, [preferences.mapViewMode, isLoaded]);
+    // Rebuild the entire style to properly update tiles
+    map.current.setStyle({
+      version: 8,
+      sources: {
+        'raster-tiles': {
+          type: 'raster',
+          tiles: [tileUrl],
+          tileSize: 256,
+          attribution
+        }
+      },
+      layers: [
+        {
+          id: 'simple-tiles',
+          type: 'raster',
+          source: 'raster-tiles',
+          minzoom: 0,
+          maxzoom: 22
+        }
+      ]
+    });
+
+    // Re-add route after style reload
+    map.current.once('styledata', () => {
+      if (currentRoute?.routePath && map.current) {
+        const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+        
+        map.current!.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: routeCoordinates
+            }
+          }
+        });
+
+        map.current!.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#2563eb',
+            'line-width': 6,
+            'line-opacity': 0.8
+          }
+        });
+      }
+    });
+  }, [preferences.mapViewMode, currentZoom >= 17, isLoaded]);
 
   // Render route on map
   useEffect(() => {
@@ -306,10 +360,12 @@ export const MapLibreMap = memo(function MapLibreMap({
         <span className="text-muted-foreground">MapLibre GL</span>
         <span className="text-muted-foreground mx-1">•</span>
         <span>{preferences.mapViewMode}</span>
-        {Math.round(map.current?.getZoom() || preferences.zoomLevel) >= 17 && (
+        <span className="text-muted-foreground mx-1">•</span>
+        <span className="text-muted-foreground">z{currentZoom}</span>
+        {currentZoom >= 17 && (
           <>
             <span className="text-muted-foreground mx-1">•</span>
-            <span className="text-green-600 font-semibold">3D View</span>
+            <span className="text-green-600 font-semibold">3D</span>
           </>
         )}
       </div>
