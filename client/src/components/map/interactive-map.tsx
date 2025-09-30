@@ -1324,7 +1324,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
       {/* Location Centering Button */}
       <div className={cn(
-        "absolute right-4 bottom-40 md:bottom-72 z-[1100]",
+        "absolute right-4 bottom-56 md:bottom-72 z-[1100]",
         "bg-card/95 backdrop-blur-sm shadow-2xl rounded-2xl border-2 border-primary/30 overflow-hidden",
         "transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
