@@ -45,7 +45,7 @@ const saveMapPreferences = (prefs: MapPreferences): void => {
   }
 };
 
-export const MapLibreMap = memo(function MapLibreMap({
+const MapLibreMap = memo(function MapLibreMap({
   currentRoute,
   selectedProfile,
   onMapClick,
@@ -373,4 +373,5 @@ export const MapLibreMap = memo(function MapLibreMap({
   );
 });
 
+export { MapLibreMap };
 export default MapLibreMap;
