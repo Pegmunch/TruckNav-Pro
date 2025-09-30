@@ -1046,6 +1046,10 @@ const InteractiveMap = memo(function InteractiveMap({
           bounds={undefined}
           noWrap={false}
           className="leaflet-tile-smooth"
+          errorTileUrl="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Crect fill='%23f0f0f0' width='256' height='256'/%3E%3Ctext x='128' y='128' text-anchor='middle' font-size='14' fill='%23999'%3EMap tile unavailable%3C/text%3E%3C/svg%3E"
+          maxNativeZoom={19}
+          maxRetries={3}
+          retryDelay={1000}
         />
         
         {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
