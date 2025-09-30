@@ -1178,8 +1178,8 @@ export default function NavigationPage() {
                   toLocation={toLocation}
                   onFromLocationChange={setFromLocation}
                   onToLocationChange={setToLocation}
-                  onPlanRoute={() => {
-                    handlePlanRoute();
+                  onPlanRoute={(routePreference) => {
+                    handlePlanRoute(routePreference);
                     setSidebarState('collapsed');
                   }}
                   isCalculating={calculateRouteMutation.isPending}

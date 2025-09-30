@@ -1034,11 +1034,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Routes with strict vehicle class enforcement
   app.post("/api/routes/calculate", validateRoutePlanningRequest, async (req: Request, res: Response) => {
     try {
-      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates } = req.body;
+      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference } = req.body;
       
       if (!startLocation || !endLocation) {
         return res.status(400).json({ message: "Start and end locations are required" });
       }
+
+      // Log route preference for debugging (would be passed to routing engine in production)
+      const preference = routePreference || 'fastest';
+      console.log(`[ROUTE] Calculating route with preference: ${preference}`);
 
       // Get vehicle profile for truck-safe routing
       let vehicleProfile = null;

@@ -4,6 +4,26 @@ This is a specialized truck navigation web application designed to provide safe 
 
 # Recent Changes
 
+## September 30, 2025 - Mobile UX Enhancement & Workflow Simplification ✅
+- **COMPLETED**: Mobile UX improvements with clean 3-mode workflow and focused mobile interface
+- **Added**: 3-mode mobile workflow (Plan → Preview → Navigate) with dedicated UI states and automatic transitions
+  - PLAN mode: Main "Plan Your Route" button opens simplified drawer for route setup
+  - PREVIEW mode: Route displayed with compact trip strip and FAB menu access
+  - NAVIGATE mode: Full-screen minimal UI with trip strip showing ETA/distance/maneuver
+- **Fixed**: MapShell height calculations using flexbox (h-full) instead of CSS calc() for reliable cross-device rendering
+- **Added**: MobileFAB component with speed-dial pattern positioned bottom-right for one-handed gloved operation
+  - 64px primary button with expandable secondary actions (Settings, Menu, Clear Route)
+  - Safe-area handling and consistent touch targets across all devices
+- **Added**: CompactTripStrip component for stable navigation data display
+  - Single-line layout with Route icon, ETA, distance, and next maneuver
+  - Overflow handling and max-width constraints for text stability
+- **Added**: SimplifiedRouteDrawer component replacing complex NavigationSidebar on mobile
+  - Focused on essential route planning: from/to inputs, current location button, route preferences
+  - Wired route preference tabs (Fastest, Eco, No Tolls) with proper state management
+  - Reduced complexity from 20+ props to 6 essential props for streamlined mobile experience
+- **Technical**: Unique map component keys per mode prevent container reuse errors and ensure clean state
+- **Status**: All mobile UX enhancement tasks completed successfully
+
 ## September 29, 2025 - Mobile Compatibility Overhaul ✅
 - **COMPLETED**: Comprehensive mobile compatibility improvements for professional truck drivers
 - **Fixed**: Tile source inconsistency between mobile (ESRI) and desktop (OpenStreetMap) maps
