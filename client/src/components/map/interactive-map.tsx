@@ -1055,13 +1055,13 @@ const InteractiveMap = memo(function InteractiveMap({
           url={(() => {
             const url = preferences.mapViewMode === 'satellite' 
               ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' // Esri World Imagery - satellite view
-              : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'; // OpenStreetMap - consistent with desktop
-            console.log('🗺️ TileLayer URL for', preferences.mapViewMode, 'mode:', url);
+              : (preferences.tiles || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'); // Use country-based provider or fallback to OpenStreetMap
+            console.log('🗺️ TileLayer URL for', preferences.mapViewMode, 'mode:', url, '| Provider:', preferences.provider);
             return url;
           })()}
           attribution={preferences.mapViewMode === 'satellite'
             ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
-            : '© OpenStreetMap contributors'
+            : (preferences.attribution || '© OpenStreetMap contributors')
           }
         />
         
