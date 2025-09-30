@@ -1287,13 +1287,13 @@ const InteractiveMap = memo(function InteractiveMap({
         "bg-card shadow-xl rounded-2xl border border-border overflow-hidden",
         "flex flex-col transition-all duration-300 pointer-events-auto",
         controlsVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none",
-        "w-24 h-24 md:w-16 md:h-20" // Mobile: 96px wide for better touch targets
+        "w-8 h-8 md:w-16 md:h-20" // Mobile: 32px (3x smaller), Desktop: 64px x 80px
       )}>
         {/* Zoom In */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-4 w-full md:h-10 rounded-none hover:bg-primary/10 transition-colors border-b border-border/50 touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1302,14 +1302,14 @@ const InteractiveMap = memo(function InteractiveMap({
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus className="w-5 h-5 pointer-events-none" />
+          <Plus className="w-2 h-2 md:w-5 md:h-5 pointer-events-none" />
         </Button>
         
         {/* Zoom Out */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-full rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
+          className="h-4 w-full md:h-10 rounded-none hover:bg-primary/10 transition-colors touch-manipulation cursor-pointer flex items-center justify-center pointer-events-auto"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1318,7 +1318,7 @@ const InteractiveMap = memo(function InteractiveMap({
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus className="w-5 h-5 pointer-events-none" />
+          <Minus className="w-2 h-2 md:w-5 md:h-5 pointer-events-none" />
         </Button>
       </div>
 
