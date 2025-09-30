@@ -2423,6 +2423,59 @@ body.navigation-active [data-testid*="button-"] {
   background-color: rgba(59, 130, 246, 0.05) !important;
 }
 
+/* ============================================
+   SMOOTH TILE RENDERING & VISIBILITY
+   ============================================ */
+
+/* Prevent tile flickering during zoom/pan */
+.leaflet-tile-container {
+  transition: opacity 200ms ease-in-out !important;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Keep tiles visible during zoom transitions */
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform;
+}
+
+/* Smooth tile loading */
+.leaflet-tile {
+  opacity: 0;
+  transition: opacity 300ms ease-in !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.leaflet-tile-loaded {
+  opacity: 1 !important;
+}
+
+/* Prevent grey background during tile loading */
+.leaflet-layer {
+  background-color: transparent !important;
+}
+
+/* Smooth tile class for enhanced visibility */
+.leaflet-tile-smooth {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimizeQuality;
+  image-rendering: smooth;
+}
+
+/* GPU acceleration for better performance */
+.leaflet-pane {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+}
+
 /* Override any conflicting Leaflet cursor styles */
 .leaflet-container .leaflet-marker-draggable {
   cursor: move !important;

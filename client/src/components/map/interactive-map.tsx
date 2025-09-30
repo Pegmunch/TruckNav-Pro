@@ -670,6 +670,15 @@ const InteractiveMap = memo(function InteractiveMap({
   // Enhanced handlers with preference persistence and auto-hide reset
   const handleZoomIn = () => {
     const newZoomLevel = Math.min(zoomLevel + 1, 19);
+    
+    // Use smooth zoom animation instead of instant setZoom
+    if (mapRef.current) {
+      mapRef.current.setZoom(newZoomLevel, {
+        animate: true,
+        duration: 0.3 // 300ms smooth animation
+      });
+    }
+    
     setZoomLevel(newZoomLevel);
     const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
     setPreferences(newPreferences);
@@ -680,6 +689,15 @@ const InteractiveMap = memo(function InteractiveMap({
 
   const handleZoomOut = () => {
     const newZoomLevel = Math.max(zoomLevel - 1, 3);
+    
+    // Use smooth zoom animation instead of instant setZoom
+    if (mapRef.current) {
+      mapRef.current.setZoom(newZoomLevel, {
+        animate: true,
+        duration: 0.3 // 300ms smooth animation
+      });
+    }
+    
     setZoomLevel(newZoomLevel);
     const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
     setPreferences(newPreferences);
@@ -981,6 +999,11 @@ const InteractiveMap = memo(function InteractiveMap({
         boxZoom={true}
         minZoom={3}
         maxZoom={19}
+        // Smooth zoom animation settings
+        zoomAnimation={true}
+        zoomAnimationThreshold={4}
+        fadeAnimation={true}
+        markerZoomAnimation={true}
       >
         <TileLayer
           key={`${preferences.mapViewMode}-${zoomLevel >= 17 ? '3d' : '2d'}`} // Dynamic key for 2D/3D switching
@@ -1009,6 +1032,13 @@ const InteractiveMap = memo(function InteractiveMap({
           maxZoom={19}
           tileSize={256}
           zoomOffset={0}
+          keepBuffer={8}
+          updateWhenZooming={true}
+          updateWhenIdle={false}
+          updateInterval={200}
+          bounds={undefined}
+          noWrap={false}
+          className="leaflet-tile-smooth"
         />
         
         {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
