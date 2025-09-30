@@ -1018,18 +1018,6 @@ export default function NavigationPage() {
                     />
                   </MapShell>
                 </div>
-
-                {/* Plan Route CTA - Center of Screen */}
-                <div className="absolute inset-0 flex items-center justify-center p-6">
-                  <Button
-                    onClick={() => setSidebarState('open')}
-                    className="h-20 px-12 text-lg font-semibold shadow-2xl"
-                    data-testid="button-plan-route-main"
-                  >
-                    <MapPin className="w-7 h-7 mr-3" />
-                    Plan Your Route
-                  </Button>
-                </div>
               </div>
 
               {/* Legal Ownership */}
