@@ -557,7 +557,10 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 }}
                 disabled={!currentRoute || !selectedProfile || isStartingJourney}
                 size="lg"
-                className="bg-green-600 hover:bg-green-700 text-white w-full font-semibold h-12"
+                className={cn(
+                  "bg-green-600 hover:bg-green-700 text-white w-full font-semibold h-12 transition-all",
+                  currentRoute && selectedProfile && "ring-4 ring-green-400/50 shadow-lg shadow-green-500/50 animate-pulse"
+                )}
                 data-testid="button-start-navigation-top"
               >
                 {isStartingJourney ? (

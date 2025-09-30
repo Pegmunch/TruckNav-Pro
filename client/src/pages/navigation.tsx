@@ -50,7 +50,7 @@ export default function NavigationPage() {
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
-  const [fromLocation, setFromLocation] = useState("Current Location");
+  const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
@@ -138,7 +138,7 @@ export default function NavigationPage() {
   }, []); // Remove isMobile dependency to prevent auto-reset
 
   
-  // Check AR support and auto-detect GPS location on component mount
+  // Check AR support on component mount (no auto-location to keep boxes empty)
   useEffect(() => {
     const checkARSupport = async () => {
       try {
@@ -155,44 +155,7 @@ export default function NavigationPage() {
       }
     };
     
-    const autoDetectLocation = async () => {
-      if (!navigator.geolocation) return;
-      
-      try {
-        // Safari-friendly geolocation with permission check
-        const permission = await navigator.permissions?.query({name: 'geolocation'}).catch(() => null);
-        if (permission && permission.state === 'denied') {
-          return;
-        }
-        
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: false, // Safari works better with this disabled
-            timeout: 15000, // Longer timeout for Safari
-            maximumAge: 300000
-          });
-        });
-        
-        // Get address from coordinates using postcode API
-        const { latitude, longitude } = position.coords;
-        try {
-          const response = await fetch(`/api/postcodes/reverse?lat=${latitude}&lng=${longitude}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.length > 0) {
-              setFromLocation(data[0].formatted || 'Current Location');
-            }
-          }
-        } catch (error) {
-          setFromLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-        }
-      } catch (error) {
-        // Silent handling for Safari - don't log errors that users can't fix
-      }
-    };
-    
     checkARSupport();
-    autoDetectLocation();
   }, []);
   
   // Auto-update mobile navigation mode based on state
@@ -1105,7 +1068,10 @@ export default function NavigationPage() {
                 <Button
                   onClick={handleStartNavigation}
                   disabled={startJourneyMutation.isPending}
-                  className="w-full h-16 text-lg font-semibold"
+                  className={cn(
+                    "w-full h-16 text-lg font-semibold transition-all",
+                    currentRoute && selectedProfile && "ring-4 ring-primary/50 shadow-lg shadow-primary/50 animate-pulse"
+                  )}
                   data-testid="button-start-navigation-preview"
                 >
                   <Navigation className="w-6 h-6 mr-3" />
