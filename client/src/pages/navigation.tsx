@@ -1006,16 +1006,18 @@ export default function NavigationPage() {
 
               {/* Background Map */}
               <div className="relative flex-1">
-                <MapShell key="plan-mode-map" className="h-full">
-                  <InteractiveMap
-                    currentRoute={null}
-                    selectedProfile={selectedProfile || activeProfile}
-                    alternativeRoutes={[]}
-                    previewRoute={null}
-                    showTrafficLayer={false}
-                    showIncidents={false}
-                  />
-                </MapShell>
+                <div className="absolute inset-0">
+                  <MapShell key="plan-mode-map" className="h-full">
+                    <InteractiveMap
+                      currentRoute={null}
+                      selectedProfile={selectedProfile || activeProfile}
+                      alternativeRoutes={[]}
+                      previewRoute={null}
+                      showTrafficLayer={false}
+                      showIncidents={false}
+                    />
+                  </MapShell>
+                </div>
               </div>
 
               {/* Legal Ownership */}
