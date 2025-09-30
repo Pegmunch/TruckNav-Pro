@@ -38,8 +38,6 @@ export default function MapLegalOwnership({
       className={cn(
         // Base positioning - fixed for viewport positioning, always bottom-right
         "fixed bottom-0 right-0 z-[100] pointer-events-none",
-        // Background and styling - semi-transparent with border
-        "bg-background border border-border rounded-lg shadow-lg",
         // Padding and spacing
         compact ? "px-3 py-2" : "px-4 py-3",
         // Ensure readable on any map background
