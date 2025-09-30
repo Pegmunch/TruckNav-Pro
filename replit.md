@@ -20,11 +20,17 @@ This is a specialized truck navigation web application designed to provide safe 
   - Opens SimplifiedRouteDrawer when tapped
   - Replaces removed blue "Plan Your Route" overlay button with cleaner, non-intrusive design
   - Includes safe-area handling for modern mobile devices
+  - Added aria-label="Open route planner" for screen reader accessibility
+- **Polish**: Code cleanup and state consistency improvements
+  - Removed unused DrawerTrigger import for cleaner codebase
+  - Fixed sidebar state consistency: both drawer close and Android back button now use 'collapsed' state
+  - Ensures consistent UI behavior across all mobile close interactions
 - **Testing**: All mobile UI improvements verified via automated Playwright testing
   - No transparent overlay detected in PLAN mode
   - All elements properly sized with no overlapping
   - Drawer opens/closes smoothly with no residual overlay
   - Map remains fully interactive throughout all modes
+  - FAB button accessibility verified with proper aria-label
 - **Status**: All mobile overlay and scaling issues resolved successfully
 
 ## September 30, 2025 - Address Autocomplete & Mobile Theme Fix ✅

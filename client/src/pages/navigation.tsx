@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
@@ -375,7 +375,7 @@ export default function NavigationPage() {
     
     // Lower priority: Sidebar management for mobile
     if (isMobile && sidebarState === 'open') {
-      setSidebarState('closed');
+      setSidebarState('collapsed');
       console.log('🔙 Android back: Closed mobile sidebar');
       return true;
     }
@@ -1026,6 +1026,7 @@ export default function NavigationPage() {
                     size="lg"
                     className="h-14 w-14 rounded-full shadow-2xl"
                     data-testid="button-plan-route-fab"
+                    aria-label="Open route planner"
                   >
                     <MapPin className="w-6 h-6" />
                   </Button>
