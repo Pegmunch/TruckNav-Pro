@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, memo, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Crosshair, Layers } from "lucide-react";
+import { Plus, Minus, Crosshair, Layers, Box } from "lucide-react";
 import { type Route, type VehicleProfile } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
@@ -57,6 +57,7 @@ const MapLibreMap = memo(function MapLibreMap({
   const [preferences, setPreferences] = useState<MapPreferences>(loadMapPreferences);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
+  const [is3DMode, setIs3DMode] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const preferencesRef = useRef(preferences);
   const currentZoomRef = useRef(currentZoom);
@@ -376,6 +377,19 @@ const MapLibreMap = memo(function MapLibreMap({
     saveMapPreferences(newPrefs);
   };
 
+  const toggle3DMode = () => {
+    if (!map.current) return;
+    
+    const newMode = !is3DMode;
+    setIs3DMode(newMode);
+    
+    // Smoothly transition between 2D (pitch 0) and 3D (pitch 60)
+    map.current.easeTo({
+      pitch: newMode ? 60 : 0,
+      duration: 800
+    });
+  };
+
   return (
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
@@ -414,6 +428,19 @@ const MapLibreMap = memo(function MapLibreMap({
         <Button
           size="icon"
           variant="secondary"
+          onClick={toggle3DMode}
+          className={cn(
+            "h-10 w-10 shadow-lg transition-colors",
+            is3DMode ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-white hover:bg-white/90"
+          )}
+          data-testid="button-toggle-3d"
+          aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
+        >
+          <Box className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="secondary"
           onClick={toggleMapView}
           className="h-10 w-10 shadow-lg bg-white hover:bg-white/90"
           data-testid="button-toggle-view"
@@ -436,10 +463,10 @@ const MapLibreMap = memo(function MapLibreMap({
         <span>{preferences.mapViewMode}</span>
         <span className="text-muted-foreground mx-1">•</span>
         <span className="text-muted-foreground">z{currentZoom}</span>
-        {currentZoom >= 17 && (
+        {is3DMode && (
           <>
             <span className="text-muted-foreground mx-1">•</span>
-            <span className="text-green-600 font-semibold">3D</span>
+            <span className="text-blue-600 font-semibold">3D</span>
           </>
         )}
       </div>
