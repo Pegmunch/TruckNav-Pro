@@ -668,7 +668,7 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Enhanced handlers with preference persistence and auto-hide reset
   const handleZoomIn = () => {
-    const newZoomLevel = Math.min(zoomLevel + 1, 18);
+    const newZoomLevel = Math.min(zoomLevel + 1, 19);
     setZoomLevel(newZoomLevel);
     const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
     setPreferences(newPreferences);
@@ -678,7 +678,7 @@ const InteractiveMap = memo(function InteractiveMap({
   };
 
   const handleZoomOut = () => {
-    const newZoomLevel = Math.max(zoomLevel - 1, 1);
+    const newZoomLevel = Math.max(zoomLevel - 1, 3);
     setZoomLevel(newZoomLevel);
     const newPreferences = { ...preferences, zoomLevel: newZoomLevel };
     setPreferences(newPreferences);
@@ -978,6 +978,8 @@ const InteractiveMap = memo(function InteractiveMap({
         // Professional map interaction settings
         keyboard={true}
         boxZoom={true}
+        minZoom={3}
+        maxZoom={19}
       >
         <TileLayer
           key={preferences.mapViewMode} // Stable key per view mode
@@ -992,6 +994,10 @@ const InteractiveMap = memo(function InteractiveMap({
             ? '© Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
             : (preferences.attribution || '© OpenStreetMap contributors')
           }
+          minZoom={3}
+          maxZoom={19}
+          tileSize={256}
+          zoomOffset={0}
         />
         
         {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
