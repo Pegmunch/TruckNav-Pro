@@ -707,7 +707,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
             </Card>
 
             {/* Quick Actions Grid */}
-            <Card className="mx-4 mb-4 shadow-sm border border-border bg-card dark:bg-card">
+            <Card className="mx-4 mb-4 mt-6 shadow-sm border border-border bg-card dark:bg-card">
               <CardContent className="p-4">
                 <h3 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-3">
