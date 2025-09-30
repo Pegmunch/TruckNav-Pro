@@ -1649,8 +1649,8 @@ const InteractiveMap = memo(function InteractiveMap({
         />
       </div>
 
-      {/* Bottom Info Bar - Fixed height to prevent map covering */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-[1300]">
+      {/* Bottom Info Bar - Hidden on mobile to prevent overlap */}
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4 z-[1300]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Map Provider Info */}
