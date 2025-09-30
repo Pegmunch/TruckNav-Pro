@@ -91,9 +91,9 @@ const SpeedDisplay = memo(function SpeedDisplay({
             }
           },
           {
-            enableHighAccuracy: false, // Less demanding for Safari
-            timeout: 15000, // Longer timeout for Safari
-            maximumAge: 5000 // More caching for Safari
+            enableHighAccuracy: true, // High accuracy for precise speed readings
+            timeout: 10000,
+            maximumAge: 1000 // Fresh data for accurate speed
           }
         );
       } catch (error) {
@@ -106,9 +106,9 @@ const SpeedDisplay = memo(function SpeedDisplay({
             },
             () => {}, // Silent error handling for Safari
             {
-              enableHighAccuracy: false,
-              timeout: 15000,
-              maximumAge: 5000
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 1000
             }
           );
         } catch (fallbackError) {
