@@ -35,6 +35,7 @@ import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-hand
 import { MapShell } from "@/components/map/map-shell";
 import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
+import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -1165,14 +1166,14 @@ export default function NavigationPage() {
             />
           )}
 
-          {/* Route Planning Drawer - Available in all modes */}
+          {/* Simplified Route Planning Drawer - Mobile Only */}
           <Drawer open={isMobileDrawerOpen} onOpenChange={(open) => setSidebarState(open ? 'open' : 'collapsed')}>
             <DrawerContent>
               <DrawerHeader>
-                <DrawerTitle className="text-xl">Route Planning</DrawerTitle>
+                <DrawerTitle className="text-xl">Plan Route</DrawerTitle>
               </DrawerHeader>
-              <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                <NavigationSidebar
+              <div className="p-6 max-h-[70vh] overflow-y-auto">
+                <SimplifiedRouteDrawer
                   fromLocation={fromLocation}
                   toLocation={toLocation}
                   onFromLocationChange={setFromLocation}
@@ -1181,29 +1182,8 @@ export default function NavigationPage() {
                     handlePlanRoute();
                     setSidebarState('collapsed');
                   }}
-                  onStartNavigation={handleStartNavigation}
-                  onStopNavigation={handleStopNavigation}
-                  currentRoute={currentRoute}
                   isCalculating={calculateRouteMutation.isPending}
-                  selectedProfile={selectedProfile}
-                  onProfileSelect={(profile) => {
-                    setSelectedProfile(profile);
-                    queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
-                  }}
-                  isNavigating={isNavigating}
-                  isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-                  isCompletingJourney={completeJourneyMutation.isPending}
-                  showRoutePreview={showRoutePreview}
-                  onRoutePreviewToggle={setShowRoutePreview}
-                  isOpen={true}
-                  onToggle={() => setSidebarState('collapsed')}
-                  isCollapsed={false}
-                  onCollapseToggle={() => {}}
-                  isSearchPanelOpen={false}
-                  onToggleSearchPanel={() => {}}
-                  showVehicleSettings={showVehicleSettings}
-                  onShowVehicleSettings={setShowVehicleSettings}
-                  onShowLaneGuidance={() => setShowLaneGuidance(true)}
+                  onUseCurrentLocation={() => setFromLocation('Current Location')}
                 />
               </div>
             </DrawerContent>
