@@ -97,6 +97,10 @@ export default function NavigationPage() {
   // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
   const [showVehicleSettings, setShowVehicleSettings] = useState(false);
   
+  // Traffic and Incidents toggle state for mobile
+  const [showTrafficLayer, setShowTrafficLayer] = useState(true);
+  const [showIncidents, setShowIncidents] = useState(true);
+  
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [currentGPSLocation, setCurrentGPSLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
@@ -1094,6 +1098,28 @@ export default function NavigationPage() {
                 />
               )}
 
+              {/* Traffic & Incidents Toggle Buttons */}
+              <div className="absolute top-16 right-4 z-[60] flex gap-2 mobile-safe-top">
+                <Button
+                  variant={showTrafficLayer ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowTrafficLayer(!showTrafficLayer)}
+                  className="h-8 px-3 text-xs shadow-lg"
+                  data-testid="button-toggle-traffic-mobile"
+                >
+                  Traffic
+                </Button>
+                <Button
+                  variant={showIncidents ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowIncidents(!showIncidents)}
+                  className="h-8 px-3 text-xs shadow-lg"
+                  data-testid="button-toggle-incidents-mobile"
+                >
+                  Incidents
+                </Button>
+              </div>
+
               {/* Full-Screen Map */}
               <div className="relative flex-1">
                 <MapShell key="navigate-mode-map" className="h-full">
@@ -1108,8 +1134,8 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       alternativeRoutes={[]}
                       previewRoute={null}
-                      showTrafficLayer={true}
-                      showIncidents={true}
+                      showTrafficLayer={showTrafficLayer}
+                      showIncidents={showIncidents}
                     />
                   )}
                 </MapShell>
