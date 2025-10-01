@@ -1114,16 +1114,16 @@ export default function NavigationPage() {
                   )}
                 </MapShell>
 
-                {/* Stop Button - Bottom Left for balance */}
-                <div className="absolute bottom-6 left-6 z-20 mobile-safe-bottom">
+                {/* Stop Button - Bottom Left Corner */}
+                <div className="absolute bottom-4 left-4 z-20 mobile-safe-bottom">
                   <Button
                     onClick={handleStopNavigation}
                     disabled={completeJourneyMutation.isPending}
                     variant="destructive"
-                    className="h-16 px-8 shadow-2xl text-lg font-semibold"
+                    className="h-12 px-6 shadow-xl text-base font-semibold"
                     data-testid="button-stop-navigation"
                   >
-                    <X className="w-6 h-6 mr-2" />
+                    <X className="w-5 h-5 mr-1.5" />
                     Stop
                   </Button>
                 </div>
