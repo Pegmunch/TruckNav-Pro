@@ -12,6 +12,7 @@ interface MapLibreMapProps {
   selectedProfile: VehicleProfile | null;
   onMapClick?: (lat: number, lng: number) => void;
   className?: string;
+  showTraffic?: boolean;
 }
 
 interface MapPreferences {
@@ -50,7 +51,8 @@ const MapLibreMap = memo(function MapLibreMap({
   currentRoute,
   selectedProfile,
   onMapClick,
-  className
+  className,
+  showTraffic = false
 }: MapLibreMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -323,6 +325,89 @@ const MapLibreMap = memo(function MapLibreMap({
     map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
 
   }, [currentRoute, isLoaded]);
+
+  // Traffic Flow Layer Implementation with TomTom API
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+
+    const TOMTOM_API_KEY = import.meta.env.VITE_TOMTOM_API_KEY;
+    
+    if (!TOMTOM_API_KEY) {
+      console.warn('VITE_TOMTOM_API_KEY not found - traffic layer disabled');
+      return;
+    }
+
+    const trafficSourceId = 'traffic-flow-source';
+    const trafficLayerId = 'traffic-flow-layer';
+
+    // Add traffic source if it doesn't exist
+    if (!map.current.getSource(trafficSourceId)) {
+      map.current.addSource(trafficSourceId, {
+        type: 'vector',
+        tiles: [
+          `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.pbf?key=${TOMTOM_API_KEY}`
+        ],
+        minzoom: 0,
+        maxzoom: 18
+      });
+    }
+
+    // Add traffic layer if it doesn't exist
+    if (!map.current.getLayer(trafficLayerId)) {
+      map.current.addLayer({
+        id: trafficLayerId,
+        type: 'line',
+        source: trafficSourceId,
+        'source-layer': 'Traffic flow',
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+          visibility: showTraffic ? 'visible' : 'none'
+        },
+        paint: {
+          'line-color': [
+            'case',
+            ['<', ['get', 'speed_ratio'], 0.3], '#DC2626', // Red: heavy traffic/congestion
+            ['<', ['get', 'speed_ratio'], 0.6], '#F59E0B', // Orange: moderate traffic
+            ['<', ['get', 'speed_ratio'], 0.8], '#FDE047', // Yellow: light traffic
+            '#22C55E' // Green: free flow
+          ],
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 2,  // 2px at zoom 10
+            18, 8   // 8px at zoom 18
+          ],
+          'line-opacity': 0.8
+        }
+      });
+    } else {
+      // Update visibility if layer exists
+      map.current.setLayoutProperty(
+        trafficLayerId,
+        'visibility',
+        showTraffic ? 'visible' : 'none'
+      );
+    }
+
+    // Auto-refresh traffic data every 5 minutes using cache-busting
+    const refreshInterval = setInterval(() => {
+      if (map.current && map.current.getSource(trafficSourceId)) {
+        const source = map.current.getSource(trafficSourceId) as any;
+        if (source && source.type === 'vector') {
+          source.setTiles([
+            `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.pbf?key=${TOMTOM_API_KEY}&t=${Date.now()}`
+          ]);
+          console.log('🚦 Traffic data refreshed with cache-busting');
+        }
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [isLoaded, showTraffic]);
 
   const handleZoomIn = () => {
     if (map.current) {

@@ -982,6 +982,7 @@ export default function NavigationPage() {
                       <MapLibreMap
                         currentRoute={null}
                         selectedProfile={selectedProfile || activeProfile}
+                        showTraffic={showTrafficLayer}
                       />
                     ) : (
                       <InteractiveMap
@@ -1025,6 +1026,7 @@ export default function NavigationPage() {
                     <MapLibreMap
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
+                      showTraffic={showTrafficLayer}
                     />
                   ) : (
                     <InteractiveMap
@@ -1127,6 +1129,7 @@ export default function NavigationPage() {
                     <MapLibreMap
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
+                      showTraffic={showTrafficLayer}
                     />
                   ) : (
                     <InteractiveMap
@@ -1333,6 +1336,7 @@ export default function NavigationPage() {
                     <MapLibreMap
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
+                      showTraffic={showTrafficLayer}
                     />
                   ) : (
                     <EnhancedRealisticMap

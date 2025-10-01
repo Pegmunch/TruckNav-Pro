@@ -51,6 +51,7 @@ Preferred communication style: Simple, everyday language.
     - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization to eliminate tile loss during pan/zoom.
     - **Performance**: Aggressive caching (maxTileCacheSize: 500) and smooth transitions (fadeDuration: 100ms).
     - **Speedometer**: GPS-based live speed tracking with speed limit display and auto MPH/KPH conversion.
+    - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding (red/orange/yellow/green) based on traffic speed ratios, zoom-based line width scaling (2-8px), and 5-minute auto-refresh for latest traffic data.
 - **Address Autocomplete**: Debounced search with postcode suggestions for UK, US, CA, AU, DE, and FR.
 - **Mobile Compatibility**:
     - Screen Wake Lock API.
@@ -73,6 +74,12 @@ Preferred communication style: Simple, everyday language.
 ## Routing and Navigation Services
 - **Wouter**: Lightweight client-side routing.
 - **Geolocation APIs**: Browser-based location services.
+
+## Traffic Data Services
+- **TomTom Traffic Flow API**: Real-time traffic visualization with vector tiles.
+  - **Required Environment Variable**: `VITE_TOMTOM_API_KEY` - TomTom API key for traffic data access.
+  - **Features**: Automatic color-coded traffic flow (red=heavy, orange=moderate, yellow=light, green=free flow).
+  - **Auto-refresh**: Traffic data updates every 5 minutes.
 
 ## Mapping Libraries
 - **MapLibre GL JS**: Primary vector map engine.
