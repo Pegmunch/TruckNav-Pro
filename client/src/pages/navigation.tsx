@@ -1146,10 +1146,10 @@ export default function NavigationPage() {
                     onClick={handleStopNavigation}
                     disabled={completeJourneyMutation.isPending}
                     variant="destructive"
-                    className="h-12 px-6 shadow-xl text-base font-semibold"
+                    className="h-9 px-4 shadow-lg text-sm font-semibold"
                     data-testid="button-stop-navigation"
                   >
-                    <X className="w-5 h-5 mr-1.5" />
+                    <X className="w-4 h-4 mr-1" />
                     Stop
                   </Button>
                 </div>
