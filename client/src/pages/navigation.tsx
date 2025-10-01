@@ -1098,29 +1098,30 @@ export default function NavigationPage() {
                 />
               )}
 
+              {/* Traffic & Incidents Toggle Buttons */}
+              <div className="absolute top-16 right-4 z-[60] flex gap-2 mobile-safe-top">
+                <Button
+                  variant={showTrafficLayer ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowTrafficLayer(!showTrafficLayer)}
+                  className="h-8 px-3 text-xs shadow-lg"
+                  data-testid="button-toggle-traffic-mobile"
+                >
+                  Traffic
+                </Button>
+                <Button
+                  variant={showIncidents ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowIncidents(!showIncidents)}
+                  className="h-8 px-3 text-xs shadow-lg"
+                  data-testid="button-toggle-incidents-mobile"
+                >
+                  Incidents
+                </Button>
+              </div>
+
               {/* Full-Screen Map */}
               <div className="relative flex-1">
-                {/* Traffic & Incidents Toggle Buttons */}
-                <div className="absolute top-4 right-4 z-[60] flex gap-2 mobile-safe-top">
-                  <Button
-                    variant={showTrafficLayer ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                    className="h-8 px-3 text-xs shadow-lg"
-                    data-testid="button-toggle-traffic-mobile"
-                  >
-                    Traffic
-                  </Button>
-                  <Button
-                    variant={showIncidents ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowIncidents(!showIncidents)}
-                    className="h-8 px-3 text-xs shadow-lg"
-                    data-testid="button-toggle-incidents-mobile"
-                  >
-                    Incidents
-                  </Button>
-                </div>
                 <MapShell key="navigate-mode-map" className="h-full">
                   {isMapLibre ? (
                     <MapLibreMap
