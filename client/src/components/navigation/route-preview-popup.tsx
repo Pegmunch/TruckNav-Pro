@@ -124,7 +124,7 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
   const [isMinimized, setIsMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 20 }); // Top-left default position
+  const [position, setPosition] = useState({ x: 20, y: 100 }); // Below top bars on mobile
   const dragRef = useRef<HTMLDivElement>(null);
   
   const routePath = currentRoute.routePath;
