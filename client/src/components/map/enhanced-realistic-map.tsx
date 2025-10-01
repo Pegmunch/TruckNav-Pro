@@ -103,28 +103,15 @@ const createTruckIcon = (isNavigating: boolean) => {
 // Create incident icon based on incident type
 const createIncidentIcon = (incident: TrafficIncident) => {
   const getIncidentIconAndColor = (type: string) => {
-    switch (type) {
-      case 'accident':
-        return { icon: '⚠️', color: '#EF4444', bgColor: '#FECACA' };
-      case 'construction':
-        return { icon: '🚧', color: '#F59E0B', bgColor: '#FEF3C7' };
-      case 'hazmat_spill':
-        return { icon: '☢️', color: '#8B5CF6', bgColor: '#E9D5FF' };
-      case 'road_closure':
-        return { icon: '🚫', color: '#DC2626', bgColor: '#FECACA' };
-      case 'breakdown':
-        return { icon: '🔧', color: '#6B7280', bgColor: '#F3F4F6' };
-      case 'weather':
-        return { icon: '🌧️', color: '#3B82F6', bgColor: '#DBEAFE' };
-      case 'police':
-        return { icon: '🚔', color: '#1F2937', bgColor: '#F9FAFB' };
-      case 'heavy_traffic':
-        return { icon: '🚗', color: '#F59E0B', bgColor: '#FEF3C7' };
-      case 'obstacle':
-        return { icon: '🚧', color: '#EF4444', bgColor: '#FECACA' };
-      default:
-        return { icon: '⚠️', color: '#EF4444', bgColor: '#FECACA' };
-    }
+    // Import the icon library
+    const { getIncidentIcon } = require('@shared/incident-icons');
+    const config = getIncidentIcon(type);
+    
+    return { 
+      icon: config.emoji, 
+      color: config.color, 
+      bgColor: config.bgColor 
+    };
   };
 
   const { icon, color, bgColor } = getIncidentIconAndColor(incident.type);
