@@ -60,6 +60,7 @@ const MapLibreMap = memo(function MapLibreMap({
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const [is3DMode, setIs3DMode] = useState(false);
+  const [isTrafficLayerReady, setIsTrafficLayerReady] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const preferencesRef = useRef(preferences);
   const currentZoomRef = useRef(currentZoom);
@@ -326,6 +327,158 @@ const MapLibreMap = memo(function MapLibreMap({
 
   }, [currentRoute, isLoaded]);
 
+  // Traffic-aware route coloring
+  useEffect(() => {
+    if (!map.current || !isLoaded || !currentRoute?.routePath) return;
+
+    const mapInstance = map.current;
+    const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+
+    // Wait for traffic layer to be available before querying
+    const trafficLayerId = 'traffic-flow-layer';
+    
+    if (!isTrafficLayerReady) {
+      // If traffic layer is not ready, remove traffic route overlay if it exists
+      if (mapInstance.getLayer('route-traffic-overlay')) {
+        mapInstance.removeLayer('route-traffic-overlay');
+      }
+      if (mapInstance.getSource('route-traffic')) {
+        mapInstance.removeSource('route-traffic');
+      }
+      return;
+    }
+
+    // Sample traffic data along the route
+    const sampleTrafficAlongRoute = () => {
+      const trafficSegments: Array<{
+        coordinates: number[][];
+        color: string;
+        width: number;
+      }> = [];
+
+      // Sample every 10 points or at least 20 samples along the route
+      const sampleInterval = Math.max(1, Math.floor(routeCoordinates.length / Math.max(20, routeCoordinates.length / 10)));
+      
+      for (let i = 0; i < routeCoordinates.length - 1; i += sampleInterval) {
+        const start = routeCoordinates[i];
+        const end = routeCoordinates[Math.min(i + sampleInterval, routeCoordinates.length - 1)];
+        
+        // Query traffic features at the midpoint
+        const midLng = (start[0] + end[0]) / 2;
+        const midLat = (start[1] + end[1]) / 2;
+        const point = mapInstance.project([midLng, midLat]);
+        
+        let speedRatio = 1.0; // Default: free flow
+        let color = '#2563eb'; // Blue: free flow/normal
+        let width = 6;
+
+        try {
+          const features = mapInstance.queryRenderedFeatures(point, {
+            layers: [trafficLayerId]
+          });
+
+          if (features && features.length > 0) {
+            const trafficData = features[0].properties;
+            if (trafficData && typeof trafficData.speed_ratio === 'number') {
+              speedRatio = trafficData.speed_ratio;
+              
+              // Apply traffic-based coloring
+              if (speedRatio < 0.3) {
+                color = '#DC2626'; // Red: heavy traffic
+                width = 8; // Thicker for emphasis
+              } else if (speedRatio < 0.6) {
+                color = '#F59E0B'; // Orange: moderate traffic
+                width = 7;
+              } else if (speedRatio < 0.8) {
+                color = '#FDE047'; // Yellow: light traffic
+                width = 6;
+              }
+              // else: keep default blue for free flow
+            }
+          }
+        } catch (error) {
+          // If query fails, keep default color
+          console.debug('Traffic query failed for segment, using default color');
+        }
+
+        // Create segment coordinates
+        const segmentCoords = routeCoordinates.slice(i, Math.min(i + sampleInterval + 1, routeCoordinates.length));
+        
+        trafficSegments.push({
+          coordinates: segmentCoords,
+          color,
+          width
+        });
+      }
+
+      // Create GeoJSON feature collection with colored segments
+      const features = trafficSegments.map(segment => ({
+        type: 'Feature' as const,
+        properties: {
+          color: segment.color,
+          width: segment.width
+        },
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: segment.coordinates
+        }
+      }));
+
+      const trafficRouteData = {
+        type: 'FeatureCollection' as const,
+        features
+      };
+
+      // Add or update traffic-aware route overlay
+      if (!mapInstance.getSource('route-traffic')) {
+        mapInstance.addSource('route-traffic', {
+          type: 'geojson',
+          data: trafficRouteData
+        });
+
+        mapInstance.addLayer({
+          id: 'route-traffic-overlay',
+          type: 'line',
+          source: 'route-traffic',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': ['get', 'width'],
+            'line-opacity': 0.9
+          }
+        });
+      } else {
+        const source = mapInstance.getSource('route-traffic') as maplibregl.GeoJSONSource;
+        if (source && source.setData) {
+          source.setData(trafficRouteData);
+        }
+      }
+    };
+
+    // Initial sampling
+    sampleTrafficAlongRoute();
+
+    // Re-sample when map moves/zooms (traffic tiles might load)
+    const handleMapMove = () => {
+      sampleTrafficAlongRoute();
+    };
+
+    mapInstance.on('moveend', handleMapMove);
+
+    // Auto-refresh traffic route coloring every 2 minutes
+    const refreshInterval = setInterval(() => {
+      sampleTrafficAlongRoute();
+    }, 2 * 60 * 1000);
+
+    return () => {
+      mapInstance.off('moveend', handleMapMove);
+      clearInterval(refreshInterval);
+    };
+  }, [currentRoute, isLoaded, isTrafficLayerReady]);
+
   // Traffic Flow Layer Implementation with TomTom API
   useEffect(() => {
     if (!map.current || !isLoaded) return;
@@ -334,11 +487,23 @@ const MapLibreMap = memo(function MapLibreMap({
     
     if (!TOMTOM_API_KEY) {
       console.warn('VITE_TOMTOM_API_KEY not found - traffic layer disabled');
+      setIsTrafficLayerReady(false);
       return;
     }
 
     const trafficSourceId = 'traffic-flow-source';
     const trafficLayerId = 'traffic-flow-layer';
+
+    if (!showTraffic) {
+      // If traffic is disabled, mark layer as not ready
+      setIsTrafficLayerReady(false);
+      
+      // Update visibility if layer exists
+      if (map.current.getLayer(trafficLayerId)) {
+        map.current.setLayoutProperty(trafficLayerId, 'visibility', 'none');
+      }
+      return;
+    }
 
     // Add traffic source if it doesn't exist
     if (!map.current.getSource(trafficSourceId)) {
@@ -362,7 +527,7 @@ const MapLibreMap = memo(function MapLibreMap({
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
-          visibility: showTraffic ? 'visible' : 'none'
+          visibility: 'visible'
         },
         paint: {
           'line-color': [
@@ -382,13 +547,13 @@ const MapLibreMap = memo(function MapLibreMap({
           'line-opacity': 0.8
         }
       });
+      // Mark layer as ready after adding
+      setIsTrafficLayerReady(true);
     } else {
       // Update visibility if layer exists
-      map.current.setLayoutProperty(
-        trafficLayerId,
-        'visibility',
-        showTraffic ? 'visible' : 'none'
-      );
+      map.current.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
+      // Mark layer as ready
+      setIsTrafficLayerReady(true);
     }
 
     // Auto-refresh traffic data every 5 minutes using cache-busting

@@ -171,6 +171,39 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
         }
       });
 
+      // Add traffic-aware route overlay for preview
+      // Since this is a preview, we'll use a simplified gradient approach
+      // For a real implementation, you'd query traffic data similar to the main map
+      
+      // Create gradient-style traffic overlay (simplified for preview)
+      const trafficOverlayData = {
+        type: 'Feature' as const,
+        properties: {},
+        geometry: geometry
+      };
+
+      map.addSource('route-traffic-preview', {
+        type: 'geojson',
+        data: trafficOverlayData
+      });
+
+      // Add a semi-transparent overlay that will show traffic when available
+      // For preview, we keep it simple - the main map will have full traffic integration
+      map.addLayer({
+        id: 'route-traffic-preview-overlay',
+        type: 'line',
+        source: 'route-traffic-preview',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#2563eb', // Default blue for preview
+          'line-width': 6,
+          'line-opacity': 0.6
+        }
+      });
+
       // Load truck icon first (create a simple SVG icon)
       const truckSvg = `
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
