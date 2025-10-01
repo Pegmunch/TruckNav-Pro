@@ -1334,8 +1334,8 @@ export default function NavigationPage() {
         </div>
       )}
 
-      {/* Professional Navigation HUD - Positioned outside relative containers */}
-      {isNavigating && !isARMode && (
+      {/* Professional Navigation HUD - Desktop only (mobile uses CompactTripStrip) */}
+      {isNavigating && !isARMode && !isMobile && (
         <ProfessionalNavHUD
           currentRoute={currentRoute}
           selectedProfile={selectedProfile || activeProfile}

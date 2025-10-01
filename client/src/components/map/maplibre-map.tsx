@@ -94,7 +94,13 @@ const MapLibreMap = memo(function MapLibreMap({
   }, []);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current) return;
+    
+    // Clean up existing map instance if it exists (handles HMR and remounting)
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
 
     try {
       map.current = new maplibregl.Map({
@@ -394,7 +400,7 @@ const MapLibreMap = memo(function MapLibreMap({
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
+      <div className="absolute bottom-32 right-4 flex flex-col gap-1.5 z-10">
         <Button
           size="icon"
           variant="secondary"
