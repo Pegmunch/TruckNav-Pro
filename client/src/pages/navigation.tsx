@@ -1258,18 +1258,35 @@ export default function NavigationPage() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'navigate' && (
                 <>
-                  {/* TruckNav Header - Branded Top Bar */}
-                  <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 mobile-safe-top shadow-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Truck className="h-5 w-5" />
-                        <span className="font-bold text-lg tracking-tight">TruckNav Pro</span>
-                      </div>
-                      <div className="text-xs font-medium opacity-90">
-                        Navigation Active
+                  {/* Trip Info Header */}
+                  {currentRoute && (
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 mobile-safe-top shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="text-center">
+                            <div className="text-xs opacity-75">ETA</div>
+                            <div className="text-sm font-bold">
+                              {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                          <div className="h-8 w-px bg-white/30"></div>
+                          <div className="text-center">
+                            <div className="text-xs opacity-75">Time</div>
+                            <div className="text-sm font-bold">
+                              {Math.floor((currentRoute.duration || 0) / 60)}h {Math.round((currentRoute.duration || 0) % 60)}m
+                            </div>
+                          </div>
+                          <div className="h-8 w-px bg-white/30"></div>
+                          <div className="text-center">
+                            <div className="text-xs opacity-75">Distance</div>
+                            <div className="text-sm font-bold">
+                              {(currentRoute.distance || 0).toFixed(1)} mi
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Compact Trip Strip - Below Header */}
                   {currentRoute && (
