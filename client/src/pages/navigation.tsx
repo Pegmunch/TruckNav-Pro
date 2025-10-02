@@ -606,7 +606,7 @@ export default function NavigationPage() {
       toast({
         title: "✅ Route Ready",
         description: `${route.distance?.toFixed(1)} mi • ${Math.round(route.duration || 0)} min`,
-        className: "bg-green-500 text-white border-green-600",
+        className: "bg-green-500 text-white border-green-600 text-[8px] p-1.5 max-w-[120px]",
         duration: 3000,
       });
     },
