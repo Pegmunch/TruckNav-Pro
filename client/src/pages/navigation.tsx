@@ -443,6 +443,8 @@ export default function NavigationPage() {
     onSuccess: (journey) => {
       setActiveJourney(null);
       setIsNavigating(false);
+      setCurrentRoute(null);
+      setMobileNavMode('plan');
       localStorage.removeItem('activeJourneyId');
       // Invalidate all journey-related queries to keep UI consistent
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
@@ -889,6 +891,16 @@ export default function NavigationPage() {
     if (activeJourney && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
     }
+    
+    // Immediately clear UI state
+    setCurrentRoute(null);
+    setMobileNavMode('plan');
+    setIsNavigating(false);
+    
+    toast({
+      title: "Navigation stopped",
+      description: "Route has been cleared successfully",
+    });
   };
 
   const handleOpenLaneSelection = () => {
