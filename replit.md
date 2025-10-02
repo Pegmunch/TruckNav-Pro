@@ -50,6 +50,8 @@ Preferred communication style: Simple, everyday language.
     - **Map Engines**: MapLibre GL JS (default, GPU-accelerated, 3D support); Leaflet (fallback for non-WebGL devices).
     - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization to eliminate tile loss during pan/zoom.
     - **Performance**: Aggressive caching (maxTileCacheSize: 500) and smooth transitions (fadeDuration: 100ms).
+    - **Mobile Layout Architecture**: Map always mounted at z-0 base layer with HUD elements overlaid using absolute positioning at higher z-indexes. Prevents conditional mounting/unmounting which caused MapLibre tile loss.
+    - **Compass/Orientation Control**: Top-right corner compass button displays current bearing (rotates with map), resets map to North (bearing 0°) on click with smooth animation.
     - **Speedometer**: GPS-based live speed tracking with speed limit display and auto MPH/KPH conversion.
     - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding (red/orange/yellow/green) based on traffic speed ratios, zoom-based line width scaling (2-8px), and 5-minute auto-refresh for latest traffic data.
     - **Traffic-Aware Route Coloring**: Routes automatically display color-coded segments based on real-time traffic conditions - heavy traffic areas show in red (speed ratio <0.3), moderate in orange (<0.6), light in yellow (<0.8), and free flow in blue (≥0.8). Auto-resamples every 2 minutes for live updates.
