@@ -1284,7 +1284,7 @@ export default function NavigationPage() {
                   )}
 
                   {/* Map Control Buttons - Right Side Stack */}
-                  <div className="absolute top-28 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
+                  <div className="absolute top-32 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
                     <Button
                       size="icon"
                       onClick={() => {
