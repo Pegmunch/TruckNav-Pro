@@ -1203,12 +1203,12 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Stop Button - Bottom Left Corner */}
-                  <div className="absolute bottom-4 left-4 z-[70] mobile-safe-bottom pointer-events-auto">
+                  <div className="absolute bottom-4 left-4 z-[100] mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
                       variant="destructive"
-                      className="h-10 px-5 shadow-lg text-sm font-semibold pointer-events-auto"
+                      className="h-10 px-5 shadow-lg text-sm font-semibold pointer-events-auto bg-destructive hover:bg-destructive/90"
                       data-testid="button-stop-navigation"
                     >
                       <X className="w-4 h-4 mr-1" />
