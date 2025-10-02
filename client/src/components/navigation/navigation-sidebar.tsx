@@ -560,11 +560,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 aria-busy={isStartingJourney}
                 size="lg"
                 className={cn(
-                  "w-full h-12 font-bold rounded-xl shadow-2xl transition-all duration-200",
+                  "w-full h-11 text-sm font-bold rounded-lg shadow-xl transition-all duration-200",
                   "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
-                  "border-2 border-blue-400/50 hover:scale-[1.02] active:scale-[0.98]",
+                  "border-2 border-blue-400/50 hover:scale-105 active:scale-95",
                   "focus-visible:ring-4 focus-visible:ring-blue-500",
-                  currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-xl shadow-blue-500/50 animate-pulse"
+                  currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-2xl shadow-blue-500/50"
                 )}
                 data-testid="button-start-navigation-top"
               >

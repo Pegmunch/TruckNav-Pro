@@ -19,6 +19,14 @@ export interface MapLibreMapRef {
   zoomOut: () => void;
   toggleMapView: () => void;
   getMapViewMode: () => 'roads' | 'satellite';
+  zoomToUserLocation: (options?: {
+    forceStreetMode?: boolean;
+    zoom?: number;
+    pitch?: number;
+    duration?: number;
+    onSuccess?: (location: { lat: number; lng: number }) => void;
+    onError?: (error: GeolocationPositionError) => void;
+  }) => void;
 }
 
 interface MapLibreMapProps {
@@ -133,6 +141,71 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     zoomOut: () => {
       if (map.current) {
         map.current.zoomOut({ duration: 300 });
+      }
+    },
+    zoomToUserLocation: (options = {}) => {
+      const {
+        forceStreetMode = true,
+        zoom = 17.5,
+        pitch = 45,
+        duration = 2000,
+        onSuccess,
+        onError
+      } = options;
+
+      if (!map.current) {
+        console.warn('Map not ready for GPS zoom');
+        return;
+      }
+
+      const mapInstance = map.current;
+
+      // Force street/roads mode if requested
+      if (forceStreetMode && preferences.mapViewMode !== 'roads') {
+        const newPrefs = { ...preferences, mapViewMode: 'roads' as const };
+        setPreferences(newPrefs);
+        saveMapPreferences(newPrefs);
+      }
+
+      // Get current GPS position for immediate lock
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude, heading } = position.coords;
+            const userBearing = heading !== null ? heading : 0;
+
+            // Dramatic flyTo animation to lock onto user position
+            mapInstance.flyTo({
+              center: [longitude, latitude],
+              zoom: zoom,
+              pitch: pitch,
+              bearing: userBearing,
+              duration: duration,
+              essential: true // Animation won't be interrupted
+            });
+
+            // Callback with location data
+            if (onSuccess) {
+              onSuccess({ lat: latitude, lng: longitude });
+            }
+          },
+          (error) => {
+            console.warn('GPS location error during zoom:', error);
+            if (onError) {
+              onError(error);
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0 // Force fresh reading
+          }
+        );
+      } else {
+        console.warn('Geolocation not available');
+        if (onError) {
+          onError(new Error('Geolocation not supported') as any);
+        }
       }
     },
     toggleMapView: () => {

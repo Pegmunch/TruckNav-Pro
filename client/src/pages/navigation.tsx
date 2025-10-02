@@ -411,6 +411,39 @@ export default function NavigationPage() {
       localStorage.setItem('activeJourneyId', journey.id.toString());
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
       refetchCurrentJourney();
+      
+      // Automatically zoom to user's GPS location in street mode
+      setTimeout(() => {
+        mapRef.current?.zoomToUserLocation({
+          forceStreetMode: true,
+          zoom: 17.5,
+          pitch: 45,
+          duration: 2000,
+          onSuccess: (location) => {
+            toast({
+              title: "Position Locked",
+              description: `Tracking from ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`,
+              duration: 2000,
+            });
+          },
+          onError: (error) => {
+            if (error.code === 1) {
+              toast({
+                title: "GPS Permission Denied",
+                description: "Please enable location access for navigation",
+                variant: "destructive",
+                duration: 5000,
+              });
+            } else {
+              toast({
+                title: "GPS Signal Acquiring",
+                description: "Waiting for location signal...",
+                duration: 3000,
+              });
+            }
+          }
+        });
+      }, 300); // Small delay to ensure map is in navigation mode
     },
     onError: (error) => {
       console.error('Failed to activate journey:', error);
@@ -1147,11 +1180,11 @@ export default function NavigationPage() {
                       aria-label="Start turn-by-turn navigation with selected route"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "w-full h-16 text-lg font-bold rounded-xl shadow-2xl transition-all duration-200",
+                        "h-12 px-8 text-base font-bold rounded-lg shadow-xl transition-all duration-200",
                         "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
-                        "border-2 border-blue-400/50 hover:scale-[1.02] active:scale-[0.98]",
+                        "border-2 border-blue-400/50 hover:scale-105 active:scale-95",
                         "focus-visible:ring-4 focus-visible:ring-blue-500",
-                        currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-xl shadow-blue-500/50 animate-pulse"
+                        currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-2xl shadow-blue-500/50"
                       )}
                       data-testid="button-start-navigation-preview"
                     >
