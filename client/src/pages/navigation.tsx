@@ -39,6 +39,8 @@ import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
+import { IncidentFeed } from "@/components/incidents/incident-feed";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -104,6 +106,9 @@ export default function NavigationPage() {
   
   // Incident reporting dialog state
   const [showIncidentReportDialog, setShowIncidentReportDialog] = useState(false);
+  
+  // Incident feed drawer state
+  const [showIncidentFeed, setShowIncidentFeed] = useState(false);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -313,6 +318,13 @@ export default function NavigationPage() {
     if (showVehicleSettings) {
       setShowVehicleSettings(false);
       console.log('🔙 Android back: Closed vehicle settings');
+      return true;
+    }
+    
+    // High priority: Close incident feed drawer
+    if (showIncidentFeed) {
+      setShowIncidentFeed(false);
+      console.log('🔙 Android back: Closed incident feed');
       return true;
     }
     
@@ -1175,6 +1187,7 @@ export default function NavigationPage() {
                   }}
                   onMenuClick={() => setSidebarState('open')}
                   onReportIncident={() => setShowIncidentReportDialog(true)}
+                  onViewIncidents={() => setShowIncidentFeed(true)}
                   className="bottom-6 right-6 mobile-safe-bottom"
                 />
 
@@ -1446,6 +1459,24 @@ export default function NavigationPage() {
         onOpenChange={setShowIncidentReportDialog}
         currentLocation={currentGPSLocation}
       />
+
+      {/* Incident Feed Drawer - Shows nearby incidents */}
+      <Sheet open={showIncidentFeed && showIncidents} onOpenChange={setShowIncidentFeed}>
+        <SheetContent 
+          side="bottom" 
+          className="h-[70vh] p-0"
+          data-testid="sheet-incident-feed"
+        >
+          <SheetHeader className="p-4 pb-2 border-b">
+            <SheetTitle data-testid="title-incident-feed">Nearby Incidents</SheetTitle>
+          </SheetHeader>
+          <IncidentFeed
+            currentLocation={currentGPSLocation}
+            showIncidents={showIncidents}
+            className="h-[calc(70vh-4rem)]"
+          />
+        </SheetContent>
+      </Sheet>
 
     </div>
   );

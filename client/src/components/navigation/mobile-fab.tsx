@@ -7,7 +7,8 @@ import {
   MapPin, 
   Layers,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +19,7 @@ interface MobileFABProps {
   onMenuClick?: () => void;
   onLayersClick?: () => void;
   onReportIncident?: () => void;
+  onViewIncidents?: () => void;
   className?: string;
 }
 
@@ -28,11 +30,19 @@ export function MobileFAB({
   onMenuClick,
   onLayersClick,
   onReportIncident,
+  onViewIncidents,
   className
 }: MobileFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const speedDialOptions = [
+    {
+      id: 'view-incidents',
+      icon: AlertCircle,
+      label: 'View Incidents',
+      onClick: onViewIncidents,
+      showInModes: ['plan', 'preview', 'navigate']
+    },
     {
       id: 'report',
       icon: AlertTriangle,
