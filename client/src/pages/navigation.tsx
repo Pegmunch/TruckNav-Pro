@@ -1119,7 +1119,7 @@ export default function NavigationPage() {
                       setCurrentRoute(null);
                       setMobileNavMode('plan');
                     }}
-                    onMenuClick={() => setSidebarState('open')}
+                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     className="absolute bottom-24 right-6 z-20 mobile-safe-bottom"
                   />
@@ -1239,11 +1239,8 @@ export default function NavigationPage() {
                   <MobileFAB
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
-                    onClearRoute={() => {
-                      setCurrentRoute(null);
-                      setMobileNavMode('plan');
-                    }}
-                    onMenuClick={() => setSidebarState('open')}
+                    onClearRoute={handleStopNavigation}
+                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
                     className="absolute bottom-6 right-6 z-[70] mobile-safe-bottom pointer-events-auto"

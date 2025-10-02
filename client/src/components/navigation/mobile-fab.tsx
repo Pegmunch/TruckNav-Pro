@@ -96,7 +96,6 @@ export function MobileFAB({
           return (
             <Button
               key={option.id}
-              variant="secondary"
               size="icon"
               onClick={() => {
                 option.onClick?.();
@@ -104,8 +103,9 @@ export function MobileFAB({
               }}
               className={cn(
                 'h-8 w-8',
-                'shadow-lg',
-                'bg-white hover:bg-white/90 text-gray-700'
+                'bg-white text-gray-800 hover:bg-white/90',
+                'border border-slate-200',
+                'shadow-xl'
               )}
               data-testid={`fab-option-${option.id}`}
             >
