@@ -987,6 +987,7 @@ export default function NavigationPage() {
                         currentRoute={null}
                         selectedProfile={selectedProfile || activeProfile}
                         showTraffic={showTrafficLayer}
+                        showIncidents={showIncidents}
                       />
                     ) : (
                       <InteractiveMap
@@ -994,8 +995,8 @@ export default function NavigationPage() {
                         selectedProfile={selectedProfile || activeProfile}
                         alternativeRoutes={[]}
                         previewRoute={null}
-                        showTrafficLayer={false}
-                        showIncidents={false}
+                        showTrafficLayer={showTrafficLayer}
+                        showIncidents={showIncidents}
                       />
                     )}
                   </MapShell>
@@ -1031,6 +1032,7 @@ export default function NavigationPage() {
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
+                      showIncidents={showIncidents}
                     />
                   ) : (
                     <InteractiveMap
@@ -1038,8 +1040,8 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       alternativeRoutes={alternatives}
                       previewRoute={previewRoute}
-                      showTrafficLayer={true}
-                      showIncidents={true}
+                      showTrafficLayer={showTrafficLayer}
+                      showIncidents={showIncidents}
                     />
                   )}
                 </MapShell>
@@ -1135,6 +1137,7 @@ export default function NavigationPage() {
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
+                      showIncidents={showIncidents}
                     />
                   ) : (
                     <InteractiveMap
@@ -1343,6 +1346,7 @@ export default function NavigationPage() {
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
+                      showIncidents={showIncidents}
                     />
                   ) : (
                     <EnhancedRealisticMap
@@ -1350,8 +1354,8 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       alternativeRoutes={alternatives}
                       previewRoute={previewRoute}
-                      showTrafficLayer={true}
-                      showIncidents={true}
+                      showTrafficLayer={showTrafficLayer}
+                      showIncidents={showIncidents}
                       isNavigating={isNavigating}
                       currentLocation={currentGPSLocation || undefined}
                       onLocationUpdate={setCurrentGPSLocation}

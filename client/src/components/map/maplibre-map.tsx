@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, memo, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, Crosshair, Layers, Box } from "lucide-react";
-import { type Route, type VehicleProfile } from "@shared/schema";
+import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
+import { getIncidentIcon } from "@shared/incident-icons";
 
 interface MapLibreMapProps {
   currentRoute: Route | null;
@@ -13,6 +15,7 @@ interface MapLibreMapProps {
   onMapClick?: (lat: number, lng: number) => void;
   className?: string;
   showTraffic?: boolean;
+  showIncidents?: boolean;
 }
 
 interface MapPreferences {
@@ -47,12 +50,27 @@ const saveMapPreferences = (prefs: MapPreferences): void => {
   }
 };
 
+// Format time ago helper
+const formatTimeAgo = (timestamp: string | Date): string => {
+  const now = new Date();
+  const reported = new Date(timestamp);
+  const diffMs = now.getTime() - reported.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  return reported.toLocaleDateString();
+};
+
 const MapLibreMap = memo(function MapLibreMap({
   currentRoute,
   selectedProfile,
   onMapClick,
   className,
-  showTraffic = false
+  showTraffic = false,
+  showIncidents = false
 }: MapLibreMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -64,6 +82,14 @@ const MapLibreMap = memo(function MapLibreMap({
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const preferencesRef = useRef(preferences);
   const currentZoomRef = useRef(currentZoom);
+  const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
+  
+  // Fetch traffic incidents with 2-minute refresh
+  const { data: incidents = [] } = useQuery<TrafficIncident[]>({
+    queryKey: ['/api/traffic-incidents'],
+    refetchInterval: 120000, // 2 minutes
+    enabled: showIncidents,
+  });
   
   // Keep refs in sync with state
   useEffect(() => {
@@ -573,6 +599,113 @@ const MapLibreMap = memo(function MapLibreMap({
       clearInterval(refreshInterval);
     };
   }, [isLoaded, showTraffic]);
+
+  // Render incident markers
+  useEffect(() => {
+    if (!map.current || !isLoaded || !showIncidents) {
+      // Clean up existing markers if incidents are disabled
+      incidentMarkersRef.current.forEach(marker => marker.remove());
+      incidentMarkersRef.current = [];
+      return;
+    }
+
+    const mapInstance = map.current;
+
+    // Clean up existing markers
+    incidentMarkersRef.current.forEach(marker => marker.remove());
+    incidentMarkersRef.current = [];
+
+    // Create markers for each incident
+    incidents.forEach((incident) => {
+      const iconConfig = getIncidentIcon(incident.type);
+      const size = incident.severity === 'high' ? 32 : incident.severity === 'medium' ? 28 : 24;
+
+      // Create HTML element for marker
+      const el = document.createElement('div');
+      el.className = 'incident-marker';
+      el.setAttribute('data-testid', `incident-marker-${incident.id}`);
+      el.style.cursor = 'pointer';
+      el.innerHTML = `
+        <div style="
+          width: ${size}px; 
+          height: ${size}px; 
+          background: ${iconConfig.bgColor}; 
+          border: 2px solid ${iconConfig.color};
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          font-size: ${size * 0.6}px;
+          position: relative;
+        ">
+          ${iconConfig.emoji}
+          ${incident.severity === 'high' ? '<div style="position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: #DC2626; border-radius: 50%;"></div>' : ''}
+        </div>
+      `;
+
+      // Create popup content
+      const severityBadgeColor = 
+        incident.severity === 'high' ? '#DC2626' : 
+        incident.severity === 'medium' ? '#F59E0B' : 
+        '#64748B';
+
+      const popupContent = `
+        <div style="padding: 8px; min-width: 200px;">
+          <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+            <span style="
+              background: ${severityBadgeColor}; 
+              color: white; 
+              padding: 2px 8px; 
+              border-radius: 4px; 
+              font-size: 11px;
+              font-weight: 600;
+            ">
+              ${(incident.severity || 'low').toUpperCase()}
+            </span>
+            <span style="
+              border: 1px solid #E5E7EB; 
+              padding: 2px 8px; 
+              border-radius: 4px; 
+              font-size: 11px;
+              color: #6B7280;
+            ">
+              ${iconConfig.label}
+            </span>
+          </div>
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">
+            ${incident.title || iconConfig.label}
+          </div>
+          ${incident.description ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">${incident.description}</div>` : ''}
+          ${incident.roadName ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">📍 ${incident.roadName}</div>` : ''}
+          <div style="font-size: 11px; color: #9CA3AF; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
+            Reported ${formatTimeAgo(incident.reportedAt || new Date())}
+          </div>
+        </div>
+      `;
+
+      // Create popup
+      const popup = new maplibregl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false
+      }).setHTML(popupContent);
+
+      // Create and add marker
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([incident.coordinates.lng, incident.coordinates.lat])
+        .setPopup(popup)
+        .addTo(mapInstance);
+
+      incidentMarkersRef.current.push(marker);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      incidentMarkersRef.current.forEach(marker => marker.remove());
+      incidentMarkersRef.current = [];
+    };
+  }, [incidents, isLoaded, showIncidents]);
 
   const handleZoomIn = () => {
     if (map.current) {

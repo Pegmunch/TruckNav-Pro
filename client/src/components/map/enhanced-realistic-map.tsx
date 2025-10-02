@@ -27,6 +27,7 @@ import {
 import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
+import { getIncidentIcon } from "@shared/incident-icons";
 
 interface EnhancedRealisticMapProps {
   currentRoute: Route | null;
@@ -64,6 +65,20 @@ const mapProviders = {
     attribution: '© OpenStreetMap contributors © CARTO',
     maxZoom: 19
   }
+};
+
+// Format time ago helper
+const formatTimeAgo = (timestamp: string | Date): string => {
+  const now = new Date();
+  const reported = new Date(timestamp);
+  const diffMs = now.getTime() - reported.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  return reported.toLocaleDateString();
 };
 
 // Custom truck icon for current position
@@ -189,10 +204,10 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
-  // Fetch traffic incidents with real-time updates
+  // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({
     queryKey: ['/api/traffic-incidents'],
-    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+    refetchInterval: 120000, // Refresh every 2 minutes
     enabled: showIncidents, // Only fetch when incidents should be shown
   });
 
@@ -488,46 +503,56 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         )}
 
         {/* Traffic Incidents */}
-        {showIncidents && incidents.map((incident) => (
-          <Marker
-            key={incident.id}
-            position={[incident.coordinates.lat, incident.coordinates.lng]}
-            icon={createIncidentIcon(incident)}
-          >
-            <Popup maxWidth={300}>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge 
-                    variant={incident.severity === 'high' ? 'destructive' : incident.severity === 'medium' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {incident.severity?.toUpperCase() || 'LOW'} SEVERITY
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {incident.type.replace('_', ' ').toUpperCase()}
-                  </Badge>
-                </div>
-                
-                <div className="font-semibold text-sm">{incident.title}</div>
-                
-                {incident.description && (
-                  <div className="text-xs text-gray-600">{incident.description}</div>
-                )}
-                
-                {incident.estimatedClearTime && (
-                  <div className="text-xs text-blue-600">
-                    Estimated clearance: {new Date(incident.estimatedClearTime).toLocaleString()}
+        {showIncidents && incidents.map((incident) => {
+          const iconConfig = getIncidentIcon(incident.type);
+          return (
+            <Marker
+              key={incident.id}
+              position={[incident.coordinates.lat, incident.coordinates.lng]}
+              icon={createIncidentIcon(incident)}
+              data-testid={`incident-marker-${incident.id}`}
+            >
+              <Popup maxWidth={300}>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge 
+                      variant={incident.severity === 'high' ? 'destructive' : incident.severity === 'medium' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {(incident.severity || 'low').toUpperCase()}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {iconConfig.label}
+                    </Badge>
                   </div>
-                )}
-                
-                <div className="text-xs text-gray-500 border-t pt-1">
-                  Reported: {new Date().toLocaleTimeString()}
-                  <span className="ml-2 text-green-600">✓ Verified</span>
+                  
+                  <div className="font-semibold text-sm">{incident.title || iconConfig.label}</div>
+                  
+                  {incident.description && (
+                    <div className="text-xs text-gray-600">{incident.description}</div>
+                  )}
+                  
+                  {incident.roadName && (
+                    <div className="text-xs text-gray-600">
+                      <MapPin className="inline-block w-3 h-3 mr-1" />
+                      {incident.roadName}
+                    </div>
+                  )}
+                  
+                  {incident.estimatedClearTime && (
+                    <div className="text-xs text-blue-600">
+                      Estimated clearance: {new Date(incident.estimatedClearTime).toLocaleString()}
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500 border-t pt-1">
+                    Reported {formatTimeAgo(incident.reportedAt || new Date())}
+                  </div>
                 </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
 
         {/* Enhanced Route Display */}
         {currentRoute?.routePath && currentRoute.routePath.length > 0 && (
