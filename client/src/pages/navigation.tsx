@@ -1214,7 +1214,7 @@ export default function NavigationPage() {
                   )}
 
                   {/* Map Control Buttons - Right side vertical stack */}
-                  <div className="absolute bottom-12 right-4 z-[70] flex flex-col gap-2 pointer-events-auto">
+                  <div className="absolute bottom-12 right-4 z-[80] flex flex-col gap-2 pointer-events-auto">
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.zoomIn()}
