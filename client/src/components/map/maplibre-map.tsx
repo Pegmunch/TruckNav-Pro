@@ -144,7 +144,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     const handleControls = () => {
       if (!map.current) return;
       
-      if (hideControls) {
+      if (hideControls || hideCompass) {
         if (navigationControlRef.current) {
           map.current.removeControl(navigationControlRef.current);
           navigationControlRef.current = null;
@@ -158,12 +158,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           });
           map.current.addControl(navigationControlRef.current, 'top-right');
           
-          // Reposition the navigation control container to avoid overlay with trip strip
+          // Reposition the navigation control container above compass button
           setTimeout(() => {
             const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
             if (navControl) {
-              (navControl as HTMLElement).style.top = '320px';
-              (navControl as HTMLElement).style.right = '12px';
+              (navControl as HTMLElement).style.top = 'auto';
+              (navControl as HTMLElement).style.bottom = '320px';
+              (navControl as HTMLElement).style.right = '16px';
             }
           }, 100);
         }
@@ -181,7 +182,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         map.current.off('load', handleControls);
       }
     };
-  }, [hideControls, isLoaded]);
+  }, [hideControls, hideCompass, isLoaded]);
 
   const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number) => {
     if (!mapInstance.isStyleLoaded()) return;
@@ -306,7 +307,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         maxTileCacheSize: 500
       });
 
-      if (!hideControls) {
+      if (!hideControls && !hideCompass) {
         navigationControlRef.current = new maplibregl.NavigationControl({
           visualizePitch: true,
           showCompass: true,
@@ -314,12 +315,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         });
         map.current.addControl(navigationControlRef.current, 'top-right');
         
-        // Reposition the navigation control container to avoid overlay with trip strip
+        // Reposition the navigation control container above compass button
         setTimeout(() => {
           const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
           if (navControl) {
-            (navControl as HTMLElement).style.top = '320px';
-            (navControl as HTMLElement).style.right = '12px';
+            (navControl as HTMLElement).style.top = 'auto';
+            (navControl as HTMLElement).style.bottom = '320px';
+            (navControl as HTMLElement).style.right = '16px';
           }
         }, 100);
       }
@@ -397,8 +399,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom]);
 
   useEffect(() => {
-    if (!map.current || !isLoaded || !currentRoute?.routePath) return;
+    if (!map.current || !isLoaded) return;
     if (!map.current.isStyleLoaded()) return;
+
+    // Remove route visualization if currentRoute is null
+    if (!currentRoute?.routePath) {
+      try {
+        if (map.current.getLayer('route-line')) {
+          map.current.removeLayer('route-line');
+        }
+        if (map.current.getSource('route')) {
+          map.current.removeSource('route');
+        }
+      } catch (error) {
+        console.warn('Failed to remove route layers:', error);
+      }
+      return;
+    }
 
     const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
@@ -893,7 +910,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       {!hideControls && !hideCompass && (
         <>
-          <div className="absolute top-[320px] right-3 z-[70]">
+          <div className="absolute bottom-72 right-4 z-[70]">
             <Button
               size="icon"
               variant="secondary"

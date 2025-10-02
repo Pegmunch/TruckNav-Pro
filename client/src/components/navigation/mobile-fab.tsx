@@ -103,14 +103,13 @@ export function MobileFAB({
                 setIsExpanded(false);
               }}
               className={cn(
-                'h-14 w-14',
-                'shadow-xl',
-                'bg-background border-2 border-primary/20',
-                'hover:bg-primary hover:text-primary-foreground'
+                'h-8 w-8',
+                'shadow-lg',
+                'bg-white hover:bg-white/90 text-gray-700'
               )}
               data-testid={`fab-option-${option.id}`}
             >
-              <Icon className="w-6 h-6" />
+              <Icon className="w-3.5 h-3.5" />
               <span className="sr-only">{option.label}</span>
             </Button>
           );
@@ -125,7 +124,8 @@ export function MobileFAB({
         className={cn(
           'h-16 w-16',
           'shadow-2xl',
-          'bg-primary hover:bg-primary/90',
+          'bg-blue-600 hover:bg-blue-700',
+          'backdrop-blur-sm',
           'transition-transform duration-200',
           isExpanded && 'rotate-45'
         )}

@@ -894,10 +894,29 @@ export default function NavigationPage() {
       completeJourneyMutation.mutate(activeJourney.id);
     }
     
-    // Immediately clear UI state
+    // Comprehensive state reset - completely cancel navigation
     setCurrentRoute(null);
-    setMobileNavMode('plan');
+    setPreviewRoute(null);
+    setActiveJourney(null);
     setIsNavigating(false);
+    setMobileNavMode('plan');
+    
+    // Clear alternative routes state
+    setIsAlternativeRoutesOpen(false);
+    setSelectedAlternativeRouteId(null);
+    setIsApplyingRoute(false);
+    
+    // Reset map and UI states
+    setIsMapExpanded(false);
+    setShowLaneGuidance(false);
+    setIsARMode(false);
+    setIsFullscreenNav(false);
+    
+    // Dispatch navigation stopped event for notification system
+    const navigationStoppedEvent = new CustomEvent('navigation:stopped', {
+      detail: { timestamp: Date.now() }
+    });
+    window.dispatchEvent(navigationStoppedEvent);
     
     toast({
       title: "Navigation stopped",
@@ -1074,7 +1093,7 @@ export default function NavigationPage() {
                     <Button
                       onClick={() => setSidebarState('open')}
                       size="lg"
-                      className="h-14 w-14 rounded-full shadow-2xl"
+                      className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
                       data-testid="button-plan-route-fab"
                       aria-label="Open route planner"
                     >
@@ -1159,8 +1178,8 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Compass, Traffic & Incidents Toggle Buttons - Properly spaced below trip strip */}
-                  <div className="absolute top-[320px] right-3 z-[70] flex flex-col gap-2 pointer-events-auto">
+                  {/* Compass, Traffic & Incidents Toggle Buttons - Positioned above zoom buttons */}
+                  <div className="absolute bottom-72 right-4 z-[70] flex flex-col gap-2 pointer-events-auto">
                     <Button
                       variant="secondary"
                       size="icon"
