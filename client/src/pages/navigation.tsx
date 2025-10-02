@@ -1138,7 +1138,7 @@ export default function NavigationPage() {
                   )}
 
                   {/* Traffic & Incidents Toggle Buttons */}
-                  <div className="absolute top-16 right-4 z-[60] flex gap-2 mobile-safe-top">
+                  <div className="absolute top-20 right-4 z-[60] flex gap-2 mobile-safe-top">
                     <Button
                       variant={showTrafficLayer ? "default" : "outline"}
                       size="sm"
