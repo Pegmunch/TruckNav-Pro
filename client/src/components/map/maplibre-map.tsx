@@ -1196,21 +1196,21 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       {!hideControls && (
         <>
-          {/* Map Controls - Always Visible on Right Side */}
+          {/* Map Controls - Right Side Stack for Mobile */}
           <div className={cn(
-            "absolute right-4 flex flex-col gap-2.5 z-[80]",
-            isNavigating ? "top-20" : "bottom-24"
+            "absolute right-3 flex flex-col gap-2 z-[80] mobile-safe-top",
+            isNavigating ? "top-14" : "bottom-20"
           )}>
             {!hideCompass && (
               <Button
                 size="icon"
                 onClick={handleCompassClick}
-                className="h-10 w-10 shadow-2xl bg-white hover:bg-white/90 text-gray-700 border-2 border-slate-200 transition-all duration-300 backdrop-blur-md"
+                className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
                 data-testid="button-compass-reset"
                 aria-label="Reset bearing to North"
               >
                 <Compass 
-                  className="h-4.5 w-4.5 transition-transform duration-300" 
+                  className="h-5 w-5 transition-transform duration-300" 
                   style={{ transform: `rotate(${bearing}deg)` }}
                 />
               </Button>
@@ -1218,52 +1218,52 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={handleZoomIn}
-              className="h-10 w-10 shadow-2xl bg-white hover:bg-white/90 text-gray-700 border-2 border-slate-200 backdrop-blur-md"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-in"
               aria-label="Zoom in"
             >
-              <Plus className="h-4.5 w-4.5" />
+              <Plus className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={handleZoomOut}
-              className="h-10 w-10 shadow-2xl bg-white hover:bg-white/90 text-gray-700 border-2 border-slate-200 backdrop-blur-md"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-out"
               aria-label="Zoom out"
             >
-              <Minus className="h-4.5 w-4.5" />
+              <Minus className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={handleRecenter}
-              className="h-10 w-10 shadow-2xl bg-white hover:bg-white/90 text-gray-700 border-2 border-slate-200 backdrop-blur-md"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-recenter"
               aria-label="Recenter map"
             >
-              <Crosshair className="h-4.5 w-4.5" />
+              <Crosshair className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={toggle3DMode}
               className={cn(
-                "h-10 w-10 shadow-2xl transition-colors border-2 backdrop-blur-md",
+                "h-11 w-11 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
                 is3DMode 
                   ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-600" 
-                  : "bg-white hover:bg-white/90 text-gray-700 border-slate-200"
+                  : "bg-white/95 hover:bg-white text-gray-800 border-slate-300"
               )}
               data-testid="button-toggle-3d"
               aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
             >
-              <Box className="h-4.5 w-4.5" />
+              <Box className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={toggleMapView}
-              className="h-10 w-10 shadow-2xl bg-white hover:bg-white/90 text-gray-700 border-2 border-slate-200 backdrop-blur-md"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-toggle-view"
               aria-label="Toggle map view"
             >
-              <Layers className="h-4.5 w-4.5" />
+              <Layers className="h-5 w-5" />
             </Button>
           </div>
 
