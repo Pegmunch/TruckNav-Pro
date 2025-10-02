@@ -1090,38 +1090,18 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Start Navigation Button - Shows when route exists */}
-                  {currentRoute && (
-                    <div className="absolute bottom-6 left-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
-                      <Button
-                        onClick={handleStartNavigation}
-                        disabled={startJourneyMutation.isPending}
-                        className={cn(
-                          "w-full h-14 text-lg font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg",
-                          currentRoute && selectedProfile && "ring-4 ring-blue-400/50 shadow-xl shadow-blue-500/50 animate-pulse"
-                        )}
-                        data-testid="button-start-navigation-plan"
-                      >
-                        <Navigation className="w-6 h-6 mr-3" />
-                        Start Navigation
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Plan Route FAB - Only shows when no route */}
-                  {!currentRoute && (
-                    <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
-                      <Button
-                        onClick={() => setSidebarState('open')}
-                        size="lg"
-                        className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
-                        data-testid="button-plan-route-fab"
-                        aria-label="Open route planner"
-                      >
-                        <Menu className="w-6 h-6" />
-                      </Button>
-                    </div>
-                  )}
+                  {/* Plan Route FAB */}
+                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
+                    <Button
+                      onClick={() => setSidebarState('open')}
+                      size="lg"
+                      className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
+                      data-testid="button-plan-route-fab"
+                      aria-label="Open route planner"
+                    >
+                      <Menu className="w-6 h-6" />
+                    </Button>
+                  </div>
 
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
@@ -1214,7 +1194,7 @@ export default function NavigationPage() {
                   )}
 
                   {/* Map Control Buttons - Right side vertical stack */}
-                  <div className="absolute bottom-12 right-4 z-[80] flex flex-col gap-2 pointer-events-auto">
+                  <div className="absolute bottom-32 right-4 z-[80] flex flex-col gap-2 pointer-events-auto">
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.zoomIn()}
