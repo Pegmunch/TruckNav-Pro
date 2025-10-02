@@ -1260,7 +1260,7 @@ export default function NavigationPage() {
                 <>
                   {/* Trip Info Header */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 py-2 mobile-safe-top shadow-lg">
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 py-2 shadow-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
