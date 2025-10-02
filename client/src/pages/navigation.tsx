@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -1159,15 +1159,29 @@ export default function NavigationPage() {
                     </div>
                     <Button
                       onClick={handleStartNavigation}
-                      disabled={startJourneyMutation.isPending}
+                      disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+                      aria-label="Start turn-by-turn navigation with selected route"
+                      aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "h-16 text-lg font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg mr-20",
-                        currentRoute && selectedProfile && "ring-4 ring-blue-400/50 shadow-xl shadow-blue-500/50 animate-pulse"
+                        "w-full h-16 text-lg font-bold rounded-xl shadow-2xl transition-all duration-200",
+                        "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
+                        "border-2 border-blue-400/50 hover:scale-[1.02] active:scale-[0.98]",
+                        "focus-visible:ring-4 focus-visible:ring-blue-500",
+                        currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-xl shadow-blue-500/50 animate-pulse"
                       )}
                       data-testid="button-start-navigation-preview"
                     >
-                      <Navigation className="w-6 h-6 mr-3" />
-                      Start Navigation
+                      {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
+                        <>
+                          <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                          Starting Navigation...
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="w-6 h-6 mr-3" />
+                          Start Navigation
+                        </>
+                      )}
                     </Button>
                   </div>
 

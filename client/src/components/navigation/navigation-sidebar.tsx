@@ -556,10 +556,15 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   }
                 }}
                 disabled={!currentRoute || !selectedProfile || isStartingJourney}
+                aria-label="Start turn-by-turn navigation with selected route"
+                aria-busy={isStartingJourney}
                 size="lg"
                 className={cn(
-                  "bg-green-600 hover:bg-green-700 text-white w-full font-semibold h-12 transition-all",
-                  currentRoute && selectedProfile && "ring-4 ring-green-400/50 shadow-lg shadow-green-500/50 animate-pulse"
+                  "w-full h-12 font-bold rounded-xl shadow-2xl transition-all duration-200",
+                  "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
+                  "border-2 border-blue-400/50 hover:scale-[1.02] active:scale-[0.98]",
+                  "focus-visible:ring-4 focus-visible:ring-blue-500",
+                  currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-xl shadow-blue-500/50 animate-pulse"
                 )}
                 data-testid="button-start-navigation-top"
               >
