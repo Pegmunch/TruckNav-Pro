@@ -1073,35 +1073,55 @@ export default function NavigationPage() {
               {/* PLAN MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'plan' && (
                 <>
-                  {/* Header - Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 border-b bg-background mobile-safe-top">
-                    <div className="flex items-center gap-3">
-                      <Truck className="w-7 h-7 text-primary" />
-                      <span className="text-xl font-semibold">TruckNav Pro</span>
+                  {/* Header - Thinner Overlay on top */}
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-2 px-4 border-b bg-background mobile-safe-top">
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-primary" />
+                      <span className="text-base font-semibold">TruckNav Pro</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-12 w-12"
+                      className="h-9 w-9"
                       data-testid="button-settings"
                     >
-                      <Settings className="w-6 h-6" />
+                      <Settings className="w-5 h-5" />
                     </Button>
                   </div>
 
-                  {/* Plan Route FAB */}
-                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
-                    <Button
-                      onClick={() => setSidebarState('open')}
-                      size="lg"
-                      className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
-                      data-testid="button-plan-route-fab"
-                      aria-label="Open route planner"
-                    >
-                      <Menu className="w-6 h-6" />
-                    </Button>
-                  </div>
+                  {/* Start Navigation Button - Shows when route exists */}
+                  {currentRoute && (
+                    <div className="absolute bottom-6 left-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
+                      <Button
+                        onClick={handleStartNavigation}
+                        disabled={startJourneyMutation.isPending}
+                        className={cn(
+                          "w-full h-14 text-lg font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg",
+                          currentRoute && selectedProfile && "ring-4 ring-blue-400/50 shadow-xl shadow-blue-500/50 animate-pulse"
+                        )}
+                        data-testid="button-start-navigation-plan"
+                      >
+                        <Navigation className="w-6 h-6 mr-3" />
+                        Start Navigation
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Plan Route FAB - Only shows when no route */}
+                  {!currentRoute && (
+                    <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
+                      <Button
+                        onClick={() => setSidebarState('open')}
+                        size="lg"
+                        className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
+                        data-testid="button-plan-route-fab"
+                        aria-label="Open route planner"
+                      >
+                        <Menu className="w-6 h-6" />
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
