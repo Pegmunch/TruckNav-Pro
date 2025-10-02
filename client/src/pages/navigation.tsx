@@ -1053,7 +1053,7 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideCompass={isMobile && mobileNavMode === 'navigate'}
+                      hideCompass={mobileNavMode === 'navigate'}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
@@ -1469,7 +1469,7 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideCompass={isMobile && mobileNavMode === 'navigate'}
+                      hideCompass={mobileNavMode === 'navigate'}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
