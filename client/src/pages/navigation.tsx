@@ -476,9 +476,6 @@ export default function NavigationPage() {
       }
       
       setCurrentRoute(route);
-      // Reset route preview state for new route
-      setShowRoutePreview(true);
-      setHasInteractedWithPreview(false);
       // Update window sync with new route
       windowSync.updateRoute(route);
       
@@ -840,9 +837,6 @@ export default function NavigationPage() {
       // Update navigation state after successful activation
       setIsNavigating(true);
       
-      // Reset route preview state when navigation starts
-      setShowRoutePreview(true);
-      setHasInteractedWithPreview(false);
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
       }
