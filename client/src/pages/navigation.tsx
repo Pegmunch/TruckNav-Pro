@@ -1420,17 +1420,17 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Stop Button - Bottom Left Corner */}
-                  <div className="absolute bottom-4 left-4 z-[100] mobile-safe-bottom pointer-events-auto">
+                  {/* Stop Button - Above Speedometer (centered) */}
+                  <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[100] mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
                       variant="destructive"
-                      className="h-11 px-6 rounded-xl shadow-2xl text-sm font-bold pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                      className="h-6 px-2 text-[10px] font-medium rounded-md shadow-md pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
                       data-testid="button-stop-navigation"
                     >
-                      <X className="w-4 h-4 mr-2" />
-                      Stop
+                      <X className="w-2.5 h-2.5 mr-1" />
+                      <span className="text-[10px]">Stop Navigation</span>
                     </Button>
                   </div>
 
