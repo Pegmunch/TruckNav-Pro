@@ -875,7 +875,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       {!hideControls && !hideCompass && (
         <>
-          <div className="absolute top-[72px] right-3 z-[70]">
+          <div className="absolute top-[216px] right-3 z-[70]">
             <Button
               size="icon"
               variant="secondary"
