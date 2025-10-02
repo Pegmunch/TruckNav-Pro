@@ -996,78 +996,21 @@ export default function NavigationPage() {
       )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
-        <div className="mobile-layout h-[100svh] flex flex-col">
+        <div className="mobile-layout h-[100svh] flex flex-col relative">
           
-          {/* PLAN MODE: Route Planning Focus */}
-          {mobileNavMode === 'plan' && !isARMode && (
+          {/* AR Mode (Full Replacement) */}
+          {isARMode ? (
+            <ARNavigation
+              isActive={isARMode}
+              onToggleAR={handleToggleAR}
+              currentDirection={getARDirectionData()}
+              route={getARRouteData()}
+            />
+          ) : (
             <>
-              {/* Simple Header */}
-              <div className="flex items-center justify-between p-4 border-b mobile-safe-top">
-                <div className="flex items-center gap-3">
-                  <Truck className="w-7 h-7 text-primary" />
-                  <span className="text-xl font-semibold">TruckNav Pro</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowVehicleSettings(true)}
-                  className="h-12 w-12"
-                  data-testid="button-settings"
-                >
-                  <Settings className="w-6 h-6" />
-                </Button>
-              </div>
-
-              {/* Background Map */}
-              <div className="relative flex-1">
-                <div className="absolute inset-0">
-                  <MapShell key="plan-mode-map" className="h-full">
-                    {isMapLibre ? (
-                      <MapLibreMap
-                        currentRoute={null}
-                        selectedProfile={selectedProfile || activeProfile}
-                        showTraffic={showTrafficLayer}
-                        showIncidents={showIncidents}
-                        onMapClick={handleMapClick}
-                      />
-                    ) : (
-                      <InteractiveMap
-                        currentRoute={null}
-                        selectedProfile={selectedProfile || activeProfile}
-                        alternativeRoutes={[]}
-                        previewRoute={null}
-                        showTrafficLayer={showTrafficLayer}
-                        showIncidents={showIncidents}
-                      />
-                    )}
-                  </MapShell>
-                </div>
-
-                {/* Plan Route FAB - Hamburger button to open panel */}
-                <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
-                  <Button
-                    onClick={() => setSidebarState('open')}
-                    size="lg"
-                    className="h-14 w-14 rounded-full shadow-2xl"
-                    data-testid="button-plan-route-fab"
-                    aria-label="Open route planner"
-                  >
-                    <Menu className="w-6 h-6" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Legal Ownership */}
-              <MapLegalOwnership compact={true} className="sm:hidden" />
-            </>
-          )}
-
-          {/* PREVIEW MODE: Route Overview */}
-          {mobileNavMode === 'preview' && !isARMode && currentRoute && (
-            <>
-              {/* Map with Route - Full Height */}
-              <div className="relative flex-1">
-                <MapShell key="preview-mode-map" className="h-full">
+              {/* MAP - ALWAYS RENDERED - Base Layer (z-0) */}
+              <div className="absolute inset-0 z-0">
+                <MapShell className="h-full w-full">
                   {isMapLibre ? (
                     <MapLibreMap
                       currentRoute={currentRoute}
@@ -1087,155 +1030,170 @@ export default function NavigationPage() {
                     />
                   )}
                 </MapShell>
-
-                {/* FAB for secondary controls - Positioned above route summary */}
-                <MobileFAB
-                  mode="preview"
-                  onSettingsClick={() => setShowVehicleSettings(true)}
-                  onClearRoute={() => {
-                    setCurrentRoute(null);
-                    setMobileNavMode('plan');
-                  }}
-                  onMenuClick={() => setSidebarState('open')}
-                  onReportIncident={() => setShowIncidentReportDialog(true)}
-                  className="bottom-24 right-6 mobile-safe-bottom"
-                />
               </div>
 
-              {/* Route Summary Card + Start CTA */}
-              <div className="p-4 border-t bg-background mobile-safe-bottom">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-primary">
-                      {(currentRoute.distance || 0).toFixed(1)} mi
+              {/* PLAN MODE OVERLAYS (z-10+) */}
+              {mobileNavMode === 'plan' && (
+                <>
+                  {/* Header - Overlay on top */}
+                  <div className="relative z-10 flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm mobile-safe-top">
+                    <div className="flex items-center gap-3">
+                      <Truck className="w-7 h-7 text-primary" />
+                      <span className="text-xl font-semibold">TruckNav Pro</span>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {Math.round(currentRoute.duration || 0)} minutes
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowVehicleSettings(true)}
+                      className="h-12 w-12"
+                      data-testid="button-settings"
+                    >
+                      <Settings className="w-6 h-6" />
+                    </Button>
                   </div>
-                  {selectedProfile && (
-                    <div className="text-right text-sm text-muted-foreground">
-                      <div>{selectedProfile.name}</div>
-                      <div>{selectedProfile.height}ft H × {selectedProfile.width}ft W</div>
-                    </div>
-                  )}
-                </div>
-                <Button
-                  onClick={handleStartNavigation}
-                  disabled={startJourneyMutation.isPending}
-                  className={cn(
-                    "w-full h-16 text-lg font-semibold transition-all",
-                    currentRoute && selectedProfile && "ring-4 ring-primary/50 shadow-lg shadow-primary/50 animate-pulse"
-                  )}
-                  data-testid="button-start-navigation-preview"
-                >
-                  <Navigation className="w-6 h-6 mr-3" />
-                  NAV
-                </Button>
-              </div>
-            </>
-          )}
 
-          {/* NAVIGATE MODE: Full-Screen Navigation */}
-          {mobileNavMode === 'navigate' && !isARMode && (
-            <>
-              {/* Compact Trip Strip */}
-              {currentRoute && (
-                <CompactTripStrip
-                  eta={Math.round(currentRoute.duration || 0)}
-                  distanceRemaining={currentRoute.distance || 0}
-                  nextManeuver="Turn Right"
-                  nextDistance={0.8}
-                />
+                  {/* Plan Route FAB */}
+                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
+                    <Button
+                      onClick={() => setSidebarState('open')}
+                      size="lg"
+                      className="h-14 w-14 rounded-full shadow-2xl"
+                      data-testid="button-plan-route-fab"
+                      aria-label="Open route planner"
+                    >
+                      <Menu className="w-6 h-6" />
+                    </Button>
+                  </div>
+
+                  {/* Legal Ownership */}
+                  <div className="absolute bottom-0 left-0 right-0 z-10">
+                    <MapLegalOwnership compact={true} className="sm:hidden" />
+                  </div>
+                </>
               )}
 
-              {/* Traffic & Incidents Toggle Buttons */}
-              <div className="absolute top-16 right-4 z-[60] flex gap-2 mobile-safe-top">
-                <Button
-                  variant={showTrafficLayer ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                  className="h-8 px-3 text-xs shadow-lg"
-                  data-testid="button-toggle-traffic-mobile"
-                >
-                  Traffic
-                </Button>
-                <Button
-                  variant={showIncidents ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowIncidents(!showIncidents)}
-                  className="h-8 px-3 text-xs shadow-lg"
-                  data-testid="button-toggle-incidents-mobile"
-                >
-                  Incidents
-                </Button>
-              </div>
+              {/* PREVIEW MODE OVERLAYS (z-10+) */}
+              {mobileNavMode === 'preview' && currentRoute && (
+                <>
+                  {/* FAB for secondary controls */}
+                  <MobileFAB
+                    mode="preview"
+                    onSettingsClick={() => setShowVehicleSettings(true)}
+                    onClearRoute={() => {
+                      setCurrentRoute(null);
+                      setMobileNavMode('plan');
+                    }}
+                    onMenuClick={() => setSidebarState('open')}
+                    onReportIncident={() => setShowIncidentReportDialog(true)}
+                    className="absolute bottom-24 right-6 z-20 mobile-safe-bottom"
+                  />
 
-              {/* Full-Screen Map */}
-              <div className="relative flex-1">
-                <MapShell key="navigate-mode-map" className="h-full">
-                  {isMapLibre ? (
-                    <MapLibreMap
-                      currentRoute={currentRoute}
-                      selectedProfile={selectedProfile || activeProfile}
-                      showTraffic={showTrafficLayer}
-                      showIncidents={showIncidents}
-                      onMapClick={handleMapClick}
-                    />
-                  ) : (
-                    <InteractiveMap
-                      currentRoute={currentRoute}
-                      selectedProfile={selectedProfile || activeProfile}
-                      alternativeRoutes={[]}
-                      previewRoute={null}
-                      showTrafficLayer={showTrafficLayer}
-                      showIncidents={showIncidents}
-                    />
+                  {/* Route Summary Card + Start CTA - Bottom Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 z-10 p-4 border-t bg-background/95 backdrop-blur-sm mobile-safe-bottom">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="text-2xl font-bold text-primary">
+                          {(currentRoute.distance || 0).toFixed(1)} mi
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {Math.round(currentRoute.duration || 0)} minutes
+                        </div>
+                      </div>
+                      {selectedProfile && (
+                        <div className="text-right text-sm text-muted-foreground">
+                          <div>{selectedProfile.name}</div>
+                          <div>{selectedProfile.height}ft H × {selectedProfile.width}ft W</div>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleStartNavigation}
+                      disabled={startJourneyMutation.isPending}
+                      className={cn(
+                        "w-full h-16 text-lg font-semibold transition-all",
+                        currentRoute && selectedProfile && "ring-4 ring-primary/50 shadow-lg shadow-primary/50 animate-pulse"
+                      )}
+                      data-testid="button-start-navigation-preview"
+                    >
+                      <Navigation className="w-6 h-6 mr-3" />
+                      NAV
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* NAVIGATE MODE OVERLAYS (z-10+) */}
+              {mobileNavMode === 'navigate' && (
+                <>
+                  {/* Compact Trip Strip - Top Overlay */}
+                  {currentRoute && (
+                    <div className="relative z-10">
+                      <CompactTripStrip
+                        eta={Math.round(currentRoute.duration || 0)}
+                        distanceRemaining={currentRoute.distance || 0}
+                        nextManeuver="Turn Right"
+                        nextDistance={0.8}
+                      />
+                    </div>
                   )}
-                </MapShell>
 
-                {/* Stop Button - Bottom Left Corner */}
-                <div className="absolute bottom-4 left-4 z-20 mobile-safe-bottom">
-                  <Button
-                    onClick={handleStopNavigation}
-                    disabled={completeJourneyMutation.isPending}
-                    variant="destructive"
-                    className="h-9 px-4 shadow-lg text-sm font-semibold"
-                    data-testid="button-stop-navigation"
-                  >
-                    <X className="w-4 h-4 mr-1" />
-                    Stop
-                  </Button>
-                </div>
+                  {/* Traffic & Incidents Toggle Buttons */}
+                  <div className="absolute top-16 right-4 z-[60] flex gap-2 mobile-safe-top">
+                    <Button
+                      variant={showTrafficLayer ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowTrafficLayer(!showTrafficLayer)}
+                      className="h-8 px-3 text-xs shadow-lg"
+                      data-testid="button-toggle-traffic-mobile"
+                    >
+                      Traffic
+                    </Button>
+                    <Button
+                      variant={showIncidents ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowIncidents(!showIncidents)}
+                      className="h-8 px-3 text-xs shadow-lg"
+                      data-testid="button-toggle-incidents-mobile"
+                    >
+                      Incidents
+                    </Button>
+                  </div>
 
-                {/* FAB for secondary controls - Bottom Right for thumb access */}
-                <MobileFAB
-                  mode="navigate"
-                  onSettingsClick={() => setShowVehicleSettings(true)}
-                  onClearRoute={() => {
-                    setCurrentRoute(null);
-                    setMobileNavMode('plan');
-                  }}
-                  onMenuClick={() => setSidebarState('open')}
-                  onReportIncident={() => setShowIncidentReportDialog(true)}
-                  onViewIncidents={() => setShowIncidentFeed(true)}
-                  className="bottom-6 right-6 mobile-safe-bottom"
-                />
+                  {/* Stop Button - Bottom Left Corner */}
+                  <div className="absolute bottom-4 left-4 z-20 mobile-safe-bottom">
+                    <Button
+                      onClick={handleStopNavigation}
+                      disabled={completeJourneyMutation.isPending}
+                      variant="destructive"
+                      className="h-9 px-4 shadow-lg text-sm font-semibold"
+                      data-testid="button-stop-navigation"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Stop
+                    </Button>
+                  </div>
 
-                {/* Legal Ownership */}
-                <MapLegalOwnership compact={true} className="sm:hidden" />
-              </div>
+                  {/* FAB for secondary controls - Bottom Right */}
+                  <MobileFAB
+                    mode="navigate"
+                    onSettingsClick={() => setShowVehicleSettings(true)}
+                    onClearRoute={() => {
+                      setCurrentRoute(null);
+                      setMobileNavMode('plan');
+                    }}
+                    onMenuClick={() => setSidebarState('open')}
+                    onReportIncident={() => setShowIncidentReportDialog(true)}
+                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    className="absolute bottom-6 right-6 z-20 mobile-safe-bottom"
+                  />
+
+                  {/* Legal Ownership */}
+                  <div className="absolute bottom-0 left-0 right-0 z-10">
+                    <MapLegalOwnership compact={true} className="sm:hidden" />
+                  </div>
+                </>
+              )}
             </>
-          )}
-
-          {/* AR Mode (unchanged) */}
-          {isARMode && (
-            <ARNavigation
-              isActive={isARMode}
-              onToggleAR={handleToggleAR}
-              currentDirection={getARDirectionData()}
-              route={getARRouteData()}
-            />
           )}
 
           {/* Full-Screen Route Planning Panel - Mobile Only */}

@@ -82,7 +82,7 @@ export function MobileFAB({
 
   return (
     <div className={cn(
-      'absolute z-30',
+      'absolute z-30 pointer-events-auto',
       className
     )}>
       {/* Speed Dial Options */}
