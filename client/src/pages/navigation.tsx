@@ -1156,12 +1156,12 @@ export default function NavigationPage() {
                   )}
 
                   {/* Traffic & Incidents Toggle Buttons */}
-                  <div className="absolute top-20 right-4 z-[60] flex gap-2 mobile-safe-top">
+                  <div className="absolute top-20 right-4 z-[60] flex gap-2 mobile-safe-top pointer-events-auto">
                     <Button
                       variant={showTrafficLayer ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                      className="h-8 px-3 text-xs shadow-lg"
+                      className="h-8 px-3 text-xs shadow-lg pointer-events-auto"
                       data-testid="button-toggle-traffic-mobile"
                     >
                       Traffic
@@ -1170,7 +1170,7 @@ export default function NavigationPage() {
                       variant={showIncidents ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowIncidents(!showIncidents)}
-                      className="h-8 px-3 text-xs shadow-lg"
+                      className="h-8 px-3 text-xs shadow-lg pointer-events-auto"
                       data-testid="button-toggle-incidents-mobile"
                     >
                       Incidents
@@ -1178,12 +1178,12 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Stop Button - Bottom Left Corner */}
-                  <div className="absolute bottom-4 left-4 z-20 mobile-safe-bottom">
+                  <div className="absolute bottom-4 left-4 z-20 mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
                       variant="destructive"
-                      className="h-9 px-4 shadow-lg text-sm font-semibold"
+                      className="h-9 px-4 shadow-lg text-sm font-semibold pointer-events-auto"
                       data-testid="button-stop-navigation"
                     >
                       <X className="w-4 h-4 mr-1" />
@@ -1202,7 +1202,7 @@ export default function NavigationPage() {
                     onMenuClick={() => setSidebarState('open')}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-20 mobile-safe-bottom"
+                    className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto"
                   />
 
                   {/* Legal Ownership */}

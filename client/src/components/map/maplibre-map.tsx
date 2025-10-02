@@ -86,6 +86,7 @@ const MapLibreMap = memo(function MapLibreMap({
   const preferencesRef = useRef(preferences);
   const currentZoomRef = useRef(currentZoom);
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
   
   // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({
@@ -116,6 +117,42 @@ const MapLibreMap = memo(function MapLibreMap({
       map.current?.off('rotate', handleRotate);
     };
   }, [isLoaded]);
+
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    
+    const handleControls = () => {
+      if (!map.current) return;
+      
+      if (hideControls) {
+        if (navigationControlRef.current) {
+          map.current.removeControl(navigationControlRef.current);
+          navigationControlRef.current = null;
+        }
+      } else {
+        if (!navigationControlRef.current) {
+          navigationControlRef.current = new maplibregl.NavigationControl({
+            visualizePitch: true,
+            showCompass: true,
+            showZoom: false
+          });
+          map.current.addControl(navigationControlRef.current, 'top-right');
+        }
+      }
+    };
+    
+    if (map.current.isStyleLoaded()) {
+      handleControls();
+    } else {
+      map.current.once('load', handleControls);
+    }
+    
+    return () => {
+      if (map.current) {
+        map.current.off('load', handleControls);
+      }
+    };
+  }, [hideControls, isLoaded]);
 
   const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number) => {
     if (!mapInstance.isStyleLoaded()) return;
@@ -240,11 +277,14 @@ const MapLibreMap = memo(function MapLibreMap({
         maxTileCacheSize: 500
       });
 
-      map.current.addControl(new maplibregl.NavigationControl({
-        visualizePitch: true,
-        showCompass: true,
-        showZoom: false
-      }), 'top-right');
+      if (!hideControls) {
+        navigationControlRef.current = new maplibregl.NavigationControl({
+          visualizePitch: true,
+          showCompass: true,
+          showZoom: false
+        });
+        map.current.addControl(navigationControlRef.current, 'top-right');
+      }
 
       if (onMapClick) {
         map.current.on('click', (e) => {
