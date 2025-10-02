@@ -52,6 +52,8 @@ Preferred communication style: Simple, everyday language.
     - **Performance**: Aggressive caching (maxTileCacheSize: 500) and smooth transitions (fadeDuration: 100ms).
     - **Speedometer**: GPS-based live speed tracking with speed limit display and auto MPH/KPH conversion.
     - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding (red/orange/yellow/green) based on traffic speed ratios, zoom-based line width scaling (2-8px), and 5-minute auto-refresh for latest traffic data.
+    - **Traffic-Aware Route Coloring**: Routes automatically display color-coded segments based on real-time traffic conditions - heavy traffic areas show in red (speed ratio <0.3), moderate in orange (<0.6), light in yellow (<0.8), and free flow in blue (≥0.8). Auto-resamples every 2 minutes for live updates.
+    - **Incident Reporting System**: Comprehensive 23-type incident library with emoji icons across 6 categories (Emergency Services, Vehicle Incidents, Road Conditions, Traffic, Hazards, Weather). Interactive 3-step wizard for drivers to report road incidents with severity levels and GPS coordinates.
 - **Address Autocomplete**: Debounced search with postcode suggestions for UK, US, CA, AU, DE, and FR.
 - **Mobile Compatibility**:
     - Screen Wake Lock API.
