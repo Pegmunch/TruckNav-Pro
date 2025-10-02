@@ -1110,13 +1110,13 @@ export default function NavigationPage() {
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending}
                       className={cn(
-                        "w-full h-16 text-lg font-semibold transition-all",
+                        "w-full h-16 text-lg font-semibold transition-all bg-primary hover:bg-primary/90 text-primary-foreground",
                         currentRoute && selectedProfile && "ring-4 ring-primary/50 shadow-lg shadow-primary/50 animate-pulse"
                       )}
                       data-testid="button-start-navigation-preview"
                     >
                       <Navigation className="w-6 h-6 mr-3" />
-                      NAV
+                      Start Navigation
                     </Button>
                   </div>
 
