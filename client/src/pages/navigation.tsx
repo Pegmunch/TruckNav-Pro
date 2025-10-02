@@ -1307,8 +1307,8 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Map Control Buttons - Right Side Stack */}
-                  <div className="absolute top-32 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
+                  {/* Map Control Buttons - Top Left Stack */}
+                  <div className="absolute top-4 left-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
                     <Button
                       size="icon"
                       onClick={() => {
