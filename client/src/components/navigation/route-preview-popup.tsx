@@ -5,8 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Minimize2, 
-  Maximize2,
+  ChevronsUp,
+  ChevronsDown,
   X,
   MapPin,
   Flag
@@ -19,6 +19,8 @@ interface RoutePreviewPopupProps {
   isNavigating: boolean;
   currentLocation?: { lat: number; lng: number };
   className?: string;
+  onClose?: () => void;
+  onInteraction?: () => void;
 }
 
 // Always use satellite view for the preview popup
@@ -114,15 +116,16 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
   currentRoute,
   isNavigating,
   currentLocation,
-  className
+  className,
+  onClose,
+  onInteraction
 }: RoutePreviewPopupProps) {
   // Don't render if not navigating or no route - MUST be before hooks
   if (!isNavigating || !currentRoute || !currentRoute.routePath || currentRoute.routePath.length === 0) {
     return null;
   }
 
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [expandState, setExpandState] = useState<'small' | 'fullscreen'>('small');
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ 
     x: 10, // Far left
@@ -170,7 +173,9 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
     <Card 
       className={cn(
         "fixed z-50 shadow-2xl border-2 transition-all duration-300 select-none",
-        isFullscreen ? "inset-0 w-full h-full" : isMinimized ? "w-12 h-10" : "w-[12.5vw] h-[12.5vw] min-w-[150px] min-h-[150px]",
+        expandState === 'fullscreen' 
+          ? "inset-0 w-full h-full" 
+          : "w-[12.5vw] h-[12.5vw] min-w-[150px] min-h-[150px]",
         className
       )}
       style={{
@@ -189,48 +194,46 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
       >
         <span className="font-medium flex items-center gap-1">
           <MapPin className="w-3 h-3" />
-          {isMinimized ? "" : "Route Overview"}
+          Route Overview
         </span>
         <div className="flex items-center gap-1">
-          {!isMinimized && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0 text-white hover:bg-white/20"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              data-testid={isFullscreen ? "exit-fullscreen-preview" : "fullscreen-route-preview"}
-              title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-            >
-              {isFullscreen ? (
-                <Minimize2 className="w-3 h-3" />
-              ) : (
-                <Maximize2 className="w-3 h-3" />
-              )}
-            </Button>
-          )}
           <Button
             variant="ghost"
             size="sm"
             className="h-5 w-5 p-0 text-white hover:bg-white/20"
             onClick={() => {
-              if (isFullscreen) setIsFullscreen(false);
-              setIsMinimized(!isMinimized);
+              setExpandState(expandState === 'small' ? 'fullscreen' : 'small');
+              onInteraction?.();
             }}
-            data-testid={isMinimized ? "maximize-route-preview" : "minimize-route-preview"}
-            title={isMinimized ? "Restore" : "Minimize"}
+            data-testid={expandState === 'fullscreen' ? "collapse-route-preview" : "expand-route-preview"}
+            title={expandState === 'fullscreen' ? "Collapse" : "Expand"}
           >
-            {isMinimized ? (
-              <Maximize2 className="w-3 h-3" />
+            {expandState === 'fullscreen' ? (
+              <ChevronsDown className="w-3 h-3" />
             ) : (
-              <Minimize2 className="w-3 h-3" />
+              <ChevronsUp className="w-3 h-3" />
             )}
           </Button>
+          {expandState === 'small' && onClose && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 text-white hover:bg-white/20"
+              onClick={() => {
+                onClose();
+                onInteraction?.();
+              }}
+              data-testid="close-route-preview"
+              title="Close"
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          )}
         </div>
       </div>
       
-      {/* Map content - only show when not minimized */}
-      {!isMinimized && (
-        <CardContent className="p-0 h-full pt-8">
+      {/* Map content */}
+      <CardContent className="p-0 h-full pt-8">
           <div className="h-full rounded-b-md overflow-hidden">
             <MapContainer
               center={[startPoint.lat, startPoint.lng]}
@@ -298,19 +301,7 @@ const RoutePreviewPopup = memo(function RoutePreviewPopup({
               <RouteViewFitter routePath={routePath} />
             </MapContainer>
           </div>
-          
-          {/* Route info overlay */}
-          <div className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded flex justify-between items-center">
-            <span className="flex items-center gap-1">
-              <Flag className="w-3 h-3" />
-              {currentRoute.distance ? `${currentRoute.distance.toFixed(1)} mi` : 'Route'}
-            </span>
-            <span className="text-green-400">
-              Satellite
-            </span>
-          </div>
         </CardContent>
-      )}
     </Card>
   );
 });

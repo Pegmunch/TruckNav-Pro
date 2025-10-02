@@ -59,6 +59,7 @@ export default function NavigationPage() {
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showRoutePreview, setShowRoutePreview] = useState(true);
+  const [hasInteractedWithPreview, setHasInteractedWithPreview] = useState(false);
   const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
   // Unified sidebar state management - single source of truth
@@ -474,6 +475,9 @@ export default function NavigationPage() {
       }
       
       setCurrentRoute(route);
+      // Reset route preview state for new route
+      setShowRoutePreview(true);
+      setHasInteractedWithPreview(false);
       // Update window sync with new route
       windowSync.updateRoute(route);
       
@@ -733,6 +737,13 @@ export default function NavigationPage() {
 
 
 
+  // Handle map click to close route preview (only after user has interacted)
+  const handleMapClick = () => {
+    if (hasInteractedWithPreview && showRoutePreview) {
+      setShowRoutePreview(false);
+    }
+  };
+
   // Handle cancel route - stop navigation
   const handleCancelRoute = () => {
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
@@ -826,6 +837,10 @@ export default function NavigationPage() {
       
       // Update navigation state after successful activation
       setIsNavigating(true);
+      
+      // Reset route preview state when navigation starts
+      setShowRoutePreview(true);
+      setHasInteractedWithPreview(false);
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
       }
@@ -1006,6 +1021,7 @@ export default function NavigationPage() {
                         selectedProfile={selectedProfile || activeProfile}
                         showTraffic={showTrafficLayer}
                         showIncidents={showIncidents}
+                        onMapClick={handleMapClick}
                       />
                     ) : (
                       <InteractiveMap
@@ -1051,6 +1067,7 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      onMapClick={handleMapClick}
                     />
                   ) : (
                     <InteractiveMap
@@ -1156,6 +1173,7 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      onMapClick={handleMapClick}
                     />
                   ) : (
                     <InteractiveMap
@@ -1366,6 +1384,7 @@ export default function NavigationPage() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      onMapClick={handleMapClick}
                     />
                   ) : (
                     <EnhancedRealisticMap
@@ -1378,6 +1397,7 @@ export default function NavigationPage() {
                       isNavigating={isNavigating}
                       currentLocation={currentGPSLocation || undefined}
                       onLocationUpdate={setCurrentGPSLocation}
+                      onMapClick={handleMapClick}
                       isMapExpanded={isMapExpanded}
                       sidebarState={sidebarState}
                     />
@@ -1450,6 +1470,8 @@ export default function NavigationPage() {
         currentRoute={currentRoute}
         isNavigating={isNavigating && showRoutePreview}
         currentLocation={currentGPSLocation || undefined}
+        onClose={() => setShowRoutePreview(false)}
+        onInteraction={() => setHasInteractedWithPreview(true)}
       />
 
       {/* Lane Guidance Popup - Can be triggered manually or during navigation */}

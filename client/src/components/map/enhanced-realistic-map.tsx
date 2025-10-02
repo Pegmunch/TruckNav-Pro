@@ -39,6 +39,7 @@ interface EnhancedRealisticMapProps {
   isNavigating?: boolean;
   currentLocation?: { lat: number; lng: number };
   onLocationUpdate?: (location: { lat: number; lng: number }) => void;
+  onMapClick?: (lat: number, lng: number) => void;
   isMapExpanded?: boolean;
   sidebarState?: 'closed' | 'open' | 'collapsed';
 }
@@ -194,6 +195,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   isNavigating = false,
   currentLocation,
   onLocationUpdate,
+  onMapClick,
   isMapExpanded,
   sidebarState
 }: EnhancedRealisticMapProps) {
@@ -448,6 +450,13 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
         attributionControl={false}
+        eventHandlers={{
+          click: (e) => {
+            if (onMapClick) {
+              onMapClick(e.latlng.lat, e.latlng.lng);
+            }
+          }
+        }}
         ref={(map) => {
           if (map && map.getContainer && map.getContainer()) {
             mapRef.current = map;
