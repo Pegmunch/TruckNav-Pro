@@ -908,79 +908,75 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      {!hideControls && !hideCompass && (
+      {!hideControls && (
         <>
-          <div className="absolute bottom-72 right-4 z-[70]">
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={handleCompassClick}
-              className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 transition-all duration-300"
-              data-testid="button-compass-reset"
-              aria-label="Reset bearing to North"
-            >
-              <Compass 
-                className="h-3.5 w-3.5 transition-transform duration-300" 
-                style={{ transform: `rotate(${bearing}deg)` }}
-              />
-            </Button>
-          </div>
-          
+          {/* Map Controls - Evenly Spaced Button Stack */}
           {!isNavigating && (
-            <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={handleZoomIn}
-              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-              data-testid="button-zoom-in"
-              aria-label="Zoom in"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={handleZoomOut}
-              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-              data-testid="button-zoom-out"
-              aria-label="Zoom out"
-            >
-              <Minus className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={handleRecenter}
-              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-              data-testid="button-recenter"
-              aria-label="Recenter map"
-            >
-              <Crosshair className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={toggle3DMode}
-              className={cn(
-                "h-8 w-8 md:h-8 md:w-8 shadow-lg transition-colors",
-                is3DMode ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-white hover:bg-white/90 text-gray-700"
+            <div className="absolute bottom-24 right-4 flex flex-col gap-2 z-10">
+              {!hideCompass && (
+                <Button
+                  size="icon"
+                  onClick={handleCompassClick}
+                  className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 transition-all duration-300"
+                  data-testid="button-compass-reset"
+                  aria-label="Reset bearing to North"
+                >
+                  <Compass 
+                    className="h-3.5 w-3.5 transition-transform duration-300" 
+                    style={{ transform: `rotate(${bearing}deg)` }}
+                  />
+                </Button>
               )}
-              data-testid="button-toggle-3d"
-              aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
-            >
-              <Box className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={toggleMapView}
-              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-              data-testid="button-toggle-view"
-              aria-label="Toggle map view"
-            >
-              <Layers className="h-3.5 w-3.5" />
-            </Button>
+              <Button
+                size="icon"
+                onClick={handleZoomIn}
+                className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200"
+                data-testid="button-zoom-in"
+                aria-label="Zoom in"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={handleZoomOut}
+                className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200"
+                data-testid="button-zoom-out"
+                aria-label="Zoom out"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={handleRecenter}
+                className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200"
+                data-testid="button-recenter"
+                aria-label="Recenter map"
+              >
+                <Crosshair className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={toggle3DMode}
+                className={cn(
+                  "h-8 w-8 md:h-8 md:w-8 shadow-lg transition-colors border",
+                  is3DMode 
+                    ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-600" 
+                    : "bg-white hover:bg-white/90 text-gray-700 border-slate-200"
+                )}
+                data-testid="button-toggle-3d"
+                aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
+              >
+                <Box className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={toggleMapView}
+                className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200"
+                data-testid="button-toggle-view"
+                aria-label="Toggle map view"
+              >
+                <Layers className="h-3.5 w-3.5" />
+              </Button>
             </div>
           )}
 
