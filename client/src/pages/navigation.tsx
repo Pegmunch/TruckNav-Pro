@@ -1264,6 +1264,13 @@ export default function NavigationPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
+                            <div className="text-xs opacity-75">Speed</div>
+                            <div className="text-sm font-bold">
+                              {currentSpeed} mph
+                            </div>
+                          </div>
+                          <div className="h-8 w-px bg-white/30"></div>
+                          <div className="text-center">
                             <div className="text-xs opacity-75">ETA</div>
                             <div className="text-sm font-bold">
                               {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
