@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
-import MapLibreMap from "@/components/map/maplibre-map";
+import MapLibreMap, { type MapLibreMapRef } from "@/components/map/maplibre-map";
 import EnhancedRealisticMap from "@/components/map/enhanced-realistic-map";
 import { useMapEngine } from "@/hooks/use-map-engine";
 import ProfessionalNavHUD from "@/components/navigation/professional-nav-hud";
@@ -119,6 +119,9 @@ export default function NavigationPage() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('plan');
   
+  // Map reference for compass control
+  const mapRef = useRef<MapLibreMapRef>(null);
+  const [mapBearing, setMapBearing] = useState(0);
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
@@ -182,6 +185,18 @@ export default function NavigationPage() {
       setMobileNavMode('plan');
     }
   }, [isMobile, isNavigating, currentRoute]);
+  
+  // Track bearing from map for compass rotation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (mapRef.current) {
+        const bearing = mapRef.current.getBearing();
+        setMapBearing(bearing);
+      }
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
@@ -1012,10 +1027,12 @@ export default function NavigationPage() {
                 <MapShell className="h-full w-full">
                   {isMapLibre ? (
                     <MapLibreMap
+                      ref={mapRef}
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      hideCompass={isMobile && mobileNavMode === 'navigate'}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
@@ -1142,8 +1159,21 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Traffic & Incidents Toggle Buttons - Properly spaced below trip strip */}
+                  {/* Compass, Traffic & Incidents Toggle Buttons - Properly spaced below trip strip */}
                   <div className="absolute top-[72px] right-3 z-[70] flex flex-col gap-2 pointer-events-auto">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => mapRef.current?.resetBearing()}
+                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 pointer-events-auto transition-all duration-300"
+                      data-testid="button-compass-reset"
+                      aria-label="Reset bearing to North"
+                    >
+                      <Compass 
+                        className="h-3.5 w-3.5 transition-transform duration-300" 
+                        style={{ transform: `rotate(${mapBearing}deg)` }}
+                      />
+                    </Button>
                     <Button
                       variant="secondary"
                       size="icon"
@@ -1354,10 +1384,12 @@ export default function NavigationPage() {
                 >
                   {isMapLibre ? (
                     <MapLibreMap
+                      ref={mapRef}
                       currentRoute={currentRoute}
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      hideCompass={isMobile && mobileNavMode === 'navigate'}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />

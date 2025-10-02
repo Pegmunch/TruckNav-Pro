@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo, useCallback } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,12 @@ import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
 import { getIncidentIcon } from "@shared/incident-icons";
 
+export interface MapLibreMapRef {
+  getMap: () => maplibregl.Map | null;
+  getBearing: () => number;
+  resetBearing: () => void;
+}
+
 interface MapLibreMapProps {
   currentRoute: Route | null;
   selectedProfile: VehicleProfile | null;
@@ -17,6 +23,7 @@ interface MapLibreMapProps {
   showTraffic?: boolean;
   showIncidents?: boolean;
   hideControls?: boolean;
+  hideCompass?: boolean;
   isNavigating?: boolean;
 }
 
@@ -66,7 +73,7 @@ const formatTimeAgo = (timestamp: string | Date): string => {
   return reported.toLocaleDateString();
 };
 
-const MapLibreMap = memo(function MapLibreMap({
+const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLibreMap({
   currentRoute,
   selectedProfile,
   onMapClick,
@@ -74,8 +81,9 @@ const MapLibreMap = memo(function MapLibreMap({
   showTraffic = false,
   showIncidents = false,
   hideControls = false,
+  hideCompass = false,
   isNavigating = false
-}: MapLibreMapProps) {
+}, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [preferences, setPreferences] = useState<MapPreferences>(loadMapPreferences);
@@ -89,6 +97,16 @@ const MapLibreMap = memo(function MapLibreMap({
   const currentZoomRef = useRef(currentZoom);
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
+  
+  useImperativeHandle(ref, () => ({
+    getMap: () => map.current,
+    getBearing: () => bearing,
+    resetBearing: () => {
+      if (map.current) {
+        map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
+      }
+    }
+  }), [bearing]);
   
   // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({
@@ -855,7 +873,7 @@ const MapLibreMap = memo(function MapLibreMap({
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      {!hideControls && (
+      {!hideControls && !hideCompass && (
         <>
           <div className="absolute top-[72px] right-3 z-[70]">
             <Button
