@@ -1127,7 +1127,7 @@ export default function NavigationPage() {
                 <>
                   {/* Compact Trip Strip - Top Overlay */}
                   {currentRoute && (
-                    <div className="relative z-10">
+                    <div className="absolute top-0 left-0 right-0 z-10">
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
