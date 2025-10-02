@@ -16,6 +16,7 @@ interface MapLibreMapProps {
   className?: string;
   showTraffic?: boolean;
   showIncidents?: boolean;
+  hideControls?: boolean;
 }
 
 interface MapPreferences {
@@ -70,7 +71,8 @@ const MapLibreMap = memo(function MapLibreMap({
   onMapClick,
   className,
   showTraffic = false,
-  showIncidents = false
+  showIncidents = false,
+  hideControls = false
 }: MapLibreMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -803,98 +805,102 @@ const MapLibreMap = memo(function MapLibreMap({
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
       
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleCompassClick}
-          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90 text-gray-700 transition-all duration-300"
-          data-testid="button-compass-reset"
-          aria-label="Reset bearing to North"
-        >
-          <Compass 
-            className="h-5 w-5 transition-transform duration-300" 
-            style={{ transform: `rotate(${bearing}deg)` }}
-          />
-        </Button>
-      </div>
-      
-      <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleZoomIn}
-          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-          data-testid="button-zoom-in"
-          aria-label="Zoom in"
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleZoomOut}
-          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-          data-testid="button-zoom-out"
-          aria-label="Zoom out"
-        >
-          <Minus className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleRecenter}
-          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-          data-testid="button-recenter"
-          aria-label="Recenter map"
-        >
-          <Crosshair className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={toggle3DMode}
-          className={cn(
-            "h-8 w-8 md:h-8 md:w-8 shadow-lg transition-colors",
-            is3DMode ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-white hover:bg-white/90 text-gray-700"
-          )}
-          data-testid="button-toggle-3d"
-          aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
-        >
-          <Box className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={toggleMapView}
-          className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
-          data-testid="button-toggle-view"
-          aria-label="Toggle map view"
-        >
-          <Layers className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      {!hideControls && (
+        <>
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={handleCompassClick}
+              className="h-10 w-10 shadow-lg bg-white hover:bg-white/90 text-gray-700 transition-all duration-300"
+              data-testid="button-compass-reset"
+              aria-label="Reset bearing to North"
+            >
+              <Compass 
+                className="h-5 w-5 transition-transform duration-300" 
+                style={{ transform: `rotate(${bearing}deg)` }}
+              />
+            </Button>
+          </div>
+          
+          <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={handleZoomIn}
+              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
+              data-testid="button-zoom-in"
+              aria-label="Zoom in"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={handleZoomOut}
+              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
+              data-testid="button-zoom-out"
+              aria-label="Zoom out"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={handleRecenter}
+              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
+              data-testid="button-recenter"
+              aria-label="Recenter map"
+            >
+              <Crosshair className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={toggle3DMode}
+              className={cn(
+                "h-8 w-8 md:h-8 md:w-8 shadow-lg transition-colors",
+                is3DMode ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-white hover:bg-white/90 text-gray-700"
+              )}
+              data-testid="button-toggle-3d"
+              aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
+            >
+              <Box className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={toggleMapView}
+              className="h-8 w-8 md:h-8 md:w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700"
+              data-testid="button-toggle-view"
+              aria-label="Toggle map view"
+            >
+              <Layers className="h-3.5 w-3.5" />
+            </Button>
+          </div>
 
-      {/* Speed Display - positioned above MapLibre legal text at bottom */}
-      <div className="absolute bottom-14 left-[48%] transform -translate-x-1/2 z-[1150]">
-        <SpeedDisplay 
-          className="shadow-2xl"
-        />
-      </div>
+          {/* Speed Display - positioned above MapLibre legal text at bottom */}
+          <div className="absolute bottom-14 left-[48%] transform -translate-x-1/2 z-[1150]">
+            <SpeedDisplay 
+              className="shadow-2xl"
+            />
+          </div>
 
-      <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
-        <span className="text-muted-foreground">MapLibre GL</span>
-        <span className="text-muted-foreground mx-1">•</span>
-        <span>{preferences.mapViewMode}</span>
-        <span className="text-muted-foreground mx-1">•</span>
-        <span className="text-muted-foreground">z{currentZoom}</span>
-        {is3DMode && (
-          <>
+          <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
+            <span className="text-muted-foreground">MapLibre GL</span>
             <span className="text-muted-foreground mx-1">•</span>
-            <span className="text-blue-600 font-semibold">3D</span>
-          </>
-        )}
-      </div>
+            <span>{preferences.mapViewMode}</span>
+            <span className="text-muted-foreground mx-1">•</span>
+            <span className="text-muted-foreground">z{currentZoom}</span>
+            {is3DMode && (
+              <>
+                <span className="text-muted-foreground mx-1">•</span>
+                <span className="text-blue-600 font-semibold">3D</span>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 });

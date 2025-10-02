@@ -1030,6 +1030,7 @@ export default function NavigationPage() {
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
                       onMapClick={handleMapClick}
+                      hideControls={mobileNavMode === 'navigate'}
                     />
                   ) : (
                     <InteractiveMap
