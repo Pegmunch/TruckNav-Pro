@@ -40,7 +40,7 @@ import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -110,6 +110,7 @@ export default function NavigationPage() {
   
   // Incident feed drawer state
   const [showIncidentFeed, setShowIncidentFeed] = useState(false);
+  const [hasInteractedWithIncidentFeed, setHasInteractedWithIncidentFeed] = useState(false);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -322,9 +323,10 @@ export default function NavigationPage() {
       return true;
     }
     
-    // High priority: Close incident feed drawer
+    // High priority: Close incident feed popup
     if (showIncidentFeed) {
       setShowIncidentFeed(false);
+      setHasInteractedWithIncidentFeed(false);
       console.log('🔙 Android back: Closed incident feed');
       return true;
     }
@@ -739,8 +741,13 @@ export default function NavigationPage() {
 
   // Handle map click to close route preview (only after user has interacted)
   const handleMapClick = () => {
+    // Close route preview if user has interacted with it
     if (hasInteractedWithPreview && showRoutePreview) {
       setShowRoutePreview(false);
+    }
+    // Close incident feed if user has interacted with it
+    if (hasInteractedWithIncidentFeed && showIncidentFeed) {
+      setShowIncidentFeed(false);
     }
   };
 
@@ -1488,23 +1495,18 @@ export default function NavigationPage() {
         currentLocation={currentGPSLocation}
       />
 
-      {/* Incident Feed Drawer - Shows nearby incidents */}
-      <Sheet open={showIncidentFeed && showIncidents} onOpenChange={setShowIncidentFeed}>
-        <SheetContent 
-          side="bottom" 
-          className="h-[70vh] p-0"
-          data-testid="sheet-incident-feed"
-        >
-          <SheetHeader className="p-4 pb-2 border-b">
-            <SheetTitle data-testid="title-incident-feed">Nearby Incidents</SheetTitle>
-          </SheetHeader>
-          <IncidentFeed
-            currentLocation={currentGPSLocation}
-            showIncidents={showIncidents}
-            className="h-[calc(70vh-4rem)]"
-          />
-        </SheetContent>
-      </Sheet>
+      {/* Incident Feed Popup - Shows nearby incidents */}
+      <IncidentFeedPopup
+        currentLocation={currentGPSLocation}
+        showIncidents={showIncidentFeed && showIncidents}
+        onClose={() => {
+          setShowIncidentFeed(false);
+          setHasInteractedWithIncidentFeed(false);
+        }}
+        onInteraction={() => {
+          setHasInteractedWithIncidentFeed(true);
+        }}
+      />
 
     </div>
   );
