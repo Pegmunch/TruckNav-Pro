@@ -486,11 +486,12 @@ export default function NavigationPage() {
       // Reset any pending state flags on error
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
-      // Show user-friendly error message
+      // Show user-friendly error message with RED styling
       toast({
-          title: "Failed to start navigation",
-          description: "Unable to activate journey. Please try again.",
+          title: "❌ Navigation Failed",
+          description: "Unable to start navigation. Please try again.",
           variant: "destructive",
+          duration: 5000,
         });
     },
   });
@@ -600,6 +601,14 @@ export default function NavigationPage() {
 
       // Small delay to allow route state to update
       setTimeout(handleMapExpansion, 200);
+      
+      // Show GREEN success toast when route is ready
+      toast({
+        title: "✅ Route Ready",
+        description: `${route.distance?.toFixed(1)} mi • ${Math.round(route.duration || 0)} min`,
+        className: "bg-green-500 text-white border-green-600",
+        duration: 3000,
+      });
     },
     onError: (error) => {
       if (import.meta.env.DEV) {
@@ -609,11 +618,12 @@ export default function NavigationPage() {
       setCurrentRoute(null);
       // Comprehensive UI recovery on route calculation failure
       recoverUIOnError();
-      // Show user-friendly error message
+      // Show user-friendly error message with RED styling
       toast({
-          title: "Route calculation failed",
+          title: "❌ Route Planning Failed",
           description: "Unable to calculate route. Please check your locations and try again.",
           variant: "destructive",
+          duration: 5000,
         });
     },
   });
@@ -727,9 +737,10 @@ export default function NavigationPage() {
       // Comprehensive UI recovery on alternative route application failure
       recoverUIOnError();
       toast({
-        title: "Failed to apply route",
+        title: "❌ Failed to Apply Route",
         description: "Unable to switch to alternative route. Please try again.",
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setIsApplyingRoute(false);
@@ -1206,31 +1217,32 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Start CTA - Bottom Overlay (No Panel) */}
-                  <div className="absolute bottom-0 left-0 right-0 z-10 p-4 mobile-safe-bottom">
+                  {/* Start CTA - Transparent Bottom Panel */}
+                  <div className="absolute bottom-0 left-0 right-0 z-10 p-6 mobile-safe-bottom bg-transparent">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       aria-label="Start turn-by-turn navigation with selected route"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "h-12 px-8 text-base font-bold rounded-lg shadow-xl transition-all duration-200",
-                        "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700",
-                        "border-2 border-blue-400/50 hover:scale-105 active:scale-95",
-                        "focus-visible:ring-4 focus-visible:ring-blue-500",
-                        currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-2xl shadow-blue-500/50"
+                        "w-full h-16 text-lg font-bold rounded-xl shadow-2xl transition-all duration-300",
+                        "border-3 hover:scale-105 active:scale-95",
+                        "focus-visible:ring-4 focus-visible:ring-offset-2",
+                        currentRoute && selectedProfile 
+                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-green-400 ring-4 ring-green-400/60 shadow-green-500/50" 
+                          : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-gray-500 cursor-not-allowed"
                       )}
                       data-testid="button-start-navigation-preview"
                     >
                       {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
                         <>
-                          <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                          Starting Navigation...
+                          <Loader2 className="w-7 h-7 mr-3 animate-spin" />
+                          <span className="text-xl">Starting Navigation...</span>
                         </>
                       ) : (
                         <>
-                          <Navigation className="w-6 h-6 mr-3" />
-                          Start Navigation
+                          <Navigation className="w-7 h-7 mr-3" />
+                          <span className="text-xl">Start Navigation</span>
                         </>
                       )}
                     </Button>
