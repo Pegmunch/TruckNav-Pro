@@ -37,7 +37,7 @@ export function SimplifiedRouteDrawer({
               id="from-location"
               value={fromLocation}
               onChange={onFromLocationChange}
-              placeholder="Start location or postcode"
+              placeholder=""
               testId="input-from-location"
               className="flex-1"
             />
@@ -61,7 +61,7 @@ export function SimplifiedRouteDrawer({
             id="to-location"
             value={toLocation}
             onChange={onToLocationChange}
-            placeholder="Destination or postcode"
+            placeholder=""
             testId="input-to-location"
           />
         </div>
