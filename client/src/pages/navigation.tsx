@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Traffic, AlertCircle } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -1155,7 +1155,7 @@ export default function NavigationPage() {
                       data-testid="button-toggle-traffic-mobile"
                       aria-label="Toggle traffic layer"
                     >
-                      <Traffic className="h-3.5 w-3.5" />
+                      <Car className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="secondary"
