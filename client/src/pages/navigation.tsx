@@ -38,6 +38,7 @@ import { MapShell } from "@/components/map/map-shell";
 import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
+import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -100,6 +101,9 @@ export default function NavigationPage() {
   // Traffic and Incidents toggle state for mobile
   const [showTrafficLayer, setShowTrafficLayer] = useState(true);
   const [showIncidents, setShowIncidents] = useState(true);
+  
+  // Incident reporting dialog state
+  const [showIncidentReportDialog, setShowIncidentReportDialog] = useState(false);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -1049,6 +1053,7 @@ export default function NavigationPage() {
                     setMobileNavMode('plan');
                   }}
                   onMenuClick={() => setSidebarState('open')}
+                  onReportIncident={() => setShowIncidentReportDialog(true)}
                   className="bottom-24 right-6 mobile-safe-bottom"
                 />
               </div>
@@ -1166,6 +1171,7 @@ export default function NavigationPage() {
                     setMobileNavMode('plan');
                   }}
                   onMenuClick={() => setSidebarState('open')}
+                  onReportIncident={() => setShowIncidentReportDialog(true)}
                   className="bottom-6 right-6 mobile-safe-bottom"
                 />
 
@@ -1428,6 +1434,13 @@ export default function NavigationPage() {
         currentRoute={currentRoute}
         isNavigating={isNavigating}
         forceVisible={showLaneGuidance}
+      />
+
+      {/* Incident Report Dialog */}
+      <IncidentReportDialog
+        open={showIncidentReportDialog}
+        onOpenChange={setShowIncidentReportDialog}
+        currentLocation={currentGPSLocation}
       />
 
     </div>

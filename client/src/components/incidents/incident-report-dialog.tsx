@@ -5,51 +5,75 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INCIDENT_ICON_LIBRARY, INCIDENT_CATEGORIES, INCIDENT_TYPES, type IncidentTypeKey } from '@shared/incident-icons';
-import { MapPin, Send } from 'lucide-react';
+import { MapPin, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface IncidentReportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentLocation?: { lat: number; lng: number };
-  onReport: (incident: {
-    type: string;
-    title: string;
-    description: string;
-    severity: 'low' | 'medium' | 'high';
-    coordinates: { lat: number; lng: number };
-  }) => void;
 }
 
 export function IncidentReportDialog({ 
   open, 
   onOpenChange, 
-  currentLocation,
-  onReport 
+  currentLocation
 }: IncidentReportDialogProps) {
+  const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<IncidentTypeKey | null>(null);
   const [severity, setSeverity] = useState<'low' | 'medium' | 'high'>('medium');
   const [description, setDescription] = useState('');
 
+  const reportIncidentMutation = useMutation({
+    mutationFn: async (incidentData: {
+      type: string;
+      title: string;
+      description?: string;
+      severity: 'low' | 'medium' | 'high';
+      coordinates: { lat: number; lng: number };
+    }) => {
+      const response = await apiRequest('POST', '/api/traffic-incidents', incidentData);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Incident Reported",
+        description: "Thank you for helping keep other drivers safe!",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/traffic-incidents'] });
+      
+      setSelectedCategory(null);
+      setSelectedType(null);
+      setSeverity('medium');
+      setDescription('');
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Failed to report incident:', error);
+      toast({
+        title: "Failed to Report Incident",
+        description: "Unable to submit your report. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = () => {
     if (!selectedType || !currentLocation) return;
 
     const config = INCIDENT_ICON_LIBRARY[selectedType];
-    onReport({
+    reportIncidentMutation.mutate({
       type: selectedType,
       title: config.label,
       description: description || config.description,
       severity,
       coordinates: currentLocation,
     });
-
-    // Reset form
-    setSelectedCategory(null);
-    setSelectedType(null);
-    setSeverity('medium');
-    setDescription('');
-    onOpenChange(false);
   };
 
   const filteredIncidents = selectedCategory
@@ -237,11 +261,20 @@ export function IncidentReportDialog({
                   onClick={handleSubmit}
                   className="w-full"
                   size="lg"
-                  disabled={!currentLocation}
+                  disabled={!currentLocation || reportIncidentMutation.isPending}
                   data-testid="button-submit-report"
                 >
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Report
+                  {reportIncidentMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit Report
+                    </>
+                  )}
                 </Button>
               </div>
             )}
