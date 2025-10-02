@@ -1201,6 +1201,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             "absolute right-3 flex flex-col gap-2 z-[80] mobile-safe-top",
             isNavigating ? "top-14" : "bottom-20"
           )}>
+            <Button
+              size="icon"
+              onClick={toggleMapView}
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              data-testid="button-toggle-view"
+              aria-label="Toggle map view"
+            >
+              <Layers className="h-5 w-5" />
+            </Button>
             {!hideCompass && (
               <Button
                 size="icon"
@@ -1255,15 +1264,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
             >
               <Box className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              onClick={toggleMapView}
-              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
-              data-testid="button-toggle-view"
-              aria-label="Toggle map view"
-            >
-              <Layers className="h-5 w-5" />
             </Button>
           </div>
 
