@@ -1148,8 +1148,8 @@ export default function NavigationPage() {
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending}
                       className={cn(
-                        "w-full h-16 text-lg font-semibold transition-all bg-primary hover:bg-primary/90 text-primary-foreground",
-                        currentRoute && selectedProfile && "ring-4 ring-primary/50 shadow-lg shadow-primary/50 animate-pulse"
+                        "h-16 text-lg font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-lg mr-20",
+                        currentRoute && selectedProfile && "ring-4 ring-blue-400/50 shadow-xl shadow-blue-500/50 animate-pulse"
                       )}
                       data-testid="button-start-navigation-preview"
                     >
