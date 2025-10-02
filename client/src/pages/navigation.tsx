@@ -1260,7 +1260,7 @@ export default function NavigationPage() {
                 <>
                   {/* Compact Trip Strip - Top Overlay with border */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-10 border-b-2 border-primary/20">
+                    <div className="absolute top-0 left-0 right-0 z-[90] border-b-2 border-primary/20 mobile-safe-top">
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
@@ -1270,8 +1270,8 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Map Control Buttons - Right side vertical stack */}
-                  <div className="absolute bottom-32 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto">
+                  {/* Map Control Buttons are now in MapLibreMap component - no duplicates needed here */}
+                  <div className="hidden absolute bottom-32 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto">
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.zoomIn()}
