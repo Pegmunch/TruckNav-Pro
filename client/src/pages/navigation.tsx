@@ -1258,9 +1258,22 @@ export default function NavigationPage() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'navigate' && (
                 <>
-                  {/* Compact Trip Strip - Top Overlay with border */}
+                  {/* TruckNav Header - Branded Top Bar */}
+                  <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 mobile-safe-top shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-5 w-5" />
+                        <span className="font-bold text-lg tracking-tight">TruckNav Pro</span>
+                      </div>
+                      <div className="text-xs font-medium opacity-90">
+                        Navigation Active
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Compact Trip Strip - Below Header */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[90] border-b-2 border-primary/20 mobile-safe-top">
+                    <div className="absolute top-10 left-0 right-0 z-[90] border-b-2 border-primary/20 mobile-safe-top">
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
@@ -1271,7 +1284,7 @@ export default function NavigationPage() {
                   )}
 
                   {/* Map Control Buttons - Right Side Stack */}
-                  <div className="absolute top-14 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
+                  <div className="absolute top-24 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
                     <Button
                       size="icon"
                       onClick={() => {
