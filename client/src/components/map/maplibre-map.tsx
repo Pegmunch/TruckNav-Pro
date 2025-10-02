@@ -157,6 +157,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             showZoom: false
           });
           map.current.addControl(navigationControlRef.current, 'top-right');
+          
+          // Reposition the navigation control container to avoid overlay with trip strip
+          setTimeout(() => {
+            const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
+            if (navControl) {
+              (navControl as HTMLElement).style.top = '144px';
+              (navControl as HTMLElement).style.right = '12px';
+            }
+          }, 100);
         }
       }
     };
@@ -304,6 +313,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           showZoom: false
         });
         map.current.addControl(navigationControlRef.current, 'top-right');
+        
+        // Reposition the navigation control container to avoid overlay with trip strip
+        setTimeout(() => {
+          const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
+          if (navControl) {
+            (navControl as HTMLElement).style.top = '144px';
+            (navControl as HTMLElement).style.right = '12px';
+          }
+        }, 100);
       }
 
       if (onMapClick) {
