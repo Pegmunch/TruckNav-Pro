@@ -1191,7 +1191,7 @@ export default function NavigationPage() {
               {/* PREVIEW MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'preview' && currentRoute && (
                 <>
-                  {/* FAB for secondary controls */}
+                  {/* FAB for secondary controls - Hamburger Menu Bottom Right */}
                   <MobileFAB
                     mode="preview"
                     onSettingsClick={() => setShowVehicleSettings(true)}
@@ -1201,7 +1201,8 @@ export default function NavigationPage() {
                     }}
                     onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
-                    className="absolute bottom-24 right-6 z-20 mobile-safe-bottom"
+                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    className="absolute bottom-6 right-6 z-20 mobile-safe-bottom"
                   />
 
                   {/* Settings Button - Top Right */}
