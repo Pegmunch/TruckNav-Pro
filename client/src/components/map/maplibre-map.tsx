@@ -103,6 +103,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const currentZoomRef = useRef(currentZoom);
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
+  const userMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const gpsWatchIdRef = useRef<number | null>(null);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number, bearing?: number} | null>(null);
   
   useImperativeHandle(ref, () => ({
     getMap: () => map.current,
@@ -859,6 +862,112 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       incidentMarkersRef.current = [];
     };
   }, [incidents, isLoaded, showIncidents]);
+
+  // GPS tracking and user position marker during navigation
+  useEffect(() => {
+    if (!map.current || !isLoaded || !isNavigating) {
+      // Clean up GPS watch and marker when not navigating
+      if (gpsWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+        gpsWatchIdRef.current = null;
+      }
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      setUserLocation(null);
+      return;
+    }
+
+    const mapInstance = map.current;
+
+    // Start GPS tracking
+    if ('geolocation' in navigator && gpsWatchIdRef.current === null) {
+      gpsWatchIdRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude, heading } = position.coords;
+          const newLocation = {
+            lat: latitude,
+            lng: longitude,
+            bearing: heading !== null ? heading : undefined
+          };
+          setUserLocation(newLocation);
+
+          // Create or update user position marker
+          if (!userMarkerRef.current) {
+            // Create blue arrow marker for user position
+            const el = document.createElement('div');
+            el.className = 'user-position-marker';
+            el.innerHTML = `
+              <div style="
+                width: 24px;
+                height: 24px;
+                background: #3B82F6;
+                border: 3px solid white;
+                border-radius: 50%;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+              ">
+                <div style="
+                  width: 0;
+                  height: 0;
+                  border-left: 4px solid transparent;
+                  border-right: 4px solid transparent;
+                  border-bottom: 8px solid white;
+                  transform: translateY(-2px);
+                "></div>
+              </div>
+            `;
+
+            userMarkerRef.current = new maplibregl.Marker({
+              element: el,
+              rotation: newLocation.bearing || 0,
+              rotationAlignment: 'map'
+            })
+              .setLngLat([newLocation.lng, newLocation.lat])
+              .addTo(mapInstance);
+          } else {
+            // Update existing marker
+            userMarkerRef.current.setLngLat([newLocation.lng, newLocation.lat]);
+            if (newLocation.bearing !== undefined) {
+              userMarkerRef.current.setRotation(newLocation.bearing);
+            }
+          }
+
+          // Center map on user location during navigation
+          mapInstance.easeTo({
+            center: [newLocation.lng, newLocation.lat],
+            zoom: 16,
+            bearing: newLocation.bearing || 0,
+            duration: 500
+          });
+        },
+        (error) => {
+          console.warn('GPS tracking error:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    // Cleanup
+    return () => {
+      if (gpsWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(gpsWatchIdRef.current);
+        gpsWatchIdRef.current = null;
+      }
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+    };
+  }, [isNavigating, isLoaded]);
 
   const handleZoomIn = () => {
     if (map.current) {
