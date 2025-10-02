@@ -162,7 +162,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           setTimeout(() => {
             const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
             if (navControl) {
-              (navControl as HTMLElement).style.top = '144px';
+              (navControl as HTMLElement).style.top = '216px';
               (navControl as HTMLElement).style.right = '12px';
             }
           }, 100);
@@ -318,7 +318,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         setTimeout(() => {
           const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
           if (navControl) {
-            (navControl as HTMLElement).style.top = '144px';
+            (navControl as HTMLElement).style.top = '216px';
             (navControl as HTMLElement).style.right = '12px';
           }
         }, 100);
@@ -893,7 +893,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       {!hideControls && !hideCompass && (
         <>
-          <div className="absolute top-[144px] right-3 z-[70]">
+          <div className="absolute top-[216px] right-3 z-[70]">
             <Button
               size="icon"
               variant="secondary"
