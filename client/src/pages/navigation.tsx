@@ -1053,7 +1053,7 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Plan Route FAB */}
-                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom">
+                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={() => setSidebarState('open')}
                       size="lg"
@@ -1118,6 +1118,11 @@ export default function NavigationPage() {
                       <Navigation className="w-6 h-6 mr-3" />
                       NAV
                     </Button>
+                  </div>
+
+                  {/* Legal Ownership */}
+                  <div className="absolute bottom-0 left-0 right-0 z-[5]">
+                    <MapLegalOwnership compact={true} className="sm:hidden" />
                   </div>
                 </>
               )}
