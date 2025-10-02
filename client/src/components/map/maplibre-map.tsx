@@ -15,6 +15,10 @@ export interface MapLibreMapRef {
   resetBearing: () => void;
   toggle3DMode: () => void;
   is3DMode: () => boolean;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  toggleMapView: () => void;
+  getMapViewMode: () => 'roads' | 'satellite';
 }
 
 interface MapLibreMapProps {
@@ -117,8 +121,25 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         duration: 800
       });
     },
-    is3DMode: () => is3DMode
-  }), [bearing, is3DMode]);
+    is3DMode: () => is3DMode,
+    zoomIn: () => {
+      if (map.current) {
+        map.current.zoomIn({ duration: 300 });
+      }
+    },
+    zoomOut: () => {
+      if (map.current) {
+        map.current.zoomOut({ duration: 300 });
+      }
+    },
+    toggleMapView: () => {
+      const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';
+      const newPrefs: MapPreferences = { ...preferences, mapViewMode: newMode };
+      setPreferences(newPrefs);
+      saveMapPreferences(newPrefs);
+    },
+    getMapViewMode: () => preferences.mapViewMode
+  }), [bearing, is3DMode, preferences.mapViewMode]);
   
   // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({

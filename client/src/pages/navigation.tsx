@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -123,6 +123,7 @@ export default function NavigationPage() {
   const mapRef = useRef<MapLibreMapRef>(null);
   const [mapBearing, setMapBearing] = useState(0);
   const [map3DMode, setMap3DMode] = useState(false);
+  const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>('roads');
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
@@ -1179,13 +1180,47 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Compass, Traffic, Incidents & 3D Tilt Toggle Buttons - Positioned above zoom buttons */}
+                  {/* Map Control Buttons - Right side vertical stack */}
                   <div className="absolute bottom-72 right-4 z-[70] flex flex-col gap-2 pointer-events-auto">
                     <Button
-                      variant="secondary"
+                      size="icon"
+                      onClick={() => mapRef.current?.zoomIn()}
+                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto"
+                      data-testid="button-zoom-in-navigate"
+                      aria-label="Zoom in"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => mapRef.current?.zoomOut()}
+                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto"
+                      data-testid="button-zoom-out-navigate"
+                      aria-label="Zoom out"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
+                      }}
+                      className={cn(
+                        "h-8 w-8 shadow-lg pointer-events-auto transition-colors border border-slate-200",
+                        mapViewMode === 'satellite'
+                          ? "bg-blue-500 text-white hover:bg-blue-600"
+                          : "bg-white hover:bg-white/90 text-gray-700"
+                      )}
+                      data-testid="button-toggle-satellite-navigate"
+                      aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
                       size="icon"
                       onClick={() => mapRef.current?.resetBearing()}
-                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 pointer-events-auto transition-all duration-300"
+                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto transition-all duration-300"
                       data-testid="button-compass-reset"
                       aria-label="Reset bearing to North"
                     >
@@ -1195,14 +1230,13 @@ export default function NavigationPage() {
                       />
                     </Button>
                     <Button
-                      variant="secondary"
                       size="icon"
                       onClick={() => {
                         mapRef.current?.toggle3DMode();
                         setMap3DMode(!map3DMode);
                       }}
                       className={cn(
-                        "h-8 w-8 shadow-lg pointer-events-auto transition-colors",
+                        "h-8 w-8 shadow-lg pointer-events-auto transition-colors border border-slate-200",
                         map3DMode 
                           ? "bg-blue-500 text-white hover:bg-blue-600" 
                           : "bg-white hover:bg-white/90 text-gray-700"
@@ -1213,11 +1247,10 @@ export default function NavigationPage() {
                       <Box className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                      variant="secondary"
                       size="icon"
                       onClick={() => setShowTrafficLayer(!showTrafficLayer)}
                       className={cn(
-                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 pointer-events-auto",
+                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto",
                         showTrafficLayer && "ring-2 ring-primary"
                       )}
                       data-testid="button-toggle-traffic-mobile"
@@ -1226,11 +1259,10 @@ export default function NavigationPage() {
                       <Car className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                      variant="secondary"
                       size="icon"
                       onClick={() => setShowIncidents(!showIncidents)}
                       className={cn(
-                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 pointer-events-auto",
+                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto",
                         showIncidents && "ring-2 ring-primary"
                       )}
                       data-testid="button-toggle-incidents-mobile"
