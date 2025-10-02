@@ -143,9 +143,9 @@ const SpeedDisplay = memo(function SpeedDisplay({
     <div 
       className={cn(
         "flex items-center justify-between",
-        "bg-white/90 dark:bg-black/80 backdrop-blur-sm rounded-full",
-        "px-6 py-3 shadow-lg border border-black/20 dark:border-white/20",
-        "text-black dark:text-white font-semibold",
+        "bg-yellow-400 backdrop-blur-sm rounded-full",
+        "px-6 py-3 shadow-lg border border-yellow-600",
+        "text-gray-900 font-semibold",
         "min-w-[220px] h-[60px]",
         "transition-all duration-300",
         className
