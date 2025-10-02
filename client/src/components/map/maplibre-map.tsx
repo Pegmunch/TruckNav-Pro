@@ -895,31 +895,43 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
           // Create or update user position marker
           if (!userMarkerRef.current) {
-            // Create blue arrow marker for user position
+            // Create premium blue arrow marker for user position
             const el = document.createElement('div');
             el.className = 'user-position-marker';
             el.innerHTML = `
               <div style="
-                width: 24px;
-                height: 24px;
-                background: #3B82F6;
-                border: 3px solid white;
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+                border: 4px solid white;
                 border-radius: 50%;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 position: relative;
+                animation: pulse-glow 2s ease-in-out infinite;
               ">
                 <div style="
                   width: 0;
                   height: 0;
-                  border-left: 4px solid transparent;
-                  border-right: 4px solid transparent;
-                  border-bottom: 8px solid white;
+                  border-left: 6px solid transparent;
+                  border-right: 6px solid transparent;
+                  border-bottom: 12px solid white;
                   transform: translateY(-2px);
+                  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
                 "></div>
               </div>
+              <style>
+                @keyframes pulse-glow {
+                  0%, 100% { 
+                    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+                  }
+                  50% { 
+                    box-shadow: 0 4px 24px rgba(59, 130, 246, 0.8), 0 2px 12px rgba(0, 0, 0, 0.4);
+                  }
+                }
+              </style>
             `;
 
             userMarkerRef.current = new maplibregl.Marker({

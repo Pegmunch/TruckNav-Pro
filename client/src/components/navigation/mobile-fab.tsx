@@ -87,7 +87,7 @@ export function MobileFAB({
     )}>
       {/* Speed Dial Options */}
       <div className={cn(
-        'flex flex-col-reverse gap-3 mb-3',
+        'flex flex-col-reverse gap-2.5 mb-3',
         'transition-all duration-200 ease-out',
         isExpanded ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
       )}>
@@ -102,14 +102,15 @@ export function MobileFAB({
                 setIsExpanded(false);
               }}
               className={cn(
-                'h-8 w-8',
-                'bg-white text-gray-800 hover:bg-white/90',
-                'border border-slate-200',
-                'shadow-xl'
+                'h-11 w-11 rounded-xl',
+                'bg-white/95 text-gray-800 hover:bg-white backdrop-blur-md',
+                'border border-white/50',
+                'shadow-2xl hover:scale-105 active:scale-95',
+                'transition-all duration-200'
               )}
               data-testid={`fab-option-${option.id}`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-4.5 h-4.5" />
               <span className="sr-only">{option.label}</span>
             </Button>
           );
@@ -122,11 +123,12 @@ export function MobileFAB({
         size="icon"
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          'h-16 w-16',
+          'h-16 w-16 rounded-2xl',
           'shadow-2xl',
-          'bg-blue-600 hover:bg-blue-700',
-          'backdrop-blur-sm',
-          'transition-transform duration-200',
+          'bg-gradient-to-br from-blue-500 to-blue-600',
+          'hover:from-blue-600 hover:to-blue-700',
+          'backdrop-blur-md border border-blue-400/50',
+          'transition-all duration-200 hover:scale-105 active:scale-95',
           isExpanded && 'rotate-45'
         )}
         data-testid="fab-main"

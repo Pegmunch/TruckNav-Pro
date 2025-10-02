@@ -1194,24 +1194,24 @@ export default function NavigationPage() {
                   )}
 
                   {/* Map Control Buttons - Right side vertical stack */}
-                  <div className="absolute bottom-32 right-4 z-[80] flex flex-col gap-2 pointer-events-auto">
+                  <div className="absolute bottom-32 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto">
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.zoomIn()}
-                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto"
+                      className="h-10 w-10 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
                       data-testid="button-zoom-in-navigate"
                       aria-label="Zoom in"
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.zoomOut()}
-                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto"
+                      className="h-10 w-10 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
                       data-testid="button-zoom-out-navigate"
                       aria-label="Zoom out"
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
@@ -1220,25 +1220,25 @@ export default function NavigationPage() {
                         setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
                       }}
                       className={cn(
-                        "h-8 w-8 shadow-lg pointer-events-auto transition-colors border border-slate-200",
+                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
                         mapViewMode === 'satellite'
-                          ? "bg-blue-500 text-white hover:bg-blue-600"
-                          : "bg-white hover:bg-white/90 text-gray-700"
+                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
                       )}
                       data-testid="button-toggle-satellite-navigate"
                       aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
                     >
-                      <Layers className="h-3.5 w-3.5" />
+                      <Layers className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.resetBearing()}
-                      className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto transition-all duration-300"
+                      className="h-10 w-10 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
                       data-testid="button-compass-reset"
                       aria-label="Reset bearing to North"
                     >
                       <Compass 
-                        className="h-3.5 w-3.5 transition-transform duration-300" 
+                        className="h-4 w-4 transition-transform duration-300" 
                         style={{ transform: `rotate(${mapBearing}deg)` }}
                       />
                     </Button>
@@ -1249,39 +1249,43 @@ export default function NavigationPage() {
                         setMap3DMode(!map3DMode);
                       }}
                       className={cn(
-                        "h-8 w-8 shadow-lg pointer-events-auto transition-colors border border-slate-200",
+                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
                         map3DMode 
-                          ? "bg-blue-500 text-white hover:bg-blue-600" 
-                          : "bg-white hover:bg-white/90 text-gray-700"
+                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
                       )}
                       data-testid="button-toggle-3d-navigate"
                       aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
                     >
-                      <Box className="h-3.5 w-3.5" />
+                      <Box className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => setShowTrafficLayer(!showTrafficLayer)}
                       className={cn(
-                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto",
-                        showTrafficLayer && "ring-2 ring-primary"
+                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        showTrafficLayer 
+                          ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 hover:scale-105 border-amber-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
                       )}
                       data-testid="button-toggle-traffic-mobile"
                       aria-label="Toggle traffic layer"
                     >
-                      <Car className="h-3.5 w-3.5" />
+                      <Car className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => setShowIncidents(!showIncidents)}
                       className={cn(
-                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200 pointer-events-auto",
-                        showIncidents && "ring-2 ring-primary"
+                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        showIncidents 
+                          ? "bg-gradient-to-br from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 hover:scale-105 border-red-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
                       )}
                       data-testid="button-toggle-incidents-mobile"
                       aria-label="Toggle incidents layer"
                     >
-                      <AlertCircle className="h-3.5 w-3.5" />
+                      <AlertCircle className="h-4 w-4" />
                     </Button>
                   </div>
 
@@ -1291,10 +1295,10 @@ export default function NavigationPage() {
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
                       variant="destructive"
-                      className="h-10 px-5 shadow-lg text-sm font-semibold pointer-events-auto bg-destructive hover:bg-destructive/90"
+                      className="h-11 px-6 rounded-xl shadow-2xl text-sm font-bold pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
                       data-testid="button-stop-navigation"
                     >
-                      <X className="w-4 h-4 mr-1" />
+                      <X className="w-4 h-4 mr-2" />
                       Stop
                     </Button>
                   </div>
