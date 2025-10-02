@@ -1218,31 +1218,31 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Start CTA - Transparent Bottom Panel */}
-                  <div className="absolute bottom-4 left-0 right-0 z-10 px-3 pb-3 pt-1 mobile-safe-bottom bg-transparent">
+                  <div className="absolute bottom-4 left-0 right-0 z-10 px-2 pb-2 pt-1 mobile-safe-bottom bg-transparent">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       aria-label="Start turn-by-turn navigation with selected route"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "w-full h-9 text-xs font-medium rounded-lg shadow-lg transition-all duration-300",
-                        "border-2 hover:scale-105 active:scale-95",
-                        "focus-visible:ring-2 focus-visible:ring-offset-1",
+                        "w-full h-6 text-[10px] font-medium rounded-md shadow-md transition-all duration-300",
+                        "border hover:scale-105 active:scale-95",
+                        "focus-visible:ring-1 focus-visible:ring-offset-1",
                         currentRoute && selectedProfile 
-                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-green-400 ring-2 ring-green-400/60 shadow-green-500/50" 
+                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-green-400 ring-1 ring-green-400/60 shadow-green-500/50" 
                           : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-gray-500 cursor-not-allowed"
                       )}
                       data-testid="button-start-navigation-preview"
                     >
                       {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
                         <>
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                          <span className="text-xs">Starting Navigation...</span>
+                          <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" />
+                          <span className="text-[10px]">Starting...</span>
                         </>
                       ) : (
                         <>
-                          <Navigation className="w-3.5 h-3.5 mr-1.5" />
-                          <span className="text-xs">Start Navigation</span>
+                          <Navigation className="w-2.5 h-2.5 mr-1" />
+                          <span className="text-[10px]">Start Navigation</span>
                         </>
                       )}
                     </Button>
