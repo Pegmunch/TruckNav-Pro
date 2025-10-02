@@ -1275,6 +1275,23 @@ export default function NavigationPage() {
                     <Button
                       size="icon"
                       onClick={() => {
+                        if (mapRef.current) {
+                          mapRef.current.zoomToUserLocation({
+                            zoom: 17.5,
+                            pitch: 45,
+                            duration: 1500
+                          });
+                        }
+                      }}
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-recenter-navigate"
+                      aria-label="Recenter on current location"
+                    >
+                      <Crosshair className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => {
                         mapRef.current?.toggleMapView();
                         setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
                       }}
@@ -1300,23 +1317,6 @@ export default function NavigationPage() {
                         className="h-5 w-5 transition-transform duration-300" 
                         style={{ transform: `rotate(${mapBearing}deg)` }}
                       />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        if (mapRef.current) {
-                          mapRef.current.zoomToUserLocation({
-                            zoom: 17.5,
-                            pitch: 45,
-                            duration: 1500
-                          });
-                        }
-                      }}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-recenter-navigate"
-                      aria-label="Recenter on current location"
-                    >
-                      <Crosshair className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
