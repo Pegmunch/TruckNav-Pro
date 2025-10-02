@@ -1074,19 +1074,19 @@ export default function NavigationPage() {
               {mobileNavMode === 'plan' && (
                 <>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-2 px-4 border-b bg-background mobile-safe-top">
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-1.5 px-4 border-b bg-background mobile-safe-top">
                     <div className="flex items-center gap-2">
-                      <Truck className="w-5 h-5 text-primary" />
-                      <span className="text-base font-semibold">TruckNav Pro</span>
+                      <Truck className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold">TruckNav Pro</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-9 w-9"
+                      className="h-8 w-8"
                       data-testid="button-settings"
                     >
-                      <Settings className="w-5 h-5" />
+                      <Settings className="w-4 h-4" />
                     </Button>
                   </div>
 
