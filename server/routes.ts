@@ -1425,6 +1425,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User-Reported Traffic Incidents API
+  app.post("/api/incidents", validateTrafficIncident, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const result = insertTrafficIncidentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid incident data", errors: result.error.errors });
+      }
+
+      const incident = await storage.createIncident(result.data);
+      res.status(201).json(incident);
+    } catch (error) {
+      console.error('Error creating incident:', error);
+      res.status(500).json({ message: "Failed to create incident" });
+    }
+  });
+
+  app.get("/api/incidents", async (req: Request, res: Response) => {
+    try {
+      const incidents = await storage.getAllActiveIncidents();
+      res.json(incidents);
+    } catch (error) {
+      console.error('Error getting active incidents:', error);
+      res.status(500).json({ message: "Failed to get active incidents" });
+    }
+  });
+
+  app.get("/api/incidents/nearby", async (req: Request, res: Response) => {
+    try {
+      const { lat, lng, radius } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "lat and lng query parameters are required" });
+      }
+
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
+      const radiusKm = radius ? parseFloat(radius as string) : 50;
+
+      if (isNaN(latitude) || isNaN(longitude) || isNaN(radiusKm)) {
+        return res.status(400).json({ message: "Invalid lat, lng, or radius values" });
+      }
+
+      if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        return res.status(400).json({ message: "Invalid coordinates" });
+      }
+
+      if (radiusKm <= 0 || radiusKm > 500) {
+        return res.status(400).json({ message: "Radius must be between 0 and 500 km" });
+      }
+
+      const incidents = await storage.getIncidentsNearLocation(latitude, longitude, radiusKm);
+      res.json(incidents);
+    } catch (error) {
+      console.error('Error getting nearby incidents:', error);
+      res.status(500).json({ message: "Failed to get nearby incidents" });
+    }
+  });
+
   // Location Management
   app.get("/api/locations", validatePagination, validateRequest, async (req: Request, res: Response) => {
     try {
