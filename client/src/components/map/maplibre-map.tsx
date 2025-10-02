@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Crosshair, Layers, Box } from "lucide-react";
+import { Plus, Minus, Crosshair, Layers, Box, Compass } from "lucide-react";
 import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
@@ -79,6 +79,7 @@ const MapLibreMap = memo(function MapLibreMap({
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const [is3DMode, setIs3DMode] = useState(false);
   const [isTrafficLayerReady, setIsTrafficLayerReady] = useState(false);
+  const [bearing, setBearing] = useState(0);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const preferencesRef = useRef(preferences);
   const currentZoomRef = useRef(currentZoom);
@@ -99,6 +100,20 @@ const MapLibreMap = memo(function MapLibreMap({
   useEffect(() => {
     currentZoomRef.current = currentZoom;
   }, [currentZoom]);
+
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    
+    const handleRotate = () => {
+      setBearing(map.current?.getBearing() || 0);
+    };
+    
+    map.current.on('rotate', handleRotate);
+    
+    return () => {
+      map.current?.off('rotate', handleRotate);
+    };
+  }, [isLoaded]);
 
   const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number) => {
     if (!mapInstance.isStyleLoaded()) return;
@@ -779,9 +794,30 @@ const MapLibreMap = memo(function MapLibreMap({
     });
   };
 
+  const handleCompassClick = () => {
+    if (!map.current) return;
+    map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
+  };
+
   return (
     <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
       <div ref={mapContainer} className="absolute inset-0" />
+      
+      <div className="absolute top-4 right-4 z-10">
+        <Button
+          size="icon"
+          variant="secondary"
+          onClick={handleCompassClick}
+          className="h-10 w-10 shadow-lg bg-white hover:bg-white/90 text-gray-700 transition-all duration-300"
+          data-testid="button-compass-reset"
+          aria-label="Reset bearing to North"
+        >
+          <Compass 
+            className="h-5 w-5 transition-transform duration-300" 
+            style={{ transform: `rotate(${bearing}deg)` }}
+          />
+        </Button>
+      </div>
       
       <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
         <Button

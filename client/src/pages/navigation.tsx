@@ -1036,7 +1036,7 @@ export default function NavigationPage() {
               {mobileNavMode === 'plan' && (
                 <>
                   {/* Header - Overlay on top */}
-                  <div className="relative z-10 flex items-center justify-between p-4 border-b bg-background mobile-safe-top">
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 border-b bg-background mobile-safe-top">
                     <div className="flex items-center gap-3">
                       <Truck className="w-7 h-7 text-primary" />
                       <span className="text-xl font-semibold">TruckNav Pro</span>
