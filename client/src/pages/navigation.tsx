@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2 } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -1270,26 +1270,8 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Map Control Buttons are now in MapLibreMap component - no duplicates needed here */}
-                  <div className="hidden absolute bottom-32 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto">
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.zoomIn()}
-                      className="h-10 w-10 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-zoom-in-navigate"
-                      aria-label="Zoom in"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.zoomOut()}
-                      className="h-10 w-10 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-zoom-out-navigate"
-                      aria-label="Zoom out"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
+                  {/* Map Control Buttons - Right Side Stack */}
+                  <div className="absolute top-14 right-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
                     <Button
                       size="icon"
                       onClick={() => {
@@ -1297,7 +1279,7 @@ export default function NavigationPage() {
                         setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
                       }}
                       className={cn(
-                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
                         mapViewMode === 'satellite'
                           ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
                           : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
@@ -1305,19 +1287,54 @@ export default function NavigationPage() {
                       data-testid="button-toggle-satellite-navigate"
                       aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
                     >
-                      <Layers className="h-4 w-4" />
+                      <Layers className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => mapRef.current?.resetBearing()}
-                      className="h-10 w-10 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-compass-reset"
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-compass-reset-navigate"
                       aria-label="Reset bearing to North"
                     >
                       <Compass 
-                        className="h-4 w-4 transition-transform duration-300" 
+                        className="h-5 w-5 transition-transform duration-300" 
                         style={{ transform: `rotate(${mapBearing}deg)` }}
                       />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => {
+                        if (mapRef.current) {
+                          mapRef.current.zoomToUserLocation({
+                            zoom: 17.5,
+                            pitch: 45,
+                            duration: 1500
+                          });
+                        }
+                      }}
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-recenter-navigate"
+                      aria-label="Recenter on current location"
+                    >
+                      <Crosshair className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => mapRef.current?.zoomIn()}
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-zoom-in-navigate"
+                      aria-label="Zoom in"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => mapRef.current?.zoomOut()}
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-zoom-out-navigate"
+                      aria-label="Zoom out"
+                    >
+                      <Minus className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
@@ -1326,7 +1343,7 @@ export default function NavigationPage() {
                         setMap3DMode(!map3DMode);
                       }}
                       className={cn(
-                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
                         map3DMode 
                           ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
                           : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
@@ -1334,35 +1351,35 @@ export default function NavigationPage() {
                       data-testid="button-toggle-3d-navigate"
                       aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
                     >
-                      <Box className="h-4 w-4" />
+                      <Box className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => setShowTrafficLayer(!showTrafficLayer)}
                       className={cn(
-                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
                         showTrafficLayer 
                           ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 hover:scale-105 border-amber-400/50"
                           : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
                       )}
-                      data-testid="button-toggle-traffic-mobile"
+                      data-testid="button-toggle-traffic-navigate"
                       aria-label="Toggle traffic layer"
                     >
-                      <Car className="h-4 w-4" />
+                      <Car className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
                       onClick={() => setShowIncidents(!showIncidents)}
                       className={cn(
-                        "h-10 w-10 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
                         showIncidents 
                           ? "bg-gradient-to-br from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 hover:scale-105 border-red-400/50"
                           : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
                       )}
-                      data-testid="button-toggle-incidents-mobile"
+                      data-testid="button-toggle-incidents-navigate"
                       aria-label="Toggle incidents layer"
                     >
-                      <AlertCircle className="h-4 w-4" />
+                      <AlertCircle className="h-5 w-5" />
                     </Button>
                   </div>
 
