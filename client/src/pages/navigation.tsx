@@ -1217,15 +1217,15 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Start CTA - Transparent Bottom Panel */}
-                  <div className="absolute bottom-4 left-0 right-0 z-10 px-2 pb-2 pt-1 mobile-safe-bottom bg-transparent">
+                  {/* Start CTA - Top Left Corner */}
+                  <div className="absolute top-4 left-4 z-10 mobile-safe-top">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       aria-label="Start turn-by-turn navigation with selected route"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "w-full h-6 text-[10px] font-medium rounded-md shadow-md transition-all duration-300",
+                        "h-6 px-2 text-[10px] font-medium rounded-md shadow-md transition-all duration-300",
                         "border hover:scale-105 active:scale-95",
                         "focus-visible:ring-1 focus-visible:ring-offset-1",
                         currentRoute && selectedProfile 
