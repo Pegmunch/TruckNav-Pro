@@ -13,6 +13,8 @@ export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
   getBearing: () => number;
   resetBearing: () => void;
+  toggle3DMode: () => void;
+  is3DMode: () => boolean;
 }
 
 interface MapLibreMapProps {
@@ -105,8 +107,18 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       if (map.current) {
         map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
       }
-    }
-  }), [bearing]);
+    },
+    toggle3DMode: () => {
+      if (!map.current) return;
+      const newMode = !is3DMode;
+      setIs3DMode(newMode);
+      map.current.easeTo({
+        pitch: newMode ? 60 : 0,
+        duration: 800
+      });
+    },
+    is3DMode: () => is3DMode
+  }), [bearing, is3DMode]);
   
   // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({
