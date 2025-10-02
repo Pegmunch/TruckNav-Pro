@@ -1126,6 +1126,19 @@ export default function NavigationPage() {
                     className="absolute bottom-24 right-6 z-20 mobile-safe-bottom"
                   />
 
+                  {/* Settings Button - Top Right */}
+                  <div className="absolute top-4 right-4 z-20 pointer-events-auto">
+                    <Button
+                      size="icon"
+                      onClick={() => setShowVehicleSettings(true)}
+                      className="h-12 w-12 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200"
+                      data-testid="button-settings-preview"
+                      aria-label="Vehicle Settings"
+                    >
+                      <Settings className="h-5 w-5" />
+                    </Button>
+                  </div>
+
                   {/* Route Summary Card + Start CTA - Bottom Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 z-10 p-4 border-t bg-background mobile-safe-bottom">
                     <div className="flex items-center justify-between mb-3">
