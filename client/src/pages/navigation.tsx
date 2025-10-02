@@ -30,7 +30,6 @@ import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
-import RoutePreviewPopup from "@/components/navigation/route-preview-popup";
 import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
 import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-handler";
@@ -58,8 +57,6 @@ export default function NavigationPage() {
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [showRoutePreview, setShowRoutePreview] = useState(true);
-  const [hasInteractedWithPreview, setHasInteractedWithPreview] = useState(false);
   const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
   // Unified sidebar state management - single source of truth
@@ -741,12 +738,8 @@ export default function NavigationPage() {
 
 
 
-  // Handle map click to close route preview (only after user has interacted)
+  // Handle map click to close overlays
   const handleMapClick = () => {
-    // Close route preview if user has interacted with it
-    if (hasInteractedWithPreview && showRoutePreview) {
-      setShowRoutePreview(false);
-    }
     // Close incident feed if user has interacted with it
     if (hasInteractedWithIncidentFeed && showIncidentFeed) {
       setShowIncidentFeed(false);
@@ -1030,7 +1023,6 @@ export default function NavigationPage() {
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
                       onMapClick={handleMapClick}
-                      hideControls={mobileNavMode === 'navigate'}
                     />
                   ) : (
                     <InteractiveMap
@@ -1143,9 +1135,9 @@ export default function NavigationPage() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'navigate' && (
                 <>
-                  {/* Compact Trip Strip - Top Overlay */}
+                  {/* Compact Trip Strip - Top Overlay with border */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-10">
+                    <div className="absolute top-0 left-0 right-0 z-10 border-b-2 border-primary/20">
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
@@ -1155,13 +1147,13 @@ export default function NavigationPage() {
                     </div>
                   )}
 
-                  {/* Traffic & Incidents Toggle Buttons */}
-                  <div className="absolute top-20 right-4 z-[60] flex gap-2 mobile-safe-top pointer-events-auto">
+                  {/* Traffic & Incidents Toggle Buttons - Properly spaced below trip strip */}
+                  <div className="absolute top-[72px] right-3 z-[70] flex flex-col gap-2 pointer-events-auto">
                     <Button
                       variant={showTrafficLayer ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                      className="h-8 px-3 text-xs shadow-lg pointer-events-auto"
+                      className="h-9 w-24 text-xs shadow-lg font-medium pointer-events-auto"
                       data-testid="button-toggle-traffic-mobile"
                     >
                       Traffic
@@ -1170,7 +1162,7 @@ export default function NavigationPage() {
                       variant={showIncidents ? "default" : "outline"}
                       size="sm"
                       onClick={() => setShowIncidents(!showIncidents)}
-                      className="h-8 px-3 text-xs shadow-lg pointer-events-auto"
+                      className="h-9 w-24 text-xs shadow-lg font-medium pointer-events-auto"
                       data-testid="button-toggle-incidents-mobile"
                     >
                       Incidents
@@ -1178,12 +1170,12 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Stop Button - Bottom Left Corner */}
-                  <div className="absolute bottom-4 left-4 z-20 mobile-safe-bottom pointer-events-auto">
+                  <div className="absolute bottom-4 left-4 z-[70] mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
                       variant="destructive"
-                      className="h-9 px-4 shadow-lg text-sm font-semibold pointer-events-auto"
+                      className="h-10 px-5 shadow-lg text-sm font-semibold pointer-events-auto"
                       data-testid="button-stop-navigation"
                     >
                       <X className="w-4 h-4 mr-1" />
@@ -1202,7 +1194,7 @@ export default function NavigationPage() {
                     onMenuClick={() => setSidebarState('open')}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto"
+                    className="absolute bottom-6 right-6 z-[70] mobile-safe-bottom pointer-events-auto"
                   />
 
                   {/* Legal Ownership */}
@@ -1299,10 +1291,6 @@ export default function NavigationPage() {
             isNavigating={isNavigating}
             isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
             isCompletingJourney={completeJourneyMutation.isPending}
-            
-            // Route preview toggle
-            showRoutePreview={showRoutePreview}
-            onRoutePreviewToggle={setShowRoutePreview}
             
             // Sidebar state
             isOpen={isSidebarOpen}
@@ -1448,14 +1436,6 @@ export default function NavigationPage() {
         onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
       />
 
-      {/* Route Preview Popup - Only visible during active navigation */}
-      <RoutePreviewPopup
-        currentRoute={currentRoute}
-        isNavigating={isNavigating && showRoutePreview}
-        currentLocation={currentGPSLocation || undefined}
-        onClose={() => setShowRoutePreview(false)}
-        onInteraction={() => setHasInteractedWithPreview(true)}
-      />
 
       {/* Lane Guidance Popup - Can be triggered manually or during navigation */}
       <LaneGuidancePopup

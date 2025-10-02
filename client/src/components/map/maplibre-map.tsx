@@ -360,6 +360,7 @@ const MapLibreMap = memo(function MapLibreMap({
 
   useEffect(() => {
     if (!map.current || !isLoaded || !currentRoute?.routePath) return;
+    if (!map.current.isStyleLoaded()) return;
 
     const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
@@ -413,6 +414,7 @@ const MapLibreMap = memo(function MapLibreMap({
   // Traffic-aware route coloring
   useEffect(() => {
     if (!map.current || !isLoaded || !currentRoute?.routePath) return;
+    if (!map.current.isStyleLoaded()) return;
 
     const mapInstance = map.current;
     const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
@@ -546,14 +548,18 @@ const MapLibreMap = memo(function MapLibreMap({
 
     // Re-sample when map moves/zooms (traffic tiles might load)
     const handleMapMove = () => {
-      sampleTrafficAlongRoute();
+      if (mapInstance.isStyleLoaded()) {
+        sampleTrafficAlongRoute();
+      }
     };
 
     mapInstance.on('moveend', handleMapMove);
 
     // Auto-refresh traffic route coloring every 2 minutes
     const refreshInterval = setInterval(() => {
-      sampleTrafficAlongRoute();
+      if (mapInstance.isStyleLoaded()) {
+        sampleTrafficAlongRoute();
+      }
     }, 2 * 60 * 1000);
 
     return () => {
@@ -565,6 +571,7 @@ const MapLibreMap = memo(function MapLibreMap({
   // Traffic Flow Layer Implementation with TomTom API
   useEffect(() => {
     if (!map.current || !isLoaded) return;
+    if (!map.current.isStyleLoaded()) return;
 
     const TOMTOM_API_KEY = import.meta.env.VITE_TOMTOM_API_KEY;
     
@@ -665,6 +672,7 @@ const MapLibreMap = memo(function MapLibreMap({
       incidentMarkersRef.current = [];
       return;
     }
+    if (!map.current.isStyleLoaded()) return;
 
     const mapInstance = map.current;
 
@@ -847,7 +855,7 @@ const MapLibreMap = memo(function MapLibreMap({
       
       {!hideControls && (
         <>
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute top-[72px] right-14 z-10">
             <Button
               size="icon"
               variant="secondary"
