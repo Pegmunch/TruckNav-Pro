@@ -688,12 +688,18 @@ export default function NavigationPage() {
     }
   }, [fromLocation, toLocation]);
 
-  // Auto-plan route when both locations are set
+  // Auto-plan route when both locations are set (with 3-second debounce)
   useEffect(() => {
-    // Only auto-plan if we have both locations (min 5 chars each for complete postcodes) and no current route
-    if (fromLocation && fromLocation.length >= 5 && toLocation && toLocation.length >= 5 && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
-      handlePlanRoute(routePreference);
-    }
+    // Clear any existing timeout
+    const timeoutId = setTimeout(() => {
+      // Only auto-plan if we have both locations (min 5 chars each for complete postcodes) and no current route
+      if (fromLocation && fromLocation.length >= 5 && toLocation && toLocation.length >= 5 && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
+        handlePlanRoute(routePreference);
+      }
+    }, 3000); // 3-second delay
+
+    // Cleanup: clear timeout if user continues typing
+    return () => clearTimeout(timeoutId);
   }, [fromLocation, toLocation, routePreference, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
 
   // Effect to automatically show alternative routes when they become available
