@@ -17,6 +17,7 @@ interface MapLibreMapProps {
   showTraffic?: boolean;
   showIncidents?: boolean;
   hideControls?: boolean;
+  isNavigating?: boolean;
 }
 
 interface MapPreferences {
@@ -72,7 +73,8 @@ const MapLibreMap = memo(function MapLibreMap({
   className,
   showTraffic = false,
   showIncidents = false,
-  hideControls = false
+  hideControls = false,
+  isNavigating = false
 }: MapLibreMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -855,23 +857,24 @@ const MapLibreMap = memo(function MapLibreMap({
       
       {!hideControls && (
         <>
-          <div className="absolute top-[72px] right-14 z-10">
+          <div className="absolute top-[72px] right-3 z-[70]">
             <Button
               size="icon"
               variant="secondary"
               onClick={handleCompassClick}
-              className="h-10 w-10 shadow-lg bg-white hover:bg-white/90 text-gray-700 transition-all duration-300"
+              className="h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 transition-all duration-300"
               data-testid="button-compass-reset"
               aria-label="Reset bearing to North"
             >
               <Compass 
-                className="h-5 w-5 transition-transform duration-300" 
+                className="h-3.5 w-3.5 transition-transform duration-300" 
                 style={{ transform: `rotate(${bearing}deg)` }}
               />
             </Button>
           </div>
           
-          <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
+          {!isNavigating && (
+            <div className="absolute bottom-24 right-4 flex flex-col gap-1.5 z-10">
             <Button
               size="icon"
               variant="secondary"
@@ -925,7 +928,8 @@ const MapLibreMap = memo(function MapLibreMap({
             >
               <Layers className="h-3.5 w-3.5" />
             </Button>
-          </div>
+            </div>
+          )}
 
           {/* Speed Display - positioned above MapLibre legal text at bottom */}
           <div className="absolute bottom-14 left-[48%] transform -translate-x-1/2 z-[1150]">

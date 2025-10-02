@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Traffic, AlertCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -1017,6 +1017,7 @@ export default function NavigationPage() {
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
                       onMapClick={handleMapClick}
+                      isNavigating={isNavigating}
                     />
                   ) : (
                     <InteractiveMap
@@ -1144,22 +1145,30 @@ export default function NavigationPage() {
                   {/* Traffic & Incidents Toggle Buttons - Properly spaced below trip strip */}
                   <div className="absolute top-[72px] right-3 z-[70] flex flex-col gap-2 pointer-events-auto">
                     <Button
-                      variant={showTrafficLayer ? "default" : "outline"}
-                      size="sm"
+                      variant="secondary"
+                      size="icon"
                       onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                      className="h-9 w-24 text-xs shadow-lg font-medium pointer-events-auto"
+                      className={cn(
+                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 pointer-events-auto",
+                        showTrafficLayer && "ring-2 ring-primary"
+                      )}
                       data-testid="button-toggle-traffic-mobile"
+                      aria-label="Toggle traffic layer"
                     >
-                      Traffic
+                      <Traffic className="h-3.5 w-3.5" />
                     </Button>
                     <Button
-                      variant={showIncidents ? "default" : "outline"}
-                      size="sm"
+                      variant="secondary"
+                      size="icon"
                       onClick={() => setShowIncidents(!showIncidents)}
-                      className="h-9 w-24 text-xs shadow-lg font-medium pointer-events-auto"
+                      className={cn(
+                        "h-8 w-8 shadow-lg bg-white hover:bg-white/90 text-gray-700 pointer-events-auto",
+                        showIncidents && "ring-2 ring-primary"
+                      )}
                       data-testid="button-toggle-incidents-mobile"
+                      aria-label="Toggle incidents layer"
                     >
-                      Incidents
+                      <AlertCircle className="h-3.5 w-3.5" />
                     </Button>
                   </div>
 
@@ -1350,6 +1359,7 @@ export default function NavigationPage() {
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
                       onMapClick={handleMapClick}
+                      isNavigating={isNavigating}
                     />
                   ) : (
                     <EnhancedRealisticMap
