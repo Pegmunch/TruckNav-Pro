@@ -1218,7 +1218,7 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Start CTA - Transparent Bottom Panel */}
-                  <div className="absolute bottom-0 left-0 right-0 z-10 p-6 mobile-safe-bottom bg-transparent">
+                  <div className="absolute bottom-4 left-0 right-0 z-10 px-6 pb-6 pt-2 mobile-safe-bottom bg-transparent">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
