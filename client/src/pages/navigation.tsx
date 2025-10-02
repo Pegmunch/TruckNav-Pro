@@ -1139,24 +1139,8 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Route Summary Card + Start CTA - Bottom Overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 z-10 p-4 border-t bg-background mobile-safe-bottom">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="text-2xl font-bold text-primary">
-                          {(currentRoute.distance || 0).toFixed(1)} mi
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {Math.round(currentRoute.duration || 0)} minutes
-                        </div>
-                      </div>
-                      {selectedProfile && (
-                        <div className="text-right text-sm text-muted-foreground">
-                          <div>{selectedProfile.name}</div>
-                          <div>{selectedProfile.height}ft H × {selectedProfile.width}ft W</div>
-                        </div>
-                      )}
-                    </div>
+                  {/* Start CTA - Bottom Overlay (No Panel) */}
+                  <div className="absolute bottom-0 left-0 right-0 z-10 p-4 mobile-safe-bottom">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
