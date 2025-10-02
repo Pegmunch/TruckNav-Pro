@@ -24,8 +24,9 @@ export interface MapLibreMapRef {
     zoom?: number;
     pitch?: number;
     duration?: number;
+    fallbackCoordinates?: { lat: number; lng: number };
     onSuccess?: (location: { lat: number; lng: number }) => void;
-    onError?: (error: GeolocationPositionError) => void;
+    onError?: (error: GeolocationPositionError | Error, usedFallback: boolean) => void;
   }) => void;
 }
 
@@ -149,64 +150,122 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         zoom = 17.5,
         pitch = 45,
         duration = 2000,
+        fallbackCoordinates,
         onSuccess,
         onError
       } = options;
 
-      if (!map.current) {
-        console.warn('Map not ready for GPS zoom');
+      // Safety check: Map must be loaded and ready
+      if (!map.current || !isLoaded) {
+        console.error('[GPS-ZOOM] Map not ready for GPS zoom');
+        if (onError) {
+          onError(new Error('Map not ready') as any, false);
+        }
         return;
       }
 
       const mapInstance = map.current;
 
-      // Force street/roads mode if requested
+      // Force street/roads mode if requested (better visibility for navigation)
       if (forceStreetMode && preferences.mapViewMode !== 'roads') {
         const newPrefs = { ...preferences, mapViewMode: 'roads' as const };
         setPreferences(newPrefs);
         saveMapPreferences(newPrefs);
       }
 
-      // Get current GPS position for immediate lock
-      if ('geolocation' in navigator) {
+      // Helper: Zoom to coordinates with flyTo animation
+      const performZoom = (lat: number, lng: number, bearing: number = 0) => {
+        try {
+          mapInstance.flyTo({
+            center: [lng, lat],
+            zoom: zoom,
+            pitch: pitch,
+            bearing: bearing,
+            duration: duration,
+            essential: true // Animation won't be interrupted by user
+          });
+        } catch (err) {
+          console.error('[GPS-ZOOM] Error during flyTo animation:', err);
+        }
+      };
+
+      // Check if geolocation is supported
+      if (!('geolocation' in navigator)) {
+        console.warn('[GPS-ZOOM] Geolocation not supported by browser');
+        
+        // Use fallback if provided
+        if (fallbackCoordinates) {
+          console.log('[GPS-ZOOM] Using fallback coordinates:', fallbackCoordinates);
+          performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
+          if (onSuccess) {
+            onSuccess(fallbackCoordinates);
+          }
+        } else if (onError) {
+          onError(new Error('Geolocation not supported') as any, false);
+        }
+        return;
+      }
+
+      // Attempt GPS acquisition with retry on timeout
+      let retryAttempt = 0;
+      const maxRetries = 1; // One retry for timeout cases
+
+      const attemptGPSAcquisition = () => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { latitude, longitude, heading } = position.coords;
+            // SUCCESS: GPS lock acquired
+            const { latitude, longitude, heading, accuracy } = position.coords;
             const userBearing = heading !== null ? heading : 0;
 
-            // Dramatic flyTo animation to lock onto user position
-            mapInstance.flyTo({
-              center: [longitude, latitude],
-              zoom: zoom,
-              pitch: pitch,
-              bearing: userBearing,
-              duration: duration,
-              essential: true // Animation won't be interrupted
-            });
+            console.log(`[GPS-ZOOM] ✓ GPS lock acquired (accuracy: ${accuracy.toFixed(1)}m, bearing: ${userBearing.toFixed(0)}°)`);
 
-            // Callback with location data
+            // Zoom to user's exact position
+            performZoom(latitude, longitude, userBearing);
+
+            // Success callback
             if (onSuccess) {
               onSuccess({ lat: latitude, lng: longitude });
             }
           },
           (error) => {
-            console.warn('GPS location error during zoom:', error);
-            if (onError) {
-              onError(error);
+            // ERROR: GPS acquisition failed
+            console.warn(`[GPS-ZOOM] GPS error (code ${error.code}): ${error.message}`);
+
+            // Handle specific error cases
+            if (error.code === GeolocationPositionError.TIMEOUT && retryAttempt < maxRetries) {
+              // TIMEOUT: Retry once
+              retryAttempt++;
+              console.log(`[GPS-ZOOM] Retrying GPS acquisition (attempt ${retryAttempt + 1}/${maxRetries + 1})...`);
+              setTimeout(attemptGPSAcquisition, 500); // Small delay before retry
+              return;
+            }
+
+            // Use fallback coordinates if GPS completely failed
+            if (fallbackCoordinates) {
+              console.log('[GPS-ZOOM] GPS unavailable, using fallback coordinates:', fallbackCoordinates);
+              performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
+              
+              if (onError) {
+                // Notify with error but indicate fallback was used
+                onError(error, true);
+              }
+            } else {
+              // No fallback available - just report error
+              if (onError) {
+                onError(error, false);
+              }
             }
           },
           {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0 // Force fresh reading
+            enableHighAccuracy: true, // Use GPS, not WiFi/cell tower
+            timeout: 8000, // 8 seconds (generous for cold start)
+            maximumAge: 0 // Always get fresh position
           }
         );
-      } else {
-        console.warn('Geolocation not available');
-        if (onError) {
-          onError(new Error('Geolocation not supported') as any);
-        }
-      }
+      };
+
+      // Start GPS acquisition
+      attemptGPSAcquisition();
     },
     toggleMapView: () => {
       const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';

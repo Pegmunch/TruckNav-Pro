@@ -414,31 +414,65 @@ export default function NavigationPage() {
       
       // Automatically zoom to user's GPS location in street mode
       setTimeout(() => {
+        // Get fallback coordinates from route start
+        const routeStartCoords = currentRoute?.startCoordinates ? {
+          lat: currentRoute.startCoordinates.lat,
+          lng: currentRoute.startCoordinates.lng
+        } : undefined;
+
         mapRef.current?.zoomToUserLocation({
           forceStreetMode: true,
           zoom: 17.5,
           pitch: 45,
           duration: 2000,
+          fallbackCoordinates: routeStartCoords,
           onSuccess: (location) => {
+            console.log(`[NAV] GPS lock successful at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`);
             toast({
-              title: "Position Locked",
-              description: `Tracking from ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`,
+              title: "📍 Position Locked",
+              description: `Tracking from your location`,
               duration: 2000,
             });
           },
-          onError: (error) => {
-            if (error.code === 1) {
-              toast({
-                title: "GPS Permission Denied",
-                description: "Please enable location access for navigation",
-                variant: "destructive",
-                duration: 5000,
-              });
+          onError: (error, usedFallback) => {
+            // Handle different error types with user-friendly messages
+            if ('code' in error) {
+              const gpsError = error as GeolocationPositionError;
+              
+              if (gpsError.code === GeolocationPositionError.PERMISSION_DENIED) {
+                toast({
+                  title: "GPS Permission Required",
+                  description: usedFallback 
+                    ? "Centered on route start. Enable GPS for live tracking." 
+                    : "Please enable location access in your browser settings",
+                  variant: "destructive",
+                  duration: 6000,
+                });
+              } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
+                toast({
+                  title: usedFallback ? "GPS Signal Weak" : "GPS Timeout",
+                  description: usedFallback 
+                    ? "Using route start. GPS will activate when signal improves." 
+                    : "Unable to acquire GPS signal. Retrying...",
+                  duration: 4000,
+                });
+              } else if (gpsError.code === GeolocationPositionError.POSITION_UNAVAILABLE) {
+                toast({
+                  title: "GPS Unavailable",
+                  description: usedFallback 
+                    ? "Centered on route start. GPS will activate when available." 
+                    : "Location services unavailable",
+                  variant: "destructive",
+                  duration: 5000,
+                });
+              }
             } else {
+              // Generic error (map not ready, etc.)
               toast({
-                title: "GPS Signal Acquiring",
-                description: "Waiting for location signal...",
-                duration: 3000,
+                title: "Unable to Center Map",
+                description: error.message || "Please try again",
+                variant: "destructive",
+                duration: 4000,
               });
             }
           }
