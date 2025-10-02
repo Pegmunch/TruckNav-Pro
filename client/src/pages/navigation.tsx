@@ -1160,7 +1160,7 @@ export default function NavigationPage() {
                   )}
 
                   {/* Compass, Traffic & Incidents Toggle Buttons - Properly spaced below trip strip */}
-                  <div className="absolute top-[216px] right-3 z-[70] flex flex-col gap-2 pointer-events-auto">
+                  <div className="absolute top-[320px] right-3 z-[70] flex flex-col gap-2 pointer-events-auto">
                     <Button
                       variant="secondary"
                       size="icon"
