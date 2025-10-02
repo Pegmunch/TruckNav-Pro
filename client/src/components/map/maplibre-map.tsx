@@ -1217,6 +1217,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             )}
             <Button
               size="icon"
+              onClick={handleRecenter}
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              data-testid="button-recenter"
+              aria-label="Recenter map"
+            >
+              <Crosshair className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
               onClick={handleZoomIn}
               className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-in"
@@ -1232,15 +1241,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               aria-label="Zoom out"
             >
               <Minus className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              onClick={handleRecenter}
-              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
-              data-testid="button-recenter"
-              aria-label="Recenter map"
-            >
-              <Crosshair className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
