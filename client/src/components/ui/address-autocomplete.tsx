@@ -15,6 +15,8 @@ import {
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useGPS } from '@/contexts/gps-context';
+import { detectPostcodeCountry, looksLikePostcode } from '@/lib/postcode-utils';
+import { geocodeUKPostcode, type PostcodeGeocodeResult } from '@/lib/uk-postcode-geocoding';
 
 interface SavedLocation {
   id: number;
@@ -93,6 +95,34 @@ export function AddressAutocomplete({
     open && searchTerm.length >= 3,
     countryCode
   );
+
+  // UK Postcode fallback - Try postcodes.io when Photon returns no results
+  const shouldTryUKPostcode = useMemo(() => {
+    return (
+      debouncedSearch.length >= 5 && // Minimum UK postcode length
+      photonResults.length === 0 && // No Photon results
+      !isLoadingPhoton && // Photon has finished loading
+      looksLikePostcode(debouncedSearch) && // Looks like a postcode
+      detectPostcodeCountry(debouncedSearch) === 'UK' // Specifically UK postcode
+    );
+  }, [debouncedSearch, photonResults.length, isLoadingPhoton]);
+
+  const { data: ukPostcodeResult, isLoading: isLoadingUKPostcode } = useQuery<PostcodeGeocodeResult | null>({
+    queryKey: ['/api/uk-postcode', debouncedSearch],
+    queryFn: async () => {
+      console.log('[UK-POSTCODE] Attempting to geocode:', debouncedSearch);
+      const result = await geocodeUKPostcode(debouncedSearch);
+      if (result) {
+        console.log('[UK-POSTCODE] Success:', result);
+      } else {
+        console.log('[UK-POSTCODE] Not found or invalid');
+      }
+      return result;
+    },
+    enabled: open && shouldTryUKPostcode,
+    staleTime: 300000, // Cache for 5 minutes
+    retry: 1, // Only retry once for postcodes
+  });
 
   // Create location mutation
   const createLocationMutation = useMutation({
@@ -173,6 +203,29 @@ export function AddressAutocomplete({
     setOpen(false);
   }, [onChange, onCoordinatesChange]);
 
+  const handleSelectUKPostcode = useCallback((result: PostcodeGeocodeResult) => {
+    const displayLabel = result.address || result.formatted;
+    
+    setSearchTerm(displayLabel);
+    onChange(displayLabel);
+    onCoordinatesChange?.(result.coordinates);
+    setOpen(false);
+    
+    // Create location entry for this UK postcode result
+    const locationData = {
+      label: displayLabel,
+      coordinates: result.coordinates,
+      isFavorite: false,
+    };
+    
+    createLocationMutation.mutate(locationData);
+    
+    toast({
+      title: "UK Postcode selected",
+      description: displayLabel,
+    });
+  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
+
   const handleInputFocus = useCallback(() => {
     // Always open dropdown on focus to show saved locations
     setOpen(true);
@@ -184,7 +237,7 @@ export function AddressAutocomplete({
     }, 200);
   }, []);
 
-  const isLoading = isLoadingPhoton;
+  const isLoading = isLoadingPhoton || isLoadingUKPostcode;
 
   return (
     <div className="space-y-1">
@@ -219,41 +272,75 @@ export function AddressAutocomplete({
           <CommandList>
             {favoriteLocations.length === 0 && 
              recentLocations.length === 0 && 
-             photonResults.length === 0 && (
+             photonResults.length === 0 && 
+             !ukPostcodeResult && (
               <CommandEmpty>
                 {debouncedSearch.length < 3 
                   ? 'Type at least 3 characters to search'
-                  : 'No addresses found'
+                  : isLoadingUKPostcode
+                    ? 'Checking UK postcode...'
+                    : 'No addresses found'
                 }
               </CommandEmpty>
             )}
 
+            {/* UK Postcode Result (postcodes.io fallback) */}
+            {ukPostcodeResult && (
+              <CommandGroup heading="UK Postcode">
+                <CommandItem
+                  key="uk-postcode-result"
+                  value={ukPostcodeResult.formatted}
+                  onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
+                  className="cursor-pointer bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500"
+                  data-testid="uk-postcode-result"
+                >
+                  <MapPin className="mr-2 h-4 w-4 text-blue-500 shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {ukPostcodeResult.formatted}
+                    </span>
+                    {ukPostcodeResult.city && (
+                      <span className="text-sm text-muted-foreground">
+                        {ukPostcodeResult.city}{ukPostcodeResult.region && `, ${ukPostcodeResult.region}`}
+                      </span>
+                    )}
+                    <span className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Coordinates: {ukPostcodeResult.coordinates.lat.toFixed(5)}, {ukPostcodeResult.coordinates.lng.toFixed(5)}
+                    </span>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+            )}
+
             {/* Photon Results (Worldwide Addresses) */}
             {photonResults.length > 0 && (
-              <CommandGroup heading="Address Results">
-                {photonResults.map((result: PhotonFeature, index: number) => (
-                  <CommandItem
-                    key={`photon-${index}`}
-                    value={formatPhotonDisplay(result)}
-                    onSelect={() => handleSelectPhoton(result)}
-                    className="cursor-pointer"
-                    data-testid={`photon-result-${index}`}
-                  >
-                    <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {result.properties.name || result.properties.street || 'Unknown'}
-                      </span>
-                      {(result.properties.city || result.properties.country) && (
-                        <span className="text-sm text-muted-foreground">
-                          {result.properties.city && `${result.properties.city}, `}
-                          {result.properties.country}
+              <>
+                {ukPostcodeResult && <CommandSeparator />}
+                <CommandGroup heading="Address Results">
+                  {photonResults.map((result: PhotonFeature, index: number) => (
+                    <CommandItem
+                      key={`photon-${index}`}
+                      value={formatPhotonDisplay(result)}
+                      onSelect={() => handleSelectPhoton(result)}
+                      className="cursor-pointer"
+                      data-testid={`photon-result-${index}`}
+                    >
+                      <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {result.properties.name || result.properties.street || 'Unknown'}
                         </span>
-                      )}
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+                        {(result.properties.city || result.properties.country) && (
+                          <span className="text-sm text-muted-foreground">
+                            {result.properties.city && `${result.properties.city}, `}
+                            {result.properties.country}
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
             )}
 
             {/* Favorite Locations */}
