@@ -69,15 +69,16 @@ Preferred communication style: Simple, everyday language.
     - **Enhanced Mobile Marker Visibility**: GPS arrowhead marker uses responsive sizing (56-84px based on devicePixelRatio) with z-index 1000 for visibility above route line. Scales automatically: 1x displays get 56px, 2x Retina maintains 56px, 3x high-end devices get 84px. Blue halo ring, enhanced shadows, and pulse animation for clear position indication.
     - **MapLibre WebGL Reliability**: Comprehensive WebGL capability detection with retry logic (up to 3 attempts), checks for required extensions (OES_standard_derivatives, OES_element_index_uint), localStorage persistence for fallback state, user-facing toast notifications, and custom event system for initialization errors. Ensures reliable fallback to Leaflet on devices with limited GPU support.
 - **Address Autocomplete**: 
-  - **Photon API Integration**: Free worldwide address search using OpenStreetMap data
-  - **Auto-detection**: Automatically switches between postcode lookup and worldwide search
-  - **Postcode Mode**: UK postcode validation with automatic geocoding
-  - **Worldwide Mode**: Photon API for international addresses (cities, landmarks, streets)
+  - **Photon API Only**: Free worldwide address search using OpenStreetMap data (no postcode database)
+  - **Search Method**: Users type city names, street addresses, or landmarks (not raw postcodes)
+  - **Minimum Characters**: 3 characters required to trigger search
   - **Debouncing**: 300ms delay for efficient API usage
   - **Error Resilience**: 5-second timeout, 2 retries with exponential backoff (1s, 2s delays)
   - **Display Format**: "{name/street}, {city}, {country}" with Globe icon
+  - **Saved Locations**: Favorites and recent searches for quick access
   - **Coverage**: NavigationSidebar, RoutePlanningPanel (LocationDropdown), SimplifiedRouteDrawer (AddressAutocomplete)
   - **Keyboard Support**: Enter key to select highlighted suggestions
+  - **Limitation**: Raw UK postcodes may not return results; users should enter full addresses or city names instead
 - **Mobile Compatibility & PWA**:
     - **Progressive Web App**: Full offline support with service worker and IndexedDB caching.
     - **iOS Enhancements**: Custom splash screens for iPhone 15 Pro Max, 15 Pro, SE, 8 Plus, and iPad Pro.

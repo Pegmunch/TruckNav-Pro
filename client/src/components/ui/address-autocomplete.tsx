@@ -6,7 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { MapPin, Loader2, Star, Clock, Globe, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { looksLikePostcode } from '@/lib/postcode-utils';
 import { 
   usePhotonAutocomplete, 
   formatPhotonDisplay, 
@@ -16,20 +15,6 @@ import {
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useGPS } from '@/contexts/gps-context';
-
-interface PostcodeResult {
-  postcode: string;
-  formatted: string;
-  country: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  address?: string;
-  city?: string;
-  region?: string;
-  confidence: number;
-}
 
 interface SavedLocation {
   id: number;
@@ -65,7 +50,6 @@ export function AddressAutocomplete({
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
   const [debouncedSearch, setDebouncedSearch] = useState(value);
-  const [isPostcodeMode, setIsPostcodeMode] = useState(false);
   const { toast } = useToast();
   const gps = useGPS();
 
@@ -97,32 +81,16 @@ export function AddressAutocomplete({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Auto-detect if the input looks like a postcode
-  useEffect(() => {
-    if (searchTerm.trim() && looksLikePostcode(searchTerm)) {
-      setIsPostcodeMode(true);
-    } else {
-      setIsPostcodeMode(false);
-    }
-  }, [searchTerm]);
-
   // Fetch saved locations
   const { data: savedLocations = [] } = useQuery<SavedLocation[]>({
     queryKey: ['/api/locations'],
     staleTime: 300000, // 5 minutes
   });
 
-  // Fetch postcode suggestions (only when in postcode mode)
-  const { data: suggestions = [], isLoading: isLoadingPostcodes } = useQuery<PostcodeResult[]>({
-    queryKey: ['/api/postcodes/search', { postcode: debouncedSearch, country: countryCode }],
-    enabled: isPostcodeMode && debouncedSearch.length >= 2 && open,
-    staleTime: 60000,
-  });
-
-  // Fetch Photon suggestions (only when NOT in postcode mode)
+  // Fetch Photon suggestions (worldwide address search)
   const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
     searchTerm,
-    !isPostcodeMode && open,
+    open && searchTerm.length >= 3,
     countryCode
   );
 
@@ -174,22 +142,6 @@ export function AddressAutocomplete({
     }
   }, [open]);
 
-  const handleSelectSuggestion = useCallback((suggestion: PostcodeResult) => {
-    const selectedValue = suggestion.address || suggestion.formatted;
-    setSearchTerm(selectedValue);
-    onChange(selectedValue);
-    onCoordinatesChange?.(suggestion.coordinates);
-    setOpen(false);
-
-    // Create location entry for this postcode
-    const locationData = {
-      label: selectedValue,
-      coordinates: suggestion.coordinates,
-      isFavorite: false,
-    };
-    createLocationMutation.mutate(locationData);
-  }, [onChange, onCoordinatesChange, createLocationMutation]);
-
   const handleSelectPhoton = useCallback((photonFeature: PhotonFeature) => {
     const displayLabel = formatPhotonDisplay(photonFeature);
     const coordinates = extractPhotonCoordinates(photonFeature);
@@ -232,7 +184,7 @@ export function AddressAutocomplete({
     }, 200);
   }, []);
 
-  const isLoading = isLoadingPostcodes || isLoadingPhoton;
+  const isLoading = isLoadingPhoton;
 
   return (
     <div className="space-y-1">
@@ -267,34 +219,35 @@ export function AddressAutocomplete({
           <CommandList>
             {favoriteLocations.length === 0 && 
              recentLocations.length === 0 && 
-             suggestions.length === 0 && 
              photonResults.length === 0 && (
               <CommandEmpty>
-                {debouncedSearch.length < 2 
-                  ? 'Type at least 2 characters to search'
+                {debouncedSearch.length < 3 
+                  ? 'Type at least 3 characters to search'
                   : 'No addresses found'
                 }
               </CommandEmpty>
             )}
-            
-            {/* Postcode Suggestions */}
-            {suggestions.length > 0 && (
-              <CommandGroup heading="Suggested Addresses">
-                {suggestions.map((suggestion, index) => (
+
+            {/* Photon Results (Worldwide Addresses) */}
+            {photonResults.length > 0 && (
+              <CommandGroup heading="Address Results">
+                {photonResults.map((result: PhotonFeature, index: number) => (
                   <CommandItem
-                    key={`${suggestion.postcode}-${index}`}
-                    value={suggestion.formatted}
-                    onSelect={() => handleSelectSuggestion(suggestion)}
+                    key={`photon-${index}`}
+                    value={formatPhotonDisplay(result)}
+                    onSelect={() => handleSelectPhoton(result)}
                     className="cursor-pointer"
-                    data-testid={`suggestion-${index}`}
+                    data-testid={`photon-result-${index}`}
                   >
-                    <MapPin className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                    <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
                     <div className="flex flex-col">
-                      <span className="font-medium">{suggestion.formatted}</span>
-                      {suggestion.address && (
+                      <span className="font-medium">
+                        {result.properties.name || result.properties.street || 'Unknown'}
+                      </span>
+                      {(result.properties.city || result.properties.country) && (
                         <span className="text-sm text-muted-foreground">
-                          {suggestion.city && `${suggestion.city}, `}
-                          {suggestion.region}
+                          {result.properties.city && `${result.properties.city}, `}
+                          {result.properties.country}
                         </span>
                       )}
                     </div>
@@ -303,41 +256,10 @@ export function AddressAutocomplete({
               </CommandGroup>
             )}
 
-            {/* Photon Results (Worldwide Addresses) */}
-            {photonResults.length > 0 && (
-              <>
-                {suggestions.length > 0 && <CommandSeparator />}
-                <CommandGroup heading="Worldwide Addresses">
-                  {photonResults.map((result: PhotonFeature, index: number) => (
-                    <CommandItem
-                      key={`photon-${index}`}
-                      value={formatPhotonDisplay(result)}
-                      onSelect={() => handleSelectPhoton(result)}
-                      className="cursor-pointer"
-                      data-testid={`photon-result-${index}`}
-                    >
-                      <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {result.properties.name || result.properties.street || 'Unknown'}
-                        </span>
-                        {(result.properties.city || result.properties.country) && (
-                          <span className="text-sm text-muted-foreground">
-                            {result.properties.city && `${result.properties.city}, `}
-                            {result.properties.country}
-                          </span>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </>
-            )}
-
             {/* Favorite Locations */}
             {favoriteLocations.length > 0 && (
               <>
-                {(suggestions.length > 0 || photonResults.length > 0) && <CommandSeparator />}
+                {photonResults.length > 0 && <CommandSeparator />}
                 <CommandGroup heading="Favorites">
                   {favoriteLocations.map((location) => (
                     <CommandItem
@@ -358,7 +280,7 @@ export function AddressAutocomplete({
             {/* Recent Locations */}
             {recentLocations.length > 0 && (
               <>
-                {(favoriteLocations.length > 0 || suggestions.length > 0 || photonResults.length > 0) && <CommandSeparator />}
+                {(favoriteLocations.length > 0 || photonResults.length > 0) && <CommandSeparator />}
                 <CommandGroup heading="Recent">
                   {recentLocations.map((location) => (
                     <CommandItem
@@ -381,7 +303,7 @@ export function AddressAutocomplete({
     </Popover>
     
     {/* Error Display */}
-    {photonError && !isPostcodeMode && debouncedSearch.length >= 3 && (
+    {photonError && debouncedSearch.length >= 3 && (
       <div className="flex items-start gap-2 px-2 py-1.5 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive" data-testid="address-autocomplete-error">
         <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
         <span>Address search unavailable. Please check your connection or try again later.</span>
