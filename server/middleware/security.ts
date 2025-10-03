@@ -450,7 +450,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     });
     
     // Auto-generate token for seamless recovery
-    const newToken = require('crypto').randomBytes(32).toString('hex');
+    const newToken = crypto.randomBytes(32).toString('hex');
     req.session.csrfTokens = [{
       token: newToken,
       timestamp: Date.now()
@@ -481,7 +481,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     // For robust recovery, try auto-generating a fresh token
     if (!token) {
       console.warn(`[CSRF] No token provided for ${req.method} ${req.url} - generating recovery token`);
-      const recoveryToken = require('crypto').randomBytes(32).toString('hex');
+      const recoveryToken = crypto.randomBytes(32).toString('hex');
       req.session.csrfTokens.push({
         token: recoveryToken,
         timestamp: Date.now()
