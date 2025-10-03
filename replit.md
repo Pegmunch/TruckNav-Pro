@@ -61,7 +61,16 @@ Preferred communication style: Simple, everyday language.
     - **GPS Singleton Provider (Battery Optimized)**: Centralized GPS tracking using React Context pattern eliminates duplicate geolocation watchers. Single `navigator.geolocation.watchPosition` for entire app shared across all components (MapLibreMap, SpeedDisplay). Location: `client/src/contexts/gps-context.tsx`. Features: EMA heading smoothing (alpha=0.25) with circular angle interpolation for smooth map rotation, dynamic smoothing enabled during navigation only, proper cleanup on unmount. Prevents battery drain from multiple concurrent GPS watchers.
     - **Enhanced Mobile Marker Visibility**: GPS arrowhead marker uses responsive sizing (56-84px based on devicePixelRatio) with z-index 1000 for visibility above route line. Scales automatically: 1x displays get 56px, 2x Retina maintains 56px, 3x high-end devices get 84px. Blue halo ring, enhanced shadows, and pulse animation for clear position indication.
     - **MapLibre WebGL Reliability**: Comprehensive WebGL capability detection with retry logic (up to 3 attempts), checks for required extensions (OES_standard_derivatives, OES_element_index_uint), localStorage persistence for fallback state, user-facing toast notifications, and custom event system for initialization errors. Ensures reliable fallback to Leaflet on devices with limited GPU support.
-- **Address Autocomplete**: Debounced search with postcode suggestions for UK, US, CA, AU, DE, and FR.
+- **Address Autocomplete**: 
+  - **Photon API Integration**: Free worldwide address search using OpenStreetMap data
+  - **Auto-detection**: Automatically switches between postcode lookup and worldwide search
+  - **Postcode Mode**: UK postcode validation with automatic geocoding
+  - **Worldwide Mode**: Photon API for international addresses (cities, landmarks, streets)
+  - **Debouncing**: 300ms delay for efficient API usage
+  - **Error Resilience**: 5-second timeout, 2 retries with exponential backoff (1s, 2s delays)
+  - **Display Format**: "{name/street}, {city}, {country}" with Globe icon
+  - **Coverage**: NavigationSidebar, RoutePlanningPanel (LocationDropdown), SimplifiedRouteDrawer (AddressAutocomplete)
+  - **Keyboard Support**: Enter key to select highlighted suggestions
 - **Mobile Compatibility**:
     - Screen Wake Lock API.
     - Safe-area handling for iOS.
@@ -89,6 +98,14 @@ Preferred communication style: Simple, everyday language.
   - **Required Environment Variable**: `VITE_TOMTOM_API_KEY` - TomTom API key for traffic data access.
   - **Features**: Automatic color-coded traffic flow (red=heavy, orange=moderate, yellow=light, green=free flow).
   - **Auto-refresh**: Traffic data updates every 5 minutes.
+
+## Address Autocomplete Services
+- **Photon API**: Free worldwide address autocomplete (OpenStreetMap-based, no API key required)
+  - **Endpoint**: https://photon.komoot.io/api/
+  - **Features**: Worldwide geocoding and address search with automatic language detection
+  - **Integration**: 300ms debounced requests with 5-second timeout and 2 retries
+  - **Error Handling**: Graceful degradation with exponential backoff
+  - **Components**: LocationDropdown, AddressAutocomplete, NavigationSidebar
 
 ## Mapping Libraries
 - **MapLibre GL JS**: Primary vector map engine.
