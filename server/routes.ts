@@ -1056,9 +1056,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vehicleProfile = await storage.getVehicleProfile(vehicleProfileId);
       }
 
-      // Use provided coordinates or fallback to UK defaults
-      const startCoords = startCoordinates || { lat: 51.8787, lng: -0.4200 }; // Luton, Bedfordshire
-      const endCoords = endCoordinates || { lat: 51.9948, lng: -0.5892 }; // Flitwick, Bedfordshire
+      // Use provided coordinates or return error if missing
+      if (!startCoordinates || !endCoordinates) {
+        return res.status(400).json({ 
+          message: "Start and end coordinates are required for route calculation" 
+        });
+      }
+      
+      const startCoords = startCoordinates;
+      const endCoords = endCoordinates;
       
       // Pre-route validation: Check if vehicle type is provided and valid
       if (vehicleProfileId && vehicleProfile) {
