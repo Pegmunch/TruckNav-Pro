@@ -1169,18 +1169,6 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Plan Route FAB */}
-                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
-                    <Button
-                      onClick={() => setSidebarState('open')}
-                      size="lg"
-                      className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
-                      data-testid="button-plan-route-fab"
-                      aria-label="Open route planner"
-                    >
-                      <Menu className="w-6 h-6" />
-                    </Button>
-                  </div>
 
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
@@ -1439,6 +1427,17 @@ export default function NavigationPage() {
                       <span className="text-[10px]">Stop Navigation</span>
                     </Button>
                   </div>
+
+                  {/* Hamburger Menu - Bottom Right */}
+                  <MobileFAB
+                    mode="navigate"
+                    onSettingsClick={() => setShowVehicleSettings(true)}
+                    onClearRoute={handleStopNavigation}
+                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
+                    onReportIncident={() => setShowIncidentReportDialog(true)}
+                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom pointer-events-auto"
+                  />
 
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
