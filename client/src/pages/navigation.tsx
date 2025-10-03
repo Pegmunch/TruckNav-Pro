@@ -1496,14 +1496,14 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Speedometer - Lower position for navigation */}
-                  <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                  <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
                     <SpeedDisplay 
                       className="shadow-2xl"
                     />
                   </div>
 
                   {/* Stop Button - Below Speedometer (centered) */}
-                  <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[100] mobile-safe-bottom pointer-events-auto">
+                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[170] mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
