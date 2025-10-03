@@ -73,7 +73,8 @@ const LocationDropdown = memo(function LocationDropdown({
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
-    if (!gps?.position) return undefined;
+    // Default to UK for truck navigation (until GPS confirms otherwise)
+    if (!gps?.position) return 'GB';
     
     const { latitude, longitude } = gps.position;
     
@@ -82,7 +83,7 @@ const LocationDropdown = memo(function LocationDropdown({
       return 'GB';
     }
     
-    // If outside UK, show all results (no filter)
+    // If GPS shows user is outside UK, allow worldwide search
     return undefined;
   }, [gps?.position]);
 
