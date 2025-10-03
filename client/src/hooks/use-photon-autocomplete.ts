@@ -44,24 +44,42 @@ export const usePhotonAutocomplete = (query: string, enabled: boolean = true) =>
   const { data, isLoading, error } = useQuery<PhotonFeature[]>({
     queryKey: ["/api/photon", debouncedQuery],
     queryFn: async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       try {
         const response = await fetch(
-          `https://photon.komoot.io/api?q=${encodeURIComponent(debouncedQuery)}&limit=5`
+          `https://photon.komoot.io/api?q=${encodeURIComponent(debouncedQuery)}&limit=5`,
+          { signal: controller.signal }
         );
         
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-          throw new Error(`Photon API error: ${response.status}`);
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const data: PhotonResponse = await response.json();
         return data.features || [];
       } catch (err) {
-        console.error("Photon autocomplete error:", err);
+        clearTimeout(timeoutId);
+        
+        if (err instanceof Error) {
+          if (err.name === 'AbortError') {
+            console.warn('[PHOTON] Request timeout after 5 seconds');
+          } else {
+            console.warn('[PHOTON] Error:', err.message);
+          }
+        } else {
+          console.warn('[PHOTON] Unknown error:', err);
+        }
+        
         return [];
       }
     },
     enabled: shouldFetch,
-    retry: false,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
