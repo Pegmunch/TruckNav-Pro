@@ -7,8 +7,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Check, AlertCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLegalConsent } from "@/hooks/use-legal-consent";
 import type { SubscriptionPlan } from "@shared/schema";
 
 interface SubscriptionCreateResponse {
@@ -22,8 +24,10 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
   const elements = useElements();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { hasAcceptedTerms, setConsentAccepted } = useLegalConsent();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +56,9 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
           variant: "destructive",
         });
       } else {
+        // Save consent on successful payment
+        setConsentAccepted();
+        
         toast({
           title: "Subscription Activated!",
           description: `You now have access to ${plan.name}.`,
@@ -118,6 +125,56 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
         </CardContent>
       </Card>
 
+      {/* Terms Acceptance Card */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="terms-acceptance"
+                  data-testid="checkbox-terms-acceptance"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  className="mt-1"
+                />
+                <label
+                  htmlFor="terms-acceptance"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  I agree to the{" "}
+                  <a
+                    href="/legal-popup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline hover:text-primary/80 font-medium"
+                    data-testid="link-terms-of-service"
+                  >
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="/legal-popup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline hover:text-primary/80 font-medium"
+                    data-testid="link-privacy-policy"
+                  >
+                    Privacy Policy
+                  </a>
+                </label>
+              </div>
+              {!termsAccepted && (
+                <p className="text-xs text-muted-foreground ml-6">
+                  You must accept the terms before completing your payment
+                </p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Error Message */}
       {errorMessage && (
         <Alert variant="destructive">
@@ -141,7 +198,7 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
         <Button
           type="submit"
           data-testid="button-submit-payment"
-          disabled={!stripe || isProcessing}
+          disabled={!stripe || isProcessing || !termsAccepted}
           className="flex-1"
           size="lg"
         >
@@ -150,6 +207,8 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
               Processing...
             </>
+          ) : !termsAccepted ? (
+            "Accept Terms to Continue"
           ) : (
             `Pay £${parseFloat(plan.priceGBP).toFixed(2)}`
           )}
