@@ -1,0 +1,108 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+interface PhotonProperties {
+  name?: string;
+  street?: string;
+  housenumber?: string;
+  city?: string;
+  country?: string;
+  postcode?: string;
+  state?: string;
+  district?: string;
+}
+
+interface PhotonGeometry {
+  coordinates: [number, number]; // [longitude, latitude]
+  type: string;
+}
+
+export interface PhotonFeature {
+  type: string;
+  geometry: PhotonGeometry;
+  properties: PhotonProperties;
+}
+
+interface PhotonResponse {
+  features: PhotonFeature[];
+}
+
+export const usePhotonAutocomplete = (query: string, enabled: boolean = true) => {
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  // Debounce the query with 300ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const shouldFetch = enabled && debouncedQuery.length >= 3;
+
+  const { data, isLoading, error } = useQuery<PhotonFeature[]>({
+    queryKey: ["/api/photon", debouncedQuery],
+    queryFn: async () => {
+      try {
+        const response = await fetch(
+          `https://photon.komoot.io/api?q=${encodeURIComponent(debouncedQuery)}&limit=5`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Photon API error: ${response.status}`);
+        }
+
+        const data: PhotonResponse = await response.json();
+        return data.features || [];
+      } catch (err) {
+        console.error("Photon autocomplete error:", err);
+        return [];
+      }
+    },
+    enabled: shouldFetch,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  return {
+    results: data || [],
+    isLoading: shouldFetch && isLoading,
+    error,
+  };
+};
+
+// Helper function to format a Photon feature for display
+export const formatPhotonDisplay = (feature: PhotonFeature): string => {
+  const props = feature.properties;
+  
+  // Build address parts
+  const parts: string[] = [];
+  
+  // Street address
+  if (props.housenumber && props.street) {
+    parts.push(`${props.housenumber} ${props.street}`);
+  } else if (props.street) {
+    parts.push(props.street);
+  } else if (props.name) {
+    parts.push(props.name);
+  }
+  
+  // City
+  if (props.city) {
+    parts.push(props.city);
+  }
+  
+  // Country
+  if (props.country) {
+    parts.push(props.country);
+  }
+  
+  return parts.length > 0 ? parts.join(", ") : "Unknown location";
+};
+
+// Helper function to extract coordinates from Photon feature
+export const extractPhotonCoordinates = (feature: PhotonFeature): { lat: number; lng: number } => {
+  const [lng, lat] = feature.geometry.coordinates;
+  return { lat, lng };
+};

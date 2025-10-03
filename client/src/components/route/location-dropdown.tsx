@@ -33,6 +33,12 @@ import {
   POSTCODE_PATTERNS, 
   type PostcodeCountry 
 } from "@/lib/postcode-utils";
+import { 
+  usePhotonAutocomplete, 
+  formatPhotonDisplay, 
+  extractPhotonCoordinates,
+  type PhotonFeature 
+} from "@/hooks/use-photon-autocomplete";
 
 interface LocationDropdownProps {
   value: string;
@@ -157,6 +163,12 @@ const LocationDropdown = memo(function LocationDropdown({
     retry: false,
   });
 
+  // Photon autocomplete (only active when NOT in postcode mode)
+  const { results: photonResults, isLoading: isLoadingPhoton } = usePhotonAutocomplete(
+    searchValue,
+    !isPostcodeMode // Only enabled when NOT in postcode mode
+  );
+
   // Postcode geocoding mutation for exact lookups
   const geocodePostcodeMutation = useMutation({
     mutationFn: async (postcodeData: { postcode: string; country?: string }) => {
@@ -276,6 +288,30 @@ const LocationDropdown = memo(function LocationDropdown({
     toast({
       title: "Postcode selected",
       description: `${postcodeResult.formatted} - ${postcodeResult.address || postcodeResult.city}`,
+    });
+  }, [onChange, createLocationMutation, toast]);
+
+  // Handle Photon result selection
+  const handlePhotonSelect = useCallback((photonFeature: PhotonFeature) => {
+    const displayLabel = formatPhotonDisplay(photonFeature);
+    const coordinates = extractPhotonCoordinates(photonFeature);
+    
+    onChange(displayLabel);
+    setSearchValue(displayLabel);
+    setOpen(false);
+    
+    // Create location entry for this Photon result
+    const locationData = {
+      label: displayLabel,
+      coordinates,
+      isFavorite: false,
+    };
+    
+    createLocationMutation.mutate(locationData);
+    
+    toast({
+      title: "Location selected",
+      description: displayLabel,
     });
   }, [onChange, createLocationMutation, toast]);
 
@@ -417,7 +453,7 @@ const LocationDropdown = memo(function LocationDropdown({
                 }}
               />
               <CommandList>
-                {(isLoadingAll || isLoadingFavorites || isLoadingPostcodes) && (
+                {(isLoadingAll || isLoadingFavorites || isLoadingPostcodes || isLoadingPhoton) && (
                   <div className="p-4 space-y-2">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
@@ -488,6 +524,41 @@ const LocationDropdown = memo(function LocationDropdown({
                       </p>
                     </div>
                   </CommandEmpty>
+                )}
+
+                {/* Photon Worldwide Address Search Results - Only shown when NOT in postcode mode */}
+                {!isPostcodeMode && photonResults.length > 0 && (
+                  <>
+                    {(postcodeResults.length > 0 || favoriteLocations.length > 0 || sortedLocations.length > 0) && <Separator />}
+                    <CommandGroup heading="Worldwide Addresses">
+                      {photonResults.map((feature: PhotonFeature, index: number) => {
+                        const displayLabel = formatPhotonDisplay(feature);
+                        const props = feature.properties;
+                        
+                        return (
+                          <CommandItem
+                            key={`photon-${index}`}
+                            value={displayLabel}
+                            onSelect={() => handlePhotonSelect(feature)}
+                            className="flex items-center justify-between cursor-pointer"
+                            data-testid={`photon-result-${index}`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <Globe className="w-4 h-4 text-primary" />
+                              <div>
+                                <div className="font-medium">
+                                  {props.name || props.street || 'Unknown'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {[props.city, props.country].filter(Boolean).join(", ")}
+                                </div>
+                              </div>
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </>
                 )}
 
                 {favoriteLocations.length > 0 && (
