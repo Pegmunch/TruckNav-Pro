@@ -125,10 +125,11 @@ export function MobileFAB({
         className={cn(
           'h-16 w-16 rounded-2xl',
           'shadow-2xl',
-          'bg-gradient-to-br from-blue-500 to-blue-600',
-          'hover:from-blue-600 hover:to-blue-700',
-          'backdrop-blur-md border border-blue-400/50',
+          'backdrop-blur-md',
           'transition-all duration-200 hover:scale-105 active:scale-95',
+          mode === 'navigate' 
+            ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50'
+            : 'bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border border-blue-400/50',
           isExpanded && 'rotate-45'
         )}
         data-testid="fab-main"
