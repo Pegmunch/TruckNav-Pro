@@ -947,12 +947,12 @@ export default function NavigationPage() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            // GPS available - zoom to exact position
+            // GPS available - zoom to exact position (nearly maximum zoom for street view)
             const gpsPosition = {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
-              zoom: 17.5,
-              pitch: 45,
+              zoom: 19.5,
+              pitch: 60,
               bearing: 0
             };
             
@@ -973,8 +973,8 @@ export default function NavigationPage() {
               const fallbackPosition = {
                 lat: route.startCoordinates.lat,
                 lng: route.startCoordinates.lng,
-                zoom: 17.5,
-                pitch: 45,
+                zoom: 19.5,
+                pitch: 60,
                 bearing: 0
               };
               
@@ -1004,8 +1004,8 @@ export default function NavigationPage() {
           const fallbackPosition = {
             lat: route.startCoordinates.lat,
             lng: route.startCoordinates.lng,
-            zoom: 17.5,
-            pitch: 45,
+            zoom: 19.5,
+            pitch: 60,
             bearing: 0
           };
           
