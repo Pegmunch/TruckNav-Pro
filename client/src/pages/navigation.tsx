@@ -1427,7 +1427,7 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Speedometer - Lower position for navigation */}
-                  <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                  <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
                     <SpeedDisplay 
                       className="shadow-2xl"
                     />
