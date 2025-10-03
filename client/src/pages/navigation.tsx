@@ -119,6 +119,9 @@ export default function NavigationPage() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('plan');
   
+  // Start Navigation button position (tap to position in preview mode)
+  const [startButtonPosition, setStartButtonPosition] = useState<{ x: number; y: number } | null>(null);
+  
   // Map reference for compass and 3D tilt control
   const mapRef = useRef<MapLibreMapRef>(null);
   const [mapBearing, setMapBearing] = useState(0);
@@ -1191,6 +1194,17 @@ export default function NavigationPage() {
               {/* PREVIEW MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'preview' && currentRoute && (
                 <>
+                  {/* Tap-to-Position Overlay for Start Button */}
+                  <div 
+                    className="absolute inset-0 z-[5]"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const y = e.clientY - rect.top;
+                      setStartButtonPosition({ x, y });
+                    }}
+                  />
+
                   {/* FAB for secondary controls - Hamburger Menu Bottom Right */}
                   <MobileFAB
                     mode="preview"
@@ -1218,10 +1232,28 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Start CTA - Above Speedometer (centered) */}
-                  <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 z-10 mobile-safe-bottom">
+                  {/* Start CTA - Tap to Position */}
+                  <div 
+                    className="absolute z-10 mobile-safe-bottom"
+                    style={
+                      startButtonPosition 
+                        ? {
+                            left: `${startButtonPosition.x}px`,
+                            top: `${startButtonPosition.y}px`,
+                            transform: 'translate(-50%, -50%)'
+                          }
+                        : {
+                            bottom: '56px',
+                            left: '50%',
+                            transform: 'translateX(-50%)'
+                          }
+                    }
+                  >
                     <Button
-                      onClick={handleStartNavigation}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStartNavigation();
+                      }}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       aria-label="Start turn-by-turn navigation with selected route"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
