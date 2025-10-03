@@ -146,6 +146,12 @@ export function AddressAutocomplete({
     }
   }, [onChange]);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && open) {
+      e.preventDefault();
+    }
+  }, [open]);
+
   const handleSelectSuggestion = useCallback((suggestion: PostcodeResult) => {
     const selectedValue = suggestion.address || suggestion.formatted;
     setSearchTerm(selectedValue);
@@ -211,6 +217,7 @@ export function AddressAutocomplete({
             id={id}
             value={searchTerm}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             placeholder={placeholder}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { 
   Settings, 
   Truck, 
@@ -144,12 +145,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [showIncidentReporting, setShowIncidentReporting] = useState(false);
   const [showVoiceNavigation, setShowVoiceNavigation] = useState(false);
 
-  // Current location input handling
-  const [currentLocationInput, setCurrentLocationInput] = useState("");
-  
-  // Destination input handling
-  const [destinationInput, setDestinationInput] = useState("");
-
   // Search functionality state
   const [facilitySearchInput, setFacilitySearchInput] = useState("");
   const [selectedPOICategory, setSelectedPOICategory] = useState<string>("");
@@ -203,43 +198,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Handle current location search
-  const handleCurrentLocationSearch = () => {
-    if (!currentLocationInput.trim()) {
-      toast({
-        title: "Please enter a location",
-        description: "Enter a current location to search for",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    onFromLocationChange(currentLocationInput.trim());
-    
-    toast({
-      title: "Current location set",
-      description: `Starting point updated to: ${currentLocationInput.trim()}`
-    });
-  };
-
-  // Handle destination search
-  const handleDestinationSearch = () => {
-    if (!destinationInput.trim()) {
-      toast({
-        title: "Please enter a destination",
-        description: "Enter a destination to search for",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    onToLocationChange(destinationInput.trim());
-    
-    toast({
-      title: "Destination set",
-      description: `Destination updated to: ${destinationInput.trim()}`
-    });
-  };
 
   // Handle use current GPS location
   const handleUseCurrentLocation = () => {
@@ -640,77 +598,28 @@ const NavigationSidebar = memo(function NavigationSidebar({
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Current Location Input */}
-                <div className="flex space-x-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      placeholder="Enter your current location..."
-                      value={currentLocationInput}
-                      onChange={(e) => setCurrentLocationInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          // If route exists and we can start navigation, do that instead of searching
-                          if (currentRoute && selectedProfile && fromLocation && toLocation && !isNavigating && !isStartingJourney && !isCompletingJourney) {
-                            onStartNavigation();
-                          } else {
-                            handleCurrentLocationSearch();
-                          }
-                        }
-                      }}
-                      className="automotive-input"
-                      data-testid="input-current-location"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleCurrentLocationSearch}
-                    disabled={!currentLocationInput.trim()}
-                    size="sm"
-                    className="automotive-button shrink-0"
-                    data-testid="button-search-current-location"
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
+                <div>
+                  <AddressAutocomplete
+                    value={fromLocation}
+                    onChange={onFromLocationChange}
+                    placeholder="Enter your current location..."
+                    id="current-location-input"
+                    testId="input-current-location"
+                    className="automotive-input"
+                  />
                 </div>
 
                 {/* Destination Input */}
-                <div className="flex space-x-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      placeholder="Enter your destination..."
-                      value={destinationInput}
-                      onChange={(e) => setDestinationInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          // If route exists and we can start navigation, do that instead of searching
-                          if (currentRoute && selectedProfile && fromLocation && toLocation && !isNavigating && !isStartingJourney && !isCompletingJourney) {
-                            onStartNavigation();
-                          } else {
-                            handleDestinationSearch();
-                          }
-                        }
-                      }}
-                      className="automotive-input"
-                      data-testid="input-destination"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleDestinationSearch}
-                    disabled={!destinationInput.trim()}
-                    size="sm"
-                    className="automotive-button shrink-0"
-                    data-testid="button-search-destination"
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
+                <div>
+                  <AddressAutocomplete
+                    value={toLocation}
+                    onChange={onToLocationChange}
+                    placeholder="Enter your destination..."
+                    id="destination-input"
+                    testId="input-destination"
+                    className="automotive-input"
+                  />
                 </div>
-
-                {/* Auto-search and plan route when both locations are entered */}
-                {(currentLocationInput.trim() && destinationInput.trim() && !fromLocation && !toLocation) && (
-                  <div className="text-center text-sm text-muted-foreground">
-                    Press Search buttons to set locations
-                  </div>
-                )}
 
                 {/* Location Status */}
                 {fromLocation && (
