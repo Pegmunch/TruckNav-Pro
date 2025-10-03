@@ -1,4 +1,4 @@
-import { Crosshair, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +15,7 @@ interface SimplifiedRouteDrawerProps {
   routePreference: 'fastest' | 'eco' | 'avoid_tolls';
   onRoutePreferenceChange: (value: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onUseCurrentLocation?: () => void;
+  onPlanRoute?: () => void;
 }
 
 export function SimplifiedRouteDrawer({
@@ -26,7 +27,8 @@ export function SimplifiedRouteDrawer({
   onToCoordinatesChange,
   routePreference,
   onRoutePreferenceChange,
-  onUseCurrentLocation
+  onUseCurrentLocation,
+  onPlanRoute
 }: SimplifiedRouteDrawerProps) {
   const gps = useGPS();
 
@@ -93,14 +95,28 @@ export function SimplifiedRouteDrawer({
           <Label htmlFor="to-location" className="text-sm font-medium">
             To
           </Label>
-          <AddressAutocomplete
-            id="to-location"
-            value={toLocation}
-            onChange={onToLocationChange}
-            onCoordinatesChange={onToCoordinatesChange}
-            placeholder=""
-            testId="input-to-location"
-          />
+          <div className="flex gap-2">
+            <AddressAutocomplete
+              id="to-location"
+              value={toLocation}
+              onChange={onToLocationChange}
+              onCoordinatesChange={onToCoordinatesChange}
+              placeholder=""
+              testId="input-to-location"
+              className="flex-1"
+            />
+            <Button
+              variant="default"
+              size="lg"
+              onClick={onPlanRoute}
+              disabled={!fromLocation || !toLocation}
+              className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold shrink-0"
+              data-testid="button-plan-route"
+            >
+              <Navigation className="w-5 h-5 mr-2" />
+              GO
+            </Button>
+          </div>
         </div>
       </div>
 

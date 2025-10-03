@@ -1415,8 +1415,7 @@ function NavigationPageContent() {
         )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
-        <div className="pwa-safe-area-wrapper relative">
-          <div className="mobile-layout h-[100svh] flex flex-col relative">
+        <div className="mobile-layout">
           
           {/* AR Mode (Full Replacement) */}
           {isARMode ? (
@@ -1476,17 +1475,19 @@ function NavigationPageContent() {
                   </div>
 
                   {/* Plan Route FAB - Opens route planner */}
-                  <div className="absolute bottom-6 right-6 z-20 mobile-safe-bottom pointer-events-auto">
-                    <Button
-                      onClick={() => setSidebarState('open')}
-                      size="lg"
-                      className="h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm"
-                      data-testid="button-plan-route-fab"
-                      aria-label="Open route planner"
-                    >
-                      <Menu className="w-6 h-6" />
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={() => setSidebarState('open')}
+                    size="lg"
+                    className="fixed z-20 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    style={{
+                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      right: 'calc(24px + var(--safe-area-right))'
+                    }}
+                    data-testid="button-plan-route-fab"
+                    aria-label="Open route planner"
+                  >
+                    <Menu className="w-6 h-6" />
+                  </Button>
 
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
@@ -1516,13 +1517,13 @@ function NavigationPageContent() {
                   </div>
 
                   {/* Start CTA - Green "GO" Hamburger Button (centered above speedometer) */}
-                  <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-[150] mobile-safe-bottom">
-                    <Button
+                  <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       aria-label="Start turn-by-turn navigation"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
+                        "absolute left-1/2 transform -translate-x-1/2 z-[150]",
                         "h-10 w-10 rounded-lg shadow-2xl transition-all duration-300",
                         "hover:scale-110 active:scale-95",
                         "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-400",
@@ -1530,6 +1531,7 @@ function NavigationPageContent() {
                           ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-2 border-green-400 shadow-green-500/50" 
                           : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-2 border-gray-500 cursor-not-allowed"
                       )}
+                      style={{ bottom: 'calc(192px + var(--safe-area-bottom))' }}
                       data-testid="button-start-navigation-go"
                     >
                       {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
@@ -1541,10 +1543,9 @@ function NavigationPageContent() {
                         </div>
                       )}
                     </Button>
-                  </div>
 
                   {/* Speedometer - Below Start Navigation button */}
-                  <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[160]" style={{ bottom: 'calc(160px + var(--safe-area-bottom))' }}>
                     <SpeedDisplay 
                       className="shadow-2xl"
                     />
@@ -1561,7 +1562,11 @@ function NavigationPageContent() {
                     onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom pointer-events-auto"
+                    className="fixed z-[200] pointer-events-auto"
+                    style={{
+                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      right: 'calc(24px + var(--safe-area-right))'
+                    }}
                   />
 
                   {/* Legal Ownership */}
@@ -1613,7 +1618,7 @@ function NavigationPageContent() {
 
                   {/* Compact Trip Strip - Below Header */}
                   {currentRoute && (
-                    <div className="absolute top-10 left-0 right-0 z-[90] border-b-2 border-primary/20 mobile-safe-top">
+                    <div className="absolute left-0 right-0 z-[90] border-b-2 border-primary/20" style={{ top: 'calc(40px + var(--safe-area-top))' }}>
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
@@ -1624,7 +1629,7 @@ function NavigationPageContent() {
                   )}
 
                   {/* Map Control Buttons - Top Left Stack */}
-                  <div className="absolute top-4 left-4 z-[80] flex flex-col gap-2.5 pointer-events-auto mobile-safe-top">
+                  <div className="absolute left-4 z-[80] flex flex-col gap-2.5 pointer-events-auto" style={{ top: 'calc(16px + var(--safe-area-top))' }}>
                     <Button
                       size="icon"
                       onClick={() => {
@@ -1737,14 +1742,14 @@ function NavigationPageContent() {
                   </div>
 
                   {/* Speedometer - Lower position for navigation */}
-                  <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[160]" style={{ bottom: 'calc(96px + var(--safe-area-bottom))' }}>
                     <SpeedDisplay 
                       className="shadow-2xl"
                     />
                   </div>
 
                   {/* Stop Button - Below Speedometer (centered) */}
-                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[170] mobile-safe-bottom pointer-events-auto">
+                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[170] pointer-events-auto" style={{ bottom: 'calc(24px + var(--safe-area-bottom))' }}>
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
@@ -1765,7 +1770,11 @@ function NavigationPageContent() {
                     onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom pointer-events-auto"
+                    className="fixed z-[200] pointer-events-auto"
+                    style={{
+                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      right: 'calc(24px + var(--safe-area-right))'
+                    }}
                   />
 
                   {/* Legal Ownership */}
@@ -1790,7 +1799,7 @@ function NavigationPageContent() {
               {/* Panel */}
               <div className="fixed inset-0 z-50 bg-white flex flex-col">
                 {/* Header with close button */}
-                <div className="flex items-center justify-between p-4 border-b mobile-safe-top">
+                <div className="flex items-center justify-between p-4 border-b" style={{ paddingTop: 'calc(16px + var(--safe-area-top))' }}>
                   <h2 className="text-xl font-semibold">Plan Route</h2>
                   <Button
                     variant="ghost"
@@ -1815,13 +1824,13 @@ function NavigationPageContent() {
                     routePreference={routePreference}
                     onRoutePreferenceChange={setRoutePreference}
                     onUseCurrentLocation={handleUseCurrentLocation}
+                    onPlanRoute={() => handlePlanRoute()}
                   />
                 </div>
               </div>
             </>
           )}
 
-          </div>
         </div>
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */

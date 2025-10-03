@@ -21,6 +21,7 @@ interface MobileFABProps {
   onReportIncident?: () => void;
   onViewIncidents?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function MobileFAB({
@@ -31,7 +32,8 @@ export function MobileFAB({
   onLayersClick,
   onReportIncident,
   onViewIncidents,
-  className
+  className,
+  style
 }: MobileFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -81,10 +83,13 @@ export function MobileFAB({
   ].filter(option => option.showInModes.includes(mode));
 
   return (
-    <div className={cn(
-      'absolute z-30 pointer-events-auto',
-      className
-    )}>
+    <div 
+      className={cn(
+        'absolute z-30 pointer-events-auto',
+        className
+      )}
+      style={style}
+    >
       {/* Speed Dial Options */}
       <div className={cn(
         'flex flex-col-reverse gap-2.5 mb-3',
