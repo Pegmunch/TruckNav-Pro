@@ -1146,8 +1146,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return R * c;
   }
 
-  // Routes with strict vehicle class enforcement
-  app.post("/api/routes/calculate", requireSubscription, validateRoutePlanningRequest, async (req: Request, res: Response) => {
+  // Routes with strict vehicle class enforcement (open access for route planning)
+  app.post("/api/routes/calculate", validateRoutePlanningRequest, async (req: Request, res: Response) => {
     try {
       const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference } = req.body;
       
@@ -1324,12 +1324,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const route = await storage.createRoute(routeData);
       
-      // Create a planned journey entry for immediate "Last Journey" availability
-      const plannedJourney = await storage.startJourney(route.id);
-      
-      // Verify the journey was created with 'planned' status as expected
-      if (plannedJourney.status !== 'planned') {
-        throw new Error(`Journey created with unexpected status: ${plannedJourney.status}, expected: planned`);
+      // Create a planned journey entry ONLY for authenticated users
+      let plannedJourney = null;
+      if ((req as any).isAuthenticated && (req as any).isAuthenticated()) {
+        const sessionId = req.sessionID || 'authenticated';
+        plannedJourney = await storage.startJourney(route.id, undefined, sessionId);
+        
+        // Verify the journey was created with 'planned' status as expected
+        if (plannedJourney.status !== 'planned') {
+          throw new Error(`Journey created with unexpected status: ${plannedJourney.status}, expected: planned`);
+        }
       }
       
       // Return the route with enhanced truck-safe information
