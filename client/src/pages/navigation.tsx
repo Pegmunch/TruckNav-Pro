@@ -98,7 +98,6 @@ function NavigationPageContent() {
   
   // Legal consent state - for automatic popup display
   const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
-  const [showLegalPopup, setShowLegalPopup] = useState(false);
   
   // AR Navigation state
   const [isARMode, setIsARMode] = useState(false);
@@ -493,12 +492,6 @@ function NavigationPageContent() {
     // Handle different UI states with priority order
     
     // Highest priority: Close critical modals/popups
-    if (showLegalPopup) {
-      setShowLegalPopup(false);
-      console.log('🔙 Android back: Closed legal popup');
-      return true;
-    }
-    
     if (showVehicleSettings) {
       setShowVehicleSettings(false);
       console.log('🔙 Android back: Closed vehicle settings');
@@ -1122,7 +1115,6 @@ function NavigationPageContent() {
       
       // Close all known overlay components using proper state management
       setIsAlternativeRoutesOpen(false);
-      setShowLegalPopup(false);
       
       // Prepare navigation interface - collapse sidebar for maximum map visibility during navigation
       setSidebarState('collapsed');
@@ -1402,17 +1394,21 @@ function NavigationPageContent() {
 
   // Don't block the entire interface for profile loading - show interface with loading states instead
 
+  // Block app access until legal terms are accepted - MANDATORY LEGAL DISCLAIMER
+  if (isConsentLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasAcceptedTerms) {
+    return <LegalDisclaimerPopup />;
+  }
+
   return (
     <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
-
-        {/* Legal Disclaimer Popup */}
-        {showLegalPopup && (
-          <LegalDisclaimerPopup 
-            onClose={() => {
-              setShowLegalPopup(false);
-            }}
-          />
-        )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
         <div className="mobile-layout">
