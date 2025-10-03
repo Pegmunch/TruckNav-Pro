@@ -1514,33 +1514,30 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Start CTA - Above Speedometer (centered) */}
+                  {/* Start CTA - Green "GO" Hamburger Button (centered above speedometer) */}
                   <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-[150] mobile-safe-bottom">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-                      aria-label="Start turn-by-turn navigation with selected route"
+                      aria-label="Start turn-by-turn navigation"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "h-6 px-2 text-[10px] font-medium rounded-md shadow-md transition-all duration-300",
-                        "border hover:scale-105 active:scale-95",
-                        "focus-visible:ring-1 focus-visible:ring-offset-1",
+                        "h-10 w-10 rounded-lg shadow-2xl transition-all duration-300",
+                        "hover:scale-110 active:scale-95",
+                        "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-400",
                         currentRoute && selectedProfile 
-                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-green-400 ring-1 ring-green-400/60 shadow-green-500/50" 
-                          : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-gray-500 cursor-not-allowed"
+                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-2 border-green-400 shadow-green-500/50" 
+                          : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-2 border-gray-500 cursor-not-allowed"
                       )}
-                      data-testid="button-start-navigation-preview"
+                      data-testid="button-start-navigation-go"
                     >
                       {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
-                        <>
-                          <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" />
-                          <span className="text-[10px]">Starting...</span>
-                        </>
+                        <Loader2 className="w-5 h-5 animate-spin" />
                       ) : (
-                        <>
-                          <Navigation className="w-2.5 h-2.5 mr-1" />
-                          <span className="text-[10px]">Start Navigation</span>
-                        </>
+                        <div className="flex flex-col items-center justify-center">
+                          <Menu className="w-4 h-4" />
+                          <span className="text-[8px] font-bold mt-0.5">GO</span>
+                        </div>
                       )}
                     </Button>
                   </div>
