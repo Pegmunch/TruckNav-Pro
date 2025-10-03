@@ -1223,6 +1223,13 @@ export default function NavigationPage() {
                     className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom"
                   />
 
+                  {/* Speedometer - Above Start Navigation button */}
+                  <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                    <SpeedDisplay 
+                      className="shadow-2xl"
+                    />
+                  </div>
+
                   {/* Start CTA - Below Speedometer (centered) */}
                   <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 z-[150] mobile-safe-bottom">
                     <Button
