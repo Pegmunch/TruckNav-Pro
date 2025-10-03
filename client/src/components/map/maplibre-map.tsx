@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
 import { getIncidentIcon } from "@shared/incident-icons";
 import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
-import { useGPSTracking } from "@/hooks/use-gps-tracking";
+import { useGPS } from "@/contexts/gps-context";
 
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
@@ -117,13 +117,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const { reportError } = useMapLibreErrorReporting();
   
-  const { position: gpsPosition } = useGPSTracking({
-    enableHighAccuracy: true,
-    timeout: 5000,
-    maximumAge: 0,
-    headingSmoothingAlpha: 0.25,
-    enableHeadingSmoothing: isNavigating
-  });
+  const gps = useGPS();
+  const gpsPosition = gps?.position ?? null;
   
   useImperativeHandle(ref, () => ({
     getMap: () => map.current,

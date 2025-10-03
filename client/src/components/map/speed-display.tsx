@@ -8,7 +8,7 @@ import { memo } from 'react';
 import { Shield, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCountryPreferences } from '@/hooks/use-country-preferences';
-import { useGPSTracking } from '@/hooks/use-gps-tracking';
+import { useGPS } from '@/contexts/gps-context';
 
 interface SpeedDisplayProps {
   className?: string;
@@ -41,12 +41,8 @@ const SpeedDisplay = memo(function SpeedDisplay({
 }: SpeedDisplayProps) {
   const { preferences } = useCountryPreferences();
   
-  const { position: gpsPosition } = useGPSTracking({
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 1000,
-    enableHeadingSmoothing: false
-  });
+  const gps = useGPS();
+  const gpsPosition = gps?.position ?? null;
   
   // Determine if country uses MPH or KPH
   const usesMPH = MPH_COUNTRIES.includes(preferences.country.code);

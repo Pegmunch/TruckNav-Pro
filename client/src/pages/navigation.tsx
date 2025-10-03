@@ -41,6 +41,7 @@ import { IncidentReportDialog } from "@/components/incidents/incident-report-dia
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import SpeedDisplay from "@/components/map/speed-display";
+import { GPSProvider } from "@/contexts/gps-context";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -1174,16 +1175,23 @@ export default function NavigationPage() {
   // Don't block the entire interface for profile loading - show interface with loading states instead
 
   return (
-    <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
+    <GPSProvider
+      enableHighAccuracy={true}
+      timeout={5000}
+      maximumAge={0}
+      headingSmoothingAlpha={0.25}
+      enableHeadingSmoothing={isNavigating}
+    >
+      <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
 
-      {/* Legal Disclaimer Popup */}
-      {showLegalPopup && (
-        <LegalDisclaimerPopup 
-          onClose={() => {
-            setShowLegalPopup(false);
-          }}
-        />
-      )}
+        {/* Legal Disclaimer Popup */}
+        {showLegalPopup && (
+          <LegalDisclaimerPopup 
+            onClose={() => {
+              setShowLegalPopup(false);
+            }}
+          />
+        )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
         <div className="mobile-layout h-[100svh] flex flex-col relative">
@@ -1797,6 +1805,7 @@ export default function NavigationPage() {
         }}
       />
 
-    </div>
+      </div>
+    </GPSProvider>
   );
 }
