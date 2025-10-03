@@ -528,6 +528,21 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
+    // Handle 403 subscription required errors
+    if (res.status === 403) {
+      try {
+        const errorText = await res.text();
+        if (errorText.toLowerCase().includes('subscription required') || 
+            errorText.toLowerCase().includes('subscription')) {
+          // Redirect to pricing page for subscription errors
+          window.location.href = '/pricing';
+          throw new Error('Subscription required. Redirecting to pricing...');
+        }
+      } catch (parseError) {
+        // If we can't parse the error, fall through to normal error handling
+      }
+    }
+
     await throwIfResNotOk(res);
     return await res.json();
   };

@@ -18,6 +18,8 @@ import EntertainmentWindow from "@/pages/window-entertainment";
 import ThemesWindow from "@/pages/window-themes";
 import HistoryWindow from "@/pages/window-history";
 import SettingsWindow from "@/pages/window-settings";
+import PricingPage from "@/pages/pricing";
+import SubscribePage from "@/pages/subscribe";
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -42,6 +44,8 @@ function Router() {
         <Switch>
           <Route path="/" component={NavigationPage} />
           <Route path="/navigation" component={NavigationPage} />
+          <Route path="/pricing" component={PricingPage} />
+          <Route path="/subscribe/:planId" component={SubscribePage} />
           <Route path="/lane-selection/:id" component={LaneSelectionPage} />
           <Route path="/lane-selection" component={LaneSelectionPage} />
           <Route path="/lanes/:routeId" component={LaneSelectionPage} />
