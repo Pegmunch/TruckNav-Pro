@@ -1209,6 +1209,20 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
+                  {/* Hamburger Menu - Bottom Right */}
+                  <MobileFAB
+                    mode="preview"
+                    onSettingsClick={() => setShowVehicleSettings(true)}
+                    onClearRoute={() => {
+                      setCurrentRoute(null);
+                      setMobileNavMode('plan');
+                    }}
+                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
+                    onReportIncident={() => setShowIncidentReportDialog(true)}
+                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom"
+                  />
+
                   {/* Speedometer - Resting on top of Start Navigation button */}
                   <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
                     <SpeedDisplay 
