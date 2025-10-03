@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -497,6 +498,9 @@ const validateVoiceTranscription = [
 ];
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  await setupAuth(app);
+  
   // Apply API rate limiting to all API routes
   app.use("/api", apiRateLimit);
   
@@ -576,6 +580,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // CSRF protection is now handled globally by security middleware - no duplicate needed
+
+  // Auth endpoints
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Subscription endpoints
+  app.get('/api/subscription/plans', async (req: Request, res: Response) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  app.post('/api/subscription/create', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { planId } = req.body;
+
+      if (!planId) {
+        return res.status(400).json({ message: "Plan ID is required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      let customerId = user.stripeCustomerId;
+      
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          metadata: {
+            userId: user.id,
+          },
+        });
+        customerId = customer.id;
+        await storage.updateUser(userId, { stripeCustomerId: customerId });
+      }
+
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: plan.stripePriceId }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+      }) as any;
+
+      await storage.createUserSubscription({
+        userId: user.id,
+        planId: plan.id,
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      });
+
+      const invoice = subscription.latest_invoice as any;
+      const paymentIntent = invoice?.payment_intent;
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret,
+        status: subscription.status,
+      });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  app.get('/api/subscription/status', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const subscription = await storage.getUserSubscriptionByUserId(userId);
+      
+      if (!subscription) {
+        return res.json({ hasActiveSubscription: false });
+      }
+
+      const isActive = subscription.status === 'active';
+      res.json({
+        hasActiveSubscription: isActive,
+        subscription: subscription,
+      });
+    } catch (error) {
+      console.error("Error checking subscription status:", error);
+      res.status(500).json({ message: "Failed to check subscription status" });
+    }
+  });
 
   // Voice Transcription Endpoint - Whisper API fallback
   app.post("/api/voice/transcribe", upload.single('audio'), async (req: Request, res: Response) => {
