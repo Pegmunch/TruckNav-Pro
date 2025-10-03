@@ -114,7 +114,7 @@ export function AddressAutocomplete({
 
   // Fetch postcode suggestions (only when in postcode mode)
   const { data: suggestions = [], isLoading: isLoadingPostcodes } = useQuery<PostcodeResult[]>({
-    queryKey: ['/api/postcodes/search', { postcode: debouncedSearch }],
+    queryKey: ['/api/postcodes/search', { postcode: debouncedSearch, country: countryCode }],
     enabled: isPostcodeMode && debouncedSearch.length >= 2 && open,
     staleTime: 60000,
   });
