@@ -1267,13 +1267,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             </Button>
           </div>
 
-          {/* Speed Display - positioned above Start Navigation button */}
-          <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 z-[160]">
-            <SpeedDisplay 
-              className="shadow-2xl"
-            />
-          </div>
-
           <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
             <span className="text-muted-foreground">MapLibre GL</span>
             <span className="text-muted-foreground mx-1">•</span>
@@ -1289,6 +1282,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           </div>
         </>
       )}
+
+      {/* Speed Display - Always visible on all pages */}
+      <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 z-[160]">
+        <SpeedDisplay 
+          className="shadow-2xl"
+        />
+      </div>
     </div>
   );
 });
