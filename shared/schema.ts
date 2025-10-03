@@ -150,6 +150,8 @@ export const users = pgTable("users", {
   username: text("username"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  hasAcceptedTerms: boolean("has_accepted_terms").default(false).notNull(),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

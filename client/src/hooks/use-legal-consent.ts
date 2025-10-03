@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 
 /**
  * Interface for legal consent data structure
@@ -28,7 +29,7 @@ export interface UseLegalConsentReturn {
   completedCheckboxes: LegalConsentData['completedCheckboxes'];
   
   // Methods
-  setConsentAccepted: (checkboxStates?: LegalConsentData['completedCheckboxes']) => void;
+  setConsentAccepted: (checkboxStates?: LegalConsentData['completedCheckboxes']) => Promise<void>;
   clearConsent: () => void;
   isConsentValid: (requiredVersion?: string) => boolean;
   
@@ -151,8 +152,9 @@ export function useLegalConsent(): UseLegalConsentReturn {
 
   /**
    * Mark consent as accepted with optional checkbox states
+   * Also records consent server-side for authenticated users
    */
-  const setConsentAccepted = useCallback((checkboxStates?: LegalConsentData['completedCheckboxes']): void => {
+  const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
     const newConsentData: LegalConsentData = {
       hasAcceptedTerms: true,
       consentVersion: CURRENT_LEGAL_VERSION,
@@ -168,6 +170,15 @@ export function useLegalConsent(): UseLegalConsentReturn {
 
     setConsentData(newConsentData);
     saveConsentData(newConsentData);
+
+    // Also save to backend for authenticated users
+    try {
+      await apiRequest('POST', '/api/users/accept-terms', {});
+    } catch (error) {
+      // Fail silently for unauthenticated users or network errors
+      // The endpoint is protected, so unauthenticated users will get a 401
+      console.error('Failed to record consent on server:', error);
+    }
   }, [saveConsentData]);
 
   /**

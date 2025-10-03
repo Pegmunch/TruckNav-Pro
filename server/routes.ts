@@ -594,6 +594,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/users/accept-terms - Record legal consent server-side
+  app.post('/api/users/accept-terms', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      await storage.updateUser(userId, {
+        hasAcceptedTerms: true,
+        termsAcceptedAt: new Date()
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error recording terms acceptance:", error);
+      res.status(500).json({ message: "Failed to record terms acceptance" });
+    }
+  });
+
   // Subscription endpoints
   app.get('/api/subscription/plans', async (req: Request, res: Response) => {
     try {
@@ -617,6 +634,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.hasAcceptedTerms) {
+        return res.status(403).json({ 
+          message: "Terms and conditions must be accepted before creating a subscription" 
+        });
       }
 
       const plan = await storage.getSubscriptionPlan(planId);

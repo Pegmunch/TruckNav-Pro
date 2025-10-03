@@ -226,6 +226,7 @@ export default function SubscribePage() {
   const { planId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { hasAcceptedTerms } = useLegalConsent();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const { data: plan, isLoading: planLoading } = useQuery<SubscriptionPlan[], Error, SubscriptionPlan | undefined>({
@@ -235,7 +236,7 @@ export default function SubscribePage() {
 
   const createSubscriptionMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/subscription/create', { planId });
+      const response = await apiRequest('POST', '/api/subscription/create', { planId, termsAccepted: hasAcceptedTerms });
       const data: SubscriptionCreateResponse = await response.json();
       return data;
     },
@@ -253,10 +254,10 @@ export default function SubscribePage() {
   });
 
   useEffect(() => {
-    if (planId && plan && !clientSecret && !createSubscriptionMutation.isPending) {
+    if (planId && plan && !clientSecret && !createSubscriptionMutation.isPending && hasAcceptedTerms) {
       createSubscriptionMutation.mutate(planId);
     }
-  }, [planId, plan, clientSecret]);
+  }, [planId, plan, clientSecret, hasAcceptedTerms]);
 
   if (planLoading || !plan) {
     return (
@@ -272,6 +273,34 @@ export default function SubscribePage() {
   if (!planId) {
     setLocation('/pricing');
     return null;
+  }
+
+  if (!hasAcceptedTerms) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center space-y-4">
+                <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+                <div>
+                  <h2 className="text-xl font-semibold mb-2">Terms Not Accepted</h2>
+                  <p className="text-muted-foreground mb-4">
+                    You must accept the legal terms before subscribing.
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Please return to the homepage and accept the terms to continue.
+                  </p>
+                </div>
+                <Button onClick={() => setLocation('/')}>
+                  Return to Homepage
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
