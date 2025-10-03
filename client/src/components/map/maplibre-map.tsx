@@ -8,6 +8,7 @@ import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/s
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
 import { getIncidentIcon } from "@shared/incident-icons";
+import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
 
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
@@ -115,6 +116,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const gpsWatchIdRef = useRef<number | null>(null);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number, bearing?: number} | null>(null);
+  const { reportError } = useMapLibreErrorReporting();
   
   useImperativeHandle(ref, () => ({
     getMap: () => map.current,
@@ -539,15 +541,26 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
       map.current.on('error', (e) => {
         console.error('MapLibre GL error:', e);
+        
+        // Report critical rendering errors that prevent map from working
+        if (e.error && (
+          e.error.message?.includes('WebGL') ||
+          e.error.message?.includes('context') ||
+          e.error.message?.includes('shader') ||
+          e.error.message?.includes('extension')
+        )) {
+          console.error('🗺️ Critical MapLibre error detected, reporting to error handler');
+          reportError(`MapLibre rendering error: ${e.error.message}`);
+        }
       });
 
     } catch (error) {
       console.error('Failed to initialize MapLibre GL:', error);
-      console.log('💡 Falling back to Leaflet - refresh and set localStorage.setItem("trucknav_map_engine", "leaflet")');
-      // Notify parent component about the failure
-      if (onMapClick) {
-        console.warn('MapLibre initialization failed - please use Leaflet instead');
-      }
+      console.log('💡 Reporting initialization failure to error handler');
+      
+      // Report the initialization failure to the error handler
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      reportError(`MapLibre initialization failed: ${errorMessage}`);
     }
 
     return () => {
