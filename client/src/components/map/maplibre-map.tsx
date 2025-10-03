@@ -610,8 +610,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         },
         paint: {
           'line-color': '#2563eb',
-          'line-width': 6,
-          'line-opacity': 0.8
+          'line-width': 10,
+          'line-opacity': 0.85
         }
       });
     } else {
@@ -1081,10 +1081,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             }
           }
 
-          // Center map on user location during navigation
+          // Center map on user location during navigation with auto-rotation based on GPS heading
           mapInstance.easeTo({
             center: [newLocation.lng, newLocation.lat],
-            zoom: 16,
+            zoom: 19.5,
+            pitch: 60,
             bearing: newLocation.bearing || 0,
             duration: 500
           });

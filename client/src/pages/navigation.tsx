@@ -953,7 +953,7 @@ export default function NavigationPage() {
               lng: position.coords.longitude,
               zoom: 19.5,
               pitch: 60,
-              bearing: 0
+              bearing: position.coords.heading || 0
             };
             
             // Switch to roads mode and fly to GPS position
