@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
-import { MapPin, Loader2, Star, Clock, Globe } from 'lucide-react';
+import { MapPin, Loader2, Star, Clock, Globe, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { looksLikePostcode } from '@/lib/postcode-utils';
 import { 
@@ -117,7 +118,7 @@ export function AddressAutocomplete({
   });
 
   // Fetch Photon suggestions (only when NOT in postcode mode)
-  const { results: photonResults, isLoading: isLoadingPhoton } = usePhotonAutocomplete(
+  const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
     searchTerm,
     !isPostcodeMode && open,
     countryCode
@@ -229,28 +230,29 @@ export function AddressAutocomplete({
   const isLoading = isLoadingPostcodes || isLoadingPhoton;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-          <Input
-            id={id}
-            value={searchTerm}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-            placeholder={placeholder}
-            className={cn("h-12 text-base pr-10", className)}
-            data-testid={testId}
-            autoComplete="off"
-          />
-          {isLoading && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          )}
-        </div>
-      </PopoverTrigger>
+    <div className="space-y-1">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <div className="relative">
+            <Input
+              id={id}
+              value={searchTerm}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              placeholder={placeholder}
+              className={cn("h-12 text-base pr-10", className)}
+              data-testid={testId}
+              autoComplete="off"
+            />
+            {isLoading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        </PopoverTrigger>
       <PopoverContent 
         className="w-[var(--radix-popover-trigger-width)] p-0" 
         align="start"
@@ -372,5 +374,42 @@ export function AddressAutocomplete({
         </Command>
       </PopoverContent>
     </Popover>
+    
+    {/* Error Display */}
+    {photonError && !isPostcodeMode && debouncedSearch.length >= 3 && (
+      <div className="flex items-start gap-2 px-2 py-1.5 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive" data-testid="address-autocomplete-error">
+        <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+        <span>Address search unavailable. Please check your connection or try again later.</span>
+      </div>
+    )}
+    
+    {/* Country Detection Status */}
+    {gps?.position && countryCode && (
+      <div className="flex items-center gap-1 px-2 text-xs text-muted-foreground" data-testid="country-detection-status">
+        <Globe className="w-3 h-3" />
+        <span>Searching {countryCode === 'GB' ? 'UK' : 'worldwide'} addresses</span>
+      </div>
+    )}
+    
+    {/* GPS Error Hint */}
+    {gps?.errorType && gps.errorType !== 'NOT_SUPPORTED' && (
+      <div className="flex items-start gap-2 px-2 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-700 dark:text-yellow-400" data-testid="gps-error-hint">
+        <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <span>{gps.errorMessage}</span>
+          {gps.canRetry && (
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => gps.retryGPS()}
+              className="h-auto p-0 ml-1 text-xs text-yellow-700 dark:text-yellow-400 underline"
+            >
+              Retry
+            </Button>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
   );
 }

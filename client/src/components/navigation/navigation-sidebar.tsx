@@ -147,6 +147,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [showWeatherWidget, setShowWeatherWidget] = useState(false);
   const [showIncidentReporting, setShowIncidentReporting] = useState(false);
   const [showVoiceNavigation, setShowVoiceNavigation] = useState(false);
+  const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
 
   // Search functionality state
   const [facilitySearchInput, setFacilitySearchInput] = useState("");
@@ -204,22 +205,31 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Handle use current GPS location with reverse geocoding
   const handleUseCurrentLocation = async () => {
+    // Check GPS availability
     if (!gpsData || !gpsData.position) {
+      const errorMsg = gpsData?.errorMessage || "Unable to get your current location. Please enable GPS or enter address manually.";
       toast({
         title: "GPS not available",
-        description: "Unable to get your current location. Please enable GPS or enter address manually.",
+        description: errorMsg,
         variant: "destructive",
+        action: gpsData?.canRetry ? (
+          <Button variant="outline" size="sm" onClick={() => gpsData.retryGPS()}>
+            Retry
+          </Button>
+        ) : undefined,
       });
       return;
     }
 
     const { latitude, longitude } = gpsData.position;
+    
+    setIsReverseGeocoding(true);
 
     try {
       // Attempt reverse geocoding with 5 second timeout
       const result = await reverseGeocode(latitude, longitude, 5000);
 
-      if (result && result.address) {
+      if (result.success) {
         // Success: Set the reverse geocoded address
         onFromLocationChange(result.address);
         toast({
@@ -227,22 +237,37 @@ const NavigationSidebar = memo(function NavigationSidebar({
           description: result.address,
         });
       } else {
-        // Fallback: Use coordinates as string if reverse geocoding fails
+        // Error result from reverse geocoding
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         onFromLocationChange(coordsString);
+        
+        // Show error-specific messages
+        const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
+                          result.error === 'RATE_LIMIT' ? 'Too many requests' :
+                          result.error === 'NO_RESULTS' ? 'No address found' :
+                          'Unable to get address';
+        
         toast({
-          title: "Using GPS coordinates",
-          description: coordsString,
+          title: errorTitle,
+          description: `${result.message}. Using coordinates: ${coordsString}`,
+          variant: result.error === 'RATE_LIMIT' ? 'destructive' : 'default',
+          action: (result.error === 'TIMEOUT' || result.error === 'NETWORK') ? (
+            <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
+              Retry
+            </Button>
+          ) : undefined,
         });
       }
     } catch (error) {
-      // Error handling: Fallback to coordinates
+      // Unexpected error: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       onFromLocationChange(coordsString);
       toast({
         title: "Using GPS coordinates",
-        description: coordsString,
+        description: `Unable to determine address. Using: ${coordsString}`,
       });
+    } finally {
+      setIsReverseGeocoding(false);
     }
   };
 
@@ -677,10 +702,20 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   variant="outline"
                   size="sm"
                   className="w-full automotive-button"
+                  disabled={isReverseGeocoding || !gpsData?.position}
                   data-testid="button-use-current-location"
                 >
-                  <Crosshair className="w-4 h-4 mr-2" />
-                  Use GPS Location
+                  {isReverseGeocoding ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Getting address...
+                    </>
+                  ) : (
+                    <>
+                      <Crosshair className="w-4 h-4 mr-2" />
+                      Use GPS Location
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

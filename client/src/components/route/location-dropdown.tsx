@@ -21,7 +21,8 @@ import {
   Mail,
   Globe,
   Keyboard,
-  Search
+  Search,
+  AlertTriangle
 } from "lucide-react";
 import { type Location } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -182,7 +183,7 @@ const LocationDropdown = memo(function LocationDropdown({
   });
 
   // Photon autocomplete (only active when NOT in postcode mode)
-  const { results: photonResults, isLoading: isLoadingPhoton } = usePhotonAutocomplete(
+  const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
     searchValue,
     !isPostcodeMode, // Only enabled when NOT in postcode mode
     countryCode
@@ -776,6 +777,42 @@ const LocationDropdown = memo(function LocationDropdown({
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {photonError && !isPostcodeMode && searchValue.length >= 3 && (
+        <div className="flex items-start gap-2 mt-2 px-2 py-1.5 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive" data-testid="location-dropdown-error">
+          <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+          <span>Address search unavailable. Please check your connection or try again later.</span>
+        </div>
+      )}
+      
+      {/* Country Detection Status */}
+      {gps?.position && countryCode && !isPostcodeMode && (
+        <div className="flex items-center gap-1 mt-2 px-2 text-xs text-muted-foreground" data-testid="country-detection-status-dropdown">
+          <Globe className="w-3 h-3" />
+          <span>Searching {countryCode === 'GB' ? 'UK' : 'worldwide'} addresses</span>
+        </div>
+      )}
+      
+      {/* GPS Error Hint */}
+      {gps?.errorType && gps.errorType !== 'NOT_SUPPORTED' && (
+        <div className="flex items-start gap-2 mt-2 px-2 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-700 dark:text-yellow-400" data-testid="gps-error-hint-dropdown">
+          <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <span>{gps.errorMessage}</span>
+            {gps.canRetry && (
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => gps.retryGPS()}
+                className="h-auto p-0 ml-1 text-xs text-yellow-700 dark:text-yellow-400 underline"
+              >
+                Retry
+              </Button>
+            )}
           </div>
         </div>
       )}

@@ -12,7 +12,7 @@
  * - Error handling with state tracking
  */
 
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 
 export interface GPSPosition {
   latitude: number;
@@ -31,10 +31,16 @@ export interface GPSError {
   message: string;
 }
 
+export type GPSErrorType = 'PERMISSION_DENIED' | 'TIMEOUT' | 'UNAVAILABLE' | 'NOT_SUPPORTED' | null;
+
 export interface GPSContextValue {
   position: GPSPosition | null;
   error: GPSError | null;
   isTracking: boolean;
+  errorType: GPSErrorType;
+  errorMessage: string | null;
+  canRetry: boolean;
+  retryGPS: () => void;
 }
 
 interface GPSProviderProps {
@@ -77,6 +83,49 @@ const smoothHeading = (currentHeading: number, previousHeading: number, alpha: n
 };
 
 /**
+ * Classify GPS error code into user-friendly error type
+ */
+const classifyGPSError = (code: number): GPSErrorType => {
+  switch (code) {
+    case GeolocationPositionError.PERMISSION_DENIED:
+      return 'PERMISSION_DENIED';
+    case GeolocationPositionError.TIMEOUT:
+      return 'TIMEOUT';
+    case GeolocationPositionError.POSITION_UNAVAILABLE:
+      return 'UNAVAILABLE';
+    case 0:
+      return 'NOT_SUPPORTED';
+    default:
+      return 'UNAVAILABLE';
+  }
+};
+
+/**
+ * Get user-friendly error message for GPS error type
+ */
+const getGPSErrorMessage = (errorType: GPSErrorType): string => {
+  switch (errorType) {
+    case 'PERMISSION_DENIED':
+      return 'GPS access denied. Please enable location services in your browser settings.';
+    case 'TIMEOUT':
+      return 'GPS signal lost. Make sure you\'re not in a building or tunnel.';
+    case 'UNAVAILABLE':
+      return 'GPS temporarily unavailable. Please check your device settings.';
+    case 'NOT_SUPPORTED':
+      return 'GPS is not supported by this browser.';
+    default:
+      return 'GPS is not available.';
+  }
+};
+
+/**
+ * Check if GPS error is retryable
+ */
+const canRetryGPSError = (errorType: GPSErrorType): boolean => {
+  return errorType === 'TIMEOUT' || errorType === 'UNAVAILABLE';
+};
+
+/**
  * GPS Provider Component
  * 
  * Wraps your app/page to provide GPS data to all child components
@@ -99,25 +148,35 @@ export function GPSProvider({
   const [position, setPosition] = useState<GPSPosition | null>(null);
   const [error, setError] = useState<GPSError | null>(null);
   const [isTracking, setIsTracking] = useState(false);
+  const [errorType, setErrorType] = useState<GPSErrorType>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const watchIdRef = useRef<number | null>(null);
   const smoothedHeadingRef = useRef<number | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
+  const startGPSTracking = useCallback(() => {
     // Check geolocation support
     if (!('geolocation' in navigator)) {
+      const errType = 'NOT_SUPPORTED';
       setError({
         code: 0,
         message: 'Geolocation not supported by this browser'
       });
+      setErrorType(errType);
+      setErrorMessage(getGPSErrorMessage(errType));
       return;
     }
 
     console.log('[GPS-PROVIDER] Starting SINGLE GPS watcher for entire app');
 
+    // Clear any previous errors
+    setError(null);
+    setErrorType(null);
+    setErrorMessage(null);
+    
     // Start GPS tracking
     setIsTracking(true);
-    setError(null);
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
@@ -160,17 +219,24 @@ export function GPSProvider({
 
         // Clear any previous errors
         setError(null);
+        setErrorType(null);
+        setErrorMessage(null);
       },
       (geoError) => {
-        // Handle GPS errors
+        // Classify and handle GPS errors
+        const errType = classifyGPSError(geoError.code);
+        const errMessage = getGPSErrorMessage(errType);
+        
         setError({
           code: geoError.code,
           message: geoError.message
         });
+        setErrorType(errType);
+        setErrorMessage(errMessage);
 
         // Log errors for debugging (but don't spam on permission denied)
         if (geoError.code !== GeolocationPositionError.PERMISSION_DENIED) {
-          console.debug(`[GPS-PROVIDER] Error (code ${geoError.code}): ${geoError.message}`);
+          console.debug(`[GPS-PROVIDER] Error (code ${geoError.code}): ${errMessage}`);
         }
       },
       {
@@ -179,23 +245,49 @@ export function GPSProvider({
         maximumAge
       }
     );
+  }, [enableHighAccuracy, timeout, maximumAge, headingSmoothingAlpha, enableHeadingSmoothing]);
+
+  const stopGPSTracking = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      console.log('[GPS-PROVIDER] Stopping GPS watcher');
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    if (retryTimeoutRef.current !== null) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    setIsTracking(false);
+    smoothedHeadingRef.current = null;
+  }, []);
+
+  const retryGPS = useCallback(() => {
+    console.log('[GPS-PROVIDER] Retrying GPS connection...');
+    stopGPSTracking();
+    
+    // Small delay before retry to avoid immediate re-error
+    retryTimeoutRef.current = setTimeout(() => {
+      startGPSTracking();
+    }, 500);
+  }, [stopGPSTracking, startGPSTracking]);
+
+  useEffect(() => {
+    startGPSTracking();
 
     // Cleanup: Stop GPS tracking when provider unmounts
     return () => {
-      if (watchIdRef.current !== null) {
-        console.log('[GPS-PROVIDER] Stopping GPS watcher');
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      setIsTracking(false);
-      smoothedHeadingRef.current = null;
+      stopGPSTracking();
     };
-  }, [enableHighAccuracy, timeout, maximumAge, headingSmoothingAlpha, enableHeadingSmoothing]);
+  }, [startGPSTracking, stopGPSTracking]);
 
   const value: GPSContextValue = {
     position,
     error,
-    isTracking
+    isTracking,
+    errorType,
+    errorMessage,
+    canRetry: errorType ? canRetryGPSError(errorType) : false,
+    retryGPS
   };
 
   return (
