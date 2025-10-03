@@ -40,6 +40,7 @@ import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
+import SpeedDisplay from "@/components/map/speed-display";
 
 export default function NavigationPage() {
   const { t } = useTranslation();
@@ -1425,7 +1426,14 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Stop Button - Above Speedometer (centered) */}
+                  {/* Speedometer - Lower position for navigation */}
+                  <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                    <SpeedDisplay 
+                      className="shadow-2xl"
+                    />
+                  </div>
+
+                  {/* Stop Button - Below Speedometer (centered) */}
                   <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[100] mobile-safe-bottom pointer-events-auto">
                     <Button
                       onClick={handleStopNavigation}

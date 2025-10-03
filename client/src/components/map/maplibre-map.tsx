@@ -1282,13 +1282,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           </div>
         </>
       )}
-
-      {/* Speed Display - Always visible on all pages */}
-      <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 z-[160]">
-        <SpeedDisplay 
-          className="shadow-2xl"
-        />
-      </div>
     </div>
   );
 });
