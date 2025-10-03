@@ -66,6 +66,7 @@ export interface IStorage {
   getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined>;
   getSubscriptionPlanByStripeId(stripePriceId: string): Promise<SubscriptionPlan | undefined>;
   getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getActiveSubscriptionPlans(): Promise<SubscriptionPlan[]>;
   createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
 
   // User Subscriptions
@@ -1324,6 +1325,10 @@ export class MemStorage implements IStorage {
   }
 
   async getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return Array.from(this.subscriptionPlans.values()).filter(plan => plan.isActive);
+  }
+
+  async getActiveSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     return Array.from(this.subscriptionPlans.values()).filter(plan => plan.isActive);
   }
 
@@ -2842,6 +2847,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
+  }
+
+  async getActiveSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     return await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true));
   }
 
