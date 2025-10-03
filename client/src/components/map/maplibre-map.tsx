@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
 import { getIncidentIcon } from "@shared/incident-icons";
 import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
+import { useGPSTracking } from "@/hooks/use-gps-tracking";
 
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
@@ -114,9 +115,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
-  const gpsWatchIdRef = useRef<number | null>(null);
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number, bearing?: number} | null>(null);
   const { reportError } = useMapLibreErrorReporting();
+  
+  const { position: gpsPosition } = useGPSTracking({
+    enableHighAccuracy: true,
+    timeout: 5000,
+    maximumAge: 0,
+    headingSmoothingAlpha: 0.25,
+    enableHeadingSmoothing: isNavigating
+  });
   
   useImperativeHandle(ref, () => ({
     getMap: () => map.current,
@@ -1008,145 +1015,115 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [incidents, isLoaded, showIncidents]);
 
-  // GPS tracking and user position marker during navigation
+  // GPS tracking and user position marker during navigation (using centralized GPS hook)
   useEffect(() => {
-    if (!map.current || !isLoaded || !isNavigating) {
-      // Clean up GPS watch and marker when not navigating
-      if (gpsWatchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(gpsWatchIdRef.current);
-        gpsWatchIdRef.current = null;
-      }
+    if (!map.current || !isLoaded || !isNavigating || !gpsPosition) {
+      // Clean up marker when not navigating or GPS unavailable
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
       }
-      setUserLocation(null);
       return;
     }
 
     const mapInstance = map.current;
+    const { latitude, longitude, smoothedHeading } = gpsPosition;
+    
+    // Use smoothed heading for fluid rotation, fallback to raw heading if smoothing disabled
+    const bearing = smoothedHeading ?? gpsPosition.heading ?? 0;
 
-    // Start GPS tracking
-    if ('geolocation' in navigator && gpsWatchIdRef.current === null) {
-      gpsWatchIdRef.current = navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude, heading } = position.coords;
-          const newLocation = {
-            lat: latitude,
-            lng: longitude,
-            bearing: heading !== null ? heading : undefined
-          };
-          setUserLocation(newLocation);
-
-          // Create or update user position marker
-          if (!userMarkerRef.current) {
-            // Calculate responsive marker size based on device pixel ratio
-            const devicePixelRatio = window.devicePixelRatio || 1;
-            const baseSize = 56; // Increased from 40px for better visibility
-            const scaleFactor = Math.max(1, devicePixelRatio / 2);
-            const markerSize = Math.round(baseSize * scaleFactor);
-            const borderWidth = Math.max(3, Math.round(4 * scaleFactor));
-            
-            // Scale arrow proportionally to marker size
-            const arrowWidth = Math.round(markerSize * 0.18); // ~10px at 56px base
-            const arrowHeight = Math.round(markerSize * 0.32); // ~18px at 56px base
-            
-            // Create premium blue arrow marker for user position
-            const el = document.createElement('div');
-            el.className = 'user-position-marker';
-            el.innerHTML = `
-              <div style="
-                width: ${markerSize}px;
-                height: ${markerSize}px;
-                background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-                border: ${borderWidth}px solid white;
-                border-radius: 50%;
-                box-shadow: 
-                  0 0 0 2px rgba(37, 99, 235, 0.3),
-                  0 4px 20px rgba(59, 130, 246, 0.6), 
-                  0 2px 10px rgba(0, 0, 0, 0.4);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                position: relative;
-                animation: pulse-glow 2s ease-in-out infinite;
-                z-index: 1000;
-              ">
-                <div style="
-                  width: 0;
-                  height: 0;
-                  border-left: ${arrowWidth}px solid transparent;
-                  border-right: ${arrowWidth}px solid transparent;
-                  border-bottom: ${arrowHeight}px solid white;
-                  transform: translateY(-2px);
-                  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
-                "></div>
-              </div>
-              <style>
-                @keyframes pulse-glow {
-                  0%, 100% { 
-                    box-shadow: 
-                      0 0 0 2px rgba(37, 99, 235, 0.3),
-                      0 4px 20px rgba(59, 130, 246, 0.6), 
-                      0 2px 10px rgba(0, 0, 0, 0.4);
-                  }
-                  50% { 
-                    box-shadow: 
-                      0 0 0 3px rgba(37, 99, 235, 0.5),
-                      0 4px 28px rgba(59, 130, 246, 0.9), 
-                      0 2px 14px rgba(0, 0, 0, 0.5);
-                  }
-                }
-              </style>
-            `;
-
-            userMarkerRef.current = new maplibregl.Marker({
-              element: el,
-              rotation: newLocation.bearing || 0,
-              rotationAlignment: 'map'
-            })
-              .setLngLat([newLocation.lng, newLocation.lat])
-              .addTo(mapInstance);
-          } else {
-            // Update existing marker
-            userMarkerRef.current.setLngLat([newLocation.lng, newLocation.lat]);
-            if (newLocation.bearing !== undefined) {
-              userMarkerRef.current.setRotation(newLocation.bearing);
+    // Create or update user position marker
+    if (!userMarkerRef.current) {
+      // Calculate responsive marker size based on device pixel ratio
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      const baseSize = 56;
+      const scaleFactor = Math.max(1, devicePixelRatio / 2);
+      const markerSize = Math.round(baseSize * scaleFactor);
+      const borderWidth = Math.max(3, Math.round(4 * scaleFactor));
+      
+      // Scale arrow proportionally to marker size
+      const arrowWidth = Math.round(markerSize * 0.18);
+      const arrowHeight = Math.round(markerSize * 0.32);
+      
+      // Create premium blue arrow marker for user position
+      const el = document.createElement('div');
+      el.className = 'user-position-marker';
+      el.innerHTML = `
+        <div style="
+          width: ${markerSize}px;
+          height: ${markerSize}px;
+          background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+          border: ${borderWidth}px solid white;
+          border-radius: 50%;
+          box-shadow: 
+            0 0 0 2px rgba(37, 99, 235, 0.3),
+            0 4px 20px rgba(59, 130, 246, 0.6), 
+            0 2px 10px rgba(0, 0, 0, 0.4);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          animation: pulse-glow 2s ease-in-out infinite;
+          z-index: 1000;
+        ">
+          <div style="
+            width: 0;
+            height: 0;
+            border-left: ${arrowWidth}px solid transparent;
+            border-right: ${arrowWidth}px solid transparent;
+            border-bottom: ${arrowHeight}px solid white;
+            transform: translateY(-2px);
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+          "></div>
+        </div>
+        <style>
+          @keyframes pulse-glow {
+            0%, 100% { 
+              box-shadow: 
+                0 0 0 2px rgba(37, 99, 235, 0.3),
+                0 4px 20px rgba(59, 130, 246, 0.6), 
+                0 2px 10px rgba(0, 0, 0, 0.4);
+            }
+            50% { 
+              box-shadow: 
+                0 0 0 3px rgba(37, 99, 235, 0.5),
+                0 4px 28px rgba(59, 130, 246, 0.9), 
+                0 2px 14px rgba(0, 0, 0, 0.5);
             }
           }
+        </style>
+      `;
 
-          // Center map on user location during navigation with auto-rotation based on GPS heading
-          mapInstance.easeTo({
-            center: [newLocation.lng, newLocation.lat],
-            zoom: 19.5,
-            pitch: 60,
-            bearing: newLocation.bearing || 0,
-            duration: 500
-          });
-        },
-        (error) => {
-          console.warn('GPS tracking error:', error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
+      userMarkerRef.current = new maplibregl.Marker({
+        element: el,
+        rotation: bearing,
+        rotationAlignment: 'map'
+      })
+        .setLngLat([longitude, latitude])
+        .addTo(mapInstance);
+    } else {
+      // Update existing marker position and rotation
+      userMarkerRef.current.setLngLat([longitude, latitude]);
+      userMarkerRef.current.setRotation(bearing);
     }
+
+    // Center map on user location during navigation with smooth rotation using smoothed heading
+    mapInstance.easeTo({
+      center: [longitude, latitude],
+      zoom: 19.5,
+      pitch: 60,
+      bearing: bearing,
+      duration: 500
+    });
 
     // Cleanup
     return () => {
-      if (gpsWatchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(gpsWatchIdRef.current);
-        gpsWatchIdRef.current = null;
-      }
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
       }
     };
-  }, [isNavigating, isLoaded]);
+  }, [gpsPosition, isNavigating, isLoaded]);
 
   // Listen for auto-zoom to GPS position event
   useEffect(() => {

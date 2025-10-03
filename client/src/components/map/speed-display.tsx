@@ -4,10 +4,11 @@
  * Automatically adapts units based on country selection (MPH/KPH)
  */
 
-import { memo, useState, useEffect } from 'react';
+import { memo } from 'react';
 import { Shield, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCountryPreferences } from '@/hooks/use-country-preferences';
+import { useGPSTracking } from '@/hooks/use-gps-tracking';
 
 interface SpeedDisplayProps {
   className?: string;
@@ -39,7 +40,13 @@ const SpeedDisplay = memo(function SpeedDisplay({
   speedLimit
 }: SpeedDisplayProps) {
   const { preferences } = useCountryPreferences();
-  const [liveSpeed, setLiveSpeed] = useState(0);
+  
+  const { position: gpsPosition } = useGPSTracking({
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 1000,
+    enableHeadingSmoothing: false
+  });
   
   // Determine if country uses MPH or KPH
   const usesMPH = MPH_COUNTRIES.includes(preferences.country.code);
@@ -62,72 +69,11 @@ const SpeedDisplay = memo(function SpeedDisplay({
     return speedKmh; // already in km/h
   };
   
-  // Live speed tracking using GPS with Safari compatibility
-  useEffect(() => {
-    let watchId: number;
-    
-    const startSpeedTracking = async () => {
-      if (!('geolocation' in navigator)) {
-        return;
-      }
-      
-      try {
-        // Safari requires explicit permission request
-        const permission = await navigator.permissions?.query({name: 'geolocation'});
-        if (permission && permission.state === 'denied') {
-          return;
-        }
-        
-        watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            // Use GPS speed if available, otherwise calculate from position changes
-            const speed = position.coords.speed || 0; // Speed in m/s
-            setLiveSpeed(Math.max(0, speed)); // Ensure non-negative speed
-          },
-          (error) => {
-            // Silently handle geolocation errors in Safari
-            if (error.code !== error.PERMISSION_DENIED) {
-              console.debug('Speed tracking unavailable:', error.message);
-            }
-          },
-          {
-            enableHighAccuracy: true, // High accuracy for precise speed readings
-            timeout: 10000,
-            maximumAge: 1000 // Fresh data for accurate speed
-          }
-        );
-      } catch (error) {
-        // Permission API not supported in all Safari versions
-        try {
-          watchId = navigator.geolocation.watchPosition(
-            (position) => {
-              const speed = position.coords.speed || 0;
-              setLiveSpeed(Math.max(0, speed));
-            },
-            () => {}, // Silent error handling for Safari
-            {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 1000
-            }
-          );
-        } catch (fallbackError) {
-          // Geolocation completely unavailable
-        }
-      }
-    };
-    
-    startSpeedTracking();
-    
-    return () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
+  // Get live speed from centralized GPS hook
+  const liveSpeed = gpsPosition?.speed ?? 0;
   
   // Use live speed or provided current speed
-  const displaySpeed = currentSpeed > 0 ? currentSpeed : liveSpeed;
+  const displaySpeed = currentSpeed > 0 ? currentSpeed : Math.max(0, liveSpeed);
   const convertedSpeed = convertSpeed(displaySpeed);
   const convertedSpeedLimit = speedLimit ? convertSpeedLimit(speedLimit) : null;
   
