@@ -155,26 +155,26 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
         {/* Page Navigation and Close */}
         <div className="flex items-center gap-4">
           {/* Page Indicators */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant={currentPage === 1 ? "default" : "outline"}
               size="sm"
               onClick={() => goToPage(1)}
-              className="automotive-touch-target min-w-[100px]"
+              className="h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0 sm:min-w-[100px]"
               data-testid="button-page-1"
             >
-              <FileText className="w-4 h-4 mr-2" />
-              Legal Terms
+              <FileText className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Legal Terms</span>
             </Button>
             <Button
               variant={currentPage === 2 ? "default" : "outline"}
               size="sm"
               onClick={() => goToPage(2)}
-              className="automotive-touch-target min-w-[120px]"
+              className="h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0 sm:min-w-[120px]"
               data-testid="button-page-2"
             >
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Acknowledgments
+              <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Acknowledgments</span>
             </Button>
           </div>
           
