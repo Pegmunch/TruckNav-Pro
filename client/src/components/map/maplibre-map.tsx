@@ -1268,7 +1268,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           </div>
 
           {/* Speed Display - positioned above Start Navigation button */}
-          <div className="absolute bottom-[40rem] left-1/2 transform -translate-x-1/2 z-[1150]">
+          <div className="absolute bottom-56 left-1/2 transform -translate-x-1/2 z-[1150]">
             <SpeedDisplay 
               className="shadow-2xl"
             />
