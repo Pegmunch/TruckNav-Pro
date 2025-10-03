@@ -1047,9 +1047,10 @@ function NavigationPageContent() {
       // Attempt reverse geocoding with 5 second timeout
       const result = await reverseGeocode(latitude, longitude, 5000);
 
-      if (result && result.address) {
-        // Success: Set the reverse geocoded address
+      if (result.success) {
+        // Success: Set the reverse geocoded address AND coordinates
         setFromLocation(result.address);
+        setFromCoordinates({ lat: latitude, lng: longitude });
         toast({
           title: "Using current location",
           description: result.address,
@@ -1058,6 +1059,7 @@ function NavigationPageContent() {
         // Fallback: Use coordinates as string if reverse geocoding fails
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         setFromLocation(coordsString);
+        setFromCoordinates({ lat: latitude, lng: longitude });
         toast({
           title: "Using GPS coordinates",
           description: coordsString,
@@ -1067,6 +1069,7 @@ function NavigationPageContent() {
       // Error handling: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       setFromLocation(coordsString);
+      setFromCoordinates({ lat: latitude, lng: longitude });
       toast({
         title: "Using GPS coordinates",
         description: coordsString,
@@ -1789,6 +1792,8 @@ function NavigationPageContent() {
                     toLocation={toLocation}
                     onFromLocationChange={setFromLocation}
                     onToLocationChange={setToLocation}
+                    onFromCoordinatesChange={setFromCoordinates}
+                    onToCoordinatesChange={setToCoordinates}
                     routePreference={routePreference}
                     onRoutePreferenceChange={setRoutePreference}
                     onUseCurrentLocation={handleUseCurrentLocation}
