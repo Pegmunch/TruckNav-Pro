@@ -1219,7 +1219,7 @@ export default function NavigationPage() {
                   </div>
 
                   {/* Start CTA - Above Speedometer (centered) */}
-                  <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-10 mobile-safe-bottom">
+                  <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-10 mobile-safe-bottom">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
