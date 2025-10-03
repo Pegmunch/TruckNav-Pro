@@ -38,7 +38,6 @@ interface EnhancedRealisticMapProps {
   showIncidents?: boolean;
   isNavigating?: boolean;
   currentLocation?: { lat: number; lng: number };
-  onLocationUpdate?: (location: { lat: number; lng: number }) => void;
   onMapClick?: (lat: number, lng: number) => void;
   isMapExpanded?: boolean;
   sidebarState?: 'closed' | 'open' | 'collapsed';
@@ -194,7 +193,6 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   showIncidents = false,
   isNavigating = false,
   currentLocation,
-  onLocationUpdate,
   onMapClick,
   isMapExpanded,
   sidebarState
@@ -202,8 +200,8 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   const [mapProvider, setMapProvider] = useState<keyof typeof mapProviders>('openstreetmap');
   const [zoomLevel, setZoomLevel] = useState(12);
   const [showControls, setShowControls] = useState(true);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([51.8787, -0.42]);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // Use UK center as neutral default (no hardcoded Luton!) - will be overridden by route/GPS
+  const [mapCenter, setMapCenter] = useState<[number, number]>([52.5, -1.5]);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch traffic incidents with 2-minute refresh
@@ -327,31 +325,8 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
     }
   }, [currentRoute, isNavigating]);
 
-  // Get current GPS location
-  useEffect(() => {
-    if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const location = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setUserLocation(location);
-          onLocationUpdate?.(location);
-        },
-        (error) => {
-          console.warn('GPS location error:', error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
-
-      return () => navigator.geolocation.clearWatch(watchId);
-    }
-  }, [onLocationUpdate]);
+  // REMOVED DUPLICATE GPS WATCHER - Use GPS singleton provider via currentLocation prop instead
+  // This component receives currentLocation from parent, no need for duplicate watchPosition
 
   const handleMapCreated = useCallback(() => {
     // This will be called when the map is ready
@@ -359,7 +334,10 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   }, []);
 
   const currentProvider = mapProviders[mapProvider];
-  const displayLocation = userLocation || currentLocation || { lat: mapCenter[0], lng: mapCenter[1] };
+  // Use real GPS location (currentLocation prop) or route start, never hardcoded coordinates
+  const displayLocation = currentLocation || 
+    (currentRoute?.startCoordinates ? { lat: currentRoute.startCoordinates.lat, lng: currentRoute.startCoordinates.lng } : null) ||
+    { lat: mapCenter[0], lng: mapCenter[1] };
 
   return (
     <div className="relative h-full w-full bg-transparent">

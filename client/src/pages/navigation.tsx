@@ -41,14 +41,18 @@ import { IncidentReportDialog } from "@/components/incidents/incident-report-dia
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import SpeedDisplay from "@/components/map/speed-display";
-import { GPSProvider } from "@/contexts/gps-context";
+import { GPSProvider, useGPS } from "@/contexts/gps-context";
 
-export default function NavigationPage() {
+// Inner component that uses GPS context
+function NavigationPageContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const { mapEngine, toggleMapEngine, isMapLibre } = useMapEngine();
+  
+  // Get GPS data from singleton provider
+  const gpsData = useGPS();
   
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
@@ -113,7 +117,13 @@ export default function NavigationPage() {
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
-  const [currentGPSLocation, setCurrentGPSLocation] = useState<{ lat: number; lng: number } | undefined>(undefined);
+  
+  // Get real GPS location from singleton GPS provider (no more duplicate watchers!)
+  const currentGPSLocation = gpsData?.position ? {
+    lat: gpsData.position.latitude,
+    lng: gpsData.position.longitude
+  } : undefined;
+  
   const [professionalVoiceEnabled, setProfessionalVoiceEnabled] = useState(true);
   const [isFullscreenNav, setIsFullscreenNav] = useState(false);
   
@@ -1175,14 +1185,7 @@ export default function NavigationPage() {
   // Don't block the entire interface for profile loading - show interface with loading states instead
 
   return (
-    <GPSProvider
-      enableHighAccuracy={true}
-      timeout={5000}
-      maximumAge={0}
-      headingSmoothingAlpha={0.25}
-      enableHeadingSmoothing={isNavigating}
-    >
-      <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
+    <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
 
         {/* Legal Disclaimer Popup */}
         {showLegalPopup && (
@@ -1707,8 +1710,7 @@ export default function NavigationPage() {
                       showTrafficLayer={showTrafficLayer}
                       showIncidents={showIncidents}
                       isNavigating={isNavigating}
-                      currentLocation={currentGPSLocation || undefined}
-                      onLocationUpdate={setCurrentGPSLocation}
+                      currentLocation={currentGPSLocation}
                       onMapClick={handleMapClick}
                       isMapExpanded={isMapExpanded}
                       sidebarState={sidebarState}
@@ -1805,7 +1807,21 @@ export default function NavigationPage() {
         }}
       />
 
-      </div>
+    </div>
+  );
+}
+
+// Main NavigationPage wrapper with GPS Provider
+export default function NavigationPage() {
+  return (
+    <GPSProvider
+      enableHighAccuracy={true}
+      timeout={5000}
+      maximumAge={0}
+      headingSmoothingAlpha={0.25}
+      enableHeadingSmoothing={true}
+    >
+      <NavigationPageContent />
     </GPSProvider>
   );
 }
