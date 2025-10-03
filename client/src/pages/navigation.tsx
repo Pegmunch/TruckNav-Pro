@@ -963,18 +963,24 @@ function NavigationPageContent() {
   }, [fromLocation, toLocation]);
 
   // Auto-plan route when both locations are set (with 3-second debounce)
+  // Also triggers when coordinates change (e.g., from AddressAutocomplete)
   useEffect(() => {
     // Clear any existing timeout
     const timeoutId = setTimeout(() => {
-      // Only auto-plan if we have both locations (min 5 chars each for complete postcodes) and no current route
-      if (fromLocation && fromLocation.length >= 5 && toLocation && toLocation.length >= 5 && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
+      // Trigger route calculation when:
+      // 1. Both location texts are filled (min 5 chars for complete postcodes), OR
+      // 2. Both coordinates are set (from autocomplete/GPS)
+      const hasLocationText = fromLocation && fromLocation.length >= 5 && toLocation && toLocation.length >= 5;
+      const hasCoordinates = fromCoordinates && toCoordinates;
+      
+      if ((hasLocationText || hasCoordinates) && !currentRoute && !calculateRouteMutation.isPending && activeProfileId) {
         handlePlanRoute(routePreference);
       }
     }, 3000); // 3-second delay
 
     // Cleanup: clear timeout if user continues typing
     return () => clearTimeout(timeoutId);
-  }, [fromLocation, toLocation, routePreference, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
+  }, [fromLocation, toLocation, fromCoordinates, toCoordinates, routePreference, activeProfileId, currentRoute, calculateRouteMutation.isPending]);
 
   // Effect to automatically show alternative routes when they become available
   useEffect(() => {
@@ -1452,7 +1458,7 @@ function NavigationPageContent() {
               {mobileNavMode === 'plan' && (
                 <>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-1 px-4 border-b bg-white">
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -1492,7 +1498,7 @@ function NavigationPageContent() {
               {mobileNavMode === 'preview' && currentRoute && (
                 <>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-1 px-4 border-b bg-white">
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -1546,6 +1552,20 @@ function NavigationPageContent() {
                     />
                   </div>
 
+                  {/* MobileFAB - Bottom Right */}
+                  <MobileFAB
+                    mode="preview"
+                    onSettingsClick={() => setShowVehicleSettings(true)}
+                    onClearRoute={() => {
+                      setCurrentRoute(null);
+                      setMobileNavMode('plan');
+                    }}
+                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
+                    onReportIncident={() => setShowIncidentReportDialog(true)}
+                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom pointer-events-auto"
+                  />
+
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-[5]">
                     <MapLegalOwnership compact={true} className="sm:hidden" />
@@ -1558,7 +1578,7 @@ function NavigationPageContent() {
                 <>
                   {/* Trip Info Header */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 py-2 shadow-lg">
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 pb-2 shadow-lg">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
