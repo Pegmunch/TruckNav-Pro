@@ -1040,40 +1040,61 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
           // Create or update user position marker
           if (!userMarkerRef.current) {
+            // Calculate responsive marker size based on device pixel ratio
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            const baseSize = 56; // Increased from 40px for better visibility
+            const scaleFactor = Math.max(1, devicePixelRatio / 2);
+            const markerSize = Math.round(baseSize * scaleFactor);
+            const borderWidth = Math.max(3, Math.round(4 * scaleFactor));
+            
+            // Scale arrow proportionally to marker size
+            const arrowWidth = Math.round(markerSize * 0.18); // ~10px at 56px base
+            const arrowHeight = Math.round(markerSize * 0.32); // ~18px at 56px base
+            
             // Create premium blue arrow marker for user position
             const el = document.createElement('div');
             el.className = 'user-position-marker';
             el.innerHTML = `
               <div style="
-                width: 40px;
-                height: 40px;
+                width: ${markerSize}px;
+                height: ${markerSize}px;
                 background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-                border: 4px solid white;
+                border: ${borderWidth}px solid white;
                 border-radius: 50%;
-                box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+                box-shadow: 
+                  0 0 0 2px rgba(37, 99, 235, 0.3),
+                  0 4px 20px rgba(59, 130, 246, 0.6), 
+                  0 2px 10px rgba(0, 0, 0, 0.4);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 position: relative;
                 animation: pulse-glow 2s ease-in-out infinite;
+                z-index: 1000;
               ">
                 <div style="
                   width: 0;
                   height: 0;
-                  border-left: 6px solid transparent;
-                  border-right: 6px solid transparent;
-                  border-bottom: 12px solid white;
+                  border-left: ${arrowWidth}px solid transparent;
+                  border-right: ${arrowWidth}px solid transparent;
+                  border-bottom: ${arrowHeight}px solid white;
                   transform: translateY(-2px);
-                  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+                  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
                 "></div>
               </div>
               <style>
                 @keyframes pulse-glow {
                   0%, 100% { 
-                    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+                    box-shadow: 
+                      0 0 0 2px rgba(37, 99, 235, 0.3),
+                      0 4px 20px rgba(59, 130, 246, 0.6), 
+                      0 2px 10px rgba(0, 0, 0, 0.4);
                   }
                   50% { 
-                    box-shadow: 0 4px 24px rgba(59, 130, 246, 0.8), 0 2px 12px rgba(0, 0, 0, 0.4);
+                    box-shadow: 
+                      0 0 0 3px rgba(37, 99, 235, 0.5),
+                      0 4px 28px rgba(59, 130, 246, 0.9), 
+                      0 2px 14px rgba(0, 0, 0, 0.5);
                   }
                 }
               </style>
