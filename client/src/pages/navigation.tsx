@@ -1209,20 +1209,6 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Hamburger Menu - Bottom Right */}
-                  <MobileFAB
-                    mode="preview"
-                    onSettingsClick={() => setShowVehicleSettings(true)}
-                    onClearRoute={() => {
-                      setCurrentRoute(null);
-                      setMobileNavMode('plan');
-                    }}
-                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
-                    onReportIncident={() => setShowIncidentReportDialog(true)}
-                    onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom"
-                  />
-
                   {/* Speedometer - Resting on top of Start Navigation button */}
                   <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
                     <SpeedDisplay 
@@ -1453,17 +1439,6 @@ export default function NavigationPage() {
                       <span className="text-[10px]">Stop Navigation</span>
                     </Button>
                   </div>
-
-                  {/* FAB for secondary controls - Bottom Right */}
-                  <MobileFAB
-                    mode="navigate"
-                    onSettingsClick={() => setShowVehicleSettings(true)}
-                    onClearRoute={handleStopNavigation}
-                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
-                    onReportIncident={() => setShowIncidentReportDialog(true)}
-                    onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-[70] mobile-safe-bottom pointer-events-auto"
-                  />
 
                   {/* Legal Ownership */}
                   <div className="absolute bottom-0 left-0 right-0 z-10">
