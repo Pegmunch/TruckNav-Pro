@@ -78,10 +78,9 @@ export function AddressAutocomplete({
 
   // Auto-detect if the input looks like a postcode
   useEffect(() => {
-    if (searchTerm && looksLikePostcode(searchTerm)) {
+    if (searchTerm.trim() && looksLikePostcode(searchTerm)) {
       setIsPostcodeMode(true);
-    } else if (searchTerm.length >= 3) {
-      // Switch to Photon mode if input is longer and doesn't look like postcode
+    } else {
       setIsPostcodeMode(false);
     }
   }, [searchTerm]);
