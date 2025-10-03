@@ -1113,6 +1113,31 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [isNavigating, isLoaded]);
 
+  // Listen for auto-zoom to GPS position event
+  useEffect(() => {
+    const handleAutoZoom = (event: CustomEvent) => {
+      if (!map.current) return;
+
+      const { position } = event.detail;
+
+      // Fly to GPS position with street-level view
+      map.current.flyTo({
+        center: [position.lng, position.lat],
+        zoom: position.zoom || 17.5,
+        pitch: position.pitch || 45,
+        bearing: position.bearing || 0,
+        duration: 2000,
+        essential: true
+      });
+    };
+
+    window.addEventListener('auto_zoom_gps', handleAutoZoom as EventListener);
+    
+    return () => {
+      window.removeEventListener('auto_zoom_gps', handleAutoZoom as EventListener);
+    };
+  }, []);
+
   const handleZoomIn = () => {
     if (map.current) {
       map.current.zoomIn({ duration: 300 });

@@ -943,6 +943,82 @@ export default function NavigationPage() {
       });
       window.dispatchEvent(streetViewActivationEvent);
 
+      // Auto-zoom to GPS position with robust fallback
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            // GPS available - zoom to exact position
+            const gpsPosition = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              zoom: 17.5,
+              pitch: 45,
+              bearing: 0
+            };
+            
+            // Switch to roads mode and fly to GPS position
+            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+              detail: { 
+                position: gpsPosition,
+                mapStyle: 'roads'
+              }
+            });
+            window.dispatchEvent(autoZoomEvent);
+          },
+          (error) => {
+            // GPS failed - fallback to route start with user notification
+            console.warn('GPS unavailable, using route start:', error.message);
+            
+            if (route.startCoordinates) {
+              const fallbackPosition = {
+                lat: route.startCoordinates.lat,
+                lng: route.startCoordinates.lng,
+                zoom: 17.5,
+                pitch: 45,
+                bearing: 0
+              };
+              
+              const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+                detail: { 
+                  position: fallbackPosition,
+                  mapStyle: 'roads'
+                }
+              });
+              window.dispatchEvent(autoZoomEvent);
+              
+              toast({
+                title: "Using route start location",
+                description: "GPS unavailable - showing route starting point",
+              });
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
+      } else {
+        // Geolocation not supported - use route start
+        if (route.startCoordinates) {
+          const fallbackPosition = {
+            lat: route.startCoordinates.lat,
+            lng: route.startCoordinates.lng,
+            zoom: 17.5,
+            pitch: 45,
+            bearing: 0
+          };
+          
+          const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+            detail: { 
+              position: fallbackPosition,
+              mapStyle: 'roads'
+            }
+          });
+          window.dispatchEvent(autoZoomEvent);
+        }
+      }
+
       setTimeout(() => {
         setIsMapExpanded(true);
       }, 300);

@@ -214,6 +214,40 @@ const InteractiveMap = memo(function InteractiveMap({
     };
   }, [preferences]);
 
+  // Listen for auto-zoom to GPS position event
+  useEffect(() => {
+    const handleAutoZoom = (event: CustomEvent) => {
+      const { position, mapStyle } = event.detail;
+      
+      // Switch to roads mode if specified
+      if (mapStyle === 'roads') {
+        const newPrefs = { ...preferences, mapStyle: 'roads' as const };
+        setPreferences(newPrefs);
+        saveMapPreferences(newPrefs);
+      }
+
+      // Fly to GPS position with street-level view (access mapRef directly without dependencies)
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.flyTo(
+            [position.lat, position.lng],
+            position.zoom || 17.5,
+            {
+              animate: true,
+              duration: 2
+            }
+          );
+        }
+      }, 100);
+    };
+
+    window.addEventListener('auto_zoom_gps', handleAutoZoom as EventListener);
+    
+    return () => {
+      window.removeEventListener('auto_zoom_gps', handleAutoZoom as EventListener);
+    };
+  }, [preferences]);
+
   // Smart auto-activation logic for navigation mode
   useEffect(() => {
     if (!isNavigating || !currentRoute) {
