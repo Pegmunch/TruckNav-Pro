@@ -1,8 +1,9 @@
-import { Crosshair } from 'lucide-react';
+import { Crosshair, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
+import { useGPS } from '@/contexts/gps-context';
 
 interface SimplifiedRouteDrawerProps {
   fromLocation: string;
@@ -27,6 +28,11 @@ export function SimplifiedRouteDrawer({
   onRoutePreferenceChange,
   onUseCurrentLocation
 }: SimplifiedRouteDrawerProps) {
+  const gps = useGPS();
+
+  const hasGPSError = gps?.error !== null || gps?.errorType !== null;
+  const isGPSReady = gps?.position !== null && !hasGPSError;
+  const isGPSInitializing = gps?.isTracking && !gps?.position && !hasGPSError;
 
   return (
     <div className="space-y-6">
@@ -47,15 +53,40 @@ export function SimplifiedRouteDrawer({
               className="flex-1"
             />
             <Button
-              variant="outline"
+              variant={hasGPSError ? "destructive" : "outline"}
               size="icon"
               onClick={onUseCurrentLocation}
+              disabled={hasGPSError}
               className="h-10 w-10 shrink-0"
               data-testid="button-current-location"
             >
-              <Crosshair className="w-5 h-5" />
+              <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600 dark:text-green-400' : ''}`} />
             </Button>
           </div>
+
+          {/* GPS Status Indicator */}
+          {gps && (
+            <div className="flex items-center gap-2 text-xs" data-testid="gps-status-indicator">
+              {isGPSReady && (
+                <>
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-green-600 dark:text-green-400">GPS Ready</span>
+                </>
+              )}
+              {hasGPSError && (
+                <>
+                  <AlertCircle className="w-4 h-4 text-destructive" />
+                  <span className="text-destructive">{gps.errorMessage || 'GPS unavailable'}</span>
+                </>
+              )}
+              {isGPSInitializing && (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Waiting for GPS...</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
