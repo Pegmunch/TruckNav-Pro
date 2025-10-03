@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,6 +14,7 @@ import {
 } from '@/hooks/use-photon-autocomplete';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useGPS } from '@/contexts/gps-context';
 
 interface PostcodeResult {
   postcode: string;
@@ -63,6 +64,22 @@ export function AddressAutocomplete({
   const [debouncedSearch, setDebouncedSearch] = useState(value);
   const [isPostcodeMode, setIsPostcodeMode] = useState(false);
   const { toast } = useToast();
+  const gps = useGPS();
+
+  // Detect country from GPS coordinates
+  const countryCode = useMemo(() => {
+    if (!gps?.position) return undefined;
+    
+    const { latitude, longitude } = gps.position;
+    
+    // UK bounds: lat 49.9-60.9, lng -8.2-1.8
+    if (latitude >= 49.9 && latitude <= 60.9 && longitude >= -8.2 && longitude <= 1.8) {
+      return 'GB';
+    }
+    
+    // If outside UK, show all results (no filter)
+    return undefined;
+  }, [gps?.position]);
 
   useEffect(() => {
     setSearchTerm(value);
@@ -101,7 +118,8 @@ export function AddressAutocomplete({
   // Fetch Photon suggestions (only when NOT in postcode mode)
   const { results: photonResults, isLoading: isLoadingPhoton } = usePhotonAutocomplete(
     searchTerm,
-    !isPostcodeMode && open
+    !isPostcodeMode && open,
+    countryCode
   );
 
   // Create location mutation

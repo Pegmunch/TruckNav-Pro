@@ -42,6 +42,7 @@ import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import SpeedDisplay from "@/components/map/speed-display";
 import { GPSProvider, useGPS } from "@/contexts/gps-context";
+import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -136,6 +137,9 @@ function NavigationPageContent() {
   const [mapBearing, setMapBearing] = useState(0);
   const [map3DMode, setMap3DMode] = useState(false);
   const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>('roads');
+  
+  // Auto-zoom tracking - ensure we only zoom once per session
+  const hasAutoZoomed = useRef(false);
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
@@ -186,6 +190,58 @@ function NavigationPageContent() {
     
     checkARSupport();
   }, []);
+  
+  // Auto-zoom to GPS location on first lock when map loads
+  useEffect(() => {
+    // Skip if already auto-zoomed
+    if (hasAutoZoomed.current) return;
+    
+    // Skip if GPS not available yet
+    if (!gpsData?.position) return;
+    
+    // Skip if map not ready
+    if (!mapRef.current) return;
+    
+    // Skip if already navigating (navigation has its own zoom logic)
+    if (isNavigating) return;
+    
+    // Skip if user already has a planned route (don't interfere with route planning)
+    if (currentRoute) return;
+    
+    // All conditions met - perform auto-zoom to GPS location
+    console.log('[AUTO-ZOOM] First GPS lock detected, auto-zooming to user location');
+    
+    // Mark as zoomed BEFORE calling to prevent duplicate attempts
+    hasAutoZoomed.current = true;
+    
+    // Small delay to ensure map is fully initialized
+    setTimeout(() => {
+      mapRef.current?.zoomToUserLocation({
+        forceStreetMode: false,  // Don't force mode change (respect user preference)
+        zoom: 17.5,              // Street-level zoom
+        pitch: 45,               // 3D tilt view
+        duration: 2000,          // Smooth 2-second animation
+        onSuccess: (location) => {
+          console.log(`[AUTO-ZOOM] ✓ Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`);
+        },
+        onError: (error, usedFallback) => {
+          // Silently handle errors - don't show toast to avoid annoying user on page load
+          if ('code' in error) {
+            const gpsError = error as GeolocationPositionError;
+            if (gpsError.code === GeolocationPositionError.PERMISSION_DENIED) {
+              console.warn('[AUTO-ZOOM] GPS permission denied - auto-zoom skipped');
+            } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
+              console.warn('[AUTO-ZOOM] GPS timeout - auto-zoom skipped');
+            } else {
+              console.warn('[AUTO-ZOOM] GPS unavailable - auto-zoom skipped');
+            }
+          } else {
+            console.warn('[AUTO-ZOOM] Auto-zoom failed:', error.message);
+          }
+        }
+      });
+    }, 500); // 500ms delay for map initialization
+  }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available
   
   // Auto-update mobile navigation mode based on state
   useEffect(() => {
@@ -861,6 +917,50 @@ function NavigationPageContent() {
       toast({
         title: "Navigation cancelled",
         description: "Route has been cancelled successfully",
+      });
+    }
+  };
+
+  // Handle use current location with reverse geocoding
+  const handleUseCurrentLocation = async () => {
+    if (!gpsData || !gpsData.position) {
+      toast({
+        title: "GPS not available",
+        description: "Unable to get your current location. Please enable GPS or enter address manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { latitude, longitude } = gpsData.position;
+
+    try {
+      // Attempt reverse geocoding with 5 second timeout
+      const result = await reverseGeocode(latitude, longitude, 5000);
+
+      if (result && result.address) {
+        // Success: Set the reverse geocoded address
+        setFromLocation(result.address);
+        toast({
+          title: "Using current location",
+          description: result.address,
+        });
+      } else {
+        // Fallback: Use coordinates as string if reverse geocoding fails
+        const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+        setFromLocation(coordsString);
+        toast({
+          title: "Using GPS coordinates",
+          description: coordsString,
+        });
+      }
+    } catch (error) {
+      // Error handling: Fallback to coordinates
+      const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+      setFromLocation(coordsString);
+      toast({
+        title: "Using GPS coordinates",
+        description: coordsString,
       });
     }
   };
@@ -1582,7 +1682,7 @@ function NavigationPageContent() {
                     onToLocationChange={setToLocation}
                     routePreference={routePreference}
                     onRoutePreferenceChange={setRoutePreference}
-                    onUseCurrentLocation={() => setFromLocation('Current Location')}
+                    onUseCurrentLocation={handleUseCurrentLocation}
                   />
                 </div>
               </div>

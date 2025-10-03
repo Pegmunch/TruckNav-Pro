@@ -7,6 +7,7 @@ interface PhotonProperties {
   housenumber?: string;
   city?: string;
   country?: string;
+  countrycode?: string;
   postcode?: string;
   state?: string;
   district?: string;
@@ -27,7 +28,11 @@ interface PhotonResponse {
   features: PhotonFeature[];
 }
 
-export const usePhotonAutocomplete = (query: string, enabled: boolean = true) => {
+export const usePhotonAutocomplete = (
+  query: string, 
+  enabled: boolean = true,
+  countryCode?: string
+) => {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
   // Debounce the query with 300ms delay
@@ -42,7 +47,7 @@ export const usePhotonAutocomplete = (query: string, enabled: boolean = true) =>
   const shouldFetch = enabled && debouncedQuery.length >= 3;
 
   const { data, isLoading, error } = useQuery<PhotonFeature[]>({
-    queryKey: ["/api/photon", debouncedQuery],
+    queryKey: ["/api/photon", debouncedQuery, countryCode],
     queryFn: async () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -60,7 +65,18 @@ export const usePhotonAutocomplete = (query: string, enabled: boolean = true) =>
         }
 
         const data: PhotonResponse = await response.json();
-        return data.features || [];
+        const features = data.features || [];
+        
+        // Filter by country code if provided
+        if (countryCode) {
+          const filtered = features.filter(f => 
+            f.properties.countrycode?.toUpperCase() === countryCode.toUpperCase() ||
+            f.properties.country?.toUpperCase() === countryCode.toUpperCase()
+          );
+          return filtered;
+        }
+        
+        return features;
       } catch (err) {
         clearTimeout(timeoutId);
         

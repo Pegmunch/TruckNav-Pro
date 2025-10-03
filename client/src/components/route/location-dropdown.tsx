@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ import {
   extractPhotonCoordinates,
   type PhotonFeature 
 } from "@/hooks/use-photon-autocomplete";
+import { useGPS } from "@/contexts/gps-context";
 
 interface LocationDropdownProps {
   value: string;
@@ -68,6 +69,22 @@ const LocationDropdown = memo(function LocationDropdown({
     error?: string;
   }>({ isValid: false, country: null, formatted: "" });
   const { toast } = useToast();
+  const gps = useGPS();
+
+  // Detect country from GPS coordinates
+  const countryCode = useMemo(() => {
+    if (!gps?.position) return undefined;
+    
+    const { latitude, longitude } = gps.position;
+    
+    // UK bounds: lat 49.9-60.9, lng -8.2-1.8
+    if (latitude >= 49.9 && latitude <= 60.9 && longitude >= -8.2 && longitude <= 1.8) {
+      return 'GB';
+    }
+    
+    // If outside UK, show all results (no filter)
+    return undefined;
+  }, [gps?.position]);
 
   // Sync internal search value with external value
   useEffect(() => {
@@ -166,7 +183,8 @@ const LocationDropdown = memo(function LocationDropdown({
   // Photon autocomplete (only active when NOT in postcode mode)
   const { results: photonResults, isLoading: isLoadingPhoton } = usePhotonAutocomplete(
     searchValue,
-    !isPostcodeMode // Only enabled when NOT in postcode mode
+    !isPostcodeMode, // Only enabled when NOT in postcode mode
+    countryCode
   );
 
   // Postcode geocoding mutation for exact lookups

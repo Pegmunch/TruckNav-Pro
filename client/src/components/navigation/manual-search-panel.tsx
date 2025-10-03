@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useGPS } from "@/contexts/gps-context";
+import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 
 interface ManualSearchPanelProps {
   fromLocation: string;
@@ -47,6 +49,7 @@ export default function ManualSearchPanel({
   const [destinationSearch, setDestinationSearch] = useState("");
   const [postcodeSearch, setPostcodeSearch] = useState("");
   const { toast } = useToast();
+  const gpsData = useGPS();
 
   // Handle current location search
   const handleCurrentLocationSearch = useCallback(() => {
@@ -127,92 +130,49 @@ export default function ManualSearchPanel({
     });
   }, [fromLocation, toLocation, onFromLocationChange, onToLocationChange, toast]);
 
-  // Handle use current location
-  const handleUseCurrentLocation = useCallback(() => {
-    if ('geolocation' in navigator) {
-      // Detect browser and platform for optimal settings
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isAndroid = /android/i.test(navigator.userAgent);
-      const isChrome = /chrome|chromium|crios/i.test(navigator.userAgent);
-      const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
-      
-      // Optimize settings based on browser and platform
-      const geolocationOptions = {
-        enableHighAccuracy: isAndroid || isChrome ? true : false, // Android/Chrome work better with high accuracy
-        timeout: isSafari ? 20000 : isMobile ? 15000 : 10000, // Longer timeout for Safari and mobile
-        maximumAge: isMobile ? 300000 : 600000 // 5-10 minutes cache depending on device
-      };
-      
-      console.log('Geolocation request with options:', {
-        browser: { isSafari, isAndroid, isChrome, isMobile },
-        options: geolocationOptions
-      });
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const locationString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-          onFromLocationChange(locationString);
-          
-          toast({
-            title: "Current location detected",
-            description: "Your current GPS location has been set as the starting point"
-          });
-        },
-        (error) => {
-          console.error('Geolocation error details:', {
-            code: error.code,
-            message: error.message,
-            PERMISSION_DENIED: error.code === 1,
-            POSITION_UNAVAILABLE: error.code === 2,
-            TIMEOUT: error.code === 3,
-            browser: { isSafari, isAndroid, isChrome, isMobile }
-          });
-          
-          let errorTitle = "Location access failed";
-          let errorDescription = "Please enable location access or enter your location manually";
-          
-          switch (error.code) {
-            case 1: // PERMISSION_DENIED
-              errorTitle = "Location permission denied";
-              if (isAndroid) {
-                errorDescription = "Please allow location access when prompted, or check your browser settings";
-              } else if (isSafari) {
-                errorDescription = "Go to Safari > Settings for This Website > Location > Allow";
-              } else {
-                errorDescription = "Please allow location access in your browser settings and try again";
-              }
-              break;
-            case 2: // POSITION_UNAVAILABLE
-              errorTitle = "Location unavailable";
-              errorDescription = isMobile ? 
-                "GPS signal weak. Try moving to an open area or enter location manually" :
-                "Your location could not be determined. Please enter manually";
-              break;
-            case 3: // TIMEOUT
-              errorTitle = "Location timeout";
-              errorDescription = isMobile ?
-                "GPS is taking too long. Try again or enter your location manually" :
-                "Location request timed out. Please try again or enter manually";
-              break;
-          }
-          
-          toast({
-            title: errorTitle,
-            description: errorDescription,
-            variant: "destructive"
-          });
-        },
-        geolocationOptions
-      );
-    } else {
+  // Handle use current location with reverse geocoding
+  const handleUseCurrentLocation = useCallback(async () => {
+    if (!gpsData || !gpsData.position) {
       toast({
-        title: "Location not supported",
-        description: "Your browser doesn't support location services",
-        variant: "destructive"
+        title: "GPS not available",
+        description: "Unable to get your current location. Please enable GPS or enter address manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { latitude, longitude } = gpsData.position;
+
+    try {
+      // Attempt reverse geocoding with 5 second timeout
+      const result = await reverseGeocode(latitude, longitude, 5000);
+
+      if (result && result.address) {
+        // Success: Set the reverse geocoded address
+        onFromLocationChange(result.address);
+        toast({
+          title: "Using current location",
+          description: result.address,
+        });
+      } else {
+        // Fallback: Use coordinates as string if reverse geocoding fails
+        const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+        onFromLocationChange(coordsString);
+        toast({
+          title: "Using GPS coordinates",
+          description: coordsString,
+        });
+      }
+    } catch (error) {
+      // Error handling: Fallback to coordinates
+      const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+      onFromLocationChange(coordsString);
+      toast({
+        title: "Using GPS coordinates",
+        description: coordsString,
       });
     }
-  }, [onFromLocationChange, toast]);
+  }, [gpsData, onFromLocationChange, toast]);
 
   return (
     <Card className={cn("bg-card", className)}>

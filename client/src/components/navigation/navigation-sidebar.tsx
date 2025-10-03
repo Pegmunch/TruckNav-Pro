@@ -50,6 +50,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import IncidentReportingForm from "@/components/traffic/incident-reporting-form";
+import { useGPS } from "@/contexts/gps-context";
+import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -136,6 +138,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   onRoutePreviewToggle,
 }: NavigationSidebarProps) {
   const { toast } = useToast();
+  const gpsData = useGPS();
   
   // State for Quick Picks modal components
   const [showVehicleProfileSetup, setShowVehicleProfileSetup] = useState(false);
@@ -199,39 +202,46 @@ const NavigationSidebar = memo(function NavigationSidebar({
   });
 
 
-  // Handle use current GPS location
-  const handleUseCurrentLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const locationString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-          onFromLocationChange(locationString);
-          
-          toast({
-            title: "Current location detected",
-            description: "Your current GPS location has been set as the starting point"
-          });
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          toast({
-            title: "Location access denied",
-            description: "Please enable location access or enter your location manually",
-            variant: "destructive"
-          });
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
-    } else {
+  // Handle use current GPS location with reverse geocoding
+  const handleUseCurrentLocation = async () => {
+    if (!gpsData || !gpsData.position) {
       toast({
-        title: "Location not supported",
-        description: "Your browser doesn't support location services",
-        variant: "destructive"
+        title: "GPS not available",
+        description: "Unable to get your current location. Please enable GPS or enter address manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { latitude, longitude } = gpsData.position;
+
+    try {
+      // Attempt reverse geocoding with 5 second timeout
+      const result = await reverseGeocode(latitude, longitude, 5000);
+
+      if (result && result.address) {
+        // Success: Set the reverse geocoded address
+        onFromLocationChange(result.address);
+        toast({
+          title: "Using current location",
+          description: result.address,
+        });
+      } else {
+        // Fallback: Use coordinates as string if reverse geocoding fails
+        const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+        onFromLocationChange(coordsString);
+        toast({
+          title: "Using GPS coordinates",
+          description: coordsString,
+        });
+      }
+    } catch (error) {
+      // Error handling: Fallback to coordinates
+      const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+      onFromLocationChange(coordsString);
+      toast({
+        title: "Using GPS coordinates",
+        description: coordsString,
       });
     }
   };
