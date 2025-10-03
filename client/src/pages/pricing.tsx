@@ -22,7 +22,7 @@ export default function PricingPage() {
 
   const handleSubscribe = (planId: string) => {
     if (!isAuthenticated) {
-      window.location.href = '/auth/login';
+      window.location.href = '/api/login';
       return;
     }
     setLocation(`/subscribe/${planId}`);

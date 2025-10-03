@@ -594,20 +594,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /api/users/accept-terms - Record legal consent server-side
-  app.post('/api/users/accept-terms', isAuthenticated, async (req: any, res: Response) => {
+  // POST /api/users/accept-terms - Record consent (works for both auth states)
+  app.post('/api/users/accept-terms', async (req: any, res: Response) => {
     try {
-      const userId = req.user.claims.sub;
-      
-      await storage.updateUser(userId, {
-        hasAcceptedTerms: true,
-        termsAcceptedAt: new Date()
-      });
-      
-      res.json({ success: true });
+      // If authenticated, save to database
+      if (req.user && req.user.claims && req.user.claims.sub) {
+        const userId = req.user.claims.sub;
+        await storage.updateUser(userId, {
+          hasAcceptedTerms: true,
+          termsAcceptedAt: new Date()
+        });
+      }
+      // Always return success (localStorage save happens client-side)
+      res.json({ success: true, authenticated: !!req.user });
     } catch (error) {
       console.error("Error recording terms acceptance:", error);
       res.status(500).json({ message: "Failed to record terms acceptance" });
+    }
+  });
+
+  // POST /api/users/sync-consent - Sync localStorage consent to database after login
+  app.post('/api/users/sync-consent', isAuthenticated, async (req: any, res: Response) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Only update if not already accepted
+      if (!user.hasAcceptedTerms) {
+        await storage.updateUser(userId, {
+          hasAcceptedTerms: true,
+          termsAcceptedAt: new Date()
+        });
+      }
+      
+      res.json({ success: true, alreadyAccepted: user.hasAcceptedTerms });
+    } catch (error) {
+      console.error("Error syncing consent:", error);
+      res.status(500).json({ message: "Failed to sync consent" });
     }
   });
 
@@ -1951,8 +1978,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize Stripe (will be available when user provides API keys)
   let stripe: Stripe | null = null;
-  if (process.env.STRIPE_SECRET_KEY) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.TESTING_STRIPE_SECRET_KEY;
+  if (stripeKey) {
+    stripe = new Stripe(stripeKey);
   }
 
   // Subscription Plans

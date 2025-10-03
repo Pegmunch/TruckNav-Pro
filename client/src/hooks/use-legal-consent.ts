@@ -30,6 +30,7 @@ export interface UseLegalConsentReturn {
   
   // Methods
   setConsentAccepted: (checkboxStates?: LegalConsentData['completedCheckboxes']) => Promise<void>;
+  syncConsentToServer: () => Promise<void>;
   clearConsent: () => void;
   isConsentValid: (requiredVersion?: string) => boolean;
   
@@ -171,15 +172,37 @@ export function useLegalConsent(): UseLegalConsentReturn {
     setConsentData(newConsentData);
     saveConsentData(newConsentData);
 
-    // Also save to backend for authenticated users
+    // Also save to backend (works for both authenticated and unauthenticated users)
     try {
       await apiRequest('POST', '/api/users/accept-terms', {});
+      console.log('Consent recorded on server');
     } catch (error) {
-      // Fail silently for unauthenticated users or network errors
-      // The endpoint is protected, so unauthenticated users will get a 401
+      // Network errors are logged but don't block the flow
       console.error('Failed to record consent on server:', error);
     }
   }, [saveConsentData]);
+
+  /**
+   * Sync localStorage consent to server after login
+   * Should be called when user becomes authenticated
+   */
+  const syncConsentToServer = useCallback(async (): Promise<void> => {
+    // Read consent directly from localStorage to avoid stale closure
+    const storedConsent = parseStoredConsent();
+    
+    if (!storedConsent || !storedConsent.hasAcceptedTerms) {
+      console.log('No consent to sync - user has not accepted terms yet');
+      return;
+    }
+
+    try {
+      const response = await apiRequest('POST', '/api/users/sync-consent', {});
+      console.log('Consent synced to server:', response);
+    } catch (error) {
+      console.error('Failed to sync consent to server:', error);
+      throw error;
+    }
+  }, [parseStoredConsent]);
 
   /**
    * Clear all consent state
@@ -265,6 +288,7 @@ export function useLegalConsent(): UseLegalConsentReturn {
     
     // Methods
     setConsentAccepted,
+    syncConsentToServer,
     clearConsent,
     isConsentValid,
     
