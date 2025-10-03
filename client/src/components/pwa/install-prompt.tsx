@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, X, Smartphone, Monitor } from 'lucide-react';
+import { Download, X, Smartphone, Monitor, Share, Plus } from 'lucide-react';
+import { isIOSDevice, isRunningAsPWA, canInstallIOSPWA } from '@/lib/pwa-registration';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -24,25 +25,43 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
-  const [platform, setPlatform] = useState<'mobile' | 'desktop' | 'unknown'>('unknown');
+  const [platform, setPlatform] = useState<'mobile' | 'desktop' | 'ios' | 'unknown'>('unknown');
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    // Detect iOS
+    const iosDevice = isIOSDevice();
+    setIsIOS(iosDevice);
+
     // Detect platform
     const userAgent = navigator.userAgent.toLowerCase();
     const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-    setPlatform(isMobile ? 'mobile' : 'desktop');
+    
+    if (iosDevice) {
+      setPlatform('ios');
+    } else if (isMobile) {
+      setPlatform('mobile');
+    } else {
+      setPlatform('desktop');
+    }
 
     // Check if already installed
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                        (window.navigator as any).standalone ||
-                        document.referrer.includes('android-app://');
+    const alreadyInstalled = isRunningAsPWA();
     
-    if (isStandalone) {
+    if (alreadyInstalled) {
       setIsInstalled(true);
       return;
     }
 
-    // Handle beforeinstallprompt event
+    // For iOS, show install prompt if not in standalone mode
+    if (iosDevice && canInstallIOSPWA()) {
+      // Show iOS install prompt after delay
+      setTimeout(() => {
+        setShowInstallPrompt(true);
+      }, 3000);
+    }
+
+    // Handle beforeinstallprompt event (non-iOS)
     const handleBeforeInstallPrompt = (e: Event) => {
       const beforeInstallPrompt = e as BeforeInstallPromptEvent;
       e.preventDefault();
@@ -113,7 +132,7 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
   }
 
   // Don't show if already installed or no prompt available
-  if (isInstalled || !showInstallPrompt || !deferredPrompt) {
+  if (isInstalled || !showInstallPrompt) {
     // Show installed badge if applicable
     if (isInstalled && showBadge) {
       return (
@@ -128,6 +147,72 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
         </div>
       );
     }
+    return null;
+  }
+
+  // iOS-specific install prompt
+  if (isIOS) {
+    return (
+      <div className={`pwa-install-prompt ios ${className}`} data-testid="pwa-install-prompt-ios">
+        <Alert 
+          className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-50 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800"
+          data-testid="alert-install-prompt-ios"
+        >
+          <Smartphone className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
+            <span>Add to Home Screen</span>
+          </AlertTitle>
+          <AlertDescription className="text-blue-700 dark:text-blue-300">
+            <p className="mb-3 text-sm">
+              Install TruckNav Pro for a native app experience:
+            </p>
+            <ul className="text-sm space-y-1 mb-3">
+              <li>• Full-screen navigation</li>
+              <li>• Works offline</li>
+              <li>• Faster performance</li>
+              <li>• Easy access from home screen</li>
+            </ul>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3 border border-blue-300 dark:border-blue-700">
+              <p className="text-xs font-semibold mb-2 text-blue-900 dark:text-blue-100">Installation Steps:</p>
+              <ol className="text-xs space-y-1 text-blue-800 dark:text-blue-200">
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">1.</span>
+                  <span className="flex items-center gap-1">
+                    Tap the Share button <Share className="h-3 w-3 inline" />
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">2.</span>
+                  <span className="flex items-center gap-1">
+                    Select "Add to Home Screen" <Plus className="h-3 w-3 inline" />
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold">3.</span>
+                  <span>Tap "Add" to confirm</span>
+                </li>
+              </ol>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={dismissPrompt}
+                className="ml-auto"
+                data-testid="button-dismiss-install-ios"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Got it
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Standard Android/Chrome install prompt
+  if (!deferredPrompt) {
     return null;
   }
 
