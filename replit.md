@@ -29,7 +29,11 @@ Preferred communication style: Simple, everyday language.
 - **Language**: TypeScript with ESM modules.
 - **Database ORM**: Drizzle ORM with PostgreSQL dialect.
 - **API Design**: RESTful endpoints for vehicle profiles, restrictions, facilities, and routes.
-- **Authentication**: Express sessions with PostgreSQL storage.
+- **Authentication**: Replit Auth (OIDC) with Express sessions and PostgreSQL storage.
+- **Subscription System**: Stripe-powered subscription management with access control middleware.
+  - **Pricing Tiers**: 3-month (£25.99), 6-month (£49.99), 12-month (£99), Lifetime (£200)
+  - **Access Control**: Subscription middleware protects all navigation features
+  - **Payment Integration**: Stripe Checkout with test keys for development
 
 ## Data Storage Solutions
 - **Primary Database**: PostgreSQL with Neon serverless driver.
@@ -37,6 +41,9 @@ Preferred communication style: Simple, everyday language.
 - **Session Storage**: PostgreSQL-based session store using `connect-pg-simple`.
 
 ## Core Data Models
+- **Users**: User authentication via Replit Auth (OIDC), session management.
+- **Subscriptions**: User subscriptions linked to pricing plans with expiry dates.
+- **Subscription Plans**: 4 pricing tiers with feature access control.
 - **Vehicle Profiles**: Dimensions (height, width, length, weight), axle count, hazmat status.
 - **Restrictions**: Geographic coordinates, type (height/width/weight), limits.
 - **Facilities**: Truck stops, fuel stations, parking areas with amenities.
@@ -71,11 +78,17 @@ Preferred communication style: Simple, everyday language.
   - **Display Format**: "{name/street}, {city}, {country}" with Globe icon
   - **Coverage**: NavigationSidebar, RoutePlanningPanel (LocationDropdown), SimplifiedRouteDrawer (AddressAutocomplete)
   - **Keyboard Support**: Enter key to select highlighted suggestions
-- **Mobile Compatibility**:
+- **Mobile Compatibility & PWA**:
+    - **Progressive Web App**: Full offline support with service worker and IndexedDB caching.
+    - **iOS Enhancements**: Custom splash screens for iPhone 15 Pro Max, 15 Pro, SE, 8 Plus, and iPad Pro.
+    - **iOS Meta Tags**: Black-translucent status bar, fullscreen mode, theme colors for light/dark modes.
+    - **Service Worker**: v2.0.0 with cache-first strategy for maps, network-first for APIs, background sync.
+    - **Install Prompts**: iOS-specific "Add to Home Screen" instructions with visual guides.
+    - **Update Management**: Automatic update detection with user-friendly toast notifications.
+    - **Offline Features**: Cached routes, restrictions, facilities for offline navigation.
     - Screen Wake Lock API.
     - Safe-area handling for iOS.
     - Android hardware back button handling.
-    - Enhanced PWA capabilities with offline route storage.
     - Orientation lock preferences.
 
 # External Dependencies
