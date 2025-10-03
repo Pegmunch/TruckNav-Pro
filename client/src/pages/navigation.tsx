@@ -138,8 +138,20 @@ function NavigationPageContent() {
   const [map3DMode, setMap3DMode] = useState(false);
   const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>('roads');
   
-  // Auto-zoom tracking - ensure we only zoom once per session
-  const hasAutoZoomed = useRef(false);
+  // Enhanced auto-zoom state tracking with retry logic and user preference support
+  // To disable auto-zoom: localStorage.setItem('trucknav_auto_zoom_enabled', 'false')
+  // To re-enable: localStorage.setItem('trucknav_auto_zoom_enabled', 'true') or localStorage.removeItem('trucknav_auto_zoom_enabled')
+  const autoZoomState = useRef<{
+    attempted: boolean;
+    succeeded: boolean;
+    attempts: number;
+    lastAttemptTime: number | null;
+  }>({
+    attempted: false,
+    succeeded: false,
+    attempts: 0,
+    lastAttemptTime: null,
+  });
 
   // Centralized UI error recovery helper - ensures consistent state after failures
   const recoverUIOnError = () => {
@@ -191,57 +203,143 @@ function NavigationPageContent() {
     checkARSupport();
   }, []);
   
-  // Auto-zoom to GPS location on first lock when map loads
+  // Enhanced auto-zoom to GPS location with user preferences, map readiness polling, and retry logic
   useEffect(() => {
-    // Skip if already auto-zoomed
-    if (hasAutoZoomed.current) return;
+    // 1. CHECK USER PREFERENCE - respect user's auto-zoom setting
+    const autoZoomEnabled = localStorage.getItem('trucknav_auto_zoom_enabled');
+    if (autoZoomEnabled === 'false') {
+      console.log('[AUTO-ZOOM] Disabled by user preference (trucknav_auto_zoom_enabled=false)');
+      return;
+    }
     
-    // Skip if GPS not available yet
-    if (!gpsData?.position) return;
+    // 2. CHECK IF ALREADY SUCCEEDED - prevent duplicate zoom operations
+    if (autoZoomState.current.succeeded) {
+      return;
+    }
     
-    // Skip if map not ready
-    if (!mapRef.current) return;
+    // 3. CHECK MAX ATTEMPTS - prevent infinite retries (max 2 attempts)
+    const MAX_ATTEMPTS = 2;
+    if (autoZoomState.current.attempts >= MAX_ATTEMPTS) {
+      console.warn(`[AUTO-ZOOM] Max attempts (${MAX_ATTEMPTS}) reached, giving up`);
+      return;
+    }
     
-    // Skip if already navigating (navigation has its own zoom logic)
-    if (isNavigating) return;
+    // 4. CHECK GPS AVAILABILITY - need GPS position to zoom
+    if (!gpsData?.position) {
+      return; // Wait for GPS lock
+    }
     
-    // Skip if user already has a planned route (don't interfere with route planning)
-    if (currentRoute) return;
+    // 5. CHECK MAP REFERENCE - map component must be mounted
+    if (!mapRef.current) {
+      return; // Wait for map to mount
+    }
     
-    // All conditions met - perform auto-zoom to GPS location
-    console.log('[AUTO-ZOOM] First GPS lock detected, auto-zooming to user location');
+    // 6. SKIP IF NAVIGATING - navigation has its own zoom logic
+    if (isNavigating) {
+      return;
+    }
     
-    // Mark as zoomed BEFORE calling to prevent duplicate attempts
-    hasAutoZoomed.current = true;
+    // 7. SKIP IF ROUTE PLANNED - don't interfere with route planning
+    if (currentRoute) {
+      return;
+    }
     
-    // Small delay to ensure map is fully initialized
-    setTimeout(() => {
-      mapRef.current?.zoomToUserLocation({
-        forceStreetMode: false,  // Don't force mode change (respect user preference)
-        zoom: 17.5,              // Street-level zoom
-        pitch: 45,               // 3D tilt view
-        duration: 2000,          // Smooth 2-second animation
-        onSuccess: (location) => {
-          console.log(`[AUTO-ZOOM] ✓ Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`);
-        },
-        onError: (error, usedFallback) => {
-          // Silently handle errors - don't show toast to avoid annoying user on page load
-          if ('code' in error) {
-            const gpsError = error as GeolocationPositionError;
-            if (gpsError.code === GeolocationPositionError.PERMISSION_DENIED) {
-              console.warn('[AUTO-ZOOM] GPS permission denied - auto-zoom skipped');
-            } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
-              console.warn('[AUTO-ZOOM] GPS timeout - auto-zoom skipped');
-            } else {
-              console.warn('[AUTO-ZOOM] GPS unavailable - auto-zoom skipped');
-            }
-          } else {
-            console.warn('[AUTO-ZOOM] Auto-zoom failed:', error.message);
-          }
+    // 8. THROTTLE RETRY ATTEMPTS - prevent rapid retry loops
+    const now = Date.now();
+    if (autoZoomState.current.lastAttemptTime) {
+      const timeSinceLastAttempt = now - autoZoomState.current.lastAttemptTime;
+      const MIN_RETRY_INTERVAL = 2000; // 2 seconds between attempts
+      if (timeSinceLastAttempt < MIN_RETRY_INTERVAL) {
+        return;
+      }
+    }
+    
+    // All pre-flight checks passed - attempt auto-zoom
+    const attemptNumber = autoZoomState.current.attempts + 1;
+    console.log(`[AUTO-ZOOM] Starting attempt ${attemptNumber}/${MAX_ATTEMPTS}`);
+    
+    // Update attempt tracking
+    autoZoomState.current.attempted = true;
+    autoZoomState.current.attempts = attemptNumber;
+    autoZoomState.current.lastAttemptTime = now;
+    
+    // 9. MAP READINESS POLLING - wait for map to be fully loaded
+    const waitForMapReady = async (maxAttempts = 10, interval = 200): Promise<boolean> => {
+      for (let i = 0; i < maxAttempts; i++) {
+        // Check if map instance exists and style is loaded
+        const mapInstance = mapRef.current?.getMap();
+        if (mapInstance && mapInstance.isStyleLoaded()) {
+          console.log(`[AUTO-ZOOM] Map ready after ${i + 1} polls (${(i + 1) * interval}ms)`);
+          return true;
         }
-      });
-    }, 500); // 500ms delay for map initialization
-  }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available
+        
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      
+      console.warn(`[AUTO-ZOOM] Map readiness timeout after ${maxAttempts * interval}ms`);
+      return false;
+    };
+    
+    // 10. PERFORM AUTO-ZOOM WITH RETRY SUPPORT
+    const performAutoZoom = async () => {
+      try {
+        // Wait for map to be ready
+        const isMapReady = await waitForMapReady(10, 200); // 10 attempts x 200ms = 2 seconds max
+        
+        if (!isMapReady) {
+          console.warn('[AUTO-ZOOM] Map not ready, will retry on next GPS update');
+          return;
+        }
+        
+        // Map is ready - perform zoom
+        console.log('[AUTO-ZOOM] GPS lock detected, zooming to user location...');
+        
+        mapRef.current?.zoomToUserLocation({
+          forceStreetMode: false,  // Respect user's map view preference
+          zoom: 17.5,              // Street-level zoom for good context
+          pitch: 45,               // 3D tilt for better spatial awareness
+          duration: 2000,          // Smooth 2-second animation
+          onSuccess: (location) => {
+            // SUCCESS - mark as completed
+            autoZoomState.current.succeeded = true;
+            console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+          },
+          onError: (error, usedFallback) => {
+            // ERROR - log and allow retry on next GPS update
+            if ('code' in error) {
+              const gpsError = error as GeolocationPositionError;
+              if (gpsError.code === GeolocationPositionError.PERMISSION_DENIED) {
+                console.warn('[AUTO-ZOOM] ❌ GPS permission denied - auto-zoom disabled');
+                // Permanent failure - stop retrying
+                autoZoomState.current.attempts = MAX_ATTEMPTS;
+              } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
+                console.warn(`[AUTO-ZOOM] ⚠️ GPS timeout (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+                // Transient failure - allow retry
+              } else {
+                console.warn(`[AUTO-ZOOM] ⚠️ GPS error code ${gpsError.code} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+              }
+            } else {
+              console.warn(`[AUTO-ZOOM] ⚠️ Error: ${error.message} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+            }
+            
+            // If this was the last attempt, show optional user feedback
+            if (attemptNumber >= MAX_ATTEMPTS && !usedFallback) {
+              console.error('[AUTO-ZOOM] ❌ Failed after all retry attempts');
+              // Optional: Show toast notification for persistent failures
+              // toast({ title: "Auto-zoom unavailable", description: "Please center map manually", variant: "destructive" });
+            }
+          }
+        });
+      } catch (error) {
+        console.error('[AUTO-ZOOM] Unexpected error during auto-zoom:', error);
+      }
+    };
+    
+    // Execute auto-zoom
+    performAutoZoom();
+    
+  }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
   
   // Auto-update mobile navigation mode based on state
   useEffect(() => {
