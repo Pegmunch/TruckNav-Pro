@@ -1209,15 +1209,8 @@ export default function NavigationPage() {
                     </Button>
                   </div>
 
-                  {/* Speedometer - Resting on top of Start Navigation button */}
-                  <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
-                    <SpeedDisplay 
-                      className="shadow-2xl"
-                    />
-                  </div>
-
-                  {/* Start CTA - Below Speedometer (centered) */}
-                  <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 z-[150] mobile-safe-bottom">
+                  {/* Start CTA - Above Speedometer (centered) */}
+                  <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-[150] mobile-safe-bottom">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
@@ -1245,6 +1238,13 @@ export default function NavigationPage() {
                         </>
                       )}
                     </Button>
+                  </div>
+
+                  {/* Speedometer - Below Start Navigation button */}
+                  <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 z-[160] mobile-safe-bottom">
+                    <SpeedDisplay 
+                      className="shadow-2xl"
+                    />
                   </div>
 
                   {/* Legal Ownership */}
