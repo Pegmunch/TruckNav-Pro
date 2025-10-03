@@ -1191,6 +1191,23 @@ export default function NavigationPage() {
               {/* PREVIEW MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'preview' && currentRoute && (
                 <>
+                  {/* Header - Thinner Overlay on top */}
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-1 px-4 border-b bg-white">
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold">TruckNav Pro</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowVehicleSettings(true)}
+                      className="h-8 w-8"
+                      data-testid="button-settings-preview"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </div>
+
                   {/* FAB for secondary controls - Hamburger Menu Bottom Right */}
                   <MobileFAB
                     mode="preview"
@@ -1202,24 +1219,11 @@ export default function NavigationPage() {
                     onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
-                    className="absolute bottom-6 right-6 z-20 mobile-safe-bottom"
+                    className="absolute bottom-6 right-6 z-[200] mobile-safe-bottom"
                   />
 
-                  {/* Settings Button - Top Right */}
-                  <div className="absolute top-4 right-4 z-20 pointer-events-auto">
-                    <Button
-                      size="icon"
-                      onClick={() => setShowVehicleSettings(true)}
-                      className="h-12 w-12 shadow-lg bg-white hover:bg-white/90 text-gray-700 border border-slate-200"
-                      data-testid="button-settings-preview"
-                      aria-label="Vehicle Settings"
-                    >
-                      <Settings className="h-5 w-5" />
-                    </Button>
-                  </div>
-
                   {/* Start CTA - Below Speedometer (centered) */}
-                  <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 z-10 mobile-safe-bottom">
+                  <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 z-[150] mobile-safe-bottom">
                     <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
