@@ -12,8 +12,6 @@ html {
   background-color: transparent;
   /* Safe area handling is managed at component level to prevent double spacing */
   box-sizing: border-box;
-  /* Enable safe area insets for mobile devices */
-  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
 }
 
 body {
@@ -32,6 +30,21 @@ body {
 /* CRITICAL: Ensure root container has full height for map rendering */
 #root {
   height: 100%;
+}
+
+/* PWA Safe Area Wrapper - Apply safe-area padding ONLY in standalone PWA mode */
+.pwa-safe-area-wrapper {
+  min-height: 100dvh;
+  min-height: 100vh; /* fallback */
+}
+
+@media (display-mode: standalone) {
+  .pwa-safe-area-wrapper {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
 }
 
 /* Automotive-optimized touch scrolling */
@@ -326,21 +339,53 @@ body {
 
 /* === PROFESSIONAL TRUCK NAVIGATION RESPONSIVE DESIGN SYSTEM === */
 
-/* Mobile-safe positioning utilities */
-.mobile-safe-bottom {
-  bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+/* Mobile-safe positioning utilities - Prevents double-offset in standalone PWA mode */
+@supports (bottom: max(0px)) {
+  .mobile-safe-bottom {
+    bottom: max(16px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-bottom {
+      bottom: 16px; /* No env() - wrapper handles it */
+    }
+  }
 }
 
-.mobile-safe-top {
-  top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
+@supports (top: max(0px)) {
+  .mobile-safe-top {
+    top: max(16px, calc(16px + env(safe-area-inset-top, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-top {
+      top: 16px; /* No env() - wrapper handles it */
+    }
+  }
 }
 
-.mobile-safe-left {
-  left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+@supports (left: max(0px)) {
+  .mobile-safe-left {
+    left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-left {
+      left: 16px; /* No env() - wrapper handles it */
+    }
+  }
 }
 
-.mobile-safe-right {
-  right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+@supports (right: max(0px)) {
+  .mobile-safe-right {
+    right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
+  }
+  
+  @media (display-mode: standalone) {
+    .mobile-safe-right {
+      right: 16px; /* No env() - wrapper handles it */
+    }
+  }
 }
 
 /* Enhanced responsive design system */

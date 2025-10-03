@@ -1415,7 +1415,8 @@ function NavigationPageContent() {
         )}
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
-        <div className="mobile-layout h-[100svh] flex flex-col relative">
+        <div className="pwa-safe-area-wrapper relative">
+          <div className="mobile-layout h-[100svh] flex flex-col relative">
           
           {/* AR Mode (Full Replacement) */}
           {isARMode ? (
@@ -1820,6 +1821,7 @@ function NavigationPageContent() {
             </>
           )}
 
+          </div>
         </div>
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */
