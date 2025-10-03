@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requireSubscription } from "./subscriptionMiddleware";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -933,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route Validation and Compliance Checking
-  app.post("/api/routes/validate", validateRoute, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/routes/validate", requireSubscription, validateRoute, validateRequest, async (req: Request, res: Response) => {
     try {
       const { routeId, vehicleProfileId, currentPosition, checkCompliance = true } = req.body;
       
@@ -1075,7 +1076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Real-time compliance monitoring endpoint
-  app.post("/api/routes/compliance-check", validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/routes/compliance-check", requireSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const { currentPosition, vehicleType, routeId } = req.body;
       
@@ -1146,7 +1147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Routes with strict vehicle class enforcement
-  app.post("/api/routes/calculate", validateRoutePlanningRequest, async (req: Request, res: Response) => {
+  app.post("/api/routes/calculate", requireSubscription, validateRoutePlanningRequest, async (req: Request, res: Response) => {
     try {
       const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference } = req.body;
       
@@ -1350,7 +1351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/routes/favorites", async (req, res) => {
+  app.get("/api/routes/favorites", requireSubscription, async (req, res) => {
     try {
       const routes = await storage.getFavoriteRoutes();
       res.json(routes);
@@ -1359,7 +1360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/routes/:id/favorite", validateId, validateRequest, async (req: Request, res: Response) => {
+  app.patch("/api/routes/:id/favorite", requireSubscription, validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isFavorite } = req.body;
@@ -1376,7 +1377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Lane Guidance
-  app.get("/api/routes/:id/lanes", validateId, validateRequest, async (req: Request, res: Response) => {
+  app.get("/api/routes/:id/lanes", requireSubscription, validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -1403,7 +1404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ),
   });
 
-  app.patch("/api/routes/:id/lanes/select", validateId, validateRequest, async (req: Request, res: Response) => {
+  app.patch("/api/routes/:id/lanes/select", requireSubscription, validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -1426,7 +1427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route Monitoring
-  app.post("/api/routes/:id/monitor", validateId, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/routes/:id/monitor", requireSubscription, validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const route = await storage.getRoute(id);
@@ -1803,7 +1804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Journey Management
-  app.get("/api/journeys", validatePagination, validateRequest, async (req: Request, res: Response) => {
+  app.get("/api/journeys", requireSubscription, validatePagination, validateRequest, async (req: Request, res: Response) => {
     try {
       const { limit, offset } = req.query;
       const parsedLimit = limit ? parseInt(limit as string) : undefined;
@@ -1816,7 +1817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/journeys/last", async (req: Request, res: Response) => {
+  app.get("/api/journeys/last", requireSubscription, async (req: Request, res: Response) => {
     try {
       const journey = await storage.getLastJourney();
       if (!journey) {
@@ -1829,7 +1830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/journeys/start", requireSubscription, validateJourney, validateRequest, async (req: Request, res: Response) => {
     try {
       const { routeId } = req.body;
       const idempotencyKey = req.headers['idempotency-key'] as string;
@@ -1864,7 +1865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/journeys/:id/activate", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+  app.patch("/api/journeys/:id/activate", requireSubscription, validateNumericId, validateRequest, async (req: Request, res: Response) => {
     const { id } = req.params;
     const idempotencyKey = req.headers['idempotency-key'] as string;
     console.log(`[JOURNEY ACTIVATION] Starting activation for journey ${id} with key: ${idempotencyKey}`);
@@ -1906,7 +1907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/journeys/:id/complete", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+  app.patch("/api/journeys/:id/complete", requireSubscription, validateNumericId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
