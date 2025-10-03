@@ -45,6 +45,7 @@ import { useGPS } from "@/contexts/gps-context";
 interface LocationDropdownProps {
   value: string;
   onChange: (value: string) => void;
+  onCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
   placeholder: string;
   testId: string;
   icon: "start" | "destination";
@@ -53,6 +54,7 @@ interface LocationDropdownProps {
 const LocationDropdown = memo(function LocationDropdown({
   value,
   onChange,
+  onCoordinatesChange,
   placeholder,
   testId,
   icon,
@@ -282,17 +284,19 @@ const LocationDropdown = memo(function LocationDropdown({
 
   const handleLocationSelect = useCallback((location: Location) => {
     onChange(location.label);
+    onCoordinatesChange?.(location.coordinates);
     setSearchValue(location.label);
     setOpen(false);
     
     // Mark location as used
     markUsedMutation.mutate(location.id);
-  }, [onChange, markUsedMutation]);
+  }, [onChange, onCoordinatesChange, markUsedMutation]);
 
   // Handle postcode result selection
   const handlePostcodeSelect = useCallback((postcodeResult: any) => {
     const formattedLabel = `${postcodeResult.formatted} (${postcodeResult.address || postcodeResult.city})`;
     onChange(formattedLabel);
+    onCoordinatesChange?.(postcodeResult.coordinates);
     setSearchValue(postcodeResult.formatted);
     setOpen(false);
     
@@ -309,7 +313,7 @@ const LocationDropdown = memo(function LocationDropdown({
       title: "Postcode selected",
       description: `${postcodeResult.formatted} - ${postcodeResult.address || postcodeResult.city}`,
     });
-  }, [onChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
 
   // Handle Photon result selection
   const handlePhotonSelect = useCallback((photonFeature: PhotonFeature) => {
@@ -317,6 +321,7 @@ const LocationDropdown = memo(function LocationDropdown({
     const coordinates = extractPhotonCoordinates(photonFeature);
     
     onChange(displayLabel);
+    onCoordinatesChange?.(coordinates);
     setSearchValue(displayLabel);
     setOpen(false);
     
@@ -333,7 +338,7 @@ const LocationDropdown = memo(function LocationDropdown({
       title: "Location selected",
       description: displayLabel,
     });
-  }, [onChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
 
   // Handle enter key press for postcode search
   const handlePostcodeEnter = useCallback(() => {

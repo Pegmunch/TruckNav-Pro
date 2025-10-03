@@ -59,6 +59,8 @@ interface NavigationSidebarProps {
   toLocation: string;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
+  onFromCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
+  onToCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
   onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onStartNavigation: () => void;
   onStopNavigation?: () => void;
@@ -111,6 +113,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
   toLocation,
   onFromLocationChange,
   onToLocationChange,
+  onFromCoordinatesChange,
+  onToCoordinatesChange,
   onPlanRoute,
   onStartNavigation,
   onStopNavigation,
@@ -230,8 +234,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
       const result = await reverseGeocode(latitude, longitude, 5000);
 
       if (result.success) {
-        // Success: Set the reverse geocoded address
+        // Success: Set the reverse geocoded address AND coordinates
         onFromLocationChange(result.address);
+        onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
         toast({
           title: "Using current location",
           description: result.address,
@@ -240,6 +245,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
         // Error result from reverse geocoding
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         onFromLocationChange(coordsString);
+        onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
         
         // Show error-specific messages
         const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
@@ -262,6 +268,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       // Unexpected error: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       onFromLocationChange(coordsString);
+      onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
       toast({
         title: "Using GPS coordinates",
         description: `Unable to determine address. Using: ${coordsString}`,
@@ -637,6 +644,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   <AddressAutocomplete
                     value={fromLocation}
                     onChange={onFromLocationChange}
+                    onCoordinatesChange={onFromCoordinatesChange}
                     placeholder="Enter your current location..."
                     id="current-location-input"
                     testId="input-current-location"
@@ -649,6 +657,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   <AddressAutocomplete
                     value={toLocation}
                     onChange={onToLocationChange}
+                    onCoordinatesChange={onToCoordinatesChange}
                     placeholder="Enter your destination..."
                     id="destination-input"
                     testId="input-destination"

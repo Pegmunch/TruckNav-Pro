@@ -46,6 +46,7 @@ interface SavedLocation {
 interface AddressAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
+  onCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
   placeholder: string;
   id: string;
   className?: string;
@@ -55,6 +56,7 @@ interface AddressAutocompleteProps {
 export function AddressAutocomplete({
   value,
   onChange,
+  onCoordinatesChange,
   placeholder,
   id,
   className,
@@ -176,6 +178,7 @@ export function AddressAutocomplete({
     const selectedValue = suggestion.address || suggestion.formatted;
     setSearchTerm(selectedValue);
     onChange(selectedValue);
+    onCoordinatesChange?.(suggestion.coordinates);
     setOpen(false);
 
     // Create location entry for this postcode
@@ -185,7 +188,7 @@ export function AddressAutocomplete({
       isFavorite: false,
     };
     createLocationMutation.mutate(locationData);
-  }, [onChange, createLocationMutation]);
+  }, [onChange, onCoordinatesChange, createLocationMutation]);
 
   const handleSelectPhoton = useCallback((photonFeature: PhotonFeature) => {
     const displayLabel = formatPhotonDisplay(photonFeature);
@@ -193,6 +196,7 @@ export function AddressAutocomplete({
     
     setSearchTerm(displayLabel);
     onChange(displayLabel);
+    onCoordinatesChange?.(coordinates);
     setOpen(false);
     
     // Create location entry for this Photon result
@@ -208,13 +212,14 @@ export function AddressAutocomplete({
       title: "Location selected",
       description: displayLabel,
     });
-  }, [onChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
 
   const handleSelectSavedLocation = useCallback((location: SavedLocation) => {
     setSearchTerm(location.label);
     onChange(location.label);
+    onCoordinatesChange?.(location.coordinates);
     setOpen(false);
-  }, [onChange]);
+  }, [onChange, onCoordinatesChange]);
 
   const handleInputFocus = useCallback(() => {
     // Always open dropdown on focus to show saved locations

@@ -61,6 +61,8 @@ function NavigationPageContent() {
   const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
+  const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
+  const [toCoordinates, setToCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -715,7 +717,14 @@ function NavigationPageContent() {
 
   // Route calculation mutation
   const calculateRouteMutation = useMutation({
-    mutationFn: async (routeData: { startLocation: string; endLocation: string; vehicleProfileId?: string; routePreference?: string }) => {
+    mutationFn: async (routeData: { 
+      startLocation: string; 
+      endLocation: string; 
+      startCoordinates?: { lat: number; lng: number } | null;
+      endCoordinates?: { lat: number; lng: number } | null;
+      vehicleProfileId?: string; 
+      routePreference?: string 
+    }) => {
       const response = await apiRequest("POST", "/api/routes/calculate", routeData);
       const result = await response.json();
       return result;
@@ -832,6 +841,8 @@ function NavigationPageContent() {
     const routeData = {
       startLocation: finalStartLoc,
       endLocation: finalEndLoc,
+      startCoordinates: fromCoordinates,
+      endCoordinates: toCoordinates,
       vehicleProfileId: activeProfileId,
       routePreference: routePreference || 'fastest',
     };
@@ -1815,6 +1826,8 @@ function NavigationPageContent() {
             toLocation={toLocation}
             onFromLocationChange={setFromLocation}
             onToLocationChange={setToLocation}
+            onFromCoordinatesChange={setFromCoordinates}
+            onToCoordinatesChange={setToCoordinates}
             onPlanRoute={handlePlanRoute}
             onStartNavigation={handleStartNavigation}
             onStopNavigation={handleStopNavigation}

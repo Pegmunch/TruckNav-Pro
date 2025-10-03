@@ -26,6 +26,8 @@ interface ManualSearchPanelProps {
   toLocation: string;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
+  onFromCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
+  onToCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
   onPlanRoute: (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => void;
   onStartNavigation?: () => void;
   currentRoute?: any | null;
@@ -39,6 +41,8 @@ export default function ManualSearchPanel({
   toLocation,
   onFromLocationChange,
   onToLocationChange,
+  onFromCoordinatesChange,
+  onToCoordinatesChange,
   onPlanRoute,
   onStartNavigation,
   currentRoute,
@@ -159,8 +163,9 @@ export default function ManualSearchPanel({
       const result = await reverseGeocode(latitude, longitude, 5000);
 
       if (result.success) {
-        // Success: Set the reverse geocoded address
+        // Success: Set the reverse geocoded address AND coordinates
         onFromLocationChange(result.address);
+        onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
         toast({
           title: "Using current location",
           description: result.address,
@@ -169,6 +174,7 @@ export default function ManualSearchPanel({
         // Error result from reverse geocoding
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         onFromLocationChange(coordsString);
+        onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
         
         // Show error-specific messages
         const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
@@ -191,6 +197,7 @@ export default function ManualSearchPanel({
       // Unexpected error: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       onFromLocationChange(coordsString);
+      onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
       toast({
         title: "Using GPS coordinates",
         description: `Unable to determine address. Using: ${coordsString}`,
@@ -198,7 +205,7 @@ export default function ManualSearchPanel({
     } finally {
       setIsReverseGeocoding(false);
     }
-  }, [gpsData, onFromLocationChange, toast]);
+  }, [gpsData, onFromLocationChange, onFromCoordinatesChange, toast]);
 
   return (
     <Card className={cn("bg-card", className)}>
