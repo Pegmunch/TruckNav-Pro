@@ -36,8 +36,8 @@ export default function MapLegalOwnership({
   return (
     <div 
       className={cn(
-        // Base positioning - fixed for viewport positioning, always bottom-right
-        "fixed bottom-0 right-0 z-[100] pointer-events-none",
+        // Base positioning - fixed for viewport positioning, centered at bottom
+        "fixed bottom-0 left-1/2 -translate-x-1/2 z-[100] pointer-events-none",
         // Padding and spacing
         compact ? "px-3 py-2" : "px-4 py-3",
         // Ensure readable on any map background
