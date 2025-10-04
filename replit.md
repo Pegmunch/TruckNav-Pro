@@ -66,7 +66,8 @@ Preferred communication style: Simple, everyday language.
 - **Address Autocomplete & POI Search**:
     - **Photon API**: Free worldwide address search using OpenStreetMap data, integrated with GPS-powered POI search (Supermarket, Restaurant, Fuel, Shop categories).
     - **Search Method**: Supports city names, street addresses, or landmarks. Features 3-character minimum, 300ms debouncing, and error resilience.
-    - **Saved Locations**: Favorites and recent searches.
+    - **POI Geographic Filtering**: 150km radius filtering to prevent cross-country results while supporting rural areas
+    - **Saved Locations**: Favorites and recent searches, with silent save (no toast notifications).
 - **Mobile Compatibility & PWA**:
     - **Progressive Web App**: Offline support via service worker and IndexedDB caching.
     - **iOS Enhancements**: Custom splash screens, meta tags for fullscreen and status bar.
