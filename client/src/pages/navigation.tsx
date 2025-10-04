@@ -1870,7 +1870,7 @@ function NavigationPageContent() {
 
                     {/* Speedometer - Above legal (z-[160]) */}
                     <div className="z-[160] pointer-events-auto" data-testid="speed-display-plan">
-                      <SpeedDisplay className="shadow-2xl" />
+                      <SpeedDisplay className="shadow-2xl" speedLimit={currentSpeedLimit || undefined} />
                     </div>
                   </div>
 
@@ -2144,7 +2144,7 @@ function NavigationPageContent() {
                     }}
                     data-testid="speed-display-navigate"
                   >
-                    <SpeedDisplay className="shadow-2xl" />
+                    <SpeedDisplay className="shadow-2xl" speedLimit={currentSpeedLimit || undefined} />
                   </div>
 
                   {/* Stop Navigation Button - Fixed position at bottom-left side (smaller) */}
