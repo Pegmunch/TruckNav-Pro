@@ -960,8 +960,8 @@ function NavigationPageContent() {
         duration: 3000,
       });
 
-      // Auto-start navigation in mobile mode after route calculation
-      if (isMobile && route && selectedProfile) {
+      // Auto-start navigation in mobile mode after successful route calculation
+      if (isMobile && route && route.coordinates && route.coordinates.length > 0 && selectedProfile) {
         setTimeout(() => {
           handleStartNavigation();
         }, 500);
