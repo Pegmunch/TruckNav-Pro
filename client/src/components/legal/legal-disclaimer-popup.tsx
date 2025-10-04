@@ -178,49 +178,50 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
       aria-labelledby="legal-disclaimer-title"
       aria-describedby="legal-disclaimer-description"
       aria-modal="true"
-      className="fixed inset-0 z-[9999] min-h-screen bg-background text-foreground p-4 overflow-y-auto" 
+      className="fixed inset-0 z-[9999] flex flex-col min-h-screen bg-background text-foreground safe-area-inset" 
       data-testid="legal-disclaimer-popup"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header - stacks vertically on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 pb-2 border-b">
+        {/* Title Section */}
         <div className="flex items-center gap-3">
-          <Scale className="w-8 h-8 text-red-600" />
+          <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" />
           <div>
-            <h1 id="legal-disclaimer-title" className="text-2xl font-bold">Legal Disclaimer</h1>
-            <p id="legal-disclaimer-description" className="text-sm text-muted-foreground">TruckNav Pro Navigation Service</p>
+            <h1 id="legal-disclaimer-title" className="text-lg sm:text-2xl font-bold">Legal Disclaimer</h1>
+            <p id="legal-disclaimer-description" className="text-xs sm:text-sm text-muted-foreground">TruckNav Pro Navigation Service</p>
           </div>
         </div>
         
-        {/* Page Navigation and Close */}
-        <div className="flex items-center gap-4">
+        {/* Page Navigation and Close - wraps on mobile */}
+        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
           {/* Page Indicators */}
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant={currentPage === 1 ? "default" : "outline"}
               size="sm"
               onClick={() => goToPage(1)}
-              className="h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0 sm:min-w-[100px]"
+              className="h-11 px-3 text-xs min-w-[90px] sm:min-w-[100px]"
               data-testid="button-page-1"
             >
-              <FileText className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Legal Terms</span>
+              <FileText className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="truncate">Terms</span>
             </Button>
             <Button
               variant={currentPage === 2 ? "default" : "outline"}
               size="sm"
               onClick={() => goToPage(2)}
-              className="h-9 px-2 sm:px-3 text-xs sm:text-sm min-w-0 sm:min-w-[120px]"
+              className="h-11 px-3 text-xs min-w-[90px] sm:min-w-[100px]"
               data-testid="button-page-2"
             >
-              <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Acknowledgments</span>
+              <CheckSquare className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="truncate">Accept</span>
             </Button>
           </div>
           
           {/* Status and Close */}
           <div className="flex items-center gap-2">
             {isAlreadyAccepted && (
-              <Badge variant="secondary" className="automotive-text-sm">
+              <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
                 Previously Accepted
               </Badge>
             )}
@@ -228,7 +229,7 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
               variant="ghost" 
               size="icon"
               onClick={onClose || (() => window.close())}
-              className="automotive-touch-target"
+              className="h-11 w-11 flex-shrink-0"
               data-testid="button-close-legal"
             >
               <X className="w-5 h-5" />
@@ -237,26 +238,11 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
         </div>
       </div>
 
-      {/* Page Progress Indicator */}
-      <div className="flex items-center justify-center mb-4">
-        <div className="flex items-center gap-2">
-          <div className={`h-2 w-8 rounded-full transition-colors ${
-            currentPage === 1 ? 'bg-primary' : 'bg-muted'
-          }`} data-testid="progress-page-1" />
-          <div className={`h-2 w-8 rounded-full transition-colors ${
-            currentPage === 2 ? 'bg-primary' : 'bg-muted'
-          }`} data-testid="progress-page-2" />
-        </div>
-        <span className="ml-3 text-sm text-muted-foreground" data-testid="text-page-indicator">
-          Page {currentPage} of 2
-        </span>
-      </div>
-
-      {/* Content Area */}
-      <div className="max-w-6xl mx-auto">
+      {/* Content Area - flex-1 allows natural scrolling */}
+      <div className="flex-1 overflow-y-auto px-4 py-4">
         {/* Page 1: Legal Terms and Disclaimers */}
         {currentPage === 1 && (
-          <ScrollArea className="h-[calc(100vh-280px)] pr-4" data-testid="legal-scroll-area-page-1">
+          <div className="space-y-4 pb-4" data-testid="legal-scroll-area-page-1">
             <div className="space-y-6">
             
             {/* Critical Safety Warning */}
@@ -414,12 +400,12 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
               </CardContent>
             </Card>
             </div>
-          </ScrollArea>
+          </div>
         )}
 
         {/* Page 2: Required Acknowledgments */}
         {currentPage === 2 && (
-          <ScrollArea className="h-[calc(100vh-280px)] pr-4" data-testid="legal-scroll-area-page-2">
+          <div className="space-y-4 pb-4" data-testid="legal-scroll-area-page-2">
             <div className="space-y-6">
               {/* Page 2 Header */}
               <Card className="border-primary/20 bg-primary/5">
@@ -545,78 +531,82 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
                 </CardContent>
               </Card>
             </div>
-          </ScrollArea>
+          </div>
         )}
-        {/* Bottom Navigation and Action Buttons */}
-        <div className="mt-6 space-y-4">
-          {/* Page Navigation */}
-          <div className="flex items-center justify-between p-4 bg-muted/20 rounded-lg border">
+      </div>
+
+      {/* Sticky Footer - Action Buttons */}
+      <div className="sticky bottom-0 border-t bg-background p-3 sm:p-4 safe-area-inset-bottom space-y-2">
+          {/* Page Navigation - Compact on mobile */}
+          <div className="flex items-center justify-between px-3 py-2 bg-muted/20 rounded-lg border text-sm">
             <Button 
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
-              variant="outline"
-              className="automotive-button automotive-text-base"
+              variant="ghost"
+              size="sm"
+              className="h-11 px-3"
               data-testid="button-previous-page"
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Previous</span>
             </Button>
             
-            <div className="flex items-center gap-3">
-              <span className="automotive-text-sm text-muted-foreground" data-testid="text-page-counter">
-                {currentPage === 1 ? 'Legal Terms' : 'Acknowledgments'}
-              </span>
-            </div>
+            <span className="text-xs sm:text-sm text-muted-foreground font-medium" data-testid="text-page-counter">
+              {currentPage === 1 ? 'Legal Terms' : 'Acknowledgments'} ({currentPage}/2)
+            </span>
             
             <Button 
               onClick={goToNextPage}
               disabled={currentPage === 2}
-              variant="outline"
-              className="automotive-button automotive-text-base"
+              variant="ghost"
+              size="sm"
+              className="h-11 px-3"
               data-testid="button-next-page"
             >
-              Next
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
 
-          {/* Action Buttons - Show on both pages but different functionality */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              onClick={handleDecline}
-              variant="outline"
-              className="automotive-button automotive-text-base"
-              data-testid="button-decline-legal"
-            >
-              Decline & Close
-            </Button>
-            
-            {currentPage === 1 ? (
+          {/* Action Buttons - 44px+ touch targets */}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
               <Button 
-                onClick={scrollToBottom}
+                onClick={handleDecline}
                 variant="outline"
-                className="automotive-button automotive-text-base"
-                data-testid="button-scroll-bottom"
+                className="h-12 flex-1 text-sm sm:text-base"
+                data-testid="button-decline-legal"
               >
-                <ChevronDown className="w-4 h-4 mr-2" />
-                Read All Terms
+                Decline
               </Button>
-            ) : (
-              <Button 
-                onClick={handleAcceptAll}
-                variant="outline"
-                className="automotive-button automotive-text-base"
-                data-testid="button-accept-all-page2"
-              >
-                <CheckSquare className="w-4 h-4 mr-2" />
-                Accept All
-              </Button>
-            )}
+              
+              {currentPage === 1 ? (
+                <Button 
+                  onClick={scrollToBottom}
+                  variant="outline"
+                  className="h-12 flex-1 text-sm sm:text-base"
+                  data-testid="button-scroll-bottom"
+                >
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  Read All
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleAcceptAll}
+                  variant="outline"
+                  className="h-12 flex-1 text-sm sm:text-base"
+                  data-testid="button-accept-all-page2"
+                >
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                  Accept All
+                </Button>
+              )}
+            </div>
             
             <Button 
               onClick={currentPage === 1 ? goToNextPage : handleAccept}
               disabled={currentPage === 2 && !canAccept}
-              className="automotive-button automotive-text-base flex-1 min-w-48"
+              className="h-12 w-full text-sm sm:text-base font-semibold"
               data-testid={currentPage === 1 ? "button-continue-to-acknowledgments" : "button-accept-legal"}
             >
               {currentPage === 1 ? (
@@ -630,12 +620,11 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
             </Button>
           </div>
 
-          {currentPage === 2 && (
-            <p className="automotive-text-sm text-muted-foreground text-center mt-4">
-              By clicking "Accept & Enter TruckNav Pro", you acknowledge reading and understanding all disclaimers.
-            </p>
-          )}
-        </div>
+        {currentPage === 2 && (
+          <p className="automotive-text-sm text-muted-foreground text-center mt-4">
+            By clicking "Accept & Enter TruckNav Pro", you acknowledge reading and understanding all disclaimers.
+          </p>
+        )}
       </div>
       
       {/* Decline Warning Overlay */}
