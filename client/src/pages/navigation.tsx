@@ -123,6 +123,7 @@ function NavigationPageContent() {
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(null);
   
   // Get real GPS location from singleton GPS provider (no more duplicate watchers!)
   const currentGPSLocation = gpsData?.position ? {
@@ -243,6 +244,40 @@ function NavigationPageContent() {
     
     checkARSupport();
   }, []);
+  
+  // Fetch speed limit when GPS position changes
+  useEffect(() => {
+    if (!gpsData?.position) {
+      setCurrentSpeedLimit(null);
+      return;
+    }
+    
+    const { latitude, longitude } = gpsData.position;
+    
+    // Debounce speed limit requests (only fetch every 5 seconds)
+    const fetchSpeedLimit = async () => {
+      try {
+        const response = await fetch(`/api/speed-limit?lat=${latitude}&lng=${longitude}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.speedLimit) {
+            setCurrentSpeedLimit(data.speedLimit);
+            console.log(`[SPEED-LIMIT] ${data.speedLimit} km/h on ${data.roadName || 'road'}`);
+          } else {
+            setCurrentSpeedLimit(null);
+          }
+        }
+      } catch (error) {
+        console.warn('[SPEED-LIMIT] Lookup failed:', error);
+      }
+    };
+    
+    // Fetch immediately, then set up interval
+    fetchSpeedLimit();
+    const intervalId = setInterval(fetchSpeedLimit, 5000); // Update every 5 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
   
   // Enhanced auto-zoom to GPS location with user preferences, map readiness polling, and retry logic
   useEffect(() => {
