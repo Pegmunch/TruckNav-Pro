@@ -960,11 +960,23 @@ function NavigationPageContent() {
         duration: 3000,
       });
 
-      // Auto-start navigation in mobile mode after successful route calculation
-      if (isMobile && route && route.coordinates && route.coordinates.length > 0 && selectedProfile) {
+      // Auto-transition to navigation mode after 2-second preview in mobile
+      if (isMobile && route && route.coordinates && route.coordinates.length > 0) {
+        // Show preview mode for 2 seconds
+        setMobileNavMode('preview');
+        
+        // Then auto-transition to navigation mode (UI only, no subscription required)
         setTimeout(() => {
-          handleStartNavigation();
-        }, 500);
+          setMobileNavMode('navigate');
+          setIsNavigating(true);
+          
+          // Visual feedback
+          toast({
+            title: "🚚 Navigation Started",
+            description: "Follow the route on your map",
+            duration: 2000,
+          });
+        }, 2000);
       }
     },
     onError: (error) => {
