@@ -292,6 +292,11 @@ export function AddressAutocomplete({
               className={cn("h-12 text-base pr-10", className)}
               data-testid={testId}
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              data-form-type="other"
+              data-lpignore="true"
             />
             {isLoading && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
