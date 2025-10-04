@@ -2296,9 +2296,9 @@ function NavigationPageContent() {
         />
       ) : null}
 
-      {/* Alternative Routes Panel */}
+      {/* Alternative Routes Panel - Hidden during navigation */}
       <AlternativeRoutesPanel
-        isOpen={isAlternativeRoutesOpen}
+        isOpen={isAlternativeRoutesOpen && !isNavigating}
         alternatives={alternatives}
         currentRoute={currentRoute}
         vehicleProfile={selectedProfile}
