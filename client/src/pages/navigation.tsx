@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -1974,45 +1974,48 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'navigate' && (
                 <>
-                  {/* Trip Info Header */}
+                  {/* Unified Navigation HUD - Single Bar */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-b from-black to-slate-900 text-white px-4 pb-2 shadow-2xl border-b-4 border-blue-500/30" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-center">
-                            <div className="text-xs opacity-75">Speed</div>
-                            <div className="text-sm font-bold">
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-b from-black to-slate-900 text-white shadow-2xl border-b-4 border-blue-500/30" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
+                      <div className="px-3 pb-2 flex items-center justify-between gap-2">
+                        {/* Left: Speed, ETA, Time, Distance */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="text-center shrink-0">
+                            <div className="text-[10px] opacity-75 leading-tight">Speed</div>
+                            <div className="text-xs font-bold leading-tight">
                               {currentSpeed} mph
                             </div>
                           </div>
-                          <div className="h-8 w-px bg-white/30"></div>
-                          <div className="text-center">
-                            <div className="text-xs opacity-75">ETA</div>
-                            <div className="text-sm font-bold">
+                          <div className="h-7 w-px bg-white/30"></div>
+                          <div className="text-center shrink-0">
+                            <div className="text-[10px] opacity-75 leading-tight">ETA</div>
+                            <div className="text-xs font-bold leading-tight">
                               {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                          <div className="h-8 w-px bg-white/30"></div>
-                          <div className="text-center">
-                            <div className="text-xs opacity-75">Time</div>
-                            <div className="text-sm font-bold">
+                          <div className="h-7 w-px bg-white/30"></div>
+                          <div className="text-center shrink-0">
+                            <div className="text-[10px] opacity-75 leading-tight">Time</div>
+                            <div className="text-xs font-bold leading-tight">
                               {Math.floor((currentRoute.duration || 0) / 60)}h {Math.round((currentRoute.duration || 0) % 60)}m
                             </div>
                           </div>
-                          <div className="h-8 w-px bg-white/30"></div>
-                          <div className="text-center">
-                            <div className="text-xs opacity-75">Distance</div>
-                            <div className="text-sm font-bold">
+                          <div className="h-7 w-px bg-white/30"></div>
+                          <div className="text-center shrink-0">
+                            <div className="text-[10px] opacity-75 leading-tight">Dist</div>
+                            <div className="text-xs font-bold leading-tight">
                               {(currentRoute.distance || 0).toFixed(1)} mi
                             </div>
                           </div>
                         </div>
-                        {gpsLoadingState?.accuracyLevel && (
-                          <Badge variant="outline" className="text-xs border-green-500/50 text-green-400">
-                            {gpsLoadingState.accuracyLevel === 'excellent' ? '⭐ Excellent' :
-                             gpsLoadingState.accuracyLevel === 'good' ? '✓ Good' : '• OK'}
-                          </Badge>
-                        )}
+
+                        {/* Right: Next Maneuver */}
+                        <div className="flex items-center gap-1.5 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-2 py-1 rounded-lg max-w-[40%]">
+                          <Navigation2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span className="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis">
+                            Turn Right • 0.8 mi
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2037,23 +2040,12 @@ function NavigationPageContent() {
                     </div>
                   )}
 
-                  {/* Compact Trip Strip - Below Trip Info Header */}
-                  {currentRoute && (
-                    <div className="absolute left-0 right-0 z-[90]" style={{ top: 'calc(56px + var(--safe-area-top))' }} data-testid="trip-strip">
-                      <CompactTripStrip
-                        eta={Math.round(currentRoute.duration || 0)}
-                        distanceRemaining={currentRoute.distance || 0}
-                        nextManeuver="Turn Right"
-                        nextDistance={0.8}
-                      />
-                    </div>
-                  )}
 
                   {/* Map Control Buttons - Right Side Stack (z-[100]+) - ARCHITECT FIX: Changed to fixed positioning */}
                   <div 
                     className="fixed right-4 z-[100] flex flex-col gap-2.5 pointer-events-none" 
                     style={{ 
-                      top: 'calc(120px + var(--safe-area-top))',
+                      top: 'calc(70px + var(--safe-area-top))',
                       right: 'calc(16px + var(--safe-area-right))'
                     }}
                   >
