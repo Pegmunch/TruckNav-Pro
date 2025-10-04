@@ -309,10 +309,7 @@ const LocationDropdown = memo(function LocationDropdown({
     
     createLocationMutation.mutate(locationData);
     
-    toast({
-      title: "Postcode selected",
-      description: `${postcodeResult.formatted} - ${postcodeResult.address || postcodeResult.city}`,
-    });
+    // Toast notification removed per user request
   }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
 
   // Handle Photon result selection
@@ -334,10 +331,7 @@ const LocationDropdown = memo(function LocationDropdown({
     
     createLocationMutation.mutate(locationData);
     
-    toast({
-      title: "Location selected",
-      description: displayLabel,
-    });
+    // Toast notification removed per user request
   }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
 
   // Handle enter key press for postcode search
