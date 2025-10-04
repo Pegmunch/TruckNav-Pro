@@ -1688,9 +1688,12 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* PLAN MODE OVERLAYS (z-10+) */}
-              {mobileNavMode === 'plan' && !isNavigating && (
-                <>
+              {/* PLAN MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
+              {mobileNavMode === 'plan' && (
+                <div className={cn(
+                  "transition-opacity duration-200",
+                  isNavigating && "opacity-0 pointer-events-none"
+                )}>
                   {/* Header - Thinner Overlay on top */}
                   <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b bg-white">
                     <div className="flex items-center gap-2">
@@ -1727,12 +1730,15 @@ function NavigationPageContent() {
                   <div className="absolute bottom-0 left-0 right-0 z-10">
                     <MapLegalOwnership compact={true} className="sm:hidden" />
                   </div>
-                </>
+                </div>
               )}
 
-              {/* PREVIEW MODE OVERLAYS (z-10+) */}
-              {mobileNavMode === 'preview' && !isNavigating && currentRoute && (
-                <>
+              {/* PREVIEW MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
+              {mobileNavMode === 'preview' && currentRoute && (
+                <div className={cn(
+                  "transition-opacity duration-200",
+                  isNavigating && "opacity-0 pointer-events-none"
+                )}>
                   {/* Header - Thinner Overlay on top */}
                   <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b bg-white">
                     <div className="flex items-center gap-2">
@@ -1814,7 +1820,7 @@ function NavigationPageContent() {
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
                   />
-                </>
+                </div>
               )}
 
               {/* NAVIGATE MODE OVERLAYS (z-10+) */}
