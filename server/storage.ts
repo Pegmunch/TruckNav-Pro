@@ -2639,30 +2639,39 @@ export class DatabaseStorage implements IStorage {
     const allRestrictions = await db.select().from(restrictions).where(eq(restrictions.isActive, true));
     
     // Filter by geographic coordinates to get only restrictions in the specified area
-    return allRestrictions.filter(restriction => {
-      if (!restriction.coordinates) return false;
+    const validRestrictions: Restriction[] = [];
+    
+    for (const restriction of allRestrictions) {
+      if (!restriction.coordinates) continue;
       
-      const coords = typeof restriction.coordinates === 'string' 
-        ? JSON.parse(restriction.coordinates) 
-        : restriction.coordinates;
-      
-      // Ensure coordinates are valid
-      if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
-        return false;
+      try {
+        const coords = typeof restriction.coordinates === 'string' 
+          ? JSON.parse(restriction.coordinates) 
+          : restriction.coordinates;
+        
+        // Ensure coordinates are valid
+        if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+          console.warn(`[RESTRICTION-FILTER] Invalid coordinates for restriction ${restriction.id}`);
+          continue;
+        }
+        
+        // Check if restriction is within the geographic bounds
+        const withinBounds = coords.lat <= bounds.north && 
+                            coords.lat >= bounds.south &&
+                            coords.lng <= bounds.east && 
+                            coords.lng >= bounds.west;
+        
+        if (withinBounds) {
+          validRestrictions.push(restriction);
+          console.log(`[RESTRICTION-FILTER] Found restriction in area: ${restriction.country} - ${restriction.type} at ${restriction.location}`);
+        }
+      } catch (parseError) {
+        console.error(`[RESTRICTION-FILTER] Error parsing coordinates for restriction ${restriction.id}:`, parseError);
+        continue;
       }
-      
-      // Check if restriction is within the geographic bounds
-      const withinBounds = coords.lat <= bounds.north && 
-                          coords.lat >= bounds.south &&
-                          coords.lng <= bounds.east && 
-                          coords.lng >= bounds.west;
-      
-      if (withinBounds) {
-        console.log(`[RESTRICTION-FILTER] Found restriction in area: ${restriction.country} - ${restriction.type} at ${restriction.location}`);
-      }
-      
-      return withinBounds;
-    });
+    }
+    
+    return validRestrictions;
   }
 
   // Facilities

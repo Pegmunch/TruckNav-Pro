@@ -222,32 +222,51 @@ async function calculateStrictVehicleClassRoute(
     for (const restriction of restrictions) {
       let intersects = false;
       
-      // Check if restriction has spatial coordinates
-      if (restriction.coordinates) {
-        const coords = typeof restriction.coordinates === 'string' 
-          ? JSON.parse(restriction.coordinates) 
-          : restriction.coordinates;
-        
-        if (coords.lat && coords.lng) {
-          // Create a point for the restriction
-          const restrictionPoint = turf.point([coords.lng, coords.lat]);
+      try {
+        // Check if restriction has spatial coordinates
+        if (restriction.coordinates) {
+          let coords;
+          try {
+            coords = typeof restriction.coordinates === 'string' 
+              ? JSON.parse(restriction.coordinates) 
+              : restriction.coordinates;
+          } catch (parseError) {
+            console.error(`[RESTRICTION-ERROR] Failed to parse coordinates for restriction ${restriction.id}:`, parseError);
+            continue;
+          }
           
-          // Check if route passes within 100 meters (0.1km) of restriction
-          const buffer = turf.buffer(restrictionPoint, 0.1, { units: 'kilometers' });
-          if (buffer) {
-            intersects = turf.booleanIntersects(routeLine, buffer);
+          if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+            // Create a point for the restriction
+            const restrictionPoint = turf.point([coords.lng, coords.lat]);
+            
+            // Check if route passes within 100 meters (0.1km) of restriction
+            const buffer = turf.buffer(restrictionPoint, 0.1, { units: 'kilometers' });
+            if (buffer) {
+              intersects = turf.booleanIntersects(routeLine, buffer);
+            }
+          } else {
+            console.warn(`[RESTRICTION-VALIDATION] Invalid coordinates for restriction ${restriction.id}: missing or invalid lat/lng`);
+          }
+        } else if (restriction.routeSegment) {
+          // Handle route segment restrictions
+          let segmentCoords;
+          try {
+            segmentCoords = typeof restriction.routeSegment === 'string'
+              ? JSON.parse(restriction.routeSegment)
+              : restriction.routeSegment;
+          } catch (parseError) {
+            console.error(`[RESTRICTION-ERROR] Failed to parse routeSegment for restriction ${restriction.id}:`, parseError);
+            continue;
+          }
+            
+          if (Array.isArray(segmentCoords) && segmentCoords.length >= 2) {
+            const restrictionSegment = turf.lineString(segmentCoords.map(coord => [coord.lng, coord.lat]));
+            intersects = turf.booleanIntersects(routeLine, restrictionSegment);
           }
         }
-      } else if (restriction.routeSegment) {
-        // Handle route segment restrictions
-        const segmentCoords = typeof restriction.routeSegment === 'string'
-          ? JSON.parse(restriction.routeSegment)
-          : restriction.routeSegment;
-          
-        if (Array.isArray(segmentCoords) && segmentCoords.length >= 2) {
-          const restrictionSegment = turf.lineString(segmentCoords.map(coord => [coord.lng, coord.lat]));
-          intersects = turf.booleanIntersects(routeLine, restrictionSegment);
-        }
+      } catch (error) {
+        console.error(`[RESTRICTION-ERROR] Error processing restriction ${restriction.id}:`, error);
+        continue;
       }
 
       // If restriction intersects with route, check if vehicle is affected
@@ -366,28 +385,39 @@ async function tryRerouteWithWaypoints(
       for (const restriction of restrictions) {
         let intersects = false;
         
-        if (restriction.coordinates) {
-          const coords = typeof restriction.coordinates === 'string' 
-            ? JSON.parse(restriction.coordinates) 
-            : restriction.coordinates;
-          
-          if (coords.lat && coords.lng) {
-            const restrictionPoint = turf.point([coords.lng, coords.lat]);
-            const buffer = turf.buffer(restrictionPoint, 0.1, { units: 'kilometers' });
-            if (buffer) {
-              intersects = turf.booleanIntersects(routeLine, buffer);
+        try {
+          if (restriction.coordinates) {
+            let coords;
+            try {
+              coords = typeof restriction.coordinates === 'string' 
+                ? JSON.parse(restriction.coordinates) 
+                : restriction.coordinates;
+            } catch (parseError) {
+              console.error(`[REROUTE-ERROR] Failed to parse coordinates for restriction ${restriction.id}:`, parseError);
+              continue;
+            }
+            
+            if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+              const restrictionPoint = turf.point([coords.lng, coords.lat]);
+              const buffer = turf.buffer(restrictionPoint, 0.1, { units: 'kilometers' });
+              if (buffer) {
+                intersects = turf.booleanIntersects(routeLine, buffer);
+              }
             }
           }
-        }
-        
-        if (intersects && isVehicleAffectedByRestriction(vehicleProfile, restriction)) {
-          const bypassable = restriction.bypassAllowed !== false && restriction.severity !== 'absolute';
-          violations.push({
-            restriction,
-            severity: restriction.severity || 'medium',
-            bypassable
-          });
-          restrictionsAvoided.push(restriction.id);
+          
+          if (intersects && isVehicleAffectedByRestriction(vehicleProfile, restriction)) {
+            const bypassable = restriction.bypassAllowed !== false && restriction.severity !== 'absolute';
+            violations.push({
+              restriction,
+              severity: restriction.severity || 'medium',
+              bypassable
+            });
+            restrictionsAvoided.push(restriction.id);
+          }
+        } catch (error) {
+          console.error(`[REROUTE-ERROR] Error processing restriction ${restriction.id}:`, error);
+          continue;
         }
       }
       
@@ -420,30 +450,50 @@ async function tryRerouteWithWaypoints(
  * Check if a vehicle is affected by a specific restriction
  */
 function isVehicleAffectedByRestriction(vehicleProfile: VehicleProfile, restriction: Restriction): boolean {
-  // Check if restriction specifically targets this vehicle type
-  if (restriction.restrictedVehicleTypes) {
-    const restrictedTypes = Array.isArray(restriction.restrictedVehicleTypes) 
-      ? restriction.restrictedVehicleTypes 
-      : JSON.parse(restriction.restrictedVehicleTypes as string);
-    return restrictedTypes.includes(vehicleProfile.type);
-  }
-  
-  // Check dimensional restrictions
-  switch (restriction.type) {
-    case 'height':
-      return vehicleProfile.height >= restriction.limit;
-    case 'width':
-      return vehicleProfile.width >= restriction.limit;
-    case 'weight':
-      return !!vehicleProfile.weight && vehicleProfile.weight >= restriction.limit;
-    case 'length':
-      return !!vehicleProfile.length && vehicleProfile.length >= restriction.limit;
-    case 'axle_count':
-      return !!vehicleProfile.axles && vehicleProfile.axles > restriction.limit;
-    case 'hazmat':
-      return !!vehicleProfile.isHazmat;
-    default:
-      return false;
+  try {
+    // Check if restriction specifically targets this vehicle type
+    if (restriction.restrictedVehicleTypes) {
+      try {
+        const restrictedTypes = Array.isArray(restriction.restrictedVehicleTypes) 
+          ? restriction.restrictedVehicleTypes 
+          : JSON.parse(restriction.restrictedVehicleTypes as string);
+        return restrictedTypes.includes(vehicleProfile.type);
+      } catch (parseError) {
+        console.error(`[RESTRICTION-CHECK] Error parsing restrictedVehicleTypes for restriction ${restriction.id}:`, parseError);
+        return false;
+      }
+    }
+    
+    // Check dimensional restrictions with proper type safety
+    switch (restriction.type) {
+      case 'height':
+        return typeof vehicleProfile.height === 'number' && 
+               typeof restriction.limit === 'number' && 
+               vehicleProfile.height >= restriction.limit;
+      case 'width':
+        return typeof vehicleProfile.width === 'number' && 
+               typeof restriction.limit === 'number' && 
+               vehicleProfile.width >= restriction.limit;
+      case 'weight':
+        return typeof vehicleProfile.weight === 'number' && 
+               typeof restriction.limit === 'number' && 
+               vehicleProfile.weight >= restriction.limit;
+      case 'length':
+        return typeof vehicleProfile.length === 'number' && 
+               typeof restriction.limit === 'number' && 
+               vehicleProfile.length >= restriction.limit;
+      case 'axle_count':
+        return typeof vehicleProfile.axles === 'number' && 
+               typeof restriction.limit === 'number' && 
+               vehicleProfile.axles > restriction.limit;
+      case 'hazmat':
+        return vehicleProfile.isHazmat === true;
+      default:
+        return false;
+    }
+  } catch (error) {
+    console.error(`[RESTRICTION-CHECK] Error checking if vehicle is affected by restriction ${restriction.id}:`, error);
+    return false;
   }
 }
 
