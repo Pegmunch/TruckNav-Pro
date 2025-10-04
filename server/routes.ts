@@ -424,7 +424,7 @@ async function tryRerouteWithWaypoints(
       // Check if this route avoids critical violations
       const criticalViolations = violations.filter(v => !v.bypassable);
       if (criticalViolations.length === 0) {
-        const avoidedCountries = [...new Set(violatedRestrictions.map(r => r.country || 'Unknown'))];
+        const avoidedCountries = Array.from(new Set(violatedRestrictions.map(r => r.country || 'Unknown')));
         console.log(`[REROUTE] SUCCESS: Found safe route with waypoint, avoided ${violatedRestrictions.length} restrictions from: ${avoidedCountries.join(', ')}`);
         return {
           distance: leg1.distance + leg2.distance,
