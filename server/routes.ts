@@ -1779,7 +1779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Photon API Proxy - Address Autocomplete with POI Support
   app.get("/api/photon-autocomplete", async (req: Request, res: Response) => {
     try {
-      const { q, limit, osm_tag } = req.query;
+      const { q, limit, osm_tag, lat, lon } = req.query;
       
       if (!q || typeof q !== 'string') {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
@@ -1792,6 +1792,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add POI filtering if osm_tag provided (e.g., "shop:supermarket", "amenity:restaurant")
       if (osm_tag && typeof osm_tag === 'string') {
         photonUrl.searchParams.set('osm_tag', osm_tag);
+      }
+      
+      // Add GPS coordinates for location-biased search (POI near me)
+      if (lat && typeof lat === 'string' && lon && typeof lon === 'string') {
+        photonUrl.searchParams.set('lat', lat);
+        photonUrl.searchParams.set('lon', lon);
+        console.log(`[PHOTON-PROXY] Location-biased search: lat=${lat}, lon=${lon}`);
       }
       
       console.log('[PHOTON-PROXY] Request URL:', photonUrl.toString());
