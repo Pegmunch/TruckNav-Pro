@@ -211,17 +211,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const handleUseCurrentLocation = async () => {
     // Check GPS availability
     if (!gpsData || !gpsData.position) {
-      const errorMsg = gpsData?.errorMessage || "Unable to get your current location. Please enable GPS or enter address manually.";
-      toast({
-        title: "GPS not available",
-        description: errorMsg,
-        variant: "destructive",
-        action: gpsData?.canRetry ? (
-          <Button variant="outline" size="sm" onClick={() => gpsData.retryGPS()}>
-            Retry
-          </Button>
-        ) : undefined,
-      });
+      // Silently return - GPS will activate when available
       return;
     }
 

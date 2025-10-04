@@ -1344,11 +1344,7 @@ function NavigationPageContent() {
   // Handle use current location with reverse geocoding
   const handleUseCurrentLocation = async () => {
     if (!gpsData || !gpsData.position) {
-      toast({
-        title: "GPS not available",
-        description: "Unable to get your current location. Please enable GPS or enter address manually.",
-        variant: "destructive",
-      });
+      // Silently return - GPS will activate when available
       return;
     }
 
