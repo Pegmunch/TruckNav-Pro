@@ -856,6 +856,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         if (map.current.getLayer('route-line')) {
           map.current.removeLayer('route-line');
         }
+        if (map.current.getLayer('route-outline')) {
+          map.current.removeLayer('route-outline');
+        }
         if (map.current.getSource('route')) {
           map.current.removeSource('route');
         }
@@ -865,7 +868,38 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       return;
     }
 
-    const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+    let routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+
+    // During navigation, show only remaining route from current GPS position
+    if (isNavigating && gpsLocation) {
+      const currentPoint = [gpsLocation.lng, gpsLocation.lat];
+      const routeLine = { type: 'LineString' as const, coordinates: routeCoordinates };
+      
+      try {
+        // Find nearest point on route to current GPS position
+        let minDistance = Infinity;
+        let nearestIndex = 0;
+        
+        for (let i = 0; i < routeCoordinates.length; i++) {
+          const dx = routeCoordinates[i][0] - currentPoint[0];
+          const dy = routeCoordinates[i][1] - currentPoint[1];
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestIndex = i;
+          }
+        }
+        
+        // Show route from nearest point to destination (dynamic shortening)
+        if (nearestIndex > 0 && nearestIndex < routeCoordinates.length - 1) {
+          routeCoordinates = routeCoordinates.slice(nearestIndex);
+          console.log(`[ROUTE-UPDATE] Route shortened - ${nearestIndex} points removed, ${routeCoordinates.length} remaining`);
+        }
+      } catch (error) {
+        console.warn('Failed to calculate remaining route:', error);
+      }
+    }
 
     if (!map.current.getSource('route')) {
       map.current.addSource('route', {
@@ -880,6 +914,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }
       });
 
+      // Add route outline for better visibility
+      map.current.addLayer({
+        id: 'route-outline',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#1e3a8a',
+          'line-width': 14,
+          'line-opacity': 0.4
+        }
+      });
+
+      // Main route line with improved visibility
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -889,9 +940,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#2563eb',
+          'line-color': '#3b82f6',
           'line-width': 10,
-          'line-opacity': 0.85
+          'line-opacity': 0.95
         }
       });
     } else {
@@ -908,11 +959,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       }
     }
 
-    const bounds = new maplibregl.LngLatBounds();
-    routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-    map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+    // Only auto-fit bounds when not navigating (during planning)
+    if (!isNavigating) {
+      const bounds = new maplibregl.LngLatBounds();
+      routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
+      map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+    }
 
-  }, [currentRoute, isLoaded]);
+  }, [currentRoute, isLoaded, isNavigating, gpsLocation]);
 
   // Traffic-aware route coloring
   useEffect(() => {
@@ -1296,16 +1350,42 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     if (!userMarkerRef.current) {
       // Calculate responsive marker size based on device pixel ratio
       const devicePixelRatio = window.devicePixelRatio || 1;
-      const baseSize = 56;
+      const baseSize = 64;
       const scaleFactor = Math.max(1, devicePixelRatio / 2);
       const markerSize = Math.round(baseSize * scaleFactor);
       const borderWidth = Math.max(3, Math.round(4 * scaleFactor));
       
-      // Scale arrow proportionally to marker size
-      const arrowWidth = Math.round(markerSize * 0.18);
-      const arrowHeight = Math.round(markerSize * 0.32);
+      // Determine vehicle icon based on selected profile
+      let vehicleIcon = '';
+      const vehicleType = selectedProfile?.type || 'car';
       
-      // Create premium blue arrow marker for user position
+      // SVG vehicle icons for different types
+      const iconSize = Math.round(markerSize * 0.5);
+      
+      if (vehicleType.includes('lorry') || vehicleType.includes('tonne')) {
+        // Truck icon
+        vehicleIcon = `
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
+            <path d="M18 18.5a1.5 1.5 0 0 1-1 1.5a1.5 1.5 0 0 1-1.5-1.5a1.5 1.5 0 0 1 1.5-1.5a1.5 1.5 0 0 1 1 1.5m1.5-9l1.96 2.5H17V9.5m-11 9A1.5 1.5 0 0 1 4.5 17A1.5 1.5 0 0 1 6 15.5A1.5 1.5 0 0 1 7.5 17A1.5 1.5 0 0 1 6 18.5M20 8h-3V4H3c-1.11 0-2 .89-2 2v11h2a3 3 0 0 0 3 3a3 3 0 0 0 3-3h6a3 3 0 0 0 3 3a3 3 0 0 0 3-3h2v-5l-3-4Z"/>
+          </svg>
+        `;
+      } else if (vehicleType.includes('caravan')) {
+        // Car with caravan icon
+        vehicleIcon = `
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
+            <path d="M19.5 17c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5m-12 0c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m4.5-5V5h7l3 4v7h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V8h10v4h1m-1 0H2v4h2.22c.55-.61 1.33-1 2.28-1c.95 0 1.73.39 2.28 1H11v-4Z"/>
+          </svg>
+        `;
+      } else {
+        // Default car icon
+        vehicleIcon = `
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+          </svg>
+        `;
+      }
+      
+      // Create premium vehicle marker with vehicle-specific icon
       const el = document.createElement('div');
       el.className = 'user-position-marker';
       el.innerHTML = `
@@ -1316,9 +1396,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           border: ${borderWidth}px solid white;
           border-radius: 50%;
           box-shadow: 
-            0 0 0 2px rgba(37, 99, 235, 0.3),
-            0 4px 20px rgba(59, 130, 246, 0.6), 
-            0 2px 10px rgba(0, 0, 0, 0.4);
+            0 0 0 4px rgba(59, 130, 246, 0.4),
+            0 6px 24px rgba(59, 130, 246, 0.7), 
+            0 3px 12px rgba(0, 0, 0, 0.5);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1326,29 +1406,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           animation: pulse-glow 2s ease-in-out infinite;
           z-index: 1000;
         ">
-          <div style="
-            width: 0;
-            height: 0;
-            border-left: ${arrowWidth}px solid transparent;
-            border-right: ${arrowWidth}px solid transparent;
-            border-bottom: ${arrowHeight}px solid white;
-            transform: translateY(-2px);
-            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
-          "></div>
+          ${vehicleIcon}
         </div>
         <style>
           @keyframes pulse-glow {
             0%, 100% { 
+              transform: scale(1);
               box-shadow: 
-                0 0 0 2px rgba(37, 99, 235, 0.3),
-                0 4px 20px rgba(59, 130, 246, 0.6), 
-                0 2px 10px rgba(0, 0, 0, 0.4);
+                0 0 0 4px rgba(59, 130, 246, 0.4),
+                0 6px 24px rgba(59, 130, 246, 0.7), 
+                0 3px 12px rgba(0, 0, 0, 0.5);
             }
             50% { 
+              transform: scale(1.05);
               box-shadow: 
-                0 0 0 3px rgba(37, 99, 235, 0.5),
-                0 4px 28px rgba(59, 130, 246, 0.9), 
-                0 2px 14px rgba(0, 0, 0, 0.5);
+                0 0 0 6px rgba(59, 130, 246, 0.6),
+                0 8px 32px rgba(59, 130, 246, 1.0), 
+                0 4px 16px rgba(0, 0, 0, 0.6);
             }
           }
         </style>
