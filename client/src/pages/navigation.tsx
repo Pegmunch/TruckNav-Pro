@@ -1273,6 +1273,14 @@ function NavigationPageContent() {
 
   // Production-grade robust navigation flow
   const handleStartNavigation = async () => {
+    // Clear any pending debounced mode transitions
+    if (modeTransitionTimeoutRef.current) {
+      clearTimeout(modeTransitionTimeoutRef.current);
+    }
+    
+    // Set navigate mode SYNCHRONOUSLY before toggling isNavigating
+    setMobileNavMode('navigate');
+    
     // Mode transition guard for mobile
     if (isMobile && !canStartNavigation()) {
       toast({
@@ -1632,6 +1640,7 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      hideControls={isNavigating}
                       hideCompass={false}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
@@ -1672,7 +1681,7 @@ function NavigationPageContent() {
               )}
 
               {/* PLAN MODE OVERLAYS (z-10+) */}
-              {mobileNavMode === 'plan' && (
+              {mobileNavMode === 'plan' && !isNavigating && (
                 <>
                   {/* Header - Thinner Overlay on top */}
                   <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b bg-white">
@@ -1714,7 +1723,7 @@ function NavigationPageContent() {
               )}
 
               {/* PREVIEW MODE OVERLAYS (z-10+) */}
-              {mobileNavMode === 'preview' && currentRoute && (
+              {mobileNavMode === 'preview' && !isNavigating && currentRoute && (
                 <>
                   {/* Header - Thinner Overlay on top */}
                   <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b bg-white">
@@ -2193,6 +2202,7 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
+                      hideControls={isNavigating}
                       hideCompass={false}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
