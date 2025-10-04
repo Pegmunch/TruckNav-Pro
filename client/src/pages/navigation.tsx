@@ -1893,6 +1893,28 @@ function NavigationPageContent() {
                     </div>
                   </div>
 
+                  {/* Start Navigation Button - Bottom Center (Preview Mode) */}
+                  <Button
+                    onClick={() => {
+                      setMobileNavMode('navigate');
+                      setIsNavigating(true);
+                      setSidebarState('collapsed');
+                      toast({
+                        title: "🚚 Navigation Started",
+                        description: "Follow the route on your map",
+                        duration: 2000,
+                      });
+                    }}
+                    className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[201] pointer-events-auto
+                             bg-green-600 hover:bg-green-700 text-white font-bold
+                             h-14 px-8 text-lg rounded-full shadow-2xl
+                             animate-pulse border-4 border-white"
+                    data-testid="button-start-navigation-preview"
+                  >
+                    <Navigation className="w-6 h-6 mr-2" />
+                    Start Navigation
+                  </Button>
+
                   {/* MobileFAB - Bottom Right (separate fixed position) */}
                   <MobileFAB
                     mode="preview"
