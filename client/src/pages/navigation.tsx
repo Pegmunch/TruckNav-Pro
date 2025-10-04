@@ -2035,6 +2035,20 @@ function NavigationPageContent() {
                     >
                       <Box className="h-5 w-5" />
                     </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => setShowTrafficLayer(!showTrafficLayer)}
+                      className={cn(
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        showTrafficLayer 
+                          ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 hover:scale-105 border-orange-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                      )}
+                      data-testid="button-traffic-toggle-navigate"
+                      aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
+                    >
+                      <Layers className="h-5 w-5" />
+                    </Button>
                   </div>
 
                   {/* Speedometer - Fixed position above Stop button */}
@@ -2051,17 +2065,28 @@ function NavigationPageContent() {
                   {/* Stop Navigation Button - Fixed position at bottom-left side (smaller) */}
                   <Button
                     onClick={handleStopNavigation}
-                    disabled={completeJourneyMutation.isPending}
                     variant="destructive"
-                    className="fixed z-[170] h-9 px-4 text-xs font-medium rounded-lg shadow-xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                    className={cn(
+                      "fixed z-[170] h-9 px-4 text-xs font-medium rounded-lg shadow-xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95",
+                      completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
+                    )}
                     style={{
                       bottom: 'calc(16px + var(--safe-area-bottom, 0px))',
                       left: 'calc(16px + var(--safe-area-left, 0px))'
                     }}
                     data-testid="button-stop-navigation"
                   >
-                    <X className="w-3 h-3 mr-1" />
-                    <span>Stop</span>
+                    {completeJourneyMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        <span>Stopping...</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-3 h-3 mr-1" />
+                        <span>Stop</span>
+                      </>
+                    )}
                   </Button>
 
                   {/* Legal Ownership - Bottom of screen */}
@@ -2074,6 +2099,7 @@ function NavigationPageContent() {
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
                     onClearRoute={handleStopNavigation}
+                    onLayersClick={() => setShowTrafficLayer(!showTrafficLayer)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
                     className="fixed z-[200] pointer-events-auto"
