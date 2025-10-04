@@ -179,7 +179,17 @@ export function AddressAutocomplete({
     setSearchTerm(displayLabel);
     onChange(displayLabel);
     onCoordinatesChange?.(coordinates);
+    
+    // Force close popup immediately and prevent reopening
     setOpen(false);
+    
+    // Blur the input to prevent popup from reopening
+    setTimeout(() => {
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) {
+        input.blur();
+      }
+    }, 0);
     
     // Create location entry for this Photon result
     const locationData = {
@@ -194,14 +204,24 @@ export function AddressAutocomplete({
       title: "Location selected",
       description: displayLabel,
     });
-  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
 
   const handleSelectSavedLocation = useCallback((location: SavedLocation) => {
     setSearchTerm(location.label);
     onChange(location.label);
     onCoordinatesChange?.(location.coordinates);
+    
+    // Force close popup immediately and prevent reopening
     setOpen(false);
-  }, [onChange, onCoordinatesChange]);
+    
+    // Blur the input to prevent popup from reopening
+    setTimeout(() => {
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) {
+        input.blur();
+      }
+    }, 0);
+  }, [onChange, onCoordinatesChange, id]);
 
   const handleSelectUKPostcode = useCallback((result: PostcodeGeocodeResult) => {
     const displayLabel = result.address || result.formatted;
@@ -209,7 +229,17 @@ export function AddressAutocomplete({
     setSearchTerm(displayLabel);
     onChange(displayLabel);
     onCoordinatesChange?.(result.coordinates);
+    
+    // Force close popup immediately and prevent reopening
     setOpen(false);
+    
+    // Blur the input to prevent popup from reopening
+    setTimeout(() => {
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) {
+        input.blur();
+      }
+    }, 0);
     
     // Create location entry for this UK postcode result
     const locationData = {
@@ -224,7 +254,7 @@ export function AddressAutocomplete({
       title: "UK Postcode selected",
       description: displayLabel,
     });
-  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
 
   const handleInputFocus = useCallback(() => {
     // Always open dropdown on focus to show saved locations

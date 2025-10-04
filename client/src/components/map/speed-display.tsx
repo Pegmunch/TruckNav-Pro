@@ -97,9 +97,9 @@ const SpeedDisplay = memo(function SpeedDisplay({
       className={cn(
         "flex items-center justify-between",
         "bg-white/95 dark:bg-black/90 backdrop-blur-md rounded-2xl",
-        "px-5 py-4 shadow-2xl",
+        "px-4 py-3 shadow-2xl",
         "text-black dark:text-white font-bold",
-        "min-w-[240px] h-[72px]",
+        "min-w-[200px] h-[64px]",
         "transition-all duration-300",
         isSpeeding && "ring-2 ring-red-500 animate-pulse",
         isNearLimit && "ring-2 ring-amber-500",

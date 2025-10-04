@@ -45,6 +45,8 @@ import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import SpeedDisplay from "@/components/map/speed-display";
 import { GPSProvider, useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
+import { geocodeUKPostcode } from "@/lib/uk-postcode-geocoding";
+import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -982,7 +984,7 @@ function NavigationPageContent() {
     return uuidRegex.test(id);
   };
 
-  const handlePlanRoute = (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
+  const handlePlanRoute = async (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
     // Guard against duplicate requests while calculating
     if (calculateRouteMutation.isPending) {
       return;
@@ -1011,11 +1013,71 @@ function NavigationPageContent() {
       return;
     }
 
+    // Geocode missing coordinates before sending to backend
+    let finalStartCoords = fromCoordinates;
+    let finalEndCoords = toCoordinates;
+
+    // Try to geocode start location if coordinates are missing
+    if (!finalStartCoords && finalStartLoc) {
+      console.log('[GEOCODE] Attempting to geocode start location:', finalStartLoc);
+      
+      if (looksLikePostcode(finalStartLoc) && detectPostcodeCountry(finalStartLoc) === 'UK') {
+        const result = await geocodeUKPostcode(finalStartLoc);
+        if (result) {
+          console.log('[GEOCODE] Start location geocoded successfully:', result.coordinates);
+          finalStartCoords = result.coordinates;
+          setFromCoordinates(result.coordinates); // Update state for future use
+        } else {
+          toast({
+            title: "Unable to find start location",
+            description: "Please select a location from the dropdown or enter a valid address.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        toast({
+          title: "Please select start location",
+          description: "Choose an address from the dropdown to ensure accurate routing.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Try to geocode end location if coordinates are missing
+    if (!finalEndCoords && finalEndLoc) {
+      console.log('[GEOCODE] Attempting to geocode end location:', finalEndLoc);
+      
+      if (looksLikePostcode(finalEndLoc) && detectPostcodeCountry(finalEndLoc) === 'UK') {
+        const result = await geocodeUKPostcode(finalEndLoc);
+        if (result) {
+          console.log('[GEOCODE] End location geocoded successfully:', result.coordinates);
+          finalEndCoords = result.coordinates;
+          setToCoordinates(result.coordinates); // Update state for future use
+        } else {
+          toast({
+            title: "Unable to find destination",
+            description: "Please select a location from the dropdown or enter a valid address.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        toast({
+          title: "Please select destination",
+          description: "Choose an address from the dropdown to ensure accurate routing.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const routeData = {
       startLocation: finalStartLoc,
       endLocation: finalEndLoc,
-      startCoordinates: fromCoordinates,
-      endCoordinates: toCoordinates,
+      startCoordinates: finalStartCoords,
+      endCoordinates: finalEndCoords,
       vehicleProfileId: activeProfileId,
       routePreference: routePreference || 'fastest',
     };
