@@ -1527,7 +1527,7 @@ function NavigationPageContent() {
                           ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-2 border-green-400 shadow-green-500/50" 
                           : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-2 border-gray-500 cursor-not-allowed"
                       )}
-                      style={{ bottom: 'calc(192px + var(--safe-area-bottom))' }}
+                      style={{ bottom: 'calc(232px + var(--safe-area-bottom))' }}
                       data-testid="button-start-navigation-go"
                     >
                       {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
@@ -1541,7 +1541,7 @@ function NavigationPageContent() {
                     </Button>
 
                   {/* Speedometer - Below Start Navigation button */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[160]" style={{ bottom: 'calc(160px + var(--safe-area-bottom))' }}>
+                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[160]" style={{ bottom: 'calc(168px + var(--safe-area-bottom))' }}>
                     <SpeedDisplay 
                       className="shadow-2xl"
                     />
