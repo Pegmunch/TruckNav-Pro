@@ -1977,9 +1977,9 @@ function NavigationPageContent() {
                     </div>
                   )}
 
-                  {/* Map Control Buttons - Right Side Stack (z-[100]+) */}
+                  {/* Map Control Buttons - Right Side Stack (z-[100]+) - ARCHITECT FIX: Changed to fixed positioning */}
                   <div 
-                    className="absolute right-4 z-[100] flex flex-col gap-2.5 pointer-events-none" 
+                    className="fixed right-4 z-[100] flex flex-col gap-2.5 pointer-events-none" 
                     style={{ 
                       top: 'calc(16px + var(--safe-area-top))',
                       right: 'calc(16px + var(--safe-area-right))'
