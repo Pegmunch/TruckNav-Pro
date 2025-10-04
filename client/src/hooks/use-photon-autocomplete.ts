@@ -101,27 +101,14 @@ export const usePhotonAutocomplete = (
         }
       }
       
-      // Step 3: Try Photon API (for non-UK postcodes or as fallback)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
+      // Step 3: Try Photon API via backend proxy (for non-UK postcodes or as fallback)
       try {
-        // Increase limit to 10 for better options
-        // Add bias for commercial/service locations (osm_tag parameter)
-        const photonUrl = new URL('https://photon.komoot.io/api');
-        photonUrl.searchParams.set('q', trimmedQuery);
-        photonUrl.searchParams.set('limit', '10');
+        // Build backend proxy URL with query parameters
+        const backendUrl = new URL('/api/photon-autocomplete', window.location.origin);
+        backendUrl.searchParams.set('q', trimmedQuery);
+        backendUrl.searchParams.set('limit', '10');
         
-        // Add country code filter if provided
-        if (countryCode) {
-          photonUrl.searchParams.set('countrycodes', countryCode);
-        }
-        
-        const response = await fetch(photonUrl.toString(), { 
-          signal: controller.signal 
-        });
-        
-        clearTimeout(timeoutId);
+        const response = await fetch(backendUrl.toString());
 
         if (!response.ok) {
           const errorMsg = `Photon API error: HTTP ${response.status}`;
@@ -189,15 +176,9 @@ export const usePhotonAutocomplete = (
           error: null
         };
       } catch (err) {
-        clearTimeout(timeoutId);
-        
         let errorMsg = 'Unknown error';
         if (err instanceof Error) {
-          if (err.name === 'AbortError') {
-            errorMsg = 'Request timeout after 5 seconds';
-          } else {
-            errorMsg = err.message;
-          }
+          errorMsg = err.message;
         }
         
         console.error('[AUTOCOMPLETE] Photon error:', errorMsg);

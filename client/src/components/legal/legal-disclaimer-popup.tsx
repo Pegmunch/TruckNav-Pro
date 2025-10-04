@@ -66,11 +66,6 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   // Use hook's hasAcceptedTerms instead of localStorage directly
   const isAlreadyAccepted = hasAcceptedTerms;
 
-  // If already accepted, don't render the overlay
-  if (isAlreadyAccepted && !isLoading) {
-    return null;
-  }
-
   const handleAccept = () => {
     if (canAccept && !isAccepting) {
       // Optimistic UI update - show acceptance immediately
@@ -170,6 +165,11 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
     initialFocus: true,
     returnFocus: true,
   });
+
+  // If already accepted, don't render the overlay (after all hooks)
+  if (isAlreadyAccepted && !isLoading) {
+    return null;
+  }
 
   return (
     <div 

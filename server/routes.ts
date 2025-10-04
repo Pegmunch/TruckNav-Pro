@@ -1776,6 +1776,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Photon API Proxy - Address Autocomplete
+  app.get("/api/photon-autocomplete", async (req: Request, res: Response) => {
+    try {
+      const { q, limit } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Query parameter 'q' is required" });
+      }
+      
+      const photonUrl = new URL('https://photon.komoot.io/api');
+      photonUrl.searchParams.set('q', q);
+      photonUrl.searchParams.set('limit', limit as string || '10');
+      
+      console.log('[PHOTON-PROXY] Request URL:', photonUrl.toString());
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        const photonResponse = await fetch(photonUrl.toString(), {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'TruckNav-Pro/1.0'
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!photonResponse.ok) {
+          const errorText = await photonResponse.text();
+          console.error(`[PHOTON-PROXY] API error: HTTP ${photonResponse.status}`, errorText);
+          return res.status(photonResponse.status).json({ 
+            message: `Photon API error: HTTP ${photonResponse.status}`,
+            features: []
+          });
+        }
+        
+        const data = await photonResponse.json();
+        console.log('[PHOTON-PROXY] Success:', data.features?.length || 0, 'results');
+        res.json(data);
+        
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.error('[PHOTON-PROXY] Timeout after 5 seconds');
+          return res.status(504).json({ 
+            message: 'Request timeout after 5 seconds',
+            features: []
+          });
+        }
+        
+        throw fetchError;
+      }
+      
+    } catch (error) {
+      console.error("[PHOTON-PROXY] Proxy error:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch autocomplete results",
+        features: []
+      });
+    }
+  });
+
   // Speed Limit Lookup using OpenStreetMap Overpass API
   app.get("/api/speed-limit", async (req: Request, res: Response) => {
     try {
