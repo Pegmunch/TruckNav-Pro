@@ -2026,7 +2026,7 @@ function NavigationPageContent() {
                     </Button>
 
                     {/* Speedometer - Top of stack (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto">
+                    <div className="z-[160] pointer-events-auto" data-testid="speed-display-navigate">
                       <SpeedDisplay className="shadow-2xl" />
                     </div>
                   </div>
