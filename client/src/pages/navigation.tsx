@@ -1527,10 +1527,13 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(navigationStartedEvent);
 
-      toast({
-        title: "Navigation started",
-        description: "Route guidance is now active.",
-      });
+      // Hide toast in mobile view - user requested no popups
+      if (window.innerWidth >= 768) {
+        toast({
+          title: "Navigation started",
+          description: "Route guidance is now active.",
+        });
+      }
 
     } catch (error) {
       console.error('Navigation start failed:', error);
@@ -1556,6 +1559,12 @@ function NavigationPageContent() {
     setIsNavigating(false);
     setMobileNavModeDebounced('plan');
     
+    // Clear location inputs to allow fresh route planning
+    setFromLocation('');
+    setToLocation('');
+    setFromCoordinates(null);
+    setToCoordinates(null);
+    
     // Clear alternative routes state
     setIsAlternativeRoutesOpen(false);
     setSelectedAlternativeRouteId(null);
@@ -1573,10 +1582,13 @@ function NavigationPageContent() {
     });
     window.dispatchEvent(navigationStoppedEvent);
     
-    toast({
-      title: "Navigation stopped",
-      description: "Route has been cleared successfully",
-    });
+    // Hide toast in mobile view - user requested no popups
+    if (window.innerWidth >= 768) {
+      toast({
+        title: "Navigation stopped",
+        description: "Ready to plan a new route",
+      });
+    }
   };
 
   const handleOpenLaneSelection = () => {
