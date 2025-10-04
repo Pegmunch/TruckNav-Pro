@@ -962,13 +962,20 @@ function NavigationPageContent() {
 
       // Auto-transition to navigation mode after 2-second preview in mobile
       if (isMobile && route && route.coordinates && route.coordinates.length > 0) {
+        console.log('[AUTO-NAV] Starting auto-navigation flow');
+        
         // Show preview mode for 2 seconds
         setMobileNavMode('preview');
+        console.log('[AUTO-NAV] Set to preview mode, will navigate in 2 seconds');
         
         // Then auto-transition to navigation mode (UI only, no subscription required)
         setTimeout(() => {
+          console.log('[AUTO-NAV] Transitioning to navigate mode NOW');
           setMobileNavMode('navigate');
           setIsNavigating(true);
+          
+          // Close route planning panel if open
+          setSidebarState('collapsed');
           
           // Visual feedback
           toast({
@@ -976,6 +983,8 @@ function NavigationPageContent() {
             description: "Follow the route on your map",
             duration: 2000,
           });
+          
+          console.log('[AUTO-NAV] Navigate mode active, isNavigating=true');
         }, 2000);
       }
     },
