@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -138,6 +140,13 @@ function NavigationPageContent() {
   const [mapBearing, setMapBearing] = useState(0);
   const [map3DMode, setMap3DMode] = useState(false);
   const [mapViewMode, setMapViewMode] = useState<'roads' | 'satellite'>('roads');
+  
+  // GPS loading state for visual feedback during auto-zoom
+  const [gpsLoadingState, setGpsLoadingState] = useState<{
+    isLoading: boolean;
+    attempt: number;
+    maxAttempts: number;
+  } | null>(null);
   
   // Enhanced auto-zoom state tracking with retry logic and user preference support
   // To disable auto-zoom: localStorage.setItem('trucknav_auto_zoom_enabled', 'false')
@@ -296,6 +305,13 @@ function NavigationPageContent() {
         // Map is ready - perform zoom
         console.log('[AUTO-ZOOM] GPS lock detected, zooming to user location...');
         
+        // Show loading indicator
+        setGpsLoadingState({
+          isLoading: true,
+          attempt: 1,
+          maxAttempts: 4
+        });
+        
         mapRef.current?.zoomToUserLocation({
           forceStreetMode: false,  // Respect user's map view preference
           zoom: 17.5,              // Street-level zoom for good context
@@ -304,21 +320,63 @@ function NavigationPageContent() {
           onSuccess: (location) => {
             // SUCCESS - mark as completed
             autoZoomState.current.succeeded = true;
+            
+            // Clear loading state
+            setGpsLoadingState(null);
+            
+            // Show success toast with accuracy info
+            const accuracyEmoji = location.accuracyLevel === 'excellent' ? '🎯' : 
+                                  location.accuracyLevel === 'good' ? '📍' : '📌';
+            const accuracyText = location.accuracy 
+              ? `Accuracy: ${Math.round(location.accuracy)}m (${location.accuracyLevel})`
+              : 'Position acquired';
+            
+            toast({
+              title: `${accuracyEmoji} Position Locked`,
+              description: accuracyText,
+              duration: 2000,
+            });
+            
             console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
           },
           onError: (error, usedFallback) => {
-            // ERROR - log and allow retry on next GPS update
+            // Clear loading state
+            setGpsLoadingState(null);
+            
+            // ERROR - handle different error types with user-friendly messages
             if ('code' in error) {
               const gpsError = error as GeolocationPositionError;
               if (gpsError.code === GeolocationPositionError.PERMISSION_DENIED) {
                 console.warn('[AUTO-ZOOM] ❌ GPS permission denied - auto-zoom disabled');
                 // Permanent failure - stop retrying
                 autoZoomState.current.attempts = MAX_ATTEMPTS;
+                
+                toast({
+                  title: "⚠️ GPS Permission Required",
+                  description: "Please enable location access in your browser settings",
+                  variant: "destructive",
+                  duration: 5000,
+                });
               } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS timeout (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
-                // Transient failure - allow retry
+                
+                if (usedFallback) {
+                  toast({
+                    title: "📍 Using Fallback Location",
+                    description: "GPS signal weak - showing approximate position",
+                    duration: 3000,
+                  });
+                }
               } else {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS error code ${gpsError.code} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+                
+                if (usedFallback) {
+                  toast({
+                    title: "🔄 GPS Unavailable",
+                    description: "Using alternative location",
+                    duration: 3000,
+                  });
+                }
               }
             } else {
               console.warn(`[AUTO-ZOOM] ⚠️ Error: ${error.message} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
@@ -327,9 +385,17 @@ function NavigationPageContent() {
             // If this was the last attempt, show optional user feedback
             if (attemptNumber >= MAX_ATTEMPTS && !usedFallback) {
               console.error('[AUTO-ZOOM] ❌ Failed after all retry attempts');
-              // Optional: Show toast notification for persistent failures
-              // toast({ title: "Auto-zoom unavailable", description: "Please center map manually", variant: "destructive" });
             }
+          },
+          onRetry: (currentAttempt, maxAttempts) => {
+            // Update loading state with retry info
+            setGpsLoadingState({
+              isLoading: true,
+              attempt: currentAttempt,
+              maxAttempts: maxAttempts
+            });
+            
+            console.log(`[AUTO-ZOOM] 🔄 Retry ${currentAttempt}/${maxAttempts}`);
           }
         });
       } catch (error) {
@@ -1449,6 +1515,28 @@ function NavigationPageContent() {
                   )}
                 </MapShell>
               </div>
+              
+              {/* GPS Loading Indicator - Production-Grade Visual Feedback */}
+              {gpsLoadingState?.isLoading && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator">
+                  <Card className="px-4 py-2 shadow-lg border-blue-500/50 bg-white/95 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <Crosshair className="h-5 w-5 text-blue-500 animate-pulse" />
+                      <div className="text-sm">
+                        <div className="font-medium text-blue-700">Acquiring GPS Signal</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs px-1 py-0">
+                            Attempt {gpsLoadingState.attempt}/{gpsLoadingState.maxAttempts}
+                          </Badge>
+                          {gpsLoadingState.attempt > 1 && (
+                            <Hourglass className="h-3 w-3 animate-spin text-amber-500" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
 
               {/* PLAN MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'plan' && (
@@ -1967,6 +2055,28 @@ function NavigationPageContent() {
                     />
                   )}
                 </MapShell>
+                
+                {/* GPS Loading Indicator - Desktop */}
+                {gpsLoadingState?.isLoading && (
+                  <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator-desktop">
+                    <Card className="px-4 py-2 shadow-lg border-blue-500/50 bg-white/95 backdrop-blur-sm">
+                      <div className="flex items-center gap-3">
+                        <Crosshair className="h-5 w-5 text-blue-500 animate-pulse" />
+                        <div className="text-sm">
+                          <div className="font-medium text-blue-700">Acquiring GPS Signal</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs px-1 py-0">
+                              Attempt {gpsLoadingState.attempt}/{gpsLoadingState.maxAttempts}
+                            </Badge>
+                            {gpsLoadingState.attempt > 1 && (
+                              <Hourglass className="h-3 w-3 animate-spin text-amber-500" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
                 
                 {/* Legal Ownership Section - Desktop */}
                 <MapLegalOwnership compact={true} className="hidden sm:block" />

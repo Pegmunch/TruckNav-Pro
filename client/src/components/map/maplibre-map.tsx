@@ -27,8 +27,14 @@ export interface MapLibreMapRef {
     pitch?: number;
     duration?: number;
     fallbackCoordinates?: { lat: number; lng: number };
-    onSuccess?: (location: { lat: number; lng: number }) => void;
+    onSuccess?: (location: { 
+      lat: number; 
+      lng: number;
+      accuracy?: number;
+      accuracyLevel?: 'excellent' | 'good' | 'acceptable';
+    }) => void;
     onError?: (error: GeolocationPositionError | Error, usedFallback: boolean) => void;
+    onRetry?: (attemptNumber: number, maxAttempts: number) => void;
   }) => void;
 }
 
@@ -120,6 +126,71 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
   
+  // Circuit Breaker Pattern for GPS reliability
+  const circuitBreakerRef = useRef({
+    failures: 0,
+    lastFailureTime: 0,
+    isOpen: false,
+    resetTimeout: null as NodeJS.Timeout | null
+  });
+  
+  // SessionStorage helpers for last known position caching
+  const cacheLastKnownPosition = (lat: number, lng: number, accuracy: number) => {
+    try {
+      sessionStorage.setItem('trucknav_last_gps_position', JSON.stringify({
+        lat,
+        lng,
+        accuracy,
+        timestamp: Date.now()
+      }));
+    } catch (err) {
+      console.warn('[GPS-CACHE] Failed to cache position:', err);
+    }
+  };
+  
+  const getLastKnownPosition = (): { lat: number; lng: number; accuracy: number } | null => {
+    try {
+      const cached = sessionStorage.getItem('trucknav_last_gps_position');
+      if (!cached) return null;
+      
+      const data = JSON.parse(cached);
+      const age = Date.now() - data.timestamp;
+      
+      // Use cached position only if less than 5 minutes old
+      if (age > 5 * 60 * 1000) {
+        sessionStorage.removeItem('trucknav_last_gps_position');
+        return null;
+      }
+      
+      return { lat: data.lat, lng: data.lng, accuracy: data.accuracy };
+    } catch (err) {
+      console.warn('[GPS-CACHE] Failed to retrieve cached position:', err);
+      return null;
+    }
+  };
+  
+  // Circuit Breaker checker - prevents GPS retry spam
+  const checkCircuitBreaker = (): boolean => {
+    const now = Date.now();
+    const cb = circuitBreakerRef.current;
+    
+    // Reset if cooldown period passed (10 seconds)
+    if (cb.isOpen && (now - cb.lastFailureTime) > 10000) {
+      cb.isOpen = false;
+      cb.failures = 0;
+      console.log('[GPS-ZOOM] Circuit breaker reset after cooldown');
+    }
+    
+    // Check if circuit should open (3 failures within 30 seconds)
+    if (cb.failures >= 3 && (now - cb.lastFailureTime) < 30000) {
+      cb.isOpen = true;
+      console.warn('[GPS-ZOOM] Circuit breaker OPEN - too many failures');
+      return false; // Circuit open, don't attempt
+    }
+    
+    return true; // Circuit closed, safe to proceed
+  };
+  
   useImperativeHandle(ref, () => ({
     getMap: () => map.current,
     getBearing: () => bearing,
@@ -156,7 +227,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         duration = 2000,
         fallbackCoordinates,
         onSuccess,
-        onError
+        onError,
+        onRetry
       } = options;
 
       // Safety check: Map must be loaded and ready
@@ -186,20 +258,67 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             pitch: pitch,
             bearing: bearing,
             duration: duration,
-            essential: true // Animation won't be interrupted by user
+            essential: true
           });
         } catch (err) {
           console.error('[GPS-ZOOM] Error during flyTo animation:', err);
         }
       };
 
+      // Check circuit breaker first
+      if (!checkCircuitBreaker()) {
+        console.warn('[GPS-ZOOM] Circuit breaker OPEN - using fallback immediately');
+        
+        // Try multi-layer fallback hierarchy
+        const cachedPosition = getLastKnownPosition();
+        
+        if (cachedPosition) {
+          console.log('[GPS-ZOOM] Using cached position (fallback layer 4)');
+          performZoom(cachedPosition.lat, cachedPosition.lng);
+          if (onSuccess) {
+            onSuccess({ 
+              lat: cachedPosition.lat, 
+              lng: cachedPosition.lng,
+              accuracy: cachedPosition.accuracy,
+              accuracyLevel: cachedPosition.accuracy <= 50 ? 'excellent' : 
+                             cachedPosition.accuracy <= 100 ? 'good' : 'acceptable'
+            });
+          }
+          return;
+        } else if (fallbackCoordinates) {
+          console.log('[GPS-ZOOM] Using route start (fallback layer 3)');
+          performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
+          if (onSuccess) {
+            onSuccess(fallbackCoordinates);
+          }
+          return;
+        }
+        
+        if (onError) {
+          onError(new Error('GPS temporarily unavailable - circuit breaker open') as any, true);
+        }
+        return;
+      }
+
       // Check if geolocation is supported
       if (!('geolocation' in navigator)) {
         console.warn('[GPS-ZOOM] Geolocation not supported by browser');
         
-        // Use fallback if provided
-        if (fallbackCoordinates) {
-          console.log('[GPS-ZOOM] Using fallback coordinates:', fallbackCoordinates);
+        // Multi-layer fallback
+        const cachedPosition = getLastKnownPosition();
+        if (cachedPosition) {
+          console.log('[GPS-ZOOM] Using cached position (no geolocation)');
+          performZoom(cachedPosition.lat, cachedPosition.lng);
+          if (onSuccess) {
+            onSuccess({ 
+              lat: cachedPosition.lat, 
+              lng: cachedPosition.lng,
+              accuracy: cachedPosition.accuracy,
+              accuracyLevel: 'acceptable'
+            });
+          }
+        } else if (fallbackCoordinates) {
+          console.log('[GPS-ZOOM] Using fallback coordinates (no geolocation)');
           performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
           if (onSuccess) {
             onSuccess(fallbackCoordinates);
@@ -210,66 +329,106 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         return;
       }
 
-      // Attempt GPS acquisition with retry on timeout
-      let retryAttempt = 0;
-      const maxRetries = 1; // One retry for timeout cases
+      // Exponential backoff retry delays: 0ms, 1s, 2s, 4s
+      const retryDelays = [0, 1000, 2000, 4000];
+      const maxAttempts = retryDelays.length;
+      let attemptNum = 0;
 
-      const attemptGPSAcquisition = () => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            // SUCCESS: GPS lock acquired
-            const { latitude, longitude, heading, accuracy } = position.coords;
-            const userBearing = heading !== null ? heading : 0;
-
-            console.log(`[GPS-ZOOM] ✓ GPS lock acquired (accuracy: ${accuracy.toFixed(1)}m, bearing: ${userBearing.toFixed(0)}°)`);
-
-            // Zoom to user's exact position
-            performZoom(latitude, longitude, userBearing);
-
-            // Success callback
+      const attemptGPS = () => {
+        // Check if all retries exhausted
+        if (attemptNum >= maxAttempts) {
+          console.error('[GPS-ZOOM] All retry attempts exhausted');
+          
+          // Mark failure in circuit breaker
+          circuitBreakerRef.current.failures++;
+          circuitBreakerRef.current.lastFailureTime = Date.now();
+          
+          // Multi-layer fallback hierarchy
+          const cachedPosition = getLastKnownPosition();
+          if (cachedPosition) {
+            console.log('[GPS-ZOOM] Using cached position (all retries failed)');
+            performZoom(cachedPosition.lat, cachedPosition.lng);
             if (onSuccess) {
-              onSuccess({ lat: latitude, lng: longitude });
+              onSuccess({ 
+                lat: cachedPosition.lat, 
+                lng: cachedPosition.lng,
+                accuracy: cachedPosition.accuracy,
+                accuracyLevel: 'acceptable'
+              });
             }
-          },
-          (error) => {
-            // ERROR: GPS acquisition failed
-            console.warn(`[GPS-ZOOM] GPS error (code ${error.code}): ${error.message}`);
-
-            // Handle specific error cases
-            if (error.code === GeolocationPositionError.TIMEOUT && retryAttempt < maxRetries) {
-              // TIMEOUT: Retry once
-              retryAttempt++;
-              console.log(`[GPS-ZOOM] Retrying GPS acquisition (attempt ${retryAttempt + 1}/${maxRetries + 1})...`);
-              setTimeout(attemptGPSAcquisition, 500); // Small delay before retry
-              return;
+          } else if (fallbackCoordinates) {
+            console.log('[GPS-ZOOM] Using fallback coordinates (all retries failed)');
+            performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
+            if (onError) {
+              onError(new Error('GPS timeout after retries') as any, true);
             }
-
-            // Use fallback coordinates if GPS completely failed
-            if (fallbackCoordinates) {
-              console.log('[GPS-ZOOM] GPS unavailable, using fallback coordinates:', fallbackCoordinates);
-              performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
-              
-              if (onError) {
-                // Notify with error but indicate fallback was used
-                onError(error, true);
-              }
-            } else {
-              // No fallback available - just report error
-              if (onError) {
-                onError(error, false);
-              }
-            }
-          },
-          {
-            enableHighAccuracy: true, // Use GPS, not WiFi/cell tower
-            timeout: 8000, // 8 seconds (generous for cold start)
-            maximumAge: 0 // Always get fresh position
+          } else if (onError) {
+            onError(new Error('GPS timeout after retries') as any, false);
           }
-        );
+          return;
+        }
+
+        const currentAttempt = attemptNum + 1;
+        const delay = retryDelays[attemptNum];
+        attemptNum++;
+
+        // Notify about retry (for visual feedback)
+        if (onRetry && currentAttempt > 1) {
+          onRetry(currentAttempt, maxAttempts);
+        }
+
+        console.log(`[GPS-ZOOM] Attempt ${currentAttempt}/${maxAttempts} (delay: ${delay}ms)`);
+
+        setTimeout(() => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              // SUCCESS - reset circuit breaker
+              circuitBreakerRef.current.failures = 0;
+              
+              const { latitude, longitude, accuracy, heading } = position.coords;
+              const userBearing = heading !== null ? heading : 0;
+              
+              // Determine accuracy level for visual feedback
+              const accuracyLevel: 'excellent' | 'good' | 'acceptable' = 
+                accuracy <= 50 ? 'excellent' : 
+                accuracy <= 100 ? 'good' : 'acceptable';
+              
+              console.log(`[GPS-ZOOM] ✓ GPS lock acquired (accuracy: ${accuracy.toFixed(1)}m [${accuracyLevel}], bearing: ${userBearing.toFixed(0)}°)`);
+              
+              // Cache successful position
+              cacheLastKnownPosition(latitude, longitude, accuracy);
+              
+              // Zoom to user's exact position
+              performZoom(latitude, longitude, userBearing);
+              
+              // Success callback with accuracy info
+              if (onSuccess) {
+                onSuccess({ 
+                  lat: latitude, 
+                  lng: longitude,
+                  accuracy,
+                  accuracyLevel
+                });
+              }
+            },
+            (error) => {
+              // FAILURE - retry with exponential backoff
+              console.warn(`[GPS-ZOOM] Attempt ${currentAttempt} failed (code ${error.code}): ${error.message}`);
+              
+              // Retry recursively
+              attemptGPS();
+            },
+            {
+              enableHighAccuracy: true, // Use GPS, not WiFi/cell tower
+              timeout: 5000, // 5 seconds for high-accuracy GPS
+              maximumAge: 0 // Always get fresh position
+            }
+          );
+        }, delay);
       };
 
-      // Start GPS acquisition
-      attemptGPSAcquisition();
+      // Start GPS acquisition with exponential backoff
+      attemptGPS();
     },
     toggleMapView: () => {
       const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';
