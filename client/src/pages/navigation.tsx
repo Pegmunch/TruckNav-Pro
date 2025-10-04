@@ -1711,11 +1711,30 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Plan Route FAB - Opens route planner */}
+                  {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
+                  <div 
+                    className="fixed left-0 right-0 flex flex-col-reverse items-center gap-3 pointer-events-none"
+                    style={{ 
+                      bottom: 'var(--safe-area-bottom, 0px)',
+                      paddingBottom: '0px'
+                    }}
+                  >
+                    {/* Legal Ownership - Bottom layer (z-[5]) */}
+                    <div className="w-full z-[5] pointer-events-auto">
+                      <MapLegalOwnership compact={true} className="sm:hidden" />
+                    </div>
+
+                    {/* Speedometer - Above legal (z-[160]) */}
+                    <div className="z-[160] pointer-events-auto" data-testid="speed-display-plan">
+                      <SpeedDisplay className="shadow-2xl" />
+                    </div>
+                  </div>
+
+                  {/* Plan Route FAB - Opens route planner (Bottom Right) */}
                   <Button
                     onClick={() => setSidebarState('open')}
                     size="lg"
-                    className="fixed z-20 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                     style={{
                       bottom: 'calc(24px + var(--safe-area-bottom))',
                       right: 'calc(24px + var(--safe-area-right))'
@@ -1725,11 +1744,6 @@ function NavigationPageContent() {
                   >
                     <Menu className="w-6 h-6" />
                   </Button>
-
-                  {/* Legal Ownership */}
-                  <div className="absolute bottom-0 left-0 right-0 z-10">
-                    <MapLegalOwnership compact={true} className="sm:hidden" />
-                  </div>
                 </div>
               )}
 
