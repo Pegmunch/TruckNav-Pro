@@ -2081,7 +2081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // CRITICAL: Filter by distance if GPS coordinates provided and POI search (osm_tag)
         // This prevents showing results from wrong countries (e.g., India when user is in UK)
         if (userLat !== null && userLon !== null && osm_tag) {
-          const MAX_DISTANCE_KM = 50; // 50km radius for POI search
+          const MAX_DISTANCE_KM = 150; // 150km radius for POI search (increased for rural areas)
           
           features = features.filter((feature: any) => {
             if (!feature.geometry?.coordinates || feature.geometry.coordinates.length < 2) {
