@@ -181,6 +181,12 @@ export function GPSProvider({
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
+        console.log('[GPS-PROVIDER] ✅ Position received:', {
+          lat: geoPosition.coords.latitude,
+          lng: geoPosition.coords.longitude,
+          accuracy: geoPosition.coords.accuracy
+        });
+        
         const { coords, timestamp } = geoPosition;
         const rawHeading = coords.heading;
 
@@ -232,6 +238,14 @@ export function GPSProvider({
         setErrorMessage(null);
       },
       (geoError) => {
+        console.error('[GPS-PROVIDER] ❌ Error callback triggered:', {
+          code: geoError.code,
+          message: geoError.message,
+          PERMISSION_DENIED: GeolocationPositionError.PERMISSION_DENIED,
+          POSITION_UNAVAILABLE: GeolocationPositionError.POSITION_UNAVAILABLE,
+          TIMEOUT: GeolocationPositionError.TIMEOUT
+        });
+        
         // Classify and handle GPS errors
         const errType = classifyGPSError(geoError.code);
         const errMessage = getGPSErrorMessage(errType);
@@ -243,10 +257,8 @@ export function GPSProvider({
         setErrorType(errType);
         setErrorMessage(errMessage);
 
-        // Log errors for debugging (but don't spam on permission denied)
-        if (geoError.code !== GeolocationPositionError.PERMISSION_DENIED) {
-          console.debug(`[GPS-PROVIDER] Error (code ${geoError.code}): ${errMessage}`);
-        }
+        // Log errors for debugging
+        console.warn(`[GPS-PROVIDER] GPS Error: ${errMessage} (code: ${geoError.code})`);
       },
       {
         enableHighAccuracy,
