@@ -8,7 +8,8 @@ import {
   Layers,
   Info,
   AlertTriangle,
-  AlertCircle
+  AlertCircle,
+  Navigation
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -71,7 +72,7 @@ export function MobileFAB({
       icon: MapPin,
       label: 'Route Options',
       onClick: onMenuClick,
-      showInModes: ['preview', 'navigate']
+      showInModes: ['preview']
     },
     {
       id: 'layers',
@@ -141,6 +142,8 @@ export function MobileFAB({
       >
         {isExpanded ? (
           <X className="w-7 h-7" />
+        ) : mode === 'navigate' ? (
+          <Navigation className="w-7 h-7" />
         ) : (
           <Menu className="w-7 h-7" />
         )}
