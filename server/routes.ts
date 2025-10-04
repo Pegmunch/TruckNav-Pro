@@ -2009,6 +2009,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to calculate distance between two coordinates (Haversine formula)
+  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
   // Photon API Proxy - Address Autocomplete with POI Support
   app.get("/api/photon-autocomplete", async (req: Request, res: Response) => {
     try {
@@ -2020,7 +2033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const photonUrl = new URL('https://photon.komoot.io/api');
       photonUrl.searchParams.set('q', q);
-      photonUrl.searchParams.set('limit', limit as string || '10');
+      photonUrl.searchParams.set('limit', '50'); // Request more results for filtering
       
       // Add POI filtering if osm_tag provided (e.g., "shop:supermarket", "amenity:restaurant")
       if (osm_tag && typeof osm_tag === 'string') {
@@ -2028,10 +2041,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Add GPS coordinates for location-biased search (POI near me)
-      if (lat && typeof lat === 'string' && lon && typeof lon === 'string') {
-        photonUrl.searchParams.set('lat', lat);
-        photonUrl.searchParams.set('lon', lon);
-        console.log(`[PHOTON-PROXY] Location-biased search: lat=${lat}, lon=${lon}`);
+      const userLat = lat && typeof lat === 'string' ? parseFloat(lat) : null;
+      const userLon = lon && typeof lon === 'string' ? parseFloat(lon) : null;
+      
+      if (userLat !== null && userLon !== null && !isNaN(userLat) && !isNaN(userLon)) {
+        photonUrl.searchParams.set('lat', lat as string);
+        photonUrl.searchParams.set('lon', lon as string);
+        console.log(`[PHOTON-PROXY] Location-biased search: lat=${userLat}, lon=${userLon}`);
       }
       
       console.log('[PHOTON-PROXY] Request URL:', photonUrl.toString());
@@ -2060,8 +2076,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         const data = await photonResponse.json();
-        console.log('[PHOTON-PROXY] Success:', data.features?.length || 0, 'results');
-        res.json(data);
+        let features = data.features || [];
+        
+        // CRITICAL: Filter by distance if GPS coordinates provided and POI search (osm_tag)
+        // This prevents showing results from wrong countries (e.g., India when user is in UK)
+        if (userLat !== null && userLon !== null && osm_tag) {
+          const MAX_DISTANCE_KM = 50; // 50km radius for POI search
+          
+          features = features.filter((feature: any) => {
+            if (!feature.geometry?.coordinates || feature.geometry.coordinates.length < 2) {
+              return false;
+            }
+            
+            const [featureLon, featureLat] = feature.geometry.coordinates;
+            const distance = calculateDistance(userLat, userLon, featureLat, featureLon);
+            
+            // Log filtered results
+            if (distance > MAX_DISTANCE_KM) {
+              console.log(`[PHOTON-PROXY] Filtered out result ${distance.toFixed(1)}km away: ${feature.properties?.name || 'Unknown'} in ${feature.properties?.city || feature.properties?.country || 'Unknown'}`);
+            }
+            
+            return distance <= MAX_DISTANCE_KM;
+          });
+          
+          console.log(`[PHOTON-PROXY] Distance filtering: ${data.features?.length || 0} -> ${features.length} results within ${MAX_DISTANCE_KM}km`);
+        }
+        
+        // Limit final results
+        const limitNum = parseInt(limit as string || '10');
+        features = features.slice(0, limitNum);
+        
+        console.log('[PHOTON-PROXY] Success:', features.length, 'results returned');
+        res.json({ ...data, features });
         
       } catch (fetchError) {
         clearTimeout(timeoutId);
