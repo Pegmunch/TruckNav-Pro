@@ -1,9 +1,17 @@
-import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation } from 'lucide-react';
+import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGPS } from '@/contexts/gps-context';
+import { useState } from 'react';
+import { 
+  usePhotonAutocomplete, 
+  formatPhotonDisplay, 
+  extractPhotonCoordinates,
+  type PhotonFeature 
+} from '@/hooks/use-photon-autocomplete';
 
 interface SimplifiedRouteDrawerProps {
   fromLocation: string;
@@ -31,10 +39,46 @@ export function SimplifiedRouteDrawer({
   onPlanRoute
 }: SimplifiedRouteDrawerProps) {
   const gps = useGPS();
+  const [selectedPOICategory, setSelectedPOICategory] = useState<string>('');
+  const [poiSearchQuery, setPOISearchQuery] = useState('');
 
   const hasGPSError = gps?.error !== null || gps?.errorType !== null;
   const isGPSReady = gps?.position !== null && !hasGPSError;
   const isGPSInitializing = gps?.isTracking && !gps?.position && !hasGPSError;
+
+  // POI Categories
+  const poiCategories = [
+    { value: 'shop:supermarket', label: 'Supermarket', icon: ShoppingCart },
+    { value: 'amenity:restaurant', label: 'Restaurant', icon: UtensilsCrossed },
+    { value: 'amenity:fuel', label: 'Fuel', icon: Fuel },
+    { value: 'shop', label: 'Shop', icon: Store },
+  ];
+
+  // When POI category selected, automatically search with GPS location
+  const shouldSearchPOI = selectedPOICategory && isGPSReady && gps?.position;
+  
+  // Build search query with GPS city/area context
+  const poiSearchText = shouldSearchPOI 
+    ? `${selectedPOICategory.split(':')[1] || selectedPOICategory} near me`
+    : '';
+
+  // Fetch POI results using Photon with osm_tag filtering
+  const { results: poiResults, isLoading: isLoadingPOI } = usePhotonAutocomplete(
+    poiSearchText,
+    !!shouldSearchPOI,
+    undefined, // No country restriction for POI
+    selectedPOICategory // Pass osm_tag filter
+  );
+
+  // Handle POI selection
+  const handleSelectPOI = (poi: PhotonFeature) => {
+    const displayLabel = formatPhotonDisplay(poi);
+    const coordinates = extractPhotonCoordinates(poi);
+    
+    onToLocationChange(displayLabel);
+    onToCoordinatesChange?.(coordinates);
+    setSelectedPOICategory(''); // Clear selection after choosing
+  };
 
   return (
     <div className="space-y-6">
@@ -136,6 +180,88 @@ export function SimplifiedRouteDrawer({
             </TabsTrigger>
           </TabsList>
         </Tabs>
+      </div>
+
+      {/* POI Near Me */}
+      <div className="space-y-3 pb-4">
+        <h3 className="text-sm font-medium text-muted-foreground">Find Places Near Me</h3>
+        
+        {/* POI Category Buttons */}
+        <ToggleGroup 
+          type="single" 
+          value={selectedPOICategory} 
+          onValueChange={setSelectedPOICategory}
+          className="grid grid-cols-2 gap-2 w-full"
+        >
+          {poiCategories.map((category) => {
+            const Icon = category.icon;
+            return (
+              <ToggleGroupItem
+                key={category.value}
+                value={category.value}
+                className="h-12 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                data-testid={`poi-category-${category.value}`}
+                disabled={!isGPSReady}
+              >
+                <Icon className="w-4 h-4 mr-2" />
+                {category.label}
+              </ToggleGroupItem>
+            );
+          })}
+        </ToggleGroup>
+
+        {!isGPSReady && (
+          <p className="text-xs text-muted-foreground text-center">
+            {hasGPSError ? 'GPS unavailable - enable location to search nearby places' : 'Waiting for GPS...'}
+          </p>
+        )}
+
+        {/* POI Results */}
+        {selectedPOICategory && isGPSReady && (
+          <div className="mt-3 space-y-2">
+            {isLoadingPOI && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Searching nearby...</span>
+              </div>
+            )}
+
+            {!isLoadingPOI && poiResults.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                No {selectedPOICategory.split(':')[1] || 'places'} found nearby
+              </p>
+            )}
+
+            {!isLoadingPOI && poiResults.length > 0 && (
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                <p className="text-xs font-medium text-muted-foreground px-2">
+                  Found {poiResults.length} nearby:
+                </p>
+                {poiResults.slice(0, 5).map((poi, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className="w-full justify-start h-auto py-2 px-2 text-left"
+                    onClick={() => handleSelectPOI(poi)}
+                    data-testid={`poi-result-${index}`}
+                  >
+                    <MapPin className="w-4 h-4 mr-2 shrink-0 text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {poi.properties.name || poi.properties.street || 'Unknown'}
+                      </p>
+                      {poi.properties.city && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {poi.properties.city}
+                        </p>
+                      )}
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
