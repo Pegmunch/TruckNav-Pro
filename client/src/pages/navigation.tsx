@@ -1582,7 +1582,7 @@ function NavigationPageContent() {
                 <>
                   {/* Trip Info Header */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 pb-2 shadow-lg">
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 pb-2 shadow-lg" data-testid="navigation-hud">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
@@ -1619,7 +1619,7 @@ function NavigationPageContent() {
 
                   {/* Compact Trip Strip - Below Header */}
                   {currentRoute && (
-                    <div className="absolute left-0 right-0 z-[90] border-b-2 border-primary/20" style={{ top: 'calc(40px + var(--safe-area-top))' }}>
+                    <div className="absolute left-0 right-0 z-[90] border-b-2 border-primary/20" style={{ top: 'calc(40px + var(--safe-area-top))' }} data-testid="trip-strip">
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
