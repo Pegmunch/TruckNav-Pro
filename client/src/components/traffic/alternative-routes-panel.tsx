@@ -293,8 +293,7 @@ const AlternativeRoutesPanel = memo(function AlternativeRoutesPanel({
     };
   }, [isOpen, alternatives, onSelectRoute, onPreviewRoute, onClose]);
 
-  if (!isOpen) return null;
-
+  // IMPORTANT: All hooks must be called BEFORE any conditional returns
   // Sort alternatives by time savings (best first)
   const sortedAlternatives = useMemo(() => {
     return [...alternatives].sort((a, b) => {
@@ -309,6 +308,9 @@ const AlternativeRoutesPanel = memo(function AlternativeRoutesPanel({
     if (!currentRoute?.duration || alternatives.length === 0) return 0;
     return Math.max(0, currentRoute.duration - sortedAlternatives[0].duration);
   }, [currentRoute?.duration, sortedAlternatives]);
+
+  // Early return AFTER all hooks
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" data-testid="alternative-routes-panel">
