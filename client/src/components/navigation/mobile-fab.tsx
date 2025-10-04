@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Menu, 
@@ -37,6 +37,20 @@ export function MobileFAB({
   style
 }: MobileFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Synchronized icon state to prevent race conditions
+  const [currentIcon, setCurrentIcon] = useState<'menu' | 'navigation' | 'x'>('menu');
+
+  useEffect(() => {
+    // Synchronize icon with mode
+    if (isExpanded) {
+      setCurrentIcon('x');
+    } else if (mode === 'navigate') {
+      setCurrentIcon('navigation');
+    } else {
+      setCurrentIcon('menu');
+    }
+  }, [mode, isExpanded]);
 
   const speedDialOptions = [
     {
@@ -140,9 +154,9 @@ export function MobileFAB({
         )}
         data-testid="fab-main"
       >
-        {isExpanded ? (
+        {currentIcon === 'x' ? (
           <X className="w-7 h-7" />
-        ) : mode === 'navigate' ? (
+        ) : currentIcon === 'navigation' ? (
           <Navigation className="w-7 h-7" />
         ) : (
           <Menu className="w-7 h-7" />

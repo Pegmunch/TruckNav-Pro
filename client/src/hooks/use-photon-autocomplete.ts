@@ -95,24 +95,29 @@ class LRUCache<K, V> {
   }
 }
 
-// Circuit breaker for API calls
+// Circuit breaker for API calls with exponential backoff
 class CircuitBreaker {
   private failures: number = 0;
   private lastFailureTime: number = 0;
   private isOpen: boolean = false;
   private readonly threshold: number = 3;
   private readonly timeout: number = 30000;
-  private readonly cooldown: number = 10000;
+  private cooldownPeriod: number = 10000;
 
   canProceed(): boolean {
     const now = Date.now();
 
-    if (this.isOpen && (now - this.lastFailureTime) > this.cooldown) {
-      this.reset();
+    if (this.isOpen && (now - this.lastFailureTime) > this.cooldownPeriod) {
+      console.log(`[CIRCUIT-BREAKER] Half-open after ${this.cooldownPeriod}ms cooldown`);
+      this.isOpen = false;
+      this.failures = 0;
       return true;
     }
 
     if (this.failures >= this.threshold && (now - this.lastFailureTime) < this.timeout) {
+      if (!this.isOpen) {
+        console.warn(`[CIRCUIT-BREAKER] OPENING - ${this.failures} failures`);
+      }
       this.isOpen = true;
       return false;
     }
@@ -123,15 +128,22 @@ class CircuitBreaker {
   recordFailure(): void {
     this.failures++;
     this.lastFailureTime = Date.now();
+    
+    this.cooldownPeriod = Math.min(this.cooldownPeriod * 2, 60000);
+    console.warn(`[CIRCUIT-BREAKER] Failure #${this.failures}, next cooldown: ${this.cooldownPeriod}ms`);
   }
 
   recordSuccess(): void {
+    if (this.failures > 0 || this.isOpen) {
+      console.log('[CIRCUIT-BREAKER] Success - resetting');
+    }
     this.reset();
   }
 
   private reset(): void {
     this.failures = 0;
     this.isOpen = false;
+    this.cooldownPeriod = 10000;
   }
 
   isCircuitOpen(): boolean {
@@ -139,10 +151,10 @@ class CircuitBreaker {
   }
 }
 
-// Singleton instances
-const autocompleteCache = new LRUCache<string, { results: PhotonFeature[]; error: string | null }>(100, 300000);
-const photonCircuitBreaker = new CircuitBreaker();
-const ukCircuitBreaker = new CircuitBreaker();
+// Global singleton instances (shared across all hook consumers)
+const globalAutocompleteCache = new LRUCache<string, { results: PhotonFeature[]; error: string | null }>(100, 300000);
+const globalPhotonCircuitBreaker = new CircuitBreaker();
+const globalUkCircuitBreaker = new CircuitBreaker();
 
 const saveToSessionStorage = (key: string, data: any): void => {
   try {
@@ -160,13 +172,29 @@ const loadFromSessionStorage = (key: string): any | null => {
     const stored = sessionStorage.getItem(`trucknav_autocomplete_${key}`);
     if (!stored) return null;
 
-    const { data, timestamp } = JSON.parse(stored);
-    const age = Date.now() - timestamp;
+    const parsed = JSON.parse(stored);
+    
+    if (!parsed || typeof parsed !== 'object' || !parsed.data || typeof parsed.timestamp !== 'number') {
+      console.warn('[AUTOCOMPLETE] Corrupted sessionStorage data, clearing');
+      sessionStorage.removeItem(`trucknav_autocomplete_${key}`);
+      return null;
+    }
+
+    const age = Date.now() - parsed.timestamp;
 
     if (age < 3600000) {
-      return data;
+      console.log(`[AUTOCOMPLETE] SessionStorage hit - Age: ${Math.round(age/1000)}s`);
+      return parsed.data;
+    } else {
+      console.log('[AUTOCOMPLETE] SessionStorage expired, clearing');
+      sessionStorage.removeItem(`trucknav_autocomplete_${key}`);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('[AUTOCOMPLETE] SessionStorage parse error, clearing:', e);
+    try {
+      sessionStorage.removeItem(`trucknav_autocomplete_${key}`);
+    } catch {}
+  }
   return null;
 };
 
@@ -176,6 +204,7 @@ export const usePhotonAutocomplete = (
   countryCode?: string
 ) => {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Debounce the query with 300ms delay
   useEffect(() => {
@@ -186,6 +215,28 @@ export const usePhotonAutocomplete = (
     return () => clearTimeout(timer);
   }, [query]);
 
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log('[AUTOCOMPLETE] Network online - resetting circuit breakers');
+      globalPhotonCircuitBreaker.recordSuccess();
+      globalUkCircuitBreaker.recordSuccess();
+      setIsOnline(true);
+    };
+    
+    const handleOffline = () => {
+      console.warn('[AUTOCOMPLETE] Network offline - will use cache');
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const shouldFetch = enabled && debouncedQuery.length >= 3;
 
   const { data, isLoading, error } = useQuery<{ results: PhotonFeature[]; error: string | null }>({
@@ -195,7 +246,7 @@ export const usePhotonAutocomplete = (
       
       const cacheKey = `${countryCode || 'global'}_${trimmedQuery.toLowerCase()}`;
       
-      const cached = autocompleteCache.get(cacheKey);
+      const cached = globalAutocompleteCache.get(cacheKey);
       if (cached) {
         console.log('[AUTOCOMPLETE] Cache hit (memory)');
         return cached;
@@ -204,14 +255,23 @@ export const usePhotonAutocomplete = (
       const sessionCached = loadFromSessionStorage(cacheKey);
       if (sessionCached) {
         console.log('[AUTOCOMPLETE] Cache hit (sessionStorage)');
-        autocompleteCache.set(cacheKey, sessionCached);
+        globalAutocompleteCache.set(cacheKey, sessionCached);
         return sessionCached;
+      }
+
+      if (!isOnline) {
+        console.warn('[AUTOCOMPLETE] Offline - using cached data only');
+        const cached = globalAutocompleteCache.get(cacheKey) || loadFromSessionStorage(cacheKey);
+        if (cached) {
+          return { ...cached, isStale: true, offline: true };
+        }
+        return { results: [], error: 'No internet connection' };
       }
 
       const detectedCountry = detectPostcodeCountry(trimmedQuery);
       const isUKPostcode = detectedCountry === 'UK';
 
-      if (isUKPostcode && ukCircuitBreaker.canProceed()) {
+      if (isUKPostcode && globalUkCircuitBreaker.canProceed()) {
         try {
           console.log('[AUTOCOMPLETE] UK postcode detected, trying postcodes.io');
           const ukResult = await geocodeUKPostcode(trimmedQuery);
@@ -222,18 +282,18 @@ export const usePhotonAutocomplete = (
               error: null
             };
             
-            ukCircuitBreaker.recordSuccess();
-            autocompleteCache.set(cacheKey, result);
+            globalUkCircuitBreaker.recordSuccess();
+            globalAutocompleteCache.set(cacheKey, result);
             saveToSessionStorage(cacheKey, result);
             return result;
           }
         } catch (err) {
-          ukCircuitBreaker.recordFailure();
+          globalUkCircuitBreaker.recordFailure();
           console.warn('[AUTOCOMPLETE] UK API error:', err);
         }
       }
 
-      if (!photonCircuitBreaker.canProceed()) {
+      if (!globalPhotonCircuitBreaker.canProceed()) {
         console.warn('[AUTOCOMPLETE] Photon circuit breaker OPEN');
         
         const staleCache = loadFromSessionStorage(cacheKey);
@@ -279,17 +339,17 @@ export const usePhotonAutocomplete = (
 
         const result = { results: features.slice(0, 10), error: null };
         
-        photonCircuitBreaker.recordSuccess();
-        autocompleteCache.set(cacheKey, result);
+        globalPhotonCircuitBreaker.recordSuccess();
+        globalAutocompleteCache.set(cacheKey, result);
         saveToSessionStorage(cacheKey, result);
         
         return result;
 
       } catch (error) {
-        photonCircuitBreaker.recordFailure();
+        globalPhotonCircuitBreaker.recordFailure();
         console.error('[AUTOCOMPLETE] Photon error:', error);
         
-        if (looksLikePostcode(trimmedQuery) && ukCircuitBreaker.canProceed()) {
+        if (looksLikePostcode(trimmedQuery) && globalUkCircuitBreaker.canProceed()) {
           try {
             const ukResult = await geocodeUKPostcode(trimmedQuery);
             if (ukResult) {
@@ -297,12 +357,12 @@ export const usePhotonAutocomplete = (
                 results: [postcodeResultToPhotonFeature(ukResult)],
                 error: null
               };
-              autocompleteCache.set(cacheKey, result);
+              globalAutocompleteCache.set(cacheKey, result);
               saveToSessionStorage(cacheKey, result);
               return result;
             }
           } catch (ukErr) {
-            ukCircuitBreaker.recordFailure();
+            globalUkCircuitBreaker.recordFailure();
           }
         }
 

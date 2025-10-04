@@ -15,6 +15,7 @@ export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
   getBearing: () => number;
   resetBearing: () => void;
+  getMapValidity: () => boolean;
   toggle3DMode: () => void;
   is3DMode: () => boolean;
   zoomIn: () => void;
@@ -32,6 +33,7 @@ export interface MapLibreMapRef {
       lng: number;
       accuracy?: number;
       accuracyLevel?: 'excellent' | 'good' | 'acceptable';
+      timestamp?: number;
     }) => void;
     onError?: (error: GeolocationPositionError | Error, usedFallback: boolean) => void;
     onRetry?: (attemptNumber: number, maxAttempts: number) => void;
@@ -122,6 +124,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const { reportError } = useMapLibreErrorReporting();
+  const resetBearingFailureCountRef = useRef(0);
+  const MAX_RESET_BEARING_FAILURES = 3;
+  const [isMapLibreValid, setIsMapLibreValid] = useState(true);
   
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
@@ -138,6 +143,12 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     lat: number;
     lng: number;
     accuracy: number;
+    timestamp: number;
+  } | null>(null);
+
+  const lastSuccessfulPositionRef = useRef<{
+    lat: number;
+    lng: number;
     timestamp: number;
   } | null>(null);
 
@@ -184,20 +195,43 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   };
 
   const getLastKnownPosition = () => {
+    const now = Date.now();
+    
     if (lastKnownPositionRef.current) {
-      const age = Date.now() - lastKnownPositionRef.current.timestamp;
-      if (age < 300000) return lastKnownPositionRef.current; // Use if < 5 minutes old
+      const age = now - lastKnownPositionRef.current.timestamp;
+      const isExpired = age >= 300000; // 5 minutes
+      
+      console.log(`[GPS-ZOOM] Cache check - Age: ${Math.round(age/1000)}s, Expired: ${isExpired}`);
+      
+      if (!isExpired) {
+        console.log('[GPS-ZOOM] Using in-memory cached position');
+        return lastKnownPositionRef.current;
+      } else {
+        console.warn('[GPS-ZOOM] In-memory cache EXPIRED, checking sessionStorage');
+      }
     }
     
     try {
       const cached = sessionStorage.getItem('trucknav_last_gps');
       if (cached) {
         const pos = JSON.parse(cached);
-        const age = Date.now() - pos.timestamp;
-        if (age < 300000) return pos;
+        const age = now - pos.timestamp;
+        const isExpired = age >= 300000;
+        
+        console.log(`[GPS-ZOOM] SessionStorage check - Age: ${Math.round(age/1000)}s, Expired: ${isExpired}`);
+        
+        if (!isExpired) {
+          console.log('[GPS-ZOOM] Using sessionStorage cached position');
+          return pos;
+        } else {
+          console.warn('[GPS-ZOOM] SessionStorage cache EXPIRED - no valid cache available');
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('[GPS-ZOOM] Cache read error:', e);
+    }
     
+    console.warn('[GPS-ZOOM] NO CACHED POSITION AVAILABLE');
     return null;
   };
 
@@ -205,6 +239,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     try {
       if (!mapInstance || !mapInstance.isStyleLoaded()) {
         console.warn('[MAP] Cannot update bearing - map not ready');
+        return false;
+      }
+
+      // Check WebGL context before animation
+      const canvas = mapInstance.getCanvas();
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+      if (gl && gl.isContextLost()) {
+        console.error('[MAP] WebGL context lost - skipping bearing update');
         return false;
       }
 
@@ -216,6 +258,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       while (delta < -180) delta += 360;
       
       const targetBearing = currentBearing + delta;
+
+      // Use moveend event to verify animation completed
+      const onMoveEnd = () => {
+        mapInstance.off('moveend', onMoveEnd);
+        console.log('[MAP] Bearing update completed:', mapInstance.getBearing());
+      };
+      mapInstance.once('moveend', onMoveEnd);
 
       mapInstance.easeTo({
         bearing: targetBearing,
@@ -229,15 +278,47 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       return false;
     }
   }, []);
+
+  const resetBearingWithWatchdog = useCallback(() => {
+    try {
+      if (!map.current || !isLoaded) {
+        resetBearingFailureCountRef.current++;
+        console.warn(`[MAP] Reset bearing failed - map not ready (${resetBearingFailureCountRef.current}/${MAX_RESET_BEARING_FAILURES})`);
+        
+        if (resetBearingFailureCountRef.current >= MAX_RESET_BEARING_FAILURES) {
+          console.error('[MAP] Reset bearing watchdog triggered - too many failures');
+          if (map.current) {
+            try {
+              map.current.resize();
+            } catch (e) {
+              console.error('[MAP] Map resize failed during recovery');
+            }
+          }
+        }
+        return;
+      }
+
+      const success = safeBearingUpdate(map.current, 0);
+      
+      if (success) {
+        resetBearingFailureCountRef.current = 0;
+      } else {
+        resetBearingFailureCountRef.current++;
+        if (resetBearingFailureCountRef.current >= MAX_RESET_BEARING_FAILURES) {
+          console.error('[MAP] Reset bearing watchdog triggered');
+        }
+      }
+    } catch (err) {
+      resetBearingFailureCountRef.current++;
+      console.error('[MAP] Reset bearing exception:', err);
+    }
+  }, [safeBearingUpdate, isLoaded]);
   
   useImperativeHandle(ref, () => ({
     getMap: () => map.current,
     getBearing: () => bearing,
-    resetBearing: () => {
-      if (map.current) {
-        map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
-      }
-    },
+    resetBearing: () => resetBearingWithWatchdog(),
+    getMapValidity: () => isMapLibreValid,
     toggle3DMode: () => {
       if (!map.current) return;
       const newMode = !is3DMode;
@@ -349,15 +430,28 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              recordGPSSuccess();
-              
               const { latitude, longitude, accuracy, heading } = position.coords;
+              
+              // Check if coordinates are stale (same as last reading)
+              const isSameAsLast = lastSuccessfulPositionRef.current &&
+                Math.abs(lastSuccessfulPositionRef.current.lat - latitude) < 0.00001 &&
+                Math.abs(lastSuccessfulPositionRef.current.lng - longitude) < 0.00001;
+              
+              if (isSameAsLast) {
+                console.warn('[GPS-ZOOM] Stale coordinates detected - incrementing failure count');
+                circuitBreakerRef.current.failures++;
+                // Don't record full success, let circuit breaker logic apply
+              } else {
+                recordGPSSuccess();
+                lastSuccessfulPositionRef.current = { lat: latitude, lng: longitude, timestamp: Date.now() };
+              }
+              
               cachePosition(latitude, longitude, accuracy);
               
               const accuracyLevel = accuracy <= 50 ? 'excellent' : accuracy <= 100 ? 'good' : 'acceptable';
               
               performZoom(latitude, longitude, heading ?? 0);
-              onSuccess?.({ lat: latitude, lng: longitude, accuracy, accuracyLevel });
+              onSuccess?.({ lat: latitude, lng: longitude, accuracy, accuracyLevel, timestamp: Date.now() });
             },
             (error) => {
               console.warn(`[GPS-ZOOM] Attempt ${currentAttempt} failed:`, error.message);
@@ -398,6 +492,41 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   useEffect(() => {
     currentZoomRef.current = currentZoom;
   }, [currentZoom]);
+
+  useEffect(() => {
+    if (!map.current) return;
+
+    const checkMapValidity = () => {
+      if (!map.current) {
+        setIsMapLibreValid(false);
+        return;
+      }
+
+      const canvas = map.current.getCanvas();
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+      
+      if (gl && gl.isContextLost()) {
+        console.error('[MAP] WebGL context lost detected');
+        setIsMapLibreValid(false);
+        
+        setTimeout(() => {
+          if (map.current) {
+            try {
+              map.current.resize();
+              setIsMapLibreValid(true);
+              console.log('[MAP] WebGL context recovered');
+            } catch (e) {
+              console.error('[MAP] WebGL recovery failed - consider Leaflet fallback');
+            }
+          }
+        }, 1000);
+      }
+    };
+
+    const interval = setInterval(checkMapValidity, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!map.current || !isLoaded) return;

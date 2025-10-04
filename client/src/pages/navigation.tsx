@@ -135,6 +135,31 @@ function NavigationPageContent() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('plan');
   
+  // Mode transition debouncing to prevent race conditions
+  const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const setMobileNavModeDebounced = useCallback((newMode: MobileNavMode) => {
+    // Clear any pending transition
+    if (modeTransitionTimeoutRef.current) {
+      clearTimeout(modeTransitionTimeoutRef.current);
+    }
+
+    // Prevent rapid mode changes (50ms debounce)
+    modeTransitionTimeoutRef.current = setTimeout(() => {
+      setMobileNavMode(newMode);
+      console.log(`[NAV-MODE] Transition to ${newMode} mode completed`);
+    }, 50);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (modeTransitionTimeoutRef.current) {
+        clearTimeout(modeTransitionTimeoutRef.current);
+      }
+    };
+  }, []);
+  
   // Map reference for compass and 3D tilt control
   const mapRef = useRef<MapLibreMapRef>(null);
   const [mapBearing, setMapBearing] = useState(0);
@@ -148,6 +173,9 @@ function NavigationPageContent() {
     maxAttempts: number;
     accuracyLevel?: string;
   } | null>(null);
+  
+  // Cache warning state for user awareness
+  const [cacheWarningShown, setCacheWarningShown] = useState(false);
   
   // Enhanced auto-zoom state tracking with retry logic and user preference support
   // To disable auto-zoom: localStorage.setItem('trucknav_auto_zoom_enabled', 'false')
@@ -325,18 +353,30 @@ function NavigationPageContent() {
             // Clear loading state
             setGpsLoadingState(null);
             
-            // Show success toast with accuracy info
-            const accuracyEmoji = location.accuracyLevel === 'excellent' ? '🎯' : 
-                                  location.accuracyLevel === 'good' ? '📍' : '📌';
-            const accuracyText = location.accuracy 
-              ? `Accuracy: ${Math.round(location.accuracy)}m (${location.accuracyLevel})`
-              : 'Position acquired';
+            // Check if this is a cached position (no accuracy or old timestamp)
+            const isCachedPosition = !location.accuracy || (location.timestamp && (Date.now() - location.timestamp) > 60000);
             
-            toast({
-              title: `${accuracyEmoji} Position Locked`,
-              description: accuracyText,
-              duration: 2000,
-            });
+            if (isCachedPosition && !cacheWarningShown) {
+              toast({
+                title: "⚠️ Using Cached Location",
+                description: "Live GPS unavailable. Position may be outdated.",
+                variant: "default",
+                duration: 5000,
+              });
+              setCacheWarningShown(true);
+            } else if (!isCachedPosition) {
+              setCacheWarningShown(false); // Reset when live GPS works
+              
+              const accuracyText = location.accuracyLevel === 'excellent' ? '📍 Excellent accuracy' :
+                                  location.accuracyLevel === 'good' ? '📍 Good accuracy' :
+                                  '📍 Position locked';
+              
+              toast({
+                title: accuracyText,
+                description: location.accuracy ? `±${Math.round(location.accuracy)}m` : 'Tracking from your location',
+                duration: 2000,
+              });
+            }
             
             console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
           },
@@ -414,13 +454,34 @@ function NavigationPageContent() {
     if (!isMobile) return; // Only applies to mobile
     
     if (isNavigating) {
-      setMobileNavMode('navigate');
+      setMobileNavModeDebounced('navigate');
     } else if (currentRoute) {
-      setMobileNavMode('preview');
+      setMobileNavModeDebounced('preview');
     } else {
-      setMobileNavMode('plan');
+      setMobileNavModeDebounced('plan');
     }
-  }, [isMobile, isNavigating, currentRoute]);
+  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced]);
+  
+  // Automated visibility check for speedometer during navigation
+  useEffect(() => {
+    if (mobileNavMode !== 'navigate') return;
+
+    const checkSpeedometerVisibility = () => {
+      const speedometer = document.querySelector('[data-testid="speed-display-navigate"]');
+      if (!speedometer) {
+        console.error('[NAV-MODE] CRITICAL: Speedometer not found in navigate mode!');
+        // Attempt recovery by forcing re-render
+        setMobileNavModeDebounced('navigate');
+      } else {
+        console.log('[NAV-MODE] ✓ Speedometer visibility confirmed');
+      }
+    };
+
+    // Check every 3 seconds during navigation
+    const interval = setInterval(checkSpeedometerVisibility, 3000);
+
+    return () => clearInterval(interval);
+  }, [mobileNavMode, setMobileNavModeDebounced]);
   
   // Real-time bearing rotation during navigation
   useEffect(() => {
@@ -798,7 +859,7 @@ function NavigationPageContent() {
       setActiveJourney(null);
       setIsNavigating(false);
       setCurrentRoute(null);
-      setMobileNavMode('plan');
+      setMobileNavModeDebounced('plan');
       localStorage.removeItem('activeJourneyId');
       // Invalidate all journey-related queries to keep UI consistent
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
@@ -1193,8 +1254,35 @@ function NavigationPageContent() {
     return crypto.randomUUID();
   };
 
+  // Mode validation guard to prevent invalid navigation transitions
+  const canStartNavigation = useCallback(() => {
+    if (isMobile && mobileNavMode !== 'preview' && mobileNavMode !== 'plan') {
+      console.warn('[NAV-MODE] Cannot start navigation - invalid mode:', mobileNavMode);
+      return false;
+    }
+    if (!currentRoute && (!fromLocation || !toLocation)) {
+      console.warn('[NAV-MODE] Cannot start navigation - missing route and locations');
+      return false;
+    }
+    if (!selectedProfile) {
+      console.warn('[NAV-MODE] Cannot start navigation - missing vehicle profile');
+      return false;
+    }
+    return true;
+  }, [isMobile, mobileNavMode, currentRoute, fromLocation, toLocation, selectedProfile]);
+
   // Production-grade robust navigation flow
   const handleStartNavigation = async () => {
+    // Mode transition guard for mobile
+    if (isMobile && !canStartNavigation()) {
+      toast({
+        title: "Cannot Start Navigation",
+        description: "Please plan a route first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Comprehensive validation
     if (!fromLocation || !toLocation) {
       toast({
@@ -1388,7 +1476,7 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     setActiveJourney(null);
     setIsNavigating(false);
-    setMobileNavMode('plan');
+    setMobileNavModeDebounced('plan');
     
     // Clear alternative routes state
     setIsAlternativeRoutesOpen(false);
@@ -1696,7 +1784,7 @@ function NavigationPageContent() {
                     onSettingsClick={() => setShowVehicleSettings(true)}
                     onClearRoute={() => {
                       setCurrentRoute(null);
-                      setMobileNavMode('plan');
+                      setMobileNavModeDebounced('plan');
                     }}
                     onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
