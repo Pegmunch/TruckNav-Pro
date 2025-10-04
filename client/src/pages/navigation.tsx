@@ -2090,35 +2090,35 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
+                  {/* Speedometer - Fixed position above Stop button */}
                   <div 
-                    className="fixed left-0 right-0 flex flex-col-reverse items-center gap-3 pointer-events-none"
-                    style={{ 
-                      bottom: 'var(--safe-area-bottom, 0px)',
-                      paddingBottom: '0px'
+                    className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                    style={{
+                      bottom: 'calc(60px + var(--safe-area-bottom, 0px))'
                     }}
+                    data-testid="speed-display-navigate"
                   >
-                    {/* Legal Ownership - Bottom layer (z-[5]) */}
-                    <div className="w-full z-[5] pointer-events-auto">
-                      <MapLegalOwnership compact={true} className="sm:hidden" />
-                    </div>
+                    <SpeedDisplay className="shadow-2xl" />
+                  </div>
 
-                    {/* Stop Button - Above legal (z-[170]) */}
-                    <Button
-                      onClick={handleStopNavigation}
-                      disabled={completeJourneyMutation.isPending}
-                      variant="destructive"
-                      className="z-[170] h-6 px-2 text-[10px] font-medium rounded-md shadow-md pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
-                      data-testid="button-stop-navigation"
-                    >
-                      <X className="w-2.5 h-2.5 mr-1" />
-                      <span className="text-[10px]">Stop Navigation</span>
-                    </Button>
+                  {/* Stop Navigation Button - Fixed position at bottom center */}
+                  <Button
+                    onClick={handleStopNavigation}
+                    disabled={completeJourneyMutation.isPending}
+                    variant="destructive"
+                    className="fixed left-1/2 -translate-x-1/2 z-[170] h-12 px-6 text-sm font-medium rounded-xl shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                    style={{
+                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))'
+                    }}
+                    data-testid="button-stop-navigation"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    <span>Stop Navigation</span>
+                  </Button>
 
-                    {/* Speedometer - Top of stack (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto" data-testid="speed-display-navigate">
-                      <SpeedDisplay className="shadow-2xl" />
-                    </div>
+                  {/* Legal Ownership - Bottom of screen */}
+                  <div className="fixed bottom-0 left-0 right-0 w-full z-[5] pointer-events-auto">
+                    <MapLegalOwnership compact={true} className="sm:hidden" />
                   </div>
 
                   {/* MobileFAB - Bottom Right (separate fixed position) */}
