@@ -264,8 +264,10 @@ export function AddressAutocomplete({
           </div>
         </PopoverTrigger>
       <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0" 
+        className="w-[var(--radix-popover-trigger-width)] p-0 z-[60]" 
         align="start"
+        side="bottom"
+        sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <Command>
