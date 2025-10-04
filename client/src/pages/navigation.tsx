@@ -1845,12 +1845,7 @@ function NavigationPageContent() {
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
 
-                    {/* Speedometer - Above legal (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto">
-                      <SpeedDisplay className="shadow-2xl" />
-                    </div>
-
-                    {/* Start Button - Top of stack (z-[150]) - Only show when NOT navigating */}
+                    {/* Start Button - Bottom center (z-[150]) - Only show when NOT navigating */}
                     {!isNavigating && (
                       <Button
                         onClick={handleStartNavigation}
@@ -1858,7 +1853,7 @@ function NavigationPageContent() {
                         aria-label="Start turn-by-turn navigation"
                         aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                         className={cn(
-                          "z-[150] h-10 w-10 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto",
+                          "z-[150] h-12 w-12 rounded-full shadow-2xl transition-all duration-300 pointer-events-auto",
                           "hover:scale-110 active:scale-95",
                           "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-400",
                           currentRoute && selectedProfile 
@@ -1871,13 +1866,28 @@ function NavigationPageContent() {
                           <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
                           <div className="flex flex-col items-center justify-center">
-                            <Menu className="w-4 h-4" />
+                            <Navigation className="w-5 h-5" />
                             <span className="text-[8px] font-bold mt-0.5">GO</span>
                           </div>
                         )}
                       </Button>
                     )}
                   </div>
+
+                  {/* Blue Hamburger FAB - Top Left - Opens route input fields */}
+                  <Button
+                    onClick={() => setSidebarState('open')}
+                    size="lg"
+                    className="fixed z-[200] h-12 w-12 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    style={{
+                      top: 'calc(80px + var(--safe-area-top))',
+                      left: 'calc(16px + var(--safe-area-left))'
+                    }}
+                    data-testid="button-edit-route-preview"
+                    aria-label="Edit route"
+                  >
+                    <Menu className="w-6 h-6" />
+                  </Button>
 
                   {/* MobileFAB - Bottom Right (separate fixed position) */}
                   <MobileFAB
