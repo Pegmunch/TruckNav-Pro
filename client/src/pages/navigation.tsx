@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
@@ -124,6 +125,10 @@ function NavigationPageContent() {
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(null);
+  
+  // Destination reached state
+  const [showDestinationReached, setShowDestinationReached] = useState(false);
+  const hasShownDestinationDialogRef = useRef(false);
   
   // Get real GPS location from singleton GPS provider (no more duplicate watchers!)
   const currentGPSLocation = gpsData?.position ? {
@@ -278,6 +283,42 @@ function NavigationPageContent() {
     
     return () => clearInterval(intervalId);
   }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
+  
+  // Detect when destination is reached
+  useEffect(() => {
+    // Only check during active navigation
+    if (!isNavigating || !currentRoute || !gpsData?.position || hasShownDestinationDialogRef.current) {
+      return;
+    }
+    
+    // Get destination coordinates (last point in route)
+    const destination = currentRoute.routePath?.[currentRoute.routePath.length - 1];
+    if (!destination) return;
+    
+    const { latitude, longitude } = gpsData.position;
+    
+    // Calculate distance to destination using Haversine formula
+    const toRadians = (deg: number) => deg * (Math.PI / 180);
+    const R = 6371000; // Earth's radius in meters
+    
+    const lat1 = toRadians(latitude);
+    const lat2 = toRadians(destination.lat);
+    const deltaLat = toRadians(destination.lat - latitude);
+    const deltaLng = toRadians(destination.lng - longitude);
+    
+    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+              Math.cos(lat1) * Math.cos(lat2) *
+              Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // Distance in meters
+    
+    // If within 50 meters of destination, show dialog
+    if (distance <= 50) {
+      console.log(`[DESTINATION] Reached! Distance: ${distance.toFixed(1)}m`);
+      setShowDestinationReached(true);
+      hasShownDestinationDialogRef.current = true;
+    }
+  }, [isNavigating, currentRoute, gpsData?.position]);
   
   // Enhanced auto-zoom to GPS location with user preferences, map readiness polling, and retry logic
   useEffect(() => {
@@ -945,6 +986,10 @@ function NavigationPageContent() {
         triggerLiveNotification('route_change');
       }
       
+      // Reset destination reached state for new journey
+      hasShownDestinationDialogRef.current = false;
+      setShowDestinationReached(false);
+      
       setCurrentRoute(route);
       // Update window sync with new route
       windowSync.updateRoute(route);
@@ -1332,6 +1377,10 @@ function NavigationPageContent() {
     document.body.classList.remove('navigation-active');
     document.documentElement.classList.remove('overlay-safe-mode');
     
+    // Reset destination reached state for next journey
+    hasShownDestinationDialogRef.current = false;
+    setShowDestinationReached(false);
+    
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
       toast({
@@ -1624,6 +1673,10 @@ function NavigationPageContent() {
     setActiveJourney(null);
     setIsNavigating(false);
     setMobileNavModeDebounced('plan');
+    
+    // Reset destination reached state for next journey
+    hasShownDestinationDialogRef.current = false;
+    setShowDestinationReached(false);
     
     // Clear location inputs to allow fresh route planning
     setFromLocation('');
@@ -2478,6 +2531,41 @@ function NavigationPageContent() {
           setHasInteractedWithIncidentFeed(true);
         }}
       />
+
+      {/* Destination Reached Dialog */}
+      <AlertDialog open={showDestinationReached} onOpenChange={setShowDestinationReached}>
+        <AlertDialogContent className="max-w-md" data-testid="dialog-destination-reached">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
+              <Navigation className="w-6 h-6 text-green-600" />
+              Destination Reached!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-lg pt-2">
+              You have arrived at your destination. Safe driving!
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogAction
+              onClick={() => {
+                // Clear route and return to plan mode
+                setCurrentRoute(null);
+                setIsNavigating(false);
+                setMobileNavModeDebounced('plan');
+                hasShownDestinationDialogRef.current = false;
+                setShowDestinationReached(false);
+                toast({
+                  title: "Navigation ended",
+                  description: "Ready to plan your next journey",
+                });
+              }}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-plan-new-journey"
+            >
+              Plan New Journey
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
