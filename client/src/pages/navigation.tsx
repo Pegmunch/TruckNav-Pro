@@ -961,8 +961,13 @@ function NavigationPageContent() {
       });
 
       // Auto-transition to navigation mode after 2-second preview in mobile
+      console.log('[AUTO-NAV] Route calculated - checking conditions...');
+      console.log('[AUTO-NAV] isMobile:', isMobile);
+      console.log('[AUTO-NAV] route exists:', !!route);
+      console.log('[AUTO-NAV] coordinates length:', route?.coordinates?.length || 0);
+      
       if (isMobile && route && route.coordinates && route.coordinates.length > 0) {
-        console.log('[AUTO-NAV] Starting auto-navigation flow');
+        console.log('[AUTO-NAV] ✅ All conditions met - Starting auto-navigation flow');
         
         // Show preview mode for 2 seconds
         setMobileNavMode('preview');
@@ -970,7 +975,7 @@ function NavigationPageContent() {
         
         // Then auto-transition to navigation mode (UI only, no subscription required)
         setTimeout(() => {
-          console.log('[AUTO-NAV] Transitioning to navigate mode NOW');
+          console.log('[AUTO-NAV] ⏰ Timeout fired - Transitioning to navigate mode NOW');
           setMobileNavMode('navigate');
           setIsNavigating(true);
           
@@ -984,8 +989,10 @@ function NavigationPageContent() {
             duration: 2000,
           });
           
-          console.log('[AUTO-NAV] Navigate mode active, isNavigating=true');
+          console.log('[AUTO-NAV] ✅ Navigate mode active, isNavigating=true');
         }, 2000);
+      } else {
+        console.log('[AUTO-NAV] ❌ Conditions NOT met - auto-nav skipped');
       }
     },
     onError: (error) => {
