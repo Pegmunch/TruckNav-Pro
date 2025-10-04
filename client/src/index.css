@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide Replit development banner in PWA/standalone mode */
+@media (display-mode: standalone) {
+  #replit-dev-banner,
+  [id^="replit-"],
+  [class*="replit-banner"],
+  [class*="dev-banner"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    opacity: 0 !important;
+  }
+}
+
 /* Fallback for browsers that don't support dvh */
 @supports not (height: 100dvh) {
   [data-testid="legal-disclaimer-popup"] {
