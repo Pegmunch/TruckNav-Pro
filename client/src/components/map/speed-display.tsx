@@ -73,6 +73,10 @@ const SpeedDisplay = memo(function SpeedDisplay({
   const convertedSpeed = convertSpeed(displaySpeed);
   const convertedSpeedLimit = speedLimit ? convertSpeedLimit(speedLimit) : null;
   
+  // Check if speeding (more than 5 over limit for tolerance)
+  const isSpeeding = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit + 5;
+  const isNearLimit = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit && !isSpeeding;
+  
   // Speed limit sign colors (Red circular sign like highway speed limits)
   const getSpeedLimitColor = () => {
     if (!convertedSpeedLimit) return 'text-gray-400 border-gray-400';
@@ -81,55 +85,71 @@ const SpeedDisplay = memo(function SpeedDisplay({
     return 'text-black border-red-600';
   };
   
+  // Get speed display color based on speed vs limit
+  const getSpeedColor = () => {
+    if (isSpeeding) return 'text-red-600 dark:text-red-400';
+    if (isNearLimit) return 'text-amber-600 dark:text-amber-400';
+    return 'text-blue-600 dark:text-blue-400';
+  };
+  
   return (
     <div 
       className={cn(
         "flex items-center justify-between",
-        "bg-white/90 dark:bg-black/80 backdrop-blur-sm rounded-full",
-        "px-6 py-3 shadow-lg border border-black/20 dark:border-white/20",
-        "text-black dark:text-white font-semibold",
-        "min-w-[220px] h-[60px]",
+        "bg-white/95 dark:bg-black/90 backdrop-blur-md rounded-2xl",
+        "px-5 py-4 shadow-2xl",
+        "text-black dark:text-white font-bold",
+        "min-w-[240px] h-[72px]",
         "transition-all duration-300",
+        isSpeeding && "ring-2 ring-red-500 animate-pulse",
+        isNearLimit && "ring-2 ring-amber-500",
+        !isSpeeding && !isNearLimit && "border-2 border-black/10 dark:border-white/10",
         className
       )}
       data-testid="speed-display"
     >
       {/* Speed Limit Section (Left) */}
-      <div className="flex items-center gap-2" data-testid="speed-limit-section">
+      <div className="flex items-center gap-3" data-testid="speed-limit-section">
         <div 
           className={cn(
             "flex items-center justify-center",
-            "w-10 h-10 rounded-full border-4 bg-white",
+            "w-12 h-12 rounded-full border-[5px] bg-white shadow-md",
             convertedSpeedLimit ? getSpeedLimitColor() : "border-gray-400 text-gray-400"
           )}
           data-testid="speed-limit-sign"
         >
           {convertedSpeedLimit ? (
-            <span className="text-sm font-bold" data-testid="speed-limit-value">
+            <span className="text-base font-black" data-testid="speed-limit-value">
               {convertedSpeedLimit}
             </span>
           ) : (
-            <Shield className="w-4 h-4" />
+            <Shield className="w-5 h-5" />
           )}
         </div>
         {convertedSpeedLimit && (
-          <span className="text-xs font-semibold text-gray-800 dark:text-gray-200" data-testid="speed-limit-unit">
+          <span className="text-xs font-black text-gray-700 dark:text-gray-300 uppercase" data-testid="speed-limit-unit">
             {speedUnit}
           </span>
         )}
       </div>
       
       {/* Separator */}
-      <div className="w-px h-8 bg-black/30 dark:bg-white/30" />
+      <div className="w-[2px] h-10 bg-black/20 dark:bg-white/20 rounded-full" />
       
       {/* Vehicle Speed Section (Right) */}
-      <div className="flex items-center gap-2" data-testid="vehicle-speed-section">
-        <Gauge className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      <div className="flex items-center gap-3" data-testid="vehicle-speed-section">
+        <Gauge className={cn("w-6 h-6 transition-colors duration-300", getSpeedColor())} />
         <div className="text-right">
-          <div className="text-2xl font-bold" data-testid="vehicle-speed-value">
+          <div className={cn(
+            "text-3xl font-black transition-colors duration-300",
+            getSpeedColor()
+          )} data-testid="vehicle-speed-value">
             {convertedSpeed}
           </div>
-          <div className="text-sm font-bold text-blue-600 dark:text-blue-400 -mt-1" data-testid="vehicle-speed-unit">
+          <div className={cn(
+            "text-xs font-black uppercase -mt-1 transition-colors duration-300",
+            getSpeedColor()
+          )} data-testid="vehicle-speed-unit">
             {speedUnit}
           </div>
         </div>
