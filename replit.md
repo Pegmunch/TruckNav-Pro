@@ -40,11 +40,14 @@ Preferred communication style: Simple, everyday language.
 ## Technical Implementations & System Design
 - **Smart Route Planning**: Calculates routes avoiding restrictions based on vehicle profiles.
 - **Intelligent Restriction Avoidance**: 
+    - **Global Coverage**: Works worldwide for all countries with geographic-based restriction filtering
+    - **Country-Specific Filtering**: Restrictions filtered by geographic bounds to ensure correct country/region checks
     - **Spatial Validation**: Routes checked against all restrictions using Turf.js geospatial analysis
     - **Critical Violation Detection**: System identifies non-bypassable restrictions (low bridges, weight limits)
     - **Automatic Rerouting**: When violations detected, tries waypoint-based alternative routes
     - **Safety Blocking**: Blocks unsafe routes if no alternative found, preventing trucks from hitting low bridges
     - **Dimensional Checking**: Height, width, weight, and length restrictions enforced based on vehicle profile
+    - **Transparent Logging**: Country-specific restriction logging for debugging and compliance verification
 - **Facility Discovery**: Search for truck-friendly facilities by type and location.
 - **Interactive Mapping**:
     - **Map Engines**: MapLibre GL JS (primary, GPU-accelerated, 3D), Leaflet (fallback).

@@ -262,7 +262,12 @@ async function calculateStrictVehicleClassRoute(
         
         restrictionsAvoided.push(restriction.id);
         
-        console.log(`Route intersects with ${restriction.severity} restriction: ${restriction.type} at ${restriction.location}`);
+        const country = restriction.country || 'Unknown';
+        const limitValue = restriction.type === 'height' ? `${restriction.limit} ft` :
+                          restriction.type === 'width' ? `${restriction.limit} ft` :
+                          restriction.type === 'weight' ? `${restriction.limit} tonnes` : restriction.limit;
+        
+        console.log(`[${country}] Route intersects with ${restriction.severity} restriction: ${restriction.type} (${limitValue}) at ${restriction.location}`);
       }
     }
 
@@ -389,7 +394,8 @@ async function tryRerouteWithWaypoints(
       // Check if this route avoids critical violations
       const criticalViolations = violations.filter(v => !v.bypassable);
       if (criticalViolations.length === 0) {
-        console.log(`[REROUTE] SUCCESS: Found safe route with waypoint, avoided ${violatedRestrictions.length} restrictions`);
+        const avoidedCountries = [...new Set(violatedRestrictions.map(r => r.country || 'Unknown'))];
+        console.log(`[REROUTE] SUCCESS: Found safe route with waypoint, avoided ${violatedRestrictions.length} restrictions from: ${avoidedCountries.join(', ')}`);
         return {
           distance: leg1.distance + leg2.distance,
           duration: leg1.duration + leg2.duration,
@@ -1366,6 +1372,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         
         const restrictions = await storage.getRestrictionsByArea(bounds);
+        
+        // Log restriction check details for transparency
+        const restrictionsByCountry = restrictions.reduce((acc, r) => {
+          const country = r.country || 'Unknown';
+          acc[country] = (acc[country] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        
+        console.log(`[ROUTE-SAFETY] Checking ${restrictions.length} restrictions for ${vehicleProfile.type}`);
+        console.log(`[ROUTE-SAFETY] Restrictions by country:`, restrictionsByCountry);
         
         // Pre-route absolute restriction check - block route immediately if violations exist
         const absoluteRestrictionsForVehicle = restrictions.filter(r => 

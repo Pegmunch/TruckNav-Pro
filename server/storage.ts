@@ -2635,8 +2635,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRestrictionsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<Restriction[]> {
-    // For now, return all restrictions. In a real implementation, you would filter by geospatial coordinates
-    return await db.select().from(restrictions);
+    // CRITICAL: Filter restrictions by geographic bounds to ensure country-specific and area-specific restriction checking
+    const allRestrictions = await db.select().from(restrictions).where(eq(restrictions.isActive, true));
+    
+    // Filter by geographic coordinates to get only restrictions in the specified area
+    return allRestrictions.filter(restriction => {
+      if (!restriction.coordinates) return false;
+      
+      const coords = typeof restriction.coordinates === 'string' 
+        ? JSON.parse(restriction.coordinates) 
+        : restriction.coordinates;
+      
+      // Ensure coordinates are valid
+      if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+        return false;
+      }
+      
+      // Check if restriction is within the geographic bounds
+      const withinBounds = coords.lat <= bounds.north && 
+                          coords.lat >= bounds.south &&
+                          coords.lng <= bounds.east && 
+                          coords.lng >= bounds.west;
+      
+      if (withinBounds) {
+        console.log(`[RESTRICTION-FILTER] Found restriction in area: ${restriction.country} - ${restriction.type} at ${restriction.location}`);
+      }
+      
+      return withinBounds;
+    });
   }
 
   // Facilities
