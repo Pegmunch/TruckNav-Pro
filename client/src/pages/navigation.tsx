@@ -2032,6 +2032,23 @@ function NavigationPageContent() {
                     >
                       <Minus className="h-5 w-5" />
                     </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMap3DMode(!map3DMode);
+                      }}
+                      className={cn(
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        map3DMode 
+                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                      )}
+                      data-testid="button-tilt-map-navigate"
+                      aria-label={map3DMode ? "Switch to flat view" : "Switch to tilted view"}
+                    >
+                      <Box className="h-5 w-5" />
+                    </Button>
                   </div>
 
                   {/* Speedometer - Fixed position above Stop button */}
