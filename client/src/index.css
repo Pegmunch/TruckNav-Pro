@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fallback for browsers that don't support dvh */
+@supports not (height: 100dvh) {
+  [data-testid="legal-disclaimer-popup"] {
+    height: 100vh;
+  }
+}
+
 /* Automotive-optimized styling for CarPlay/Android Auto */
 html {
   scroll-behavior: smooth;

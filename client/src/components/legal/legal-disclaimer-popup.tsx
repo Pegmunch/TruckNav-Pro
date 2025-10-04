@@ -178,7 +178,7 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
       aria-labelledby="legal-disclaimer-title"
       aria-describedby="legal-disclaimer-description"
       aria-modal="true"
-      className="fixed inset-0 z-[9999] flex flex-col min-h-screen bg-background text-foreground safe-area-inset" 
+      className="fixed inset-0 z-[9999] flex flex-col h-dvh bg-background text-foreground" 
       data-testid="legal-disclaimer-popup"
     >
       {/* Header - stacks vertically on mobile */}
@@ -536,7 +536,7 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
       </div>
 
       {/* Sticky Footer - Action Buttons */}
-      <div className="sticky bottom-0 border-t bg-background p-3 sm:p-4 safe-area-inset-bottom space-y-2">
+      <div className="sticky bottom-0 border-t bg-background px-3 sm:px-4 pt-3 sm:pt-4 pb-[env(safe-area-inset-bottom,12px)] sm:pb-[env(safe-area-inset-bottom,16px)] space-y-2">
           {/* Page Navigation - Compact on mobile */}
           <div className="flex items-center justify-between px-3 py-2 bg-muted/20 rounded-lg border text-sm">
             <Button 
