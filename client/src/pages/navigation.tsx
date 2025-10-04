@@ -2041,19 +2041,20 @@ function NavigationPageContent() {
                     <SpeedDisplay className="shadow-2xl" />
                   </div>
 
-                  {/* Stop Navigation Button - Fixed position at bottom center */}
+                  {/* Stop Navigation Button - Fixed position at bottom-left side (smaller) */}
                   <Button
                     onClick={handleStopNavigation}
                     disabled={completeJourneyMutation.isPending}
                     variant="destructive"
-                    className="fixed left-1/2 -translate-x-1/2 z-[170] h-12 px-6 text-sm font-medium rounded-xl shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                    className="fixed z-[170] h-9 px-4 text-xs font-medium rounded-lg shadow-xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
                     style={{
-                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))'
+                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))',
+                      left: 'calc(16px + var(--safe-area-left, 0px))'
                     }}
                     data-testid="button-stop-navigation"
                   >
-                    <X className="w-4 h-4 mr-2" />
-                    <span>Stop Navigation</span>
+                    <X className="w-3 h-3 mr-1" />
+                    <span>Stop</span>
                   </Button>
 
                   {/* Legal Ownership - Bottom of screen */}
