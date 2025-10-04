@@ -8,44 +8,32 @@ Preferred communication style: Simple, everyday language.
 
 # System Architecture
 
-## Frontend Architecture
+## Frontend
 - **Framework**: React with TypeScript and Vite.
-- **UI/UX**: Shadcn/ui components (built on Radix UI) for accessibility, styled with Tailwind CSS and CSS variables.
+- **UI/UX**: Shadcn/ui (Radix UI, Tailwind CSS) with a mobile-first, 3-mode workflow (Plan → Preview → Navigate). Features include a dedicated full-screen route planner, compact trip strip, MobileFAB for one-handed operation, professional touch targets (44px+), and Day (light) theme enforced on mobile. Responsive design uses CSS clamp() density tokens. Screen Wake Lock API prevents display sleep.
 - **Routing**: Wouter for client-side routing.
-- **State Management**: TanStack React Query for server state and caching; React Context for local UI state.
+- **State Management**: TanStack React Query for server state; React Context for local UI state.
 - **Forms**: React Hook Form with Zod validation.
-- **UI/UX Decisions**:
-    - Mobile-first approach with a clean, 3-mode workflow (Plan → Preview → Navigate).
-    - Dedicated full-screen route planner for mobile with a hamburger menu.
-    - Compact trip strip for navigation data.
-    - MobileFAB component with speed-dial for one-handed operation.
-    - Professional touch targets (44px+) optimized for gloved use.
-    - Day (light) theme enforced on mobile for better visibility.
-    - Responsive design using CSS clamp() density tokens.
-    - Screen Wake Lock API to prevent display sleep during navigation.
 
-## Backend Architecture
+## Backend
 - **Runtime**: Node.js with Express.js.
 - **Language**: TypeScript with ESM modules.
 - **Database ORM**: Drizzle ORM with PostgreSQL dialect.
 - **API Design**: RESTful endpoints for vehicle profiles, restrictions, facilities, and routes.
 - **Authentication**: Replit Auth (OIDC) with Express sessions and PostgreSQL storage.
-- **Subscription System**: Stripe-powered subscription management with access control middleware.
-  - **Pricing Tiers**: 3-month (£25.99), 6-month (£49.99), 12-month (£99), Lifetime (£200)
-  - **Access Control**: Subscription middleware protects all navigation features
-  - **Payment Integration**: Stripe Checkout with test keys for development
+- **Subscription System**: Stripe-powered subscription management with access control middleware for features.
 
-## Data Storage Solutions
+## Data Storage
 - **Primary Database**: PostgreSQL with Neon serverless driver.
 - **Schema Management**: Drizzle Kit for migrations.
-- **Session Storage**: PostgreSQL-based session store using `connect-pg-simple`.
+- **Session Storage**: PostgreSQL-based session store.
 
 ## Core Data Models
-- **Users**: User authentication via Replit Auth (OIDC), session management.
-- **Subscriptions**: User subscriptions linked to pricing plans with expiry dates.
+- **Users**: Authentication and session management.
+- **Subscriptions**: User subscriptions linked to pricing plans.
 - **Subscription Plans**: 4 pricing tiers with feature access control.
-- **Vehicle Profiles**: Dimensions (height, width, length, weight), axle count, hazmat status.
-- **Restrictions**: Geographic coordinates, type (height/width/weight), limits.
+- **Vehicle Profiles**: Dimensions, axle count, hazmat status.
+- **Restrictions**: Geographic and type-based limits (height, width, weight).
 - **Facilities**: Truck stops, fuel stations, parking areas with amenities.
 - **Routes**: Saved routes including start/end, coordinates, and calculated paths.
 
@@ -54,48 +42,29 @@ Preferred communication style: Simple, everyday language.
 - **Restriction Awareness**: Real-time checking of restrictions against vehicle dimensions.
 - **Facility Discovery**: Search for truck-friendly facilities by type and location.
 - **Interactive Mapping**:
-    - **Map Engines**: MapLibre GL JS (default, GPU-accelerated, 3D support); Leaflet (fallback for non-WebGL devices).
-    - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization to eliminate tile loss during pan/zoom.
-    - **Performance**: Aggressive caching (maxTileCacheSize: 500) and smooth transitions (fadeDuration: 100ms).
-    - **Mobile Layout Architecture**: Map always mounted at z-0 base layer with HUD elements overlaid using absolute positioning at higher z-indexes. Prevents conditional mounting/unmounting which caused MapLibre tile loss.
-    - **Compass/Orientation Control**: Top-right corner compass button displays current bearing (rotates with map), resets map to North (bearing 0°) on click with smooth animation.
-    - **Professional Speedometer**: Enhanced GPS-based live speed tracking with visual safety warnings. Features: large bold display (72px height) for better visibility, speed limit sign (red circular border), live speed in MPH/KPH (auto-converts based on country), intelligent color-coding (blue=safe, amber=near limit, red=speeding 5+ over), pulsing red ring when speeding for immediate driver awareness, smooth color transitions for professional feel.
-    - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding (red/orange/yellow/green) based on traffic speed ratios, zoom-based line width scaling (2-8px), and 5-minute auto-refresh for latest traffic data.
-    - **Traffic-Aware Route Coloring**: Routes automatically display color-coded segments based on real-time traffic conditions - heavy traffic areas show in red (speed ratio <0.3), moderate in orange (<0.6), light in yellow (<0.8), and free flow in blue (≥0.8). Auto-resamples every 2 minutes for live updates.
-    - **Crowdsourced Incident Reporting System**: Community-driven traffic awareness with 23-type incident library featuring emoji icons across 6 categories (Emergency Services, Vehicle Incidents, Road Conditions, Traffic, Hazards, Weather). Features include: interactive 3-step wizard for reporting incidents, real-time incident feed showing nearby reports with distances, map markers with emoji icons, auto-refresh every 2 minutes, 24-hour auto-expiration, and GPS-based location capture. Works independently without external API keys.
-    - **Auto-Route Planning**: 3-second debounce delay prevents premature route calculation while entering postcodes.
-    - **Automatic GPS Position Lock & Real-Time Bearing Rotation (Production-Grade)**: When navigation starts, map automatically zooms to user's exact GPS location at maximum street level (zoom 19.5, 60° pitch) with 2-second flyTo animation and auto-rotation to GPS heading direction. During navigation, map continuously rotates to match real-time GPS direction of travel so route always points forward/upward. Switches to roads mode for optimal visibility. Enterprise-level robustness: retry logic for GPS timeouts, intelligent fallback to route start coordinates if GPS unavailable, comprehensive error handling for all GeolocationPositionError codes (PERMISSION_DENIED, TIMEOUT, POSITION_UNAVAILABLE), map readiness checks, and user-friendly toast notifications. Route line rendered at 10px width for clear visibility. Blue arrowhead marker displays current GPS position on route.
-    - **GPS Singleton Provider (Battery Optimized)**: Centralized GPS tracking using React Context pattern eliminates duplicate geolocation watchers. Single `navigator.geolocation.watchPosition` for entire app shared across all components (MapLibreMap, SpeedDisplay). Location: `client/src/contexts/gps-context.tsx`. Features: EMA heading smoothing (alpha=0.25) with circular angle interpolation for smooth map rotation, dynamic smoothing enabled during navigation only, proper cleanup on unmount. Prevents battery drain from multiple concurrent GPS watchers.
-    - **Enhanced Mobile Marker Visibility**: GPS arrowhead marker uses responsive sizing (56-84px based on devicePixelRatio) with z-index 1000 for visibility above route line. Scales automatically: 1x displays get 56px, 2x Retina maintains 56px, 3x high-end devices get 84px. Blue halo ring, enhanced shadows, and pulse animation for clear position indication.
-    - **MapLibre WebGL Reliability**: Comprehensive WebGL capability detection with retry logic (up to 3 attempts), checks for required extensions (OES_standard_derivatives, OES_element_index_uint), localStorage persistence for fallback state, user-facing toast notifications, and custom event system for initialization errors. Ensures reliable fallback to Leaflet on devices with limited GPU support.
-    - **99.9% Production-Grade Robustness** (max 0.1% failure rate):
-        - **GPS Auto-Zoom Circuit Breaker**: Stale coordinate detection (tracks last position, flags unchanged readings as failures), dual-layer position caching (in-memory + sessionStorage, 5-min TTL), exponential backoff retry (1s → 2s → 4s delays), comprehensive telemetry logging ([GPS-ZOOM] prefix), visual cache warnings ("⚠️ Using Cached Location" toasts), multi-layer fallback (GPS → cached → route start → error), circuit opens after 3 failures within 30s.
-        - **Postcode Search Resilience**: Singleton cache architecture (globalAutocompleteCache, globalPhotonCircuitBreaker, globalUkCircuitBreaker shared across all components), LRU cache (100 entries, 5-min TTL), sessionStorage corruption auto-detection and clearing, exponential backoff circuit breaker (10s → 20s → 40s → 60s max cooldown), offline/online transition handling (resets circuit breakers on reconnect), 5-second timeout with AbortController, stale data serving when offline.
-        - **Map Animation Safety**: WebGL context validation before all animations, safeBearingUpdate error handling with graceful degradation, reset bearing watchdog (3-failure threshold triggers auto-recovery), periodic map validity checking (5-second intervals during navigation), isMapLibreValid state tracking, automatic recovery attempts via map.resize(), comprehensive [MAP] telemetry, moveend event verification for animation completion.
-        - **Navigation Mode Stability**: Mode transition debouncing (50ms delay prevents race conditions), MobileFAB icon synchronization via useEffect (ensures icon always matches mode state), navigation start guards (validates mode, route, vehicle profile), automated speedometer visibility check (every 3 seconds, forces recovery if missing), [NAV-MODE] telemetry for all transitions, prevents inconsistent UI during rapid plan→navigate→plan toggling.
-- **Address Autocomplete**: 
-  - **Photon API Only**: Free worldwide address search using OpenStreetMap data (no postcode database)
-  - **Search Method**: Users type city names, street addresses, or landmarks (not raw postcodes)
-  - **Minimum Characters**: 3 characters required to trigger search
-  - **Debouncing**: 300ms delay for efficient API usage
-  - **Error Resilience**: 5-second timeout, 2 retries with exponential backoff (1s, 2s delays)
-  - **Display Format**: "{name/street}, {city}, {country}" with Globe icon
-  - **Saved Locations**: Favorites and recent searches for quick access
-  - **Coverage**: NavigationSidebar, RoutePlanningPanel (LocationDropdown), SimplifiedRouteDrawer (AddressAutocomplete)
-  - **Keyboard Support**: Enter key to select highlighted suggestions
-  - **Limitation**: Raw UK postcodes may not return results; users should enter full addresses or city names instead
+    - **Map Engines**: MapLibre GL JS (primary, GPU-accelerated, 3D), Leaflet (fallback).
+    - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization.
+    - **Mobile Layout**: Map always mounted at z-0 with HUD elements overlaid.
+    - **Compass/Orientation Control**: Top-right compass button for bearing display and North reset.
+    - **Professional Speedometer**: GPS-based live speed tracking with visual safety warnings, intelligent color-coding, and pulsing red ring when speeding.
+    - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding and 5-minute auto-refresh.
+    - **Traffic-Aware Route Coloring**: Routes display color-coded segments based on real-time traffic conditions, auto-resampled every 2 minutes.
+    - **Crowdsourced Incident Reporting**: Community-driven system with 23 incident types, real-time feed, map markers, 2-minute auto-refresh, and 24-hour auto-expiration.
+    - **Automatic GPS Position Lock & Real-Time Bearing Rotation**: Map auto-zooms to GPS location, rotates to match travel direction, with retry logic and error handling.
+    - **GPS Singleton Provider**: Centralized, battery-optimized GPS tracking using React Context with EMA heading smoothing.
+    - **Enhanced Mobile Marker Visibility**: Responsive GPS arrowhead marker sizing with high z-index, halo ring, shadows, and pulse animation.
+    - **MapLibre WebGL Reliability**: Comprehensive WebGL capability detection with retry logic, extension checks, and graceful fallback to Leaflet.
+    - **Robustness Features**: Includes GPS auto-zoom circuit breaker, postcode search resilience (LRU cache, exponential backoff), map animation safety, and navigation mode stability with telemetry.
+- **Address Autocomplete & POI Search**:
+    - **Photon API**: Free worldwide address search using OpenStreetMap data, integrated with GPS-powered POI search (Supermarket, Restaurant, Fuel, Shop categories).
+    - **Search Method**: Supports city names, street addresses, or landmarks. Features 3-character minimum, 300ms debouncing, and error resilience.
+    - **Saved Locations**: Favorites and recent searches.
 - **Mobile Compatibility & PWA**:
-    - **Progressive Web App**: Full offline support with service worker and IndexedDB caching.
-    - **iOS Enhancements**: Custom splash screens for iPhone 15 Pro Max, 15 Pro, SE, 8 Plus, and iPad Pro.
-    - **iOS Meta Tags**: Black-translucent status bar, fullscreen mode, theme colors for light/dark modes.
-    - **Service Worker**: v2.0.0 with cache-first strategy for maps, network-first for APIs, background sync.
-    - **Install Prompts**: iOS-specific "Add to Home Screen" instructions with visual guides.
-    - **Update Management**: Automatic update detection with user-friendly toast notifications.
-    - **Offline Features**: Cached routes, restrictions, facilities for offline navigation.
-    - Screen Wake Lock API.
-    - Safe-area handling for iOS.
-    - Android hardware back button handling.
-    - Orientation lock preferences.
+    - **Progressive Web App**: Offline support via service worker and IndexedDB caching.
+    - **iOS Enhancements**: Custom splash screens, meta tags for fullscreen and status bar.
+    - **Update Management**: Automatic update detection.
+    - **Offline Features**: Cached routes, restrictions, facilities.
+    - Screen Wake Lock API, safe-area handling for iOS, Android hardware back button handling, orientation lock preferences.
 
 # External Dependencies
 
@@ -113,24 +82,18 @@ Preferred communication style: Simple, everyday language.
 - **Geolocation APIs**: Browser-based location services.
 
 ## Traffic Data Services
-- **TomTom Traffic Flow API**: Real-time traffic visualization with vector tiles.
-  - **Required Environment Variable**: `VITE_TOMTOM_API_KEY` - TomTom API key for traffic data access.
-  - **Features**: Automatic color-coded traffic flow (red=heavy, orange=moderate, yellow=light, green=free flow).
-  - **Auto-refresh**: Traffic data updates every 5 minutes.
+- **TomTom Traffic Flow API**: Real-time traffic visualization.
+  - **Required Environment Variable**: `VITE_TOMTOM_API_KEY`
 
 ## Address Autocomplete Services
-- **Photon API**: Free worldwide address autocomplete (OpenStreetMap-based, no API key required)
-  - **Endpoint**: https://photon.komoot.io/api/
-  - **Features**: Worldwide geocoding and address search with automatic language detection
-  - **Integration**: 300ms debounced requests with 5-second timeout and 2 retries
-  - **Error Handling**: Graceful degradation with exponential backoff
-  - **Components**: LocationDropdown, AddressAutocomplete, NavigationSidebar
+- **Photon API**: Free worldwide address autocomplete (OpenStreetMap-based).
+  - **Endpoint**: `https://photon.komoot.io/api/`
 
 ## Mapping Libraries
 - **MapLibre GL JS**: Primary vector map engine.
 - **Leaflet**: Fallback map rendering library.
 - **React-Leaflet**: React bindings for Leaflet.
-- **Tile Sources**: Google Maps (3D), OpenStreetMap, Esri satellite imagery.
+- **Tile Sources**: Google Maps, OpenStreetMap, Esri satellite imagery.
 
 ## Form and Data Validation
 - **Zod**: Runtime type validation and schema definition.
@@ -138,3 +101,16 @@ Preferred communication style: Simple, everyday language.
 
 ## State Management
 - **TanStack React Query**: Server state management.
+- **Mobile Compatibility & PWA**:
+    - **Progressive Web App**: Full offline support with service worker and IndexedDB caching.
+    - **Clean PWA UI**: Development banner automatically hidden in standalone/PWA mode via CSS media query `@media (display-mode: standalone)`
+    - **iOS Enhancements**: Custom splash screens for iPhone 15 Pro Max, 15 Pro, SE, 8 Plus, and iPad Pro.
+    - **iOS Meta Tags**: Black-translucent status bar, fullscreen mode, theme colors for light/dark modes.
+    - **Service Worker**: v2.0.0 with cache-first strategy for maps, network-first for APIs, background sync.
+    - **Install Prompts**: iOS-specific "Add to Home Screen" instructions with visual guides.
+    - **Update Management**: Automatic update detection with user-friendly toast notifications.
+    - **Offline Features**: Cached routes, restrictions, facilities for offline navigation.
+    - Screen Wake Lock API.
+    - Safe-area handling for iOS.
+    - Android hardware back button handling.
+    - Orientation lock preferences.
