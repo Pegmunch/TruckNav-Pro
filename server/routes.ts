@@ -298,6 +298,119 @@ async function calculateStrictVehicleClassRoute(
 }
 
 /**
+ * Attempt to find alternative route using waypoints to avoid restrictions
+ */
+async function tryRerouteWithWaypoints(
+  startCoords: { lat: number; lng: number },
+  endCoords: { lat: number; lng: number },
+  vehicleProfile: VehicleProfile,
+  restrictions: Restriction[],
+  violatedRestrictions: Restriction[]
+): Promise<{
+  distance: number;
+  duration: number;
+  coordinates: Array<{ lat: number; lng: number }>;
+  restrictionsAvoided: string[];
+  geometry: any;
+  violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }>;
+  isRouteAllowed: boolean;
+} | null> {
+  try {
+    // Calculate perpendicular offset waypoints to bypass restrictions
+    const midLat = (startCoords.lat + endCoords.lat) / 2;
+    const midLng = (startCoords.lng + endCoords.lng) / 2;
+    
+    // Calculate bearing of direct route
+    const bearing = Math.atan2(
+      endCoords.lng - startCoords.lng,
+      endCoords.lat - startCoords.lat
+    );
+    
+    // Try waypoints at different offsets (perpendicular to route)
+    const offsets = [0.05, 0.1, -0.05, -0.1]; // degrees offset
+    
+    for (const offset of offsets) {
+      const waypointLat = midLat + offset * Math.cos(bearing + Math.PI/2);
+      const waypointLng = midLng + offset * Math.sin(bearing + Math.PI/2);
+      const waypoint = { lat: waypointLat, lng: waypointLng };
+      
+      console.log(`[REROUTE] Trying waypoint at ${waypoint.lat.toFixed(4)}, ${waypoint.lng.toFixed(4)}`);
+      
+      // Try route with waypoint: start -> waypoint -> end
+      const leg1 = await callGraphHopperAPI(startCoords, waypoint, vehicleProfile);
+      if (!leg1) continue;
+      
+      const leg2 = await callGraphHopperAPI(waypoint, endCoords, vehicleProfile);
+      if (!leg2) continue;
+      
+      // Combine the two legs
+      const combinedCoords = [...leg1.coordinates, ...leg2.coordinates];
+      const combinedGeometry = {
+        type: "LineString" as const,
+        coordinates: [
+          ...leg1.geometry.coordinates,
+          ...leg2.geometry.coordinates
+        ]
+      };
+      
+      // Validate against restrictions
+      const routeLine = turf.lineString(combinedGeometry.coordinates);
+      const violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }> = [];
+      const restrictionsAvoided: string[] = [];
+      
+      for (const restriction of restrictions) {
+        let intersects = false;
+        
+        if (restriction.coordinates) {
+          const coords = typeof restriction.coordinates === 'string' 
+            ? JSON.parse(restriction.coordinates) 
+            : restriction.coordinates;
+          
+          if (coords.lat && coords.lng) {
+            const restrictionPoint = turf.point([coords.lng, coords.lat]);
+            const buffer = turf.buffer(restrictionPoint, 0.1, { units: 'kilometers' });
+            if (buffer) {
+              intersects = turf.booleanIntersects(routeLine, buffer);
+            }
+          }
+        }
+        
+        if (intersects && isVehicleAffectedByRestriction(vehicleProfile, restriction)) {
+          const bypassable = restriction.bypassAllowed !== false && restriction.severity !== 'absolute';
+          violations.push({
+            restriction,
+            severity: restriction.severity || 'medium',
+            bypassable
+          });
+          restrictionsAvoided.push(restriction.id);
+        }
+      }
+      
+      // Check if this route avoids critical violations
+      const criticalViolations = violations.filter(v => !v.bypassable);
+      if (criticalViolations.length === 0) {
+        console.log(`[REROUTE] SUCCESS: Found safe route with waypoint, avoided ${violatedRestrictions.length} restrictions`);
+        return {
+          distance: leg1.distance + leg2.distance,
+          duration: leg1.duration + leg2.duration,
+          coordinates: combinedCoords,
+          restrictionsAvoided,
+          geometry: combinedGeometry,
+          violations,
+          isRouteAllowed: true
+        };
+      }
+    }
+    
+    console.log('[REROUTE] FAILED: No safe waypoint routes found');
+    return null;
+  } catch (error) {
+    console.error('[REROUTE] Error during waypoint rerouting:', error);
+    return null;
+  }
+}
+
+/**
  * Check if a vehicle is affected by a specific restriction
  */
 function isVehicleAffectedByRestriction(vehicleProfile: VehicleProfile, restriction: Restriction): boolean {
@@ -1305,14 +1418,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
           restrictionsAvoided = vehicleSpecificRoute.restrictionsAvoided;
           geometry = vehicleSpecificRoute.geometry;
           
-          // Include violation information in response for transparency
+          // Check for non-bypassable violations (critical restrictions like low bridges)
           if (vehicleSpecificRoute.violations && vehicleSpecificRoute.violations.length > 0) {
-            // Add violations to the route response
             const routeViolations = vehicleSpecificRoute.violations;
-            const nonBypassableViolations = routeViolations.filter(v => !v.bypassable);
+            const criticalViolations = routeViolations.filter(v => !v.bypassable);
             
-            if (nonBypassableViolations.length > 0) {
-              console.warn(`Route contains ${nonBypassableViolations.length} non-bypassable violations for ${vehicleProfile.type}`);
+            if (criticalViolations.length > 0) {
+              // CRITICAL: Route contains non-bypassable restrictions - TRY REROUTING
+              console.warn(`[SAFETY] Route has ${criticalViolations.length} critical violations for ${vehicleProfile.type} - attempting reroute`);
+              
+              // Log each violation for debugging
+              criticalViolations.forEach(v => {
+                console.warn(`  - ${v.restriction.type} restriction at ${v.restriction.location}: ` +
+                  `Vehicle ${vehicleProfile.type} (${v.restriction.type === 'height' ? vehicleProfile.height + ' ft' : 
+                  v.restriction.type === 'width' ? vehicleProfile.width + ' ft' : 
+                  vehicleProfile.weight + ' tonnes'}) exceeds limit ${v.restriction.limit}`);
+              });
+              
+              // Try to find alternative route using waypoints
+              const violatedRestrictions = criticalViolations.map(v => v.restriction);
+              const rerouteResult = await tryRerouteWithWaypoints(
+                startCoords,
+                endCoords,
+                vehicleProfile,
+                restrictions,
+                violatedRestrictions
+              );
+              
+              if (rerouteResult && rerouteResult.isRouteAllowed) {
+                // SUCCESS: Found safe alternative route
+                console.log(`[SAFETY] ✓ Successfully rerouted around ${criticalViolations.length} restrictions`);
+                routeDistance = rerouteResult.distance;
+                routeDuration = rerouteResult.duration;
+                routePath = rerouteResult.coordinates;
+                restrictionsAvoided = rerouteResult.restrictionsAvoided;
+                geometry = rerouteResult.geometry;
+              } else {
+                // FAILED: No safe route possible - BLOCK
+                console.error(`[SAFETY] ✗ Cannot find safe route - blocking for safety`);
+                return res.status(403).json({
+                  message: `Route contains ${criticalViolations.length} critical restriction(s) that cannot be bypassed`,
+                  routeBlocked: true,
+                  canBypass: false,
+                  violations: criticalViolations.map(v => ({
+                    type: v.restriction.type,
+                    location: v.restriction.location,
+                    description: v.restriction.description,
+                    limit: v.restriction.limit,
+                    yourValue: v.restriction.type === 'height' ? vehicleProfile.height :
+                              v.restriction.type === 'width' ? vehicleProfile.width :
+                              vehicleProfile.weight,
+                    severity: v.severity,
+                    roadName: v.restriction.roadName
+                  })),
+                  suggestion: "No safe route available. The system tried multiple alternatives but all paths contain restrictions unsafe for your vehicle. Please choose a different destination or adjust your vehicle profile."
+                });
+              }
+            }
+            
+            // Log bypassable violations for information
+            const bypassableViolations = routeViolations.filter(v => v.bypassable);
+            if (bypassableViolations.length > 0) {
+              console.log(`[INFO] Route contains ${bypassableViolations.length} bypassable advisory restrictions`);
             }
           }
         }
