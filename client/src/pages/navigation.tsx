@@ -1804,7 +1804,7 @@ function NavigationPageContent() {
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b bg-white">
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b-4 border-gray-200 bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -1863,7 +1863,7 @@ function NavigationPageContent() {
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b bg-white">
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b-4 border-gray-200 bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -1940,7 +1940,7 @@ function NavigationPageContent() {
                 <>
                   {/* Trip Info Header */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black text-white px-4 pb-2 shadow-lg" data-testid="navigation-hud">
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-b from-black to-slate-900 text-white px-4 pb-2 shadow-2xl border-b-4 border-blue-500/30" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
@@ -2001,9 +2001,9 @@ function NavigationPageContent() {
                     </div>
                   )}
 
-                  {/* Compact Trip Strip - Below Header */}
+                  {/* Compact Trip Strip - Below Trip Info Header */}
                   {currentRoute && (
-                    <div className="absolute left-0 right-0 z-[90] border-b-2 border-primary/20" style={{ top: 'calc(40px + var(--safe-area-top))' }} data-testid="trip-strip">
+                    <div className="absolute left-0 right-0 z-[90]" style={{ top: 'calc(56px + var(--safe-area-top))' }} data-testid="trip-strip">
                       <CompactTripStrip
                         eta={Math.round(currentRoute.duration || 0)}
                         distanceRemaining={currentRoute.distance || 0}
