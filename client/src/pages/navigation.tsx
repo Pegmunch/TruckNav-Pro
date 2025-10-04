@@ -2032,68 +2032,6 @@ function NavigationPageContent() {
                     >
                       <Minus className="h-5 w-5" />
                     </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMap3DMode(!map3DMode);
-                      }}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        map3DMode 
-                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-toggle-3d-navigate"
-                      aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
-                    >
-                      <Box className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        mapRef.current?.toggleMapView();
-                        setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
-                      }}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        mapViewMode === 'satellite'
-                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-toggle-satellite-navigate"
-                      aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
-                    >
-                      <Layers className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        showTrafficLayer 
-                          ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 hover:scale-105 border-amber-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-toggle-traffic-navigate"
-                      aria-label="Toggle traffic layer"
-                    >
-                      <Car className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => setShowIncidents(!showIncidents)}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        showIncidents 
-                          ? "bg-gradient-to-br from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 hover:scale-105 border-red-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-toggle-incidents-navigate"
-                      aria-label="Toggle incidents layer"
-                    >
-                      <AlertCircle className="h-5 w-5" />
-                    </Button>
                   </div>
 
                   {/* Speedometer - Fixed position above Stop button */}
