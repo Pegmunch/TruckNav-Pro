@@ -1544,7 +1544,7 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideCompass={mobileNavMode === 'navigate'}
+                      hideCompass={false}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
@@ -1937,7 +1937,6 @@ function NavigationPageContent() {
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
                     onClearRoute={handleStopNavigation}
-                    onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
                     className="fixed z-[200] pointer-events-auto"
@@ -2106,7 +2105,7 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideCompass={mobileNavMode === 'navigate'}
+                      hideCompass={false}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
