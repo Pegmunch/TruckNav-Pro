@@ -62,12 +62,18 @@ export function SimplifiedRouteDrawer({
     ? `${selectedPOICategory.split(':')[1] || selectedPOICategory} near me`
     : '';
 
-  // Fetch POI results using Photon with osm_tag filtering
+  // Fetch POI results using Photon with osm_tag filtering and GPS coordinates
+  const gpsCoords = gps?.position ? { 
+    lat: gps.position.latitude, 
+    lng: gps.position.longitude 
+  } : undefined;
+  
   const { results: poiResults, isLoading: isLoadingPOI } = usePhotonAutocomplete(
     poiSearchText,
     !!shouldSearchPOI,
     undefined, // No country restriction for POI
-    selectedPOICategory // Pass osm_tag filter
+    selectedPOICategory, // Pass osm_tag filter
+    gpsCoords // Pass GPS coordinates for location-biased search
   );
 
   // Handle POI selection
