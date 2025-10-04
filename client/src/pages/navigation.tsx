@@ -1760,31 +1760,33 @@ function NavigationPageContent() {
                       <SpeedDisplay className="shadow-2xl" />
                     </div>
 
-                    {/* Start Button - Top of stack (z-[150]) */}
-                    <Button
-                      onClick={handleStartNavigation}
-                      disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-                      aria-label="Start turn-by-turn navigation"
-                      aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-                      className={cn(
-                        "z-[150] h-10 w-10 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto",
-                        "hover:scale-110 active:scale-95",
-                        "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-400",
-                        currentRoute && selectedProfile 
-                          ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-2 border-green-400 shadow-green-500/50" 
-                          : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-2 border-gray-500 cursor-not-allowed"
-                      )}
-                      data-testid="button-start-navigation-go"
-                    >
-                      {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center">
-                          <Menu className="w-4 h-4" />
-                          <span className="text-[8px] font-bold mt-0.5">GO</span>
-                        </div>
-                      )}
-                    </Button>
+                    {/* Start Button - Top of stack (z-[150]) - Only show when NOT navigating */}
+                    {!isNavigating && (
+                      <Button
+                        onClick={handleStartNavigation}
+                        disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+                        aria-label="Start turn-by-turn navigation"
+                        aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
+                        className={cn(
+                          "z-[150] h-10 w-10 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto",
+                          "hover:scale-110 active:scale-95",
+                          "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-400",
+                          currentRoute && selectedProfile 
+                            ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-2 border-green-400 shadow-green-500/50" 
+                            : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-2 border-gray-500 cursor-not-allowed"
+                        )}
+                        data-testid="button-start-navigation-go"
+                      >
+                        {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center">
+                            <Menu className="w-4 h-4" />
+                            <span className="text-[8px] font-bold mt-0.5">GO</span>
+                          </div>
+                        )}
+                      </Button>
+                    )}
                   </div>
 
                   {/* MobileFAB - Bottom Right (separate fixed position) */}
