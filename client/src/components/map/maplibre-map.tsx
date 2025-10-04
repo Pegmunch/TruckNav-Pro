@@ -1341,19 +1341,19 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     const mapInstance = map.current;
-    const { latitude, longitude, smoothedHeading } = gpsPosition;
+    const { latitude, longitude, smoothedHeading, accuracy } = gpsPosition;
     
     // Use smoothed heading for fluid rotation, fallback to raw heading if smoothing disabled
     const bearing = smoothedHeading ?? gpsPosition.heading ?? 0;
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
-      // Calculate responsive marker size based on device pixel ratio
+      // Calculate responsive marker size - smaller to not exceed route width
       const devicePixelRatio = window.devicePixelRatio || 1;
-      const baseSize = 64;
+      const baseSize = 48; // Reduced from 68px to stay within route line
       const scaleFactor = Math.max(1, devicePixelRatio / 2);
       const markerSize = Math.round(baseSize * scaleFactor);
-      const borderWidth = Math.max(3, Math.round(4 * scaleFactor));
+      const borderWidth = Math.max(2, Math.round(3 * scaleFactor)); // Thinner border
       
       // Determine vehicle icon based on selected profile
       let vehicleIcon = '';
@@ -1365,64 +1365,153 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       if (vehicleType.includes('lorry') || vehicleType.includes('tonne')) {
         // Truck icon
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
             <path d="M18 18.5a1.5 1.5 0 0 1-1 1.5a1.5 1.5 0 0 1-1.5-1.5a1.5 1.5 0 0 1 1.5-1.5a1.5 1.5 0 0 1 1 1.5m1.5-9l1.96 2.5H17V9.5m-11 9A1.5 1.5 0 0 1 4.5 17A1.5 1.5 0 0 1 6 15.5A1.5 1.5 0 0 1 7.5 17A1.5 1.5 0 0 1 6 18.5M20 8h-3V4H3c-1.11 0-2 .89-2 2v11h2a3 3 0 0 0 3 3a3 3 0 0 0 3-3h6a3 3 0 0 0 3 3a3 3 0 0 0 3-3h2v-5l-3-4Z"/>
           </svg>
         `;
       } else if (vehicleType.includes('caravan')) {
         // Car with caravan icon
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
             <path d="M19.5 17c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5m-12 0c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m4.5-5V5h7l3 4v7h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V8h10v4h1m-1 0H2v4h2.22c.55-.61 1.33-1 2.28-1c.95 0 1.73.39 2.28 1H11v-4Z"/>
           </svg>
         `;
       } else {
         // Default car icon
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
             <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
           </svg>
         `;
       }
       
-      // Create premium vehicle marker with vehicle-specific icon
+      // GPS accuracy indicator - multi-tier visual feedback
+      const accuracyLevel = !accuracy ? 'excellent' : 
+                           accuracy < 10 ? 'excellent' : 
+                           accuracy < 30 ? 'good' : 
+                           accuracy < 100 ? 'fair' : 'poor';
+      
+      const accuracyColors = {
+        excellent: { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.4)' },
+        good: { ring: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)' },
+        fair: { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)' },
+        poor: { ring: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)' }
+      };
+      
+      const { ring: accuracyColor, glow: accuracyGlow } = accuracyColors[accuracyLevel];
+      
+      // Directional chevron arrow (always points forward relative to heading)
+      const chevronSize = Math.round(markerSize * 0.35);
+      const directionChevron = `
+        <svg width="${chevronSize}" height="${chevronSize}" viewBox="0 0 24 24" fill="white" style="
+          position: absolute;
+          top: -${chevronSize * 0.6}px;
+          left: 50%;
+          transform: translateX(-50%);
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+        ">
+          <path d="M7.41 8.58L12 13.17l4.59-4.59L18 10l-6 6-6-6 1.41-1.42z" transform="rotate(180 12 12)"/>
+        </svg>
+      `;
+      
+      // Create premium vehicle marker with excellence-grade design
       const el = document.createElement('div');
       el.className = 'user-position-marker';
       el.innerHTML = `
         <div style="
+          position: relative;
           width: ${markerSize}px;
           height: ${markerSize}px;
-          background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-          border: ${borderWidth}px solid white;
-          border-radius: 50%;
-          box-shadow: 
-            0 0 0 4px rgba(59, 130, 246, 0.4),
-            0 6px 24px rgba(59, 130, 246, 0.7), 
-            0 3px 12px rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          animation: pulse-glow 2s ease-in-out infinite;
-          z-index: 1000;
         ">
-          ${vehicleIcon}
+          <!-- Outer glow effect -->
+          <div style="
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            background: radial-gradient(circle, ${accuracyGlow} 0%, transparent 70%);
+            animation: glow-pulse 3s ease-in-out infinite;
+          "></div>
+          
+          <!-- Accuracy ring with gradient -->
+          <div style="
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 3px solid ${accuracyColor};
+            opacity: 0.6;
+            animation: accuracy-pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 20px ${accuracyGlow};
+          "></div>
+          
+          <!-- Secondary pulse ring -->
+          <div style="
+            position: absolute;
+            inset: -2px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: secondary-pulse 2.5s ease-in-out infinite 0.3s;
+          "></div>
+          
+          <!-- Main marker with premium gradient -->
+          <div style="
+            width: ${markerSize}px;
+            height: ${markerSize}px;
+            background: linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%);
+            border: ${borderWidth}px solid white;
+            border-radius: 50%;
+            box-shadow: 
+              0 0 0 2px rgba(59, 130, 246, 0.4),
+              0 10px 32px rgba(37, 99, 235, 0.9), 
+              0 5px 18px rgba(0, 0, 0, 0.7),
+              inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: marker-pulse 2.8s ease-in-out infinite;
+            z-index: 1000;
+          ">
+            ${vehicleIcon}
+            ${directionChevron}
+          </div>
         </div>
         <style>
-          @keyframes pulse-glow {
+          @keyframes marker-pulse {
             0%, 100% { 
               transform: scale(1);
-              box-shadow: 
-                0 0 0 4px rgba(59, 130, 246, 0.4),
-                0 6px 24px rgba(59, 130, 246, 0.7), 
-                0 3px 12px rgba(0, 0, 0, 0.5);
             }
             50% { 
-              transform: scale(1.05);
-              box-shadow: 
-                0 0 0 6px rgba(59, 130, 246, 0.6),
-                0 8px 32px rgba(59, 130, 246, 1.0), 
-                0 4px 16px rgba(0, 0, 0, 0.6);
+              transform: scale(1.06);
+            }
+          }
+          @keyframes accuracy-pulse {
+            0%, 100% { 
+              transform: scale(1);
+              opacity: 0.6;
+            }
+            50% { 
+              transform: scale(1.12);
+              opacity: 0.9;
+            }
+          }
+          @keyframes secondary-pulse {
+            0%, 100% { 
+              transform: scale(1);
+              opacity: 0.3;
+            }
+            50% { 
+              transform: scale(1.08);
+              opacity: 0.6;
+            }
+          }
+          @keyframes glow-pulse {
+            0%, 100% { 
+              opacity: 0.4;
+              transform: scale(1);
+            }
+            50% { 
+              opacity: 0.7;
+              transform: scale(1.15);
             }
           }
         </style>

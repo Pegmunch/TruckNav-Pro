@@ -121,7 +121,14 @@ const LocationDropdown = memo(function LocationDropdown({
     if (searchTerm.trim()) {
       setSearchValue(searchTerm);
       onChange(searchTerm);
-      setOpen(true); // Open dropdown to show results
+      
+      // Don't open dropdown in mobile/PWA mode
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isMobile = window.innerWidth < 768;
+      if (!isStandalone && !isMobile) {
+        setOpen(true); // Open dropdown to show results (desktop only)
+      }
+      
       setShowVirtualKeyboard(false);
     }
   }, [onChange]);
@@ -129,7 +136,14 @@ const LocationDropdown = memo(function LocationDropdown({
   const handleKeyboardEnter = useCallback(() => {
     if (searchValue.trim()) {
       onChange(searchValue);
-      setOpen(true); // Open dropdown to show results
+      
+      // Don't open dropdown in mobile/PWA mode
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      const isMobile = window.innerWidth < 768;
+      if (!isStandalone && !isMobile) {
+        setOpen(true); // Open dropdown to show results (desktop only)
+      }
+      
       setShowVirtualKeyboard(false);
     }
   }, [searchValue, onChange]);

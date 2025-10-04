@@ -252,7 +252,16 @@ export function AddressAutocomplete({
   }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
 
   const handleInputFocus = useCallback(() => {
-    // Always open dropdown on focus to show saved locations
+    // Check if in mobile/PWA mode - don't show popups in standalone mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isMobile = window.innerWidth < 768;
+    
+    // Don't open dropdown in mobile/PWA mode
+    if (isStandalone || isMobile) {
+      return;
+    }
+    
+    // Open dropdown on desktop only
     setOpen(true);
   }, []);
 
