@@ -1495,7 +1495,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         <>
           {/* Map Controls - Right Side Stack for Mobile */}
           <div className={cn(
-            "absolute right-3 flex flex-col gap-2 mobile-safe-top",
+            "absolute right-3 flex flex-col gap-2 mobile-safe-top pointer-events-auto",
             isNavigating ? "top-14 z-[100]" : "bottom-40 z-[80]"
           )}>
             <Button
