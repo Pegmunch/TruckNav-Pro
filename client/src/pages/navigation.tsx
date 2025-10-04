@@ -959,6 +959,13 @@ function NavigationPageContent() {
         className: "bg-green-500 text-white border-green-600 text-[8px] p-1.5 max-w-[120px]",
         duration: 3000,
       });
+
+      // Auto-start navigation in mobile mode after route calculation
+      if (isMobile && route && selectedProfile) {
+        setTimeout(() => {
+          handleStartNavigation();
+        }, 500);
+      }
     },
     onError: (error) => {
       if (import.meta.env.DEV) {
