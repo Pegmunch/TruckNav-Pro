@@ -201,13 +201,7 @@ export function AddressAutocomplete({
     
     createLocationMutation.mutate(locationData);
     
-    // Hide toast in mobile view - user requested no popup after selection
-    if (window.innerWidth >= 768) {
-      toast({
-        title: "Location selected",
-        description: displayLabel,
-      });
-    }
+    // Toast notification removed per user request
   }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
 
   const handleSelectSavedLocation = useCallback((location: SavedLocation) => {
@@ -254,13 +248,7 @@ export function AddressAutocomplete({
     
     createLocationMutation.mutate(locationData);
     
-    // Hide toast in mobile view - user requested no popup after selection
-    if (window.innerWidth >= 768) {
-      toast({
-        title: "UK Postcode selected",
-        description: displayLabel,
-      });
-    }
+    // Toast notification removed per user request
   }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
 
   const handleInputFocus = useCallback(() => {
