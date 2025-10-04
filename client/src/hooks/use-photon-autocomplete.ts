@@ -202,7 +202,8 @@ export const usePhotonAutocomplete = (
   query: string, 
   enabled: boolean = true,
   countryCode?: string,
-  poiCategory?: string // e.g., "shop:supermarket", "amenity:restaurant", "amenity:fuel"
+  poiCategory?: string, // e.g., "shop:supermarket", "amenity:restaurant", "amenity:fuel"
+  gpsCoordinates?: { lat: number; lng: number } // GPS coordinates for location-biased search
 ) => {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -241,11 +242,13 @@ export const usePhotonAutocomplete = (
   const shouldFetch = enabled && debouncedQuery.length >= 3;
 
   const { data, isLoading, error } = useQuery<{ results: PhotonFeature[]; error: string | null }>({
-    queryKey: ["/api/photon-autocomplete", debouncedQuery, countryCode, poiCategory],
+    queryKey: ["/api/photon-autocomplete", debouncedQuery, countryCode, poiCategory, gpsCoordinates?.lat, gpsCoordinates?.lng],
     queryFn: async () => {
       const trimmedQuery = debouncedQuery.trim();
       
-      const cacheKey = `${countryCode || 'global'}_${poiCategory || 'all'}_${trimmedQuery.toLowerCase()}`;
+      // Include GPS coordinates in cache key for location-specific caching
+      const locationKey = gpsCoordinates ? `${gpsCoordinates.lat.toFixed(4)}_${gpsCoordinates.lng.toFixed(4)}` : 'no_gps';
+      const cacheKey = `${countryCode || 'global'}_${poiCategory || 'all'}_${locationKey}_${trimmedQuery.toLowerCase()}`;
       
       const cached = globalAutocompleteCache.get(cacheKey);
       if (cached) {
@@ -316,6 +319,13 @@ export const usePhotonAutocomplete = (
         // Add POI filter if category specified
         if (poiCategory) {
           backendUrl.searchParams.set('osm_tag', poiCategory);
+        }
+        
+        // Add GPS coordinates for location-biased search (POI near me)
+        if (gpsCoordinates) {
+          backendUrl.searchParams.set('lat', gpsCoordinates.lat.toString());
+          backendUrl.searchParams.set('lon', gpsCoordinates.lng.toString());
+          console.log(`[AUTOCOMPLETE] Using GPS location: lat=${gpsCoordinates.lat}, lng=${gpsCoordinates.lng}`);
         }
         
         const controller = new AbortController();
