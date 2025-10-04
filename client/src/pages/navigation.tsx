@@ -2017,7 +2017,7 @@ function NavigationPageContent() {
                   <div 
                     className="fixed right-4 z-[100] flex flex-col gap-2.5 pointer-events-none" 
                     style={{ 
-                      top: 'calc(16px + var(--safe-area-top))',
+                      top: 'calc(120px + var(--safe-area-top))',
                       right: 'calc(16px + var(--safe-area-right))'
                     }}
                   >
