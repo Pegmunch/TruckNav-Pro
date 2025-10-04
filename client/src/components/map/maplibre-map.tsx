@@ -1329,10 +1329,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [incidents, isLoaded, showIncidents]);
 
-  // GPS tracking and user position marker during navigation (using centralized GPS hook)
+  // GPS tracking and user position marker (using centralized GPS hook)
   useEffect(() => {
-    if (!map.current || !isLoaded || !isNavigating || !gpsPosition) {
-      // Clean up marker when not navigating or GPS unavailable
+    if (!map.current || !isLoaded || !gpsPosition) {
+      // Clean up marker when GPS unavailable
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
@@ -1442,13 +1442,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     // Center map on user location during navigation with smooth rotation using smoothed heading
-    mapInstance.easeTo({
-      center: [longitude, latitude],
-      zoom: 19.5,
-      pitch: 60,
-      bearing: bearing,
-      duration: 500
-    });
+    if (isNavigating) {
+      mapInstance.easeTo({
+        center: [longitude, latitude],
+        zoom: 19.5,
+        pitch: 60,
+        bearing: bearing,
+        duration: 500
+      });
+    }
 
     // Cleanup
     return () => {
@@ -1457,7 +1459,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         userMarkerRef.current = null;
       }
     };
-  }, [gpsPosition, isNavigating, isLoaded]);
+  }, [gpsPosition, isLoaded, isNavigating, selectedProfile]);
 
   // Listen for auto-zoom to GPS position event
   useEffect(() => {
