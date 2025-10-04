@@ -1977,8 +1977,26 @@ function NavigationPageContent() {
                     </div>
                   )}
 
-                  {/* Map Control Buttons - Top Left Stack (z-[100]+) */}
-                  <div className="absolute left-4 z-[100] flex flex-col gap-2.5 pointer-events-auto" style={{ top: 'calc(16px + var(--safe-area-top))' }}>
+                  {/* Map Control Buttons - Right Side Stack (z-[100]+) */}
+                  <div 
+                    className="absolute right-4 z-[100] flex flex-col gap-2.5 pointer-events-none" 
+                    style={{ 
+                      top: 'calc(16px + var(--safe-area-top))',
+                      right: 'calc(16px + var(--safe-area-right))'
+                    }}
+                  >
+                    <Button
+                      size="icon"
+                      onClick={() => mapRef.current?.resetBearing()}
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-compass-reset-navigate"
+                      aria-label="Reset bearing to North"
+                    >
+                      <Compass 
+                        className="h-5 w-5 transition-transform duration-300" 
+                        style={{ transform: `rotate(${mapBearing}deg)` }}
+                      />
+                    </Button>
                     <Button
                       size="icon"
                       onClick={() => {
@@ -1995,35 +2013,6 @@ function NavigationPageContent() {
                       aria-label="Recenter on current location"
                     >
                       <Crosshair className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        mapRef.current?.toggleMapView();
-                        setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
-                      }}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        mapViewMode === 'satellite'
-                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-toggle-satellite-navigate"
-                      aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
-                    >
-                      <Layers className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.resetBearing()}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-compass-reset-navigate"
-                      aria-label="Reset bearing to North"
-                    >
-                      <Compass 
-                        className="h-5 w-5 transition-transform duration-300" 
-                        style={{ transform: `rotate(${mapBearing}deg)` }}
-                      />
                     </Button>
                     <Button
                       size="icon"
@@ -2059,6 +2048,23 @@ function NavigationPageContent() {
                       aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
                     >
                       <Box className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapViewMode(mapRef.current?.getMapViewMode() || 'roads');
+                      }}
+                      className={cn(
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        mapViewMode === 'satellite'
+                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                      )}
+                      data-testid="button-toggle-satellite-navigate"
+                      aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
+                    >
+                      <Layers className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
