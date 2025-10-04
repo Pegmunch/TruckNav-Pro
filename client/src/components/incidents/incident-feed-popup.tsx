@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { IncidentFeed } from "./incident-feed";
 import { type TrafficIncident } from "@shared/schema";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface IncidentFeedPopupProps {
   currentLocation?: { lat: number; lng: number };
@@ -97,6 +98,21 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
     return distance <= maxDistanceKm;
   }).length;
   
+  // Handle close with proper cleanup
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  // Focus trap for accessibility - ESC key closes the modal
+  const focusTrapRef = useFocusTrap<HTMLDivElement>({
+    enabled: showIncidents && expandState === 'fullscreen',
+    onEscape: handleClose,
+    initialFocus: false,
+    returnFocus: true,
+  });
+
   // Handle drag functionality
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target !== e.currentTarget) return; // Only drag from header area
@@ -132,6 +148,11 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
   
   return (
     <Card 
+      ref={expandState === 'fullscreen' ? focusTrapRef : dragRef}
+      role="dialog"
+      aria-labelledby="incident-feed-title"
+      aria-describedby="incident-feed-description"
+      aria-modal={expandState === 'fullscreen' ? 'true' : 'false'}
       className={cn(
         "fixed z-50 shadow-2xl border-2 transition-all duration-300 select-none",
         expandState === 'fullscreen' 
@@ -144,7 +165,6 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
         top: expandState === 'fullscreen' ? 0 : position.y,
         cursor: isDragging ? 'grabbing' : 'default'
       }}
-      ref={dragRef}
       data-testid="incident-feed-popup"
     >
       {/* Header with controls */}
@@ -156,13 +176,14 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
         onMouseDown={handleMouseDown}
         data-testid="incident-feed-header"
       >
-        <span className="font-medium flex items-center gap-2">
+        <span id="incident-feed-title" className="font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
-          Nearby Incidents
+          <span id="incident-feed-description">Nearby Incidents</span>
           <Badge 
             variant="secondary" 
             className="bg-white/20 text-white hover:bg-white/30 text-xs"
             data-testid="badge-incident-count"
+            aria-label={`${nearbyIncidentCount} nearby incidents`}
           >
             {nearbyIncidentCount}
           </Badge>
@@ -171,13 +192,14 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 text-white hover:bg-white/20"
+            className="min-w-[44px] min-h-[44px] p-0 text-white hover:bg-white/20"
             onClick={() => {
               setExpandState(expandState === 'small' ? 'fullscreen' : 'small');
               onInteraction?.();
             }}
             data-testid={expandState === 'fullscreen' ? "collapse-incident-feed" : "expand-incident-feed"}
             title={expandState === 'fullscreen' ? "Collapse" : "Expand"}
+            aria-label={expandState === 'fullscreen' ? "Collapse incident feed" : "Expand incident feed"}
           >
             {expandState === 'fullscreen' ? (
               <ChevronsDown className="w-4 h-4" />
@@ -189,13 +211,14 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-white hover:bg-white/20"
+              className="min-w-[44px] min-h-[44px] p-0 text-white hover:bg-white/20"
               onClick={() => {
                 onClose();
                 onInteraction?.();
               }}
               data-testid="close-incident-feed"
               title="Close"
+              aria-label="Close incident feed"
             >
               <X className="w-4 h-4" />
             </Button>

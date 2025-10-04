@@ -2,22 +2,26 @@ import { useState, useEffect, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   ArrowUp, 
   ArrowUpRight, 
   ArrowRight, 
   CheckCircle,
   Navigation,
-  Hand
+  Hand,
+  X
 } from "lucide-react";
 import { type LaneSegment, type LaneOption, type Route } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface LaneGuidancePopupProps {
   currentRoute: Route | null;
   isNavigating: boolean;
   className?: string;
   forceVisible?: boolean;
+  onClose?: () => void;
 }
 
 interface LaneIndicatorProps {
@@ -93,7 +97,8 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   currentRoute,
   isNavigating,
   className,
-  forceVisible = false
+  forceVisible = false,
+  onClose
 }: LaneGuidancePopupProps) {
   const [savedSelections, setSavedSelections] = useState<Record<number, number>>({});
   const [isVisible, setIsVisible] = useState(false);
@@ -102,6 +107,22 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Handle close
+  const handleClose = () => {
+    setIsVisible(false);
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  // Focus trap for accessibility - ESC key closes the modal
+  const focusTrapRef = useFocusTrap<HTMLDivElement>({
+    enabled: isVisible,
+    onEscape: handleClose,
+    initialFocus: false,
+    returnFocus: true,
+  });
 
   // Load saved lane selections from localStorage
   useEffect(() => {
@@ -276,6 +297,11 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
 
   return (
     <div 
+      ref={focusTrapRef}
+      role="dialog"
+      aria-labelledby="lane-guidance-title"
+      aria-describedby="lane-guidance-description"
+      aria-modal="true"
       className={cn(
         "fixed z-50 transition-all duration-300 ease-in-out lane-guidance-safe professional-nav-interface",
         isDragging ? "cursor-grabbing" : "cursor-grab",
@@ -295,7 +321,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
       <Card className="shadow-xl border-2 border-primary/30 backdrop-blur-sm bg-background/95">
         <CardContent className="p-3">
           <div className="space-y-2">
-            {/* Header with Drag Handle */}
+            {/* Header with Drag Handle and Close Button */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
                 <div 
@@ -306,13 +332,32 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
                 >
                   <Hand className="w-3 h-3 text-muted-foreground hover:text-primary transition-colors" />
                   <Navigation className="w-3 h-3 text-primary" />
-                  <span className="text-xs font-medium text-foreground">Lane Guide</span>
+                  <span id="lane-guidance-title" className="text-xs font-medium text-foreground">Lane Guide</span>
                 </div>
               </div>
-              <Badge variant="secondary" className="text-xs px-1 py-0">
-                {currentManeuver.laneOptions?.length || 4}
-              </Badge>
+              <div className="flex items-center gap-1">
+                <Badge variant="secondary" className="text-xs px-1 py-0" aria-label={`${currentManeuver.laneOptions?.length || 4} lanes available`}>
+                  {currentManeuver.laneOptions?.length || 4}
+                </Badge>
+                {onClose && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-w-[44px] min-h-[44px] p-0 h-auto w-auto"
+                    onClick={handleClose}
+                    data-testid="button-close-lane-guidance"
+                    aria-label="Close lane guidance"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
             </div>
+            
+            {/* Hidden description for screen readers */}
+            <span id="lane-guidance-description" className="sr-only">
+              Lane guidance popup showing available lanes and recommendations for your route
+            </span>
 
             {/* Lane indicators */}
             <div className="flex justify-center space-x-1">

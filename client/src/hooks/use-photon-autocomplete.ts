@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { detectPostcodeCountry, looksLikePostcode } from "@/lib/postcode-utils";
+import { geocodeUKPostcode, PostcodeGeocodeResult } from "@/lib/uk-postcode-geocoding";
 
 interface PhotonProperties {
   name?: string;
@@ -11,6 +13,8 @@ interface PhotonProperties {
   postcode?: string;
   state?: string;
   district?: string;
+  osm_key?: string;
+  osm_value?: string;
 }
 
 interface PhotonGeometry {
@@ -26,6 +30,27 @@ export interface PhotonFeature {
 
 interface PhotonResponse {
   features: PhotonFeature[];
+}
+
+// Convert UK postcode result to PhotonFeature format for consistency
+function postcodeResultToPhotonFeature(result: PostcodeGeocodeResult): PhotonFeature {
+  return {
+    type: "Feature",
+    geometry: {
+      coordinates: [result.coordinates.lng, result.coordinates.lat],
+      type: "Point"
+    },
+    properties: {
+      name: result.postcode,
+      postcode: result.postcode,
+      city: result.city,
+      district: result.region,
+      country: "United Kingdom",
+      countrycode: "GB",
+      osm_key: "postcode",
+      osm_value: "uk_postcode_accurate"
+    }
+  };
 }
 
 export const usePhotonAutocomplete = (
@@ -46,71 +71,227 @@ export const usePhotonAutocomplete = (
 
   const shouldFetch = enabled && debouncedQuery.length >= 3;
 
-  const { data, isLoading, error } = useQuery<PhotonFeature[]>({
-    queryKey: ["/api/photon", debouncedQuery, countryCode],
+  const { data, isLoading, error } = useQuery<{ results: PhotonFeature[]; error: string | null }>({
+    queryKey: ["/api/photon-autocomplete", debouncedQuery, countryCode],
     queryFn: async () => {
+      const trimmedQuery = debouncedQuery.trim();
+      
+      // Step 1: Check if input is a UK postcode
+      const detectedCountry = detectPostcodeCountry(trimmedQuery);
+      const isUKPostcode = detectedCountry === 'UK';
+      
+      // Step 2: If UK postcode detected, try UK API first for high accuracy
+      if (isUKPostcode) {
+        try {
+          console.log('[AUTOCOMPLETE] Detected UK postcode, using postcodes.io API');
+          const ukResult = await geocodeUKPostcode(trimmedQuery);
+          
+          if (ukResult) {
+            // Return UK postcode result as primary result
+            return {
+              results: [postcodeResultToPhotonFeature(ukResult)],
+              error: null
+            };
+          }
+          // If UK API fails, continue to try Photon below
+          console.log('[AUTOCOMPLETE] UK postcode not found in postcodes.io, falling back to Photon');
+        } catch (err) {
+          console.warn('[AUTOCOMPLETE] UK postcode API error:', err);
+          // Continue to Photon fallback
+        }
+      }
+      
+      // Step 3: Try Photon API (for non-UK postcodes or as fallback)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       try {
-        const response = await fetch(
-          `https://photon.komoot.io/api?q=${encodeURIComponent(debouncedQuery)}&limit=5`,
-          { signal: controller.signal }
-        );
+        // Increase limit to 10 for better options
+        // Add bias for commercial/service locations (osm_tag parameter)
+        const photonUrl = new URL('https://photon.komoot.io/api');
+        photonUrl.searchParams.set('q', trimmedQuery);
+        photonUrl.searchParams.set('limit', '10');
+        
+        // Add country code filter if provided
+        if (countryCode) {
+          photonUrl.searchParams.set('countrycodes', countryCode);
+        }
+        
+        const response = await fetch(photonUrl.toString(), { 
+          signal: controller.signal 
+        });
         
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          const errorMsg = `Photon API error: HTTP ${response.status}`;
+          console.error('[AUTOCOMPLETE]', errorMsg);
+          
+          // If Photon fails and input looks like UK postcode, try UK API as fallback
+          if (looksLikePostcode(trimmedQuery)) {
+            try {
+              console.log('[AUTOCOMPLETE] Photon failed, trying UK postcode API as fallback');
+              const ukResult = await geocodeUKPostcode(trimmedQuery);
+              if (ukResult) {
+                return {
+                  results: [postcodeResultToPhotonFeature(ukResult)],
+                  error: null
+                };
+              }
+            } catch (ukErr) {
+              console.warn('[AUTOCOMPLETE] UK fallback also failed:', ukErr);
+            }
+          }
+          
+          return {
+            results: [],
+            error: errorMsg
+          };
         }
 
         const data: PhotonResponse = await response.json();
-        const features = data.features || [];
+        let features = data.features || [];
         
         // Filter by country code if provided
         if (countryCode) {
-          const filtered = features.filter(f => 
+          features = features.filter(f => 
             f.properties.countrycode?.toUpperCase() === countryCode.toUpperCase() ||
             f.properties.country?.toUpperCase() === countryCode.toUpperCase()
           );
-          return filtered;
         }
         
-        return features;
+        // Step 4: If Photon returns no results and input looks like UK postcode, try UK API fallback
+        if (features.length === 0 && looksLikePostcode(trimmedQuery)) {
+          try {
+            console.log('[AUTOCOMPLETE] No Photon results, trying UK postcode API fallback');
+            const ukResult = await geocodeUKPostcode(trimmedQuery);
+            if (ukResult) {
+              return {
+                results: [postcodeResultToPhotonFeature(ukResult)],
+                error: null
+              };
+            }
+          } catch (ukErr) {
+            console.warn('[AUTOCOMPLETE] UK fallback failed:', ukErr);
+          }
+        }
+        
+        // Prioritize commercial/truck-suitable locations
+        // POIs like service stations, commercial addresses, industrial areas
+        const prioritized = features.sort((a, b) => {
+          const aScore = getTruckSuitabilityScore(a);
+          const bScore = getTruckSuitabilityScore(b);
+          return bScore - aScore;
+        });
+        
+        return {
+          results: prioritized,
+          error: null
+        };
       } catch (err) {
         clearTimeout(timeoutId);
         
+        let errorMsg = 'Unknown error';
         if (err instanceof Error) {
           if (err.name === 'AbortError') {
-            console.warn('[PHOTON] Request timeout after 5 seconds');
+            errorMsg = 'Request timeout after 5 seconds';
           } else {
-            console.warn('[PHOTON] Error:', err.message);
+            errorMsg = err.message;
           }
-        } else {
-          console.warn('[PHOTON] Unknown error:', err);
         }
         
-        return [];
+        console.error('[AUTOCOMPLETE] Photon error:', errorMsg);
+        
+        // Try UK postcode API as last resort if input looks like postcode
+        if (looksLikePostcode(trimmedQuery)) {
+          try {
+            console.log('[AUTOCOMPLETE] Error occurred, trying UK postcode API as last resort');
+            const ukResult = await geocodeUKPostcode(trimmedQuery);
+            if (ukResult) {
+              return {
+                results: [postcodeResultToPhotonFeature(ukResult)],
+                error: null
+              };
+            }
+          } catch (ukErr) {
+            console.warn('[AUTOCOMPLETE] UK fallback failed:', ukErr);
+          }
+        }
+        
+        // Surface error to UI
+        return {
+          results: [],
+          error: errorMsg
+        };
       }
     },
     enabled: shouldFetch,
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 1, // Reduced retry since we have UK fallback
+    retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   return {
-    results: data || [],
+    results: data?.results || [],
     isLoading: shouldFetch && isLoading,
-    error,
+    error: data?.error || (error ? String(error) : null),
   };
 };
 
-// Helper function to format a Photon feature for display
+// Calculate truck suitability score for POI prioritization
+function getTruckSuitabilityScore(feature: PhotonFeature): number {
+  const props = feature.properties;
+  let score = 0;
+  
+  // Prioritize by OSM tags that indicate truck-suitable locations
+  const osmKey = props.osm_key?.toLowerCase() || '';
+  const osmValue = props.osm_value?.toLowerCase() || '';
+  
+  // High priority: Service stations, truck stops, industrial areas
+  if (osmKey === 'amenity' && (osmValue.includes('fuel') || osmValue.includes('charging_station'))) {
+    score += 10;
+  }
+  if (osmKey === 'highway' && osmValue === 'services') {
+    score += 10;
+  }
+  if (osmKey === 'landuse' && (osmValue === 'industrial' || osmValue === 'commercial')) {
+    score += 8;
+  }
+  
+  // Medium priority: Commercial addresses, warehouses, depots
+  if (osmKey === 'building' && (osmValue === 'commercial' || osmValue === 'industrial' || osmValue === 'warehouse')) {
+    score += 6;
+  }
+  if (osmKey === 'shop' || osmKey === 'office') {
+    score += 4;
+  }
+  
+  // Postcode results get high priority
+  if (osmValue === 'uk_postcode_accurate') {
+    score += 15;
+  }
+  
+  // Prefer results with postcodes
+  if (props.postcode) {
+    score += 2;
+  }
+  
+  // Prefer complete addresses with street and city
+  if (props.street) {
+    score += 1;
+  }
+  if (props.city) {
+    score += 1;
+  }
+  
+  return score;
+}
+
+// Helper function to format a Photon feature for display with improved metadata
 export const formatPhotonDisplay = (feature: PhotonFeature): string => {
   const props = feature.properties;
   
-  // Build address parts
+  // Build address parts with more detail
   const parts: string[] = [];
   
   // Street address
@@ -118,13 +299,25 @@ export const formatPhotonDisplay = (feature: PhotonFeature): string => {
     parts.push(`${props.housenumber} ${props.street}`);
   } else if (props.street) {
     parts.push(props.street);
-  } else if (props.name) {
+  } else if (props.name && props.name !== props.city) {
     parts.push(props.name);
   }
   
-  // City
+  // City or district
   if (props.city) {
     parts.push(props.city);
+  } else if (props.district) {
+    parts.push(props.district);
+  }
+  
+  // Add region/state for context
+  if (props.state && props.state !== props.city) {
+    parts.push(props.state);
+  }
+  
+  // Add postcode if available (important for UK addresses)
+  if (props.postcode) {
+    parts.push(props.postcode);
   }
   
   // Country
@@ -139,4 +332,9 @@ export const formatPhotonDisplay = (feature: PhotonFeature): string => {
 export const extractPhotonCoordinates = (feature: PhotonFeature): { lat: number; lng: number } => {
   const [lng, lat] = feature.geometry.coordinates;
   return { lat, lng };
+};
+
+// Helper to check if a result is from UK postcode API
+export const isUKPostcodeResult = (feature: PhotonFeature): boolean => {
+  return feature.properties.osm_value === 'uk_postcode_accurate';
 };

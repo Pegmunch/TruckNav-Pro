@@ -23,6 +23,7 @@ import {
   CheckSquare
 } from "lucide-react";
 import { useLegalConsent, migrateOldConsentData } from "@/hooks/use-legal-consent";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface LegalDisclaimerPopupProps {
   // For popup window context
@@ -40,6 +41,12 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   const [acknowledgePrivacy, setAcknowledgePrivacy] = useState(false);
   const [acknowledgeTerms, setAcknowledgeTerms] = useState(false);
   const [acceptDisclaimer, setAcceptDisclaimer] = useState(false);
+  
+  // Decline handling state
+  const [showDeclineWarning, setShowDeclineWarning] = useState(false);
+  
+  // Optimistic acceptance state
+  const [isAccepting, setIsAccepting] = useState(false);
 
   // Use the centralized legal consent hook
   const {
@@ -65,42 +72,58 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   }
 
   const handleAccept = () => {
-    if (canAccept) {
-      // Use the centralized consent management hook
+    if (canAccept && !isAccepting) {
+      // Optimistic UI update - show acceptance immediately
+      setIsAccepting(true);
+      
+      // Use the centralized consent management hook - don't await, let it run in background
+      // State updates happen synchronously, API call happens async in background
       setConsentAccepted({
         navigation: acknowledgeNavigation,
         liability: acknowledgeLiability,
         responsibility: acknowledgeResponsibility,
         privacy: acknowledgePrivacy,
         terms: acknowledgeTerms,
+      }).catch((error) => {
+        // Log API errors but don't block UI flow
+        console.error('Failed to record consent on server:', error);
       });
       
-      // Notify parent window or close
+      // Notify parent window immediately (optimistic)
       if (window.opener) {
         window.opener.postMessage({ type: 'legal_disclaimer_accepted' }, window.location.origin);
       }
       
+      // Close immediately - state is already updated synchronously
       if (onClose) {
         onClose();
-      } else {
-        window.close();
       }
     }
   };
 
   const handleDecline = () => {
-    // Use the centralized consent management hook
+    // Show inline warning instead of trying to close window
+    setShowDeclineWarning(true);
+  };
+  
+  const handleConfirmDecline = () => {
+    // Clear consent and redirect to home
     clearConsent();
     
     if (window.opener) {
       window.opener.postMessage({ type: 'legal_disclaimer_declined' }, window.location.origin);
-    }
-    
-    if (onClose) {
+      window.close();
+    } else if (onClose) {
       onClose();
     } else {
-      window.close();
+      // Redirect to home page with query param
+      window.location.href = '/?declined=true';
     }
+  };
+  
+  const handleCancelDecline = () => {
+    // Go back to accepting terms
+    setShowDeclineWarning(false);
   };
 
   const scrollToBottom = () => {
@@ -140,15 +163,31 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
     setAcceptDisclaimer(true);
   };
 
+  // Focus trap for accessibility - ESC key closes/declines the modal
+  const containerRef = useFocusTrap<HTMLDivElement>({
+    enabled: true,
+    onEscape: showDeclineWarning ? handleCancelDecline : handleDecline,
+    initialFocus: true,
+    returnFocus: true,
+  });
+
   return (
-    <div className="min-h-screen bg-background text-foreground p-4" data-testid="legal-disclaimer-popup">
+    <div 
+      ref={containerRef}
+      role="dialog"
+      aria-labelledby="legal-disclaimer-title"
+      aria-describedby="legal-disclaimer-description"
+      aria-modal="true"
+      className="fixed inset-0 z-[9999] min-h-screen bg-background text-foreground p-4 overflow-y-auto" 
+      data-testid="legal-disclaimer-popup"
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Scale className="w-8 h-8 text-red-600" />
           <div>
-            <h1 className="text-2xl font-bold">Legal Disclaimer</h1>
-            <p className="text-sm text-muted-foreground">TruckNav Pro Navigation Service</p>
+            <h1 id="legal-disclaimer-title" className="text-2xl font-bold">Legal Disclaimer</h1>
+            <p id="legal-disclaimer-description" className="text-sm text-muted-foreground">TruckNav Pro Navigation Service</p>
           </div>
         </div>
         
@@ -598,6 +637,50 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
           )}
         </div>
       </div>
+      
+      {/* Decline Warning Overlay */}
+      {showDeclineWarning && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <Card className="max-w-md mx-4 shadow-2xl border-red-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-6 h-6" />
+                Terms Acceptance Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="automotive-text-base text-foreground">
+                <strong>You must accept the legal terms to use TruckNav Pro.</strong>
+              </p>
+              <p className="automotive-text-sm text-muted-foreground">
+                Our navigation service requires your acknowledgment of the safety disclaimers and legal terms. 
+                Without acceptance, we cannot provide navigation services.
+              </p>
+              <Separator />
+              <div className="space-y-3">
+                <p className="automotive-text-sm font-medium">What would you like to do?</p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={handleCancelDecline}
+                    className="automotive-button automotive-text-base w-full"
+                    data-testid="button-cancel-decline"
+                  >
+                    Review Terms Again
+                  </Button>
+                  <Button
+                    onClick={handleConfirmDecline}
+                    variant="outline"
+                    className="automotive-button automotive-text-base w-full text-red-600 border-red-300 hover:bg-red-50"
+                    data-testid="button-confirm-decline"
+                  >
+                    Exit Without Accepting
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

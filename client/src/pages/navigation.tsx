@@ -1512,22 +1512,38 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Start CTA - Green "GO" Hamburger Button (centered above speedometer) */}
-                  <Button
+                  {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
+                  <div 
+                    className="fixed left-0 right-0 flex flex-col-reverse items-center gap-4 pointer-events-none"
+                    style={{ 
+                      bottom: 'var(--safe-area-bottom, 0px)',
+                      paddingBottom: '0px'
+                    }}
+                  >
+                    {/* Legal Ownership - Bottom layer (z-[5]) */}
+                    <div className="w-full z-[5] pointer-events-auto">
+                      <MapLegalOwnership compact={true} className="sm:hidden" />
+                    </div>
+
+                    {/* Speedometer - Above legal (z-[160]) */}
+                    <div className="z-[160] pointer-events-auto">
+                      <SpeedDisplay className="shadow-2xl" />
+                    </div>
+
+                    {/* Start Button - Top of stack (z-[150]) */}
+                    <Button
                       onClick={handleStartNavigation}
                       disabled={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       aria-label="Start turn-by-turn navigation"
                       aria-busy={startJourneyMutation.isPending || activateJourneyMutation.isPending}
                       className={cn(
-                        "absolute left-1/2 transform -translate-x-1/2 z-[150]",
-                        "h-10 w-10 rounded-lg shadow-2xl transition-all duration-300",
+                        "z-[150] h-10 w-10 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto",
                         "hover:scale-110 active:scale-95",
                         "focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-green-400",
                         currentRoute && selectedProfile 
                           ? "bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-2 border-green-400 shadow-green-500/50" 
                           : "bg-gradient-to-br from-gray-400 to-gray-500 text-gray-200 border-2 border-gray-500 cursor-not-allowed"
                       )}
-                      style={{ bottom: 'calc(232px + var(--safe-area-bottom))' }}
                       data-testid="button-start-navigation-go"
                     >
                       {(startJourneyMutation.isPending || activateJourneyMutation.isPending) ? (
@@ -1539,15 +1555,9 @@ function NavigationPageContent() {
                         </div>
                       )}
                     </Button>
-
-                  {/* Speedometer - Below Start Navigation button */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[160]" style={{ bottom: 'calc(168px + var(--safe-area-bottom))' }}>
-                    <SpeedDisplay 
-                      className="shadow-2xl"
-                    />
                   </div>
 
-                  {/* MobileFAB - Bottom Right */}
+                  {/* MobileFAB - Bottom Right (separate fixed position) */}
                   <MobileFAB
                     mode="preview"
                     onSettingsClick={() => setShowVehicleSettings(true)}
@@ -1564,11 +1574,6 @@ function NavigationPageContent() {
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
                   />
-
-                  {/* Legal Ownership */}
-                  <div className="absolute bottom-0 left-0 right-0 z-[5]">
-                    <MapLegalOwnership compact={true} className="sm:hidden" />
-                  </div>
                 </>
               )}
 
@@ -1624,8 +1629,8 @@ function NavigationPageContent() {
                     </div>
                   )}
 
-                  {/* Map Control Buttons - Top Left Stack */}
-                  <div className="absolute left-4 z-[80] flex flex-col gap-2.5 pointer-events-auto" style={{ top: 'calc(16px + var(--safe-area-top))' }}>
+                  {/* Map Control Buttons - Top Left Stack (z-[100]+) */}
+                  <div className="absolute left-4 z-[100] flex flex-col gap-2.5 pointer-events-auto" style={{ top: 'calc(16px + var(--safe-area-top))' }}>
                     <Button
                       size="icon"
                       onClick={() => {
@@ -1737,28 +1742,38 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Speedometer - Lower position for navigation */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[160]" style={{ bottom: 'calc(96px + var(--safe-area-bottom))' }}>
-                    <SpeedDisplay 
-                      className="shadow-2xl"
-                    />
-                  </div>
+                  {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
+                  <div 
+                    className="fixed left-0 right-0 flex flex-col-reverse items-center gap-3 pointer-events-none"
+                    style={{ 
+                      bottom: 'var(--safe-area-bottom, 0px)',
+                      paddingBottom: '0px'
+                    }}
+                  >
+                    {/* Legal Ownership - Bottom layer (z-[5]) */}
+                    <div className="w-full z-[5] pointer-events-auto">
+                      <MapLegalOwnership compact={true} className="sm:hidden" />
+                    </div>
 
-                  {/* Stop Button - Below Speedometer (centered) */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 z-[170] pointer-events-auto" style={{ bottom: 'calc(24px + var(--safe-area-bottom))' }}>
+                    {/* Stop Button - Above legal (z-[170]) */}
                     <Button
                       onClick={handleStopNavigation}
                       disabled={completeJourneyMutation.isPending}
                       variant="destructive"
-                      className="h-6 px-2 text-[10px] font-medium rounded-md shadow-md pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
+                      className="z-[170] h-6 px-2 text-[10px] font-medium rounded-md shadow-md pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95"
                       data-testid="button-stop-navigation"
                     >
                       <X className="w-2.5 h-2.5 mr-1" />
                       <span className="text-[10px]">Stop Navigation</span>
                     </Button>
+
+                    {/* Speedometer - Top of stack (z-[160]) */}
+                    <div className="z-[160] pointer-events-auto">
+                      <SpeedDisplay className="shadow-2xl" />
+                    </div>
                   </div>
 
-                  {/* Hamburger Menu - Bottom Right */}
+                  {/* MobileFAB - Bottom Right (separate fixed position) */}
                   <MobileFAB
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
@@ -1772,11 +1787,6 @@ function NavigationPageContent() {
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
                   />
-
-                  {/* Legal Ownership */}
-                  <div className="absolute bottom-0 left-0 right-0 z-10">
-                    <MapLegalOwnership compact={true} className="sm:hidden" />
-                  </div>
                 </>
               )}
             </>
