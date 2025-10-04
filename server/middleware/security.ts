@@ -343,9 +343,9 @@ export const ensureSessionExists = (req: express.Request & { session?: any; sess
 
   // Comprehensive cookie and session debugging
   const cookies = req.headers.cookie;
-  const sessionHeader = req.headers['x-session-id'];
-  const sessionFromStorage = req.headers['x-storage-session'];
-  const userAgent = req.headers['user-agent'];
+  const sessionHeader = Array.isArray(req.headers['x-session-id']) ? req.headers['x-session-id'][0] : req.headers['x-session-id'];
+  const sessionFromStorage = Array.isArray(req.headers['x-storage-session']) ? req.headers['x-storage-session'][0] : req.headers['x-storage-session'];
+  const userAgent = Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'];
   const cookieReceived = cookies && cookies.includes('trucknav_session');
   
   // Log detailed session information
@@ -456,7 +456,7 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
       timestamp: Date.now()
     }];
     
-    // Force session save to ensure token persists
+    // Force session save to ensure token persists, then validate
     req.session.save((err: any) => {
       if (err) {
         console.error('[CSRF] Failed to save session during token recovery:', err);
@@ -465,13 +465,27 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
           code: 'CSRF_SAVE_ERROR',
           timestamp: new Date().toISOString()
         });
-      } else {
-        console.log(`[CSRF] Auto-generated recovery token for session ${req.sessionID?.substring(0, 8)}... - saved successfully`);
-        // Continue to token validation below
       }
+      
+      console.log(`[CSRF] Auto-generated recovery token for session ${req.sessionID?.substring(0, 8)}... - saved successfully`);
+      
+      // Now validate the token AFTER session is saved
+      validateTokenAndProceed(req, res, next, token);
     });
+    return; // Important: stop execution here, validation happens in callback
   }
 
+  // If we have tokens, validate immediately
+  validateTokenAndProceed(req, res, next, token);
+}
+
+// Helper function to validate token and proceed
+function validateTokenAndProceed(
+  req: express.Request & { session?: any },
+  res: express.Response,
+  next: express.NextFunction,
+  token: string
+) {
   // Enhanced token validation - check against all valid tokens
   const validToken = req.session.csrfTokens.find((tokenInfo: any) => 
     tokenInfo.token === token
