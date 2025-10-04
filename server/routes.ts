@@ -1776,10 +1776,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Photon API Proxy - Address Autocomplete
+  // Photon API Proxy - Address Autocomplete with POI Support
   app.get("/api/photon-autocomplete", async (req: Request, res: Response) => {
     try {
-      const { q, limit } = req.query;
+      const { q, limit, osm_tag } = req.query;
       
       if (!q || typeof q !== 'string') {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
@@ -1788,6 +1788,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photonUrl = new URL('https://photon.komoot.io/api');
       photonUrl.searchParams.set('q', q);
       photonUrl.searchParams.set('limit', limit as string || '10');
+      
+      // Add POI filtering if osm_tag provided (e.g., "shop:supermarket", "amenity:restaurant")
+      if (osm_tag && typeof osm_tag === 'string') {
+        photonUrl.searchParams.set('osm_tag', osm_tag);
+      }
       
       console.log('[PHOTON-PROXY] Request URL:', photonUrl.toString());
       

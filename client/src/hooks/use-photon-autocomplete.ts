@@ -201,7 +201,8 @@ const loadFromSessionStorage = (key: string): any | null => {
 export const usePhotonAutocomplete = (
   query: string, 
   enabled: boolean = true,
-  countryCode?: string
+  countryCode?: string,
+  poiCategory?: string // e.g., "shop:supermarket", "amenity:restaurant", "amenity:fuel"
 ) => {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -240,11 +241,11 @@ export const usePhotonAutocomplete = (
   const shouldFetch = enabled && debouncedQuery.length >= 3;
 
   const { data, isLoading, error } = useQuery<{ results: PhotonFeature[]; error: string | null }>({
-    queryKey: ["/api/photon-autocomplete", debouncedQuery, countryCode],
+    queryKey: ["/api/photon-autocomplete", debouncedQuery, countryCode, poiCategory],
     queryFn: async () => {
       const trimmedQuery = debouncedQuery.trim();
       
-      const cacheKey = `${countryCode || 'global'}_${trimmedQuery.toLowerCase()}`;
+      const cacheKey = `${countryCode || 'global'}_${poiCategory || 'all'}_${trimmedQuery.toLowerCase()}`;
       
       const cached = globalAutocompleteCache.get(cacheKey);
       if (cached) {
@@ -311,6 +312,11 @@ export const usePhotonAutocomplete = (
         const backendUrl = new URL('/api/photon-autocomplete', window.location.origin);
         backendUrl.searchParams.set('q', trimmedQuery);
         backendUrl.searchParams.set('limit', '10');
+        
+        // Add POI filter if category specified
+        if (poiCategory) {
+          backendUrl.searchParams.set('osm_tag', poiCategory);
+        }
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
