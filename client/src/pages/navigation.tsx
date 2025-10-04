@@ -146,6 +146,7 @@ function NavigationPageContent() {
     isLoading: boolean;
     attempt: number;
     maxAttempts: number;
+    accuracyLevel?: string;
   } | null>(null);
   
   // Enhanced auto-zoom state tracking with retry logic and user preference support
@@ -421,17 +422,49 @@ function NavigationPageContent() {
     }
   }, [isMobile, isNavigating, currentRoute]);
   
-  // Track bearing from map for compass rotation
+  // Real-time bearing rotation during navigation
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (mapRef.current) {
+    const updateBearing = () => {
+      if (mapRef.current && isNavigating && gpsData?.position?.smoothedHeading !== null && gpsData?.position?.smoothedHeading !== undefined) {
+        try {
+          const mapInstance = mapRef.current.getMap();
+          if (!mapInstance) return;
+
+          const currentBearing = mapRef.current.getBearing();
+          const targetBearing = gpsData.position.smoothedHeading;
+          
+          // Only update if significant change (>5 degrees) to prevent jitter
+          let delta = targetBearing - currentBearing;
+          
+          // Normalize delta to [-180, 180] for shortest rotation path
+          while (delta > 180) delta -= 360;
+          while (delta < -180) delta += 360;
+          
+          const normalizedDelta = Math.abs(delta);
+          
+          if (normalizedDelta > 5) {
+            mapInstance.easeTo({
+              bearing: targetBearing,
+              duration: 500,
+              easing: (t) => t * (2 - t)
+            });
+          }
+          
+          setMapBearing(targetBearing);
+        } catch (err) {
+          console.error('[NAV] Bearing update failed:', err);
+        }
+      } else if (mapRef.current) {
+        // When not navigating, just track the current bearing for compass display
         const bearing = mapRef.current.getBearing();
         setMapBearing(bearing);
       }
-    }, 100);
+    };
+
+    const interval = setInterval(updateBearing, 500);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [isNavigating, gpsData?.position?.smoothedHeading]);
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
@@ -653,16 +686,29 @@ function NavigationPageContent() {
           pitch: 45,
           duration: 2000,
           fallbackCoordinates: routeStartCoords,
+          onRetry: (attemptNum, maxAttempts) => {
+            setGpsLoadingState({
+              isLoading: true,
+              attempt: attemptNum,
+              maxAttempts
+            });
+          },
           onSuccess: (location) => {
-            console.log(`[NAV] GPS lock successful at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`);
+            setGpsLoadingState(null);
+            
+            const accuracyText = location.accuracyLevel === 'excellent' ? '📍 Excellent accuracy' :
+                                location.accuracyLevel === 'good' ? '📍 Good accuracy' :
+                                '📍 Position locked';
+            
             toast({
-              title: "📍 Position Locked",
-              description: `Tracking from your location`,
+              title: accuracyText,
+              description: location.accuracy ? `±${Math.round(location.accuracy)}m` : 'Tracking from your location',
               duration: 2000,
             });
           },
           onError: (error, usedFallback) => {
-            // Handle different error types with user-friendly messages
+            setGpsLoadingState(null);
+            
             if ('code' in error) {
               const gpsError = error as GeolocationPositionError;
               
@@ -671,7 +717,7 @@ function NavigationPageContent() {
                   title: "GPS Permission Required",
                   description: usedFallback 
                     ? "Centered on route start. Enable GPS for live tracking." 
-                    : "Please enable location access in your browser settings",
+                    : "Please enable location access",
                   variant: "destructive",
                   duration: 6000,
                 });
@@ -680,21 +726,20 @@ function NavigationPageContent() {
                   title: usedFallback ? "GPS Signal Weak" : "GPS Timeout",
                   description: usedFallback 
                     ? "Using route start. GPS will activate when signal improves." 
-                    : "Unable to acquire GPS signal. Retrying...",
+                    : "Unable to acquire GPS signal",
                   duration: 4000,
                 });
-              } else if (gpsError.code === GeolocationPositionError.POSITION_UNAVAILABLE) {
+              } else {
                 toast({
                   title: "GPS Unavailable",
                   description: usedFallback 
-                    ? "Centered on route start. GPS will activate when available." 
+                    ? "Centered on route start" 
                     : "Location services unavailable",
                   variant: "destructive",
                   duration: 5000,
                 });
               }
             } else {
-              // Generic error (map not ready, etc.)
               toast({
                 title: "Unable to Center Map",
                 description: error.message || "Please try again",
@@ -1701,7 +1746,33 @@ function NavigationPageContent() {
                             </div>
                           </div>
                         </div>
+                        {gpsLoadingState?.accuracyLevel && (
+                          <Badge variant="outline" className="text-xs border-green-500/50 text-green-400">
+                            {gpsLoadingState.accuracyLevel === 'excellent' ? '⭐ Excellent' :
+                             gpsLoadingState.accuracyLevel === 'good' ? '✓ Good' : '• OK'}
+                          </Badge>
+                        )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* GPS Loading Indicator */}
+                  {gpsLoadingState?.isLoading && (
+                    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[150] pointer-events-none">
+                      <Card className="px-4 py-3 shadow-xl border-blue-500/50 bg-white/95 backdrop-blur-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <Crosshair className="h-6 w-6 text-blue-500 animate-pulse" />
+                            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+                          </div>
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">Acquiring GPS Signal</div>
+                            <div className="text-xs text-gray-600">
+                              Attempt {gpsLoadingState.attempt}/{gpsLoadingState.maxAttempts}
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
                     </div>
                   )}
 

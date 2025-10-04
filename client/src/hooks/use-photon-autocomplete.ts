@@ -53,6 +53,123 @@ function postcodeResultToPhotonFeature(result: PostcodeGeocodeResult): PhotonFea
   };
 }
 
+// LRU Cache for autocomplete results
+class LRUCache<K, V> {
+  private cache: Map<K, { value: V; timestamp: number }>;
+  private maxSize: number;
+  private ttl: number;
+
+  constructor(maxSize: number = 100, ttl: number = 300000) {
+    this.cache = new Map();
+    this.maxSize = maxSize;
+    this.ttl = ttl;
+  }
+
+  get(key: K): V | null {
+    const item = this.cache.get(key);
+    if (!item) return null;
+
+    if (Date.now() - item.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    this.cache.delete(key);
+    this.cache.set(key, item);
+    return item.value;
+  }
+
+  set(key: K, value: V): void {
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey);
+      }
+    }
+
+    this.cache.set(key, { value, timestamp: Date.now() });
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+// Circuit breaker for API calls
+class CircuitBreaker {
+  private failures: number = 0;
+  private lastFailureTime: number = 0;
+  private isOpen: boolean = false;
+  private readonly threshold: number = 3;
+  private readonly timeout: number = 30000;
+  private readonly cooldown: number = 10000;
+
+  canProceed(): boolean {
+    const now = Date.now();
+
+    if (this.isOpen && (now - this.lastFailureTime) > this.cooldown) {
+      this.reset();
+      return true;
+    }
+
+    if (this.failures >= this.threshold && (now - this.lastFailureTime) < this.timeout) {
+      this.isOpen = true;
+      return false;
+    }
+
+    return true;
+  }
+
+  recordFailure(): void {
+    this.failures++;
+    this.lastFailureTime = Date.now();
+  }
+
+  recordSuccess(): void {
+    this.reset();
+  }
+
+  private reset(): void {
+    this.failures = 0;
+    this.isOpen = false;
+  }
+
+  isCircuitOpen(): boolean {
+    return this.isOpen;
+  }
+}
+
+// Singleton instances
+const autocompleteCache = new LRUCache<string, { results: PhotonFeature[]; error: string | null }>(100, 300000);
+const photonCircuitBreaker = new CircuitBreaker();
+const ukCircuitBreaker = new CircuitBreaker();
+
+const saveToSessionStorage = (key: string, data: any): void => {
+  try {
+    sessionStorage.setItem(`trucknav_autocomplete_${key}`, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.warn('[AUTOCOMPLETE] SessionStorage save failed');
+  }
+};
+
+const loadFromSessionStorage = (key: string): any | null => {
+  try {
+    const stored = sessionStorage.getItem(`trucknav_autocomplete_${key}`);
+    if (!stored) return null;
+
+    const { data, timestamp } = JSON.parse(stored);
+    const age = Date.now() - timestamp;
+
+    if (age < 3600000) {
+      return data;
+    }
+  } catch (e) {}
+  return null;
+};
+
 export const usePhotonAutocomplete = (
   query: string, 
   enabled: boolean = true,
@@ -76,133 +193,127 @@ export const usePhotonAutocomplete = (
     queryFn: async () => {
       const trimmedQuery = debouncedQuery.trim();
       
-      // Step 1: Check if input is a UK postcode
+      const cacheKey = `${countryCode || 'global'}_${trimmedQuery.toLowerCase()}`;
+      
+      const cached = autocompleteCache.get(cacheKey);
+      if (cached) {
+        console.log('[AUTOCOMPLETE] Cache hit (memory)');
+        return cached;
+      }
+
+      const sessionCached = loadFromSessionStorage(cacheKey);
+      if (sessionCached) {
+        console.log('[AUTOCOMPLETE] Cache hit (sessionStorage)');
+        autocompleteCache.set(cacheKey, sessionCached);
+        return sessionCached;
+      }
+
       const detectedCountry = detectPostcodeCountry(trimmedQuery);
       const isUKPostcode = detectedCountry === 'UK';
-      
-      // Step 2: If UK postcode detected, try UK API first for high accuracy
-      if (isUKPostcode) {
+
+      if (isUKPostcode && ukCircuitBreaker.canProceed()) {
         try {
-          console.log('[AUTOCOMPLETE] Detected UK postcode, using postcodes.io API');
+          console.log('[AUTOCOMPLETE] UK postcode detected, trying postcodes.io');
           const ukResult = await geocodeUKPostcode(trimmedQuery);
           
           if (ukResult) {
-            // Return UK postcode result as primary result
-            return {
+            const result = {
               results: [postcodeResultToPhotonFeature(ukResult)],
               error: null
             };
+            
+            ukCircuitBreaker.recordSuccess();
+            autocompleteCache.set(cacheKey, result);
+            saveToSessionStorage(cacheKey, result);
+            return result;
           }
-          // If UK API fails, continue to try Photon below
-          console.log('[AUTOCOMPLETE] UK postcode not found in postcodes.io, falling back to Photon');
         } catch (err) {
-          console.warn('[AUTOCOMPLETE] UK postcode API error:', err);
-          // Continue to Photon fallback
+          ukCircuitBreaker.recordFailure();
+          console.warn('[AUTOCOMPLETE] UK API error:', err);
         }
       }
-      
-      // Step 3: Try Photon API via backend proxy (for non-UK postcodes or as fallback)
+
+      if (!photonCircuitBreaker.canProceed()) {
+        console.warn('[AUTOCOMPLETE] Photon circuit breaker OPEN');
+        
+        const staleCache = loadFromSessionStorage(cacheKey);
+        if (staleCache) {
+          return { ...staleCache, isStale: true };
+        }
+        
+        return {
+          results: [],
+          error: 'Service temporarily unavailable. Please try again.'
+        };
+      }
+
       try {
-        // Build backend proxy URL with query parameters
         const backendUrl = new URL('/api/photon-autocomplete', window.location.origin);
         backendUrl.searchParams.set('q', trimmedQuery);
         backendUrl.searchParams.set('limit', '10');
         
-        const response = await fetch(backendUrl.toString());
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(backendUrl.toString(), { signal: controller.signal });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
-          const errorMsg = `Photon API error: HTTP ${response.status}`;
-          console.error('[AUTOCOMPLETE]', errorMsg);
-          
-          // If Photon fails and input looks like UK postcode, try UK API as fallback
-          if (looksLikePostcode(trimmedQuery)) {
-            try {
-              console.log('[AUTOCOMPLETE] Photon failed, trying UK postcode API as fallback');
-              const ukResult = await geocodeUKPostcode(trimmedQuery);
-              if (ukResult) {
-                return {
-                  results: [postcodeResultToPhotonFeature(ukResult)],
-                  error: null
-                };
-              }
-            } catch (ukErr) {
-              console.warn('[AUTOCOMPLETE] UK fallback also failed:', ukErr);
-            }
-          }
-          
-          return {
-            results: [],
-            error: errorMsg
-          };
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const data: PhotonResponse = await response.json();
         let features = data.features || [];
-        
-        // Filter by country code if provided
+
         if (countryCode) {
-          features = features.filter(f => 
-            f.properties.countrycode?.toUpperCase() === countryCode.toUpperCase() ||
-            f.properties.country?.toUpperCase() === countryCode.toUpperCase()
+          features = features.filter((f: PhotonFeature) => 
+            f.properties.countrycode?.toUpperCase() === countryCode.toUpperCase()
           );
         }
-        
-        // Step 4: If Photon returns no results and input looks like UK postcode, try UK API fallback
-        if (features.length === 0 && looksLikePostcode(trimmedQuery)) {
-          try {
-            console.log('[AUTOCOMPLETE] No Photon results, trying UK postcode API fallback');
-            const ukResult = await geocodeUKPostcode(trimmedQuery);
-            if (ukResult) {
-              return {
-                results: [postcodeResultToPhotonFeature(ukResult)],
-                error: null
-              };
-            }
-          } catch (ukErr) {
-            console.warn('[AUTOCOMPLETE] UK fallback failed:', ukErr);
-          }
-        }
-        
-        // Prioritize commercial/truck-suitable locations
-        // POIs like service stations, commercial addresses, industrial areas
-        const prioritized = features.sort((a, b) => {
+
+        features = features.sort((a: PhotonFeature, b: PhotonFeature) => {
           const aScore = getTruckSuitabilityScore(a);
           const bScore = getTruckSuitabilityScore(b);
           return bScore - aScore;
         });
+
+        const result = { results: features.slice(0, 10), error: null };
         
-        return {
-          results: prioritized,
-          error: null
-        };
-      } catch (err) {
-        let errorMsg = 'Unknown error';
-        if (err instanceof Error) {
-          errorMsg = err.message;
-        }
+        photonCircuitBreaker.recordSuccess();
+        autocompleteCache.set(cacheKey, result);
+        saveToSessionStorage(cacheKey, result);
         
-        console.error('[AUTOCOMPLETE] Photon error:', errorMsg);
+        return result;
+
+      } catch (error) {
+        photonCircuitBreaker.recordFailure();
+        console.error('[AUTOCOMPLETE] Photon error:', error);
         
-        // Try UK postcode API as last resort if input looks like postcode
-        if (looksLikePostcode(trimmedQuery)) {
+        if (looksLikePostcode(trimmedQuery) && ukCircuitBreaker.canProceed()) {
           try {
-            console.log('[AUTOCOMPLETE] Error occurred, trying UK postcode API as last resort');
             const ukResult = await geocodeUKPostcode(trimmedQuery);
             if (ukResult) {
-              return {
+              const result = {
                 results: [postcodeResultToPhotonFeature(ukResult)],
                 error: null
               };
+              autocompleteCache.set(cacheKey, result);
+              saveToSessionStorage(cacheKey, result);
+              return result;
             }
           } catch (ukErr) {
-            console.warn('[AUTOCOMPLETE] UK fallback failed:', ukErr);
+            ukCircuitBreaker.recordFailure();
           }
         }
-        
-        // Surface error to UI
+
+        const staleCache = loadFromSessionStorage(cacheKey);
+        if (staleCache) {
+          return { ...staleCache, isStale: true, error: 'Using cached results' };
+        }
+
         return {
           results: [],
-          error: errorMsg
+          error: error instanceof Error ? error.message : 'Search temporarily unavailable'
         };
       }
     },

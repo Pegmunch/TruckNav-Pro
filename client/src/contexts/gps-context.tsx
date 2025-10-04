@@ -153,6 +153,7 @@ export function GPSProvider({
 
   const watchIdRef = useRef<number | null>(null);
   const smoothedHeadingRef = useRef<number | null>(null);
+  const lastHeadingUpdateRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const startGPSTracking = useCallback(() => {
@@ -186,8 +187,16 @@ export function GPSProvider({
         // Apply heading smoothing if enabled and heading is available
         let smoothed: number | null = null;
         if (enableHeadingSmoothing && rawHeading !== null) {
+          const now = Date.now();
+          const timeDelta = now - lastHeadingUpdateRef.current;
+          lastHeadingUpdateRef.current = now;
+
           if (smoothedHeadingRef.current === null) {
             // First reading: initialize smoothed heading
+            smoothedHeadingRef.current = rawHeading;
+            smoothed = rawHeading;
+          } else if (timeDelta > 2000) {
+            // Skip smoothing if too much time passed (>2 seconds) - reset to current heading
             smoothedHeadingRef.current = rawHeading;
             smoothed = rawHeading;
           } else {
