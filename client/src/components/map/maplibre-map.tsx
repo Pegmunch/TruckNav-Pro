@@ -871,8 +871,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     let routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
     // During navigation, show only remaining route from current GPS position
-    if (isNavigating && gpsLocation) {
-      const currentPoint = [gpsLocation.lng, gpsLocation.lat];
+    if (isNavigating && gpsPosition) {
+      const currentPoint = [gpsPosition.longitude, gpsPosition.latitude];
       const routeLine = { type: 'LineString' as const, coordinates: routeCoordinates };
       
       try {
@@ -966,7 +966,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
     }
 
-  }, [currentRoute, isLoaded, isNavigating, gpsLocation]);
+  }, [currentRoute, isLoaded, isNavigating, gpsPosition]);
 
   // Traffic-aware route coloring
   useEffect(() => {

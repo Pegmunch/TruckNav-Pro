@@ -60,7 +60,9 @@ Preferred communication style: Simple, everyday language.
     - **Crowdsourced Incident Reporting**: Community-driven system with 23 incident types, real-time feed, map markers, 2-minute auto-refresh, and 24-hour auto-expiration.
     - **Automatic GPS Position Lock & Real-Time Bearing Rotation**: Map auto-zooms to GPS location, rotates to match travel direction, with retry logic and error handling.
     - **GPS Singleton Provider**: Centralized, battery-optimized GPS tracking using React Context with EMA heading smoothing.
-    - **Enhanced Mobile Marker Visibility**: Responsive GPS arrowhead marker sizing with high z-index, halo ring, shadows, and pulse animation.
+    - **Vehicle-Specific GPS Markers**: Responsive GPS markers displaying vehicle-type icons (truck, car, caravan) with smooth heading rotation, halo rings, shadows, and pulse animation for maximum visibility.
+    - **Dynamic Route Visualization**: GraphHopper road-snapped routes with white outline for visibility, dynamically shortens during navigation to show only remaining path from current GPS position to destination.
+    - **Road-Following Geometry**: Routes strictly follow GraphHopper's detailed road geometry with proper line styling and visual enhancements.
     - **MapLibre WebGL Reliability**: Comprehensive WebGL capability detection with retry logic, extension checks, and graceful fallback to Leaflet.
     - **Robustness Features**: Includes GPS auto-zoom circuit breaker, postcode search resilience (LRU cache, exponential backoff), map animation safety, and navigation mode stability with telemetry.
 - **Address Autocomplete & POI Search**:
