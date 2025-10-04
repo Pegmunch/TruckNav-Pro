@@ -462,6 +462,14 @@ function NavigationPageContent() {
     }
   }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced]);
   
+  // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
+  useEffect(() => {
+    if (isNavigating) {
+      setSidebarState('collapsed');
+      console.log('[NAV-MODE] ✓ Sidebar forcefully closed during navigation start');
+    }
+  }, [isNavigating]);
+  
   // Automated visibility check for speedometer during navigation
   useEffect(() => {
     if (mobileNavMode !== 'navigate') return;
@@ -2049,8 +2057,8 @@ function NavigationPageContent() {
             </>
           )}
 
-          {/* Full-Screen Route Planning Panel - Mobile Only */}
-          {isMobileDrawerOpen && (
+          {/* Full-Screen Route Planning Panel - Mobile Only - NEVER show during active navigation */}
+          {isMobileDrawerOpen && !isNavigating && (
             <>
               {/* Backdrop - tap anywhere to close */}
               <div 
@@ -2102,8 +2110,8 @@ function NavigationPageContent() {
           "automotive-layout desktop-sidebar"
         )}>
           
-          {/* Desktop Hamburger Menu - Always visible when sidebar is closed */}
-          {!isSidebarOpen && (
+          {/* Desktop Hamburger Menu - Only visible on desktop when sidebar closed and NOT navigating */}
+          {!isSidebarOpen && !isNavigating && (
             <Button
               variant="default"
               size="icon"
