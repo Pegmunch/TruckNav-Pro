@@ -536,7 +536,15 @@ function validateTokenAndProceed(
   validToken.timestamp = Date.now();
   
   console.log(`[CSRF] Token validated successfully for ${req.method} ${req.url} (session: ${req.sessionID?.substring(0, 8)}...)`);
-  next();
+  
+  // Save session to persist timestamp update before proceeding
+  req.session.save((err: any) => {
+    if (err) {
+      console.error('[CSRF] Failed to save session after token validation:', err);
+      // Continue anyway - timestamp update is not critical
+    }
+    next();
+  });
 };
 
 // Generate CSRF token
