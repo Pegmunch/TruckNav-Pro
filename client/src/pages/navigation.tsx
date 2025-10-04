@@ -1926,6 +1926,11 @@ function NavigationPageContent() {
                     <div className="w-full z-[5] pointer-events-auto">
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
+
+                    {/* Speedometer - Above legal (z-[160]) */}
+                    <div className="z-[160] pointer-events-auto" data-testid="speed-display-preview">
+                      <SpeedDisplay className="shadow-2xl" speedLimit={currentSpeedLimit || undefined} />
+                    </div>
                   </div>
 
                   {/* Start Navigation Button - Bottom Center (Preview Mode) */}
