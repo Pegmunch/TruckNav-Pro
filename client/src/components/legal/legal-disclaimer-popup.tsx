@@ -172,15 +172,21 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
   }
 
   return (
-    <div 
-      ref={containerRef}
-      role="dialog"
-      aria-labelledby="legal-disclaimer-title"
-      aria-describedby="legal-disclaimer-description"
-      aria-modal="true"
-      className="fixed inset-0 z-[9999] flex flex-col h-dvh bg-background text-foreground" 
-      data-testid="legal-disclaimer-popup"
-    >
+    // Outer wrapper: Isolated stacking context at z-9999
+    <div className="fixed inset-0 z-[9999] isolate">
+      {/* Backdrop layer: Semi-transparent overlay to block underlying content */}
+      <div className="absolute inset-0 bg-black/70 dark:bg-black/80" aria-hidden="true" />
+      
+      {/* Content container: Fully opaque panel with focus trap */}
+      <div 
+        ref={containerRef}
+        role="dialog"
+        aria-labelledby="legal-disclaimer-title"
+        aria-describedby="legal-disclaimer-description"
+        aria-modal="true"
+        className="relative flex flex-col h-full min-h-[100vh] sm:h-dvh bg-white dark:bg-gray-950 text-foreground" 
+        data-testid="legal-disclaimer-popup"
+      >
       {/* Header - stacks vertically on mobile */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 pb-2 border-b">
         {/* Title Section */}
@@ -670,6 +676,7 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
           </Card>
         </div>
       )}
+    </div>
     </div>
   );
 }
