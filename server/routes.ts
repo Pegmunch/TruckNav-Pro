@@ -2079,27 +2079,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let features = data.features || [];
         
         // CRITICAL: Filter by distance if GPS coordinates provided and POI search (osm_tag)
-        // This prevents showing results from wrong countries (e.g., India when user is in UK)
+        // This prevents showing results from wrong countries and prioritizes nearby POIs
         if (userLat !== null && userLon !== null && osm_tag) {
-          const MAX_DISTANCE_KM = 150; // 150km radius for POI search (increased for rural areas)
+          const MAX_DISTANCE_KM = 10; // 10km (6 miles) radius for accurate nearby POI search
           
-          features = features.filter((feature: any) => {
+          // Calculate distance for each feature and attach it
+          const featuresWithDistance = features.map((feature: any) => {
             if (!feature.geometry?.coordinates || feature.geometry.coordinates.length < 2) {
-              return false;
+              return { feature, distance: Infinity };
             }
             
             const [featureLon, featureLat] = feature.geometry.coordinates;
             const distance = calculateDistance(userLat, userLon, featureLat, featureLon);
             
-            // Log filtered results
-            if (distance > MAX_DISTANCE_KM) {
-              console.log(`[PHOTON-PROXY] Filtered out result ${distance.toFixed(1)}km away: ${feature.properties?.name || 'Unknown'} in ${feature.properties?.city || feature.properties?.country || 'Unknown'}`);
-            }
-            
-            return distance <= MAX_DISTANCE_KM;
+            return { feature, distance };
           });
           
-          console.log(`[PHOTON-PROXY] Distance filtering: ${data.features?.length || 0} -> ${features.length} results within ${MAX_DISTANCE_KM}km`);
+          // Filter by distance
+          const filtered = featuresWithDistance.filter(({ distance }: { distance: number }) => {
+            if (distance > MAX_DISTANCE_KM) {
+              return false;
+            }
+            return true;
+          });
+          
+          // Sort by distance (nearest first)
+          filtered.sort((a: any, b: any) => a.distance - b.distance);
+          
+          // Extract features
+          features = filtered.map(({ feature, distance }: { feature: any; distance: number }) => {
+            console.log(`[PHOTON-PROXY] POI: ${feature.properties?.name || 'Unknown'} - ${distance.toFixed(2)}km away`);
+            return feature;
+          });
+          
+          console.log(`[PHOTON-PROXY] Distance filtering: ${data.features?.length || 0} -> ${features.length} results within ${MAX_DISTANCE_KM}km, sorted by distance`);
         }
         
         // Limit final results
