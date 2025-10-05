@@ -1,7 +1,7 @@
 // TruckNav Pro Service Worker
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
-const CACHE_VERSION = '2.0.0';
+const CACHE_VERSION = '3.0.0';
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;
