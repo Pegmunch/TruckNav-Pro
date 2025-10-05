@@ -1906,14 +1906,8 @@ function NavigationPageContent() {
                   {/* Start Navigation Button - Bottom Center (Preview Mode) */}
                   <Button
                     onClick={() => {
-                      setMobileNavMode('navigate');
-                      setIsNavigating(true);
-                      setSidebarState('collapsed');
-                      toast({
-                        title: "🚚 Navigation Started",
-                        description: "Follow the route on your map",
-                        duration: 2000,
-                      });
+                      // Call the proper navigation start handler to set up 3D camera and bearing rotation
+                      handleStartNavigation();
                     }}
                     className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[201] pointer-events-auto
                              bg-green-600 hover:bg-green-700 text-white font-bold

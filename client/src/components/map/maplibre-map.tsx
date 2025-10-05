@@ -1348,12 +1348,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
-      // Calculate responsive marker size - optimized for mobile visibility
-      const devicePixelRatio = window.devicePixelRatio || 1;
-      const baseSize = 52; // Increased for better mobile visibility
-      const scaleFactor = Math.max(1, devicePixelRatio / 2);
-      const markerSize = Math.round(baseSize * scaleFactor);
-      const borderWidth = Math.max(4, Math.round(5 * scaleFactor)); // Thicker borders for better alignment
+      // Fixed marker size to stay within route line width (~40-50px at zoom 19.5)
+      const markerSize = 32; // Fixed 32px to ensure it stays within the route line
+      const borderWidth = 2; // Thin 2px border
       
       // Determine vehicle icon based on selected profile
       let vehicleIcon = '';
@@ -1531,13 +1528,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     // Center map on user location during navigation with smooth rotation using smoothed heading
+    // This creates "heading-up" mode where travel direction always points upward
     if (isNavigating) {
       mapInstance.easeTo({
         center: [longitude, latitude],
         zoom: 19.5,
-        pitch: 60,
-        bearing: bearing,
-        duration: 500
+        pitch: 60, // 3D tilt for better perspective
+        bearing: bearing, // Rotate map so heading points up (north on screen)
+        duration: 500,
+        easing: (t) => t * (2 - t) // Smooth easing for fluid rotation
       });
     }
 
