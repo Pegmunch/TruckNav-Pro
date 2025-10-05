@@ -71,8 +71,8 @@ body {
 /* Apply safe area padding ONLY in standalone PWA mode */
 @media (display-mode: standalone) {
   .mobile-layout {
-    padding-top: var(--safe-area-top);
-    padding-bottom: var(--safe-area-bottom);
+    padding-top: calc(var(--safe-area-top) + 16px);
+    padding-bottom: calc(var(--safe-area-bottom) + 4px);
   }
 }
 
