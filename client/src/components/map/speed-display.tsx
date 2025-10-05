@@ -96,14 +96,14 @@ const SpeedDisplay = memo(function SpeedDisplay({
     <div 
       className={cn(
         "flex items-center justify-between",
-        "bg-white/95 dark:bg-black/90 backdrop-blur-md rounded-2xl",
+        "backdrop-blur-md rounded-2xl",
         "px-4 py-3 shadow-2xl",
         "text-black dark:text-white font-bold",
         "min-w-[200px] h-[64px]",
         "transition-all duration-300",
-        isSpeeding && "ring-2 ring-red-500 animate-pulse",
-        isNearLimit && "ring-2 ring-amber-500",
-        !isSpeeding && !isNearLimit && "border-2 border-black/10 dark:border-white/10",
+        isSpeeding && "bg-red-600/95 dark:bg-red-700/90 ring-4 ring-red-500 animate-pulse",
+        isNearLimit && "bg-amber-500/95 dark:bg-amber-600/90 ring-2 ring-amber-400",
+        !isSpeeding && !isNearLimit && "bg-white/95 dark:bg-black/90 border-2 border-black/10 dark:border-white/10",
         className
       )}
       data-testid="speed-display"
@@ -113,13 +113,14 @@ const SpeedDisplay = memo(function SpeedDisplay({
         <div 
           className={cn(
             "flex items-center justify-center",
-            "w-12 h-12 rounded-full border-[5px] bg-white shadow-md",
-            convertedSpeedLimit ? getSpeedLimitColor() : "border-gray-400 text-gray-400"
+            "w-12 h-12 rounded-full bg-white shadow-lg",
+            "border-[4px]",
+            convertedSpeedLimit ? "border-red-600 text-black" : "border-gray-400 text-gray-400"
           )}
           data-testid="speed-limit-sign"
         >
           {convertedSpeedLimit ? (
-            <span className="text-base font-black" data-testid="speed-limit-value">
+            <span className="text-lg font-black leading-none" data-testid="speed-limit-value">
               {convertedSpeedLimit}
             </span>
           ) : (
@@ -127,28 +128,37 @@ const SpeedDisplay = memo(function SpeedDisplay({
           )}
         </div>
         {convertedSpeedLimit && (
-          <span className="text-xs font-black text-gray-700 dark:text-gray-300 uppercase" data-testid="speed-limit-unit">
+          <span className={cn(
+            "text-xs font-black uppercase",
+            isSpeeding ? "text-white" : "text-gray-700 dark:text-gray-300"
+          )} data-testid="speed-limit-unit">
             {speedUnit}
           </span>
         )}
       </div>
       
       {/* Separator */}
-      <div className="w-[2px] h-10 bg-black/20 dark:bg-white/20 rounded-full" />
+      <div className={cn(
+        "w-[2px] h-10 rounded-full",
+        isSpeeding ? "bg-white/40" : "bg-black/20 dark:bg-white/20"
+      )} />
       
       {/* Vehicle Speed Section (Right) */}
       <div className="flex items-center gap-3" data-testid="vehicle-speed-section">
-        <Gauge className={cn("w-6 h-6 transition-colors duration-300", getSpeedColor())} />
+        <Gauge className={cn(
+          "w-6 h-6 transition-colors duration-300",
+          isSpeeding ? "text-white" : isNearLimit ? "text-white" : getSpeedColor()
+        )} />
         <div className="text-right">
           <div className={cn(
             "text-3xl font-black transition-colors duration-300",
-            getSpeedColor()
+            isSpeeding ? "text-white" : isNearLimit ? "text-white" : getSpeedColor()
           )} data-testid="vehicle-speed-value">
             {convertedSpeed}
           </div>
           <div className={cn(
             "text-xs font-black uppercase -mt-1 transition-colors duration-300",
-            getSpeedColor()
+            isSpeeding ? "text-white" : isNearLimit ? "text-white" : getSpeedColor()
           )} data-testid="vehicle-speed-unit">
             {speedUnit}
           </div>
