@@ -1796,17 +1796,17 @@ select:focus-visible,
   position: relative;
 }
 
-/* Mobile fullscreen map container - Extended depth coverage */
+/* Mobile fullscreen map container - Optimized depth coverage */
 .mobile-map-container {
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: calc(100vh - 160px); /* Thicker borders at top and bottom for better alignment */
-  height: calc(100vh - 160px); /* Increased spacing for proper mobile framing */
+  min-height: calc(100vh - 120px); /* Balanced spacing for better alignment without sacrificing map area */
+  height: calc(100vh - 120px); /* Slightly thicker borders for proper mobile framing */
   background: var(--map-background, #f8fafc);
   overflow: hidden;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 /* Inherit map-container styles for mobile */
@@ -1818,34 +1818,34 @@ select:focus-visible,
 /* Responsive adjustments for better alignment on all screen sizes */
 @media (max-height: 600px) {
   .map-container {
-    min-height: calc(100vh - 120px); /* Thicker borders for small screens */
-    height: calc(100vh - 120px); /* Better alignment on compact devices */
+    min-height: calc(100vh - 100px); /* Optimized for small screens */
+    height: calc(100vh - 100px); /* Better alignment on compact devices */
   }
   
   .mobile-map-container {
-    min-height: calc(100vh - 130px); /* Consistent spacing on small screens */
-    height: calc(100vh - 130px); /* Optimized mobile alignment */
+    min-height: calc(100vh - 110px); /* Balanced spacing on small screens */
+    height: calc(100vh - 110px); /* Optimized mobile alignment */
   }
 }
 
 @media (min-height: 800px) {
   .map-container {
-    min-height: calc(100vh - 180px); /* More spacing on large screens */
-    height: calc(100vh - 180px); /* Better visual balance */
+    min-height: calc(100vh - 140px); /* Moderate spacing on large screens */
+    height: calc(100vh - 140px); /* Better visual balance */
   }
   
   .mobile-map-container {
-    min-height: calc(100vh - 170px); /* Consistent framing on tall screens */
-    height: calc(100vh - 170px); /* Better mobile coverage with proper borders */
+    min-height: calc(100vh - 130px); /* Balanced framing on tall screens */
+    height: calc(100vh - 130px); /* Better mobile coverage with proper borders */
   }
 }
 
-/* CarPlay/Android Auto adjustments - Reduced borders for landscape automotive displays */
+/* CarPlay/Android Auto adjustments - Optimized for landscape automotive displays */
 @media (max-height: 480px) and (orientation: landscape) {
   .map-container,
   .mobile-map-container {
-    min-height: calc(100vh - 100px); /* Reduced borders for landscape automotive displays */
-    height: calc(100vh - 100px); /* Better coverage on automotive screens */
+    min-height: calc(100vh - 90px); /* Optimized for landscape automotive displays */
+    height: calc(100vh - 90px); /* Better coverage on automotive screens */
   }
 }
 
