@@ -1184,10 +1184,6 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     // Implement save functionality here
-                                    toast({
-                                      title: "Location saved",
-                                      description: `${facility.name} added to favorites`
-                                    });
                                   }}
                                   data-testid={`button-save-${facility.id}`}
                                   aria-label={`Save ${facility.name} to favorites`}

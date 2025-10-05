@@ -225,11 +225,6 @@ const LocationDropdown = memo(function LocationDropdown({
       onChange(result.formatted);
       setSearchValue(result.formatted);
       setOpen(false);
-      
-      toast({
-        title: "Postcode found",
-        description: `${result.formatted} - ${result.address || result.city}`,
-      });
     },
     onError: (error) => {
       toast({
@@ -249,10 +244,6 @@ const LocationDropdown = memo(function LocationDropdown({
     onSuccess: () => {
       // Invalidate location queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ["/api/locations"] });
-      toast({
-        title: "Location saved",
-        description: "Location has been added to your history",
-      });
       setShowSaveDialog(false);
       setSaveLabel("");
     },
