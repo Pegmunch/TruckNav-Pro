@@ -1801,10 +1801,12 @@ select:focus-visible,
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: calc(100vh - 100px); /* EXTENDED: Reduced from 150px to 100px for maximum mobile depth */
-  height: calc(100vh - 100px); /* More navigation coverage on mobile */
+  min-height: calc(100vh - 160px); /* Thicker borders at top and bottom for better alignment */
+  height: calc(100vh - 160px); /* Increased spacing for proper mobile framing */
   background: var(--map-background, #f8fafc);
   overflow: hidden;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 /* Inherit map-container styles for mobile */
@@ -1813,37 +1815,37 @@ select:focus-visible,
   height: 100%;
 }
 
-/* EXTENDED DEPTH: Optimized responsive adjustments for maximum map coverage */
+/* Responsive adjustments for better alignment on all screen sizes */
 @media (max-height: 600px) {
   .map-container {
-    min-height: calc(100vh - 80px); /* EXTENDED: Reduced from 120px to 80px */
-    height: calc(100vh - 80px); /* Maximum depth for small screens */
+    min-height: calc(100vh - 120px); /* Thicker borders for small screens */
+    height: calc(100vh - 120px); /* Better alignment on compact devices */
   }
   
   .mobile-map-container {
-    min-height: calc(100vh - 70px); /* EXTENDED: Reduced from 100px to 70px */
-    height: calc(100vh - 70px); /* Optimized mobile depth */
+    min-height: calc(100vh - 130px); /* Consistent spacing on small screens */
+    height: calc(100vh - 130px); /* Optimized mobile alignment */
   }
 }
 
 @media (min-height: 800px) {
   .map-container {
-    min-height: calc(100vh - 140px); /* EXTENDED: Reduced from 250px to 140px */
-    height: calc(100vh - 140px); /* Enhanced depth for large screens */
+    min-height: calc(100vh - 180px); /* More spacing on large screens */
+    height: calc(100vh - 180px); /* Better visual balance */
   }
   
   .mobile-map-container {
-    min-height: calc(100vh - 110px); /* EXTENDED: Reduced from 180px to 110px */
-    height: calc(100vh - 110px); /* Better mobile coverage on tall screens */
+    min-height: calc(100vh - 170px); /* Consistent framing on tall screens */
+    height: calc(100vh - 170px); /* Better mobile coverage with proper borders */
   }
 }
 
-/* EXTENDED DEPTH: CarPlay/Android Auto maximum coverage adjustments */
+/* CarPlay/Android Auto adjustments - Reduced borders for landscape automotive displays */
 @media (max-height: 480px) and (orientation: landscape) {
   .map-container,
   .mobile-map-container {
-    min-height: calc(100vh - 60px); /* EXTENDED: Reduced from 80px to 60px for maximum automotive depth */
-    height: calc(100vh - 60px); /* Enhanced coverage for automotive displays */
+    min-height: calc(100vh - 100px); /* Reduced borders for landscape automotive displays */
+    height: calc(100vh - 100px); /* Better coverage on automotive screens */
   }
 }
 

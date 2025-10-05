@@ -1348,12 +1348,12 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
-      // Calculate responsive marker size - smaller to not exceed route width
+      // Calculate responsive marker size - optimized for mobile visibility
       const devicePixelRatio = window.devicePixelRatio || 1;
-      const baseSize = 48; // Reduced from 68px to stay within route line
+      const baseSize = 52; // Increased for better mobile visibility
       const scaleFactor = Math.max(1, devicePixelRatio / 2);
       const markerSize = Math.round(baseSize * scaleFactor);
-      const borderWidth = Math.max(2, Math.round(3 * scaleFactor)); // Thinner border
+      const borderWidth = Math.max(4, Math.round(5 * scaleFactor)); // Thicker borders for better alignment
       
       // Determine vehicle icon based on selected profile
       let vehicleIcon = '';
@@ -1452,7 +1452,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             animation: secondary-pulse 2.5s ease-in-out infinite 0.3s;
           "></div>
           
-          <!-- Main marker with premium gradient -->
+          <!-- Main marker with premium gradient and thicker borders -->
           <div style="
             width: ${markerSize}px;
             height: ${markerSize}px;
@@ -1460,10 +1460,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             border: ${borderWidth}px solid white;
             border-radius: 50%;
             box-shadow: 
-              0 0 0 2px rgba(59, 130, 246, 0.4),
-              0 10px 32px rgba(37, 99, 235, 0.9), 
-              0 5px 18px rgba(0, 0, 0, 0.7),
-              inset 0 2px 4px rgba(255, 255, 255, 0.3);
+              0 0 0 3px rgba(59, 130, 246, 0.5),
+              0 12px 36px rgba(37, 99, 235, 1.0), 
+              0 6px 20px rgba(0, 0, 0, 0.8),
+              inset 0 3px 6px rgba(255, 255, 255, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
