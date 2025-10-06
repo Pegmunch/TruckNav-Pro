@@ -26,6 +26,7 @@ export interface MapLibreMapRef {
     forceStreetMode?: boolean;
     zoom?: number;
     pitch?: number;
+    bearing?: number;
     duration?: number;
     fallbackCoordinates?: { lat: number; lng: number };
     onSuccess?: (location: { 
@@ -344,6 +345,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         forceStreetMode = true,
         zoom = 17.5,
         pitch = 45,
+        bearing: optionsBearing,
         duration = 2000,
         fallbackCoordinates,
         onSuccess,
@@ -389,10 +391,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         
         const cached = getLastKnownPosition();
         if (cached) {
-          performZoom(cached.lat, cached.lng);
+          performZoom(cached.lat, cached.lng, optionsBearing ?? 0);
           onSuccess?.({ lat: cached.lat, lng: cached.lng, accuracy: cached.accuracy, accuracyLevel: cached.accuracy <= 50 ? 'excellent' : cached.accuracy <= 100 ? 'good' : 'acceptable' });
         } else if (fallbackCoordinates) {
-          performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
+          performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng, optionsBearing ?? 0);
           onSuccess?.(fallbackCoordinates);
         } else {
           onError?.(new Error('GPS unavailable') as any, false);
@@ -410,10 +412,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           
           const cached = getLastKnownPosition();
           if (cached) {
-            performZoom(cached.lat, cached.lng);
+            performZoom(cached.lat, cached.lng, optionsBearing ?? 0);
             onError?.(new Error('GPS timeout') as any, true);
           } else if (fallbackCoordinates) {
-            performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng);
+            performZoom(fallbackCoordinates.lat, fallbackCoordinates.lng, optionsBearing ?? 0);
             onError?.(new Error('GPS timeout') as any, true);
           } else {
             onError?.(new Error('GPS timeout') as any, false);
@@ -450,7 +452,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               
               const accuracyLevel = accuracy <= 50 ? 'excellent' : accuracy <= 100 ? 'good' : 'acceptable';
               
-              performZoom(latitude, longitude, heading ?? 0);
+              performZoom(latitude, longitude, optionsBearing ?? heading ?? 0);
               onSuccess?.({ lat: latitude, lng: longitude, accuracy, accuracyLevel, timestamp: Date.now() });
             },
             (error) => {

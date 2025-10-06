@@ -572,6 +572,44 @@ function NavigationPageContent() {
     }
   }, [isNavigating]);
   
+  // Force 3D navigation view when navigation starts with GPS lock
+  const hasInitialized3DRef = useRef(false);
+  
+  useEffect(() => {
+    if (isNavigating && gpsData?.position && !hasInitialized3DRef.current && mapRef.current) {
+      hasInitialized3DRef.current = true;
+
+      // Get bearing from GPS (use smoothedHeading for smoother rotation, fallback to heading)
+      const gpsBearing = gpsData.position.smoothedHeading ?? gpsData.position.heading ?? 0;
+
+      console.log('[NAV-3D] Forcing 3D navigation view ONCE - pitch: 67°, zoom: 18.5, bearing:', gpsBearing);
+
+      // Force 3D perspective with GPS-aligned bearing
+      mapRef.current.zoomToUserLocation({
+        pitch: 67,
+        zoom: 18.5,
+        bearing: gpsBearing,
+        duration: 1500,
+        onSuccess: (location) => {
+          console.log('[NAV-3D] ✓ 3D navigation view activated at:', location);
+          setMap3DMode(true);
+        },
+        onError: (error) => {
+          console.warn('[NAV-3D] Failed to activate 3D view:', error);
+          // Still set 3D mode flag even if zoom fails
+          setMap3DMode(true);
+        }
+      });
+
+      // Set 3D mode flag immediately
+      setMap3DMode(true);
+    }
+    
+    if (!isNavigating) {
+      hasInitialized3DRef.current = false;
+    }
+  }, [isNavigating, gpsData?.position]);
+  
   // Automated visibility check for speedometer during navigation
   useEffect(() => {
     if (mobileNavMode !== 'navigate') return;
