@@ -29,3 +29,15 @@ export const requireSubscription: RequestHandler = async (req: any, res, next) =
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const requireAuth: RequestHandler = async (req: any, res, next) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    next();
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
