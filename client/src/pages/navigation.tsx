@@ -1517,10 +1517,7 @@ function NavigationPageContent() {
       clearTimeout(modeTransitionTimeoutRef.current);
     }
     
-    // Set navigate mode SYNCHRONOUSLY before toggling isNavigating
-    setMobileNavMode('navigate');
-    
-    // Mode transition guard for mobile
+    // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
       toast({
         title: "Cannot Start Navigation",
@@ -1529,6 +1526,9 @@ function NavigationPageContent() {
       });
       return;
     }
+    
+    // Set navigate mode SYNCHRONOUSLY after validation passes
+    setMobileNavMode('navigate');
     
     // Comprehensive validation
     if (!fromLocation || !toLocation) {
@@ -1895,7 +1895,7 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideControls={isNavigating}
+                      hideControls={false}
                       hideCompass={false}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
@@ -2437,7 +2437,7 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideControls={isNavigating}
+                      hideControls={false}
                       hideCompass={false}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
