@@ -212,29 +212,14 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
         if (category) {
           setSelectedCategory(category.type);
           setSearchQuery("");
-          
-          toast({
-            title: "Voice search activated",
-            description: `Searching for ${category.label.toLowerCase()}`,
-          });
         } else {
           setSearchQuery(poiType);
           setSelectedCategory("");
-          
-          toast({
-            title: "Voice search activated",
-            description: `Searching for "${poiType}"`,
-          });
         }
       } else if (intent.action === 'search_location' && locationEntities.length > 0) {
         const location = locationEntities[0].value;
         setSearchQuery(location);
         setSelectedCategory("");
-        
-        toast({
-          title: "Voice search activated",
-          description: `Searching for "${location}"`,
-        });
       }
     },
     
@@ -273,33 +258,78 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     }
   );
 
-  // Build search query parameters with fallback coordinates
-  const buildSearchParams = useCallback(() => {
-    const params = new URLSearchParams();
-    
-    // Use provided coordinates, or fall back to a default location (London, UK)
-    const lat = coordinates?.lat || 51.5074;
-    const lng = coordinates?.lng || -0.1278;
-    
-    params.set('lat', lat.toString());
-    params.set('lng', lng.toString());
-    params.set('radius', '25');
-    
-    if (selectedCategory) {
-      params.set('type', selectedCategory);
-    }
-    
-    return params.toString();
-  }, [coordinates, selectedCategory]);
+  // Map POI categories to OSM tags for Photon API
+  const getOSMTagForCategory = (category: string): string => {
+    const categoryMap: Record<string, string> = {
+      'fuel': 'amenity:fuel',
+      'restaurant': 'amenity:restaurant',
+      'parking': 'amenity:parking',
+      'hotel': 'tourism:hotel',
+      'truck_stop': 'highway:services',
+      'rest_area': 'highway:rest_area',
+      'service': 'shop:car_repair',
+      'supermarket': 'shop:supermarket',
+      'shop': 'shop'
+    };
+    return categoryMap[category] || '';
+  };
 
-  // Facilities search query with error handling
-  const searchParams = buildSearchParams();
-  const { data: facilities = [], isLoading, error } = useQuery<Facility[]>({
-    queryKey: ['/api/facilities', searchParams],
-    enabled: isOpen,
+  // Use Photon API for POI search with 150km radius filtering
+  const { data: photonData, isLoading: isPhotonLoading, error: photonError } = useQuery({
+    queryKey: ['/api/photon-autocomplete', selectedCategory, searchQuery, coordinates?.lat, coordinates?.lng],
+    queryFn: async () => {
+      const lat = coordinates?.lat || 51.5074;
+      const lng = coordinates?.lng || -0.1278;
+      
+      const url = new URL('/api/photon-autocomplete', window.location.origin);
+      url.searchParams.set('q', selectedCategory ? POI_CATEGORIES.find(c => c.type === selectedCategory)?.label || searchQuery : searchQuery || 'amenity');
+      url.searchParams.set('limit', '50');
+      url.searchParams.set('lat', lat.toString());
+      url.searchParams.set('lon', lng.toString());
+      
+      const osmTag = getOSMTagForCategory(selectedCategory);
+      if (osmTag) {
+        url.searchParams.set('osm_tag', osmTag);
+      }
+      
+      const response = await fetch(url.toString());
+      if (!response.ok) {
+        throw new Error('Failed to fetch POI data');
+      }
+      
+      const data = await response.json();
+      return data.features || [];
+    },
+    enabled: isOpen && (!!selectedCategory || searchQuery.length >= 3),
     retry: 2,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Convert Photon results to Facility format
+  const facilities: Facility[] = (photonData || []).map((feature: any) => {
+    const props = feature.properties || {};
+    const coords = feature.geometry?.coordinates || [0, 0];
+    
+    return {
+      id: `photon-${coords[1]}-${coords[0]}`,
+      name: props.name || props.street || 'Unknown Location',
+      type: selectedCategory || 'amenity',
+      coordinates: { lat: coords[1], lng: coords[0] },
+      address: [props.street, props.city, props.postcode].filter(Boolean).join(', '),
+      amenities: [],
+      rating: null,
+      reviewCount: 0,
+      truckParking: false,
+      fuel: selectedCategory === 'fuel',
+      restaurant: selectedCategory === 'restaurant',
+      restrooms: false,
+      showers: false,
+      country: props.country || 'UK'
+    } as Facility;
+  });
+
+  const isLoading = isPhotonLoading;
+  const error = photonError;
 
   // Journey History
   const { data: lastJourney, isLoading: isLoadingLastJourney } = useQuery<Journey | null>({
@@ -394,17 +424,6 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     (facility.address || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Show error toast when query fails
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Search Error",
-        description: "Failed to search facilities. Please check your connection and try again.",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
   // Handle category selection
   const handleCategorySelect = (categoryType: string) => {
     setSelectedCategory(categoryType === selectedCategory ? "" : categoryType);
@@ -466,10 +485,6 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   // Handle facility selection
   const handleFacilitySelect = (facility: Facility) => {
     onSelectFacility?.(facility);
-    toast({
-      title: "Facility selected",
-      description: `Selected ${facility.name}`,
-    });
   };
 
   // Helper functions for History & Favorites

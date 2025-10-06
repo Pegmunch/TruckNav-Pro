@@ -18,11 +18,15 @@ import {
   Maximize2,
   Eye,
   Compass,
-  X
+  X,
+  AlertTriangle,
+  Shield
 } from "lucide-react";
 import { type Route, type VehicleProfile } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useWakeLock } from "@/hooks/use-wake-lock";
+import { useSpeedLimit, isSpeeding, getConfidenceColor, getConfidenceLabel } from "@/hooks/use-speed-limit";
+import { useGPS } from "@/contexts/gps-context";
 
 interface ProfessionalNavHUDProps {
   currentRoute: Route | null;
@@ -104,6 +108,48 @@ const getDirectionIcon = (direction: NavigationInstruction['direction']) => {
   }
 };
 
+// Helper function to get road type badge color
+const getRoadTypeBadgeColor = (roadType?: string): string => {
+  if (!roadType) return 'bg-gray-600/30 text-gray-300 border-gray-500/40';
+  
+  switch (roadType) {
+    case 'motorway':
+    case 'motorway_link':
+      return 'bg-blue-600/30 text-blue-200 border-blue-500/40';
+    case 'trunk':
+    case 'trunk_link':
+      return 'bg-green-600/30 text-green-200 border-green-500/40';
+    case 'primary':
+    case 'primary_link':
+      return 'bg-green-600/25 text-green-300 border-green-500/35';
+    case 'secondary':
+      return 'bg-yellow-600/25 text-yellow-300 border-yellow-500/35';
+    default:
+      return 'bg-gray-600/30 text-gray-300 border-gray-500/40';
+  }
+};
+
+// Helper function to format junction reference
+const formatJunctionRef = (ref: string | null): string | null => {
+  if (!ref) return null;
+  
+  // Handle various junction formats: "15", "J15", "Junction 15", "Exit 15", "E3"
+  const junctionMatch = ref.match(/^(?:J|Junction|Exit|E)?\s*(\d+[A-Z]?)$/i);
+  if (junctionMatch) {
+    return `J${junctionMatch[1]}`;
+  }
+  
+  return ref;
+};
+
+// Helper function to format road reference for display
+const formatRoadRef = (ref: string | null): string | null => {
+  if (!ref) return null;
+  
+  // Clean up road references: "M25", "A1", "I-95", "E40"
+  return ref.toUpperCase().trim();
+};
+
 const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   currentRoute,
   selectedProfile,
@@ -124,6 +170,33 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
 
   // Screen wake lock to keep display on during navigation
   const wakeLock = useWakeLock();
+  
+  // Speed limit data from OpenStreetMap
+  const speedLimitData = useSpeedLimit();
+  
+  // GPS data for speed (in m/s)
+  const gps = useGPS();
+  
+  // Convert GPS speed (m/s) to display unit (mph or km/h)
+  const convertSpeed = (speedMs: number | null, unit: 'mph' | 'km/h'): number => {
+    if (speedMs === null) return 0;
+    if (unit === 'mph') {
+      return Math.round(speedMs * 2.23694); // m/s to mph
+    } else {
+      return Math.round(speedMs * 3.6); // m/s to km/h
+    }
+  };
+  
+  const currentSpeedInUnit = gps?.position?.speed 
+    ? convertSpeed(gps.position.speed, speedLimitData.unit)
+    : currentSpeed; // fallback to prop if GPS speed unavailable
+  
+  // Determine if speeding
+  const isCurrentlySpeeding = isSpeeding(
+    currentSpeedInUnit, 
+    speedLimitData.speedLimitDisplay,
+    2 // 2 unit tolerance
+  );
 
   // Generate turn-by-turn instructions when route changes
   useEffect(() => {
@@ -179,23 +252,150 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
     <div className="fixed nav-hud-safe-area z-[60] bg-transparent w-auto max-w-lg professional-nav-interface">
       {/* Professional HUD Header */}
       <div className="flex items-center justify-between px-3 py-2 md:px-4 md:py-2.5 bg-gray-900/95 border-b border-gray-700/50">
-        {/* Left: Current Speed & Status */}
+        {/* Left: Enhanced Oval Speedometer with Speed Limit */}
         <div className="flex items-center space-x-2 md:space-x-3">
-          <div className="bg-blue-600/20 rounded-lg p-1.5 md:p-2 border border-blue-500/30">
-            <div className="flex items-center space-x-1 md:space-x-1.5">
-              <Gauge className="w-3 h-3 md:w-4 md:h-4 text-blue-400" />
-              <div className="text-right">
-                <div className="text-lg md:text-xl font-mono font-bold text-white leading-tight">{Math.round(currentSpeed)}</div>
-                <div className="text-[10px] md:text-xs text-blue-300 leading-none">MPH</div>
+          {/* Oval Speedometer */}
+          <div 
+            className={cn(
+              "rounded-full px-3 py-1.5 md:px-4 md:py-2 border transition-all duration-300",
+              isCurrentlySpeeding 
+                ? "bg-red-600/30 border-red-500/50" 
+                : "bg-blue-600/20 border-blue-500/30"
+            )}
+            data-testid="speedometer-oval"
+          >
+            <div className="flex items-center space-x-2 md:space-x-3">
+              {/* Left Section: Speed Limit */}
+              <div className="flex flex-col items-center min-w-[40px] md:min-w-[50px]">
+                {speedLimitData.speedLimitDisplay !== null ? (
+                  <>
+                    <div className={cn(
+                      "text-xs md:text-sm font-bold leading-tight",
+                      isCurrentlySpeeding ? "text-red-200" : "text-blue-200"
+                    )}>
+                      {speedLimitData.speedLimitDisplay}
+                    </div>
+                    <div className={cn(
+                      "text-[9px] md:text-[10px] leading-none uppercase",
+                      isCurrentlySpeeding ? "text-red-300" : "text-blue-300"
+                    )}>
+                      Limit
+                    </div>
+                    {/* Confidence Badge */}
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "mt-0.5 px-1 py-0 text-[8px] md:text-[9px] h-auto",
+                        getConfidenceColor(speedLimitData.confidence)
+                      )}
+                      data-testid="confidence-badge"
+                    >
+                      {speedLimitData.confidence === 'high' ? '✓' : 
+                       speedLimitData.confidence === 'medium' ? '≈' : 
+                       speedLimitData.confidence === 'low' ? '~' : '?'}
+                    </Badge>
+                  </>
+                ) : (
+                  <div className="text-[9px] md:text-[10px] text-gray-400 text-center">
+                    No limit
+                  </div>
+                )}
               </div>
+
+              {/* Center Divider */}
+              <div className={cn(
+                "h-8 md:h-10 w-px",
+                isCurrentlySpeeding ? "bg-red-400/30" : "bg-blue-400/30"
+              )} />
+
+              {/* Center Section: Current Speed */}
+              <div className="flex items-center space-x-1 md:space-x-1.5">
+                <Gauge className={cn(
+                  "w-4 h-4 md:w-5 md:h-5",
+                  isCurrentlySpeeding ? "text-red-300" : "text-blue-400"
+                )} />
+                <div className="text-center">
+                  <div className={cn(
+                    "text-2xl md:text-3xl font-mono font-bold leading-tight",
+                    isCurrentlySpeeding ? "text-white animate-pulse" : "text-white"
+                  )} data-testid="current-speed">
+                    {currentSpeedInUnit}
+                  </div>
+                  <div className={cn(
+                    "text-[10px] md:text-xs leading-none uppercase",
+                    isCurrentlySpeeding ? "text-red-300" : "text-blue-300"
+                  )}>
+                    {speedLimitData.unit}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Section: Dynamic Road Info */}
+              {(speedLimitData.roadRef || speedLimitData.junction?.ref || speedLimitData.destination) && (
+                <>
+                  <div className={cn(
+                    "h-8 md:h-10 w-px",
+                    isCurrentlySpeeding ? "bg-red-400/30" : "bg-blue-400/30"
+                  )} />
+                  <div className="flex flex-col items-center justify-center min-w-[45px] md:min-w-[55px]">
+                    {/* Road Reference Badge */}
+                    {speedLimitData.roadRef && (
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold h-auto mb-0.5",
+                          getRoadTypeBadgeColor(speedLimitData.roadType)
+                        )}
+                        data-testid="road-ref-badge"
+                      >
+                        {formatRoadRef(speedLimitData.roadRef)}
+                      </Badge>
+                    )}
+                    
+                    {/* Junction Badge (Amber) */}
+                    {speedLimitData.junction?.ref && (
+                      <Badge 
+                        variant="outline" 
+                        className="px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold h-auto bg-amber-600/25 text-amber-200 border-amber-500/40 mb-0.5"
+                        data-testid="junction-badge"
+                      >
+                        {formatJunctionRef(speedLimitData.junction.ref)}
+                      </Badge>
+                    )}
+                    
+                    {/* Destination Arrow */}
+                    {speedLimitData.destination && (
+                      <div className="text-[8px] md:text-[9px] text-gray-300 flex items-center truncate max-w-[60px]">
+                        <span className="mr-0.5">→</span>
+                        <span className="truncate" title={speedLimitData.destination}>
+                          {speedLimitData.destination.split(',')[0].trim()}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Fallback: Speeding indicator if no road data but speeding */}
+                    {!speedLimitData.roadRef && !speedLimitData.junction?.ref && !speedLimitData.destination && isCurrentlySpeeding && (
+                      <>
+                        <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-400 animate-pulse" />
+                        <div className="text-[8px] md:text-[9px] text-red-300 font-bold uppercase mt-0.5">
+                          Speeding
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
           
+          {/* Status Info */}
           <div className="text-left hidden sm:block">
-            <div className="text-xs md:text-sm text-gray-300 leading-tight">Navigation Active</div>
+            <div className="text-xs md:text-sm text-gray-300 leading-tight">
+              {speedLimitData.roadRef || speedLimitData.roadName || 'Navigation Active'}
+            </div>
             <div className="text-[10px] md:text-xs text-green-400 flex items-center">
               <Compass className="w-2.5 h-2.5 md:w-3 md:h-3 mr-0.5 md:mr-1" />
-              GPS Connected
+              GPS {speedLimitData.isLoading ? 'Updating...' : 'Connected'}
             </div>
           </div>
         </div>

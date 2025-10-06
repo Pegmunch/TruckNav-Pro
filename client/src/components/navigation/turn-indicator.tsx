@@ -83,23 +83,23 @@ const TurnIndicator = memo(function TurnIndicator({
     >
       {/* Main Turn Bubble */}
       <div className={cn(
-        "bg-slate-700/95 backdrop-blur-md",
+        "bg-white/95 backdrop-blur-md",
         "rounded-3xl shadow-2xl",
         "px-6 py-3",
         "flex items-center gap-3",
-        "border-2 border-white/20"
+        "border-2 border-gray-200/50"
       )}>
         {/* Turn Arrow */}
-        <div className="text-white" data-testid="turn-arrow">
+        <div className="text-blue-600" data-testid="turn-arrow">
           {getTurnIcon()}
         </div>
         
         {/* Distance */}
         <div className="text-center">
-          <div className="text-4xl font-black text-white leading-none" data-testid="turn-distance">
+          <div className="text-4xl font-black text-gray-900 leading-none" data-testid="turn-distance">
             {value}
           </div>
-          <div className="text-sm font-bold text-white/80 uppercase" data-testid="turn-unit">
+          <div className="text-sm font-bold text-gray-600 uppercase" data-testid="turn-unit">
             {displayUnit}
           </div>
         </div>
@@ -108,10 +108,10 @@ const TurnIndicator = memo(function TurnIndicator({
       {/* Road Name (if available) */}
       {roadName && (
         <div className={cn(
-          "bg-slate-800/90 backdrop-blur-sm",
+          "bg-white/90 backdrop-blur-sm",
           "px-4 py-1.5 rounded-full",
-          "text-white text-sm font-semibold",
-          "shadow-lg"
+          "text-gray-800 text-sm font-semibold",
+          "shadow-lg border border-gray-200/50"
         )} data-testid="turn-road-name">
           onto {roadName}
         </div>

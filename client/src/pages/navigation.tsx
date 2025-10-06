@@ -49,6 +49,7 @@ import { GPSProvider, useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 import { geocodeUKPostcode } from "@/lib/uk-postcode-geocoding";
 import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
+import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -60,6 +61,9 @@ function NavigationPageContent() {
   
   // Get GPS data from singleton provider
   const gpsData = useGPS();
+  
+  // Get user measurement preference (mi/km)
+  const { system: measurementSystem } = useMeasurement();
   
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
@@ -141,6 +145,13 @@ function NavigationPageContent() {
   // Destination reached state
   const [showDestinationReached, setShowDestinationReached] = useState(false);
   const hasShownDestinationDialogRef = useRef(false);
+  
+  // Turn-by-turn navigation state
+  const [nextTurn, setNextTurn] = useState<{
+    direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left';
+    distance: number; // in meters
+    roadName?: string;
+  } | null>(null);
   
   // Get real GPS location from singleton GPS provider (no more duplicate watchers!)
   const currentGPSLocation = gpsData?.position ? {
@@ -307,6 +318,131 @@ function NavigationPageContent() {
     
     return () => clearInterval(intervalId);
   }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
+  
+  // Calculate next turn from route and GPS position
+  useEffect(() => {
+    if (!isNavigating || !currentRoute || !gpsData?.position) {
+      setNextTurn(null);
+      return;
+    }
+
+    // Helper: Calculate distance between two coordinates using Haversine formula
+    const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+      const toRadians = (deg: number) => deg * (Math.PI / 180);
+      const R = 6371000; // Earth's radius in meters
+      
+      const dLat = toRadians(lat2 - lat1);
+      const dLng = toRadians(lng2 - lng1);
+      
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      
+      return R * c; // Distance in meters
+    };
+
+    const { latitude, longitude } = gpsData.position;
+
+    // Try to get next turn from laneGuidance first
+    if (currentRoute.laneGuidance && currentRoute.laneGuidance.length > 0) {
+      // Find the next upcoming maneuver based on GPS position
+      for (const segment of currentRoute.laneGuidance) {
+        // Calculate distance to this maneuver (convert miles to meters)
+        const distanceToManeuver = segment.distance * 1609.34;
+        
+        // If this maneuver is ahead (within reasonable navigation distance)
+        if (distanceToManeuver > 10 && distanceToManeuver < 10000) { // 10m to 10km
+          // Map maneuver type to turn direction
+          let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
+          
+          switch (segment.maneuverType) {
+            case 'turn-left':
+              direction = 'left';
+              break;
+            case 'turn-right':
+              direction = 'right';
+              break;
+            case 'straight':
+            case 'merge':
+              direction = 'straight';
+              break;
+            default:
+              direction = 'straight';
+          }
+          
+          setNextTurn({
+            direction,
+            distance: distanceToManeuver,
+            roadName: segment.roadName
+          });
+          return;
+        }
+      }
+    }
+
+    // Fallback: Calculate next turn from route waypoints
+    if (currentRoute.routePath && currentRoute.routePath.length > 1) {
+      let closestWaypointIndex = -1;
+      let minDistance = Infinity;
+
+      // Find closest waypoint ahead
+      currentRoute.routePath.forEach((waypoint, index) => {
+        const distance = calculateDistance(latitude, longitude, waypoint.lat, waypoint.lng);
+        if (distance < minDistance && distance > 10) { // Must be ahead (>10m)
+          minDistance = distance;
+          closestWaypointIndex = index;
+        }
+      });
+
+      // If we found a waypoint ahead, calculate turn direction
+      if (closestWaypointIndex >= 0 && closestWaypointIndex < currentRoute.routePath.length - 1) {
+        const currentWaypoint = currentRoute.routePath[closestWaypointIndex];
+        const nextWaypoint = currentRoute.routePath[closestWaypointIndex + 1];
+        
+        // Calculate bearing change to determine turn direction
+        const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+          const toRadians = (deg: number) => deg * (Math.PI / 180);
+          const toDegrees = (rad: number) => rad * (180 / Math.PI);
+          
+          const dLng = toRadians(lng2 - lng1);
+          const y = Math.sin(dLng) * Math.cos(toRadians(lat2));
+          const x = Math.cos(toRadians(lat1)) * Math.sin(toRadians(lat2)) -
+                    Math.sin(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.cos(dLng);
+          
+          return toDegrees(Math.atan2(y, x));
+        };
+
+        const currentBearing = calculateBearing(latitude, longitude, currentWaypoint.lat, currentWaypoint.lng);
+        const nextBearing = calculateBearing(currentWaypoint.lat, currentWaypoint.lng, nextWaypoint.lat, nextWaypoint.lng);
+        
+        let turnAngle = nextBearing - currentBearing;
+        // Normalize to [-180, 180]
+        while (turnAngle > 180) turnAngle -= 360;
+        while (turnAngle < -180) turnAngle += 360;
+
+        let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
+        
+        if (Math.abs(turnAngle) < 15) {
+          direction = 'straight';
+        } else if (turnAngle < -60) {
+          direction = 'sharp_left';
+        } else if (turnAngle < -15) {
+          direction = 'slight_left';
+        } else if (turnAngle > 60) {
+          direction = 'sharp_right';
+        } else if (turnAngle > 15) {
+          direction = 'slight_right';
+        }
+
+        setNextTurn({
+          direction,
+          distance: minDistance,
+          roadName: undefined // No road name from waypoints
+        });
+      }
+    }
+  }, [isNavigating, currentRoute, gpsData?.position]);
   
   // Detect when destination is reached
   useEffect(() => {
@@ -1942,7 +2078,7 @@ function NavigationPageContent() {
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b-4 border-gray-200 bg-white">
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b border-gray-100 bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -2006,7 +2142,7 @@ function NavigationPageContent() {
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
                   {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b-4 border-gray-200 bg-white">
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b border-gray-100 bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -2097,14 +2233,14 @@ function NavigationPageContent() {
                   )}
                   
                   {/* Turn Indicator - Large bubble at top center */}
-                  {currentRoute && (
+                  {nextTurn && (
                     <TurnIndicator
-                      direction="right"
-                      distance={1200}
-                      unit="mi"
+                      direction={nextTurn.direction}
+                      distance={nextTurn.distance}
+                      unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                      roadName={nextTurn.roadName}
                     />
                   )}
-                  {/* TODO: In production, calculate turn data from currentRoute.laneGuidance or route waypoints */}
 
                   {/* GPS Loading Indicator */}
                   {gpsLoadingState?.isLoading && (

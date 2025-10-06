@@ -140,7 +140,7 @@ export function MapShell({ children, className, onSizeChange, id = 'map-containe
       id={id}
       className={cn(
         'map-shell',
-        'relative w-full overflow-hidden',
+        'relative w-full overflow-visible',
         className
       )}
       data-testid="map-shell"

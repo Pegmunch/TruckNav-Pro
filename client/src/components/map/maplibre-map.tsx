@@ -128,6 +128,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const resetBearingFailureCountRef = useRef(0);
   const MAX_RESET_BEARING_FAILURES = 3;
   const [isMapLibreValid, setIsMapLibreValid] = useState(true);
+  const previousNavigationStateRef = useRef(isNavigating);
+  const previousPitchRef = useRef(0);
+  const previousBearingRef = useRef(0);
   
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
@@ -495,6 +498,41 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     currentZoomRef.current = currentZoom;
   }, [currentZoom]);
 
+  // Enhanced 3D Navigation Mode: Auto-activate when navigation starts, smooth exit when it ends
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+
+    const wasNavigating = previousNavigationStateRef.current;
+    const isNowNavigating = isNavigating;
+
+    // Navigation started - activate 3D mode and save previous state
+    if (!wasNavigating && isNowNavigating) {
+      console.log('[NAV-3D] Navigation started - activating enhanced 3D mode (67° pitch)');
+      previousPitchRef.current = map.current.getPitch();
+      previousBearingRef.current = map.current.getBearing();
+      setIs3DMode(true);
+    }
+    
+    // Navigation ended - smooth transition back to previous state
+    if (wasNavigating && !isNowNavigating) {
+      console.log('[NAV-3D] Navigation ended - transitioning to normal view');
+      
+      map.current.easeTo({
+        pitch: previousPitchRef.current,
+        bearing: 0,
+        zoom: Math.min(map.current.getZoom(), 16),
+        duration: 1000,
+        easing: (t) => t * (2 - t)
+      });
+      
+      // Reset 3D mode state to match previous pitch
+      const was3D = previousPitchRef.current > 30;
+      setIs3DMode(was3D);
+    }
+
+    previousNavigationStateRef.current = isNavigating;
+  }, [isNavigating, isLoaded]);
+
   useEffect(() => {
     if (!map.current) return;
 
@@ -739,7 +777,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         minZoom: 3,
         maxZoom: 19,
         minPitch: 0,
-        maxPitch: 60,
+        maxPitch: 67,
         attributionControl: false,
         refreshExpiredTiles: false,
         fadeDuration: 100,
@@ -1538,7 +1576,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         zoom: 18.5, // Slightly wider view for better context (was 19.5)
         pitch: 67, // Enhanced 3D tilt for professional perspective (was 60)
         bearing: bearing, // Rotate map so heading points up (north on screen)
-        padding: { top: 0, bottom: 280, left: 0, right: 0 }, // Push GPS marker lower (280px from bottom)
+        padding: { top: 0, bottom: 150, left: 0, right: 0 }, // Push GPS marker lower (150px from bottom)
         duration: 500,
         easing: (t) => t * (2 - t) // Smooth easing for fluid rotation
       });
@@ -1639,6 +1677,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
   const toggle3DMode = () => {
     if (!map.current) return;
+    
+    // During navigation, 3D mode is auto-controlled by GPS heading
+    // Still allow toggle, but inform user via state change
+    if (isNavigating) {
+      console.log('[3D-TOGGLE] 3D mode is auto-managed during navigation (67° pitch, heading-up rotation)');
+      // Toggle state for visual feedback, but navigation will override camera
+      setIs3DMode(!is3DMode);
+      return;
+    }
     
     const newMode = !is3DMode;
     setIs3DMode(newMode);
