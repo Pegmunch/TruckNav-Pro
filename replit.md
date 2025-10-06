@@ -80,6 +80,32 @@ Preferred communication style: Simple, everyday language.
     - **Offline Features**: Cached routes, restrictions, facilities.
     - Screen Wake Lock API, safe-area handling for iOS, Android hardware back button handling, orientation lock preferences.
 
+# CRITICAL PERMANENT FIXES - DO NOT MODIFY
+
+## Navigation UI Controls (NEVER CHANGE)
+**Issue**: Map control buttons (layers, compass, GPS, zoom, 3D) disappear during navigation on mobile
+**Root Cause**: Buttons positioned at `top-14` (56px) get hidden under PWA header (status bar + title + online indicator)
+**PERMANENT FIX**: In `client/src/components/map/maplibre-map.tsx` line 1670:
+```tsx
+isNavigating ? "top-[120px] z-[100]" : "bottom-64 z-[80]"
+```
+- NEVER change `top-[120px]` back to `top-14` or any value less than 100px
+- This ensures buttons clear the mobile header during navigation
+- hideControls prop MUST stay `false` in navigation.tsx (lines 1898, 2440)
+
+## Journey Start Authorization (NEVER CHANGE)
+**Issue**: POST /api/journeys/start and POST /api/routes/:id/monitor returned 401 Unauthorized
+**Root Cause**: Subscription middleware blocking anonymous users from starting navigation
+**PERMANENT FIX**: In `server/routes.ts`:
+- Line 2333: Journey start has NO auth requirement (supports anonymous via session tracking)
+- Line 1720: Route monitoring has NO auth requirement  
+- Both endpoints use `req.sessionID || 'anonymous'` for session-based tracking
+- CSRF protection and rate limiting still active
+
+## Toast Notification Removal
+**Issue**: GPS and POI search showing unwanted toast notifications
+**Fix**: All location-related toasts removed, silent operations only
+
 # External Dependencies
 
 ## Database Services

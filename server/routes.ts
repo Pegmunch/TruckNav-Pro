@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requireSubscription } from "./subscriptionMiddleware";
+import { requireSubscription, requireAuth } from "./subscriptionMiddleware";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -1713,8 +1713,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Route Monitoring
-  app.post("/api/routes/:id/monitor", requireSubscription, validateId, validateRequest, async (req: Request, res: Response) => {
+  // Route Monitoring - Supports anonymous users (no auth required)
+  app.post("/api/routes/:id/monitor", validateId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const route = await storage.getRoute(id);
@@ -2326,7 +2326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/journeys/start", requireSubscription, validateJourney, validateRequest, async (req: Request, res: Response) => {
+  // Navigation endpoints support anonymous users - no auth required (uses session tracking)
+  app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
     try {
       const { routeId } = req.body;
       const idempotencyKey = req.headers['idempotency-key'] as string;

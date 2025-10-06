@@ -1661,10 +1661,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       {!hideControls && (
         <>
-          {/* Map Controls - Right Side Stack for Mobile */}
+          {/* Map Controls - Right Side Stack for Mobile - PERMANENT: Always visible during navigation */}
           <div className={cn(
-            "absolute right-3 flex flex-col gap-2 mobile-safe-top pointer-events-auto",
-            isNavigating ? "top-14 z-[100]" : "bottom-64 z-[80]"
+            "absolute right-3 flex flex-col gap-2 pointer-events-auto",
+            isNavigating ? "top-[120px] z-[100]" : "bottom-64 z-[80]"
           )}>
             <Button
               size="icon"
