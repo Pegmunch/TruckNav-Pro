@@ -1,6 +1,6 @@
 # Overview
 
-This project is a specialized web application for truck navigation, designed to provide safe and efficient routing for heavy goods vehicles (HGVs). Its primary purpose is to help truck drivers plan routes that avoid restrictions based on vehicle dimensions (height, width, weight, length) and to locate truck-friendly facilities along their journey. The system aims to enhance safety and efficiency for professional drivers by offering intelligent route planning and real-time information.
+This project is a specialized web application for truck navigation, providing safe and efficient routing for Heavy Goods Vehicles (HGVs). Its primary purpose is to help truck drivers plan routes that avoid restrictions based on vehicle dimensions (height, width, weight, length) and to locate truck-friendly facilities. The system aims to enhance safety and efficiency for professional drivers through intelligent route planning, real-time information, and a mobile-first design.
 
 # User Preferences
 
@@ -10,7 +10,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Frontend
 - **Framework**: React with TypeScript and Vite.
-- **UI/UX**: Shadcn/ui (Radix UI, Tailwind CSS) with a mobile-first, 3-mode workflow (Plan → Preview → Navigate). Features include a dedicated full-screen route planner, compact trip strip, MobileFAB for one-handed operation, professional touch targets (44px+), and Day (light) theme enforced on mobile. Responsive design uses CSS clamp() density tokens. Screen Wake Lock API prevents display sleep.
+- **UI/UX**: Shadcn/ui (Radix UI, Tailwind CSS) with a mobile-first, 3-mode workflow (Plan → Preview → Navigate). Features include a full-screen route planner, compact trip strip, MobileFAB for one-handed operation, professional touch targets (44px+), Day theme enforced on mobile, and responsive design using CSS clamp() density tokens. Screen Wake Lock API prevents display sleep.
 - **Routing**: Wouter for client-side routing.
 - **State Management**: TanStack React Query for server state; React Context for local UI state.
 - **Forms**: React Hook Form with Zod validation.
@@ -21,7 +21,7 @@ Preferred communication style: Simple, everyday language.
 - **Database ORM**: Drizzle ORM with PostgreSQL dialect.
 - **API Design**: RESTful endpoints for vehicle profiles, restrictions, facilities, and routes.
 - **Authentication**: Replit Auth (OIDC) with Express sessions and PostgreSQL storage.
-- **Subscription System**: Stripe-powered subscription management with access control middleware for features.
+- **Subscription System**: Stripe-powered subscription management with access control.
 
 ## Data Storage
 - **Primary Database**: PostgreSQL with Neon serverless driver.
@@ -30,81 +30,43 @@ Preferred communication style: Simple, everyday language.
 
 ## Core Data Models
 - **Users**: Authentication and session management.
-- **Subscriptions**: User subscriptions linked to pricing plans.
-- **Subscription Plans**: 4 pricing tiers with feature access control.
+- **Subscriptions**: User subscriptions linked to pricing plans (4 tiers).
 - **Vehicle Profiles**: Dimensions, axle count, hazmat status.
-- **Restrictions**: Geographic and type-based limits (height, width, weight).
+- **Restrictions**: Geographic and type-based limits.
 - **Facilities**: Truck stops, fuel stations, parking areas with amenities.
 - **Routes**: Saved routes including start/end, coordinates, and calculated paths.
 
 ## Technical Implementations & System Design
 - **Smart Route Planning**: Calculates routes avoiding restrictions based on vehicle profiles.
-- **Intelligent Restriction Avoidance**: 
-    - **Global Coverage**: Works worldwide for all countries with geographic-based restriction filtering
-    - **Country-Specific Filtering**: Restrictions filtered by geographic bounds to ensure correct country/region checks
-    - **Spatial Validation**: Routes checked against all restrictions using Turf.js geospatial analysis
-    - **Critical Violation Detection**: System identifies non-bypassable restrictions (low bridges, weight limits)
-    - **Automatic Rerouting**: When violations detected, tries waypoint-based alternative routes
-    - **Safety Blocking**: Blocks unsafe routes if no alternative found, preventing trucks from hitting low bridges
-    - **Dimensional Checking**: Height, width, weight, and length restrictions enforced based on vehicle profile
-    - **Transparent Logging**: Country-specific restriction logging for debugging and compliance verification
+    - **Intelligent Restriction Avoidance**: Global coverage with country-specific filtering, spatial validation (Turf.js), critical violation detection, automatic rerouting, safety blocking for unsafe routes, and dimensional checking (height, width, weight, length).
 - **Facility Discovery**: Search for truck-friendly facilities by type and location.
 - **Interactive Mapping**:
     - **Map Engines**: MapLibre GL JS (primary, GPU-accelerated, 3D), Leaflet (fallback).
-    - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization.
-    - **Mobile Layout**: Map always mounted at z-0 with HUD elements overlaid.
-    - **Compass/Orientation Control**: Top-right compass button for bearing display and North reset.
-    - **Professional Navigation HUD**: Enhanced driver interface featuring lowered GPS marker (150px bottom padding for better visibility above speedometer), elongated oval speedometer with three sections displaying speed limit (left), current speed (center), and dynamic road info (right). **Enhanced Speed Limit System** queries OpenStreetMap Overpass API every 5 seconds with 100m radius coverage, includes intelligent fallback estimates based on road type when OSM data unavailable, and shows confidence indicators (high/medium/low) for transparency. **Enhanced Road Display** shows motorway/highway references (M25, A1, I-95, E40) with intelligent pattern matching, junction numbers (J15, E3) displayed in amber badges, destination arrows showing upcoming road changes (→ London), and professional color-coded badges (blue for motorways, green for A-roads, gray for regular roads). Automatically handles mph/km/h conversions based on country settings.
-    - **Enhanced 3D Navigation Mode**: Professional forward-looking perspective during navigation with 67° pitch angle and 18.5 zoom level for dramatic ahead view, automatic heading-up map rotation following travel direction, and optimized camera positioning for realistic navigation experience.
-    - **Turn-by-Turn Indicator**: Large prominent bubble at top center showing next turn direction with arrow icons, distance conversion (mi/km with automatic ft/m for short distances), optional road name display, iOS-safe positioning with notch awareness, and z-index layered above all HUD elements for maximum visibility.
-    - **Simplified Navigation Info Bar**: Minimal top bar showing only essential information (ETA and remaining distance) during active navigation for cleaner driver interface and reduced visual clutter.
-    - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding and 5-minute auto-refresh.
-    - **Traffic-Aware Route Coloring**: Routes display color-coded segments based on real-time traffic conditions, auto-resampled every 2 minutes.
-    - **Crowdsourced Incident Reporting**: Community-driven system with 23 incident types, real-time feed, map markers, 2-minute auto-refresh, and 24-hour auto-expiration.
-    - **Automatic GPS Position Lock & Real-Time Bearing Rotation**: Map auto-zooms to GPS location, rotates to match travel direction, with retry logic and error handling.
-    - **GPS Singleton Provider**: Centralized, battery-optimized GPS tracking using React Context with EMA heading smoothing.
-    - **Vehicle-Specific GPS Markers**: Responsive GPS markers displaying vehicle-type icons (truck, car, caravan) with smooth heading rotation, halo rings, shadows, and pulse animation for maximum visibility.
-    - **Dynamic Route Visualization**: GraphHopper road-snapped routes with white outline for visibility, dynamically shortens during navigation to show only remaining path from current GPS position to destination.
-    - **Road-Following Geometry**: Routes strictly follow GraphHopper's detailed road geometry with proper line styling and visual enhancements.
-    - **MapLibre WebGL Reliability**: Comprehensive WebGL capability detection with retry logic, extension checks, and graceful fallback to Leaflet.
-    - **Robustness Features**: Includes GPS auto-zoom circuit breaker, postcode search resilience (LRU cache, exponential backoff), map animation safety, and navigation mode stability with telemetry.
+    - **Persistent Tile Sources**: Four tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d).
+    - **Mobile Layout**: Map mounted at z-0 with HUD elements overlaid.
+    - **Professional Navigation HUD**: Lowered GPS marker, elongated oval speedometer with speed limit, current speed, and dynamic road info.
+        - **Enhanced Speed Limit System**: Queries OpenStreetMap Overpass API (5s, 100m radius), intelligent fallback estimates, confidence indicators, and mph/km/h conversions.
+        - **Enhanced Road Display**: Motorway/highway references (M25, A1, I-95, E40), junction numbers (J15, E3), destination arrows, and color-coded badges.
+    - **Enhanced 3D Navigation Mode**: Professional forward-looking perspective (67° pitch, 18.5 zoom), automatic heading-up rotation, optimized camera positioning.
+    - **Turn-by-Turn Indicator**: Large bubble showing next turn direction, distance conversion, optional road name, iOS-safe positioning.
+    - **Simplified Navigation Info Bar**: Minimal top bar with ETA and remaining distance.
+    - **Real-Time Traffic Visualization**: TomTom Traffic Flow API with color-coding and 5-minute auto-refresh.
+    - **Crowdsourced Incident Reporting**: 23 incident types, real-time feed, map markers, 2-minute auto-refresh, 24-hour auto-expiration.
+    - **Automatic GPS Position Lock & Real-Time Bearing Rotation**: Map auto-zooms and rotates to travel direction.
+    - **GPS Singleton Provider**: Centralized, battery-optimized GPS tracking with EMA heading smoothing.
+    - **Vehicle-Specific GPS Markers**: Responsive markers with vehicle-type icons, smooth heading rotation, halo rings, shadows, and pulse animation.
+    - **Dynamic Route Visualization**: GraphHopper road-snapped routes with white outline, dynamically shortens during navigation.
+    - **Robustness Features**: GPS auto-zoom circuit breaker, postcode search resilience, map animation safety, navigation mode stability.
 - **Address Autocomplete & POI Search**:
-    - **Photon API**: Free worldwide address search using OpenStreetMap data, integrated with GPS-powered POI search (Supermarket, Restaurant, Fuel, Shop categories).
-    - **Search Method**: Supports city names, street addresses, or landmarks. Features 3-character minimum, 300ms debouncing, and error resilience.
-    - **POI Geographic Filtering**: 150km radius filtering to prevent cross-country results while supporting rural areas
-    - **Saved Locations**: Favorites and recent searches, with silent save (no toast notifications).
+    - **Photon API**: Worldwide address search (OpenStreetMap-based) integrated with GPS-powered POI search (Supermarket, Restaurant, Fuel, Shop categories).
+    - **Search Method**: Supports city names, street addresses, or landmarks with 3-character minimum, 300ms debouncing, and 150km POI geographic filtering.
+    - **Saved Locations**: Favorites and recent searches.
 - **Mobile Compatibility & PWA**:
     - **Progressive Web App**: Offline support via service worker and IndexedDB caching.
     - **iOS Enhancements**: Custom splash screens, meta tags for fullscreen and status bar.
     - **Update Management**: Automatic update detection.
     - **Offline Features**: Cached routes, restrictions, facilities.
     - Screen Wake Lock API, safe-area handling for iOS, Android hardware back button handling, orientation lock preferences.
-
-# CRITICAL PERMANENT FIXES - DO NOT MODIFY
-
-## Navigation UI Controls (NEVER CHANGE)
-**Issue**: Map control buttons (layers, compass, GPS, zoom, 3D) disappear during navigation on mobile
-**Root Cause**: Buttons positioned at `top-14` (56px) get hidden under PWA header (status bar + title + online indicator)
-**PERMANENT FIX**: In `client/src/components/map/maplibre-map.tsx` line 1670:
-```tsx
-isNavigating ? "top-[120px] z-[100]" : "bottom-64 z-[80]"
-```
-- NEVER change `top-[120px]` back to `top-14` or any value less than 100px
-- This ensures buttons clear the mobile header during navigation
-- hideControls prop MUST stay `false` in navigation.tsx (lines 1898, 2440)
-
-## Journey Start Authorization (NEVER CHANGE)
-**Issue**: POST /api/journeys/start and POST /api/routes/:id/monitor returned 401 Unauthorized
-**Root Cause**: Subscription middleware blocking anonymous users from starting navigation
-**PERMANENT FIX**: In `server/routes.ts`:
-- Line 2333: Journey start has NO auth requirement (supports anonymous via session tracking)
-- Line 1720: Route monitoring has NO auth requirement  
-- Both endpoints use `req.sessionID || 'anonymous'` for session-based tracking
-- CSRF protection and rate limiting still active
-
-## Toast Notification Removal
-**Issue**: GPS and POI search showing unwanted toast notifications
-**Fix**: All location-related toasts removed, silent operations only
 
 # External Dependencies
 
@@ -141,16 +103,3 @@ isNavigating ? "top-[120px] z-[100]" : "bottom-64 z-[80]"
 
 ## State Management
 - **TanStack React Query**: Server state management.
-- **Mobile Compatibility & PWA**:
-    - **Progressive Web App**: Full offline support with service worker and IndexedDB caching.
-    - **Clean PWA UI**: Development banner automatically hidden in standalone/PWA mode via CSS media query `@media (display-mode: standalone)`
-    - **iOS Enhancements**: Custom splash screens for iPhone 15 Pro Max, 15 Pro, SE, 8 Plus, and iPad Pro.
-    - **iOS Meta Tags**: Black-translucent status bar, fullscreen mode, theme colors for light/dark modes.
-    - **Service Worker**: v2.0.0 with cache-first strategy for maps, network-first for APIs, background sync.
-    - **Install Prompts**: iOS-specific "Add to Home Screen" instructions with visual guides.
-    - **Update Management**: Automatic update detection with user-friendly toast notifications.
-    - **Offline Features**: Cached routes, restrictions, facilities for offline navigation.
-    - Screen Wake Lock API.
-    - Safe-area handling for iOS.
-    - Android hardware back button handling.
-    - Orientation lock preferences.
