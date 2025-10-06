@@ -14,6 +14,7 @@ interface SpeedDisplayProps {
   className?: string;
   currentSpeed?: number; // Current vehicle speed in m/s
   speedLimit?: number; // Current road speed limit in km/h
+  roadName?: string; // Current road/motorway name (e.g., "M25", "A1", "Oxford Street")
 }
 
 // Countries that use MPH (primarily US, UK, and some territories)
@@ -37,7 +38,8 @@ const MPH_COUNTRIES = [
 const SpeedDisplay = memo(function SpeedDisplay({
   className,
   currentSpeed = 0,
-  speedLimit
+  speedLimit,
+  roadName
 }: SpeedDisplayProps) {
   const { preferences } = useCountryPreferences();
   
@@ -92,15 +94,20 @@ const SpeedDisplay = memo(function SpeedDisplay({
     return 'text-blue-600 dark:text-blue-400';
   };
   
+  // Determine if road is a motorway/highway for badge styling
+  const isMotorway = roadName && /^(M\d+|A\d+M|I-\d+|US-\d+|E\d+)/.test(roadName);
+  const isARoad = roadName && /^A\d+/.test(roadName) && !isMotorway;
+  
   return (
     <div 
       className={cn(
-        "flex items-center justify-between",
-        "backdrop-blur-md rounded-2xl",
+        "flex items-center justify-between gap-3",
+        "backdrop-blur-md rounded-3xl",
         "px-4 py-3 shadow-2xl",
         "text-black dark:text-white font-bold",
-        "min-w-[200px] h-[64px]",
         "transition-all duration-300",
+        roadName ? "min-w-[280px]" : "min-w-[200px]", // Wider when road name shown
+        "h-[64px]",
         isSpeeding && "bg-red-600/95 dark:bg-red-700/90 ring-4 ring-red-500 animate-pulse",
         isNearLimit && "bg-amber-500/95 dark:bg-amber-600/90 ring-2 ring-amber-400",
         !isSpeeding && !isNearLimit && "bg-white/95 dark:bg-black/90 border-2 border-black/10 dark:border-white/10",
@@ -143,7 +150,7 @@ const SpeedDisplay = memo(function SpeedDisplay({
         isSpeeding ? "bg-white/40" : "bg-black/20 dark:bg-white/20"
       )} />
       
-      {/* Vehicle Speed Section (Right) */}
+      {/* Vehicle Speed Section (Middle) */}
       <div className="flex items-center gap-3" data-testid="vehicle-speed-section">
         <Gauge className={cn(
           "w-6 h-6 transition-colors duration-300",
@@ -164,6 +171,29 @@ const SpeedDisplay = memo(function SpeedDisplay({
           </div>
         </div>
       </div>
+      
+      {/* Road Name Section (Right) - Only shown during navigation with road name */}
+      {roadName && (
+        <>
+          {/* Separator */}
+          <div className={cn(
+            "w-[2px] h-10 rounded-full",
+            isSpeeding ? "bg-white/40" : "bg-black/20 dark:bg-white/20"
+          )} />
+          
+          <div className="flex items-center" data-testid="road-name-section">
+            <div className={cn(
+              "px-3 py-1.5 rounded-lg font-black text-sm shadow-md transition-all duration-300",
+              isMotorway && !isSpeeding && !isNearLimit && "bg-blue-600 text-white",
+              isARoad && !isSpeeding && !isNearLimit && "bg-green-600 text-white",
+              !isMotorway && !isARoad && !isSpeeding && !isNearLimit && "bg-gray-600 text-white",
+              (isSpeeding || isNearLimit) && "bg-white/30 text-white"
+            )} data-testid="road-name-badge">
+              {roadName}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 });
