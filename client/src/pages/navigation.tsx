@@ -111,6 +111,9 @@ function NavigationPageContent() {
   // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
   const [showVehicleSettings, setShowVehicleSettings] = useState(false);
   
+  // Current road name from GPS position (for speedometer display)
+  const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
+  
   // Traffic and Incidents toggle state for mobile
   const [showTrafficLayer, setShowTrafficLayer] = useState(true);
   const [showIncidents, setShowIncidents] = useState(true);
@@ -612,6 +615,77 @@ function NavigationPageContent() {
     
     return () => clearInterval(interval);
   }, [isNavigating, gpsData?.position?.smoothedHeading]);
+  
+  // Extract current road name from GPS position for speedometer display
+  useEffect(() => {
+    // Only get road name during active navigation
+    if (!isNavigating || !gpsData?.position) {
+      setCurrentRoadName(null);
+      return;
+    }
+    
+    const { latitude, longitude } = gpsData.position;
+    let isCancelled = false;
+    
+    // Debounce road name updates (every 5 seconds to avoid API spam)
+    const updateRoadName = async () => {
+      try {
+        const result = await reverseGeocode(latitude, longitude, 3000);
+        
+        if (isCancelled) return;
+        
+        if (result.success && result.fullData?.properties) {
+          const props = result.fullData.properties;
+          
+          // Extract road name in priority order:
+          // 1. Motorway/Highway reference (M25, A1, I-95, etc.)
+          // 2. Street name
+          // 3. Name of location
+          let roadName: string | null = null;
+          
+          // Check for motorway/highway reference in road name
+          if (props.street) {
+            // UK Motorways (M1, M25, etc.) and A-roads (A1, A40, etc.)
+            const ukMotorwayMatch = props.street.match(/\b(M\d+|A\d+M?)\b/);
+            // US Interstates (I-95, I-5, etc.) and Highways (US-1, Route 66, etc.)
+            const usHighwayMatch = props.street.match(/\b(I-\d+|US-\d+|Route\s+\d+)\b/i);
+            // European routes (E40, E75, etc.)
+            const euroRouteMatch = props.street.match(/\bE\d+\b/);
+            
+            if (ukMotorwayMatch) {
+              roadName = ukMotorwayMatch[0];
+            } else if (usHighwayMatch) {
+              roadName = usHighwayMatch[0].toUpperCase();
+            } else if (euroRouteMatch) {
+              roadName = euroRouteMatch[0];
+            } else {
+              roadName = props.street;
+            }
+          } else if (props.name) {
+            roadName = props.name;
+          }
+          
+          setCurrentRoadName(roadName);
+        } else {
+          setCurrentRoadName(null);
+        }
+      } catch (error) {
+        console.error('[ROAD-NAME] Failed to get road name:', error);
+        setCurrentRoadName(null);
+      }
+    };
+    
+    // Initial update
+    updateRoadName();
+    
+    // Update every 5 seconds during navigation
+    const interval = setInterval(updateRoadName, 5000);
+    
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
+  }, [isNavigating, gpsData?.position?.latitude, gpsData?.position?.longitude]);
   
   // Handle AR mode toggle
   const handleToggleAR = useCallback(() => {
@@ -1840,7 +1914,11 @@ function NavigationPageContent() {
 
                     {/* Speedometer - Above legal (z-[160]) */}
                     <div className="z-[160] pointer-events-auto" data-testid="speed-display-plan">
-                      <SpeedDisplay className="shadow-2xl" speedLimit={currentSpeedLimit || undefined} />
+                      <SpeedDisplay 
+                        className="shadow-2xl" 
+                        speedLimit={currentSpeedLimit || undefined}
+                        roadName={currentRoadName || undefined}
+                      />
                     </div>
                   </div>
 
@@ -1899,7 +1977,11 @@ function NavigationPageContent() {
 
                     {/* Speedometer - Above legal (z-[160]) */}
                     <div className="z-[160] pointer-events-auto" data-testid="speed-display-preview">
-                      <SpeedDisplay className="shadow-2xl" speedLimit={currentSpeedLimit || undefined} />
+                      <SpeedDisplay 
+                        className="shadow-2xl" 
+                        speedLimit={currentSpeedLimit || undefined}
+                        roadName={currentRoadName || undefined}
+                      />
                     </div>
                   </div>
 
@@ -2105,7 +2187,11 @@ function NavigationPageContent() {
                     }}
                     data-testid="speed-display-navigate"
                   >
-                    <SpeedDisplay className="shadow-2xl" speedLimit={currentSpeedLimit || undefined} />
+                    <SpeedDisplay 
+                      className="shadow-2xl" 
+                      speedLimit={currentSpeedLimit || undefined}
+                      roadName={currentRoadName || undefined}
+                    />
                   </div>
 
                   {/* Stop Navigation Button - Fixed position at bottom-left side (smaller) */}
