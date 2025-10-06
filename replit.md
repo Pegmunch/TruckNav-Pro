@@ -54,7 +54,7 @@ Preferred communication style: Simple, everyday language.
     - **Persistent Tile Source Design**: All 4 tile sources (roads-2d, roads-3d, satellite-2d, satellite-3d) defined at initialization.
     - **Mobile Layout**: Map always mounted at z-0 with HUD elements overlaid.
     - **Compass/Orientation Control**: Top-right compass button for bearing display and North reset.
-    - **Professional Speedometer**: GPS-based live speed tracking with visual safety warnings, intelligent color-coding, and pulsing red ring when speeding.
+    - **Professional Navigation HUD**: Enhanced driver interface featuring lowered GPS marker (150px bottom padding for better visibility above speedometer), elongated oval speedometer with three sections displaying speed limit (left), current speed (center), and dynamic road names (right). Real-time reverse geocoding extracts motorway/highway references (M25, A1, I-95, E40) and street names every 5 seconds during navigation with intelligent pattern matching for UK, US, and European road designations. Road names styled with professional badges - blue for motorways, gray for regular roads.
     - **Real-Time Traffic Visualization**: TomTom Traffic Flow API integration with automatic color-coding and 5-minute auto-refresh.
     - **Traffic-Aware Route Coloring**: Routes display color-coded segments based on real-time traffic conditions, auto-resampled every 2 minutes.
     - **Crowdsourced Incident Reporting**: Community-driven system with 23 incident types, real-time feed, map markers, 2-minute auto-refresh, and 24-hour auto-expiration.
