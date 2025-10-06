@@ -40,6 +40,7 @@ import { MapShell } from "@/components/map/map-shell";
 import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
+import TurnIndicator from "@/components/navigation/turn-indicator";
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
@@ -2046,51 +2047,26 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) */}
               {mobileNavMode === 'navigate' && (
                 <>
-                  {/* Unified Navigation HUD - Single Bar */}
+                  {/* Simplified Navigation HUD - Minimal Info Bar */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-gradient-to-b from-black to-slate-900 text-white shadow-2xl border-b-4 border-blue-500/30" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
-                      <div className="px-3 pb-2 flex items-center justify-between gap-2">
-                        {/* Left: Speed, ETA, Time, Distance */}
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="text-center shrink-0">
-                            <div className="text-[10px] opacity-75 leading-tight">Speed</div>
-                            <div className="text-xs font-bold leading-tight">
-                              {currentSpeed} mph
-                            </div>
-                          </div>
-                          <div className="h-7 w-px bg-white/30"></div>
-                          <div className="text-center shrink-0">
-                            <div className="text-[10px] opacity-75 leading-tight">ETA</div>
-                            <div className="text-xs font-bold leading-tight">
-                              {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
-                          <div className="h-7 w-px bg-white/30"></div>
-                          <div className="text-center shrink-0">
-                            <div className="text-[10px] opacity-75 leading-tight">Time</div>
-                            <div className="text-xs font-bold leading-tight">
-                              {Math.floor((currentRoute.duration || 0) / 60)}h {Math.round((currentRoute.duration || 0) % 60)}m
-                            </div>
-                          </div>
-                          <div className="h-7 w-px bg-white/30"></div>
-                          <div className="text-center shrink-0">
-                            <div className="text-[10px] opacity-75 leading-tight">Dist</div>
-                            <div className="text-xs font-bold leading-tight">
-                              {(currentRoute.distance || 0).toFixed(1)} mi
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right: Next Maneuver */}
-                        <div className="flex items-center gap-1.5 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-2 py-1 rounded-lg max-w-[40%]">
-                          <Navigation2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                          <span className="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis">
-                            Turn Right • 0.8 mi
-                          </span>
-                        </div>
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black/80 backdrop-blur-sm text-white shadow-lg" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
+                      <div className="px-4 py-2 flex items-center justify-center">
+                        <span className="text-sm font-medium">
+                          Arrive: {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} • {(currentRoute.distance || 0).toFixed(1)} mi
+                        </span>
                       </div>
                     </div>
                   )}
+                  
+                  {/* Turn Indicator - Large bubble at top center */}
+                  {currentRoute && (
+                    <TurnIndicator
+                      direction="right"
+                      distance={1200}
+                      unit="mi"
+                    />
+                  )}
+                  {/* TODO: In production, calculate turn data from currentRoute.laneGuidance or route waypoints */}
 
                   {/* GPS Loading Indicator */}
                   {gpsLoadingState?.isLoading && (
