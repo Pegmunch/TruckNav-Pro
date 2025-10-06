@@ -114,6 +114,14 @@ function NavigationPageContent() {
   // Current road name from GPS position (for speedometer display)
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
   
+  // Enhanced road info state
+  const [roadInfo, setRoadInfo] = useState<{
+    confidence: 'high' | 'medium' | 'low' | 'none';
+    roadRef: string | null;
+    junction: { name: string | null; ref: string | null; exitTo: string | null } | null;
+    destination: string | null;
+  } | null>(null);
+  
   // Traffic and Incidents toggle state for mobile
   const [showTrafficLayer, setShowTrafficLayer] = useState(true);
   const [showIncidents, setShowIncidents] = useState(true);
@@ -253,36 +261,48 @@ function NavigationPageContent() {
     checkARSupport();
   }, []);
   
-  // Fetch speed limit when GPS position changes
+  // Fetch enhanced speed limit and road info when GPS position changes
   useEffect(() => {
     if (!gpsData?.position) {
       setCurrentSpeedLimit(null);
+      setRoadInfo(null);
       return;
     }
     
     const { latitude, longitude } = gpsData.position;
     
-    // Debounce speed limit requests (only fetch every 5 seconds)
-    const fetchSpeedLimit = async () => {
+    // Debounce road info requests (only fetch every 5 seconds)
+    const fetchRoadInfo = async () => {
       try {
         const response = await fetch(`/api/speed-limit?lat=${latitude}&lng=${longitude}`);
         if (response.ok) {
           const data = await response.json();
+          
+          // Update speed limit
           if (data.speedLimit) {
             setCurrentSpeedLimit(data.speedLimit);
-            console.log(`[SPEED-LIMIT] ${data.speedLimit} km/h on ${data.roadName || 'road'}`);
           } else {
             setCurrentSpeedLimit(null);
           }
+          
+          // Update enhanced road info
+          setRoadInfo({
+            confidence: data.confidence || 'none',
+            roadRef: data.roadRef,
+            junction: data.junction,
+            destination: data.destination
+          });
+          
+          console.log(`[ROAD-INFO] ${data.speedLimit || 'No'} km/h (${data.confidence}) on ${data.roadRef || data.roadName || 'road'}${data.junction?.ref ? ` - Junction ${data.junction.ref}` : ''}`);
         }
       } catch (error) {
-        console.warn('[SPEED-LIMIT] Lookup failed:', error);
+        console.warn('[ROAD-INFO] Lookup failed:', error);
       }
     };
     
     // Fetch immediately, then set up interval
-    fetchSpeedLimit();
-    const intervalId = setInterval(fetchSpeedLimit, 5000); // Update every 5 seconds
+    fetchRoadInfo();
+    const intervalId = setInterval(fetchRoadInfo, 5000); // Update every 5 seconds
     
     return () => clearInterval(intervalId);
   }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
@@ -1918,6 +1938,7 @@ function NavigationPageContent() {
                         className="shadow-2xl" 
                         speedLimit={currentSpeedLimit || undefined}
                         roadName={currentRoadName || undefined}
+                        roadInfo={roadInfo}
                       />
                     </div>
                   </div>
@@ -1981,6 +2002,7 @@ function NavigationPageContent() {
                         className="shadow-2xl" 
                         speedLimit={currentSpeedLimit || undefined}
                         roadName={currentRoadName || undefined}
+                        roadInfo={roadInfo}
                       />
                     </div>
                   </div>
@@ -2191,6 +2213,7 @@ function NavigationPageContent() {
                       className="shadow-2xl" 
                       speedLimit={currentSpeedLimit || undefined}
                       roadName={currentRoadName || undefined}
+                      roadInfo={roadInfo}
                     />
                   </div>
 

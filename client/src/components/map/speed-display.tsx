@@ -15,6 +15,12 @@ interface SpeedDisplayProps {
   currentSpeed?: number; // Current vehicle speed in m/s
   speedLimit?: number; // Current road speed limit in km/h
   roadName?: string; // Current road/motorway name (e.g., "M25", "A1", "Oxford Street")
+  roadInfo?: {
+    confidence: 'high' | 'medium' | 'low' | 'none';
+    roadRef: string | null;
+    junction: { name: string | null; ref: string | null; exitTo: string | null } | null;
+    destination: string | null;
+  } | null;
 }
 
 // Countries that use MPH (primarily US, UK, and some territories)
@@ -39,7 +45,8 @@ const SpeedDisplay = memo(function SpeedDisplay({
   className,
   currentSpeed = 0,
   speedLimit,
-  roadName
+  roadName,
+  roadInfo
 }: SpeedDisplayProps) {
   const { preferences } = useCountryPreferences();
   
@@ -97,6 +104,48 @@ const SpeedDisplay = memo(function SpeedDisplay({
   // Determine if road is a motorway/highway for badge styling
   const isMotorway = roadName && /^(M\d+|A\d+M|I-\d+|US-\d+|E\d+)/.test(roadName);
   const isARoad = roadName && /^A\d+/.test(roadName) && !isMotorway;
+  
+  // Build enhanced road display text
+  const getRoadDisplayText = () => {
+    // Priority 1: Use roadRef from API if available (most accurate)
+    if (roadInfo?.roadRef) {
+      return roadInfo.roadRef;
+    }
+    
+    // Priority 2: Use roadName from reverse geocoding
+    if (roadName) {
+      return roadName;
+    }
+    
+    return null;
+  };
+  
+  const displayRoadName = getRoadDisplayText();
+  
+  // Get junction display text if available
+  const getJunctionText = () => {
+    if (!roadInfo?.junction) return null;
+    
+    const { ref, name, exitTo } = roadInfo.junction;
+    
+    if (ref) {
+      return `J${ref}`;
+    }
+    
+    if (name) {
+      return name.replace('Junction ', 'J').replace('Exit ', 'E');
+    }
+    
+    return null;
+  };
+  
+  const junctionText = getJunctionText();
+  
+  // Get destination text if available
+  const destinationText = roadInfo?.destination;
+  
+  // Show confidence indicator for speed limit
+  const showConfidenceIndicator = roadInfo?.confidence === 'medium' || roadInfo?.confidence === 'low';
   
   return (
     <div 
@@ -172,8 +221,8 @@ const SpeedDisplay = memo(function SpeedDisplay({
         </div>
       </div>
       
-      {/* Road Name Section (Right) - Only shown during navigation with road name */}
-      {roadName && (
+      {/* Enhanced Road Info Section (Right) - Shows road name, junction, and destination */}
+      {displayRoadName && (
         <>
           {/* Separator */}
           <div className={cn(
@@ -181,16 +230,49 @@ const SpeedDisplay = memo(function SpeedDisplay({
             isSpeeding ? "bg-white/40" : "bg-black/20 dark:bg-white/20"
           )} />
           
-          <div className="flex items-center" data-testid="road-name-section">
-            <div className={cn(
-              "px-3 py-1.5 rounded-lg font-black text-sm shadow-md transition-all duration-300",
-              isMotorway && !isSpeeding && !isNearLimit && "bg-blue-600 text-white",
-              isARoad && !isSpeeding && !isNearLimit && "bg-green-600 text-white",
-              !isMotorway && !isARoad && !isSpeeding && !isNearLimit && "bg-gray-600 text-white",
-              (isSpeeding || isNearLimit) && "bg-white/30 text-white"
-            )} data-testid="road-name-badge">
-              {roadName}
+          <div className="flex flex-col gap-0.5 min-w-0" data-testid="road-name-section">
+            {/* Primary Road Name Badge */}
+            <div className="flex items-center gap-1.5">
+              <div className={cn(
+                "px-3 py-1 rounded-lg font-black text-sm shadow-md transition-all duration-300 whitespace-nowrap",
+                isMotorway && !isSpeeding && !isNearLimit && "bg-blue-600 text-white",
+                isARoad && !isSpeeding && !isNearLimit && "bg-green-600 text-white",
+                !isMotorway && !isARoad && !isSpeeding && !isNearLimit && "bg-gray-600 text-white",
+                (isSpeeding || isNearLimit) && "bg-white/30 text-white"
+              )} data-testid="road-name-badge">
+                {displayRoadName}
+              </div>
+              
+              {/* Junction Badge (if available) */}
+              {junctionText && (
+                <div className={cn(
+                  "px-2 py-1 rounded-md font-bold text-xs shadow-sm transition-all duration-300 whitespace-nowrap",
+                  isSpeeding || isNearLimit ? "bg-white/20 text-white" : "bg-amber-500 text-white"
+                )} data-testid="junction-badge">
+                  {junctionText}
+                </div>
+              )}
+              
+              {/* Confidence Indicator for Estimated Speed Limits */}
+              {showConfidenceIndicator && convertedSpeedLimit && (
+                <div className={cn(
+                  "px-1.5 py-0.5 rounded text-[10px] font-bold",
+                  roadInfo?.confidence === 'medium' ? "bg-amber-500/80 text-white" : "bg-orange-500/80 text-white"
+                )} data-testid="confidence-indicator" title={`Speed limit ${roadInfo?.confidence === 'medium' ? 'estimated' : 'uncertain'}`}>
+                  {roadInfo?.confidence === 'medium' ? '~' : '?'}
+                </div>
+              )}
             </div>
+            
+            {/* Destination Text (if available) */}
+            {destinationText && (
+              <div className={cn(
+                "text-[10px] font-semibold truncate max-w-[140px]",
+                isSpeeding || isNearLimit ? "text-white/90" : "text-gray-600 dark:text-gray-300"
+              )} data-testid="destination-text" title={destinationText}>
+                → {destinationText}
+              </div>
+            )}
           </div>
         </>
       )}

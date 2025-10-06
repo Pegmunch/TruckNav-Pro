@@ -2145,7 +2145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Speed Limit Lookup using OpenStreetMap Overpass API
+  // Enhanced Speed Limit & Road Info Lookup using OpenStreetMap Overpass API
   app.get("/api/speed-limit", async (req: Request, res: Response) => {
     try {
       const { lat, lng } = req.query;
@@ -2161,11 +2161,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid coordinates" });
       }
       
-      // Query OpenStreetMap Overpass API for speed limits
-      const radius = 50; // meters
+      // Query OpenStreetMap Overpass API for detailed road information
+      const radius = 100; // Increased from 50m to 100m for better coverage
       const query = `
         [out:json][timeout:5];
-        way[highway][maxspeed](around:${radius},${latitude},${longitude});
+        (
+          way[highway](around:${radius},${latitude},${longitude});
+          node[highway=motorway_junction](around:500,${latitude},${longitude});
+        );
         out tags;
       `;
       
@@ -2179,50 +2182,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (!overpassResponse.ok) {
-        console.warn('Overpass API error:', overpassResponse.status);
+        console.warn('[SPEED-LIMIT] Overpass API error:', overpassResponse.status);
         return res.json({ speedLimit: null, source: 'unavailable' });
       }
       
       const data = await overpassResponse.json();
       
-      // Extract speed limit from nearest road
+      // Helper function to estimate speed limits based on road type
+      const estimateSpeedLimit = (roadType: string): number | null => {
+        const speedEstimates: Record<string, number> = {
+          'motorway': 120,
+          'motorway_link': 80,
+          'trunk': 100,
+          'trunk_link': 70,
+          'primary': 80,
+          'primary_link': 60,
+          'secondary': 60,
+          'tertiary': 50,
+          'residential': 30,
+          'living_street': 20,
+          'service': 20,
+          'unclassified': 50
+        };
+        return speedEstimates[roadType] || null;
+      };
+      
+      // Extract road information from nearest road
       if (data.elements && data.elements.length > 0) {
-        // Find first element with maxspeed tag
-        const roadWithSpeed = data.elements.find((element: any) => element.tags?.maxspeed);
+        // Separate ways (roads) from nodes (junctions)
+        const ways = data.elements.filter((el: any) => el.type === 'way');
+        const junctions = data.elements.filter((el: any) => el.type === 'node' && el.tags?.highway === 'motorway_junction');
         
-        if (roadWithSpeed?.tags?.maxspeed) {
-          const maxspeed = roadWithSpeed.tags.maxspeed;
+        // Find nearest road
+        const nearestRoad = ways.length > 0 ? ways[0] : null;
+        
+        if (nearestRoad?.tags) {
+          const tags = nearestRoad.tags;
+          const maxspeed = tags.maxspeed;
+          const roadType = tags.highway;
           
           // Parse speed limit (handles formats like "50", "50 mph", "50 km/h")
           let speedKmh: number | null = null;
+          let speedSource: string = 'not_found';
           
-          if (maxspeed === 'none' || maxspeed === 'signals') {
-            // No speed limit or variable speed limit
-            speedKmh = null;
-          } else if (maxspeed.includes('mph')) {
-            // Convert mph to km/h
-            const mph = parseInt(maxspeed.replace(/[^0-9]/g, ''));
-            speedKmh = Math.round(mph * 1.60934);
-          } else {
-            // Assume km/h
-            speedKmh = parseInt(maxspeed.replace(/[^0-9]/g, ''));
+          if (maxspeed) {
+            if (maxspeed === 'none' || maxspeed === 'signals') {
+              // No speed limit or variable speed limit
+              speedKmh = null;
+              speedSource = 'variable';
+            } else if (maxspeed.includes('mph')) {
+              // Convert mph to km/h
+              const mph = parseInt(maxspeed.replace(/[^0-9]/g, ''));
+              speedKmh = Math.round(mph * 1.60934);
+              speedSource = 'openstreetmap';
+            } else {
+              // Assume km/h
+              speedKmh = parseInt(maxspeed.replace(/[^0-9]/g, ''));
+              speedSource = 'openstreetmap';
+            }
+          } else if (roadType) {
+            // Fallback: estimate based on road type
+            speedKmh = estimateSpeedLimit(roadType);
+            speedSource = 'estimated';
           }
+          
+          // Extract road reference (e.g., "M25", "A1", "I-95")
+          const roadRef = tags.ref || null;
+          
+          // Extract road name
+          let roadName = tags.name || null;
+          
+          // If we have a ref, prioritize it over name for motorways
+          if (roadRef && (roadType === 'motorway' || roadType === 'trunk')) {
+            roadName = roadRef;
+          }
+          
+          // Extract junction information
+          let junctionInfo = null;
+          if (junctions.length > 0) {
+            const nearestJunction = junctions[0];
+            junctionInfo = {
+              name: nearestJunction.tags?.name || null,
+              ref: nearestJunction.tags?.ref || null,
+              exitTo: nearestJunction.tags?.exit_to || nearestJunction.tags?.destination || null
+            };
+          }
+          
+          // Extract destination/direction information
+          const destination = tags.destination || tags['destination:ref'] || null;
+          const destinationRef = tags['destination:ref'] || null;
           
           return res.json({
             speedLimit: speedKmh,
-            source: 'openstreetmap',
-            roadType: roadWithSpeed.tags.highway,
-            roadName: roadWithSpeed.tags.name || 'Unknown Road'
+            source: speedSource,
+            confidence: speedSource === 'openstreetmap' ? 'high' : speedSource === 'estimated' ? 'medium' : 'low',
+            roadType: roadType,
+            roadName: roadName,
+            roadRef: roadRef,
+            destination: destination,
+            destinationRef: destinationRef,
+            junction: junctionInfo,
+            lanes: tags.lanes ? parseInt(tags.lanes) : null,
+            surface: tags.surface || null,
+            oneway: tags.oneway === 'yes'
           });
         }
       }
       
-      // No speed limit found - return null
-      res.json({ speedLimit: null, source: 'not_found' });
+      // No road data found - return null with fallback info
+      console.log('[SPEED-LIMIT] No road data found near coordinates');
+      res.json({ speedLimit: null, source: 'not_found', confidence: 'none' });
       
     } catch (error) {
-      console.error("Speed limit lookup error:", error);
-      res.status(500).json({ message: "Failed to get speed limit", speedLimit: null });
+      console.error("[SPEED-LIMIT] Lookup error:", error);
+      res.status(500).json({ message: "Failed to get speed limit", speedLimit: null, source: 'error' });
     }
   });
 
