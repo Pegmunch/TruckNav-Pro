@@ -1529,12 +1529,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     // Center map on user location during navigation with smooth rotation using smoothed heading
     // This creates "heading-up" mode where travel direction always points upward
+    // GPS marker positioned lower on screen (just above speedometer) using bottom padding
     if (isNavigating) {
       mapInstance.easeTo({
         center: [longitude, latitude],
         zoom: 19.5,
         pitch: 60, // 3D tilt for better perspective
         bearing: bearing, // Rotate map so heading points up (north on screen)
+        padding: { top: 0, bottom: 280, left: 0, right: 0 }, // Push GPS marker lower (280px from bottom)
         duration: 500,
         easing: (t) => t * (2 - t) // Smooth easing for fluid rotation
       });
