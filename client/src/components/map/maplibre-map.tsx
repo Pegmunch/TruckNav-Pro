@@ -1533,8 +1533,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     if (isNavigating) {
       mapInstance.easeTo({
         center: [longitude, latitude],
-        zoom: 19.5,
-        pitch: 60, // 3D tilt for better perspective
+        zoom: 18.5, // Slightly wider view for better context (was 19.5)
+        pitch: 67, // Enhanced 3D tilt for professional perspective (was 60)
         bearing: bearing, // Rotate map so heading points up (north on screen)
         padding: { top: 0, bottom: 280, left: 0, right: 0 }, // Push GPS marker lower (280px from bottom)
         duration: 500,
