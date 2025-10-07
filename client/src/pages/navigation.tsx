@@ -691,14 +691,19 @@ function NavigationPageContent() {
   useEffect(() => {
     if (!isMobile) return; // Only applies to mobile
     
+    console.log('[NAV-MODE-DEBUG] useEffect triggered - isNavigating:', isNavigating, 'currentRoute:', !!currentRoute, 'mobileNavMode:', mobileNavMode);
+    
     if (isNavigating) {
+      console.log('[NAV-MODE-DEBUG] Setting navigate mode via debounced');
       setMobileNavModeDebounced('navigate');
     } else if (currentRoute) {
+      console.log('[NAV-MODE-DEBUG] Setting preview mode via debounced');
       setMobileNavModeDebounced('preview');
     } else {
+      console.log('[NAV-MODE-DEBUG] Setting plan mode via debounced');
       setMobileNavModeDebounced('plan');
     }
-  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced]);
+  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode]);
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
   useEffect(() => {
@@ -1734,7 +1739,9 @@ function NavigationPageContent() {
       });
       
       // Update navigation state after successful activation
+      console.log('[NAV-MODE-DEBUG] Setting isNavigating=true after successful activation');
       setIsNavigating(true);
+      console.log('[NAV-MODE-DEBUG] isNavigating set to true');
       
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
