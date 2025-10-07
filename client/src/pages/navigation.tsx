@@ -993,6 +993,13 @@ function NavigationPageContent() {
   useEffect(() => {
     if (currentJourney) {
       setActiveJourney(currentJourney);
+      
+      // CRITICAL FIX: Load the journey's route into currentRoute state!
+      if (currentJourney.route) {
+        console.log('[JOURNEY-LOAD] Loading route from journey:', currentJourney.route);
+        setCurrentRoute(currentJourney.route);
+      }
+      
       if (currentJourney.status === 'active') {
         setIsNavigating(true);
       }
