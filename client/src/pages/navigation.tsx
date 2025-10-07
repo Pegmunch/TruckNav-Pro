@@ -1653,6 +1653,14 @@ function NavigationPageContent() {
 
   // Production-grade robust navigation flow
   const handleStartNavigation = async () => {
+    console.log('[NAV-START-DEBUG] Start Navigation clicked!');
+    console.log('[NAV-START-DEBUG] currentRoute:', currentRoute);
+    console.log('[NAV-START-DEBUG] fromLocation:', fromLocation);
+    console.log('[NAV-START-DEBUG] toLocation:', toLocation);
+    console.log('[NAV-START-DEBUG] selectedProfile:', selectedProfile);
+    console.log('[NAV-START-DEBUG] mobileNavMode:', mobileNavMode);
+    console.log('[NAV-START-DEBUG] canStartNavigation():', canStartNavigation());
+    
     // Clear any pending debounced mode transitions
     if (modeTransitionTimeoutRef.current) {
       clearTimeout(modeTransitionTimeoutRef.current);
@@ -1660,6 +1668,7 @@ function NavigationPageContent() {
     
     // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
+      console.log('[NAV-START-DEBUG] canStartNavigation() returned FALSE - blocking navigation');
       toast({
         title: "Cannot Start Navigation",
         description: "Please plan a route first",
@@ -1667,6 +1676,8 @@ function NavigationPageContent() {
       });
       return;
     }
+    
+    console.log('[NAV-START-DEBUG] Validation passed, proceeding with navigation start');
     
     // Set navigate mode SYNCHRONOUSLY after validation passes
     setMobileNavMode('navigate');
