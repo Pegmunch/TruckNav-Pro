@@ -251,7 +251,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
   return (
     <div className="fixed nav-hud-safe-area z-[60] bg-transparent w-auto max-w-lg professional-nav-interface">
       {/* Professional HUD Header */}
-      <div className="flex items-center justify-between px-3 py-2 md:px-4 md:py-2.5 bg-gray-900/95 border-b border-gray-700/50">
+      <div className="flex items-center justify-between px-3 py-2 md:px-4 md:py-2.5 bg-gray-900/95 border-b border-gray-700/30">
         {/* Left: Enhanced Oval Speedometer with Speed Limit */}
         <div className="flex items-center space-x-2 md:space-x-3">
           {/* Oval Speedometer */}

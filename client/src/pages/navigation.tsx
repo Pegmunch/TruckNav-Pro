@@ -2296,10 +2296,10 @@ function NavigationPageContent() {
 
                   {/* Map Control Buttons - Right Side Stack (z-[120]+) - All buttons clickable */}
                   <div 
-                    className="absolute z-[120] flex flex-col gap-2.5 pointer-events-auto" 
+                    className="absolute z-[120] flex flex-col gap-3 pointer-events-auto" 
                     style={{ 
                       top: 'calc(4.5rem + var(--safe-area-top))',
-                      right: 'calc(0.75rem + var(--safe-area-right))'
+                      right: 'calc(1rem + var(--safe-area-right))'
                     }}
                   >
                     <Button
