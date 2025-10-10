@@ -2385,7 +2385,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/journeys/:id/activate", requireSubscription, validateNumericId, validateRequest, async (req: Request, res: Response) => {
+  // Navigation endpoints support anonymous users - no subscription required
+  app.patch("/api/journeys/:id/activate", validateNumericId, validateRequest, async (req: Request, res: Response) => {
     const { id } = req.params;
     const idempotencyKey = req.headers['idempotency-key'] as string;
     console.log(`[JOURNEY ACTIVATION] Starting activation for journey ${id} with key: ${idempotencyKey}`);
@@ -2427,7 +2428,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/journeys/:id/complete", requireSubscription, validateNumericId, validateRequest, async (req: Request, res: Response) => {
+  // Navigation endpoints support anonymous users - no subscription required
+  app.patch("/api/journeys/:id/complete", validateNumericId, validateRequest, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
