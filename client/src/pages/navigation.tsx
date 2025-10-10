@@ -998,6 +998,20 @@ function NavigationPageContent() {
       if (currentJourney.route) {
         console.log('[JOURNEY-LOAD] Loading route from journey:', currentJourney.route);
         setCurrentRoute(currentJourney.route);
+        
+        // CRITICAL FIX: Populate location fields from route data
+        if (currentJourney.route.startLocation) {
+          setFromLocation(currentJourney.route.startLocation);
+          if (currentJourney.route.startCoordinates) {
+            setFromCoordinates(currentJourney.route.startCoordinates);
+          }
+        }
+        if (currentJourney.route.endLocation) {
+          setToLocation(currentJourney.route.endLocation);
+          if (currentJourney.route.endCoordinates) {
+            setToCoordinates(currentJourney.route.endCoordinates);
+          }
+        }
       }
       
       if (currentJourney.status === 'active') {
