@@ -1974,19 +1974,25 @@ function NavigationPageContent() {
   const handleSelectFacility = (facility: any) => {
     // Navigate to selected facility
     setToLocation(facility.address || facility.name);
-    toast({
-      title: "Facility selected",
-      description: `Set destination to ${facility.name}`,
-    });
+    // Hide toast in mobile view - user requested no popups
+    if (window.innerWidth >= 768) {
+      toast({
+        title: "Facility selected",
+        description: `Set destination to ${facility.name}`,
+      });
+    }
   };
 
   // Handle navigation to location - for left sidebar
   const handleNavigateToLocation = (location: string) => {
     setToLocation(location);
-    toast({
-      title: "Destination set",
-      description: `Navigating to: ${location}`,
-    });
+    // Hide toast in mobile view - user requested no popups
+    if (window.innerWidth >= 768) {
+      toast({
+        title: "Destination set",
+        description: `Navigating to: ${location}`,
+      });
+    }
   };
 
   // Get current coordinates for search (fallback to London if not available)
