@@ -2326,6 +2326,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get journey by ID with route data
+  app.get("/api/journeys/:id", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const journey = await storage.getJourney(parseInt(id));
+      if (!journey) {
+        return res.status(404).json({ message: "Journey not found" });
+      }
+      
+      // Fetch the associated route
+      const route = await storage.getRoute(journey.routeId);
+      
+      // Return journey with route embedded
+      res.json({
+        ...journey,
+        route: route || null
+      });
+    } catch (error) {
+      console.error(`[JOURNEY-GET] Error fetching journey:`, error);
+      res.status(500).json({ message: "Failed to get journey" });
+    }
+  });
+
   // Navigation endpoints support anonymous users - no auth required (uses session tracking)
   app.post("/api/journeys/start", validateJourney, validateRequest, async (req: Request, res: Response) => {
     try {
