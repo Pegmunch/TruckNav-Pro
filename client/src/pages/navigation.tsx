@@ -1686,10 +1686,7 @@ function NavigationPageContent() {
     
     console.log('[NAV-START-DEBUG] Validation passed, proceeding with navigation start');
     
-    // Set navigate mode SYNCHRONOUSLY after validation passes
-    setMobileNavMode('navigate');
-    
-    // Comprehensive validation
+    // Additional comprehensive validation before starting
     if (!fromLocation || !toLocation) {
       toast({
         title: "Missing locations",
@@ -1755,6 +1752,9 @@ function NavigationPageContent() {
         journeyId, 
         idempotencyKey 
       });
+      
+      // Set navigate mode AFTER successful activation
+      setMobileNavMode('navigate');
       
       // Update navigation state after successful activation
       console.log('[NAV-MODE-DEBUG] Setting isNavigating=true after successful activation');
