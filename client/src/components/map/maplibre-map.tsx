@@ -1748,7 +1748,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           {/* Map Controls - Right Side Stack for Mobile - PERMANENT: Always visible during navigation */}
           <div className={cn(
             "absolute right-3 flex flex-col gap-3 pointer-events-auto safe-area-top",
-            isNavigating ? "top-[100px] z-[120]" : "bottom-64 z-[80]"
+            isNavigating ? "top-[100px] z-[500]" : "bottom-64 z-[450]"
           )}>
             <Button
               size="icon"
