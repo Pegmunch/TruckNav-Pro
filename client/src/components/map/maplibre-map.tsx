@@ -1574,9 +1574,16 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         .addTo(mapInstance);
       
       // CRITICAL: Force marker to appear above all other elements
-      if (el.parentElement) {
-        el.parentElement.style.zIndex = '9999';
-      }
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        if (el.parentElement) {
+          el.parentElement.style.zIndex = '9999';
+          el.parentElement.style.pointerEvents = 'none';
+          console.log('[GPS-MARKER] Z-index applied to parent element');
+        } else {
+          console.warn('[GPS-MARKER] Parent element not found for z-index');
+        }
+      }, 0);
       
       console.log('[GPS-MARKER] ✅ New marker added to map at:', [longitude, latitude]);
     } else {

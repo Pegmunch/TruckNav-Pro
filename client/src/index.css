@@ -1580,6 +1580,23 @@ select:focus-visible,
   50% { opacity: 0.9; transform: scale(1.02); }
 }
 
+/* GPS Marker Visibility Fix */
+.maplibregl-marker {
+  z-index: 9999 !important;
+}
+
+.user-position-marker {
+  z-index: 9999 !important;
+  position: relative !important;
+}
+
+/* Ensure MapLibre markers are always visible */
+.maplibregl-canvas-container .maplibregl-marker {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 /* Amazon Fire TV and 10-foot UI Optimizations */
 @media (orientation: landscape) and (min-width: 1280px) and (min-height: 720px) {
   /* Fire TV specific styles for TruckNav Pro */
