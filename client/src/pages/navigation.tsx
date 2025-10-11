@@ -1270,39 +1270,23 @@ function NavigationPageContent() {
         duration: 3000,
       });
 
-      // Auto-transition to navigation mode after 2-second preview in mobile
-      console.log('[AUTO-NAV] Route calculated - checking conditions...');
+      // DISABLED: Auto-transition to navigation mode - User must manually click "Start Navigation"
+      // Show preview mode only, let user manually start navigation
+      console.log('[AUTO-NAV] Route calculated - showing preview mode only');
       console.log('[AUTO-NAV] isMobile:', isMobile);
       console.log('[AUTO-NAV] route exists:', !!route);
       console.log('[AUTO-NAV] coordinates length:', route?.coordinates?.length || 0);
       
       if (isMobile && route && route.coordinates && route.coordinates.length > 0) {
-        console.log('[AUTO-NAV] ✅ All conditions met - Starting auto-navigation flow');
+        console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
         
-        // Show preview mode for 2 seconds
+        // Show preview mode - user must manually click "Start Navigation" button
         setMobileNavMode('preview');
-        console.log('[AUTO-NAV] Set to preview mode, will navigate in 2 seconds');
         
-        // Then auto-transition to navigation mode (UI only, no subscription required)
-        setTimeout(() => {
-          console.log('[AUTO-NAV] ⏰ Timeout fired - Transitioning to navigate mode NOW');
-          setMobileNavMode('navigate');
-          setIsNavigating(true);
-          
-          // Close route planning panel if open
-          setSidebarState('collapsed');
-          
-          // Visual feedback
-          toast({
-            title: "🚚 Navigation Started",
-            description: "Follow the route on your map",
-            duration: 2000,
-          });
-          
-          console.log('[AUTO-NAV] ✅ Navigate mode active, isNavigating=true');
-        }, 2000);
+        // Close route planning panel if open
+        setSidebarState('collapsed');
       } else {
-        console.log('[AUTO-NAV] ❌ Conditions NOT met - auto-nav skipped');
+        console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
       }
     },
     onError: (error) => {
