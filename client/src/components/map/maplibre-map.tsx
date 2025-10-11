@@ -1372,7 +1372,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   // GPS tracking and user position marker (using centralized GPS hook)
   // CRITICAL: GPS marker must ALWAYS be visible on any map scenario
   useEffect(() => {
+    console.log('[GPS-MARKER] Effect triggered - map:', !!map.current, 'isLoaded:', isLoaded, 'hasGPS:', !!gpsPosition);
+    
     if (!map.current || !isLoaded) {
+      console.log('[GPS-MARKER] Skipping - map or isLoaded not ready');
       return;
     }
 
@@ -1384,6 +1387,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     const longitude = gpsPosition?.longitude ?? mapInstance.getCenter().lng;
     const smoothedHeading = gpsPosition?.smoothedHeading ?? null;
     const accuracy = gpsPosition?.accuracy ?? null;
+    
+    console.log('[GPS-MARKER] Creating/updating marker at:', { lat: latitude, lng: longitude, hasGPS });
     
     // Use smoothed heading for fluid rotation, fallback to raw heading if smoothing disabled
     const bearing = smoothedHeading ?? gpsPosition?.heading ?? 0;
@@ -1433,7 +1438,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
                            accuracy < 100 ? 'fair' : 'poor';
       
       const accuracyColors = {
-        unavailable: { ring: '#9ca3af', glow: 'rgba(156, 163, 175, 0.4)', markerBg: 'linear-gradient(145deg, #6b7280 0%, #4b5563 50%, #374151 100%)' },
+        unavailable: { ring: '#f97316', glow: 'rgba(249, 115, 22, 0.6)', markerBg: 'linear-gradient(145deg, #f97316 0%, #ea580c 50%, #c2410c 100%)' }, // Bright orange for visibility
         excellent: { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
         good: { ring: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
         fair: { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
@@ -1566,10 +1571,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       })
         .setLngLat([longitude, latitude])
         .addTo(mapInstance);
+      
+      console.log('[GPS-MARKER] ✅ New marker added to map at:', [longitude, latitude]);
     } else {
       // Update existing marker position and rotation
       userMarkerRef.current.setLngLat([longitude, latitude]);
       userMarkerRef.current.setRotation(bearing);
+      console.log('[GPS-MARKER] ✅ Marker updated at:', [longitude, latitude]);
     }
 
     // Center map on user location during navigation with smooth rotation using smoothed heading
