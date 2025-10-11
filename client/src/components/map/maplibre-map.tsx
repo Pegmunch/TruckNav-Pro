@@ -1395,9 +1395,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
-      // Fixed marker size to stay within route line width (~40-50px at zoom 19.5)
-      const markerSize = 32; // Fixed 32px to ensure it stays within the route line
-      const borderWidth = 2; // Thin 2px border
+      // LARGER marker size for mobile visibility
+      const markerSize = 48; // Increased to 48px for better mobile visibility
+      const borderWidth = 3; // Thicker 3px border
       
       // Determine vehicle icon based on selected profile
       let vehicleIcon = '';
@@ -1438,7 +1438,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
                            accuracy < 100 ? 'fair' : 'poor';
       
       const accuracyColors = {
-        unavailable: { ring: '#f97316', glow: 'rgba(249, 115, 22, 0.6)', markerBg: 'linear-gradient(145deg, #f97316 0%, #ea580c 50%, #c2410c 100%)' }, // Bright orange for visibility
+        unavailable: { ring: '#ff6600', glow: 'rgba(255, 102, 0, 0.8)', markerBg: 'linear-gradient(145deg, #ff6600 0%, #ff4400 50%, #ff2200 100%)' }, // BRIGHTER orange for visibility
         excellent: { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
         good: { ring: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
         fair: { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
