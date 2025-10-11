@@ -1569,14 +1569,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     // Center map on user location during navigation with smooth rotation using smoothed heading
     // This creates "heading-up" mode where travel direction always points upward
-    // GPS marker positioned lower on screen (just above speedometer) using bottom padding
+    // GPS marker centered on screen with route pointing north - HUD at bottom shows speed
     if (isNavigating) {
       mapInstance.easeTo({
         center: [longitude, latitude],
-        zoom: 18.5, // Slightly wider view for better context (was 19.5)
-        pitch: 67, // Enhanced 3D tilt for professional perspective (was 60)
-        bearing: bearing, // Rotate map so heading points up (north on screen)
-        padding: { top: 0, bottom: 150, left: 0, right: 0 }, // Push GPS marker lower (150px from bottom)
+        zoom: 18.5, // Slightly wider view for better context
+        pitch: 67, // Enhanced 3D tilt for professional perspective
+        bearing: bearing, // Rotate map so heading points up (route always points north)
+        padding: { top: 200, bottom: 200, left: 0, right: 0 }, // Center GPS marker vertically
         duration: 500,
         easing: (t) => t * (2 - t) // Smooth easing for fluid rotation
       });
@@ -1711,7 +1711,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           {/* Map Controls - Right Side Stack for Mobile - PERMANENT: Always visible during navigation */}
           <div className={cn(
             "absolute right-3 flex flex-col gap-2 pointer-events-auto",
-            isNavigating ? "top-[120px] z-[100]" : "bottom-64 z-[80]"
+            isNavigating ? "top-[60px] z-[120]" : "bottom-64 z-[80]"
           )}>
             <Button
               size="icon"
