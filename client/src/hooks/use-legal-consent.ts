@@ -130,6 +130,10 @@ export function useLegalConsent(): UseLegalConsentReturn {
   const saveConsentData = useCallback((data: LegalConsentData): void => {
     try {
       localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(data));
+      // Also set the flag that cache buster checks
+      if (data.hasAcceptedTerms) {
+        localStorage.setItem('trucknav_legal_accepted', 'true');
+      }
     } catch (error) {
       console.error('Failed to save consent data to localStorage:', error);
     }

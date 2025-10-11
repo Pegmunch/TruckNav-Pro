@@ -185,10 +185,11 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
         aria-describedby="legal-disclaimer-description"
         aria-modal="true"
         className="relative flex flex-col h-full min-h-[100vh] sm:h-dvh bg-white dark:bg-gray-950 text-foreground" 
+        style={{ backgroundColor: '#ffffff' }}
         data-testid="legal-disclaimer-popup"
       >
       {/* Header - stacks vertically on mobile */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 pb-2 border-b">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 pb-2 border-b bg-white" style={{ backgroundColor: '#ffffff' }}>
         {/* Title Section */}
         <div className="flex items-center gap-3">
           <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" />
@@ -245,7 +246,7 @@ export default function LegalDisclaimerPopup({ onClose }: LegalDisclaimerPopupPr
       </div>
 
       {/* Content Area - flex-1 allows natural scrolling */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 bg-white" style={{ backgroundColor: '#ffffff' }}>
         {/* Page 1: Legal Terms and Disclaimers */}
         {currentPage === 1 && (
           <div className="space-y-4 pb-4" data-testid="legal-scroll-area-page-1">
