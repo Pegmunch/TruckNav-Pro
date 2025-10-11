@@ -938,10 +938,20 @@ function NavigationPageContent() {
         // Load journey from URL parameter
         const response = await apiRequest("GET", `/api/journeys/${urlJourneyId}`);
         const journey = await response.json();
+        
+        // CRITICAL: Only load active/planned journeys, clear completed ones
         if (journey && (journey.status === 'active' || journey.status === 'planned')) {
           // Store in localStorage for future use
           localStorage.setItem('activeJourneyId', journey.id);
           return journey;
+        } else {
+          // Clear completed/cancelled journey from URL
+          console.log('[JOURNEY-CLEAR] Clearing completed journey from URL:', urlJourneyId);
+          const url = new URL(window.location.href);
+          url.searchParams.delete('journey');
+          window.history.replaceState({}, '', url.pathname);
+          localStorage.removeItem('activeJourneyId');
+          return null;
         }
       }
       
