@@ -2001,6 +2001,42 @@ function NavigationPageContent() {
                 </MapShell>
               </div>
               
+              {/* GPS Permission Request Button - Shows when GPS not available on Mobile/PWA */}
+              {!gpsData?.position && !gpsLoadingState?.isLoading && (
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[500]" data-testid="gps-permission-button">
+                  <Button
+                    onClick={() => {
+                      console.log('[GPS] Requesting location permission...');
+                      // This will trigger the browser's GPS permission request
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          console.log('[GPS] Permission granted, location:', pos.coords);
+                          // The GPS context will automatically pick up the position
+                        },
+                        (error) => {
+                          console.log('[GPS] Permission denied or error:', error);
+                          toast({
+                            title: "Location Access Required",
+                            description: "Please enable location services in your browser settings",
+                            variant: "destructive"
+                          });
+                        },
+                        { 
+                          enableHighAccuracy: true,
+                          timeout: 10000,
+                          maximumAge: 0
+                        }
+                      );
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+                    size="lg"
+                  >
+                    <MapPin className="w-5 h-5 mr-2" />
+                    Enable GPS Location
+                  </Button>
+                </div>
+              )}
+              
               {/* GPS Loading Indicator - Production-Grade Visual Feedback */}
               {gpsLoadingState?.isLoading && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator">

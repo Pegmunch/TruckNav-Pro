@@ -1381,10 +1381,21 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     const mapInstance = map.current;
     
-    // Use GPS position if available, otherwise use map center as fallback
+    // CRITICAL: Only show GPS marker when we have actual GPS, not fallback
     const hasGPS = !!gpsPosition;
-    const latitude = gpsPosition?.latitude ?? mapInstance.getCenter().lat;
-    const longitude = gpsPosition?.longitude ?? mapInstance.getCenter().lng;
+    
+    // Don't show marker if GPS isn't available - avoid confusing fallback locations
+    if (!hasGPS) {
+      console.log('[GPS-MARKER] No GPS position available - not showing marker');
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      return;
+    }
+    
+    const latitude = gpsPosition.latitude;
+    const longitude = gpsPosition.longitude;
     const smoothedHeading = gpsPosition?.smoothedHeading ?? null;
     const accuracy = gpsPosition?.accuracy ?? null;
     
