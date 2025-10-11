@@ -1386,8 +1386,56 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     
     // Don't show marker if GPS isn't available - avoid confusing fallback locations
     if (!hasGPS) {
-      console.log('[GPS-MARKER] No GPS position available - not showing marker');
-      if (userMarkerRef.current) {
+      console.log('[GPS-MARKER] No GPS position available - showing orange unavailable marker');
+      
+      // Show orange GPS-unavailable marker at last known position or default
+      const lastKnown = getLastKnownPosition();
+      if (lastKnown || !userMarkerRef.current) {
+        const fallbackLat = lastKnown?.lat ?? 51.5074;
+        const fallbackLng = lastKnown?.lng ?? -0.1278;
+        
+        if (!userMarkerRef.current) {
+          // Create orange unavailable GPS marker
+          const markerSize = 48;
+          const el = document.createElement('div');
+          el.className = 'user-position-marker-unavailable';
+          el.innerHTML = `
+            <div style="
+              width: ${markerSize}px;
+              height: ${markerSize}px;
+              background: linear-gradient(145deg, #ff6600 0%, #ff4400 50%, #ff2200 100%);
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 0 20px rgba(255, 102, 0, 0.8);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              animation: no-gps-pulse 2s ease-in-out infinite;
+              z-index: 1000;
+            ">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+            </div>
+            <style>
+              @keyframes no-gps-pulse {
+                0%, 100% { transform: scale(1); opacity: 0.9; }
+                50% { transform: scale(1.1); opacity: 1; }
+              }
+            </style>
+          `;
+          
+          userMarkerRef.current = new maplibregl.Marker({
+            element: el,
+            anchor: 'center'
+          })
+            .setLngLat([fallbackLng, fallbackLat])
+            .addTo(mapInstance);
+        }
+        return;
+      }
+      
+      if (userMarkerRef.current && !lastKnown) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
       }
@@ -1604,21 +1652,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       console.log('[GPS-MARKER] ✅ Marker updated at:', [longitude, latitude]);
     }
 
-    // Center map on user location during navigation with smooth rotation using smoothed heading
-    // This creates "heading-up" mode where travel direction always points upward
-    // GPS marker centered on screen with route pointing north - HUD at bottom shows speed
-    if (isNavigating) {
-      mapInstance.easeTo({
-        center: [longitude, latitude],
-        zoom: 18.5, // Slightly wider view for better context
-        pitch: 67, // Enhanced 3D tilt for professional perspective
-        bearing: bearing, // Rotate map so heading points up (route always points north)
-        padding: { top: 200, bottom: 200, left: 0, right: 0 }, // Center GPS marker vertically
-        duration: 500,
-        easing: (t) => t * (2 - t) // Smooth easing for fluid rotation
-      });
-    }
-
     // Cleanup
     return () => {
       if (userMarkerRef.current) {
@@ -1626,7 +1659,104 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         userMarkerRef.current = null;
       }
     };
-  }, [gpsPosition, isLoaded, isNavigating, selectedProfile]);
+  }, [gpsPosition, isLoaded, selectedProfile]); // Removed isNavigating to prevent marker recreation
+  
+  // HEADING-UP NAVIGATION MODE: Continuous map rotation based on GPS heading
+  // Separate effect for continuous rotation during navigation
+  useEffect(() => {
+    if (!map.current || !isLoaded || !isNavigating || !gpsPosition) {
+      console.log('[HEADING-UP] Not ready or not navigating');
+      return;
+    }
+    
+    const mapInstance = map.current;
+    let animationFrame: number | null = null;
+    let lastUpdateTime = Date.now();
+    let lastBearing = 0;
+    
+    // Continuous rotation function
+    const updateHeadingUp = () => {
+      if (!gpsPosition) {
+        animationFrame = requestAnimationFrame(updateHeadingUp);
+        return;
+      }
+      
+      const now = Date.now();
+      const deltaTime = now - lastUpdateTime;
+      
+      // Update at 30 FPS (every ~33ms) for smoother performance
+      if (deltaTime > 33) {
+        const latitude = gpsPosition.latitude;
+        const longitude = gpsPosition.longitude;
+        const bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
+        
+        // Store last bearing for fallback
+        if (bearing !== 0) {
+          lastBearing = bearing;
+        }
+        
+        // Get current map state
+        const currentBearing = mapInstance.getBearing();
+        const currentCenter = mapInstance.getCenter();
+        const centerDelta = Math.sqrt(
+          Math.pow(longitude - currentCenter.lng, 2) + 
+          Math.pow(latitude - currentCenter.lat, 2)
+        );
+        
+        // Calculate bearing delta with circular interpolation
+        let bearingDelta = bearing - currentBearing;
+        while (bearingDelta > 180) bearingDelta -= 360;
+        while (bearingDelta < -180) bearingDelta += 360;
+        
+        // Update compass bearing display
+        setBearing(bearing);
+        
+        // Only update if significant change or continuous movement
+        // Reduced threshold for smoother rotation
+        if (Math.abs(bearingDelta) > 0.3 || centerDelta > 0.000005) {
+          mapInstance.easeTo({
+            center: [longitude, latitude],
+            zoom: 18.5, // Optimal street-level zoom for navigation
+            pitch: 67, // Professional 3D perspective
+            bearing: bearing, // Rotate map so heading points up (route always points north)
+            padding: { 
+              top: 280, // Increased space for HUD elements and centering marker above speedometer
+              bottom: 120, // Space for speedometer at bottom
+              left: 0, 
+              right: 0 
+            },
+            duration: 250, // Faster for more responsive feel
+            easing: (t) => t * (2 - t), // Smooth ease-out for better feel
+            essential: true
+          });
+          
+          // Debug logging with rate limiting
+          if (deltaTime > 1000) { // Log every second max
+            console.log('[HEADING-UP] Map rotation - Bearing:', bearing.toFixed(1), 
+                       '°, GPS:', latitude.toFixed(6), longitude.toFixed(6));
+          }
+        }
+        
+        lastUpdateTime = now;
+      }
+      
+      // Continue animation loop
+      animationFrame = requestAnimationFrame(updateHeadingUp);
+    };
+    
+    // Start continuous rotation
+    console.log('[HEADING-UP] ✓ Starting continuous rotation for navigation mode');
+    console.log('[HEADING-UP] GPS heading will rotate map so route always points upward');
+    updateHeadingUp();
+    
+    // Cleanup animation frame on unmount
+    return () => {
+      if (animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+        console.log('[HEADING-UP] ✓ Stopped continuous rotation');
+      }
+    };
+  }, [isNavigating, isLoaded, gpsPosition]);
 
   // Listen for auto-zoom to GPS position event
   useEffect(() => {
@@ -1733,6 +1863,18 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       duration: 800
     });
   };
+  
+  // AUTO-ENABLE 3D MODE when navigation starts
+  useEffect(() => {
+    if (isNavigating && !is3DMode) {
+      console.log('[3D-AUTO] Automatically enabling 3D mode for navigation');
+      setIs3DMode(true);
+    } else if (!isNavigating && previousNavigationStateRef.current && is3DMode) {
+      console.log('[3D-AUTO] Navigation ended, keeping 3D mode state');
+      // Keep 3D mode even after navigation ends - user can manually toggle
+    }
+    previousNavigationStateRef.current = isNavigating;
+  }, [isNavigating, is3DMode]);
 
   const handleCompassClick = () => {
     if (!map.current) return;

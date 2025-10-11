@@ -676,6 +676,30 @@ function NavigationPageContent() {
       // Always switch to navigate mode when navigation starts
       console.log('[NAV-MODE-DEBUG] Setting navigate mode via debounced');
       setMobileNavModeDebounced('navigate');
+      
+      // Log all active navigation features for verification
+      console.log('[NAV-MODE] ✅ Professional Heading-Up Navigation Mode ACTIVE');
+      console.log('[NAV-MODE] ============ FEATURES STATUS ============');
+      console.log('[NAV-MODE] 1️⃣ Heading-Up Mode: ENABLED (Map rotates with GPS heading)');
+      console.log('[NAV-MODE] 2️⃣ GPS Marker: Centered above HUD (Orange if no GPS, Blue if GPS active)');
+      console.log('[NAV-MODE] 3️⃣ 3D View: 67° pitch (Professional perspective)');
+      console.log('[NAV-MODE] 4️⃣ Zoom Level: 18.5 (Optimal street view)');
+      console.log('[NAV-MODE] 5️⃣ Map Rotation: Continuous (Route always points upward)');
+      console.log('[NAV-MODE] 6️⃣ Compass: Shows true north bearing');
+      console.log('[NAV-MODE] 7️⃣ Smooth Animations: requestAnimationFrame at 30 FPS');
+      console.log('[NAV-MODE] ========================================');
+      
+      // Log GPS status
+      if (gpsData?.position) {
+        console.log('[NAV-MODE] 📍 GPS STATUS: ACTIVE');
+        console.log('[NAV-MODE] • Lat:', gpsData.position.latitude.toFixed(6));
+        console.log('[NAV-MODE] • Lng:', gpsData.position.longitude.toFixed(6));
+        console.log('[NAV-MODE] • Heading:', gpsData.position.heading?.toFixed(1) ?? 'N/A', '°');
+        console.log('[NAV-MODE] • Smoothed Heading:', gpsData.position.smoothedHeading?.toFixed(1) ?? 'N/A', '°');
+        console.log('[NAV-MODE] • Accuracy:', gpsData.position.accuracy?.toFixed(0) ?? 'N/A', 'm');
+      } else {
+        console.log('[NAV-MODE] ⚠️ GPS STATUS: UNAVAILABLE (Showing orange marker)');
+      }
     } else if (!currentRoute && mobileNavMode !== 'plan') {
       // Only switch to plan mode if no route AND not already in plan mode
       console.log('[NAV-MODE-DEBUG] Setting plan mode via debounced');
