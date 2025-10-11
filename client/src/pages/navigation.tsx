@@ -45,6 +45,7 @@ import { IncidentReportDialog } from "@/components/incidents/incident-report-dia
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import SpeedDisplay from "@/components/map/speed-display";
+import SpeedometerHUD from "@/components/navigation/speedometer-hud";
 import { GPSProvider, useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 import { geocodeUKPostcode } from "@/lib/uk-postcode-geocoding";
@@ -2093,13 +2094,13 @@ function NavigationPageContent() {
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
 
-                    {/* Speedometer - Above legal (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto" data-testid="speed-display-plan">
-                      <SpeedDisplay 
+                    {/* Professional Oval Speedometer HUD - Above legal (z-[160]) */}
+                    <div className="z-[160] pointer-events-auto" data-testid="speedometer-hud-plan">
+                      <SpeedometerHUD 
                         className="shadow-2xl" 
                         speedLimit={currentSpeedLimit || undefined}
-                        roadName={currentRoadName || undefined}
                         roadInfo={roadInfo}
+                        isNavigating={false}
                       />
                     </div>
                   </div>
@@ -2157,13 +2158,13 @@ function NavigationPageContent() {
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
 
-                    {/* Speedometer - Above legal (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto" data-testid="speed-display-preview">
-                      <SpeedDisplay 
+                    {/* Professional Oval Speedometer HUD - Above legal (z-[160]) */}
+                    <div className="z-[160] pointer-events-auto" data-testid="speedometer-hud-preview">
+                      <SpeedometerHUD 
                         className="shadow-2xl" 
                         speedLimit={currentSpeedLimit || undefined}
-                        roadName={currentRoadName || undefined}
                         roadInfo={roadInfo}
+                        isNavigating={false}
                       />
                     </div>
                   </div>
@@ -2337,19 +2338,19 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Speedometer - Fixed position above Stop button */}
+                  {/* Professional Oval Speedometer HUD - Fixed position above Stop button */}
                   <div 
                     className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                     style={{
-                      bottom: 'calc(60px + var(--safe-area-bottom, 0px))'
+                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))'
                     }}
-                    data-testid="speed-display-navigate"
+                    data-testid="speedometer-hud-navigate"
                   >
-                    <SpeedDisplay 
+                    <SpeedometerHUD 
                       className="shadow-2xl" 
                       speedLimit={currentSpeedLimit || undefined}
-                      roadName={currentRoadName || undefined}
                       roadInfo={roadInfo}
+                      isNavigating={true}
                     />
                   </div>
 
