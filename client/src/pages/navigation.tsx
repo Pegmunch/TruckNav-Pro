@@ -2685,8 +2685,8 @@ function NavigationPageContent() {
         </div>
       )}
 
-      {/* Professional Navigation HUD - Desktop only (mobile uses SpeedDisplay in navigate mode) */}
-      {isNavigating && !isARMode && !isMobile && (
+      {/* Professional Navigation HUD - Shows during navigation on both mobile and desktop */}
+      {isNavigating && !isARMode && (
         <ProfessionalNavHUD
           currentRoute={currentRoute}
           selectedProfile={selectedProfile || activeProfile}
