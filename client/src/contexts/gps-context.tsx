@@ -180,25 +180,38 @@ export function GPSProvider({
     setIsTracking(true);
 
     // Use watchPosition for continuous GPS updates with high accuracy
+    // Request initial position first to trigger permission if needed
+    navigator.geolocation.getCurrentPosition(
+      (initialPos) => {
+        console.log('[GPS-PROVIDER] ✅ Initial position acquired:', {
+          lat: initialPos.coords.latitude,
+          lng: initialPos.coords.longitude,
+          accuracy: initialPos.coords.accuracy
+        });
+      },
+      (error) => {
+        console.log('[GPS-PROVIDER] ⚠️ Initial position failed:', error.message);
+      },
+      {
+        enableHighAccuracy,
+        timeout,
+        maximumAge
+      }
+    );
+    
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
-        // Only accept positions with reasonable accuracy (< 100 meters)
+        console.log('[GPS-PROVIDER] ✅ Position received:', {
+          lat: geoPosition.coords.latitude,
+          lng: geoPosition.coords.longitude,
+          accuracy: geoPosition.coords.accuracy,
+          altitude: geoPosition.coords.altitude,
+          speed: geoPosition.coords.speed
+        });
+        
+        // Log accuracy level for debugging
         if (geoPosition.coords.accuracy > 100) {
-          console.log('[GPS-PROVIDER] ⚠️ Position accuracy too low:', {
-            lat: geoPosition.coords.latitude,
-            lng: geoPosition.coords.longitude,
-            accuracy: geoPosition.coords.accuracy,
-            status: 'Waiting for better accuracy...'
-          });
-          // Don't reject, but wait for better accuracy
-        } else {
-          console.log('[GPS-PROVIDER] ✅ High accuracy position received:', {
-            lat: geoPosition.coords.latitude,
-            lng: geoPosition.coords.longitude,
-            accuracy: geoPosition.coords.accuracy,
-            altitude: geoPosition.coords.altitude,
-            speed: geoPosition.coords.speed
-          });
+          console.log('[GPS-PROVIDER] ⚠️ Low accuracy:', geoPosition.coords.accuracy, 'meters');
         }
         
         const { coords, timestamp } = geoPosition;

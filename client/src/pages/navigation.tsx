@@ -2010,75 +2010,7 @@ function NavigationPageContent() {
                 </MapShell>
               </div>
               
-              {/* GPS Permission Request Button - Shows when GPS not available on Mobile/PWA */}
-              {!gpsData?.position && !gpsLoadingState?.isLoading && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[500]" data-testid="gps-permission-button">
-                  <Button
-                    onClick={() => {
-                      console.log('[GPS] Requesting HIGH ACCURACY location permission...');
-                      // Request location with HIGH accuracy for better GPS precision
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                          console.log('[GPS] ✅ Permission granted with HIGH ACCURACY:', {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy,
-                            altitude: pos.coords.altitude,
-                            speed: pos.coords.speed,
-                            heading: pos.coords.heading
-                          });
-                          
-                          // Also request continuous updates for better tracking
-                          const watchId = navigator.geolocation.watchPosition(
-                            (position) => {
-                              console.log('[GPS] Continuous update:', {
-                                accuracy: position.coords.accuracy,
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                              });
-                            },
-                            (error) => {
-                              console.log('[GPS] Watch error:', error);
-                            },
-                            {
-                              enableHighAccuracy: true,
-                              timeout: 10000,
-                              maximumAge: 0
-                            }
-                          );
-                          
-                          // Clean up watch after 5 seconds (GPS context will take over)
-                          setTimeout(() => {
-                            navigator.geolocation.clearWatch(watchId);
-                            console.log('[GPS] Cleared initial watch, GPS context now tracking');
-                          }, 5000);
-                        },
-                        (error) => {
-                          console.log('[GPS] Permission denied or error:', error);
-                          toast({
-                            title: "Location Access Required",
-                            description: error.code === 1 
-                              ? "Please allow location access in your browser/device settings"
-                              : "Please ensure GPS/Location services are enabled on your device",
-                            variant: "destructive"
-                          });
-                        },
-                        { 
-                          enableHighAccuracy: true, // Force HIGH accuracy GPS
-                          timeout: 15000, // 15 second timeout for better accuracy
-                          maximumAge: 0 // Always get fresh position
-                        }
-                      );
-                    }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
-                    size="lg"
-                  >
-                    <MapPin className="w-5 h-5 mr-2" />
-                    Enable GPS Location
-                  </Button>
-                </div>
-              )}
-              
+              {/* GPS Permission Button removed - moved to route planning panel */}
               {/* GPS Loading Indicator - Production-Grade Visual Feedback */}
               {gpsLoadingState?.isLoading && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator">
