@@ -1264,13 +1264,8 @@ function NavigationPageContent() {
       // Small delay to allow route state to update
       setTimeout(handleMapExpansion, 200);
       
-      // Show GREEN success toast when route is ready
-      toast({
-        title: "✅ Route Ready",
-        description: `${route.distance?.toFixed(1)} mi • ${Math.round(route.duration || 0)} min`,
-        className: "bg-green-500 text-white border-green-600 text-[8px] p-1.5 max-w-[120px]",
-        duration: 3000,
-      });
+      // DISABLED: Toast notifications removed per user request
+      // Toast pop-ups were interfering with input fields on mobile
 
       // DISABLED: Auto-transition to navigation mode - User must manually click "Start Navigation"
       // Show preview mode only, let user manually start navigation
@@ -1299,13 +1294,8 @@ function NavigationPageContent() {
       setCurrentRoute(null);
       // Comprehensive UI recovery on route calculation failure
       recoverUIOnError();
-      // Show user-friendly error message with RED styling
-      toast({
-          title: "❌ Route Planning Failed",
-          description: "Unable to calculate route. Please check your locations and try again.",
-          variant: "destructive",
-          duration: 5000,
-        });
+      // DISABLED: Toast notifications removed per user request
+      // Errors will be handled silently or shown in the UI instead
     },
   });
 
