@@ -140,8 +140,8 @@ const canRetryGPSError = (errorType: GPSErrorType): boolean => {
 export function GPSProvider({
   children,
   enableHighAccuracy = true,
-  timeout = 5000,
-  maximumAge = 0,
+  timeout = 10000, // Increased to 10s for better accuracy
+  maximumAge = 0, // Always get fresh GPS data
   headingSmoothingAlpha = 0.25,
   enableHeadingSmoothing = true
 }: GPSProviderProps) {
@@ -179,13 +179,27 @@ export function GPSProvider({
     // Start GPS tracking
     setIsTracking(true);
 
+    // Use watchPosition for continuous GPS updates with high accuracy
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
-        console.log('[GPS-PROVIDER] ✅ Position received:', {
-          lat: geoPosition.coords.latitude,
-          lng: geoPosition.coords.longitude,
-          accuracy: geoPosition.coords.accuracy
-        });
+        // Only accept positions with reasonable accuracy (< 100 meters)
+        if (geoPosition.coords.accuracy > 100) {
+          console.log('[GPS-PROVIDER] ⚠️ Position accuracy too low:', {
+            lat: geoPosition.coords.latitude,
+            lng: geoPosition.coords.longitude,
+            accuracy: geoPosition.coords.accuracy,
+            status: 'Waiting for better accuracy...'
+          });
+          // Don't reject, but wait for better accuracy
+        } else {
+          console.log('[GPS-PROVIDER] ✅ High accuracy position received:', {
+            lat: geoPosition.coords.latitude,
+            lng: geoPosition.coords.longitude,
+            accuracy: geoPosition.coords.accuracy,
+            altitude: geoPosition.coords.altitude,
+            speed: geoPosition.coords.speed
+          });
+        }
         
         const { coords, timestamp } = geoPosition;
         const rawHeading = coords.heading;

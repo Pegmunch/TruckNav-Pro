@@ -1007,24 +1007,33 @@ function NavigationPageContent() {
       
       setActiveJourney(currentJourney);
       
-      // CRITICAL FIX: Load the journey's route into currentRoute state!
-      if (currentJourney.route) {
-        console.log('[JOURNEY-LOAD] Loading route from journey:', currentJourney.route);
-        setCurrentRoute(currentJourney.route);
-        
-        // CRITICAL FIX: Populate location fields from route data
-        if (currentJourney.route.startLocation) {
-          setFromLocation(currentJourney.route.startLocation);
-          if (currentJourney.route.startCoordinates) {
-            setFromCoordinates(currentJourney.route.startCoordinates);
-          }
-        }
-        if (currentJourney.route.endLocation) {
-          setToLocation(currentJourney.route.endLocation);
-          if (currentJourney.route.endCoordinates) {
-            setToCoordinates(currentJourney.route.endCoordinates);
-          }
-        }
+      // CRITICAL FIX: Load the route data from the journey's routeId
+      if (currentJourney.routeId) {
+        console.log('[JOURNEY-LOAD] Journey has routeId, fetching route:', currentJourney.routeId);
+        // Fetch the route using the routeId
+        fetch(`/api/routes/${currentJourney.routeId}`)
+          .then(res => res.json())
+          .then(route => {
+            console.log('[JOURNEY-LOAD] Loading route from journey:', route);
+            setCurrentRoute(route);
+            
+            // CRITICAL FIX: Populate location fields from route data
+            if (route.startLocation) {
+              setFromLocation(route.startLocation);
+              if (route.startCoordinates) {
+                setFromCoordinates(route.startCoordinates);
+              }
+            }
+            if (route.endLocation) {
+              setToLocation(route.endLocation);
+              if (route.endCoordinates) {
+                setToCoordinates(route.endCoordinates);
+              }
+            }
+          })
+          .catch(err => {
+            console.error('[JOURNEY-LOAD] Failed to fetch route:', err);
+          });
       }
       
       // Note: Don't automatically start navigation even if status is 'active'
@@ -2006,25 +2015,58 @@ function NavigationPageContent() {
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[500]" data-testid="gps-permission-button">
                   <Button
                     onClick={() => {
-                      console.log('[GPS] Requesting location permission...');
-                      // This will trigger the browser's GPS permission request
+                      console.log('[GPS] Requesting HIGH ACCURACY location permission...');
+                      // Request location with HIGH accuracy for better GPS precision
                       navigator.geolocation.getCurrentPosition(
                         (pos) => {
-                          console.log('[GPS] Permission granted, location:', pos.coords);
-                          // The GPS context will automatically pick up the position
+                          console.log('[GPS] ✅ Permission granted with HIGH ACCURACY:', {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy,
+                            altitude: pos.coords.altitude,
+                            speed: pos.coords.speed,
+                            heading: pos.coords.heading
+                          });
+                          
+                          // Also request continuous updates for better tracking
+                          const watchId = navigator.geolocation.watchPosition(
+                            (position) => {
+                              console.log('[GPS] Continuous update:', {
+                                accuracy: position.coords.accuracy,
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                              });
+                            },
+                            (error) => {
+                              console.log('[GPS] Watch error:', error);
+                            },
+                            {
+                              enableHighAccuracy: true,
+                              timeout: 10000,
+                              maximumAge: 0
+                            }
+                          );
+                          
+                          // Clean up watch after 5 seconds (GPS context will take over)
+                          setTimeout(() => {
+                            navigator.geolocation.clearWatch(watchId);
+                            console.log('[GPS] Cleared initial watch, GPS context now tracking');
+                          }, 5000);
                         },
                         (error) => {
                           console.log('[GPS] Permission denied or error:', error);
                           toast({
                             title: "Location Access Required",
-                            description: "Please enable location services in your browser settings",
+                            description: error.code === 1 
+                              ? "Please allow location access in your browser/device settings"
+                              : "Please ensure GPS/Location services are enabled on your device",
                             variant: "destructive"
                           });
                         },
                         { 
-                          enableHighAccuracy: true,
-                          timeout: 10000,
-                          maximumAge: 0
+                          enableHighAccuracy: true, // Force HIGH accuracy GPS
+                          timeout: 15000, // 15 second timeout for better accuracy
+                          maximumAge: 0 // Always get fresh position
                         }
                       );
                     }}
