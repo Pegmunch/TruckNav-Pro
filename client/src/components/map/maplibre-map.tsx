@@ -1567,10 +1567,16 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       userMarkerRef.current = new maplibregl.Marker({
         element: el,
         rotation: bearing,
-        rotationAlignment: 'map'
+        rotationAlignment: 'map',
+        anchor: 'center'
       })
         .setLngLat([longitude, latitude])
         .addTo(mapInstance);
+      
+      // CRITICAL: Force marker to appear above all other elements
+      if (el.parentElement) {
+        el.parentElement.style.zIndex = '9999';
+      }
       
       console.log('[GPS-MARKER] ✅ New marker added to map at:', [longitude, latitude]);
     } else {
