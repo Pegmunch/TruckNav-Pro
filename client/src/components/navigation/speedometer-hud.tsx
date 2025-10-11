@@ -39,7 +39,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
 }: SpeedometerHUDProps) {
   // Get GPS data and measurement preferences
   const gps = useGPS();
-  const { system: measurementSystem, toggleSystem } = useMeasurement();
+  const { system: measurementSystem, setSystem } = useMeasurement();
   const speedLimitData = useSpeedLimit();
   
   // State for smooth speed animation
@@ -176,7 +176,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
     if (onUnitToggle) {
       onUnitToggle();
     } else {
-      toggleSystem();
+      // Toggle between imperial and metric
+      setSystem(measurementSystem === 'imperial' ? 'metric' : 'imperial');
     }
   };
   

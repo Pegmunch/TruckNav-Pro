@@ -122,15 +122,8 @@ export function useSpeedLimit() {
 
         lastFetchRef.current = now;
 
-        console.log('[SPEED-LIMIT] Updated:', {
-          limit: displaySpeed,
-          unit,
-          confidence: data.confidence,
-          road: data.roadRef || data.roadName || 'Unknown'
-        });
-
       } catch (error) {
-        console.warn('[SPEED-LIMIT] Fetch failed:', error);
+        // Silently handle errors - speed limit data is not critical
         
         setSpeedLimitData(prev => ({
           ...prev,
