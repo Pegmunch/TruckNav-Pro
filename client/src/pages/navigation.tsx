@@ -964,6 +964,21 @@ function NavigationPageContent() {
   const { data: currentJourney, refetch: refetchCurrentJourney } = useQuery<Journey | null>({
     queryKey: ["/api/journeys", "active"],
     queryFn: async () => {
+      // Check URL parameter first for journey ID
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlJourneyId = urlParams.get('journey');
+      
+      if (urlJourneyId) {
+        // Load journey from URL parameter
+        const response = await apiRequest("GET", `/api/journeys/${urlJourneyId}`);
+        const journey = await response.json();
+        if (journey && (journey.status === 'active' || journey.status === 'planned')) {
+          // Store in localStorage for future use
+          localStorage.setItem('activeJourneyId', journey.id);
+          return journey;
+        }
+      }
+      
       // Check if we have an active journey in localStorage
       const storedJourneyId = localStorage.getItem('activeJourneyId');
       if (storedJourneyId) {
@@ -1014,9 +1029,8 @@ function NavigationPageContent() {
         }
       }
       
-      if (currentJourney.status === 'active') {
-        setIsNavigating(true);
-      }
+      // Note: Don't automatically start navigation even if status is 'active'
+      // User should manually click "Start Navigation" to begin
     }
   }, [currentJourney]);
 
