@@ -90,11 +90,29 @@ export function AddressAutocomplete({
     staleTime: 300000, // 5 minutes
   });
 
-  // Fetch Photon suggestions (worldwide address search)
+  // Get GPS coordinates for location-biased search (POI near me)
+  const gpsCoordinates = useMemo(() => {
+    if (gps?.position) {
+      console.log('[ADDRESS-AUTOCOMPLETE] Using GPS for location-biased search:', {
+        lat: gps.position.latitude,
+        lng: gps.position.longitude
+      });
+      return {
+        lat: gps.position.latitude,
+        lng: gps.position.longitude
+      };
+    }
+    console.log('[ADDRESS-AUTOCOMPLETE] No GPS available for location-biased search');
+    return undefined;
+  }, [gps?.position]);
+
+  // Fetch Photon suggestions (worldwide address search with GPS bias for POI)
   const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
     searchTerm,
     open && searchTerm.length >= 3,
-    countryCode
+    countryCode,
+    undefined, // POI category (not used here, but could filter by shop types)
+    gpsCoordinates // Pass GPS coordinates for location-biased search!
   );
 
   // UK Postcode fallback - Try postcodes.io when Photon returns no results

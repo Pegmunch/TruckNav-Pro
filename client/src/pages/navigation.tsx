@@ -2305,11 +2305,11 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Professional Oval Speedometer HUD - Fixed position above Stop button */}
+                  {/* Professional Oval Speedometer HUD - Fixed position above Stop button (moved up) */}
                   <div 
                     className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                     style={{
-                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))'
+                      bottom: 'calc(140px + var(--safe-area-bottom, 0px))' // Moved up from 100px to 140px
                     }}
                     data-testid="speedometer-hud-navigate"
                   >
@@ -2580,22 +2580,8 @@ function NavigationPageContent() {
         </div>
       )}
 
-      {/* Professional Navigation HUD - Shows during navigation on both mobile and desktop */}
-      {isNavigating && !isARMode && (
-        <ProfessionalNavHUD
-          currentRoute={currentRoute}
-          selectedProfile={selectedProfile || activeProfile}
-          isNavigating={isNavigating}
-          currentSpeed={currentSpeed}
-          currentLocation={currentGPSLocation || undefined}
-          onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-          onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
-          onCancelRoute={handleCancelRoute}
-          isCancellingRoute={completeJourneyMutation.isPending}
-          voiceEnabled={professionalVoiceEnabled}
-          isFullscreen={isFullscreenNav}
-        />
-      )}
+      {/* REMOVED: Professional Navigation HUD - Duplicate speedometer functionality
+          Now using only SpeedometerHUD for a single, consistent speedometer display */}
 
       {/* Removed unused Navigation Status Drawer that was creating grey overlay */}
 

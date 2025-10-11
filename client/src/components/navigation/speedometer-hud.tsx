@@ -192,11 +192,11 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       )}
       data-testid="speedometer-hud"
     >
-      {/* Main oval speedometer container */}
+      {/* Main oval speedometer container - RESIZED to be smaller as requested */}
       <div
         className={cn(
-          // Oval shape with aspect ratio
-          'relative w-[320px] h-[120px] sm:w-[380px] sm:h-[140px] md:w-[420px] md:h-[150px]',
+          // Reduced oval shape with aspect ratio (280px-360px width as requested)
+          'relative w-[280px] h-[100px] sm:w-[320px] sm:h-[110px] md:w-[360px] md:h-[120px]',
           // Glassmorphism effect
           'backdrop-blur-xl bg-gradient-to-r',
           getBackgroundGradient(),
@@ -215,7 +215,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             <div
               className={cn(
                 'relative flex flex-col items-center justify-center',
-                'w-16 h-16 sm:w-20 sm:h-20',
+                'w-14 h-14 sm:w-16 sm:h-16', // Reduced from w-16/h-16 to w-14/h-14
                 'rounded-full bg-white dark:bg-slate-900',
                 'shadow-lg',
                 convertedSpeedLimit ? 'border-4 border-red-600' : 'border-4 border-slate-400'
@@ -224,7 +224,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             >
               {convertedSpeedLimit ? (
                 <>
-                  <span className="text-xl sm:text-2xl font-black text-black dark:text-white">
+                  <span className="text-lg sm:text-xl font-black text-black dark:text-white">
                     {convertedSpeedLimit}
                   </span>
                   {confidenceIndicator && (
@@ -258,7 +258,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               {/* Speed value with animation */}
               <motion.div
                 className={cn(
-                  'text-5xl sm:text-6xl md:text-7xl font-black tabular-nums',
+                  'text-4xl sm:text-5xl md:text-6xl font-black tabular-nums',
                   getSpeedColor(),
                   'transition-colors duration-300'
                 )}

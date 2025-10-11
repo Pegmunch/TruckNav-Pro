@@ -38,6 +38,7 @@ import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import SpeedDisplay from "@/components/map/speed-display";
 import StreetView from "@/components/map/street-view";
+import { useGPS } from "@/contexts/gps-context";
 
 interface InteractiveMapProps {
   currentRoute: Route | null;
@@ -470,9 +471,27 @@ const InteractiveMap = memo(function InteractiveMap({
     enabled: !!selectedProfile,
   });
 
-  // Get facilities for the current view
+  // Get facilities for the current view using actual GPS coordinates
+  const gpsData = useGPS();
+  const currentLat = gpsData?.position?.latitude || 51.5074; // Default to London if no GPS
+  const currentLng = gpsData?.position?.longitude || -0.1278; // Default to London if no GPS
+  
+  // Debug logging for POI coordinates
+  useEffect(() => {
+    if (gpsData?.position) {
+      console.log('[POI-DEBUG] Using GPS coordinates for facilities:', {
+        lat: gpsData.position.latitude,
+        lng: gpsData.position.longitude,
+        accuracy: gpsData.position.accuracy
+      });
+    } else {
+      console.warn('[POI-DEBUG] No GPS available, using default coordinates');
+    }
+  }, [gpsData?.position]);
+  
   const { data: facilities = [] } = useQuery<Facility[]>({
-    queryKey: ["/api/facilities?lat=52.5&lng=-1.5&radius=50"],
+    queryKey: [`/api/facilities?lat=${currentLat}&lng=${currentLng}&radius=50`],
+    enabled: true, // Always enable to get local POIs
   });
 
   // Get traffic conditions for current route - using preferences as single source of truth
