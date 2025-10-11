@@ -1,7 +1,8 @@
 // TruckNav Pro Service Worker
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
-const CACHE_VERSION = '3.0.0';
+// Force cache update by incrementing version (fixes PWA multi-version issue)
+const CACHE_VERSION = '3.1.0';
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;
@@ -214,8 +215,9 @@ self.addEventListener('install', (event) => {
         return cache.addAll(ESSENTIAL_FILES);
       }),
       // Initialize IndexedDB
-      initDB()
-      // Remove auto skipWaiting - rely on user-initiated updates
+      initDB(),
+      // Force immediate activation to fix multi-version issue
+      self.skipWaiting()
     ]).then(() => {
       console.log('[SW] Installation complete - Essential files cached and DB initialized');
     }).catch((error) => {
@@ -590,6 +592,21 @@ self.addEventListener('message', (event) => {
       clients.forEach(client => {
         client.postMessage({ type: 'UPDATE_READY' });
       });
+    });
+  }
+  
+  // Force clear all caches for troubleshooting
+  if (event.data && event.data.type === 'CLEAR_ALL_CACHES') {
+    console.log('[SW] Clearing all caches requested');
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          console.log('[SW] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      event.ports[0].postMessage({ success: true, message: 'All caches cleared' });
     });
   }
   
