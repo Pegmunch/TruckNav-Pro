@@ -2,11 +2,24 @@
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
 // Force cache update by incrementing version (fixes PWA multi-version issue)
-const CACHE_VERSION = '3.1.0';
+const CACHE_VERSION = '3.2.0';
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;
 const MAP_CACHE = `trucknav-maps-v${CACHE_VERSION}`;
+
+// Cache size limits to prevent memory overflow (in bytes)
+const MAX_CACHE_SIZE = 100 * 1024 * 1024; // 100MB total
+const MAX_STATIC_CACHE = 30 * 1024 * 1024; // 30MB for static assets
+const MAX_API_CACHE = 20 * 1024 * 1024; // 20MB for API responses  
+const MAX_MAP_CACHE = 50 * 1024 * 1024; // 50MB for map tiles
+const MAX_CACHE_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Error recovery tracking
+let errorCount = 0;
+let lastErrorTime = 0;
+const ERROR_THRESHOLD = 5;
+const ERROR_TIME_WINDOW = 60000; // 1 minute
 
 // Essential files to cache for offline functionality
 const ESSENTIAL_FILES = [
@@ -70,6 +83,159 @@ function detectNetworkQuality() {
     downlink,
     rtt: connection.rtt || 0
   };
+}
+
+// Track and handle errors with circuit breaker pattern
+function trackError(error) {
+  const now = Date.now();
+  
+  // Reset counter if outside time window
+  if (now - lastErrorTime > ERROR_TIME_WINDOW) {
+    errorCount = 0;
+  }
+  
+  errorCount++;
+  lastErrorTime = now;
+  
+  console.error('[SW] Error tracked:', error, `Count: ${errorCount}`);
+  
+  // If too many errors, trigger recovery
+  if (errorCount >= ERROR_THRESHOLD) {
+    console.warn('[SW] Error threshold exceeded, initiating recovery...');
+    initiateErrorRecovery();
+  }
+}
+
+// Recovery mechanism for excessive errors
+async function initiateErrorRecovery() {
+  try {
+    console.log('[SW] Starting error recovery process...');
+    
+    // Clear problematic caches
+    const cacheNames = await caches.keys();
+    const oldCaches = cacheNames.filter(name => 
+      name.includes('trucknav') && !name.includes(CACHE_VERSION)
+    );
+    
+    for (const cacheName of oldCaches) {
+      await caches.delete(cacheName);
+      console.log('[SW] Deleted old cache:', cacheName);
+    }
+    
+    // Reduce cache sizes if needed
+    await trimCacheSize(STATIC_CACHE, MAX_STATIC_CACHE);
+    await trimCacheSize(API_CACHE, MAX_API_CACHE);
+    await trimCacheSize(MAP_CACHE, MAX_MAP_CACHE);
+    
+    // Reset error counter
+    errorCount = 0;
+    
+    console.log('[SW] Error recovery completed');
+  } catch (recoveryError) {
+    console.error('[SW] Error recovery failed:', recoveryError);
+  }
+}
+
+// Calculate cache size
+async function getCacheSize(cacheName) {
+  try {
+    const cache = await caches.open(cacheName);
+    const requests = await cache.keys();
+    let totalSize = 0;
+    
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (response) {
+        const blob = await response.blob();
+        totalSize += blob.size;
+      }
+    }
+    
+    return totalSize;
+  } catch (error) {
+    console.error(`[SW] Failed to calculate cache size for ${cacheName}:`, error);
+    return 0;
+  }
+}
+
+// Trim cache to specified size limit
+async function trimCacheSize(cacheName, maxSize) {
+  try {
+    const cache = await caches.open(cacheName);
+    const requests = await cache.keys();
+    const cacheEntries = [];
+    
+    // Get all cache entries with their sizes and timestamps
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (response) {
+        const blob = await response.blob();
+        const dateHeader = response.headers.get('date');
+        cacheEntries.push({
+          request,
+          size: blob.size,
+          timestamp: dateHeader ? new Date(dateHeader).getTime() : 0
+        });
+      }
+    }
+    
+    // Sort by timestamp (oldest first)
+    cacheEntries.sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Calculate total size and remove oldest entries if needed
+    let totalSize = cacheEntries.reduce((sum, entry) => sum + entry.size, 0);
+    let removed = 0;
+    
+    while (totalSize > maxSize && cacheEntries.length > 0) {
+      const entry = cacheEntries.shift();
+      if (entry) {
+        await cache.delete(entry.request);
+        totalSize -= entry.size;
+        removed++;
+      }
+    }
+    
+    if (removed > 0) {
+      console.log(`[SW] Trimmed ${removed} items from ${cacheName} to stay under ${maxSize} bytes`);
+    }
+  } catch (error) {
+    console.error(`[SW] Failed to trim cache ${cacheName}:`, error);
+    trackError(error);
+  }
+}
+
+// Remove expired cache entries
+async function removeExpiredEntries(cacheName) {
+  try {
+    const cache = await caches.open(cacheName);
+    const requests = await cache.keys();
+    const now = Date.now();
+    let removed = 0;
+    
+    for (const request of requests) {
+      const response = await cache.match(request);
+      if (response) {
+        const dateHeader = response.headers.get('date');
+        if (dateHeader) {
+          const cacheTime = new Date(dateHeader).getTime();
+          if (now - cacheTime > MAX_CACHE_AGE) {
+            await cache.delete(request);
+            removed++;
+          }
+        }
+      }
+    }
+    
+    if (removed > 0) {
+      console.log(`[SW] Removed ${removed} expired items from ${cacheName}`);
+    }
+    
+    return removed;
+  } catch (error) {
+    console.error(`[SW] Failed to remove expired entries from ${cacheName}:`, error);
+    trackError(error);
+    return 0;
+  }
 }
 
 // Enhanced caching for mobile networks
@@ -278,70 +444,84 @@ function getCachingStrategy(request) {
   return 'cache-first';
 }
 
-// Cache management with TTL and size limits
+// Cache management with TTL and size limits (uses enhanced functions)
 async function manageCacheSize(cacheName, maxEntries = 100, maxAge = 24 * 60 * 60 * 1000) {
-  const cache = await caches.open(cacheName);
-  const requests = await cache.keys();
-  
-  // Remove expired entries
-  const now = Date.now();
-  for (const request of requests) {
-    const response = await cache.match(request);
-    if (response) {
-      const dateHeader = response.headers.get('date');
-      const cacheDate = dateHeader ? new Date(dateHeader).getTime() : now;
-      if (now - cacheDate > maxAge) {
+  try {
+    // First remove expired entries
+    await removeExpiredEntries(cacheName);
+    
+    // Then check size limits
+    let maxSize;
+    if (cacheName === STATIC_CACHE) {
+      maxSize = MAX_STATIC_CACHE;
+    } else if (cacheName === API_CACHE) {
+      maxSize = MAX_API_CACHE;
+    } else if (cacheName === MAP_CACHE) {
+      maxSize = MAX_MAP_CACHE;
+    } else {
+      maxSize = MAX_CACHE_SIZE / 4; // Default to 1/4 of total for unknown caches
+    }
+    
+    // Trim cache to size limit
+    await trimCacheSize(cacheName, maxSize);
+    
+    // Also enforce entry count limit
+    const cache = await caches.open(cacheName);
+    const requests = await cache.keys();
+    if (requests.length > maxEntries) {
+      const toDelete = requests.slice(0, requests.length - maxEntries);
+      for (const request of toDelete) {
         await cache.delete(request);
-        console.log('[SW] Removed expired cache entry:', request.url);
       }
+      console.log(`[SW] Removed ${toDelete.length} entries to stay under ${maxEntries} entry limit`);
     }
-  }
-  
-  // Remove oldest entries if over limit
-  const remainingRequests = await cache.keys();
-  if (remainingRequests.length > maxEntries) {
-    const toDelete = remainingRequests.slice(0, remainingRequests.length - maxEntries);
-    for (const request of toDelete) {
-      await cache.delete(request);
-      console.log('[SW] Removed old cache entry (LRU):', request.url);
-    }
+  } catch (error) {
+    console.error(`[SW] Error managing cache size for ${cacheName}:`, error);
+    trackError(error);
   }
 }
 
 // Cache First Strategy with cache management
 async function cacheFirstStrategy(request, cacheName = CACHE_NAME) {
-  const cache = await caches.open(cacheName);
-  const cachedResponse = await cache.match(request);
-  
-  if (cachedResponse) {
-    // Serve from cache, update cache in background
-    fetch(request).then(async response => {
-      if (response.ok) {
-        await cache.put(request, response.clone());
+  try {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+    
+    if (cachedResponse) {
+      // Serve from cache, update cache in background
+      fetch(request).then(async response => {
+        if (response.ok) {
+          await cache.put(request, response.clone());
+          
+          // Manage cache size for map tiles
+          if (cacheName === MAP_CACHE) {
+            await manageCacheSize(MAP_CACHE, 500, 7 * 24 * 60 * 60 * 1000); // 500 entries, 7 days
+          }
+        }
+      }).catch(() => {}); // Ignore network errors
+      
+      return cachedResponse;
+    }
+    
+    try {
+      const networkResponse = await fetch(request);
+      if (networkResponse.ok) {
+        await cache.put(request, networkResponse.clone());
         
         // Manage cache size for map tiles
         if (cacheName === MAP_CACHE) {
           await manageCacheSize(MAP_CACHE, 500, 7 * 24 * 60 * 60 * 1000); // 500 entries, 7 days
         }
       }
-    }).catch(() => {}); // Ignore network errors
-    
-    return cachedResponse;
-  }
-  
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      await cache.put(request, networkResponse.clone());
-      
-      // Manage cache size for map tiles
-      if (cacheName === MAP_CACHE) {
-        await manageCacheSize(MAP_CACHE, 500, 7 * 24 * 60 * 60 * 1000); // 500 entries, 7 days
-      }
+      return networkResponse;
+    } catch (networkError) {
+      console.log('[SW] Network failed for cache-first request:', request.url);
+      trackError(networkError);
+      throw networkError;
     }
-    return networkResponse;
   } catch (error) {
-    console.log('[SW] Network failed for cache-first request:', request.url);
+    console.error('[SW] Cache first strategy error:', error);
+    trackError(error);
     throw error;
   }
 }

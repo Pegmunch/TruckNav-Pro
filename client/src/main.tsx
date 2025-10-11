@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "./lib/queryClient";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { startVersionMonitoring } from "./lib/cache-buster";
+import { initializeGlobalErrorHandler } from "./lib/global-error-handler";
 import "./index.css";
 import "./i18n/config";
 
@@ -49,6 +50,9 @@ if (import.meta.env.DEV && document) {
   buildMarker.content = BUILD_ID;
   document.head.appendChild(buildMarker);
 }
+
+// Initialize global error handler early to catch all errors
+initializeGlobalErrorHandler();
 
 // Start cache busting to prevent PWA multi-version issues
 startVersionMonitoring();
