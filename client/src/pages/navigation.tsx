@@ -1009,6 +1009,20 @@ function NavigationPageContent() {
   // Sync active journey with current journey from query
   useEffect(() => {
     if (currentJourney) {
+      // CRITICAL: Only load active or planned journeys - ignore completed ones
+      if (currentJourney.status === 'completed' || currentJourney.status === 'cancelled') {
+        console.log('[JOURNEY-LOAD] Ignoring completed/cancelled journey - clearing persistence');
+        localStorage.removeItem('activeJourneyId');
+        
+        // Clear URL parameter
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('journey')) {
+          url.searchParams.delete('journey');
+          window.history.replaceState({}, '', url.pathname);
+        }
+        return;
+      }
+      
       setActiveJourney(currentJourney);
       
       // CRITICAL FIX: Load the journey's route into currentRoute state!
@@ -1583,17 +1597,32 @@ function NavigationPageContent() {
     document.body.classList.remove('navigation-active');
     document.documentElement.classList.remove('overlay-safe-mode');
     
+    // CRITICAL: Clear all route persistence - fresh start page
+    localStorage.removeItem('activeJourneyId');
+    
+    // Clear URL parameter
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('journey')) {
+      url.searchParams.delete('journey');
+      window.history.replaceState({}, '', url.pathname);
+    }
+    
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
     setShowDestinationReached(false);
     
+    // Clear all route state
+    setCurrentRoute(null);
+    setPreviewRoute(null);
+    setActiveJourney(null);
+    setIsNavigating(false);
+    setMobileNavModeDebounced('plan');
+    
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
-      toast({
-        title: "Navigation cancelled",
-        description: "Route has been cancelled successfully",
-      });
     }
+    
+    console.log('[ROUTE-CANCEL] ✅ Route cancelled - fresh start page restored');
   };
 
   // Handle use current location with reverse geocoding
@@ -1886,6 +1915,16 @@ function NavigationPageContent() {
       completeJourneyMutation.mutate(activeJourney.id);
     }
     
+    // CRITICAL: Clear all route persistence - fresh start page
+    localStorage.removeItem('activeJourneyId');
+    
+    // Clear URL parameter
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('journey')) {
+      url.searchParams.delete('journey');
+      window.history.replaceState({}, '', url.pathname);
+    }
+    
     // Comprehensive state reset - completely cancel navigation
     setCurrentRoute(null);
     setPreviewRoute(null);
@@ -1920,13 +1959,7 @@ function NavigationPageContent() {
     });
     window.dispatchEvent(navigationStoppedEvent);
     
-    // Hide toast in mobile view - user requested no popups
-    if (window.innerWidth >= 768) {
-      toast({
-        title: "Navigation stopped",
-        description: "Ready to plan a new route",
-      });
-    }
+    console.log('[ROUTE-CANCEL] ✅ Route cancelled - fresh start page restored');
   };
 
   const handleOpenLaneSelection = () => {
@@ -2756,16 +2789,24 @@ function NavigationPageContent() {
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogAction
               onClick={() => {
+                // CRITICAL: Clear all route persistence - fresh start page
+                localStorage.removeItem('activeJourneyId');
+                
+                // Clear URL parameter
+                const url = new URL(window.location.href);
+                if (url.searchParams.has('journey')) {
+                  url.searchParams.delete('journey');
+                  window.history.replaceState({}, '', url.pathname);
+                }
+                
                 // Clear route and return to plan mode
                 setCurrentRoute(null);
                 setIsNavigating(false);
                 setMobileNavModeDebounced('plan');
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
-                toast({
-                  title: "Navigation ended",
-                  description: "Ready to plan your next journey",
-                });
+                
+                console.log('[ROUTE-COMPLETE] ✅ Route completed - fresh start page restored');
               }}
               className="bg-blue-600 hover:bg-blue-700"
               data-testid="button-plan-new-journey"
