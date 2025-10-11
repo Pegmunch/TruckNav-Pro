@@ -688,21 +688,23 @@ function NavigationPageContent() {
   }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
   
   // Auto-update mobile navigation mode based on state
+  // IMPORTANT: Only auto-switch when appropriate, don't interrupt user interactions
   useEffect(() => {
     if (!isMobile) return; // Only applies to mobile
     
     console.log('[NAV-MODE-DEBUG] useEffect triggered - isNavigating:', isNavigating, 'currentRoute:', !!currentRoute, 'mobileNavMode:', mobileNavMode);
     
     if (isNavigating) {
+      // Always switch to navigate mode when navigation starts
       console.log('[NAV-MODE-DEBUG] Setting navigate mode via debounced');
       setMobileNavModeDebounced('navigate');
-    } else if (currentRoute) {
-      console.log('[NAV-MODE-DEBUG] Setting preview mode via debounced');
-      setMobileNavModeDebounced('preview');
-    } else {
+    } else if (!currentRoute && mobileNavMode !== 'plan') {
+      // Only switch to plan mode if no route AND not already in plan mode
       console.log('[NAV-MODE-DEBUG] Setting plan mode via debounced');
       setMobileNavModeDebounced('plan');
     }
+    // REMOVED: Auto-switch to preview when route exists - this was interrupting user input
+    // The route calculation onSuccess handler will explicitly set preview mode when needed
   }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode]);
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
