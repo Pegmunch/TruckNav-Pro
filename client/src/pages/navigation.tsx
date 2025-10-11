@@ -595,12 +595,7 @@ function NavigationPageContent() {
             const isCachedPosition = !location.accuracy || (location.timestamp && (Date.now() - location.timestamp) > 60000);
             
             if (isCachedPosition && !cacheWarningShown) {
-              toast({
-                title: "⚠️ Using Cached Location",
-                description: "Live GPS unavailable. Position may be outdated.",
-                variant: "default",
-                duration: 5000,
-              });
+              // REMOVED TOAST: No popups per user request
               setCacheWarningShown(true);
             } else if (!isCachedPosition) {
               setCacheWarningShown(false); // Reset when live GPS works
@@ -609,11 +604,7 @@ function NavigationPageContent() {
                                   location.accuracyLevel === 'good' ? '📍 Good accuracy' :
                                   '📍 Position locked';
               
-              toast({
-                title: accuracyText,
-                description: location.accuracy ? `±${Math.round(location.accuracy)}m` : 'Tracking from your location',
-                duration: 2000,
-              });
+              // REMOVED TOAST: No popups per user request
             }
             
             console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
@@ -630,31 +621,18 @@ function NavigationPageContent() {
                 // Permanent failure - stop retrying
                 autoZoomState.current.attempts = MAX_ATTEMPTS;
                 
-                toast({
-                  title: "⚠️ GPS Permission Required",
-                  description: "Please enable location access in your browser settings",
-                  variant: "destructive",
-                  duration: 5000,
-                });
+                // REMOVED TOAST: No popups per user request
               } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS timeout (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
                 
                 if (usedFallback) {
-                  toast({
-                    title: "📍 Using Fallback Location",
-                    description: "GPS signal weak - showing approximate position",
-                    duration: 3000,
-                  });
+                  // REMOVED TOAST: No popups per user request
                 }
               } else {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS error code ${gpsError.code} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
                 
                 if (usedFallback) {
-                  toast({
-                    title: "🔄 GPS Unavailable",
-                    description: "Using alternative location",
-                    duration: 3000,
-                  });
+                  // REMOVED TOAST: No popups per user request
                 }
               }
             } else {
@@ -893,35 +871,21 @@ function NavigationPageContent() {
   const handleToggleAR = useCallback(() => {
     
     if (!arSupported) {
-      toast({
-        title: "AR Not Supported",
-        description: "Your device doesn't support AR navigation features.",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
     
     if (!isNavigating) {
-      toast({
-        title: "Start Navigation First",
-        description: "Please start navigation before enabling AR mode.",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
     
     setIsARMode(!isARMode);
     
     if (!isARMode) {
-      toast({
-        title: "AR Mode Activated",
-        description: "Camera will start and directions will overlay on live feed.",
-      });
+      // REMOVED TOAST: No popups per user request
     } else {
-      toast({
-        title: "AR Mode Deactivated",
-        description: "Returning to map navigation.",
-      });
+      // REMOVED TOAST: No popups per user request
     }
   }, [arSupported, isNavigating, isARMode, toast]);
 
@@ -1080,10 +1044,7 @@ function NavigationPageContent() {
     // High priority: Exit special navigation modes
     if (isARMode) {
       setIsARMode(false);
-      toast({
-        title: "AR Mode Disabled",
-        description: "Returning to normal navigation view",
-      });
+      // REMOVED TOAST: No popups per user request
       console.log('🔙 Android back: Exited AR mode');
       return true;
     }
@@ -1117,11 +1078,7 @@ function NavigationPageContent() {
     
     // Professional truck navigation: Don't exit app during navigation
     if (isNavigating) {
-      toast({
-        title: "Navigation Active",
-        description: "Please stop navigation before going back. Safety first!",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
       console.log('🔙 Android back: Prevented exit during navigation');
       return true;
     }
@@ -1152,12 +1109,7 @@ function NavigationPageContent() {
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
       // Show user-friendly error message with RED styling
-      toast({
-          title: "❌ Navigation Failed",
-          description: "Unable to start navigation. Please try again.",
-          variant: "destructive",
-          duration: 5000,
-        });
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1174,11 +1126,7 @@ function NavigationPageContent() {
       // Comprehensive UI recovery on journey creation failure
       recoverUIOnError();
       // Show user-friendly error message
-      toast({
-          title: "Failed to start journey",
-          description: "Unable to create new journey. Please try again.",
-          variant: "destructive",
-        });
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1204,11 +1152,7 @@ function NavigationPageContent() {
       // Comprehensive UI recovery on journey completion failure
       recoverUIOnError();
       // Show user-friendly error message
-      toast({
-          title: "Failed to stop navigation",
-          description: "Unable to complete journey. Please try again.",
-          variant: "destructive",
-        });
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1327,11 +1271,7 @@ function NavigationPageContent() {
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
-      toast({
-        title: "Vehicle profile required",
-        description: "Please select a valid vehicle profile before planning a route.",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1340,11 +1280,7 @@ function NavigationPageContent() {
     const finalEndLoc = endLoc || toLocation;
     
     if (!finalStartLoc || !finalEndLoc) {
-      toast({
-        title: "Locations required",
-        description: "Please enter both start and destination locations before planning a route.",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1363,19 +1299,11 @@ function NavigationPageContent() {
           finalStartCoords = result.coordinates;
           setFromCoordinates(result.coordinates); // Update state for future use
         } else {
-          toast({
-            title: "Unable to find start location",
-            description: "Please select a location from the dropdown or enter a valid address.",
-            variant: "destructive",
-          });
+          // REMOVED TOAST: No popups per user request
           return;
         }
       } else {
-        toast({
-          title: "Please select start location",
-          description: "Choose an address from the dropdown to ensure accurate routing.",
-          variant: "destructive",
-        });
+        // REMOVED TOAST: No popups per user request
         return;
       }
     }
@@ -1391,19 +1319,11 @@ function NavigationPageContent() {
           finalEndCoords = result.coordinates;
           setToCoordinates(result.coordinates); // Update state for future use
         } else {
-          toast({
-            title: "Unable to find destination",
-            description: "Please select a location from the dropdown or enter a valid address.",
-            variant: "destructive",
-          });
+          // REMOVED TOAST: No popups per user request
           return;
         }
       } else {
-        toast({
-          title: "Please select destination",
-          description: "Choose an address from the dropdown to ensure accurate routing.",
-          variant: "destructive",
-        });
+        // REMOVED TOAST: No popups per user request
         return;
       }
     }
@@ -1423,10 +1343,7 @@ function NavigationPageContent() {
   // Alternative routes preview handlers
   const handlePreviewRoute = (route: AlternativeRoute) => {
     setPreviewRoute(route);
-    toast({
-      title: "Previewing alternative route",
-      description: `Showing ${route.reasonForSuggestion?.replace(/_/g, ' ') || 'alternative route'} on map`,
-    });
+    // REMOVED TOAST: No popups per user request
   };
 
   const handleSelectRoute = async (route: AlternativeRoute) => {
@@ -1436,22 +1353,14 @@ function NavigationPageContent() {
     try {
       // Ensure we have a valid vehicle profile before applying alternative route
       if (!activeProfile?.id) {
-        toast({
-          title: "Vehicle profile required",
-          description: "Please select a vehicle profile before applying alternative routes.",
-          variant: "destructive",
-        });
+        // REMOVED TOAST: No popups per user request
         return;
       }
 
       // Apply the alternative route
       // Ensure we have a valid vehicle profile ID
       if (!activeProfileId || activeProfileId.trim().length === 0) {
-        toast({
-          title: "Vehicle profile required",
-          description: "Please select a valid vehicle profile before applying routes.",
-          variant: "destructive",
-        });
+        // REMOVED TOAST: No popups per user request
         return;
       }
 
@@ -1471,10 +1380,7 @@ function NavigationPageContent() {
       // Trigger live notification for route change
       triggerLiveNotification('route_change');
       
-      toast({
-        title: "Route updated",
-        description: `Now using ${route.reasonForSuggestion?.replace(/_/g, ' ') || 'alternative route'}`,
-      });
+      // REMOVED TOAST: No popups per user request
       
       // Update window sync
       windowSync.updateRoute(newRoute);
@@ -1483,12 +1389,7 @@ function NavigationPageContent() {
       console.error('Failed to apply alternative route:', error);
       // Comprehensive UI recovery on alternative route application failure
       recoverUIOnError();
-      toast({
-        title: "❌ Failed to Apply Route",
-        description: "Unable to switch to alternative route. Please try again.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      // REMOVED TOAST: No popups per user request
     } finally {
       setIsApplyingRoute(false);
       setSelectedAlternativeRouteId(null);
@@ -1561,10 +1462,7 @@ function NavigationPageContent() {
       // Trigger notification about available alternatives
       triggerLiveNotification('route_change');
       
-      toast({
-        title: "Better routes found",
-        description: `Up to ${timeSavingsAvailable} minutes faster routes available`,
-      });
+      // REMOVED TOAST: No popups per user request
     }
   }, [alternatives.length, shouldReroute, timeSavingsAvailable, triggerLiveNotification]);
 
@@ -1642,29 +1540,20 @@ function NavigationPageContent() {
         // Success: Set the reverse geocoded address AND coordinates
         setFromLocation(result.address);
         setFromCoordinates({ lat: latitude, lng: longitude });
-        toast({
-          title: "Using current location",
-          description: result.address,
-        });
+        // REMOVED TOAST: No popups per user request
       } else {
         // Fallback: Use coordinates as string if reverse geocoding fails
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         setFromLocation(coordsString);
         setFromCoordinates({ lat: latitude, lng: longitude });
-        toast({
-          title: "Using GPS coordinates",
-          description: coordsString,
-        });
+        // REMOVED TOAST: No popups per user request
       }
     } catch (error) {
       // Error handling: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       setFromLocation(coordsString);
       setFromCoordinates({ lat: latitude, lng: longitude });
-      toast({
-        title: "Using GPS coordinates",
-        description: coordsString,
-      });
+      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -1709,11 +1598,7 @@ function NavigationPageContent() {
     // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
       console.log('[NAV-START-DEBUG] canStartNavigation() returned FALSE - blocking navigation');
-      toast({
-        title: "Cannot Start Navigation",
-        description: "Please plan a route first",
-        variant: "destructive"
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
     
@@ -1721,20 +1606,12 @@ function NavigationPageContent() {
     
     // Additional comprehensive validation before starting
     if (!fromLocation || !toLocation) {
-      toast({
-        title: "Missing locations",
-        description: "Please enter both start and destination locations.",
-        variant: "destructive"
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
     if (!selectedProfile) {
-      toast({
-        title: "Vehicle profile required",
-        description: "Please select a vehicle profile before starting navigation.",
-        variant: "destructive"
-      });
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1847,10 +1724,7 @@ function NavigationPageContent() {
               });
               window.dispatchEvent(autoZoomEvent);
               
-              toast({
-                title: "Using route start location",
-                description: "GPS unavailable - showing route starting point",
-              });
+              // REMOVED TOAST: No popups per user request
             }
           },
           {
@@ -1892,21 +1766,14 @@ function NavigationPageContent() {
 
       // Hide toast in mobile view - user requested no popups
       if (window.innerWidth >= 768) {
-        toast({
-          title: "Navigation started",
-          description: "Route guidance is now active.",
-        });
+        // REMOVED TOAST: No popups per user request
       }
 
     } catch (error) {
       console.error('Navigation start failed:', error);
       recoverUIOnError();
       
-      toast({
-        title: "Navigation failed",
-        description: "Unable to start navigation. Please try again.",
-        variant: "destructive"
-      });
+      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2013,10 +1880,7 @@ function NavigationPageContent() {
     setToLocation(facility.address || facility.name);
     // Hide toast in mobile view - user requested no popups
     if (window.innerWidth >= 768) {
-      toast({
-        title: "Facility selected",
-        description: `Set destination to ${facility.name}`,
-      });
+      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2025,10 +1889,7 @@ function NavigationPageContent() {
     setToLocation(location);
     // Hide toast in mobile view - user requested no popups
     if (window.innerWidth >= 768) {
-      toast({
-        title: "Destination set",
-        description: `Navigating to: ${location}`,
-      });
+      // REMOVED TOAST: No popups per user request
     }
   };
 

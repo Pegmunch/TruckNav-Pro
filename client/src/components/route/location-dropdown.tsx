@@ -227,11 +227,8 @@ const LocationDropdown = memo(function LocationDropdown({
       setOpen(false);
     },
     onError: (error) => {
-      toast({
-        title: "Postcode not found",
-        description: error instanceof Error ? error.message : "Could not geocode this postcode",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
+      console.error("Postcode not found:", error);
     },
   });
 
@@ -248,11 +245,8 @@ const LocationDropdown = memo(function LocationDropdown({
       setSaveLabel("");
     },
     onError: (error) => {
-      toast({
-        title: "Error saving location",
-        description: error instanceof Error ? error.message : "Failed to save location",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
+      console.error("Error saving location:", error);
     },
   });
 
@@ -280,10 +274,7 @@ const LocationDropdown = memo(function LocationDropdown({
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/locations"] });
-      toast({
-        title: variables.isFavorite ? "Added to favorites" : "Removed from favorites",
-        description: "Location favorites updated",
-      });
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -315,7 +306,7 @@ const LocationDropdown = memo(function LocationDropdown({
     createLocationMutation.mutate(locationData);
     
     // Toast notification removed per user request
-  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation]);
 
   // Handle Photon result selection
   const handlePhotonSelect = useCallback((photonFeature: PhotonFeature) => {
@@ -337,7 +328,7 @@ const LocationDropdown = memo(function LocationDropdown({
     createLocationMutation.mutate(locationData);
     
     // Toast notification removed per user request
-  }, [onChange, onCoordinatesChange, createLocationMutation, toast]);
+  }, [onChange, onCoordinatesChange, createLocationMutation]);
 
   // Handle enter key press for postcode search
   const handlePostcodeEnter = useCallback(() => {
@@ -351,11 +342,8 @@ const LocationDropdown = memo(function LocationDropdown({
 
   const handleSaveLocation = useCallback(() => {
     if (!saveLabel.trim()) {
-      toast({
-        title: "Invalid location name",
-        description: "Please enter a name for this location",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
+      console.error("Invalid location name - Please enter a name for this location");
       return;
     }
 
@@ -371,7 +359,7 @@ const LocationDropdown = memo(function LocationDropdown({
       coordinates: mockCoordinates,
       isFavorite: false,
     });
-  }, [saveLabel, createLocationMutation, toast]);
+  }, [saveLabel, createLocationMutation]);
 
   const handleToggleFavorite = useCallback((location: Location, event: React.MouseEvent) => {
     event.stopPropagation();

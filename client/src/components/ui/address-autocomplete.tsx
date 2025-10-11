@@ -135,11 +135,8 @@ export function AddressAutocomplete({
       queryClient.invalidateQueries({ queryKey: ["/api/locations"] });
     },
     onError: (error) => {
-      toast({
-        title: "Error saving location",
-        description: error instanceof Error ? error.message : "Failed to save location",
-        variant: "destructive",
-      });
+      // REMOVED TOAST: No popups per user request
+      console.error("Error saving location:", error);
     },
   });
 
