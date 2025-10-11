@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
 import { type Facility, type Route as RouteType, type Journey } from "@shared/schema";
+import { useGPS } from "@/contexts/gps-context";
 
 interface UnifiedSearchPanelProps {
   // Panel state
@@ -112,6 +113,10 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const { t } = useTranslation();
   const { toast } = useToast();
   const { formatDistance } = useMeasurement();
+  
+  // Get GPS position for POI search
+  const gps = useGPS();
+  const gpsPosition = gps?.position ?? null;
   
   // Weather data hook
   const { weatherData, isLoading: isWeatherLoading, error: weatherError, refreshWeather } = useWeatherData();
@@ -276,10 +281,11 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
 
   // Use Photon API for POI search with 150km radius filtering
   const { data: photonData, isLoading: isPhotonLoading, error: photonError } = useQuery({
-    queryKey: ['/api/photon-autocomplete', selectedCategory, searchQuery, coordinates?.lat, coordinates?.lng],
+    queryKey: ['/api/photon-autocomplete', selectedCategory, searchQuery, gpsPosition?.latitude, gpsPosition?.longitude, coordinates?.lat, coordinates?.lng],
     queryFn: async () => {
-      const lat = coordinates?.lat || 51.5074;
-      const lng = coordinates?.lng || -0.1278;
+      // Use GPS position first, then coordinates prop, then fallback to London
+      const lat = gpsPosition?.latitude || coordinates?.lat || 51.5074;
+      const lng = gpsPosition?.longitude || coordinates?.lng || -0.1278;
       
       const url = new URL('/api/photon-autocomplete', window.location.origin);
       url.searchParams.set('q', selectedCategory ? POI_CATEGORIES.find(c => c.type === selectedCategory)?.label || searchQuery : searchQuery || 'amenity');

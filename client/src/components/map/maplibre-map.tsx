@@ -1816,19 +1816,22 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             </Button>
           </div>
 
-          <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
-            <span className="text-muted-foreground">MapLibre GL</span>
-            <span className="text-muted-foreground mx-1">•</span>
-            <span>{preferences.mapViewMode}</span>
-            <span className="text-muted-foreground mx-1">•</span>
-            <span className="text-muted-foreground">z{currentZoom}</span>
-            {is3DMode && (
-              <>
-                <span className="text-muted-foreground mx-1">•</span>
-                <span className="text-blue-600 font-semibold">3D</span>
-              </>
-            )}
-          </div>
+          {/* Debug info - only show in development mode */}
+          {import.meta.env.DEV && (
+            <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
+              <span className="text-muted-foreground">MapLibre GL</span>
+              <span className="text-muted-foreground mx-1">•</span>
+              <span>{preferences.mapViewMode}</span>
+              <span className="text-muted-foreground mx-1">•</span>
+              <span className="text-muted-foreground">z{currentZoom}</span>
+              {is3DMode && (
+                <>
+                  <span className="text-muted-foreground mx-1">•</span>
+                  <span className="text-blue-600 font-semibold">3D</span>
+                </>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

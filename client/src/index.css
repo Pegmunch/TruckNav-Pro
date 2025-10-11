@@ -68,10 +68,10 @@ body {
   flex-direction: column;
 }
 
-/* Apply safe area padding ONLY in standalone PWA mode */
+/* Apply safe area padding ONLY in standalone PWA mode - reduced padding for mobile */
 @media (display-mode: standalone) {
   .mobile-layout {
-    padding-top: calc(var(--safe-area-top) + 48px);
+    padding-top: calc(var(--safe-area-top) + 24px); /* Reduced from 48px to 24px */
     padding-bottom: var(--safe-area-bottom);
   }
 }
