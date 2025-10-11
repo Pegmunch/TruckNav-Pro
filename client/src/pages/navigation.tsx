@@ -994,6 +994,14 @@ function NavigationPageContent() {
           url.searchParams.delete('journey');
           window.history.replaceState({}, '', url.pathname);
         }
+        
+        // CRITICAL: Clear the route from the map!
+        setCurrentRoute(null);
+        setActiveJourney(null);
+        setFromLocation('');
+        setToLocation('');
+        setFromCoordinates(null);
+        setToCoordinates(null);
         return;
       }
       
@@ -1021,6 +1029,11 @@ function NavigationPageContent() {
       
       // Note: Don't automatically start navigation even if status is 'active'
       // User should manually click "Start Navigation" to begin
+    } else {
+      // No journey - ensure clean state
+      console.log('[JOURNEY-LOAD] No journey - ensuring clean state');
+      setCurrentRoute(null);
+      setActiveJourney(null);
     }
   }, [currentJourney]);
 
