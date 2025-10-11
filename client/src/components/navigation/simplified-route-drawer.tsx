@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGPS } from '@/contexts/gps-context';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   usePhotonAutocomplete, 
   formatPhotonDisplay, 
@@ -61,12 +61,39 @@ export function SimplifiedRouteDrawer({
   const poiSearchText = shouldSearchPOI 
     ? `${selectedPOICategory.split(':')[1] || selectedPOICategory} near me`
     : '';
+  
+  // CRITICAL DEBUG: Log the actual GPS availability when POI is selected
+  React.useEffect(() => {
+    if (selectedPOICategory) {
+      console.log('[POI-CRITICAL] POI Category Selected:', selectedPOICategory);
+      console.log('[POI-CRITICAL] GPS Ready:', isGPSReady);
+      console.log('[POI-CRITICAL] GPS Position Available:', !!gps?.position);
+      if (gps?.position) {
+        console.log('[POI-CRITICAL] GPS Coordinates:', {
+          lat: gps.position.latitude,
+          lng: gps.position.longitude
+        });
+      } else {
+        console.error('[POI-CRITICAL] GPS POSITION IS NULL - THIS IS THE ISSUE!');
+        console.error('[POI-CRITICAL] GPS Object:', gps);
+      }
+    }
+  }, [selectedPOICategory, gps, isGPSReady]);
 
   // Fetch POI results using Photon with osm_tag filtering and GPS coordinates
   const gpsCoords = gps?.position ? { 
     lat: gps.position.latitude, 
     lng: gps.position.longitude 
   } : undefined;
+  
+  // DEBUG: Log GPS coordinates being passed to POI search
+  if (selectedPOICategory) {
+    console.log('[POI-DEBUG] POI Category Selected:', selectedPOICategory);
+    console.log('[POI-DEBUG] GPS Position Available:', !!gps?.position);
+    console.log('[POI-DEBUG] GPS Coordinates:', gpsCoords);
+    console.log('[POI-DEBUG] Search Text:', poiSearchText);
+    console.log('[POI-DEBUG] Should Search:', shouldSearchPOI);
+  }
   
   const { results: poiResults, isLoading: isLoadingPOI } = usePhotonAutocomplete(
     poiSearchText,

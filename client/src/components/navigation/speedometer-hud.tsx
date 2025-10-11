@@ -195,8 +195,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       {/* Main oval speedometer container - RESIZED to be smaller as requested */}
       <div
         className={cn(
-          // Reduced oval shape with aspect ratio (280px-360px width as requested)
-          'relative w-[280px] h-[100px] sm:w-[320px] sm:h-[110px] md:w-[360px] md:h-[120px]',
+          // Further reduced oval shape with aspect ratio (240px-300px width as requested)
+          'relative w-[240px] h-[85px] sm:w-[270px] sm:h-[95px] md:w-[300px] md:h-[105px]',
           // Glassmorphism effect
           'backdrop-blur-xl bg-gradient-to-r',
           getBackgroundGradient(),
@@ -215,7 +215,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             <div
               className={cn(
                 'relative flex flex-col items-center justify-center',
-                'w-14 h-14 sm:w-16 sm:h-16', // Reduced from w-16/h-16 to w-14/h-14
+                'w-12 h-12 sm:w-14 sm:h-14', // Further reduced for smaller speedometer
                 'rounded-full bg-white dark:bg-slate-900',
                 'shadow-lg',
                 convertedSpeedLimit ? 'border-4 border-red-600' : 'border-4 border-slate-400'
@@ -224,7 +224,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             >
               {convertedSpeedLimit ? (
                 <>
-                  <span className="text-lg sm:text-xl font-black text-black dark:text-white">
+                  <span className="text-base sm:text-lg font-black text-black dark:text-white">
                     {convertedSpeedLimit}
                   </span>
                   {confidenceIndicator && (
@@ -244,10 +244,10 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                   )}
                 </>
               ) : (
-                <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-slate-400" />
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
               )}
             </div>
-            <span className="mt-1 text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+            <span className="mt-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase">
               LIMIT
             </span>
           </div>
@@ -258,7 +258,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               {/* Speed value with animation */}
               <motion.div
                 className={cn(
-                  'text-4xl sm:text-5xl md:text-6xl font-black tabular-nums',
+                  'text-3xl sm:text-4xl md:text-5xl font-black tabular-nums',
                   getSpeedColor(),
                   'transition-colors duration-300'
                 )}
@@ -279,7 +279,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               <button
                 onClick={handleUnitToggle}
                 className={cn(
-                  'mt-0 text-xs sm:text-sm font-bold uppercase',
+                  'mt-0 text-[10px] sm:text-xs font-bold uppercase',
                   'text-slate-600 dark:text-slate-400',
                   'hover:text-blue-500 dark:hover:text-blue-400',
                   'transition-colors duration-200',
@@ -309,8 +309,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 {/* Road reference badge */}
                 <div
                   className={cn(
-                    'px-3 py-1.5 rounded-lg',
-                    'text-sm sm:text-base font-black',
+                    'px-2 py-1 rounded-lg',
+                    'text-xs sm:text-sm font-black',
                     'shadow-md',
                     getRoadBadgeColor(roadInfo.roadRef)
                   )}
@@ -323,7 +323,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 {roadInfo.junction?.ref && (
                   <div className="flex items-center gap-1">
                     <MapPin className="w-3 h-3 text-slate-500" />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                    <span className="text-[9px] font-semibold text-slate-600 dark:text-slate-400">
                       J{roadInfo.junction.ref}
                     </span>
                   </div>
@@ -333,7 +333,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 {roadInfo.destination && (
                   <div className="flex items-center gap-1 max-w-full">
                     <Navigation className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                    <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 truncate">
+                    <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 truncate">
                       {roadInfo.destination}
                     </span>
                   </div>

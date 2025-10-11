@@ -326,6 +326,10 @@ export const usePhotonAutocomplete = (
           backendUrl.searchParams.set('lat', gpsCoordinates.lat.toString());
           backendUrl.searchParams.set('lon', gpsCoordinates.lng.toString());
           console.log(`[AUTOCOMPLETE] Using GPS location: lat=${gpsCoordinates.lat}, lng=${gpsCoordinates.lng}`);
+        } else {
+          console.warn('[AUTOCOMPLETE] NO GPS COORDINATES - POI search will not be location-biased!');
+          console.warn('[AUTOCOMPLETE] Query:', trimmedQuery);
+          console.warn('[AUTOCOMPLETE] POI Category:', poiCategory);
         }
         
         const controller = new AbortController();

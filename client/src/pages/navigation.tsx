@@ -2309,7 +2309,7 @@ function NavigationPageContent() {
                   <div 
                     className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                     style={{
-                      bottom: 'calc(140px + var(--safe-area-bottom, 0px))' // Moved up from 100px to 140px
+                      bottom: 'calc(160px + var(--safe-area-bottom, 0px))' // Moved up to 160px for better visibility
                     }}
                     data-testid="speedometer-hud-navigate"
                   >
