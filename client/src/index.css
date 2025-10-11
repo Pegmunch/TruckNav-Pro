@@ -674,8 +674,8 @@ body {
 
 /* Professional navigation HUD safe area support */
 .nav-hud-safe-area {
-  /* Enhanced positioning for iOS devices - HUD at TOP during navigation */
-  top: max(0px, env(safe-area-inset-top, 0px));
+  /* Enhanced positioning for iOS devices - HUD at BOTTOM during navigation */
+  bottom: max(20px, calc(20px + env(safe-area-inset-bottom, 0px)));
   right: max(16px, calc(16px + env(safe-area-inset-right, 0px)));
   left: max(16px, calc(16px + env(safe-area-inset-left, 0px)));
 }
