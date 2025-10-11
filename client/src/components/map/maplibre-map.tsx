@@ -1370,21 +1370,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   }, [incidents, isLoaded, showIncidents]);
 
   // GPS tracking and user position marker (using centralized GPS hook)
+  // CRITICAL: GPS marker must ALWAYS be visible on any map scenario
   useEffect(() => {
-    if (!map.current || !isLoaded || !gpsPosition) {
-      // Clean up marker when GPS unavailable
-      if (userMarkerRef.current) {
-        userMarkerRef.current.remove();
-        userMarkerRef.current = null;
-      }
+    if (!map.current || !isLoaded) {
       return;
     }
 
     const mapInstance = map.current;
-    const { latitude, longitude, smoothedHeading, accuracy } = gpsPosition;
+    
+    // Use GPS position if available, otherwise use map center as fallback
+    const hasGPS = !!gpsPosition;
+    const latitude = gpsPosition?.latitude ?? mapInstance.getCenter().lat;
+    const longitude = gpsPosition?.longitude ?? mapInstance.getCenter().lng;
+    const smoothedHeading = gpsPosition?.smoothedHeading ?? null;
+    const accuracy = gpsPosition?.accuracy ?? null;
     
     // Use smoothed heading for fluid rotation, fallback to raw heading if smoothing disabled
-    const bearing = smoothedHeading ?? gpsPosition.heading ?? 0;
+    const bearing = smoothedHeading ?? gpsPosition?.heading ?? 0;
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
@@ -1423,19 +1425,22 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       }
       
       // GPS accuracy indicator - multi-tier visual feedback
-      const accuracyLevel = !accuracy ? 'excellent' : 
+      // CRITICAL: Show gray marker when GPS is not available
+      const accuracyLevel = !hasGPS ? 'unavailable' :
+                           !accuracy ? 'excellent' : 
                            accuracy < 10 ? 'excellent' : 
                            accuracy < 30 ? 'good' : 
                            accuracy < 100 ? 'fair' : 'poor';
       
       const accuracyColors = {
-        excellent: { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.4)' },
-        good: { ring: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)' },
-        fair: { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)' },
-        poor: { ring: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)' }
+        unavailable: { ring: '#9ca3af', glow: 'rgba(156, 163, 175, 0.4)', markerBg: 'linear-gradient(145deg, #6b7280 0%, #4b5563 50%, #374151 100%)' },
+        excellent: { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
+        good: { ring: '#3b82f6', glow: 'rgba(59, 130, 246, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
+        fair: { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' },
+        poor: { ring: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)', markerBg: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)' }
       };
       
-      const { ring: accuracyColor, glow: accuracyGlow } = accuracyColors[accuracyLevel];
+      const { ring: accuracyColor, glow: accuracyGlow, markerBg } = accuracyColors[accuracyLevel];
       
       // Directional chevron arrow (always points forward relative to heading)
       const chevronSize = Math.round(markerSize * 0.35);
@@ -1493,12 +1498,12 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           <div style="
             width: ${markerSize}px;
             height: ${markerSize}px;
-            background: linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%);
+            background: ${markerBg};
             border: ${borderWidth}px solid white;
             border-radius: 50%;
             box-shadow: 
-              0 0 0 3px rgba(59, 130, 246, 0.5),
-              0 12px 36px rgba(37, 99, 235, 1.0), 
+              0 0 0 3px ${accuracyGlow},
+              0 12px 36px ${accuracyGlow}, 
               0 6px 20px rgba(0, 0, 0, 0.8),
               inset 0 3px 6px rgba(255, 255, 255, 0.4);
             display: flex;
@@ -1509,7 +1514,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             z-index: 1000;
           ">
             ${vehicleIcon}
-            ${directionChevron}
+            ${hasGPS ? directionChevron : ''}
           </div>
         </div>
         <style>
