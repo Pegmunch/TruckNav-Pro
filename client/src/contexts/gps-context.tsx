@@ -524,50 +524,19 @@ export function GPSProvider({
     console.log('[GPS-DEBUG] ✅ GPS cache cleared and tracking restarted');
   }, []);
 
-  // Development fallback for environments without real GPS
-  const useDevelopmentFallback = useCallback(() => {
-    console.log('[GPS-PROVIDER] 🔧 Using development fallback GPS (London center)');
+  // Handler for when GPS is truly unavailable
+  const handleGPSUnavailable = useCallback((reason: string) => {
+    console.log('[GPS-PROVIDER] ⚠️ GPS unavailable:', reason);
     
-    // Default to central London for development
-    const fallbackLat = 51.5074;
-    const fallbackLng = -0.1278;
-    const timestamp = Date.now();
-    
-    const developmentPosition: GPSPosition = {
-      latitude: fallbackLat,
-      longitude: fallbackLng,
-      accuracy: 50, // Simulated accuracy
-      altitude: null,
-      altitudeAccuracy: null,
-      speed: null,
-      heading: null,
-      smoothedHeading: null,
-      timestamp,
-      confidenceScore: 75,
-      confidenceLevel: 'high',
-      accuracyLevel: 'good',
-      isStale: false,
-      isStuck: false,
-      isOutOfBounds: false
-    };
-    
-    setPosition(developmentPosition);
-    setHasFreshPosition(true);
+    // Set error state but don't provide fake coordinates
+    setStatus('unavailable');
+    setPosition(null);
+    setHasFreshPosition(false);
     setIsUsingCached(false);
-    setStatus('ready');
-    gpsReceivedRef.current = true;
+    gpsReceivedRef.current = false;
     
-    // Save as cached for next time
-    saveGPSToCache(developmentPosition);
-    
-    // Update refs
-    lastPositionRef.current = { lat: fallbackLat, lng: fallbackLng, timestamp };
-    lastUpdateTimeRef.current = timestamp;
-    
-    console.log('[GPS-PROVIDER] ✅ Development GPS position set:', {
-      lat: fallbackLat,
-      lng: fallbackLng
-    });
+    // Don't provide any fallback coordinates - user must grant GPS permission
+    console.log('[GPS-PROVIDER] No fallback coordinates provided - waiting for real GPS');
   }, []);
 
   const startGPSTracking = useCallback(() => {
@@ -582,9 +551,9 @@ export function GPSProvider({
       setErrorMessage(getGPSErrorMessage(errType));
       setStatus('error');
       
-      // Use development fallback
-      console.log('[GPS-PROVIDER] Geolocation not supported, using development fallback');
-      useDevelopmentFallback();
+      // No fallback - user must use a browser with GPS support
+      console.log('[GPS-PROVIDER] Geolocation not supported - cannot provide location');
+      handleGPSUnavailable('Geolocation API not supported');
       return;
     }
 
@@ -622,9 +591,9 @@ export function GPSProvider({
           gpsReceivedRef.current = true;
           console.log(`[GPS-PROVIDER] Using cached position from ${cached.ageDisplay}`);
         } else {
-          // Use development fallback when no cache available
-          console.log('[GPS-PROVIDER] No cache available, using development fallback');
-          useDevelopmentFallback();
+          // No fallback coordinates - wait for real GPS
+          console.log('[GPS-PROVIDER] No cache available and no GPS received - waiting for real GPS');
+          handleGPSUnavailable('GPS acquisition timeout and no cached position available');
         }
       }
     }, 15000); // 15 second timeout
@@ -969,7 +938,7 @@ export function GPSProvider({
         maximumAge
       }
     );
-  }, [enableHighAccuracy, timeout, maximumAge, headingSmoothingAlpha, enableHeadingSmoothing, useDevelopmentFallback]);
+  }, [enableHighAccuracy, timeout, maximumAge, headingSmoothingAlpha, enableHeadingSmoothing, handleGPSUnavailable]);
 
   const stopGPSTracking = useCallback(() => {
     if (watchIdRef.current !== null) {

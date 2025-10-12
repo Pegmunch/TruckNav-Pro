@@ -347,12 +347,17 @@ const LocationDropdown = memo(function LocationDropdown({
       return;
     }
 
-    // For demo purposes, we'll use sample coordinates
-    // In a real app, this would come from geocoding the current input value
-    const mockCoordinates = {
-      lat: 52.5074 + (Math.random() - 0.5) * 0.1, // Random coordinates near London
-      lng: -0.1278 + (Math.random() - 0.5) * 0.1,
-    };
+    // Get actual GPS coordinates or return without saving
+    // Don't save locations without real coordinates
+    if (!navigator.geolocation) {
+      console.error("Geolocation not supported");
+      return;
+    }
+    
+    // This would normally come from geocoding the input value
+    // For now, we'll skip saving if we don't have real coordinates
+    console.log("Need real coordinates from geocoding to save location");
+    return;
 
     createLocationMutation.mutate({
       label: saveLabel,

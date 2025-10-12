@@ -473,8 +473,9 @@ const InteractiveMap = memo(function InteractiveMap({
 
   // Get facilities for the current view using actual GPS coordinates
   const gpsData = useGPS();
-  const currentLat = gpsData?.position?.latitude || 51.5074; // Default to London if no GPS
-  const currentLng = gpsData?.position?.longitude || -0.1278; // Default to London if no GPS
+  // Don't provide fallback coordinates - only use real GPS
+  const currentLat = gpsData?.position?.latitude;
+  const currentLng = gpsData?.position?.longitude;
   
   // Debug logging for POI coordinates
   useEffect(() => {

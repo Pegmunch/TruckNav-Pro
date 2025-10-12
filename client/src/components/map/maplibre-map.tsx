@@ -1392,11 +1392,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     if (!hasGPS) {
       console.log('[GPS-MARKER] GPS not ready - status:', gpsStatus, '- showing orange unavailable marker');
       
-      // Show orange GPS-unavailable marker at last known position or default
+      // Show orange GPS-unavailable marker at last known position if available
       const lastKnown = getLastKnownPosition();
-      if (lastKnown || !userMarkerRef.current) {
-        const fallbackLat = lastKnown?.lat ?? 51.5074;
-        const fallbackLng = lastKnown?.lng ?? -0.1278;
+      if (lastKnown && !userMarkerRef.current) {
+        const fallbackLat = lastKnown.lat;
+        const fallbackLng = lastKnown.lng;
         
         if (!userMarkerRef.current) {
           // Create orange unavailable GPS marker
