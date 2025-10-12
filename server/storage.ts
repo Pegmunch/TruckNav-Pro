@@ -454,6 +454,25 @@ export class MemStorage implements IStorage {
     sampleFacilities.forEach(facility => {
       this.facilities.set(facility.id, facility);
     });
+    
+    // Add test facility near St Albans for POI distance filtering verification
+    const stAlbansFacility: Facility = {
+      id: "facility-st-albans-test",
+      name: "St Albans Fuel Station",
+      type: "fuel",
+      coordinates: { lat: 51.760, lng: -0.340 }, // About 0.5km from St Albans center
+      address: "St Albans, Hertfordshire",
+      amenities: ["fuel", "parking", "restrooms"],
+      rating: 4.5,
+      reviewCount: 42,
+      truckParking: true,
+      fuel: true,
+      restaurant: false,
+      restrooms: true,
+      showers: false,
+      country: "UK",
+    };
+    this.facilities.set(stAlbansFacility.id, stAlbansFacility);
 
     // Sample traffic incidents
     const sampleIncidents: TrafficIncident[] = [
@@ -1058,25 +1077,53 @@ export class MemStorage implements IStorage {
     }
     
     if (params.coordinates && params.radius) {
-      // Convert radius from kilometers to miles for comparison (since calculateDistance returns miles)
-      const radiusInMiles = params.radius * 0.621371;
+      // Keep radius in kilometers - this is the fix!
+      const radiusKm = params.radius;
+      
+      // Debug logging for POI search
+      console.log('[POI-SEARCH] Starting facility search:', {
+        userLocation: params.coordinates,
+        radiusKm: radiusKm,
+        type: params.type || 'all',
+        totalFacilities: facilities.length
+      });
       
       // Map facilities with their distances
       const facilitiesWithDistance = facilities
         .map(f => {
           const coords = f.coordinates as { lat: number; lng: number };
+          // calculateDistance returns miles (Earth radius = 3959 miles)
           const distanceInMiles = this.calculateDistance(params.coordinates!, coords);
+          // Convert miles to kilometers
           const distanceInKm = distanceInMiles * 1.60934;
+          
+          // Debug log for each facility
+          console.log(`[POI-SEARCH] Facility "${f.name}":`, {
+            location: `(${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`,
+            distanceKm: distanceInKm.toFixed(2),
+            withinRadius: distanceInKm <= radiusKm
+          });
+          
           return {
             facility: f,
             distanceInMiles,
             distanceInKm
           };
         })
-        // Filter by radius
-        .filter(item => item.distanceInMiles <= radiusInMiles)
-        // Sort by distance (closest first)
-        .sort((a, b) => a.distanceInMiles - b.distanceInMiles);
+        // CRITICAL FIX: Filter by kilometers, not miles!
+        .filter(item => {
+          const passes = item.distanceInKm <= radiusKm;
+          if (!passes) {
+            console.log(`[POI-SEARCH] ❌ Filtered out "${item.facility.name}" - ${item.distanceInKm.toFixed(2)}km > ${radiusKm}km`);
+          } else {
+            console.log(`[POI-SEARCH] ✅ Including "${item.facility.name}" - ${item.distanceInKm.toFixed(2)}km <= ${radiusKm}km`);
+          }
+          return passes;
+        })
+        // Sort by distance in kilometers (closest first)
+        .sort((a, b) => a.distanceInKm - b.distanceInKm);
+      
+      console.log(`[POI-SEARCH] Found ${facilitiesWithDistance.length} facilities within ${radiusKm}km radius`);
       
       // Return facilities with distance property added
       return facilitiesWithDistance.map(item => ({
@@ -2720,8 +2767,16 @@ export class DatabaseStorage implements IStorage {
     
     // Filter by distance if coordinates and radius are provided
     if (params.coordinates && params.radius) {
-      // Convert radius from kilometers to miles for comparison (since calculateDistance returns miles)
-      const radiusInMiles = params.radius * 0.621371;
+      // Keep radius in kilometers - this is the fix!
+      const radiusKm = params.radius;
+      
+      // Debug logging for POI search
+      console.log('[DB-POI-SEARCH] Starting facility search:', {
+        userLocation: params.coordinates,
+        radiusKm: radiusKm,
+        type: params.type || 'all',
+        totalFacilities: allFacilities.length
+      });
       
       // Map facilities with their distances
       const facilitiesWithDistance = allFacilities
@@ -2733,8 +2788,17 @@ export class DatabaseStorage implements IStorage {
               ? JSON.parse(facility.coordinates) 
               : facility.coordinates;
             
+            // calculateDistance returns miles (Earth radius = 3959 miles)
             const distanceInMiles = this.calculateDistance(params.coordinates!, facilityCoords);
+            // Convert miles to kilometers
             const distanceInKm = distanceInMiles * 1.60934;
+            
+            // Debug log for each facility
+            console.log(`[DB-POI-SEARCH] Facility "${facility.name}":`, {
+              location: `(${facilityCoords.lat.toFixed(4)}, ${facilityCoords.lng.toFixed(4)})`,
+              distanceKm: distanceInKm.toFixed(2),
+              withinRadius: distanceInKm <= radiusKm
+            });
             
             return {
               facility,
@@ -2742,16 +2806,26 @@ export class DatabaseStorage implements IStorage {
               distanceInKm
             };
           } catch (error) {
-            console.error(`[FACILITY-FILTER] Error parsing coordinates for facility ${facility.id}:`, error);
+            console.error(`[DB-POI-SEARCH] Error parsing coordinates for facility ${facility.id}:`, error);
             return null;
           }
         })
         // Filter out facilities without valid coordinates
         .filter((item): item is { facility: any; distanceInMiles: number; distanceInKm: number } => item !== null)
-        // Filter by radius
-        .filter(item => item.distanceInMiles <= radiusInMiles)
-        // Sort by distance (closest first)
-        .sort((a, b) => a.distanceInMiles - b.distanceInMiles);
+        // CRITICAL FIX: Filter by kilometers, not miles!
+        .filter(item => {
+          const passes = item.distanceInKm <= radiusKm;
+          if (!passes) {
+            console.log(`[DB-POI-SEARCH] ❌ Filtered out "${item.facility.name}" - ${item.distanceInKm.toFixed(2)}km > ${radiusKm}km`);
+          } else {
+            console.log(`[DB-POI-SEARCH] ✅ Including "${item.facility.name}" - ${item.distanceInKm.toFixed(2)}km <= ${radiusKm}km`);
+          }
+          return passes;
+        })
+        // Sort by distance in kilometers (closest first)
+        .sort((a, b) => a.distanceInKm - b.distanceInKm);
+      
+      console.log(`[DB-POI-SEARCH] Found ${facilitiesWithDistance.length} facilities within ${radiusKm}km radius`);
       
       // Return facilities with distance property added
       return facilitiesWithDistance.map(item => ({
