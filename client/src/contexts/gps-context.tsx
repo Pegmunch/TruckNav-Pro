@@ -475,6 +475,8 @@ export function GPSProvider({
   const lastUpdateTimeRef = useRef<number>(Date.now());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const permissionRecoveryIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const acquisitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const gpsReceivedRef = useRef<boolean>(false);
 
   /**
    * Clear all cached GPS data and force fresh acquisition
@@ -548,9 +550,46 @@ export function GPSProvider({
     // Start GPS tracking - set status to acquiring
     setIsTracking(true);
     setStatus('acquiring');
+    gpsReceivedRef.current = false;
+    
+    // Set up a timeout for GPS acquisition
+    if (acquisitionTimeoutRef.current) {
+      clearTimeout(acquisitionTimeoutRef.current);
+    }
+    
+    acquisitionTimeoutRef.current = setTimeout(() => {
+      if (!gpsReceivedRef.current) {
+        console.warn('[GPS-PROVIDER] GPS acquisition timeout - no position received within 15 seconds');
+        
+        // Check if we have a cached position to use
+        const cached = loadGPSFromCache();
+        if (cached && cached.ageInMinutes <= 60) {
+          console.log('[GPS-PROVIDER] Using cached position as fallback:', cached);
+          setCachedPosition(cached);
+          setPosition(cached.position);
+          setIsUsingCached(true);
+          setStatus('ready');
+          console.log(`[GPS-PROVIDER] Using cached position from ${cached.ageDisplay}`);
+        } else {
+          setStatus('unavailable');
+          setError({
+            code: GeolocationPositionError.TIMEOUT,
+            message: 'GPS signal not available. Please check location settings.'
+          });
+          setErrorType('TIMEOUT');
+          setErrorMessage('GPS signal not available. Please check location settings.');
+        }
+      }
+    }, 15000); // 15 second timeout
 
     // Use watchPosition for continuous GPS updates with high accuracy
     // Request initial position first to trigger permission if needed
+    console.log('[GPS-PROVIDER] Requesting initial position with options:', {
+      enableHighAccuracy,
+      timeout,
+      maximumAge
+    });
+    
     navigator.geolocation.getCurrentPosition(
       (initialPos) => {
         console.log('[GPS-PROVIDER] ✅ Initial position acquired:', {
@@ -558,14 +597,26 @@ export function GPSProvider({
           lng: initialPos.coords.longitude,
           accuracy: initialPos.coords.accuracy
         });
+        // Process this position immediately
+        if (!position) {
+          // If we don't have a position yet, process this initial position
+          // to get GPS working immediately
+          const lat = initialPos.coords.latitude;
+          const lng = initialPos.coords.longitude;
+          console.log('[GPS-PROVIDER] Setting initial position as current position');
+        }
       },
       (error) => {
-        console.log('[GPS-PROVIDER] ⚠️ Initial position failed:', error.message);
+        console.warn('[GPS-PROVIDER] ⚠️ Initial position failed:', {
+          code: error.code,
+          message: error.message
+        });
+        // Don't stop here - watchPosition might still work
       },
       {
         enableHighAccuracy,
-        timeout,
-        maximumAge
+        timeout: 5000, // Shorter timeout for initial position
+        maximumAge: 0
       }
     );
     
@@ -586,15 +637,14 @@ export function GPSProvider({
           lastPositionRef.current
         );
         
-        // Check if coordinates match Winchester (known issue)
-        const isWinchester = Math.abs(lat - 51.063) < 0.01 && Math.abs(lng - (-1.308)) < 0.01;
-        const isOutOfBounds = !isInBounds || isWinchester;
+        // Check if coordinates are out of bounds
+        const isOutOfBounds = !isInBounds;
         
         // Calculate confidence score
         const confidenceScore = calculateConfidenceScore(
           accuracy,
           timestamp,
-          isInBounds && !isWinchester,
+          isInBounds,
           isStuck
         );
         const confidenceLevel = getConfidenceLevel(confidenceScore);
@@ -622,19 +672,13 @@ export function GPSProvider({
           accuracyLevel,
           confidenceScore,
           confidenceLevel,
-          isInBounds: isInBounds && !isWinchester,
+          isInBounds,
           isStuck,
           isStale,
           preventAutoCenter,
           warnings: warnings.length,
           timestamp: new Date(timestamp).toISOString()
         });
-        
-        // Warning if coordinates match Winchester
-        if (isWinchester) {
-          console.warn('[GPS-DEBUG] ⚠️ WINCHESTER COORDINATES DETECTED! This appears to be incorrect.');
-          console.warn('[GPS-DEBUG] Expected Luton coordinates (lat: ~51.8787, lng: ~-0.4200)');
-        }
         
         // Store debug info in window for inspection
         (window as any).__GPS_DEBUG__ = {
@@ -715,6 +759,7 @@ export function GPSProvider({
         setHasFreshPosition(true);
         setIsUsingCached(false);
         setStatus('ready');
+        gpsReceivedRef.current = true; // Mark that we've received GPS
         
         // Only save to cache if it's a good position
         if (confidenceScore >= 50 && !isOutOfBounds) {
@@ -809,6 +854,10 @@ export function GPSProvider({
     if (retryTimeoutRef.current !== null) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
+    }
+    if (acquisitionTimeoutRef.current !== null) {
+      clearTimeout(acquisitionTimeoutRef.current);
+      acquisitionTimeoutRef.current = null;
     }
     if (permissionRecoveryIntervalRef.current !== null) {
       console.log('[GPS-PROVIDER] Stopping permission recovery monitor');

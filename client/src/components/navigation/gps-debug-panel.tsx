@@ -46,20 +46,17 @@ export default function GPSDebugPanel({
     return () => clearInterval(interval);
   }, []);
 
-  // Check if coordinates match Winchester or Luton
+  // Check if coordinates match expected location (Luton)
   const checkLocation = () => {
-    if (!gps?.position) return { isWinchester: false, isLuton: false, isUnknown: true };
+    if (!gps?.position) return { isLuton: false, isUnknown: true };
     
     const lat = gps.position.latitude;
     const lng = gps.position.longitude;
     
-    // Winchester coordinates: lat: ~51.063, lng: ~-1.308
-    const isWinchester = Math.abs(lat - 51.063) < 0.01 && Math.abs(lng - (-1.308)) < 0.01;
-    
     // Luton coordinates: lat: ~51.8787, lng: ~-0.4200
     const isLuton = Math.abs(lat - 51.8787) < 0.1 && Math.abs(lng - (-0.4200)) < 0.1;
     
-    return { isWinchester, isLuton, isUnknown: !isWinchester && !isLuton };
+    return { isLuton, isUnknown: !isLuton };
   };
 
   const handleResetGPS = async () => {
@@ -75,7 +72,7 @@ export default function GPSDebugPanel({
     }, 2000);
   };
 
-  const { isWinchester, isLuton, isUnknown } = checkLocation();
+  const { isLuton, isUnknown } = checkLocation();
   
   // Determine GPS source based on accuracy
   const getGPSSource = () => {
@@ -150,16 +147,6 @@ export default function GPSDebugPanel({
       {showDebug && (
         <CardContent className="space-y-3">
           {/* Location Detection Alert */}
-          {isWinchester && (
-            <Alert className="border-red-500 bg-red-50 dark:bg-red-950/20">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <AlertDescription className="text-xs">
-                <strong>WARNING:</strong> Detecting Winchester coordinates! This appears incorrect.
-                Expected location: Luton (LU2 7FG)
-              </AlertDescription>
-            </Alert>
-          )}
-          
           {isLuton && (
             <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
               <CheckCircle className="h-4 w-4 text-green-500" />
