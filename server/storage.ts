@@ -2689,14 +2689,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchFacilities(params: { type?: string; coordinates?: { lat: number; lng: number }; radius?: number }): Promise<Facility[]> {
-    let query = db.select().from(facilities);
+    let allFacilities = await db.select().from(facilities);
     
+    // Filter by type if specified
     if (params.type) {
-      query = query.where(eq(facilities.type, params.type));
+      allFacilities = allFacilities.filter(f => f.type === params.type);
     }
     
-    // For now, return all facilities matching type. In a real implementation, you would filter by distance
-    return await query;
+    // Filter by distance if coordinates and radius are provided
+    if (params.coordinates && params.radius) {
+      allFacilities = allFacilities.filter(facility => {
+        if (!facility.coordinates) return false;
+        
+        try {
+          const facilityCoords = typeof facility.coordinates === 'string' 
+            ? JSON.parse(facility.coordinates) 
+            : facility.coordinates;
+          
+          const distance = this.calculateDistance(params.coordinates!, facilityCoords);
+          return distance <= params.radius!;
+        } catch (error) {
+          console.error(`[FACILITY-FILTER] Error parsing coordinates for facility ${facility.id}:`, error);
+          return false;
+        }
+      });
+      
+      // Sort by distance (closest first)
+      allFacilities.sort((a, b) => {
+        try {
+          const coordsA = typeof a.coordinates === 'string' ? JSON.parse(a.coordinates) : a.coordinates;
+          const coordsB = typeof b.coordinates === 'string' ? JSON.parse(b.coordinates) : b.coordinates;
+          const distA = this.calculateDistance(params.coordinates!, coordsA);
+          const distB = this.calculateDistance(params.coordinates!, coordsB);
+          return distA - distB;
+        } catch {
+          return 0;
+        }
+      });
+    }
+    
+    return allFacilities;
   }
 
   // Routes
