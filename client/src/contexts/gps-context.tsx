@@ -54,6 +54,54 @@ interface GPSProviderProps {
 
 const GPSContext = createContext<GPSContextValue | null>(null);
 
+// Cache key for localStorage
+const GPS_CACHE_KEY = 'trucknav_gps_last_known_position';
+
+/**
+ * Save GPS position to localStorage for use as fallback
+ */
+const saveGPSToCache = (position: GPSPosition): void => {
+  try {
+    localStorage.setItem(GPS_CACHE_KEY, JSON.stringify(position));
+    console.log('[GPS-CACHE] Saved position to localStorage:', {
+      lat: position.latitude,
+      lng: position.longitude,
+      timestamp: new Date(position.timestamp).toISOString()
+    });
+  } catch (e) {
+    console.warn('[GPS-CACHE] Failed to save to localStorage:', e);
+  }
+};
+
+/**
+ * Load cached GPS position from localStorage
+ */
+const loadGPSFromCache = (): GPSPosition | null => {
+  try {
+    const cached = localStorage.getItem(GPS_CACHE_KEY);
+    if (cached) {
+      const position = JSON.parse(cached) as GPSPosition;
+      const age = Date.now() - position.timestamp;
+      
+      // Only use cache if less than 24 hours old
+      if (age < 24 * 60 * 60 * 1000) {
+        console.log('[GPS-CACHE] Loaded cached position:', {
+          lat: position.latitude,
+          lng: position.longitude,
+          age: Math.round(age / 1000) + 's old'
+        });
+        return position;
+      } else {
+        console.log('[GPS-CACHE] Cached position too old, discarding');
+        localStorage.removeItem(GPS_CACHE_KEY);
+      }
+    }
+  } catch (e) {
+    console.warn('[GPS-CACHE] Failed to load from localStorage:', e);
+  }
+  return null;
+};
+
 /**
  * Normalize angle to 0-360 range
  */
@@ -145,7 +193,14 @@ export function GPSProvider({
   headingSmoothingAlpha = 0.25,
   enableHeadingSmoothing = true
 }: GPSProviderProps) {
-  const [position, setPosition] = useState<GPSPosition | null>(null);
+  // Initialize with cached position if available
+  const [position, setPosition] = useState<GPSPosition | null>(() => {
+    const cached = loadGPSFromCache();
+    if (cached) {
+      console.log('[GPS-PROVIDER] Initialized with cached position');
+    }
+    return cached;
+  });
   const [error, setError] = useState<GPSError | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [errorType, setErrorType] = useState<GPSErrorType>(null);
@@ -247,7 +302,7 @@ export function GPSProvider({
         }
 
         // Update position state
-        setPosition({
+        const newPosition: GPSPosition = {
           latitude: coords.latitude,
           longitude: coords.longitude,
           accuracy: coords.accuracy,
@@ -257,7 +312,12 @@ export function GPSProvider({
           heading: rawHeading,
           smoothedHeading: smoothed,
           timestamp
-        });
+        };
+        
+        setPosition(newPosition);
+        
+        // Save to localStorage for future use
+        saveGPSToCache(newPosition);
 
         // Clear any previous errors
         setError(null);

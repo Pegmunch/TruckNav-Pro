@@ -1917,8 +1917,19 @@ function NavigationPageContent() {
     }
   };
 
-  // Get current coordinates for search (fallback to London if not available)
-  const currentCoordinates = { lat: 51.5074, lng: -0.1278 };
+  // Get current coordinates for search - use actual GPS position
+  const currentCoordinates = gpsData?.position 
+    ? { lat: gpsData.position.latitude, lng: gpsData.position.longitude }
+    : null;
+  
+  // Log GPS usage for debugging
+  useEffect(() => {
+    if (currentCoordinates) {
+      console.log('[NAVIGATION] Using GPS coordinates:', currentCoordinates);
+    } else {
+      console.log('[NAVIGATION] No GPS coordinates available - waiting for GPS signal');
+    }
+  }, [currentCoordinates?.lat, currentCoordinates?.lng]);
   
   // Generate AR direction data from current route
   const getARDirectionData = () => {

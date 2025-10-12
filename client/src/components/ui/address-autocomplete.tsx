@@ -373,28 +373,46 @@ export function AddressAutocomplete({
               <>
                 {ukPostcodeResult && <CommandSeparator />}
                 <CommandGroup heading="Address Results">
-                  {photonResults.map((result: PhotonFeature, index: number) => (
-                    <CommandItem
-                      key={`photon-${index}`}
-                      value={formatPhotonDisplay(result)}
-                      onSelect={() => handleSelectPhoton(result)}
-                      className="cursor-pointer"
-                      data-testid={`photon-result-${index}`}
-                    >
-                      <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {result.properties.name || result.properties.street || 'Unknown'}
-                        </span>
-                        {(result.properties.city || result.properties.country) && (
-                          <span className="text-sm text-muted-foreground">
-                            {result.properties.city && `${result.properties.city}, `}
-                            {result.properties.country}
+                  {photonResults.map((result: PhotonFeature, index: number) => {
+                    // Create a stable unique ID for this result
+                    const coords = result.geometry?.coordinates || [0, 0];
+                    const uniqueId = `${coords[0]}_${coords[1]}_${index}`;
+                    const displayText = formatPhotonDisplay(result);
+                    
+                    // Capture result in closure to prevent selection bugs
+                    const handleSelect = () => {
+                      console.log('[AUTOCOMPLETE] Selected Photon result:', {
+                        index,
+                        displayText,
+                        coordinates: coords,
+                        properties: result.properties
+                      });
+                      handleSelectPhoton(result);
+                    };
+                    
+                    return (
+                      <CommandItem
+                        key={uniqueId}
+                        value={uniqueId} // Use unique ID instead of display text
+                        onSelect={handleSelect}
+                        className="cursor-pointer"
+                        data-testid={`photon-result-${index}`}
+                      >
+                        <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {result.properties.name || result.properties.street || 'Unknown'}
                           </span>
-                        )}
-                      </div>
-                    </CommandItem>
-                  ))}
+                          {(result.properties.city || result.properties.country) && (
+                            <span className="text-sm text-muted-foreground">
+                              {result.properties.city && `${result.properties.city}, `}
+                              {result.properties.country}
+                            </span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
                 </CommandGroup>
               </>
             )}

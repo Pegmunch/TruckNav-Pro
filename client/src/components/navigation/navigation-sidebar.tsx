@@ -164,10 +164,18 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const buildFacilitySearchParams = () => {
     const params = new URLSearchParams();
     
-    // Use provided coordinates, or fall back to a default location (London, UK)
-    const lat = coordinates?.lat || 51.5074;
-    const lng = coordinates?.lng || -0.1278;
+    // Use GPS coordinates first, then provided coordinates
+    const gpsPosition = gpsData?.position;
+    const lat = gpsPosition?.latitude || coordinates?.lat;
+    const lng = gpsPosition?.longitude || coordinates?.lng;
     
+    // Only proceed if we have valid coordinates
+    if (!lat || !lng) {
+      console.log('[NAV-SIDEBAR] No GPS or coordinates available for search');
+      return null;
+    }
+    
+    console.log('[NAV-SIDEBAR] Building search with GPS:', { lat, lng });
     params.set('lat', lat.toString());
     params.set('lng', lng.toString());
     params.set('radius', '25');
@@ -188,6 +196,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const searchParams = buildFacilitySearchParams();
   const shouldFetchFacilities = Boolean(
     isOpen && 
+    searchParams && // Only search if we have valid GPS coordinates
     ((selectedPOICategory && selectedPOICategory.length > 0) || 
      (facilitySearchInput && facilitySearchInput.trim().length > 0))
   );

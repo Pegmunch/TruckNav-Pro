@@ -283,9 +283,17 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const { data: photonData, isLoading: isPhotonLoading, error: photonError } = useQuery({
     queryKey: ['/api/photon-autocomplete', selectedCategory, searchQuery, gpsPosition?.latitude, gpsPosition?.longitude, coordinates?.lat, coordinates?.lng],
     queryFn: async () => {
-      // Use GPS position first, then coordinates prop, then fallback to London
-      const lat = gpsPosition?.latitude || coordinates?.lat || 51.5074;
-      const lng = gpsPosition?.longitude || coordinates?.lng || -0.1278;
+      // Use GPS position first, then coordinates prop
+      // NO HARDCODED FALLBACK - real GPS only
+      const lat = gpsPosition?.latitude || coordinates?.lat;
+      const lng = gpsPosition?.longitude || coordinates?.lng;
+      
+      if (!lat || !lng) {
+        console.log('[UNIFIED-SEARCH] No GPS available - skipping POI search');
+        return [];
+      }
+      
+      console.log('[UNIFIED-SEARCH] POI search with GPS:', { lat, lng });
       
       const url = new URL('/api/photon-autocomplete', window.location.origin);
       url.searchParams.set('q', selectedCategory ? POI_CATEGORIES.find(c => c.type === selectedCategory)?.label || searchQuery : searchQuery || 'amenity');

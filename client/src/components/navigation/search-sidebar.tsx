@@ -159,15 +159,23 @@ const SearchSidebar = memo(function SearchSidebar({
     }
   );
 
-  // Build search query parameters with fallback coordinates
+  // Build search query parameters with GPS coordinates
   const buildSearchParams = useCallback(() => {
     const params = new URLSearchParams();
     
-    // Use provided coordinates, or fall back to a default location (London, UK)
-    // This ensures search works even without an active route
-    const lat = coordinates?.lat || 51.5074;
-    const lng = coordinates?.lng || -0.1278;
+    // Use actual GPS coordinates first, then provided coordinates
+    // Never use hardcoded fallback coordinates
+    const gpsPosition = gps?.position;
+    const lat = gpsPosition?.latitude || coordinates?.lat;
+    const lng = gpsPosition?.longitude || coordinates?.lng;
     
+    // Only proceed if we have valid coordinates
+    if (!lat || !lng) {
+      console.log('[SEARCH-SIDEBAR] No GPS or coordinates available for search');
+      return null;
+    }
+    
+    console.log('[SEARCH-SIDEBAR] Building search with GPS:', { lat, lng });
     params.set('lat', lat.toString());
     params.set('lng', lng.toString());
     params.set('radius', '25');
@@ -183,7 +191,7 @@ const SearchSidebar = memo(function SearchSidebar({
   const searchParams = buildSearchParams();
   const { data: facilities = [], isLoading, error } = useQuery<Facility[]>({
     queryKey: ['/api/facilities', searchParams],
-    enabled: isOpen, // Search works at all times when sidebar is open
+    enabled: isOpen && searchParams !== null, // Only search when we have GPS coordinates
     retry: 2,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });

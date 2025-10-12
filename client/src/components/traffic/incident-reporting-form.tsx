@@ -83,7 +83,7 @@ export default function IncidentReportingForm({
       severity: "medium",
       title: "",
       description: "",
-      coordinates: currentLocation || { lat: 51.5074, lng: -0.1278 },
+      coordinates: currentLocation || { lat: 0, lng: 0 }, // Default to 0,0 if no GPS (will be validated)
       roadName: "",
       direction: "both_directions",
       reporterName: "",

@@ -845,12 +845,28 @@ export class RouteComplianceMonitor {
   }
 
   /**
-   * Get current GPS position (mock implementation)
+   * Get current GPS position from actual device
    */
   private getCurrentPosition(): { lat: number; lng: number } | null {
-    // In a real implementation, this would use the Geolocation API
-    // For now, return a mock position
-    return { lat: 53.4808, lng: -2.2426 }; // Manchester coordinates
+    // Try to get cached GPS position from localStorage
+    try {
+      const cached = localStorage.getItem('trucknav_gps_last_known_position');
+      if (cached) {
+        const position = JSON.parse(cached);
+        if (position && position.latitude && position.longitude) {
+          console.log('[NAVIGATION-SERVICE] Using cached GPS:', {
+            lat: position.latitude,
+            lng: position.longitude
+          });
+          return { lat: position.latitude, lng: position.longitude };
+        }
+      }
+    } catch (e) {
+      console.warn('[NAVIGATION-SERVICE] Failed to read GPS cache:', e);
+    }
+    
+    console.log('[NAVIGATION-SERVICE] No GPS position available');
+    return null; // No fallback - return null if no GPS
   }
 
   /**
