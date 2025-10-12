@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Crosshair, Layers, Box, Compass } from "lucide-react";
+import { Plus, Minus, Crosshair, Layers, Box, Compass, MapPin } from "lucide-react";
 import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
@@ -134,6 +134,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
+  const gpsStatus = gps?.status ?? 'acquiring';
+  const isGPSReady = gpsStatus === 'ready' && !gps?.isUsingCached;
   
   // Circuit Breaker Pattern for GPS reliability
   const circuitBreakerRef = useRef({
@@ -1372,7 +1374,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   // GPS tracking and user position marker (using centralized GPS hook)
   // CRITICAL: GPS marker must ALWAYS be visible on any map scenario
   useEffect(() => {
-    console.log('[GPS-MARKER] Effect triggered - map:', !!map.current, 'isLoaded:', isLoaded, 'hasGPS:', !!gpsPosition);
+    console.log('[GPS-MARKER] Effect triggered - map:', !!map.current, 'isLoaded:', isLoaded, 'status:', gpsStatus, 'hasPosition:', !!gpsPosition);
     
     if (!map.current || !isLoaded) {
       console.log('[GPS-MARKER] Skipping - map or isLoaded not ready');
@@ -1381,12 +1383,12 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     const mapInstance = map.current;
     
-    // CRITICAL: Only show GPS marker when we have actual GPS, not fallback
-    const hasGPS = !!gpsPosition;
+    // CRITICAL: Only show GPS marker when we have actual fresh GPS, not cached
+    const hasGPS = isGPSReady && !!gpsPosition;
     
-    // Don't show marker if GPS isn't available - avoid confusing fallback locations
+    // Show orange marker when GPS is acquiring or unavailable
     if (!hasGPS) {
-      console.log('[GPS-MARKER] No GPS position available - showing orange unavailable marker');
+      console.log('[GPS-MARKER] GPS not ready - status:', gpsStatus, '- showing orange unavailable marker');
       
       // Show orange GPS-unavailable marker at last known position or default
       const lastKnown = getLastKnownPosition();
@@ -1659,7 +1661,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         userMarkerRef.current = null;
       }
     };
-  }, [gpsPosition, isLoaded, selectedProfile]); // Removed isNavigating to prevent marker recreation
+  }, [gpsPosition, gpsStatus, isGPSReady, isLoaded, selectedProfile]); // Include GPS status for proper marker updates
   
   // HEADING-UP NAVIGATION MODE: Continuous map rotation based on GPS heading
   // Separate effect for continuous rotation during navigation
@@ -1975,6 +1977,82 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             </div>
           )}
         </>
+      )}
+      
+      {/* GPS Status Indicator */}
+      {(gpsStatus === 'acquiring' || gpsStatus === 'unavailable' || gpsStatus === 'error') && (
+        <div 
+          className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          data-testid="gps-status-indicator"
+        >
+          <div className={cn(
+            "px-4 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-2",
+            gpsStatus === 'acquiring' && "bg-orange-500/90 text-white",
+            gpsStatus === 'unavailable' && "bg-red-500/90 text-white",
+            gpsStatus === 'error' && "bg-red-600/90 text-white"
+          )}>
+            {gpsStatus === 'acquiring' && (
+              <>
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                <span className="text-sm font-medium">Acquiring GPS...</span>
+              </>
+            )}
+            {gpsStatus === 'unavailable' && (
+              <>
+                <Crosshair className="w-4 h-4" />
+                <span className="text-sm font-medium">GPS unavailable</span>
+              </>
+            )}
+            {gpsStatus === 'error' && (
+              <>
+                <Crosshair className="w-4 h-4" />
+                <span className="text-sm font-medium">GPS error</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Cached Position Confirmation */}
+      {gps?.cachedPosition && !gps?.position && gps?.cachedPosition.ageInMinutes <= 5 && (
+        <div 
+          className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50"
+          data-testid="cached-position-prompt"
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 max-w-sm">
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-orange-500 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Use last known location?
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  From {gps.cachedPosition.ageDisplay}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    onClick={() => gps.useCachedPosition(true)}
+                    size="sm"
+                    variant="default"
+                    className="text-xs"
+                    data-testid="button-use-cached"
+                  >
+                    Use cached
+                  </Button>
+                  <Button
+                    onClick={() => gps.useCachedPosition(false)}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    data-testid="button-wait-gps"
+                  >
+                    Wait for GPS
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

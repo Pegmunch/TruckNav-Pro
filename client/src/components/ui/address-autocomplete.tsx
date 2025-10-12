@@ -55,6 +55,7 @@ export function AddressAutocomplete({
   const [debouncedSearch, setDebouncedSearch] = useState(value);
   const { toast } = useToast();
   const gps = useGPS();
+  const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
@@ -91,20 +92,22 @@ export function AddressAutocomplete({
   });
 
   // Get GPS coordinates for location-biased search (POI near me)
+  // CRITICAL: Only use GPS coordinates when GPS is ready (not acquiring or using cached)
   const gpsCoordinates = useMemo(() => {
-    if (gps?.position) {
-      console.log('[ADDRESS-AUTOCOMPLETE] Using GPS for location-biased search:', {
+    if (isGPSReady && gps?.position) {
+      console.log('[ADDRESS-AUTOCOMPLETE] Using fresh GPS for location-biased search:', {
         lat: gps.position.latitude,
-        lng: gps.position.longitude
+        lng: gps.position.longitude,
+        status: gps.status
       });
       return {
         lat: gps.position.latitude,
         lng: gps.position.longitude
       };
     }
-    console.log('[ADDRESS-AUTOCOMPLETE] No GPS available for location-biased search');
+    console.log('[ADDRESS-AUTOCOMPLETE] GPS not ready for location-biased search - status:', gps?.status);
     return undefined;
-  }, [gps?.position]);
+  }, [gps?.position, gps?.status, isGPSReady]);
 
   // Fetch Photon suggestions (worldwide address search with GPS bias for POI)
   const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(

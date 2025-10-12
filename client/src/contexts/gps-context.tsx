@@ -33,6 +33,14 @@ export interface GPSError {
 
 export type GPSErrorType = 'PERMISSION_DENIED' | 'TIMEOUT' | 'UNAVAILABLE' | 'NOT_SUPPORTED' | null;
 
+export type GPSStatus = 'acquiring' | 'ready' | 'unavailable' | 'error';
+
+export interface CachedPosition {
+  position: GPSPosition;
+  ageInMinutes: number;
+  ageDisplay: string;
+}
+
 export interface GPSContextValue {
   position: GPSPosition | null;
   error: GPSError | null;
@@ -41,6 +49,10 @@ export interface GPSContextValue {
   errorMessage: string | null;
   canRetry: boolean;
   retryGPS: () => void;
+  status: GPSStatus;
+  cachedPosition: CachedPosition | null;
+  useCachedPosition: (useCache: boolean) => void;
+  isUsingCached: boolean;
 }
 
 interface GPSProviderProps {
@@ -75,24 +87,37 @@ const saveGPSToCache = (position: GPSPosition): void => {
 
 /**
  * Load cached GPS position from localStorage
+ * Returns null if no valid cache exists or if cache is too old
  */
-const loadGPSFromCache = (): GPSPosition | null => {
+const loadGPSFromCache = (): CachedPosition | null => {
   try {
     const cached = localStorage.getItem(GPS_CACHE_KEY);
     if (cached) {
       const position = JSON.parse(cached) as GPSPosition;
       const age = Date.now() - position.timestamp;
+      const ageInMinutes = Math.floor(age / (60 * 1000));
       
-      // Only use cache if less than 24 hours old
-      if (age < 24 * 60 * 60 * 1000) {
-        console.log('[GPS-CACHE] Loaded cached position:', {
+      // Only consider cache if less than 30 minutes old
+      // User must explicitly confirm to use cache older than 5 minutes
+      if (ageInMinutes < 30) {
+        const ageDisplay = ageInMinutes === 0 ? 'Less than a minute ago' :
+                           ageInMinutes === 1 ? '1 minute ago' :
+                           `${ageInMinutes} minutes ago`;
+        
+        console.log('[GPS-CACHE] Found cached position:', {
           lat: position.latitude,
           lng: position.longitude,
-          age: Math.round(age / 1000) + 's old'
+          ageInMinutes,
+          ageDisplay
         });
-        return position;
+        
+        return {
+          position,
+          ageInMinutes,
+          ageDisplay
+        };
       } else {
-        console.log('[GPS-CACHE] Cached position too old, discarding');
+        console.log('[GPS-CACHE] Cached position too old (>30 min), discarding');
         localStorage.removeItem(GPS_CACHE_KEY);
       }
     }
@@ -193,18 +218,16 @@ export function GPSProvider({
   headingSmoothingAlpha = 0.25,
   enableHeadingSmoothing = true
 }: GPSProviderProps) {
-  // Initialize with cached position if available
-  const [position, setPosition] = useState<GPSPosition | null>(() => {
-    const cached = loadGPSFromCache();
-    if (cached) {
-      console.log('[GPS-PROVIDER] Initialized with cached position');
-    }
-    return cached;
-  });
+  // DO NOT automatically use cached position - wait for fresh GPS
+  const [position, setPosition] = useState<GPSPosition | null>(null);
   const [error, setError] = useState<GPSError | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [errorType, setErrorType] = useState<GPSErrorType>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [status, setStatus] = useState<GPSStatus>('acquiring');
+  const [cachedPosition, setCachedPosition] = useState<CachedPosition | null>(null);
+  const [isUsingCached, setIsUsingCached] = useState(false);
+  const [hasFreshPosition, setHasFreshPosition] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const smoothedHeadingRef = useRef<number | null>(null);
@@ -221,6 +244,7 @@ export function GPSProvider({
       });
       setErrorType(errType);
       setErrorMessage(getGPSErrorMessage(errType));
+      setStatus('error');
       return;
     }
 
@@ -231,8 +255,9 @@ export function GPSProvider({
     setErrorType(null);
     setErrorMessage(null);
     
-    // Start GPS tracking
+    // Start GPS tracking - set status to acquiring
     setIsTracking(true);
+    setStatus('acquiring');
 
     // Use watchPosition for continuous GPS updates with high accuracy
     // Request initial position first to trigger permission if needed
@@ -315,6 +340,9 @@ export function GPSProvider({
         };
         
         setPosition(newPosition);
+        setHasFreshPosition(true);
+        setIsUsingCached(false);
+        setStatus('ready');
         
         // Save to localStorage for future use
         saveGPSToCache(newPosition);
@@ -343,6 +371,13 @@ export function GPSProvider({
         });
         setErrorType(errType);
         setErrorMessage(errMessage);
+        
+        // Set proper status based on error type
+        if (errType === 'PERMISSION_DENIED' || errType === 'NOT_SUPPORTED') {
+          setStatus('error');
+        } else {
+          setStatus('unavailable');
+        }
 
         // Log errors for debugging
         console.warn(`[GPS-PROVIDER] GPS Error: ${errMessage} (code: ${geoError.code})`);
@@ -378,8 +413,33 @@ export function GPSProvider({
       startGPSTracking();
     }, 500);
   }, [stopGPSTracking, startGPSTracking]);
+  
+  const useCachedPosition = useCallback((useCache: boolean) => {
+    if (useCache && cachedPosition) {
+      console.log('[GPS-PROVIDER] User accepted cached position from', cachedPosition.ageDisplay);
+      setPosition(cachedPosition.position);
+      setIsUsingCached(true);
+      setStatus('ready');
+    } else {
+      console.log('[GPS-PROVIDER] User rejected cached position, waiting for fresh GPS');
+      setPosition(null);
+      setIsUsingCached(false);
+      setStatus('acquiring');
+    }
+  }, [cachedPosition]);
 
   useEffect(() => {
+    // Load cached position for info (but don't use it automatically)
+    const cached = loadGPSFromCache();
+    if (cached && cached.ageInMinutes <= 5) {
+      // Only offer cached position if it's less than 5 minutes old
+      setCachedPosition(cached);
+      console.log('[GPS-PROVIDER] Cached position available from', cached.ageDisplay);
+    } else if (cached) {
+      console.log('[GPS-PROVIDER] Cached position too old (>5 min), not offering to user');
+    }
+    
+    // Start acquiring fresh GPS
     startGPSTracking();
 
     // Cleanup: Stop GPS tracking when provider unmounts
@@ -395,7 +455,11 @@ export function GPSProvider({
     errorType,
     errorMessage,
     canRetry: errorType ? canRetryGPSError(errorType) : false,
-    retryGPS
+    retryGPS,
+    status,
+    cachedPosition,
+    useCachedPosition,
+    isUsingCached
   };
 
   return (
