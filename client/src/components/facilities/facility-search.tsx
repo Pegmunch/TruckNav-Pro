@@ -27,12 +27,26 @@ export default function FacilitySearch({ coordinates, onSelectFacility }: Facili
   const [searchQuery, setSearchQuery] = useState("");
   const [facilityType, setFacilityType] = useState<string>("");
 
+  // Get saved POI radius from localStorage
+  const getPoiRadius = () => {
+    try {
+      const mapPrefs = localStorage.getItem('trucknav_map_preferences');
+      if (mapPrefs) {
+        const prefs = JSON.parse(mapPrefs);
+        return prefs.poiSearchRadius || 10; // Default to 10km (6 miles)
+      }
+    } catch (error) {
+      console.warn('Failed to load POI radius:', error);
+    }
+    return 10; // Default to 10km (6 miles)
+  };
+
   // Build query parameters dynamically
   const queryParams = new URLSearchParams();
   if (coordinates) {
     queryParams.set('lat', coordinates.lat.toString());
     queryParams.set('lng', coordinates.lng.toString());
-    queryParams.set('radius', '25');
+    queryParams.set('radius', getPoiRadius().toString());
   }
   if (facilityType) {
     queryParams.set('type', facilityType);

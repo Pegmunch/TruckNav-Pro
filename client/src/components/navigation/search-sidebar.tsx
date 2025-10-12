@@ -36,6 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from "@/lib/utils";
 import { type Facility } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useGPS } from "@/contexts/gps-context";
 
 interface SearchSidebarProps {
   // Sidebar state
@@ -73,6 +74,7 @@ const SearchSidebar = memo(function SearchSidebar({
 }: SearchSidebarProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const gpsData = useGPS();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,13 +161,27 @@ const SearchSidebar = memo(function SearchSidebar({
     }
   );
 
+  // Get saved POI radius from localStorage
+  const getPoiRadius = useCallback(() => {
+    try {
+      const mapPrefs = localStorage.getItem('trucknav_map_preferences');
+      if (mapPrefs) {
+        const prefs = JSON.parse(mapPrefs);
+        return prefs.poiSearchRadius || 10; // Default to 10km (6 miles)
+      }
+    } catch (error) {
+      console.warn('Failed to load POI radius:', error);
+    }
+    return 10; // Default to 10km (6 miles)
+  }, []);
+  
   // Build search query parameters with GPS coordinates
   const buildSearchParams = useCallback(() => {
     const params = new URLSearchParams();
     
     // Use actual GPS coordinates first, then provided coordinates
     // Never use hardcoded fallback coordinates
-    const gpsPosition = gps?.position;
+    const gpsPosition = gpsData?.position;
     const lat = gpsPosition?.latitude || coordinates?.lat;
     const lng = gpsPosition?.longitude || coordinates?.lng;
     
@@ -178,14 +194,14 @@ const SearchSidebar = memo(function SearchSidebar({
     console.log('[SEARCH-SIDEBAR] Building search with GPS:', { lat, lng });
     params.set('lat', lat.toString());
     params.set('lng', lng.toString());
-    params.set('radius', '25');
+    params.set('radius', getPoiRadius().toString());
     
     if (selectedCategory) {
       params.set('type', selectedCategory);
     }
     
     return params.toString();
-  }, [coordinates, selectedCategory]);
+  }, [coordinates, selectedCategory, gpsData, getPoiRadius]);
 
   // Facilities search query with error handling - uses default fetcher for consistency
   const searchParams = buildSearchParams();

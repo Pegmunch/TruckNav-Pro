@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 // Import existing components
 import { ThemeSelector } from "@/components/theme/theme-selector";
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
+import { useMeasurement } from "@/components/measurement/measurement-provider";
 import LanguageSelector from "@/components/language/language-selector";
 import CountryLanguageSelector from "@/components/country/country-language-selector";
 import { DNDControls } from "@/components/notifications/dnd-controls";
@@ -76,6 +77,7 @@ interface MapPreferences {
   showTruckRoutes: boolean;
   zoomLevel: number;
   persistSettings: boolean;
+  poiSearchRadius: number; // Radius in kilometers
 }
 
 interface DoNotDisturbState {
@@ -105,6 +107,7 @@ const defaultMapPreferences: MapPreferences = {
   showTruckRoutes: true,
   zoomLevel: 10,
   persistSettings: true,
+  poiSearchRadius: 10, // 10km (≈6 miles) default
 };
 
 const defaultDndState: DoNotDisturbState = {
@@ -160,6 +163,7 @@ const SettingsModal = memo(function SettingsModal({
   onCloseSidebar
 }: SettingsModalProps) {
   const { toast } = useToast();
+  const { system, convertDistance } = useMeasurement();
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   // Settings state
@@ -354,6 +358,72 @@ const SettingsModal = memo(function SettingsModal({
               }
               data-testid="switch-persist-settings"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* POI Search Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            POI Search Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-base font-medium">Search Radius</Label>
+              <p className="text-sm text-muted-foreground">
+                Default radius for finding points of interest
+              </p>
+            </div>
+            <Select
+              value={mapPreferences.poiSearchRadius.toString()}
+              onValueChange={(value) => 
+                setMapPreferences(prev => ({ ...prev, poiSearchRadius: parseInt(value) }))
+              }
+            >
+              <SelectTrigger className="w-40" data-testid="select-poi-radius">
+                <SelectValue>
+                  {system === 'imperial' ? (
+                    mapPreferences.poiSearchRadius === 5 ? '3 miles' :
+                    mapPreferences.poiSearchRadius === 10 ? '6 miles' :  // Display 10km as "6 miles" for cleaner UI
+                    mapPreferences.poiSearchRadius === 25 ? '15 miles' :
+                    mapPreferences.poiSearchRadius === 50 ? '30 miles' :
+                    mapPreferences.poiSearchRadius === 100 ? '60 miles' :
+                    `${Math.round(convertDistance(mapPreferences.poiSearchRadius, 'km', 'miles'))} miles`
+                  ) : (
+                    `${mapPreferences.poiSearchRadius} km`
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">
+                  {system === 'imperial' ? '3 miles' : '5 km'}
+                </SelectItem>
+                <SelectItem value="10">
+                  {system === 'imperial' ? '6 miles' : '10 km'} {/* Clean display for 6 miles */}
+                </SelectItem>
+                <SelectItem value="25">
+                  {system === 'imperial' ? '15 miles' : '25 km'}
+                </SelectItem>
+                <SelectItem value="50">
+                  {system === 'imperial' ? '30 miles' : '50 km'}
+                </SelectItem>
+                <SelectItem value="100">
+                  {system === 'imperial' ? '60 miles' : '100 km'}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="p-3 bg-muted rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              {system === 'imperial' 
+                ? 'Searches for fuel stations, restaurants, parking, and other facilities within the selected radius from your location or specified point.'
+                : 'Searches for fuel stations, restaurants, parking, and other facilities within the selected radius from your location or specified point.'}
+            </p>
           </div>
         </CardContent>
       </Card>

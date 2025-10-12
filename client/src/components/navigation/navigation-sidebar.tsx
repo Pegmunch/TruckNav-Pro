@@ -160,6 +160,20 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Route preference selection
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   
+  // Get saved POI radius from localStorage
+  const getPoiRadius = () => {
+    try {
+      const mapPrefs = localStorage.getItem('trucknav_map_preferences');
+      if (mapPrefs) {
+        const prefs = JSON.parse(mapPrefs);
+        return prefs.poiSearchRadius || 10; // Default to 10km (6 miles)
+      }
+    } catch (error) {
+      console.warn('Failed to load POI radius:', error);
+    }
+    return 10; // Default to 10km (6 miles)
+  };
+  
   // Build search query parameters for facility search
   const buildFacilitySearchParams = () => {
     const params = new URLSearchParams();
@@ -178,7 +192,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     console.log('[NAV-SIDEBAR] Building search with GPS:', { lat, lng });
     params.set('lat', lat.toString());
     params.set('lng', lng.toString());
-    params.set('radius', '25');
+    params.set('radius', getPoiRadius().toString());
     
     if (selectedPOICategory) {
       params.set('type', selectedPOICategory);
