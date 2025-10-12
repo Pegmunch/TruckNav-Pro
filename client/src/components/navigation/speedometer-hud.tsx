@@ -192,39 +192,39 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       )}
       data-testid="speedometer-hud"
     >
-      {/* Main oval speedometer container - RESIZED to be smaller as requested */}
+      {/* Main oval speedometer container - SIGNIFICANTLY THINNER AND MORE COMPACT */}
       <div
         className={cn(
-          // Further reduced oval shape with aspect ratio (240px-300px width as requested)
-          'relative w-[240px] h-[85px] sm:w-[270px] sm:h-[95px] md:w-[300px] md:h-[105px]',
+          // Dramatically reduced oval shape - much thinner/narrower (200px-240px width, 70px-85px height)
+          'relative w-[200px] h-[70px] sm:w-[220px] sm:h-[75px] md:w-[240px] md:h-[85px]',
           // Glassmorphism effect
           'backdrop-blur-xl bg-gradient-to-r',
           getBackgroundGradient(),
           // Border and shadow
           getBorderStyle(),
-          'rounded-[60px] shadow-2xl',
+          'rounded-[45px] shadow-2xl',
           // Transition for smooth color changes
           'transition-all duration-300 ease-in-out'
         )}
       >
-        {/* Inner container for content */}
-        <div className="absolute inset-0 flex items-center justify-between px-6 sm:px-8">
+        {/* Inner container for content - reduced padding for tighter packing */}
+        <div className="absolute inset-0 flex items-center justify-between px-4 sm:px-5">
           
           {/* Left Section: Speed Limit */}
-          <div className="flex flex-col items-center justify-center min-w-[80px]">
+          <div className="flex flex-col items-center justify-center min-w-[65px]">
             <div
               className={cn(
                 'relative flex flex-col items-center justify-center',
-                'w-12 h-12 sm:w-14 sm:h-14', // Further reduced for smaller speedometer
+                'w-10 h-10 sm:w-11 sm:h-11', // Significantly reduced for compact speedometer
                 'rounded-full bg-white dark:bg-slate-900',
                 'shadow-lg',
-                convertedSpeedLimit ? 'border-4 border-red-600' : 'border-4 border-slate-400'
+                convertedSpeedLimit ? 'border-[3px] border-red-600' : 'border-[3px] border-slate-400'
               )}
               data-testid="speed-limit-display"
             >
               {convertedSpeedLimit ? (
                 <>
-                  <span className="text-base sm:text-lg font-black text-black dark:text-white">
+                  <span className="text-sm sm:text-base font-black text-black dark:text-white">
                     {convertedSpeedLimit}
                   </span>
                   {confidenceIndicator && (
@@ -244,7 +244,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                   )}
                 </>
               ) : (
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
               )}
             </div>
             <span className="mt-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase">
@@ -258,7 +258,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               {/* Speed value with animation */}
               <motion.div
                 className={cn(
-                  'text-3xl sm:text-4xl md:text-5xl font-black tabular-nums',
+                  'text-2xl sm:text-3xl md:text-4xl font-black tabular-nums',
                   getSpeedColor(),
                   'transition-colors duration-300'
                 )}
@@ -303,14 +303,14 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           </div>
           
           {/* Right Section: Road Info */}
-          <div className="flex flex-col items-end justify-center min-w-[80px] max-w-[120px]">
+          <div className="flex flex-col items-end justify-center min-w-[65px] max-w-[100px]">
             {roadInfo.roadRef ? (
               <div className="flex flex-col items-end gap-1">
                 {/* Road reference badge */}
                 <div
                   className={cn(
-                    'px-2 py-1 rounded-lg',
-                    'text-xs sm:text-sm font-black',
+                    'px-1.5 py-0.5 rounded-lg',
+                    'text-[11px] sm:text-xs font-black',
                     'shadow-md',
                     getRoadBadgeColor(roadInfo.roadRef)
                   )}
@@ -341,8 +341,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               </div>
             ) : isNavigating ? (
               <div className="flex flex-col items-center justify-center">
-                <Gauge className="w-8 h-8 text-slate-400" />
-                <span className="mt-1 text-[10px] font-medium text-slate-500">
+                <Gauge className="w-6 h-6 text-slate-400" />
+                <span className="mt-0.5 text-[9px] font-medium text-slate-500">
                   {speedLimitData.isLoading ? 'Loading...' : 'No road data'}
                 </span>
               </div>
@@ -357,11 +357,11 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 rounded-[60px] pointer-events-none"
+              className="absolute inset-0 rounded-[45px] pointer-events-none"
             >
               <div
                 className={cn(
-                  'absolute inset-0 rounded-[60px]',
+                  'absolute inset-0 rounded-[45px]',
                   'bg-gradient-to-r from-red-500/10 via-transparent to-red-500/10',
                   'animate-pulse'
                 )}
