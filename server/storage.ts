@@ -2731,6 +2731,24 @@ export class DatabaseStorage implements IStorage {
     return allFacilities;
   }
 
+  // Helper methods for distance calculation (Haversine formula)
+  private calculateDistance(coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }): number {
+    const R = 3959; // Earth's radius in miles
+    const dLat = this.toRad(coord2.lat - coord1.lat);
+    const dLon = this.toRad(coord2.lng - coord1.lng);
+    const lat1 = this.toRad(coord1.lat);
+    const lat2 = this.toRad(coord2.lat);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRad(value: number): number {
+    return value * Math.PI / 180;
+  }
+
   // Routes
   async getRoute(id: string): Promise<Route | undefined> {
     const [route] = await db.select().from(routes).where(eq(routes.id, id));
