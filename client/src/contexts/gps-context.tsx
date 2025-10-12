@@ -578,7 +578,13 @@ export function GPSProvider({
     
     acquisitionTimeoutRef.current = setTimeout(() => {
       if (!gpsReceivedRef.current) {
-        console.warn('[GPS-PROVIDER] GPS acquisition timeout - no position received within 15 seconds');
+        console.warn('[GPS-PROVIDER] ⏱️ GPS acquisition timeout - no position received within 45 seconds');
+        console.log('[GPS-PROVIDER] GPS Status Details:', {
+          isTracking,
+          watchId: watchIdRef.current,
+          browserSupport: 'geolocation' in navigator,
+          timestamp: new Date().toISOString()
+        });
         
         // Check if we have a cached position to use
         const cached = loadGPSFromCache();
@@ -592,19 +598,25 @@ export function GPSProvider({
           console.log(`[GPS-PROVIDER] Using cached position from ${cached.ageDisplay}`);
         } else {
           // No fallback coordinates - wait for real GPS
-          console.log('[GPS-PROVIDER] No cache available and no GPS received - waiting for real GPS');
+          console.log('[GPS-PROVIDER] ❌ No cache available and no GPS received - waiting for real GPS');
+          console.log('[GPS-PROVIDER] Please ensure:');
+          console.log('[GPS-PROVIDER] 1. Location services are enabled on your device');
+          console.log('[GPS-PROVIDER] 2. You have granted location permission to this site');
+          console.log('[GPS-PROVIDER] 3. You have a clear view of the sky (for GPS signal)');
           handleGPSUnavailable('GPS acquisition timeout and no cached position available');
         }
+      } else {
+        console.log('[GPS-PROVIDER] ✅ GPS position received before timeout');
       }
-    }, 15000); // 15 second timeout
+    }, 45000); // 45 second timeout - give GPS more time to acquire signal
 
     // Use watchPosition for continuous GPS updates with high accuracy
     // Request initial position first to trigger permission if needed
     console.log('[GPS-PROVIDER] Requesting GPS permission and starting tracking...');
-    console.log('[GPS-PROVIDER] Options:', {
+    console.log('[GPS-PROVIDER] Initial getCurrentPosition Options:', {
       enableHighAccuracy,
-      timeout,
-      maximumAge
+      timeout: 20000,
+      maximumAge: 0
     });
     
     // Try to get initial position first - this will trigger permission prompt
@@ -678,9 +690,26 @@ export function GPSProvider({
           TIMEOUT: error.code === 3
         });
         
+        // Log more details about the error
+        if (error.code === 1) {
+          console.error('[GPS-PROVIDER] ⛔ PERMISSION_DENIED - User must grant location permission');
+          console.error('[GPS-PROVIDER] Please check:');
+          console.error('[GPS-PROVIDER] 1. Site permissions in browser settings');
+          console.error('[GPS-PROVIDER] 2. System location services are enabled');
+          console.error('[GPS-PROVIDER] 3. Browser has permission to access location');
+        } else if (error.code === 2) {
+          console.error('[GPS-PROVIDER] ⚠️ POSITION_UNAVAILABLE - GPS signal not available');
+          console.error('[GPS-PROVIDER] Please check:');
+          console.error('[GPS-PROVIDER] 1. Device has GPS/Location services enabled');
+          console.error('[GPS-PROVIDER] 2. You have a clear view of the sky');
+          console.error('[GPS-PROVIDER] 3. Not in airplane mode');
+        } else if (error.code === 3) {
+          console.error('[GPS-PROVIDER] ⏱️ TIMEOUT - GPS took too long to respond');
+          console.error('[GPS-PROVIDER] This can happen indoors or in areas with poor GPS signal');
+        }
+        
         // If permission denied, handle it properly
         if (error.code === GeolocationPositionError.PERMISSION_DENIED) {
-          console.error('[GPS-PROVIDER] ⛔ GPS Permission Denied - User must allow location access');
           const errType = 'PERMISSION_DENIED';
           setError({
             code: error.code,
@@ -698,13 +727,35 @@ export function GPSProvider({
       },
       {
         enableHighAccuracy,
-        timeout: 5000, // Shorter timeout for initial position
+        timeout: 20000, // 20 second timeout for initial position to allow for permission prompt
         maximumAge: 0
       }
     );
     
     // Always set up watchPosition for continuous tracking
     console.log('[GPS-PROVIDER] Setting up watchPosition for continuous GPS tracking...');
+    console.log('[GPS-PROVIDER] watchPosition Options:', {
+      enableHighAccuracy,
+      timeout,
+      maximumAge
+    });
+    
+    // Check permission state if available
+    if ('permissions' in navigator) {
+      navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((result) => {
+        console.log('[GPS-PROVIDER] 📍 Permission state:', result.state);
+        if (result.state === 'denied') {
+          console.error('[GPS-PROVIDER] ⛔ Location permission is DENIED');
+          console.error('[GPS-PROVIDER] User must manually enable location access in browser settings');
+        } else if (result.state === 'prompt') {
+          console.log('[GPS-PROVIDER] 🔔 Location permission will be prompted');
+        } else if (result.state === 'granted') {
+          console.log('[GPS-PROVIDER] ✅ Location permission is GRANTED');
+        }
+      }).catch((err) => {
+        console.log('[GPS-PROVIDER] Could not check permission state:', err);
+      });
+    }
     
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
