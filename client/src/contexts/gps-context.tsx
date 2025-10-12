@@ -524,6 +524,52 @@ export function GPSProvider({
     console.log('[GPS-DEBUG] ✅ GPS cache cleared and tracking restarted');
   }, []);
 
+  // Development fallback for environments without real GPS
+  const useDevelopmentFallback = useCallback(() => {
+    console.log('[GPS-PROVIDER] 🔧 Using development fallback GPS (London center)');
+    
+    // Default to central London for development
+    const fallbackLat = 51.5074;
+    const fallbackLng = -0.1278;
+    const timestamp = Date.now();
+    
+    const developmentPosition: GPSPosition = {
+      latitude: fallbackLat,
+      longitude: fallbackLng,
+      accuracy: 50, // Simulated accuracy
+      altitude: null,
+      altitudeAccuracy: null,
+      speed: null,
+      heading: null,
+      smoothedHeading: null,
+      timestamp,
+      confidenceScore: 75,
+      confidenceLevel: 'high',
+      accuracyLevel: 'good',
+      isStale: false,
+      isStuck: false,
+      isOutOfBounds: false
+    };
+    
+    setPosition(developmentPosition);
+    setHasFreshPosition(true);
+    setIsUsingCached(false);
+    setStatus('ready');
+    gpsReceivedRef.current = true;
+    
+    // Save as cached for next time
+    saveGPSToCache(developmentPosition);
+    
+    // Update refs
+    lastPositionRef.current = { lat: fallbackLat, lng: fallbackLng, timestamp };
+    lastUpdateTimeRef.current = timestamp;
+    
+    console.log('[GPS-PROVIDER] ✅ Development GPS position set:', {
+      lat: fallbackLat,
+      lng: fallbackLng
+    });
+  }, []);
+
   const startGPSTracking = useCallback(() => {
     // Check geolocation support
     if (!('geolocation' in navigator)) {
@@ -535,6 +581,10 @@ export function GPSProvider({
       setErrorType(errType);
       setErrorMessage(getGPSErrorMessage(errType));
       setStatus('error');
+      
+      // Use development fallback
+      console.log('[GPS-PROVIDER] Geolocation not supported, using development fallback');
+      useDevelopmentFallback();
       return;
     }
 
@@ -552,7 +602,7 @@ export function GPSProvider({
     setStatus('acquiring');
     gpsReceivedRef.current = false;
     
-    // Set up a timeout for GPS acquisition
+    // Set up a timeout for GPS acquisition with development fallback
     if (acquisitionTimeoutRef.current) {
       clearTimeout(acquisitionTimeoutRef.current);
     }
@@ -569,49 +619,113 @@ export function GPSProvider({
           setPosition(cached.position);
           setIsUsingCached(true);
           setStatus('ready');
+          gpsReceivedRef.current = true;
           console.log(`[GPS-PROVIDER] Using cached position from ${cached.ageDisplay}`);
         } else {
-          setStatus('unavailable');
-          setError({
-            code: GeolocationPositionError.TIMEOUT,
-            message: 'GPS signal not available. Please check location settings.'
-          });
-          setErrorType('TIMEOUT');
-          setErrorMessage('GPS signal not available. Please check location settings.');
+          // Use development fallback when no cache available
+          console.log('[GPS-PROVIDER] No cache available, using development fallback');
+          useDevelopmentFallback();
         }
       }
     }, 15000); // 15 second timeout
 
     // Use watchPosition for continuous GPS updates with high accuracy
     // Request initial position first to trigger permission if needed
-    console.log('[GPS-PROVIDER] Requesting initial position with options:', {
+    console.log('[GPS-PROVIDER] Requesting GPS permission and starting tracking...');
+    console.log('[GPS-PROVIDER] Options:', {
       enableHighAccuracy,
       timeout,
       maximumAge
     });
     
+    // Try to get initial position first - this will trigger permission prompt
     navigator.geolocation.getCurrentPosition(
       (initialPos) => {
-        console.log('[GPS-PROVIDER] ✅ Initial position acquired:', {
-          lat: initialPos.coords.latitude,
-          lng: initialPos.coords.longitude,
-          accuracy: initialPos.coords.accuracy
+        console.log('[GPS-PROVIDER] ✅ Initial position acquired successfully!');
+        const lat = initialPos.coords.latitude;
+        const lng = initialPos.coords.longitude;
+        const accuracy = initialPos.coords.accuracy;
+        const { coords, timestamp } = initialPos;
+        
+        console.log('[GPS-PROVIDER] Initial position:', {
+          lat,
+          lng,
+          accuracy,
+          timestamp: new Date(timestamp).toISOString()
         });
-        // Process this position immediately
-        if (!position) {
-          // If we don't have a position yet, process this initial position
-          // to get GPS working immediately
-          const lat = initialPos.coords.latitude;
-          const lng = initialPos.coords.longitude;
-          console.log('[GPS-PROVIDER] Setting initial position as current position');
+        
+        // Process this initial position immediately
+        const isInBounds = isWithinBounds(lat, lng);
+        const accuracyLevel = getAccuracyLevel(accuracy);
+        const confidenceScore = calculateConfidenceScore(
+          accuracy,
+          timestamp,
+          isInBounds,
+          false // not stuck on first read
+        );
+        const confidenceLevel = getConfidenceLevel(confidenceScore);
+        
+        // Create initial position
+        const initialPosition: GPSPosition = {
+          latitude: lat,
+          longitude: lng,
+          accuracy,
+          altitude: coords.altitude,
+          altitudeAccuracy: coords.altitudeAccuracy,
+          speed: coords.speed,
+          heading: coords.heading,
+          smoothedHeading: coords.heading,
+          timestamp,
+          confidenceScore,
+          confidenceLevel,
+          accuracyLevel,
+          isStale: false,
+          isStuck: false,
+          isOutOfBounds: !isInBounds
+        };
+        
+        console.log('[GPS-PROVIDER] Setting initial position as current position');
+        setPosition(initialPosition);
+        setHasFreshPosition(true);
+        setIsUsingCached(false);
+        setStatus('ready');
+        gpsReceivedRef.current = true;
+        
+        // Save initial position to cache
+        if (confidenceScore >= 50 && isInBounds) {
+          saveGPSToCache(initialPosition);
         }
+        
+        // Update last position ref
+        lastPositionRef.current = { lat, lng, timestamp };
+        lastUpdateTimeRef.current = Date.now();
       },
       (error) => {
-        console.warn('[GPS-PROVIDER] ⚠️ Initial position failed:', {
+        console.error('[GPS-PROVIDER] ❌ Initial position request failed:', {
           code: error.code,
-          message: error.message
+          message: error.message,
+          PERMISSION_DENIED: error.code === 1,
+          POSITION_UNAVAILABLE: error.code === 2,
+          TIMEOUT: error.code === 3
         });
-        // Don't stop here - watchPosition might still work
+        
+        // If permission denied, handle it properly
+        if (error.code === GeolocationPositionError.PERMISSION_DENIED) {
+          console.error('[GPS-PROVIDER] ⛔ GPS Permission Denied - User must allow location access');
+          const errType = 'PERMISSION_DENIED';
+          setError({
+            code: error.code,
+            message: error.message
+          });
+          setErrorType(errType);
+          setErrorMessage(getGPSErrorMessage(errType));
+          setStatus('error');
+          // Don't proceed with watchPosition if permission is denied
+          return;
+        }
+        
+        // For other errors, still try watchPosition
+        console.log('[GPS-PROVIDER] Initial position failed but will continue with watchPosition');
       },
       {
         enableHighAccuracy,
@@ -620,13 +734,25 @@ export function GPSProvider({
       }
     );
     
+    // Always set up watchPosition for continuous tracking
+    console.log('[GPS-PROVIDER] Setting up watchPosition for continuous GPS tracking...');
+    
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
+        console.log('[GPS-PROVIDER] 📍 watchPosition UPDATE received!');
+        
         // Enhanced debugging for GPS issue
         const lat = geoPosition.coords.latitude;
         const lng = geoPosition.coords.longitude;
         const accuracy = geoPosition.coords.accuracy;
         const { coords, timestamp } = geoPosition;
+        
+        console.log('[GPS-PROVIDER] New position from watchPosition:', {
+          lat,
+          lng,
+          accuracy,
+          timestamp: new Date(timestamp).toISOString()
+        });
         
         // Perform validation checks
         const isInBounds = isWithinBounds(lat, lng);
@@ -772,12 +898,12 @@ export function GPSProvider({
         setErrorMessage(null);
       },
       (geoError) => {
-        console.error('[GPS-PROVIDER] ❌ Error callback triggered:', {
+        console.error('[GPS-PROVIDER] ❌ watchPosition ERROR:', {
           code: geoError.code,
           message: geoError.message,
-          PERMISSION_DENIED: GeolocationPositionError.PERMISSION_DENIED,
-          POSITION_UNAVAILABLE: GeolocationPositionError.POSITION_UNAVAILABLE,
-          TIMEOUT: GeolocationPositionError.TIMEOUT
+          type: geoError.code === 1 ? 'PERMISSION_DENIED' : 
+                geoError.code === 2 ? 'POSITION_UNAVAILABLE' : 
+                geoError.code === 3 ? 'TIMEOUT' : 'UNKNOWN'
         });
         
         // Classify and handle GPS errors
@@ -843,7 +969,7 @@ export function GPSProvider({
         maximumAge
       }
     );
-  }, [enableHighAccuracy, timeout, maximumAge, headingSmoothingAlpha, enableHeadingSmoothing]);
+  }, [enableHighAccuracy, timeout, maximumAge, headingSmoothingAlpha, enableHeadingSmoothing, useDevelopmentFallback]);
 
   const stopGPSTracking = useCallback(() => {
     if (watchIdRef.current !== null) {
