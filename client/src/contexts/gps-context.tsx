@@ -474,6 +474,7 @@ export function GPSProvider({
   const lastPositionRef = useRef<{ lat: number; lng: number; timestamp: number } | null>(null);
   const lastUpdateTimeRef = useRef<number>(Date.now());
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const permissionRecoveryIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
    * Clear all cached GPS data and force fresh acquisition
@@ -537,10 +538,12 @@ export function GPSProvider({
 
     console.log('[GPS-PROVIDER] Starting SINGLE GPS watcher for entire app');
 
-    // Clear any previous errors
+    // Clear any previous errors and reset state
     setError(null);
     setErrorType(null);
     setErrorMessage(null);
+    setValidationWarnings([]);
+    setShouldPreventAutoCenter(false);
     
     // Start GPS tracking - set status to acquiring
     setIsTracking(true);
@@ -746,6 +749,42 @@ export function GPSProvider({
         // Set proper status based on error type
         if (errType === 'PERMISSION_DENIED' || errType === 'NOT_SUPPORTED') {
           setStatus('error');
+          
+          // If permission denied, start monitoring for permission recovery
+          if (errType === 'PERMISSION_DENIED' && !permissionRecoveryIntervalRef.current) {
+            console.log('[GPS-PROVIDER] Starting permission recovery monitor...');
+            
+            permissionRecoveryIntervalRef.current = setInterval(() => {
+              console.log('[GPS-PROVIDER] Checking for permission recovery...');
+              
+              // Try to get current position to check if permission is now granted
+              navigator.geolocation.getCurrentPosition(
+                () => {
+                  console.log('[GPS-PROVIDER] ✅ Permission recovered! Restarting GPS tracking...');
+                  
+                  // Clear the recovery interval
+                  if (permissionRecoveryIntervalRef.current) {
+                    clearInterval(permissionRecoveryIntervalRef.current);
+                    permissionRecoveryIntervalRef.current = null;
+                  }
+                  
+                  // Clear errors and restart tracking
+                  setError(null);
+                  setErrorType(null);
+                  setErrorMessage(null);
+                  setStatus('acquiring');
+                  
+                  // Restart GPS tracking
+                  startGPSTracking();
+                },
+                () => {
+                  // Still denied, continue monitoring
+                  console.log('[GPS-PROVIDER] Permission still denied, continuing to monitor...');
+                },
+                { timeout: 1000 } // Quick check
+              );
+            }, 3000); // Check every 3 seconds
+          }
         } else {
           setStatus('unavailable');
         }
@@ -771,16 +810,33 @@ export function GPSProvider({
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
+    if (permissionRecoveryIntervalRef.current !== null) {
+      console.log('[GPS-PROVIDER] Stopping permission recovery monitor');
+      clearInterval(permissionRecoveryIntervalRef.current);
+      permissionRecoveryIntervalRef.current = null;
+    }
     setIsTracking(false);
     smoothedHeadingRef.current = null;
   }, []);
 
   const retryGPS = useCallback(() => {
     console.log('[GPS-PROVIDER] Retrying GPS connection...');
+    
+    // Clear ALL error states before retrying
+    setError(null);
+    setErrorType(null);
+    setErrorMessage(null);
+    setStatus('acquiring');
+    
+    // Stop current tracking
     stopGPSTracking();
     
     // Small delay before retry to avoid immediate re-error
     retryTimeoutRef.current = setTimeout(() => {
+      // Clear errors again just in case
+      setError(null);
+      setErrorType(null);
+      setErrorMessage(null);
       startGPSTracking();
     }, 500);
   }, [stopGPSTracking, startGPSTracking]);

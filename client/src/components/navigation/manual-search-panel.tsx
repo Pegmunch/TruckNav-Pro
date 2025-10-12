@@ -256,17 +256,38 @@ export default function ManualSearchPanel({
 
           {/* Use Current Location Button */}
           <Button
-            onClick={handleUseCurrentLocation}
+            onClick={() => {
+              // If GPS has error but can retry, trigger retry instead
+              if (gpsData?.error && gpsData?.canRetry) {
+                gpsData.retryGPS();
+              } else {
+                handleUseCurrentLocation();
+              }
+            }}
             variant="outline"
             size="sm"
             className="w-full automotive-button"
-            disabled={isReverseGeocoding || !gpsData?.position}
+            disabled={
+              isReverseGeocoding || 
+              (!gpsData?.position && gpsData?.status !== 'acquiring') ||
+              (gpsData?.status === 'error' && !gpsData?.canRetry)
+            }
             data-testid="button-use-current-location"
           >
             {isReverseGeocoding ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Getting address...
+              </>
+            ) : gpsData?.status === 'acquiring' ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Acquiring GPS...
+              </>
+            ) : gpsData?.error && gpsData?.canRetry ? (
+              <>
+                <CornerUpLeft className="w-4 h-4 mr-2" />
+                Retry GPS
               </>
             ) : (
               <>
