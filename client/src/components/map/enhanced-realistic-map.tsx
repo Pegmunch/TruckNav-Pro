@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback, useRef } from "react";
-import { MapContainer, TileLayer, useMap, Polyline, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Polyline, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useQuery } from "@tanstack/react-query";
@@ -184,6 +184,18 @@ const getRouteStyle = (routeType: 'main' | 'alternative' | 'preview' = 'main') =
   return styles[routeType];
 };
 
+// Map click handler component
+const MapClickHandler = ({ onMapClick }: { onMapClick?: (lat: number, lng: number) => void }) => {
+  useMapEvents({
+    click: (e: L.LeafletMouseEvent) => {
+      if (onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    }
+  });
+  return null;
+};
+
 const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   currentRoute,
   selectedProfile,
@@ -200,8 +212,8 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   const [mapProvider, setMapProvider] = useState<keyof typeof mapProviders>('openstreetmap');
   const [zoomLevel, setZoomLevel] = useState(12);
   const [showControls, setShowControls] = useState(true);
-  // Use UK center as neutral default (no hardcoded Luton!) - will be overridden by route/GPS
-  const [mapCenter, setMapCenter] = useState<[number, number]>([52.5, -1.5]);
+  // NO DEFAULT CENTER - wait for GPS instead
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   // Fetch traffic incidents with 2-minute refresh
@@ -337,7 +349,7 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
   // Use real GPS location (currentLocation prop) or route start, never hardcoded coordinates
   const displayLocation = currentLocation || 
     (currentRoute?.startCoordinates ? { lat: currentRoute.startCoordinates.lat, lng: currentRoute.startCoordinates.lng } : null) ||
-    { lat: mapCenter[0], lng: mapCenter[1] };
+    (mapCenter ? { lat: mapCenter[0], lng: mapCenter[1] } : null);
 
   return (
     <div className="relative h-full w-full bg-transparent">
@@ -423,18 +435,12 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
 
       {/* Enhanced Leaflet Map */}
       <MapContainer
-        center={mapCenter}
-        zoom={zoomLevel}
+        // CRITICAL: Don't use hardcoded default center - wait for GPS or route
+        center={mapCenter || (currentLocation ? [currentLocation.lat, currentLocation.lng] : [0, 0])}
+        zoom={mapCenter || currentLocation ? zoomLevel : 2}
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
         attributionControl={false}
-        eventHandlers={{
-          click: (e) => {
-            if (onMapClick) {
-              onMapClick(e.latlng.lat, e.latlng.lng);
-            }
-          }
-        }}
         ref={(map) => {
           if (map && map.getContainer && map.getContainer()) {
             mapRef.current = map;
@@ -468,6 +474,9 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
           maxZoom={currentProvider.maxZoom}
           className="map-tiles-enhanced"
         />
+
+        {/* Map Click Handler */}
+        <MapClickHandler onMapClick={onMapClick} />
 
         {/* Current Location Marker */}
         {displayLocation && (

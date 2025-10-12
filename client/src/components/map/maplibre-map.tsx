@@ -56,13 +56,13 @@ interface MapLibreMapProps {
 interface MapPreferences {
   mapViewMode: 'roads' | 'satellite';
   zoomLevel: number;
-  center: [number, number];
+  center?: [number, number]; // Made optional - no default coordinates
 }
 
 const defaultPreferences: MapPreferences = {
   mapViewMode: 'roads',
   zoomLevel: 10,
-  center: [-1.5, 52.5],
+  // NO DEFAULT CENTER - wait for GPS instead
 };
 
 const loadMapPreferences = (): MapPreferences => {
@@ -772,8 +772,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           }
         ]
         },
-        center: preferences.center,
-        zoom: preferences.zoomLevel,
+        // CRITICAL: Don't use any default center - wait for GPS
+        // Using world view (0,0) with low zoom while waiting for GPS
+        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [0, 0],
+        zoom: gpsPosition ? preferences.zoomLevel : 2,
         pitch: 0,
         bearing: 0,
         minZoom: 3,
@@ -1812,28 +1814,26 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           });
         },
         () => {
-          // Fallback: center on route or default position
+          // Fallback: center on route if available
           if (currentRoute?.routePath) {
             const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
             const bounds = new maplibregl.LngLatBounds();
             routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
             map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
-          } else {
-            map.current?.flyTo({ center: preferences.center, zoom: 12, duration: 1000 });
           }
+          // Don't use any hardcoded default position - just stay where we are
         },
         { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
       );
     } else {
-      // Geolocation not available, fallback to route or default
+      // Geolocation not available, fallback to route only
       if (currentRoute?.routePath) {
         const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
         const bounds = new maplibregl.LngLatBounds();
         routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
         map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
-      } else {
-        map.current.flyTo({ center: preferences.center, zoom: 12, duration: 1000 });
       }
+      // Don't use any hardcoded default position - just stay where we are
     }
   };
 

@@ -1033,8 +1033,9 @@ const InteractiveMap = memo(function InteractiveMap({
       {/* React Leaflet Map */}
       <MapContainer 
         key="stable-map-container"
-        center={[52.5, -1.5]} 
-        zoom={zoomLevel} 
+        // CRITICAL: Don't use hardcoded default center - wait for GPS
+        center={gpsData?.position ? [gpsData.position.latitude, gpsData.position.longitude] : [0, 0]} 
+        zoom={gpsData?.position ? zoomLevel : 2} 
         style={{ height: '100%', width: '100%' }}
         className="absolute inset-0 z-0 cursor-grab"
         data-testid="leaflet-map"
