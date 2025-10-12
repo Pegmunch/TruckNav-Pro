@@ -14,6 +14,9 @@
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 
+export type GPSAccuracyLevel = 'excellent' | 'good' | 'fair' | 'poor' | 'very-poor';
+export type GPSConfidenceLevel = 'high' | 'medium' | 'low' | 'very-low';
+
 export interface GPSPosition {
   latitude: number;
   longitude: number;
@@ -24,6 +27,13 @@ export interface GPSPosition {
   heading: number | null;
   smoothedHeading: number | null;
   timestamp: number;
+  // New fields for confidence scoring
+  confidenceScore: number; // 0-100
+  confidenceLevel: GPSConfidenceLevel;
+  accuracyLevel: GPSAccuracyLevel;
+  isStale: boolean;
+  isStuck: boolean;
+  isOutOfBounds: boolean;
 }
 
 export interface GPSError {
@@ -33,12 +43,18 @@ export interface GPSError {
 
 export type GPSErrorType = 'PERMISSION_DENIED' | 'TIMEOUT' | 'UNAVAILABLE' | 'NOT_SUPPORTED' | null;
 
-export type GPSStatus = 'acquiring' | 'ready' | 'unavailable' | 'error';
+export type GPSStatus = 'acquiring' | 'ready' | 'unavailable' | 'error' | 'initializing';
 
 export interface CachedPosition {
   position: GPSPosition;
   ageInMinutes: number;
   ageDisplay: string;
+}
+
+export interface GPSValidationWarning {
+  type: 'accuracy' | 'stale' | 'stuck' | 'bounds';
+  message: string;
+  severity: 'warning' | 'error';
 }
 
 export interface GPSContextValue {
@@ -54,6 +70,11 @@ export interface GPSContextValue {
   useCachedPosition: (useCache: boolean) => void;
   isUsingCached: boolean;
   clearGPSCache: () => void;
+  // New fields for validation
+  validationWarnings: GPSValidationWarning[];
+  lastGoodPosition: GPSPosition | null;
+  timeSinceLastUpdate: number | null; // seconds
+  shouldPreventAutoCenter: boolean;
 }
 
 interface GPSProviderProps {
@@ -69,6 +90,216 @@ const GPSContext = createContext<GPSContextValue | null>(null);
 
 // Cache key for localStorage
 const GPS_CACHE_KEY = 'trucknav_gps_last_known_position';
+
+// Constants for GPS validation
+const GPS_ACCURACY_THRESHOLDS = {
+  EXCELLENT: 20,    // < 20m
+  GOOD: 50,         // < 50m
+  FAIR: 100,        // < 100m
+  POOR: 250,        // < 250m
+  REJECT: 500       // > 500m reject
+};
+
+const GPS_CONFIDENCE_WEIGHTS = {
+  ACCURACY: 0.4,
+  FRESHNESS: 0.3,
+  MOVEMENT: 0.15,
+  BOUNDS: 0.15
+};
+
+const UK_EUROPE_BOUNDS = {
+  minLat: 35.0,   // Southern Europe (Gibraltar/Cyprus)
+  maxLat: 71.0,   // Northern Europe (Norway)
+  minLng: -11.0,  // Western Europe (Ireland)
+  maxLng: 40.0    // Eastern Europe (Turkey)
+};
+
+const STALE_THRESHOLD_MS = 60000;  // 1 minute
+const STUCK_THRESHOLD_MS = 120000; // 2 minutes
+const NO_UPDATE_WARNING_MS = 30000; // 30 seconds
+
+/**
+ * Determine GPS accuracy level based on accuracy value
+ */
+const getAccuracyLevel = (accuracy: number): GPSAccuracyLevel => {
+  if (accuracy <= GPS_ACCURACY_THRESHOLDS.EXCELLENT) return 'excellent';
+  if (accuracy <= GPS_ACCURACY_THRESHOLDS.GOOD) return 'good';
+  if (accuracy <= GPS_ACCURACY_THRESHOLDS.FAIR) return 'fair';
+  if (accuracy <= GPS_ACCURACY_THRESHOLDS.POOR) return 'poor';
+  return 'very-poor';
+};
+
+/**
+ * Check if coordinates are within reasonable bounds (UK/Europe)
+ */
+const isWithinBounds = (lat: number, lng: number): boolean => {
+  return lat >= UK_EUROPE_BOUNDS.minLat && 
+         lat <= UK_EUROPE_BOUNDS.maxLat && 
+         lng >= UK_EUROPE_BOUNDS.minLng && 
+         lng <= UK_EUROPE_BOUNDS.maxLng;
+};
+
+/**
+ * Calculate distance between two GPS positions (Haversine formula)
+ */
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+};
+
+/**
+ * Detect if GPS is stuck (no movement despite time passing)
+ */
+const isGPSStuck = (
+  currentPos: { lat: number; lng: number; timestamp: number },
+  previousPos: { lat: number; lng: number; timestamp: number } | null,
+  minDistanceThreshold: number = 5 // meters
+): boolean => {
+  if (!previousPos) return false;
+  
+  const timeDiff = currentPos.timestamp - previousPos.timestamp;
+  if (timeDiff < STUCK_THRESHOLD_MS) return false;
+  
+  const distance = calculateDistance(
+    currentPos.lat, currentPos.lng,
+    previousPos.lat, previousPos.lng
+  );
+  
+  // If less than 5 meters movement in 2+ minutes, likely stuck
+  return distance < minDistanceThreshold;
+};
+
+/**
+ * Calculate GPS confidence score (0-100)
+ */
+const calculateConfidenceScore = (
+  accuracy: number,
+  timestamp: number,
+  isInBounds: boolean,
+  isStuck: boolean
+): number => {
+  let score = 0;
+  
+  // Accuracy component (0-40 points)
+  if (accuracy <= GPS_ACCURACY_THRESHOLDS.EXCELLENT) {
+    score += 40;
+  } else if (accuracy <= GPS_ACCURACY_THRESHOLDS.GOOD) {
+    score += 35;
+  } else if (accuracy <= GPS_ACCURACY_THRESHOLDS.FAIR) {
+    score += 25;
+  } else if (accuracy <= GPS_ACCURACY_THRESHOLDS.POOR) {
+    score += 15;
+  } else if (accuracy <= GPS_ACCURACY_THRESHOLDS.REJECT) {
+    score += 5;
+  } else {
+    score += 0;
+  }
+  
+  // Freshness component (0-30 points)
+  const age = Date.now() - timestamp;
+  if (age < 5000) {
+    score += 30;
+  } else if (age < 15000) {
+    score += 25;
+  } else if (age < 30000) {
+    score += 20;
+  } else if (age < 60000) {
+    score += 10;
+  } else {
+    score += 0;
+  }
+  
+  // Movement component (0-15 points)
+  if (!isStuck) {
+    score += 15;
+  }
+  
+  // Bounds component (0-15 points)
+  if (isInBounds) {
+    score += 15;
+  }
+  
+  return Math.min(100, Math.max(0, score));
+};
+
+/**
+ * Get confidence level from score
+ */
+const getConfidenceLevel = (score: number): GPSConfidenceLevel => {
+  if (score >= 75) return 'high';
+  if (score >= 50) return 'medium';
+  if (score >= 25) return 'low';
+  return 'very-low';
+};
+
+/**
+ * Generate validation warnings based on GPS state
+ */
+const generateValidationWarnings = (
+  accuracy: number,
+  timestamp: number,
+  isStuck: boolean,
+  isOutOfBounds: boolean
+): GPSValidationWarning[] => {
+  const warnings: GPSValidationWarning[] = [];
+  const age = Date.now() - timestamp;
+  
+  if (accuracy > GPS_ACCURACY_THRESHOLDS.REJECT) {
+    warnings.push({
+      type: 'accuracy',
+      message: `GPS accuracy too low (${Math.round(accuracy)}m). Please move to an open area.`,
+      severity: 'error'
+    });
+  } else if (accuracy > GPS_ACCURACY_THRESHOLDS.FAIR) {
+    warnings.push({
+      type: 'accuracy',
+      message: `GPS accuracy is poor (${Math.round(accuracy)}m)`,
+      severity: 'warning'
+    });
+  }
+  
+  if (age > STALE_THRESHOLD_MS) {
+    warnings.push({
+      type: 'stale',
+      message: 'GPS data is stale. Check your signal.',
+      severity: 'error'
+    });
+  } else if (age > NO_UPDATE_WARNING_MS) {
+    warnings.push({
+      type: 'stale',
+      message: 'GPS signal weak - no recent updates',
+      severity: 'warning'
+    });
+  }
+  
+  if (isStuck) {
+    warnings.push({
+      type: 'stuck',
+      message: 'GPS appears stuck. Try restarting location services.',
+      severity: 'warning'
+    });
+  }
+  
+  if (isOutOfBounds) {
+    warnings.push({
+      type: 'bounds',
+      message: 'GPS coordinates appear incorrect for your region.',
+      severity: 'error'
+    });
+  }
+  
+  return warnings;
+};
 
 /**
  * Save GPS position to localStorage for use as fallback
@@ -225,15 +456,24 @@ export function GPSProvider({
   const [isTracking, setIsTracking] = useState(false);
   const [errorType, setErrorType] = useState<GPSErrorType>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [status, setStatus] = useState<GPSStatus>('acquiring');
+  const [status, setStatus] = useState<GPSStatus>('initializing');
   const [cachedPosition, setCachedPosition] = useState<CachedPosition | null>(null);
   const [isUsingCached, setIsUsingCached] = useState(false);
   const [hasFreshPosition, setHasFreshPosition] = useState(false);
+  
+  // New validation state
+  const [validationWarnings, setValidationWarnings] = useState<GPSValidationWarning[]>([]);
+  const [lastGoodPosition, setLastGoodPosition] = useState<GPSPosition | null>(null);
+  const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<number | null>(null);
+  const [shouldPreventAutoCenter, setShouldPreventAutoCenter] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const smoothedHeadingRef = useRef<number | null>(null);
   const lastHeadingUpdateRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPositionRef = useRef<{ lat: number; lng: number; timestamp: number } | null>(null);
+  const lastUpdateTimeRef = useRef<number>(Date.now());
+  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
    * Clear all cached GPS data and force fresh acquisition
@@ -332,22 +572,59 @@ export function GPSProvider({
         const lat = geoPosition.coords.latitude;
         const lng = geoPosition.coords.longitude;
         const accuracy = geoPosition.coords.accuracy;
+        const { coords, timestamp } = geoPosition;
         
-        // Check if coordinates match Winchester (lat: ~51.063, lng: ~-1.308)
+        // Perform validation checks
+        const isInBounds = isWithinBounds(lat, lng);
+        const accuracyLevel = getAccuracyLevel(accuracy);
+        const isStale = (Date.now() - timestamp) > STALE_THRESHOLD_MS;
+        const isStuck = isGPSStuck(
+          { lat, lng, timestamp },
+          lastPositionRef.current
+        );
+        
+        // Check if coordinates match Winchester (known issue)
         const isWinchester = Math.abs(lat - 51.063) < 0.01 && Math.abs(lng - (-1.308)) < 0.01;
-        const isLuton = Math.abs(lat - 51.8787) < 0.1 && Math.abs(lng - (-0.4200)) < 0.1;
+        const isOutOfBounds = !isInBounds || isWinchester;
         
-        console.log('[GPS-DEBUG] 🎯 Position received:', {
+        // Calculate confidence score
+        const confidenceScore = calculateConfidenceScore(
+          accuracy,
+          timestamp,
+          isInBounds && !isWinchester,
+          isStuck
+        );
+        const confidenceLevel = getConfidenceLevel(confidenceScore);
+        
+        // Generate validation warnings
+        const warnings = generateValidationWarnings(
+          accuracy,
+          timestamp,
+          isStuck,
+          isOutOfBounds
+        );
+        setValidationWarnings(warnings);
+        
+        // Determine if we should prevent auto-center
+        const preventAutoCenter = accuracy > GPS_ACCURACY_THRESHOLDS.REJECT ||
+                                  confidenceScore < 25 ||
+                                  isOutOfBounds ||
+                                  isStuck;
+        setShouldPreventAutoCenter(preventAutoCenter);
+        
+        console.log('[GPS-VALIDATION] Position analysis:', {
           lat,
           lng,
           accuracy,
-          altitude: geoPosition.coords.altitude,
-          speed: geoPosition.coords.speed,
-          timestamp: new Date().toISOString(),
-          isWinchester,
-          isLuton,
-          accuracyLevel: accuracy < 50 ? 'HIGH' : accuracy < 100 ? 'MEDIUM' : 'LOW',
-          source: accuracy > 1000 ? 'IP_BASED' : 'GPS'
+          accuracyLevel,
+          confidenceScore,
+          confidenceLevel,
+          isInBounds: isInBounds && !isWinchester,
+          isStuck,
+          isStale,
+          preventAutoCenter,
+          warnings: warnings.length,
+          timestamp: new Date(timestamp).toISOString()
         });
         
         // Warning if coordinates match Winchester
@@ -356,21 +633,21 @@ export function GPSProvider({
           console.warn('[GPS-DEBUG] Expected Luton coordinates (lat: ~51.8787, lng: ~-0.4200)');
         }
         
-        // Log accuracy level for debugging
-        if (accuracy > 100) {
-          console.log('[GPS-DEBUG] ⚠️ Low accuracy:', accuracy, 'meters - may be using IP-based location');
-        }
-        
         // Store debug info in window for inspection
         (window as any).__GPS_DEBUG__ = {
           currentPosition: { lat, lng, accuracy },
-          isWinchester,
-          isLuton,
-          timestamp: Date.now(),
-          source: accuracy > 1000 ? 'IP_BASED' : 'GPS'
+          validationState: {
+            confidenceScore,
+            confidenceLevel,
+            accuracyLevel,
+            isStuck,
+            isStale,
+            isOutOfBounds,
+            preventAutoCenter
+          },
+          timestamp: Date.now()
         };
         
-        const { coords, timestamp } = geoPosition;
         const rawHeading = coords.heading;
 
         // Apply heading smoothing if enabled and heading is available
@@ -402,7 +679,7 @@ export function GPSProvider({
           smoothed = rawHeading;
         }
 
-        // Update position state
+        // Create new position with validation data
         const newPosition: GPSPosition = {
           latitude: coords.latitude,
           longitude: coords.longitude,
@@ -412,16 +689,34 @@ export function GPSProvider({
           speed: coords.speed,
           heading: rawHeading,
           smoothedHeading: smoothed,
-          timestamp
+          timestamp,
+          // New validation fields
+          confidenceScore,
+          confidenceLevel,
+          accuracyLevel,
+          isStale,
+          isStuck,
+          isOutOfBounds
         };
+        
+        // Update last position for movement detection
+        lastPositionRef.current = { lat, lng, timestamp };
+        lastUpdateTimeRef.current = Date.now();
+        
+        // Save as last good position if confidence is high enough
+        if (confidenceScore >= 50 && !isOutOfBounds) {
+          setLastGoodPosition(newPosition);
+        }
         
         setPosition(newPosition);
         setHasFreshPosition(true);
         setIsUsingCached(false);
         setStatus('ready');
         
-        // Save to localStorage for future use
-        saveGPSToCache(newPosition);
+        // Only save to cache if it's a good position
+        if (confidenceScore >= 50 && !isOutOfBounds) {
+          saveGPSToCache(newPosition);
+        }
 
         // Clear any previous errors
         setError(null);
@@ -504,6 +799,41 @@ export function GPSProvider({
     }
   }, [cachedPosition]);
 
+  // Timer to track time since last GPS update
+  useEffect(() => {
+    const updateTimer = setInterval(() => {
+      const now = Date.now();
+      const timeSince = lastUpdateTimeRef.current ? 
+        Math.floor((now - lastUpdateTimeRef.current) / 1000) : null;
+      setTimeSinceLastUpdate(timeSince);
+      
+      // Check for GPS signal lost (no updates for 30 seconds)
+      if (timeSince && timeSince > 30 && status === 'ready') {
+        console.warn('[GPS-PROVIDER] GPS signal lost - no updates for', timeSince, 'seconds');
+        setStatus('unavailable');
+        setValidationWarnings(prev => {
+          const hasSignalLostWarning = prev.some(w => w.type === 'stale' && w.severity === 'error');
+          if (!hasSignalLostWarning) {
+            return [...prev, {
+              type: 'stale',
+              message: 'GPS signal lost - no updates for over 30 seconds',
+              severity: 'error' as const
+            }];
+          }
+          return prev;
+        });
+      }
+    }, 1000);
+    
+    updateIntervalRef.current = updateTimer;
+    
+    return () => {
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
+    };
+  }, [status]);
+
   useEffect(() => {
     // Load cached position for info (but don't use it automatically)
     const cached = loadGPSFromCache();
@@ -536,7 +866,12 @@ export function GPSProvider({
     cachedPosition,
     useCachedPosition,
     isUsingCached,
-    clearGPSCache
+    clearGPSCache,
+    // New validation fields
+    validationWarnings,
+    lastGoodPosition,
+    timeSinceLastUpdate,
+    shouldPreventAutoCenter
   };
 
   return (
