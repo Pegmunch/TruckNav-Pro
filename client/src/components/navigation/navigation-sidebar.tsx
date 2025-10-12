@@ -1037,8 +1037,17 @@ Calculating route...
                                <MapPin className="w-4 h-4 text-gray-600" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate" data-testid={`text-facility-name-${facility.id}`}>
-                                {facility.name}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="font-medium text-sm truncate" data-testid={`text-facility-name-${facility.id}`}>
+                                  {facility.name}
+                                </div>
+                                {(facility as any).distance !== undefined && (
+                                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400 shrink-0">
+                                    {(facility as any).distance < 1 
+                                      ? `${Math.round((facility as any).distance * 1000)}m` 
+                                      : `${(facility as any).distance.toFixed(1)}km`}
+                                  </span>
+                                )}
                               </div>
                               {facility.address && (
                                 <div className="text-xs text-muted-foreground truncate">

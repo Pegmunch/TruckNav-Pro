@@ -1058,11 +1058,33 @@ export class MemStorage implements IStorage {
     }
     
     if (params.coordinates && params.radius) {
-      facilities = facilities.filter(f => {
-        const coords = f.coordinates as { lat: number; lng: number };
-        const distance = this.calculateDistance(params.coordinates!, coords);
-        return distance <= params.radius!;
-      });
+      // Convert radius from kilometers to miles for comparison (since calculateDistance returns miles)
+      const radiusInMiles = params.radius * 0.621371;
+      
+      // Map facilities with their distances
+      const facilitiesWithDistance = facilities
+        .map(f => {
+          const coords = f.coordinates as { lat: number; lng: number };
+          const distanceInMiles = this.calculateDistance(params.coordinates!, coords);
+          const distanceInKm = distanceInMiles * 1.60934;
+          return {
+            facility: f,
+            distanceInMiles,
+            distanceInKm
+          };
+        })
+        // Filter by radius
+        .filter(item => item.distanceInMiles <= radiusInMiles)
+        // Sort by distance (closest first)
+        .sort((a, b) => a.distanceInMiles - b.distanceInMiles);
+      
+      // Return facilities with distance property added
+      return facilitiesWithDistance.map(item => ({
+        ...item.facility,
+        // Add distance in both units for flexibility
+        distance: item.distanceInKm, // Distance in kilometers for display
+        distanceMiles: item.distanceInMiles // Distance in miles if needed
+      }));
     }
     
     return facilities;
@@ -2698,34 +2720,46 @@ export class DatabaseStorage implements IStorage {
     
     // Filter by distance if coordinates and radius are provided
     if (params.coordinates && params.radius) {
-      allFacilities = allFacilities.filter(facility => {
-        if (!facility.coordinates) return false;
-        
-        try {
-          const facilityCoords = typeof facility.coordinates === 'string' 
-            ? JSON.parse(facility.coordinates) 
-            : facility.coordinates;
-          
-          const distance = this.calculateDistance(params.coordinates!, facilityCoords);
-          return distance <= params.radius!;
-        } catch (error) {
-          console.error(`[FACILITY-FILTER] Error parsing coordinates for facility ${facility.id}:`, error);
-          return false;
-        }
-      });
+      // Convert radius from kilometers to miles for comparison (since calculateDistance returns miles)
+      const radiusInMiles = params.radius * 0.621371;
       
-      // Sort by distance (closest first)
-      allFacilities.sort((a, b) => {
-        try {
-          const coordsA = typeof a.coordinates === 'string' ? JSON.parse(a.coordinates) : a.coordinates;
-          const coordsB = typeof b.coordinates === 'string' ? JSON.parse(b.coordinates) : b.coordinates;
-          const distA = this.calculateDistance(params.coordinates!, coordsA);
-          const distB = this.calculateDistance(params.coordinates!, coordsB);
-          return distA - distB;
-        } catch {
-          return 0;
-        }
-      });
+      // Map facilities with their distances
+      const facilitiesWithDistance = allFacilities
+        .map(facility => {
+          if (!facility.coordinates) return null;
+          
+          try {
+            const facilityCoords = typeof facility.coordinates === 'string' 
+              ? JSON.parse(facility.coordinates) 
+              : facility.coordinates;
+            
+            const distanceInMiles = this.calculateDistance(params.coordinates!, facilityCoords);
+            const distanceInKm = distanceInMiles * 1.60934;
+            
+            return {
+              facility,
+              distanceInMiles,
+              distanceInKm
+            };
+          } catch (error) {
+            console.error(`[FACILITY-FILTER] Error parsing coordinates for facility ${facility.id}:`, error);
+            return null;
+          }
+        })
+        // Filter out facilities without valid coordinates
+        .filter((item): item is { facility: any; distanceInMiles: number; distanceInKm: number } => item !== null)
+        // Filter by radius
+        .filter(item => item.distanceInMiles <= radiusInMiles)
+        // Sort by distance (closest first)
+        .sort((a, b) => a.distanceInMiles - b.distanceInMiles);
+      
+      // Return facilities with distance property added
+      return facilitiesWithDistance.map(item => ({
+        ...item.facility,
+        // Add distance in both units for flexibility
+        distance: item.distanceInKm, // Distance in kilometers for display
+        distanceMiles: item.distanceInMiles // Distance in miles if needed
+      }));
     }
     
     return allFacilities;
