@@ -1,16 +1,16 @@
 /**
  * SpeedometerHUD Component for TruckNav Pro
- * Professional oval speedometer with speed limit indicators
- * Features dynamic road information, unit switching, and visual warnings
+ * Redesigned long, thin speedometer bar with solid backgrounds
+ * Features speed limit on left, current speed in center, road info on right
  */
 
-import { memo, useState, useEffect, useRef } from 'react';
-import { Gauge, Shield, AlertCircle, Navigation, MapPin, Info } from 'lucide-react';
+import { memo, useState, useEffect } from 'react';
+import { Shield, AlertCircle, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGPS } from '@/contexts/gps-context';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { useSpeedLimit } from '@/hooks/use-speed-limit';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 interface SpeedometerHUDProps {
   className?: string;
@@ -27,7 +27,7 @@ interface SpeedometerHUDProps {
 }
 
 /**
- * Professional oval speedometer HUD with speed limit integration
+ * Long, thin speedometer bar with solid backgrounds
  */
 const SpeedometerHUD = memo(function SpeedometerHUD({
   className,
@@ -41,11 +41,11 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   const gps = useGPS();
   const { system: measurementSystem, setSystem } = useMeasurement();
   const speedLimitData = useSpeedLimit();
+  const { toast } = useToast();
   
   // State for smooth speed animation
   const [animatedSpeed, setAnimatedSpeed] = useState(0);
-  const [pulseAnimation, setPulseAnimation] = useState(false);
-  const prevSpeedingRef = useRef(false);
+  const [showJunctionInfo, setShowJunctionInfo] = useState(false);
   
   // Use provided data or fetch from hooks
   const gpsSpeed = gps?.position?.speed ?? 0;
@@ -84,11 +84,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   const convertedSpeed = convertSpeed(Math.max(0, displaySpeed));
   const convertedSpeedLimit = speedLimit ? convertSpeedLimit(speedLimit) : null;
   
-  // Determine speed status
-  const speedDifference = convertedSpeedLimit ? convertedSpeed - convertedSpeedLimit : 0;
-  const isSpeeding = convertedSpeedLimit && speedDifference > 5; // 5 unit tolerance
-  const isNearLimit = convertedSpeedLimit && speedDifference > 0 && speedDifference <= 5;
-  const isWellUnder = convertedSpeedLimit && speedDifference < -10;
+  // Determine speed status - simpler logic
+  const isSpeeding = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit;
   
   // Smooth speed animation
   useEffect(() => {
@@ -96,196 +93,142 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       setAnimatedSpeed(prev => {
         const diff = convertedSpeed - prev;
         if (Math.abs(diff) < 0.5) return convertedSpeed;
-        return prev + diff * 0.2; // Smooth transition
+        return prev + diff * 0.3; // Slightly faster transition
       });
     });
     
     return () => cancelAnimationFrame(animationFrame);
   }, [convertedSpeed]);
   
-  // Pulse animation when starting to speed
-  useEffect(() => {
-    if (isSpeeding && !prevSpeedingRef.current) {
-      setPulseAnimation(true);
-      setTimeout(() => setPulseAnimation(false), 2000);
-    }
-    prevSpeedingRef.current = isSpeeding as boolean;
-  }, [isSpeeding]);
-  
-  // Get speed color based on status
+  // Get speed text color based on status
   const getSpeedColor = () => {
-    if (isSpeeding) return 'text-red-500';
-    if (isNearLimit) return 'text-amber-500';
-    if (isWellUnder) return 'text-green-500';
-    return 'text-blue-500';
+    if (isSpeeding) return 'text-white'; // White when speeding (red background)
+    return 'text-slate-900 dark:text-white';
   };
   
-  // Get background gradient based on status
-  const getBackgroundGradient = () => {
-    if (isSpeeding) {
-      return 'from-red-600/20 via-red-500/15 to-red-600/20 dark:from-red-700/30 dark:via-red-600/25 dark:to-red-700/30';
-    }
-    if (isNearLimit) {
-      return 'from-amber-600/20 via-amber-500/15 to-amber-600/20 dark:from-amber-700/30 dark:via-amber-600/25 dark:to-amber-700/30';
-    }
-    return 'from-slate-900/20 via-slate-800/15 to-slate-900/20 dark:from-slate-100/10 dark:via-slate-200/8 dark:to-slate-100/10';
-  };
-  
-  // Get border style based on status
-  const getBorderStyle = () => {
-    if (isSpeeding) {
-      return cn(
-        'border-2 border-red-500/50',
-        pulseAnimation && 'animate-pulse ring-4 ring-red-500/30'
-      );
-    }
-    if (isNearLimit) {
-      return 'border-2 border-amber-500/40';
-    }
-    return 'border border-slate-300/30 dark:border-slate-700/30';
-  };
-  
-  // Road type badge color
+  // Road type badge color (UK motorway standards)
   const getRoadBadgeColor = (ref: string) => {
-    if (ref.match(/^M\d/)) return 'bg-blue-600 text-white'; // Motorways
-    if (ref.match(/^A\d/)) return 'bg-green-600 text-white'; // A-roads
-    if (ref.match(/^I-/)) return 'bg-blue-700 text-white'; // Interstate
+    if (ref.match(/^M\d/)) return 'bg-blue-600 text-white'; // UK Motorways
+    if (ref.match(/^A\d/)) return 'bg-green-600 text-white'; // UK A-roads
+    if (ref.match(/^B\d/)) return 'bg-amber-600 text-white'; // UK B-roads
+    if (ref.match(/^I-/)) return 'bg-blue-700 text-white'; // US Interstate
     if (ref.match(/^US-/)) return 'bg-green-700 text-white'; // US Highway
     if (ref.match(/^E\d/)) return 'bg-blue-800 text-white'; // European routes
     return 'bg-slate-600 text-white'; // Other roads
   };
-  
-  // Confidence indicator
-  const getConfidenceIndicator = () => {
-    switch (roadInfo.confidence) {
-      case 'high':
-        return null; // No indicator for high confidence
-      case 'medium':
-        return { icon: '~', color: 'text-amber-500', tooltip: 'Estimated speed limit' };
-      case 'low':
-        return { icon: '?', color: 'text-orange-500', tooltip: 'Uncertain speed limit' };
-      default:
-        return null;
-    }
-  };
-  
-  const confidenceIndicator = getConfidenceIndicator();
   
   // Handle unit toggle
   const handleUnitToggle = () => {
     if (onUnitToggle) {
       onUnitToggle();
     } else {
-      // Toggle between imperial and metric
       setSystem(measurementSystem === 'imperial' ? 'metric' : 'imperial');
     }
   };
   
+  // Handle motorway sign click
+  const handleMotorwayClick = () => {
+    if (roadInfo.junction) {
+      setShowJunctionInfo(true);
+      toast({
+        title: `${roadInfo.roadRef || 'Road'} Junction ${roadInfo.junction.ref}`,
+        description: roadInfo.junction.exitTo ? `Exit to: ${roadInfo.junction.exitTo}` : 
+                     roadInfo.destination ? `Towards: ${roadInfo.destination}` : 
+                     'Junction information',
+      });
+      setTimeout(() => setShowJunctionInfo(false), 3000);
+    }
+  };
+  
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+    <div
       className={cn(
         'relative',
         className
       )}
       data-testid="speedometer-hud"
     >
-      {/* Main oval speedometer container - SIGNIFICANTLY THINNER AND MORE COMPACT */}
+      {/* Main speedometer bar - MUCH LONGER AND THINNER */}
       <div
         className={cn(
-          // Dramatically reduced oval shape - much thinner/narrower (200px-240px width, 70px-85px height)
-          'relative w-[200px] h-[70px] sm:w-[220px] sm:h-[75px] md:w-[240px] md:h-[85px]',
-          // Glassmorphism effect
-          'backdrop-blur-xl bg-gradient-to-r',
-          getBackgroundGradient(),
-          // Border and shadow
-          getBorderStyle(),
-          'rounded-[45px] shadow-2xl',
-          // Transition for smooth color changes
-          'transition-all duration-300 ease-in-out'
+          // New dimensions: much wider and thinner
+          'relative w-[360px] h-[60px] sm:w-[380px] sm:h-[64px] md:w-[400px] md:h-[64px]',
+          // Solid background - changes color when speeding
+          isSpeeding 
+            ? 'bg-red-600 dark:bg-red-700' 
+            : 'bg-slate-950 dark:bg-slate-900',
+          // Border
+          'border border-slate-700',
+          // Less rounded corners for more rectangular look
+          'rounded-2xl',
+          // Shadow for depth
+          'shadow-xl',
+          // Smooth transition for background color changes
+          'transition-all duration-500 ease-in-out'
         )}
       >
-        {/* Inner container for content - reduced padding for tighter packing */}
-        <div className="absolute inset-0 flex items-center justify-between px-4 sm:px-5">
+        {/* Inner container with horizontal layout */}
+        <div className="absolute inset-0 flex items-center justify-between px-4">
           
-          {/* Left Section: Speed Limit */}
-          <div className="flex flex-col items-center justify-center min-w-[65px]">
+          {/* LEFT: Speed Limit Badge (pill shape) */}
+          <div className="flex items-center gap-3">
             <div
               className={cn(
-                'relative flex flex-col items-center justify-center',
-                'w-10 h-10 sm:w-11 sm:h-11', // Significantly reduced for compact speedometer
-                'rounded-full bg-white dark:bg-slate-900',
-                'shadow-lg',
-                convertedSpeedLimit ? 'border-[3px] border-red-600' : 'border-[3px] border-slate-400'
+                // Pill shape instead of circle
+                'flex items-center gap-2 px-3 py-1.5',
+                'rounded-full',
+                // Background colors
+                isSpeeding 
+                  ? 'bg-white/20 border-2 border-white'
+                  : convertedSpeedLimit 
+                    ? 'bg-red-600 dark:bg-red-700 border-2 border-red-500'
+                    : 'bg-slate-800 dark:bg-slate-700 border-2 border-slate-600',
+                'shadow-md',
+                'transition-all duration-300'
               )}
               data-testid="speed-limit-display"
             >
+              <Shield className="w-4 h-4 text-white" />
               {convertedSpeedLimit ? (
-                <>
-                  <span className="text-sm sm:text-base font-black text-black dark:text-white">
-                    {convertedSpeedLimit}
-                  </span>
-                  {confidenceIndicator && (
-                    <span
-                      className={cn(
-                        'absolute -top-1 -right-1',
-                        'w-5 h-5 rounded-full bg-white dark:bg-slate-900',
-                        'flex items-center justify-center',
-                        'text-xs font-bold',
-                        confidenceIndicator.color,
-                        'shadow-md border border-white dark:border-slate-700'
-                      )}
-                      title={confidenceIndicator.tooltip}
-                    >
-                      {confidenceIndicator.icon}
-                    </span>
-                  )}
-                </>
+                <span className="text-lg font-bold text-white tabular-nums">
+                  {convertedSpeedLimit}
+                </span>
               ) : (
-                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                <span className="text-sm font-medium text-white/70">--</span>
               )}
             </div>
-            <span className="mt-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase">
-              LIMIT
-            </span>
+            
+            {/* Vertical divider */}
+            <div className="h-8 w-px bg-slate-600 dark:bg-slate-500" />
           </div>
           
-          {/* Center Section: Current Speed */}
+          {/* CENTER: Current Speed (Large and prominent) */}
           <div className="flex flex-col items-center justify-center flex-1">
-            <div className="relative">
-              {/* Speed value with animation */}
-              <motion.div
+            <div className="flex items-baseline gap-2">
+              {/* Speed value */}
+              <span
                 className={cn(
-                  'text-2xl sm:text-3xl md:text-4xl font-black tabular-nums',
+                  'text-4xl font-bold tabular-nums',
                   getSpeedColor(),
                   'transition-colors duration-300'
                 )}
-                animate={{
-                  scale: isSpeeding ? [1, 1.05, 1] : 1
-                }}
-                transition={{
-                  duration: 0.5,
-                  repeat: isSpeeding ? Infinity : 0,
-                  repeatDelay: 1
-                }}
                 data-testid="current-speed-value"
               >
                 {Math.round(animatedSpeed)}
-              </motion.div>
+              </span>
               
               {/* Speed unit (clickable for toggle) */}
               <button
                 onClick={handleUnitToggle}
                 className={cn(
-                  'mt-0 text-[10px] sm:text-xs font-bold uppercase',
-                  'text-slate-600 dark:text-slate-400',
-                  'hover:text-blue-500 dark:hover:text-blue-400',
+                  'text-sm font-medium uppercase',
+                  isSpeeding 
+                    ? 'text-white/80 hover:text-white' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
                   'transition-colors duration-200',
                   'cursor-pointer select-none',
-                  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                  'rounded px-2 py-0.5'
+                  'focus:outline-none',
+                  'px-1'
                 )}
                 data-testid="speed-unit-toggle"
               >
@@ -293,105 +236,56 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               </button>
             </div>
             
-            {/* GPS status indicator */}
+            {/* GPS status (only if no GPS) */}
             {!gps?.position && (
-              <div className="absolute bottom-2 flex items-center gap-1 text-xs text-slate-500">
-                <AlertCircle className="w-3 h-3" />
-                <span>No GPS</span>
+              <div className="absolute -bottom-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 text-amber-500" />
+                <span className="text-[10px] text-amber-500 font-medium">NO GPS</span>
               </div>
             )}
           </div>
           
-          {/* Right Section: Road Info */}
-          <div className="flex flex-col items-end justify-center min-w-[65px] max-w-[100px]">
+          {/* RIGHT: Motorway Sign (Interactive) */}
+          <div className="flex items-center gap-3">
+            {/* Vertical divider */}
+            {roadInfo.roadRef && (
+              <div className="h-8 w-px bg-slate-600 dark:bg-slate-500" />
+            )}
+            
             {roadInfo.roadRef ? (
-              <div className="flex flex-col items-end gap-1">
-                {/* Road reference badge */}
-                <div
-                  className={cn(
-                    'px-1.5 py-0.5 rounded-lg',
-                    'text-[11px] sm:text-xs font-black',
-                    'shadow-md',
-                    getRoadBadgeColor(roadInfo.roadRef)
-                  )}
-                  data-testid="road-ref-badge"
-                >
-                  {roadInfo.roadRef}
-                </div>
-                
-                {/* Junction info */}
+              <button
+                onClick={handleMotorwayClick}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5',
+                  'rounded-lg',
+                  'font-bold text-sm',
+                  getRoadBadgeColor(roadInfo.roadRef),
+                  'shadow-md',
+                  'hover:scale-105 active:scale-100',
+                  'transition-transform duration-200',
+                  'cursor-pointer'
+                )}
+                data-testid="road-ref-badge"
+              >
+                <span className="font-black">{roadInfo.roadRef}</span>
                 {roadInfo.junction?.ref && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-slate-500" />
-                    <span className="text-[9px] font-semibold text-slate-600 dark:text-slate-400">
-                      J{roadInfo.junction.ref}
-                    </span>
-                  </div>
+                  <>
+                    <ChevronRight className="w-3 h-3" />
+                    <span className="text-xs">J{roadInfo.junction.ref}</span>
+                  </>
                 )}
-                
-                {/* Destination */}
-                {roadInfo.destination && (
-                  <div className="flex items-center gap-1 max-w-full">
-                    <Navigation className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                    <span className="text-[9px] font-medium text-slate-600 dark:text-slate-400 truncate">
-                      {roadInfo.destination}
-                    </span>
-                  </div>
-                )}
-              </div>
+              </button>
             ) : isNavigating ? (
-              <div className="flex flex-col items-center justify-center">
-                <Gauge className="w-6 h-6 text-slate-400" />
-                <span className="mt-0.5 text-[9px] font-medium text-slate-500">
-                  {speedLimitData.isLoading ? 'Loading...' : 'No road data'}
+              <div className="px-3 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-700">
+                <span className="text-xs font-medium text-slate-400">
+                  No road data
                 </span>
               </div>
             ) : null}
           </div>
         </div>
-        
-        {/* Visual warning overlay for speeding */}
-        <AnimatePresence>
-          {isSpeeding && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 rounded-[45px] pointer-events-none"
-            >
-              <div
-                className={cn(
-                  'absolute inset-0 rounded-[45px]',
-                  'bg-gradient-to-r from-red-500/10 via-transparent to-red-500/10',
-                  'animate-pulse'
-                )}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-      
-      {/* Speed difference indicator */}
-      {convertedSpeedLimit && isNavigating && (
-        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2">
-          <div className="flex items-center gap-1 text-xs font-medium">
-            {isSpeeding ? (
-              <span className="text-red-500">
-                +{speedDifference} {speedUnit} over limit
-              </span>
-            ) : isNearLimit ? (
-              <span className="text-amber-500">
-                Approaching limit
-              </span>
-            ) : (
-              <span className="text-green-500">
-                Within limit
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-    </motion.div>
+    </div>
   );
 });
 
