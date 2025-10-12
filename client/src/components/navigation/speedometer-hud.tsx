@@ -1,6 +1,6 @@
 /**
  * SpeedometerHUD Component for TruckNav Pro
- * Redesigned long, thin speedometer bar with solid backgrounds
+ * Oval-shaped speedometer with white background and clean design
  * Features speed limit on left, current speed in center, road info on right
  */
 
@@ -27,7 +27,7 @@ interface SpeedometerHUDProps {
 }
 
 /**
- * Long, thin speedometer bar with solid backgrounds
+ * Oval-shaped speedometer with white background
  */
 const SpeedometerHUD = memo(function SpeedometerHUD({
   className,
@@ -102,8 +102,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   
   // Get speed text color based on status
   const getSpeedColor = () => {
-    if (isSpeeding) return 'text-white'; // White when speeding (red background)
-    return 'text-slate-900 dark:text-white';
+    if (isSpeeding) return 'text-white'; // White text on red background when speeding
+    return 'text-gray-900 dark:text-gray-900'; // Dark text on white background normally
   };
   
   // Road type badge color (UK motorway standards)
@@ -148,21 +148,23 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       )}
       data-testid="speedometer-hud"
     >
-      {/* Main speedometer bar - MUCH LONGER AND THINNER */}
+      {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
       <div
         className={cn(
-          // New dimensions: much wider and thinner
-          'relative w-[360px] h-[60px] sm:w-[380px] sm:h-[64px] md:w-[400px] md:h-[64px]',
-          // Solid background - changes color when speeding
+          // Shorter dimensions for compact oval shape
+          'relative w-[280px] h-[70px] sm:w-[300px] sm:h-[75px] md:w-[320px] md:h-[80px]',
+          // White background normally, red when speeding
           isSpeeding 
-            ? 'bg-red-600 dark:bg-red-700' 
-            : 'bg-slate-950 dark:bg-slate-900',
-          // Border
-          'border border-slate-700',
-          // Less rounded corners for more rectangular look
-          'rounded-2xl',
-          // Shadow for depth
-          'shadow-xl',
+            ? 'bg-red-500 dark:bg-red-500' 
+            : 'bg-white dark:bg-gray-100',
+          // Subtle border for white background
+          isSpeeding 
+            ? 'border border-red-600'
+            : 'border border-gray-200 dark:border-gray-300',
+          // Full rounded corners for oval shape
+          'rounded-full',
+          // Shadow for depth and elevation
+          'shadow-lg',
           // Smooth transition for background color changes
           'transition-all duration-500 ease-in-out'
         )}
@@ -177,29 +179,48 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 // Pill shape instead of circle
                 'flex items-center gap-2 px-3 py-1.5',
                 'rounded-full',
-                // Background colors
+                // Background colors adapted for white background
                 isSpeeding 
-                  ? 'bg-white/20 border-2 border-white'
+                  ? 'bg-white/90 border-2 border-white' // White on red when speeding
                   : convertedSpeedLimit 
-                    ? 'bg-red-600 dark:bg-red-700 border-2 border-red-500'
-                    : 'bg-slate-800 dark:bg-slate-700 border-2 border-slate-600',
+                    ? 'bg-red-500 dark:bg-red-500 border-2 border-red-400' // Red badge on white
+                    : 'bg-gray-200 dark:bg-gray-300 border-2 border-gray-400',
                 'shadow-md',
                 'transition-all duration-300'
               )}
               data-testid="speed-limit-display"
             >
-              <Shield className="w-4 h-4 text-white" />
+              <Shield className={cn(
+                "w-4 h-4",
+                isSpeeding 
+                  ? "text-gray-900" // Dark icon on white badge when speeding
+                  : convertedSpeedLimit 
+                    ? "text-white" // White icon on red badge
+                    : "text-gray-600" // Gray icon on gray badge
+              )} />
               {convertedSpeedLimit ? (
-                <span className="text-lg font-bold text-white tabular-nums">
+                <span className={cn(
+                  "text-lg font-bold tabular-nums",
+                  isSpeeding 
+                    ? "text-gray-900" // Dark text on white badge when speeding
+                    : convertedSpeedLimit 
+                      ? "text-white" // White text on red badge
+                      : "text-gray-700" // Gray text on gray badge
+                )}>
                   {convertedSpeedLimit}
                 </span>
               ) : (
-                <span className="text-sm font-medium text-white/70">--</span>
+                <span className="text-sm font-medium text-gray-500">--</span>
               )}
             </div>
             
             {/* Vertical divider */}
-            <div className="h-8 w-px bg-slate-600 dark:bg-slate-500" />
+            <div className={cn(
+              "h-8 w-px",
+              isSpeeding 
+                ? "bg-white/40" 
+                : "bg-gray-300 dark:bg-gray-400"
+            )} />
           </div>
           
           {/* CENTER: Current Speed (Large and prominent) */}
@@ -224,7 +245,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                   'text-sm font-medium uppercase',
                   isSpeeding 
                     ? 'text-white/80 hover:text-white' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                    : 'text-gray-600 dark:text-gray-600 hover:text-gray-900 dark:hover:text-gray-900',
                   'transition-colors duration-200',
                   'cursor-pointer select-none',
                   'focus:outline-none',
@@ -249,7 +270,12 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           <div className="flex items-center gap-3">
             {/* Vertical divider */}
             {roadInfo.roadRef && (
-              <div className="h-8 w-px bg-slate-600 dark:bg-slate-500" />
+              <div className={cn(
+                "h-8 w-px",
+                isSpeeding 
+                  ? "bg-white/40" 
+                  : "bg-gray-300 dark:bg-gray-400"
+              )} />
             )}
             
             {roadInfo.roadRef ? (
@@ -276,8 +302,18 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 )}
               </button>
             ) : isNavigating ? (
-              <div className="px-3 py-1.5 rounded-lg bg-slate-800 dark:bg-slate-700">
-                <span className="text-xs font-medium text-slate-400">
+              <div className={cn(
+                "px-3 py-1.5 rounded-lg",
+                isSpeeding 
+                  ? "bg-white/20" 
+                  : "bg-gray-200 dark:bg-gray-300"
+              )}>
+                <span className={cn(
+                  "text-xs font-medium",
+                  isSpeeding 
+                    ? "text-white" 
+                    : "text-gray-600 dark:text-gray-700"
+                )}>
                   No road data
                 </span>
               </div>
