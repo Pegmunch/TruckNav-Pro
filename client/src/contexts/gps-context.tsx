@@ -53,6 +53,7 @@ export interface GPSContextValue {
   cachedPosition: CachedPosition | null;
   useCachedPosition: (useCache: boolean) => void;
   isUsingCached: boolean;
+  clearGPSCache: () => void;
 }
 
 interface GPSProviderProps {
@@ -234,6 +235,52 @@ export function GPSProvider({
   const lastHeadingUpdateRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  /**
+   * Clear all cached GPS data and force fresh acquisition
+   */
+  const clearGPSCache = useCallback(() => {
+    console.log('[GPS-DEBUG] 🧹 Clearing all GPS caches and forcing fresh acquisition');
+    
+    // Clear localStorage cache
+    localStorage.removeItem(GPS_CACHE_KEY);
+    
+    // Clear any other GPS-related localStorage items
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('gps') || key.includes('GPS') || key.includes('location') || key.includes('position'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => {
+      console.log(`[GPS-DEBUG] Removing localStorage key: ${key}`);
+      localStorage.removeItem(key);
+    });
+    
+    // Clear state
+    setCachedPosition(null);
+    setIsUsingCached(false);
+    setHasFreshPosition(false);
+    
+    // Stop current tracking if any
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    
+    // Restart GPS tracking with fresh state
+    setPosition(null);
+    setError(null);
+    setErrorType(null);
+    setErrorMessage(null);
+    setStatus('acquiring');
+    
+    // Start fresh GPS tracking
+    setTimeout(() => startGPSTracking(), 100);
+    
+    console.log('[GPS-DEBUG] ✅ GPS cache cleared and tracking restarted');
+  }, []);
+
   const startGPSTracking = useCallback(() => {
     // Check geolocation support
     if (!('geolocation' in navigator)) {
@@ -281,18 +328,47 @@ export function GPSProvider({
     
     watchIdRef.current = navigator.geolocation.watchPosition(
       (geoPosition) => {
-        console.log('[GPS-PROVIDER] ✅ Position received:', {
-          lat: geoPosition.coords.latitude,
-          lng: geoPosition.coords.longitude,
-          accuracy: geoPosition.coords.accuracy,
+        // Enhanced debugging for GPS issue
+        const lat = geoPosition.coords.latitude;
+        const lng = geoPosition.coords.longitude;
+        const accuracy = geoPosition.coords.accuracy;
+        
+        // Check if coordinates match Winchester (lat: ~51.063, lng: ~-1.308)
+        const isWinchester = Math.abs(lat - 51.063) < 0.01 && Math.abs(lng - (-1.308)) < 0.01;
+        const isLuton = Math.abs(lat - 51.8787) < 0.1 && Math.abs(lng - (-0.4200)) < 0.1;
+        
+        console.log('[GPS-DEBUG] 🎯 Position received:', {
+          lat,
+          lng,
+          accuracy,
           altitude: geoPosition.coords.altitude,
-          speed: geoPosition.coords.speed
+          speed: geoPosition.coords.speed,
+          timestamp: new Date().toISOString(),
+          isWinchester,
+          isLuton,
+          accuracyLevel: accuracy < 50 ? 'HIGH' : accuracy < 100 ? 'MEDIUM' : 'LOW',
+          source: accuracy > 1000 ? 'IP_BASED' : 'GPS'
         });
         
-        // Log accuracy level for debugging
-        if (geoPosition.coords.accuracy > 100) {
-          console.log('[GPS-PROVIDER] ⚠️ Low accuracy:', geoPosition.coords.accuracy, 'meters');
+        // Warning if coordinates match Winchester
+        if (isWinchester) {
+          console.warn('[GPS-DEBUG] ⚠️ WINCHESTER COORDINATES DETECTED! This appears to be incorrect.');
+          console.warn('[GPS-DEBUG] Expected Luton coordinates (lat: ~51.8787, lng: ~-0.4200)');
         }
+        
+        // Log accuracy level for debugging
+        if (accuracy > 100) {
+          console.log('[GPS-DEBUG] ⚠️ Low accuracy:', accuracy, 'meters - may be using IP-based location');
+        }
+        
+        // Store debug info in window for inspection
+        (window as any).__GPS_DEBUG__ = {
+          currentPosition: { lat, lng, accuracy },
+          isWinchester,
+          isLuton,
+          timestamp: Date.now(),
+          source: accuracy > 1000 ? 'IP_BASED' : 'GPS'
+        };
         
         const { coords, timestamp } = geoPosition;
         const rawHeading = coords.heading;
@@ -459,7 +535,8 @@ export function GPSProvider({
     status,
     cachedPosition,
     useCachedPosition,
-    isUsingCached
+    isUsingCached,
+    clearGPSCache
   };
 
   return (

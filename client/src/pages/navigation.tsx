@@ -51,6 +51,7 @@ import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocod
 import { geocodeUKPostcode } from "@/lib/uk-postcode-geocoding";
 import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
+import GPSDebugPanel from "@/components/navigation/gps-debug-panel";
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -2035,6 +2036,11 @@ function NavigationPageContent() {
                   </Card>
                 </div>
               )}
+              
+              {/* GPS Debug Panel - Shows detailed GPS info and allows reset */}
+              <div className="absolute top-20 right-4 z-[150] max-w-xs" data-testid="gps-debug-panel-mobile">
+                <GPSDebugPanel className="shadow-lg" />
+              </div>
 
               {/* PLAN MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
               {mobileNavMode === 'plan' && (
