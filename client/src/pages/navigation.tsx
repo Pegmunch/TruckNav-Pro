@@ -2472,6 +2472,7 @@ function NavigationPageContent() {
                     onRoutePreferenceChange={setRoutePreference}
                     onUseCurrentLocation={handleUseCurrentLocation}
                     onPlanRoute={() => handlePlanRoute()}
+                    activeProfileId={activeProfileId}
                   />
                 </div>
               </div>

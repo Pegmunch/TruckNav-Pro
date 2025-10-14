@@ -26,6 +26,7 @@ interface SimplifiedRouteDrawerProps {
   onRoutePreferenceChange: (value: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onUseCurrentLocation?: () => void;
   onPlanRoute?: () => void;
+  activeProfileId?: string | null;
 }
 
 export function SimplifiedRouteDrawer({
@@ -40,7 +41,8 @@ export function SimplifiedRouteDrawer({
   routePreference,
   onRoutePreferenceChange,
   onUseCurrentLocation,
-  onPlanRoute
+  onPlanRoute,
+  activeProfileId
 }: SimplifiedRouteDrawerProps) {
   const gps = useGPS();
   const [selectedPOICategory, setSelectedPOICategory] = useState<string>('');
@@ -197,9 +199,10 @@ export function SimplifiedRouteDrawer({
               variant="default"
               size="lg"
               onClick={onPlanRoute}
-              disabled={!fromLocation || !toLocation}
-              className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold shrink-0"
+              disabled={!fromLocation || !toLocation || !activeProfileId}
+              className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="button-plan-route"
+              title={!activeProfileId ? "Please select a vehicle profile first" : "Plan route"}
             >
               <Navigation className="w-5 h-5 mr-2" />
               GO
