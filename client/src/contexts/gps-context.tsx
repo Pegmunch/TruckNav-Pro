@@ -749,25 +749,23 @@ export function GPSProvider({
           timestamp: new Date().toISOString()
         });
         
-        // Check if we have a cached position to use
-        const cached = loadGPSFromCache();
-        if (cached && cached.ageInMinutes <= 60) {
-          console.log('[GPS-PROVIDER] Using cached position as fallback:', cached);
-          setCachedPosition(cached);
-          setPosition(cached.position);
-          setIsUsingCached(true);
-          setStatus('ready');
-          gpsReceivedRef.current = true;
-          console.log(`[GPS-PROVIDER] Using cached position from ${cached.ageDisplay}`);
-        } else {
-          // No fallback coordinates - wait for real GPS
-          console.log('[GPS-PROVIDER] ❌ No cache available and no GPS received - waiting for real GPS');
-          console.log('[GPS-PROVIDER] Please ensure:');
-          console.log('[GPS-PROVIDER] 1. Location services are enabled on your device');
-          console.log('[GPS-PROVIDER] 2. You have granted location permission to this site');
-          console.log('[GPS-PROVIDER] 3. You have a clear view of the sky (for GPS signal)');
-          handleGPSUnavailable('GPS acquisition timeout and no cached position available');
-        }
+        // DO NOT use cached position - keep status as unavailable
+        console.log('[GPS-PROVIDER] ❌ No GPS received within timeout');
+        
+        // Clear any cached position to prevent fake coordinates
+        console.log('[GPS-PROVIDER] Clearing cached positions to prevent fake coordinates');
+        localStorage.removeItem(GPS_CACHE_KEY);
+        setCachedPosition(null);
+        setPosition(null);
+        setIsUsingCached(false);
+        setStatus('unavailable'); // Status unavailable, NOT ready
+        gpsReceivedRef.current = false;
+        
+        console.log('[GPS-PROVIDER] Please ensure:');
+        console.log('[GPS-PROVIDER] 1. Location services are enabled on your device');
+        console.log('[GPS-PROVIDER] 2. You have granted location permission to this site');
+        console.log('[GPS-PROVIDER] 3. You have a clear view of the sky (for GPS signal)');
+        handleGPSUnavailable('GPS acquisition timeout and no cached position available');
       } else {
         console.log('[GPS-PROVIDER] ✅ GPS position received before timeout');
       }
@@ -874,13 +872,23 @@ export function GPSProvider({
         // If permission denied, handle it properly
         if (error.code === GeolocationPositionError.PERMISSION_DENIED) {
           const errType = 'PERMISSION_DENIED';
+          
+          // CRITICAL: Clear all cached positions to prevent fake coordinates
+          console.error('[GPS-PROVIDER] ⛔ Clearing all cached positions due to permission denial');
+          localStorage.removeItem(GPS_CACHE_KEY);
+          setCachedPosition(null);
+          setPosition(null);
+          setIsUsingCached(false);
+          setLastGoodPosition(null);
+          
           setError({
             code: error.code,
             message: error.message
           });
           setErrorType(errType);
           setErrorMessage(getGPSErrorMessage(errType));
-          setStatus('error');
+          setStatus('error'); // Status is error, NOT ready
+          
           // Don't proceed with watchPosition if permission is denied
           return;
         }
@@ -1200,18 +1208,14 @@ export function GPSProvider({
   }, [stopGPSTracking, startGPSTracking]);
   
   const useCachedPosition = useCallback((useCache: boolean) => {
-    if (useCache && cachedPosition) {
-      console.log('[GPS-PROVIDER] User accepted cached position from', cachedPosition.ageDisplay);
-      setPosition(cachedPosition.position);
-      setIsUsingCached(true);
-      setStatus('ready');
-    } else {
-      console.log('[GPS-PROVIDER] User rejected cached position, waiting for fresh GPS');
-      setPosition(null);
-      setIsUsingCached(false);
-      setStatus('acquiring');
-    }
-  }, [cachedPosition]);
+    // DEPRECATED - Never use cached position as it provides fake coordinates
+    console.warn('[GPS-PROVIDER] useCachedPosition called but DISABLED - cached positions not allowed');
+    console.log('[GPS-PROVIDER] Waiting for real GPS position only');
+    setPosition(null);
+    setIsUsingCached(false);
+    setCachedPosition(null);
+    setStatus('acquiring');
+  }, []);
 
   // Timer to track time since last GPS update
   useEffect(() => {
