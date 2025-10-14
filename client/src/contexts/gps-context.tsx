@@ -43,12 +43,19 @@ export interface GPSError {
 
 export type GPSErrorType = 'PERMISSION_DENIED' | 'TIMEOUT' | 'UNAVAILABLE' | 'NOT_SUPPORTED' | null;
 
-export type GPSStatus = 'acquiring' | 'ready' | 'unavailable' | 'error' | 'initializing';
+export type GPSStatus = 'acquiring' | 'ready' | 'unavailable' | 'error' | 'initializing' | 'manual';
 
 export interface CachedPosition {
   position: GPSPosition;
   ageInMinutes: number;
   ageDisplay: string;
+}
+
+export interface ManualLocationData {
+  latitude: number;
+  longitude: number;
+  address?: string;
+  timestamp: number;
 }
 
 export interface GPSValidationWarning {
@@ -75,6 +82,11 @@ export interface GPSContextValue {
   lastGoodPosition: GPSPosition | null;
   timeSinceLastUpdate: number | null; // seconds
   shouldPreventAutoCenter: boolean;
+  // Manual location fallback
+  manualLocation: ManualLocationData | null;
+  setManualLocation: (location: ManualLocationData | null) => void;
+  isUsingManualLocation: boolean;
+  clearManualLocation: () => void;
 }
 
 interface GPSProviderProps {
@@ -90,6 +102,7 @@ const GPSContext = createContext<GPSContextValue | null>(null);
 
 // Cache key for localStorage
 const GPS_CACHE_KEY = 'trucknav_gps_last_known_position';
+const MANUAL_LOCATION_KEY = 'trucknav_manual_location';
 
 // Constants for GPS validation
 const GPS_ACCURACY_THRESHOLDS = {
@@ -318,6 +331,57 @@ const saveGPSToCache = (position: GPSPosition): void => {
 };
 
 /**
+ * Save manual location to localStorage
+ */
+const saveManualLocation = (location: ManualLocationData): void => {
+  try {
+    localStorage.setItem(MANUAL_LOCATION_KEY, JSON.stringify(location));
+    console.log('[MANUAL-LOCATION] Saved manual location:', {
+      lat: location.latitude,
+      lng: location.longitude,
+      address: location.address,
+      timestamp: new Date(location.timestamp).toISOString()
+    });
+  } catch (e) {
+    console.warn('[MANUAL-LOCATION] Failed to save to localStorage:', e);
+  }
+};
+
+/**
+ * Load manual location from localStorage
+ */
+const loadManualLocation = (): ManualLocationData | null => {
+  try {
+    const stored = localStorage.getItem(MANUAL_LOCATION_KEY);
+    if (stored) {
+      const location = JSON.parse(stored) as ManualLocationData;
+      console.log('[MANUAL-LOCATION] Loaded manual location:', {
+        lat: location.latitude,
+        lng: location.longitude,
+        address: location.address,
+        timestamp: new Date(location.timestamp).toISOString()
+      });
+      return location;
+    }
+  } catch (e) {
+    console.warn('[MANUAL-LOCATION] Failed to load from localStorage:', e);
+  }
+  return null;
+};
+
+/**
+ * Clear manual location from localStorage
+ */
+const clearManualLocationFromStorage = (): void => {
+  try {
+    localStorage.removeItem(MANUAL_LOCATION_KEY);
+    console.log('[MANUAL-LOCATION] Cleared manual location from localStorage');
+  } catch (e) {
+    console.warn('[MANUAL-LOCATION] Failed to clear from localStorage:', e);
+  }
+};
+
+/**
  * Load cached GPS position from localStorage
  * Returns null if no valid cache exists or if cache is too old
  */
@@ -466,6 +530,10 @@ export function GPSProvider({
   const [lastGoodPosition, setLastGoodPosition] = useState<GPSPosition | null>(null);
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<number | null>(null);
   const [shouldPreventAutoCenter, setShouldPreventAutoCenter] = useState(false);
+  
+  // Manual location state
+  const [manualLocation, setManualLocationState] = useState<ManualLocationData | null>(() => loadManualLocation());
+  const [isUsingManualLocation, setIsUsingManualLocation] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const smoothedHeadingRef = useRef<number | null>(null);
@@ -523,21 +591,116 @@ export function GPSProvider({
     
     console.log('[GPS-DEBUG] ✅ GPS cache cleared and tracking restarted');
   }, []);
+  
+  /**
+   * Set manual location for fallback when GPS is unavailable
+   */
+  const setManualLocation = useCallback((location: ManualLocationData | null) => {
+    if (!location) {
+      console.log('[MANUAL-LOCATION] Clearing manual location');
+      clearManualLocationFromStorage();
+      setManualLocationState(null);
+      setIsUsingManualLocation(false);
+      
+      // If currently using manual location, try to reacquire GPS
+      if (isUsingManualLocation && status === 'manual') {
+        console.log('[MANUAL-LOCATION] Restarting GPS acquisition after clearing manual location');
+        startGPSTracking();
+      }
+      return;
+    }
+    
+    console.log('[MANUAL-LOCATION] Setting manual location:', location);
+    
+    // Save to localStorage for persistence
+    saveManualLocation(location);
+    setManualLocationState(location);
+    
+    // If GPS is currently unavailable, use manual location immediately
+    if (status === 'unavailable' || status === 'error' || !position) {
+      const manualPosition: GPSPosition = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: 50, // Set reasonable accuracy for manual location
+        altitude: null,
+        altitudeAccuracy: null,
+        speed: null,
+        heading: null,
+        smoothedHeading: null,
+        timestamp: location.timestamp,
+        confidenceScore: 60, // Medium confidence for manual location
+        confidenceLevel: 'medium',
+        accuracyLevel: 'good',
+        isStale: false,
+        isStuck: false,
+        isOutOfBounds: false
+      };
+      
+      setPosition(manualPosition);
+      setIsUsingManualLocation(true);
+      setStatus('manual');
+      setError(null);
+      setErrorType(null);
+      setErrorMessage(null);
+      
+      console.log('[MANUAL-LOCATION] Manual location now active');
+    }
+  }, [isUsingManualLocation, status, position]);
+  
+  /**
+   * Clear manual location
+   */
+  const clearManualLocation = useCallback(() => {
+    setManualLocation(null);
+  }, []);
 
   // Handler for when GPS is truly unavailable
   const handleGPSUnavailable = useCallback((reason: string) => {
     console.log('[GPS-PROVIDER] ⚠️ GPS unavailable:', reason);
     
-    // Set error state but don't provide fake coordinates
-    setStatus('unavailable');
-    setPosition(null);
-    setHasFreshPosition(false);
-    setIsUsingCached(false);
-    gpsReceivedRef.current = false;
-    
-    // Don't provide any fallback coordinates - user must grant GPS permission
-    console.log('[GPS-PROVIDER] No fallback coordinates provided - waiting for real GPS');
-  }, []);
+    // Check if we have a manual location to fallback to
+    if (manualLocation) {
+      console.log('[GPS-PROVIDER] Using manual location as fallback:', manualLocation);
+      
+      // Convert manual location to GPSPosition format
+      const manualPosition: GPSPosition = {
+        latitude: manualLocation.latitude,
+        longitude: manualLocation.longitude,
+        accuracy: 50, // Set reasonable accuracy for manual location
+        altitude: null,
+        altitudeAccuracy: null,
+        speed: null,
+        heading: null,
+        smoothedHeading: null,
+        timestamp: manualLocation.timestamp,
+        confidenceScore: 60, // Medium confidence for manual location
+        confidenceLevel: 'medium',
+        accuracyLevel: 'good',
+        isStale: false,
+        isStuck: false,
+        isOutOfBounds: false
+      };
+      
+      setPosition(manualPosition);
+      setIsUsingManualLocation(true);
+      setStatus('manual');
+      setHasFreshPosition(false);
+      setIsUsingCached(false);
+      gpsReceivedRef.current = false;
+      
+      console.log('[GPS-PROVIDER] Manual location active - address:', manualLocation.address);
+    } else {
+      // Set error state but don't provide fake coordinates
+      setStatus('unavailable');
+      setPosition(null);
+      setHasFreshPosition(false);
+      setIsUsingCached(false);
+      gpsReceivedRef.current = false;
+      
+      // Don't provide any fallback coordinates - user must set manual location or grant GPS permission
+      console.log('[GPS-PROVIDER] No manual location set - waiting for manual location or real GPS');
+    }
+  }, [manualLocation]);
 
   const startGPSTracking = useCallback(() => {
     // Check geolocation support
@@ -1122,7 +1285,12 @@ export function GPSProvider({
     validationWarnings,
     lastGoodPosition,
     timeSinceLastUpdate,
-    shouldPreventAutoCenter
+    shouldPreventAutoCenter,
+    // Manual location fallback
+    manualLocation,
+    setManualLocation,
+    isUsingManualLocation,
+    clearManualLocation
   };
 
   return (

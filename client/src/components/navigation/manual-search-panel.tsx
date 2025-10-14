@@ -1,10 +1,20 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   MapPin, 
   Navigation, 
@@ -14,7 +24,9 @@ import {
   ArrowUpDown,
   Crosshair,
   Mail,
-  Loader2
+  Loader2,
+  AlertCircle,
+  MapPinOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -54,8 +66,17 @@ export default function ManualSearchPanel({
   const [destinationSearch, setDestinationSearch] = useState("");
   const [postcodeSearch, setPostcodeSearch] = useState("");
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [manualLocationDialogOpen, setManualLocationDialogOpen] = useState(false);
+  const [manualLocationInput, setManualLocationInput] = useState("");
+  const [isGeocodingManualLocation, setIsGeocodingManualLocation] = useState(false);
   const { toast } = useToast();
   const gpsData = useGPS();
+  
+  // Check if GPS is unavailable or permission denied
+  const isGPSUnavailable = gpsData?.status === 'unavailable' || 
+                          gpsData?.status === 'error' ||
+                          gpsData?.errorType === 'PERMISSION_DENIED';
+  const isUsingManualLocation = gpsData?.status === 'manual';
 
   // Handle current location search
   const handleCurrentLocationSearch = useCallback(() => {
@@ -135,6 +156,117 @@ export default function ManualSearchPanel({
       description: "Starting point and destination have been switched"
     });
   }, [fromLocation, toLocation, onFromLocationChange, onToLocationChange, toast]);
+  
+  // Handle manual location setting when GPS unavailable
+  const handleSetManualLocation = useCallback(async () => {
+    if (!manualLocationInput.trim()) {
+      toast({
+        title: "Please enter a location",
+        description: "Enter an address or postcode (e.g., 'Luton LU2 7FG')",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsGeocodingManualLocation(true);
+    
+    try {
+      // Try to geocode the address using Photon API directly
+      // Wait for geocoding results
+      const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(manualLocationInput)}&limit=1`);
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        const feature = data.features[0];
+        const [lng, lat] = feature.geometry.coordinates;
+        const address = feature.properties.name || 
+                       `${feature.properties.street || ''} ${feature.properties.housenumber || ''}`.trim() ||
+                       feature.properties.city || 
+                       feature.properties.state || 
+                       manualLocationInput;
+        
+        // Set manual location in GPS context
+        gpsData?.setManualLocation({
+          latitude: lat,
+          longitude: lng,
+          address: address,
+          timestamp: Date.now()
+        });
+        
+        // Also set as from location
+        onFromLocationChange(address);
+        onFromCoordinatesChange?.({ lat, lng });
+        
+        toast({
+          title: "Manual location set",
+          description: `Location set to: ${address}`,
+        });
+        
+        setManualLocationDialogOpen(false);
+        setManualLocationInput("");
+        
+        console.log('[MANUAL-LOCATION] Set manual location:', {
+          lat,
+          lng,
+          address
+        });
+      } else {
+        // Try to parse as coordinates if no geocoding results
+        const coordPattern = /^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/;
+        const match = manualLocationInput.match(coordPattern);
+        
+        if (match) {
+          const lat = parseFloat(match[1]);
+          const lng = parseFloat(match[2]);
+          
+          if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+            // Valid coordinates
+            const address = formatCoordinatesAsAddress(lat, lng);
+            
+            gpsData?.setManualLocation({
+              latitude: lat,
+              longitude: lng,
+              address: address,
+              timestamp: Date.now()
+            });
+            
+            onFromLocationChange(address);
+            onFromCoordinatesChange?.({ lat, lng });
+            
+            toast({
+              title: "Manual location set",
+              description: `Location set to coordinates: ${address}`,
+            });
+            
+            setManualLocationDialogOpen(false);
+            setManualLocationInput("");
+          } else {
+            throw new Error("Invalid coordinates");
+          }
+        } else {
+          throw new Error("No geocoding results found");
+        }
+      }
+    } catch (error) {
+      console.error('[MANUAL-LOCATION] Error setting manual location:', error);
+      toast({
+        title: "Unable to set location",
+        description: "Please try a different address or enter coordinates (lat, lng)",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeocodingManualLocation(false);
+    }
+  }, [manualLocationInput, gpsData, onFromLocationChange, onFromCoordinatesChange, toast]);
+  
+  // Handle clearing manual location
+  const handleClearManualLocation = useCallback(() => {
+    gpsData?.clearManualLocation();
+    toast({
+      title: "Manual location cleared",
+      description: "GPS acquisition will be attempted",
+    });
+  }, [gpsData, toast]);
 
   // Handle use current location - directly request GPS position each time
   const handleUseCurrentLocation = useCallback(async () => {
@@ -262,6 +394,116 @@ export default function ManualSearchPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* GPS Unavailable Warning and Manual Location Setting */}
+        {isGPSUnavailable && (
+          <Alert className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
+            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="space-y-2">
+              <div className="font-medium text-orange-900 dark:text-orange-100">
+                GPS unavailable - Set your location manually
+              </div>
+              <Dialog open={manualLocationDialogOpen} onOpenChange={setManualLocationDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                    data-testid="button-set-manual-location"
+                  >
+                    <MapPinOff className="w-4 h-4 mr-2" />
+                    Set Location Manually
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Set Manual Location</DialogTitle>
+                    <DialogDescription>
+                      Enter an address, postcode, or coordinates to set your location manually.
+                      This will be used when GPS is unavailable.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="manual-location">
+                        Location (e.g., "Luton LU2 7FG" or "51.8787, -0.4200")
+                      </Label>
+                      <Input
+                        id="manual-location"
+                        placeholder="Enter address, postcode, or coordinates..."
+                        value={manualLocationInput}
+                        onChange={(e) => setManualLocationInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !isGeocodingManualLocation) {
+                            e.preventDefault();
+                            handleSetManualLocation();
+                          }
+                        }}
+                        className="w-full"
+                        autoFocus
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Examples: "London SW1A 1AA", "Manchester", "52.4862, -1.8904"
+                      </p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setManualLocationDialogOpen(false)}
+                      disabled={isGeocodingManualLocation}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSetManualLocation}
+                      disabled={!manualLocationInput.trim() || isGeocodingManualLocation}
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                      {isGeocodingManualLocation ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Setting...
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Set Location
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Show manual location indicator when active */}
+        {isUsingManualLocation && gpsData?.manualLocation && (
+          <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+            <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-blue-900 dark:text-blue-100">
+                  Manual Location Active
+                </div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  {gpsData.manualLocation.address}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearManualLocation}
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                data-testid="button-clear-manual-location"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Current Location Search */}
         <div className="space-y-2">
           <Label htmlFor="current-location-search" className="text-xs font-medium text-muted-foreground">

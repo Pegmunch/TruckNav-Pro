@@ -136,6 +136,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const gpsPosition = gps?.position ?? null;
   const gpsStatus = gps?.status ?? 'acquiring';
   const isGPSReady = gpsStatus === 'ready' && !gps?.isUsingCached;
+  const isManualLocation = gpsStatus === 'manual' || gps?.isUsingManualLocation;
   
   // Circuit Breaker Pattern for GPS reliability
   const circuitBreakerRef = useRef({
@@ -1385,12 +1386,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     const mapInstance = map.current;
     
-    // CRITICAL: Only show GPS marker when we have actual fresh GPS, not cached
+    // CRITICAL: Show marker based on GPS/Manual status
     const hasGPS = isGPSReady && !!gpsPosition;
+    const hasManualLocation = isManualLocation && !!gpsPosition;
+    const hasPosition = hasGPS || hasManualLocation;
     
-    // Show orange marker when GPS is acquiring or unavailable
-    if (!hasGPS) {
-      console.log('[GPS-MARKER] GPS not ready - status:', gpsStatus, '- showing orange unavailable marker');
+    // Show different markers based on status
+    if (!hasPosition && gpsStatus !== 'manual') {
+      console.log('[GPS-MARKER] No position available - status:', gpsStatus);
       
       // Show orange GPS-unavailable marker at last known position if available
       const lastKnown = getLastKnownPosition();
@@ -1446,10 +1449,16 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       return;
     }
     
-    const latitude = gpsPosition.latitude;
-    const longitude = gpsPosition.longitude;
+    const latitude = gpsPosition?.latitude;
+    const longitude = gpsPosition?.longitude;
     const smoothedHeading = gpsPosition?.smoothedHeading ?? null;
     const accuracy = gpsPosition?.accuracy ?? null;
+    
+    // Safety check - if we don't have valid coordinates, return early
+    if (latitude === undefined || longitude === undefined) {
+      console.warn('[GPS-MARKER] Invalid GPS position - missing coordinates');
+      return;
+    }
     
     console.log('[GPS-MARKER] Creating/updating marker at:', { lat: latitude, lng: longitude, hasGPS });
     
