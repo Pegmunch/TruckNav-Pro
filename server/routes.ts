@@ -2145,6 +2145,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TomTom Search API Proxy - Address Autocomplete & POI Search
+  app.get("/api/tomtom-search", async (req: Request, res: Response) => {
+    try {
+      const { q, limit, searchType, categorySet, lat, lon, countrySet } = req.query;
+      
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Query parameter 'q' is required" });
+      }
+      
+      const TOMTOM_API_KEY = process.env.VITE_TOMTOM_API_KEY;
+      
+      if (!TOMTOM_API_KEY) {
+        console.error('[TOMTOM-PROXY] API key not found');
+        return res.status(500).json({ message: "TomTom API key not configured" });
+      }
+      
+      const type = searchType === 'poi' ? 'poiSearch' : 'search'; // POI or fuzzy search
+      const tomtomUrl = new URL(`https://api.tomtom.com/search/2/${type}/${encodeURIComponent(q)}.json`);
+      
+      tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+      tomtomUrl.searchParams.set('limit', limit as string || '10');
+      tomtomUrl.searchParams.set('typeahead', 'true'); // Enable typeahead for autocomplete
+      
+      // Add GPS coordinates for location-biased search
+      const userLat = lat && typeof lat === 'string' ? parseFloat(lat) : null;
+      const userLon = lon && typeof lon === 'string' ? parseFloat(lon) : null;
+      
+      if (userLat !== null && userLon !== null && !isNaN(userLat) && !isNaN(userLon)) {
+        tomtomUrl.searchParams.set('lat', userLat.toString());
+        tomtomUrl.searchParams.set('lon', userLon.toString());
+        console.log(`[TOMTOM-PROXY] Location-biased search: lat=${userLat}, lon=${userLon}`);
+      }
+      
+      // Add POI category filter
+      if (categorySet && typeof categorySet === 'string') {
+        tomtomUrl.searchParams.set('categorySet', categorySet);
+      }
+      
+      // Add country filter
+      if (countrySet && typeof countrySet === 'string') {
+        tomtomUrl.searchParams.set('countrySet', countrySet);
+      }
+      
+      console.log('[TOMTOM-PROXY] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      try {
+        const tomtomResponse = await fetch(tomtomUrl.toString(), {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'TruckNav-Pro/1.0'
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!tomtomResponse.ok) {
+          const errorText = await tomtomResponse.text();
+          console.error(`[TOMTOM-PROXY] API error: HTTP ${tomtomResponse.status}`, errorText);
+          return res.status(tomtomResponse.status).json({ 
+            message: `TomTom API error: HTTP ${tomtomResponse.status}`,
+            results: []
+          });
+        }
+        
+        const data = await tomtomResponse.json();
+        const results = data.results || [];
+        
+        console.log('[TOMTOM-PROXY] Success:', results.length, 'results returned');
+        res.json(data);
+        
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.error('[TOMTOM-PROXY] Timeout after 8 seconds');
+          return res.status(504).json({ 
+            message: 'Request timeout after 8 seconds',
+            results: []
+          });
+        }
+        
+        throw fetchError;
+      }
+      
+    } catch (error) {
+      console.error("[TOMTOM-PROXY] Proxy error:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch TomTom search results",
+        results: []
+      });
+    }
+  });
+
   // Enhanced Speed Limit & Road Info Lookup using OpenStreetMap Overpass API
   app.get("/api/speed-limit", async (req: Request, res: Response) => {
     try {

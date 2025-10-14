@@ -8,11 +8,12 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { MapPin, Loader2, Star, Clock, Globe, AlertTriangle, ShoppingCart, UtensilsCrossed, Fuel, Store, Map } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
-  usePhotonAutocomplete, 
-  formatPhotonDisplay, 
-  extractPhotonCoordinates,
-  type PhotonFeature 
-} from '@/hooks/use-photon-autocomplete';
+  useTomTomAutocomplete, 
+  formatTomTomDisplay, 
+  extractTomTomCoordinates,
+  isTomTomPOI,
+  type TomTomResult 
+} from '@/hooks/use-tomtom-autocomplete';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useGPS } from '@/contexts/gps-context';
@@ -55,6 +56,7 @@ export function AddressAutocomplete({
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
   const [debouncedSearch, setDebouncedSearch] = useState(value);
+  const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const { toast } = useToast();
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
@@ -145,25 +147,26 @@ export function AddressAutocomplete({
     return undefined;
   }, [coordinates, gps?.position, gps?.status, gps?.manualLocation, isGPSReady]);
 
-  // Fetch Photon suggestions (worldwide address search with GPS bias for POI)
-  const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
+  // Fetch TomTom suggestions (worldwide address search with GPS bias for POI)
+  const { results: tomtomResults, isLoading: isLoadingTomTom, error: tomtomError } = useTomTomAutocomplete(
     searchTerm,
     open && searchTerm.length >= 3,
     countryCode,
-    undefined, // POI category (not used here, but could filter by shop types)
-    gpsCoordinates // Pass GPS coordinates for location-biased search!
+    poiCategory || undefined, // POI category filter
+    gpsCoordinates, // Pass GPS coordinates for location-biased search!
+    poiCategory ? 'poi' : 'fuzzy' // Use POI search when category selected, otherwise fuzzy address search
   );
 
-  // UK Postcode fallback - Try postcodes.io when Photon returns no results
+  // UK Postcode fallback - Try postcodes.io when TomTom returns no results
   const shouldTryUKPostcode = useMemo(() => {
     return (
       debouncedSearch.length >= 5 && // Minimum UK postcode length
-      photonResults.length === 0 && // No Photon results
-      !isLoadingPhoton && // Photon has finished loading
+      tomtomResults.length === 0 && // No TomTom results
+      !isLoadingTomTom && // TomTom has finished loading
       looksLikePostcode(debouncedSearch) && // Looks like a postcode
       detectPostcodeCountry(debouncedSearch) === 'UK' // Specifically UK postcode
     );
-  }, [debouncedSearch, photonResults.length, isLoadingPhoton]);
+  }, [debouncedSearch, tomtomResults.length, isLoadingTomTom]);
 
   const { data: ukPostcodeResult, isLoading: isLoadingUKPostcode } = useQuery<PostcodeGeocodeResult | null>({
     queryKey: ['/api/uk-postcode', debouncedSearch],
@@ -227,9 +230,9 @@ export function AddressAutocomplete({
     }
   }, [open]);
 
-  const handleSelectPhoton = useCallback((photonFeature: PhotonFeature) => {
-    const displayLabel = formatPhotonDisplay(photonFeature);
-    const coordinates = extractPhotonCoordinates(photonFeature);
+  const handleSelectTomTom = useCallback((tomtomResult: TomTomResult) => {
+    const displayLabel = formatTomTomDisplay(tomtomResult);
+    const coordinates = extractTomTomCoordinates(tomtomResult);
     
     setSearchTerm(displayLabel);
     onChange(displayLabel);
@@ -246,7 +249,7 @@ export function AddressAutocomplete({
       }
     }, 0);
     
-    // Create location entry for this Photon result
+    // Create location entry for this TomTom result
     const locationData = {
       label: displayLabel,
       coordinates,
@@ -325,10 +328,70 @@ export function AddressAutocomplete({
     }, 200);
   }, []);
 
-  const isLoading = isLoadingPhoton || isLoadingUKPostcode;
+  const isLoading = isLoadingTomTom || isLoadingUKPostcode;
+
+  // Dynamic placeholder based on POI category
+  const dynamicPlaceholder = useMemo(() => {
+    if (poiCategory === '7315') return 'Search for truck stops near you...';
+    if (poiCategory === '7311') return 'Search for gas stations near you...';
+    if (poiCategory === '9920') return 'Search for rest areas near you...';
+    return placeholder; // Default address search
+  }, [poiCategory, placeholder]);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
+      {/* POI Category Selector - Truck-Specific */}
+      <ToggleGroup 
+        type="single" 
+        value={poiCategory} 
+        onValueChange={(value) => {
+          setPoiCategory(value);
+          // Clear search when switching categories
+          if (value !== poiCategory) {
+            setSearchTerm('');
+            setDebouncedSearch('');
+          }
+        }}
+        className="justify-start gap-2 flex-wrap"
+      >
+        <ToggleGroupItem 
+          value="" 
+          aria-label="Search addresses"
+          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          data-testid="poi-category-addresses"
+        >
+          <MapPin className="h-4 w-4 mr-1.5" />
+          Addresses
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="7315" 
+          aria-label="Truck stops"
+          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          data-testid="poi-category-truck-stops"
+        >
+          <Store className="h-4 w-4 mr-1.5" />
+          Truck Stops
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="7311" 
+          aria-label="Gas stations"
+          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          data-testid="poi-category-gas-stations"
+        >
+          <Fuel className="h-4 w-4 mr-1.5" />
+          Gas Stations
+        </ToggleGroupItem>
+        <ToggleGroupItem 
+          value="9920" 
+          aria-label="Rest areas"
+          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          data-testid="poi-category-rest-areas"
+        >
+          <UtensilsCrossed className="h-4 w-4 mr-1.5" />
+          Rest Areas
+        </ToggleGroupItem>
+      </ToggleGroup>
+
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <div className="relative">
@@ -339,7 +402,7 @@ export function AddressAutocomplete({
               onKeyDown={handleKeyDown}
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
-              placeholder={placeholder}
+              placeholder={dynamicPlaceholder}
               className={cn("h-12 text-base pr-10", className)}
               data-testid={testId}
               autoComplete="off"
@@ -364,21 +427,22 @@ export function AddressAutocomplete({
         onOpenAutoFocus={(e) => e.preventDefault()}
         collisionPadding={20}
         avoidCollisions={true}
-        forceMount={false}
         sticky="always"
       >
         <Command>
           <CommandList>
             {favoriteLocations.length === 0 && 
              recentLocations.length === 0 && 
-             photonResults.length === 0 && 
+             tomtomResults.length === 0 && 
              !ukPostcodeResult && (
               <CommandEmpty>
                 {debouncedSearch.length < 3 
-                  ? 'Type at least 3 characters to search'
+                  ? `Type at least 3 characters to search ${poiCategory ? 'for POIs' : 'for addresses'}`
                   : isLoadingUKPostcode
                     ? 'Checking UK postcode...'
-                    : 'No addresses found'
+                    : poiCategory
+                      ? 'No POIs found in this area. Try searching a different location or category.'
+                      : 'No addresses found'
                 }
               </CommandEmpty>
             )}
@@ -411,26 +475,27 @@ export function AddressAutocomplete({
               </CommandGroup>
             )}
 
-            {/* Photon Results (Worldwide Addresses) */}
-            {photonResults.length > 0 && (
+            {/* TomTom Results (Worldwide Addresses & POIs) */}
+            {tomtomResults.length > 0 && (
               <>
                 {ukPostcodeResult && <CommandSeparator />}
                 <CommandGroup heading="Address Results">
-                  {photonResults.map((result: PhotonFeature, index: number) => {
+                  {tomtomResults.map((result: TomTomResult, index: number) => {
                     // Create a stable unique ID for this result
-                    const coords = result.geometry?.coordinates || [0, 0];
-                    const uniqueId = `${coords[0]}_${coords[1]}_${index}`;
-                    const displayText = formatPhotonDisplay(result);
+                    const uniqueId = result.id || `${result.position.lat}_${result.position.lon}_${index}`;
+                    const displayText = formatTomTomDisplay(result);
+                    const isPOI = isTomTomPOI(result);
                     
                     // Capture result in closure to prevent selection bugs
                     const handleSelect = () => {
-                      console.log('[AUTOCOMPLETE] Selected Photon result:', {
+                      console.log('[AUTOCOMPLETE] Selected TomTom result:', {
                         index,
                         displayText,
-                        coordinates: coords,
-                        properties: result.properties
+                        coordinates: result.position,
+                        address: result.address,
+                        isPOI
                       });
-                      handleSelectPhoton(result);
+                      handleSelectTomTom(result);
                     };
                     
                     return (
@@ -439,17 +504,22 @@ export function AddressAutocomplete({
                         value={uniqueId} // Use unique ID instead of display text
                         onSelect={handleSelect}
                         className="cursor-pointer"
-                        data-testid={`photon-result-${index}`}
+                        data-testid={`tomtom-result-${index}`}
                       >
-                        <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
+                        {isPOI ? (
+                          <Store className="mr-2 h-4 w-4 text-blue-500 shrink-0" />
+                        ) : (
+                          <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
+                        )}
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {result.properties.name || result.properties.street || 'Unknown'}
+                            {result.poi?.name || result.address.freeformAddress || result.address.streetName || 'Unknown'}
                           </span>
-                          {(result.properties.city || result.properties.country) && (
+                          {(result.address.municipality || result.address.country) && (
                             <span className="text-sm text-muted-foreground">
-                              {result.properties.city && `${result.properties.city}, `}
-                              {result.properties.country}
+                              {result.address.municipality && `${result.address.municipality}, `}
+                              {result.address.countrySubdivision && `${result.address.countrySubdivision}, `}
+                              {result.address.country}
                             </span>
                           )}
                         </div>
@@ -463,7 +533,7 @@ export function AddressAutocomplete({
             {/* Favorite Locations */}
             {favoriteLocations.length > 0 && (
               <>
-                {photonResults.length > 0 && <CommandSeparator />}
+                {tomtomResults.length > 0 && <CommandSeparator />}
                 <CommandGroup heading="Favorites">
                   {favoriteLocations.map((location) => (
                     <CommandItem
@@ -484,7 +554,7 @@ export function AddressAutocomplete({
             {/* Recent Locations */}
             {recentLocations.length > 0 && (
               <>
-                {(favoriteLocations.length > 0 || photonResults.length > 0) && <CommandSeparator />}
+                {(favoriteLocations.length > 0 || tomtomResults.length > 0) && <CommandSeparator />}
                 <CommandGroup heading="Recent">
                   {recentLocations.map((location) => (
                     <CommandItem
@@ -507,7 +577,7 @@ export function AddressAutocomplete({
     </Popover>
     
     {/* Error Display */}
-    {photonError && debouncedSearch.length >= 3 && (
+    {tomtomError && debouncedSearch.length >= 3 && (
       <div className="flex items-start gap-2 px-2 py-1.5 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive" data-testid="address-autocomplete-error">
         <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
         <span>Address search unavailable. Please check your connection or try again later.</span>

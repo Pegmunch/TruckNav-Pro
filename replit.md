@@ -58,9 +58,11 @@ Preferred communication style: Simple, everyday language.
     - **Dynamic Route Visualization**: GraphHopper road-snapped routes with white outline, dynamically shortens during navigation.
     - **Robustness Features**: GPS auto-zoom circuit breaker, postcode search resilience, map animation safety, navigation mode stability.
 - **Address Autocomplete & POI Search**:
-    - **Photon API**: Worldwide address search (OpenStreetMap-based) integrated with GPS-powered POI search (Supermarket, Restaurant, Fuel, Shop categories).
-    - **Search Method**: Supports city names, street addresses, or landmarks with 3-character minimum, 300ms debouncing, and 150km POI geographic filtering.
+    - **TomTom Search API**: Worldwide address autocomplete and truck-specific POI search with fuzzy matching and typeahead support.
+    - **Search Features**: City names, street addresses, landmarks, postcodes with 3-character minimum, 300ms debouncing, GPS-biased location search.
+    - **POI Categories**: Truck stops (7315), gas stations (7311), rest areas (9920), service areas, commercial/industrial locations.
     - **Saved Locations**: Favorites and recent searches.
+    - **UK Postcode Fallback**: postcodes.io integration for accurate UK postcode geocoding.
 - **Mobile Compatibility & PWA**:
     - **Progressive Web App**: Offline support via service worker and IndexedDB caching.
     - **iOS Enhancements**: Custom splash screens, meta tags for fullscreen and status bar.
@@ -88,8 +90,10 @@ Preferred communication style: Simple, everyday language.
   - **Required Environment Variable**: `VITE_TOMTOM_API_KEY`
 
 ## Address Autocomplete Services
-- **Photon API**: Free worldwide address autocomplete (OpenStreetMap-based).
-  - **Endpoint**: `https://photon.komoot.io/api/`
+- **TomTom Search API**: Worldwide address autocomplete and truck-specific POI search.
+  - **Required Environment Variable**: `VITE_TOMTOM_API_KEY`
+  - **Endpoints**: Fuzzy Search, POI Search with category filtering
+- **postcodes.io**: UK postcode fallback geocoding service.
 
 ## Mapping Libraries
 - **MapLibre GL JS**: Primary vector map engine.
