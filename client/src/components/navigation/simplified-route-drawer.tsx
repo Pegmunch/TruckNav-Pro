@@ -1,5 +1,6 @@
 import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -131,25 +132,30 @@ export function SimplifiedRouteDrawer({
             From
           </Label>
           <div className="flex gap-2">
-            <AddressAutocomplete
+            {/* Address Autocomplete - TEMPORARILY DISABLED */}
+            <Input
               id="from-location"
               value={fromLocation}
-              onChange={onFromLocationChange}
-              onCoordinatesChange={onFromCoordinatesChange}
-              coordinates={fromCoordinates}
-              placeholder=""
-              testId="input-from-location"
+              onChange={(e) => onFromLocationChange(e.target.value)}
+              placeholder="Autocomplete temporarily disabled"
+              data-testid="input-from-location-disabled"
               className="flex-1"
+              disabled={true}
+              title="Address autocomplete temporarily disabled"
             />
+            {/* GPS Button - TEMPORARILY DISABLED */}
             <Button
-              variant={hasGPSError ? "destructive" : "outline"}
+              variant="outline"
               size="icon"
-              onClick={onUseCurrentLocation}
-              disabled={hasGPSError}
-              className="h-10 w-10 shrink-0"
-              data-testid="button-current-location"
+              onClick={() => {
+                alert('GPS functionality temporarily disabled for reconstruction');
+              }}
+              disabled={true}
+              className="h-10 w-10 shrink-0 opacity-50 cursor-not-allowed"
+              data-testid="button-current-location-disabled"
+              title="GPS functionality temporarily disabled"
             >
-              <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600 dark:text-green-400' : ''}`} />
+              <Crosshair className="w-5 h-5 text-muted-foreground" />
             </Button>
           </div>
 
@@ -183,15 +189,16 @@ export function SimplifiedRouteDrawer({
             To
           </Label>
           <div className="flex gap-2">
-            <AddressAutocomplete
+            {/* Address Autocomplete - TEMPORARILY DISABLED */}
+            <Input
               id="to-location"
               value={toLocation}
-              onChange={onToLocationChange}
-              onCoordinatesChange={onToCoordinatesChange}
-              coordinates={toCoordinates}
-              placeholder=""
-              testId="input-to-location"
+              onChange={(e) => onToLocationChange(e.target.value)}
+              placeholder="Autocomplete temporarily disabled"
+              data-testid="input-to-location-disabled"
               className="flex-1"
+              disabled={true}
+              title="Address autocomplete temporarily disabled"
             />
             <Button
               variant="default"

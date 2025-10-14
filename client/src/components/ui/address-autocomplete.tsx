@@ -357,13 +357,15 @@ export function AddressAutocomplete({
           </div>
         </PopoverTrigger>
       <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0 z-[100] shadow-lg border-2 bg-background" 
+        className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999] shadow-lg border-2 bg-background max-h-[400px] overflow-y-auto" 
         align="start"
         side="bottom"
-        sideOffset={8}
+        sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
-        collisionPadding={10}
+        collisionPadding={20}
         avoidCollisions={true}
+        forceMount={false}
+        sticky="always"
       >
         <Command>
           <CommandList>
