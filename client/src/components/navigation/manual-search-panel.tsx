@@ -396,10 +396,10 @@ export default function ManualSearchPanel({
       <CardContent className="space-y-4">
         {/* GPS Unavailable Warning and Manual Location Setting */}
         {isGPSUnavailable && (
-          <Alert className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
+          <Alert className="bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800" data-testid="alert-gps-unavailable">
             <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <AlertDescription className="space-y-2">
-              <div className="font-medium text-orange-900 dark:text-orange-100">
+              <div className="font-medium text-orange-900 dark:text-orange-100" data-testid="text-gps-unavailable">
                 GPS unavailable - Set your location manually
               </div>
               <Dialog open={manualLocationDialogOpen} onOpenChange={setManualLocationDialogOpen}>
@@ -440,6 +440,7 @@ export default function ManualSearchPanel({
                         }}
                         className="w-full"
                         autoFocus
+                        data-testid="input-manual-location"
                       />
                       <p className="text-xs text-muted-foreground">
                         Examples: "London SW1A 1AA", "Manchester", "52.4862, -1.8904"
@@ -458,6 +459,7 @@ export default function ManualSearchPanel({
                       onClick={handleSetManualLocation}
                       disabled={!manualLocationInput.trim() || isGeocodingManualLocation}
                       className="bg-orange-600 hover:bg-orange-700 text-white"
+                      data-testid="button-set-location"
                     >
                       {isGeocodingManualLocation ? (
                         <>
@@ -487,7 +489,7 @@ export default function ManualSearchPanel({
                 <div className="font-medium text-blue-900 dark:text-blue-100">
                   Manual Location Active
                 </div>
-                <div className="text-sm text-blue-700 dark:text-blue-300">
+                <div className="text-sm text-blue-700 dark:text-blue-300" data-testid="text-manual-location-display">
                   {gpsData.manualLocation.address}
                 </div>
               </div>

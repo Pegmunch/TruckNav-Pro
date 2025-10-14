@@ -178,10 +178,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const buildFacilitySearchParams = () => {
     const params = new URLSearchParams();
     
-    // Use GPS coordinates first, then provided coordinates
+    // Use GPS coordinates first, then manual location, then provided coordinates
     const gpsPosition = gpsData?.position;
-    const lat = gpsPosition?.latitude || coordinates?.lat;
-    const lng = gpsPosition?.longitude || coordinates?.lng;
+    const manualLocation = gpsData?.manualLocation;
+    const lat = gpsPosition?.latitude || manualLocation?.latitude || coordinates?.lat;
+    const lng = gpsPosition?.longitude || manualLocation?.longitude || coordinates?.lng;
     
     // Only proceed if we have valid coordinates
     if (!lat || !lng) {
@@ -189,7 +190,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
       return null;
     }
     
-    console.log('[NAV-SIDEBAR] Building search with GPS:', { lat, lng });
+    const source = gpsPosition ? 'GPS' : manualLocation ? 'Manual' : 'Provided';
+    console.log(`[NAV-SIDEBAR] Building search with ${source} location:`, { lat, lng });
     params.set('lat', lat.toString());
     params.set('lng', lng.toString());
     params.set('radius', getPoiRadius().toString());
