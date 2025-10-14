@@ -60,32 +60,30 @@ export function SimplifiedRouteDrawer({
     { value: 'shop', label: 'Shop', icon: Store },
   ];
 
-  // When POI category selected, automatically search with GPS location
-  // Use fromCoordinates (from GPS button) or direct GPS position
-  const shouldSearchPOI = selectedPOICategory && (fromCoordinates || (isGPSReady && gps?.position));
+  // When POI category selected, automatically search with available location
+  // Priority: 1) fromCoordinates (from address or GPS button), 2) direct GPS position
+  const hasSearchableLocation = fromCoordinates || (isGPSReady && gps?.position);
+  const shouldSearchPOI = selectedPOICategory && hasSearchableLocation;
   
-  // Build search query with GPS city/area context
+  // Build search query with location context
   const poiSearchText = shouldSearchPOI 
     ? `${selectedPOICategory.split(':')[1] || selectedPOICategory} near me`
     : '';
   
-  // CRITICAL DEBUG: Log the actual GPS availability when POI is selected
+  // DEBUG: Log POI search activation
   React.useEffect(() => {
     if (selectedPOICategory) {
-      console.log('[POI-CRITICAL] POI Category Selected:', selectedPOICategory);
-      console.log('[POI-CRITICAL] GPS Ready:', isGPSReady);
-      console.log('[POI-CRITICAL] GPS Position Available:', !!gps?.position);
-      if (gps?.position) {
-        console.log('[POI-CRITICAL] GPS Coordinates:', {
-          lat: gps.position.latitude,
-          lng: gps.position.longitude
-        });
-      } else {
-        console.error('[POI-CRITICAL] GPS POSITION IS NULL - THIS IS THE ISSUE!');
-        console.error('[POI-CRITICAL] GPS Object:', gps);
-      }
+      console.log('[POI-DEBUG] POI Category Selected:', selectedPOICategory);
+      console.log('[POI-DEBUG] Has searchable location:', hasSearchableLocation);
+      console.log('[POI-DEBUG] From Coordinates:', fromCoordinates);
+      console.log('[POI-DEBUG] GPS Ready:', isGPSReady);
+      console.log('[POI-DEBUG] GPS Position:', gps?.position ? {
+        lat: gps.position.latitude,
+        lng: gps.position.longitude
+      } : 'not available');
+      console.log('[POI-DEBUG] Using:', fromCoordinates ? 'Manual address coordinates' : isGPSReady ? 'GPS coordinates' : 'No coordinates');
     }
-  }, [selectedPOICategory, gps, isGPSReady]);
+  }, [selectedPOICategory, hasSearchableLocation, fromCoordinates, gps, isGPSReady]);
 
   // Fetch POI results using Photon with osm_tag filtering and GPS coordinates
   // Use fromCoordinates first (from GPS button click), then fall back to direct GPS position
@@ -248,7 +246,7 @@ export function SimplifiedRouteDrawer({
                 value={category.value}
                 className="h-12 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 data-testid={`poi-category-${category.value}`}
-                disabled={!fromCoordinates && !isGPSReady}
+                disabled={!hasSearchableLocation}
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {category.label}
@@ -257,14 +255,19 @@ export function SimplifiedRouteDrawer({
           })}
         </ToggleGroup>
 
-        {!fromCoordinates && !isGPSReady && (
+        {!hasSearchableLocation && (
           <p className="text-xs text-muted-foreground text-center">
-            {hasGPSError ? 'Click the GPS button above to search nearby places' : 'Waiting for GPS...'}
+            {hasGPSError 
+              ? 'Enter an address or click the GPS button to search nearby places' 
+              : fromLocation 
+                ? 'Enter a more specific address to search nearby places'
+                : 'Enter a starting location to search nearby places'
+            }
           </p>
         )}
 
         {/* POI Results */}
-        {selectedPOICategory && (fromCoordinates || isGPSReady) && (
+        {selectedPOICategory && hasSearchableLocation && (
           <div className="mt-3 space-y-2">
             {isLoadingPOI && (
               <div className="flex items-center justify-center py-4">
