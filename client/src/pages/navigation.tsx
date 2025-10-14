@@ -1560,7 +1560,25 @@ function NavigationPageContent() {
 
   // Handle use current location with reverse geocoding
   const handleUseCurrentLocation = async () => {
+    // Check if GPS permission is denied
+    if (gpsData?.errorType === 'PERMISSION_DENIED') {
+      console.error('[GPS-BUTTON] ⛔ LOCATION PERMISSION BLOCKED!');
+      console.error('[GPS-BUTTON] To enable GPS:');
+      console.error('[GPS-BUTTON] 1. Click the padlock icon in your browser address bar');
+      console.error('[GPS-BUTTON] 2. Find "Location" in the permissions');
+      console.error('[GPS-BUTTON] 3. Change it from "Block" to "Allow"');
+      console.error('[GPS-BUTTON] 4. Refresh the page');
+      alert('Location permission is BLOCKED!\n\n' +
+            'To enable GPS:\n' +
+            '1. Click the padlock icon in your browser address bar\n' +
+            '2. Find "Location" in the permissions\n' +
+            '3. Change it from "Block" to "Allow"\n' +
+            '4. Refresh the page');
+      return;
+    }
+    
     if (!gpsData || !gpsData.position) {
+      console.log('[GPS-BUTTON] No GPS position available');
       // Silently return - GPS will activate when available
       return;
     }

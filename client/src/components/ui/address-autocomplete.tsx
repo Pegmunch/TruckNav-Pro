@@ -61,19 +61,28 @@ export function AddressAutocomplete({
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
-    // Default to UK for truck navigation (until GPS confirms otherwise)
-    if (!gps?.position) return 'GB';
-    
-    const { latitude, longitude } = gps.position;
-    
-    // UK bounds: lat 49.9-60.9, lng -8.2-1.8
-    if (latitude >= 49.9 && latitude <= 60.9 && longitude >= -8.2 && longitude <= 1.8) {
-      return 'GB';
+    // If we have explicit coordinates passed (from GPS button), use those
+    if (coordinates) {
+      const { lat, lng } = coordinates;
+      // UK bounds: lat 49.9-60.9, lng -8.2-1.8
+      if (lat >= 49.9 && lat <= 60.9 && lng >= -8.2 && lng <= 1.8) {
+        return 'GB';
+      }
+      return undefined; // Worldwide search
     }
     
-    // If GPS shows user is outside UK, allow worldwide search
+    // Only default to UK if we have actual GPS position
+    if (gps?.position) {
+      const { latitude, longitude } = gps.position;
+      // UK bounds: lat 49.9-60.9, lng -8.2-1.8
+      if (latitude >= 49.9 && latitude <= 60.9 && longitude >= -8.2 && longitude <= 1.8) {
+        return 'GB';
+      }
+    }
+    
+    // No default - allow worldwide search when no GPS
     return undefined;
-  }, [gps?.position]);
+  }, [coordinates, gps?.position]);
 
   useEffect(() => {
     setSearchTerm(value);
