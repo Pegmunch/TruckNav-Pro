@@ -1289,13 +1289,22 @@ function NavigationPageContent() {
   };
 
   const handlePlanRoute = async (routePreference?: 'fastest' | 'eco' | 'avoid_tolls', startLoc?: string, endLoc?: string) => {
+    console.log('[PLAN-ROUTE] Starting route planning...');
+    console.log('[PLAN-ROUTE] Active Profile ID:', activeProfileId);
+    console.log('[PLAN-ROUTE] From Location:', fromLocation);
+    console.log('[PLAN-ROUTE] To Location:', toLocation);
+    console.log('[PLAN-ROUTE] From Coordinates:', fromCoordinates);
+    console.log('[PLAN-ROUTE] To Coordinates:', toCoordinates);
+    
     // Guard against duplicate requests while calculating
     if (calculateRouteMutation.isPending) {
+      console.log('[PLAN-ROUTE] Already calculating route - skipping duplicate request');
       return;
     }
     
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
+      console.error('[PLAN-ROUTE] ERROR: No vehicle profile selected! Please select a vehicle profile first.');
       // REMOVED TOAST: No popups per user request
       return;
     }
@@ -1305,6 +1314,7 @@ function NavigationPageContent() {
     const finalEndLoc = endLoc || toLocation;
     
     if (!finalStartLoc || !finalEndLoc) {
+      console.error('[PLAN-ROUTE] ERROR: Missing locations - From:', finalStartLoc, 'To:', finalEndLoc);
       // REMOVED TOAST: No popups per user request
       return;
     }
