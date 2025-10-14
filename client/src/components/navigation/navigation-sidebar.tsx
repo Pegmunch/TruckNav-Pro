@@ -234,62 +234,156 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // Handle use current GPS location with reverse geocoding
   const handleUseCurrentLocation = async () => {
-    // Check GPS availability
-    if (!gpsData || !gpsData.position) {
-      // Silently return - GPS will activate when available
-      return;
-    }
+    // If GPS data already exists, use it
+    if (gpsData?.position) {
+      const { latitude, longitude } = gpsData.position;
+      
+      setIsReverseGeocoding(true);
 
-    const { latitude, longitude } = gpsData.position;
-    
-    setIsReverseGeocoding(true);
+      try {
+        // Attempt reverse geocoding with 5 second timeout
+        const result = await reverseGeocode(latitude, longitude, 5000);
 
-    try {
-      // Attempt reverse geocoding with 5 second timeout
-      const result = await reverseGeocode(latitude, longitude, 5000);
-
-      if (result.success) {
-        // Success: Set the reverse geocoded address AND coordinates
-        onFromLocationChange(result.address);
-        onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-        toast({
-          title: "Using current location",
-          description: result.address,
-        });
-      } else {
-        // Error result from reverse geocoding
+        if (result.success) {
+          // Success: Set the reverse geocoded address AND coordinates
+          onFromLocationChange(result.address);
+          onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
+          toast({
+            title: "Using current location",
+            description: result.address,
+          });
+        } else {
+          // Error result from reverse geocoding
+          const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+          onFromLocationChange(coordsString);
+          onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
+          
+          // Show error-specific messages
+          const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
+                            result.error === 'RATE_LIMIT' ? 'Too many requests' :
+                            result.error === 'NO_RESULTS' ? 'No address found' :
+                            'Unable to get address';
+          
+          toast({
+            title: errorTitle,
+            description: `${result.message}. Using coordinates: ${coordsString}`,
+            variant: result.error === 'RATE_LIMIT' ? 'destructive' : 'default',
+            action: (result.error === 'TIMEOUT' || result.error === 'NETWORK') ? (
+              <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
+                Retry
+              </Button>
+            ) : undefined,
+          });
+        }
+      } catch (error) {
+        // Unexpected error: Fallback to coordinates
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         onFromLocationChange(coordsString);
         onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-        
-        // Show error-specific messages
-        const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
-                          result.error === 'RATE_LIMIT' ? 'Too many requests' :
-                          result.error === 'NO_RESULTS' ? 'No address found' :
-                          'Unable to get address';
-        
         toast({
-          title: errorTitle,
-          description: `${result.message}. Using coordinates: ${coordsString}`,
-          variant: result.error === 'RATE_LIMIT' ? 'destructive' : 'default',
-          action: (result.error === 'TIMEOUT' || result.error === 'NETWORK') ? (
-            <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
-              Retry
-            </Button>
-          ) : undefined,
+          title: "Using GPS coordinates",
+          description: `Unable to determine address. Using: ${coordsString}`,
         });
+      } finally {
+        setIsReverseGeocoding(false);
       }
-    } catch (error) {
-      // Unexpected error: Fallback to coordinates
-      const coordsString = formatCoordinatesAsAddress(latitude, longitude);
-      onFromLocationChange(coordsString);
+    } else if (gpsData?.manualLocation) {
+      // Use manual location if available
+      const { latitude, longitude, address } = gpsData.manualLocation;
+      onFromLocationChange(address || formatCoordinatesAsAddress(latitude, longitude));
       onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
       toast({
-        title: "Using GPS coordinates",
-        description: `Unable to determine address. Using: ${coordsString}`,
+        title: "Using manual location",
+        description: address || formatCoordinatesAsAddress(latitude, longitude),
       });
-    } finally {
-      setIsReverseGeocoding(false);
+    } else {
+      // No GPS or manual location - actively request GPS
+      setIsReverseGeocoding(true);
+      
+      if (!navigator.geolocation) {
+        toast({
+          title: "GPS not supported",
+          description: "Your browser doesn't support geolocation",
+          variant: "destructive"
+        });
+        setIsReverseGeocoding(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            // Attempt reverse geocoding with 5 second timeout
+            const result = await reverseGeocode(latitude, longitude, 5000);
+
+            if (result.success) {
+              onFromLocationChange(result.address);
+              onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
+              toast({
+                title: "Location acquired",
+                description: result.address,
+              });
+            } else {
+              const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+              onFromLocationChange(coordsString);
+              onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
+              toast({
+                title: "Using GPS coordinates",
+                description: coordsString,
+              });
+            }
+          } catch (error) {
+            const coordsString = formatCoordinatesAsAddress(latitude, longitude);
+            onFromLocationChange(coordsString);
+            onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
+            toast({
+              title: "Using GPS coordinates",
+              description: coordsString,
+            });
+          } finally {
+            setIsReverseGeocoding(false);
+          }
+        },
+        (error) => {
+          setIsReverseGeocoding(false);
+          
+          let errorMessage = "Unable to get your location";
+          let errorDescription = "Please check your GPS settings";
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Location permission denied";
+              errorDescription = "Please allow location access for this website";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location unavailable";
+              errorDescription = "GPS signal not available. Try moving to an open area";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timeout";
+              errorDescription = "GPS is taking too long. Please try again";
+              break;
+          }
+          
+          toast({
+            title: errorMessage,
+            description: errorDescription,
+            variant: "destructive",
+            action: (
+              <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
+                Retry
+              </Button>
+            )
+          });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
     }
   };
 
@@ -726,7 +820,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   variant="outline"
                   size="sm"
                   className="w-full automotive-button"
-                  disabled={isReverseGeocoding || !gpsData?.position}
+                  disabled={isReverseGeocoding}
                   data-testid="button-use-current-location"
                 >
                   {isReverseGeocoding ? (

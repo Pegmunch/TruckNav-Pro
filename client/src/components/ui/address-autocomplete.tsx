@@ -92,8 +92,9 @@ export function AddressAutocomplete({
   });
 
   // Get GPS coordinates for location-biased search (POI near me)
-  // CRITICAL: Only use GPS coordinates when GPS is ready (not acquiring or using cached)
+  // CRITICAL: Use GPS coordinates when ready, or manual location as fallback
   const gpsCoordinates = useMemo(() => {
+    // First priority: Fresh GPS position
     if (isGPSReady && gps?.position) {
       console.log('[ADDRESS-AUTOCOMPLETE] Using fresh GPS for location-biased search:', {
         lat: gps.position.latitude,
@@ -105,9 +106,23 @@ export function AddressAutocomplete({
         lng: gps.position.longitude
       };
     }
-    console.log('[ADDRESS-AUTOCOMPLETE] GPS not ready for location-biased search - status:', gps?.status);
+    
+    // Second priority: Manual location when GPS unavailable
+    if (gps?.manualLocation) {
+      console.log('[ADDRESS-AUTOCOMPLETE] Using manual location for location-biased search:', {
+        lat: gps.manualLocation.latitude,
+        lng: gps.manualLocation.longitude,
+        address: gps.manualLocation.address
+      });
+      return {
+        lat: gps.manualLocation.latitude,
+        lng: gps.manualLocation.longitude
+      };
+    }
+    
+    console.log('[ADDRESS-AUTOCOMPLETE] No location available for biased search - status:', gps?.status);
     return undefined;
-  }, [gps?.position, gps?.status, isGPSReady]);
+  }, [gps?.position, gps?.status, gps?.manualLocation, isGPSReady]);
 
   // Fetch Photon suggestions (worldwide address search with GPS bias for POI)
   const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
@@ -321,11 +336,13 @@ export function AddressAutocomplete({
           </div>
         </PopoverTrigger>
       <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0 z-[60]" 
+        className="w-[var(--radix-popover-trigger-width)] p-0 z-[100] shadow-lg border-2 bg-background" 
         align="start"
         side="bottom"
-        sideOffset={4}
+        sideOffset={8}
         onOpenAutoFocus={(e) => e.preventDefault()}
+        collisionPadding={10}
+        avoidCollisions={true}
       >
         <Command>
           <CommandList>
