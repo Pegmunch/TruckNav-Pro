@@ -59,7 +59,8 @@ export function SimplifiedRouteDrawer({
   ];
 
   // When POI category selected, automatically search with GPS location
-  const shouldSearchPOI = selectedPOICategory && isGPSReady && gps?.position;
+  // Use fromCoordinates (from GPS button) or direct GPS position
+  const shouldSearchPOI = selectedPOICategory && (fromCoordinates || (isGPSReady && gps?.position));
   
   // Build search query with GPS city/area context
   const poiSearchText = shouldSearchPOI 
@@ -85,7 +86,11 @@ export function SimplifiedRouteDrawer({
   }, [selectedPOICategory, gps, isGPSReady]);
 
   // Fetch POI results using Photon with osm_tag filtering and GPS coordinates
-  const gpsCoords = gps?.position ? { 
+  // Use fromCoordinates first (from GPS button click), then fall back to direct GPS position
+  const gpsCoords = fromCoordinates ? {
+    lat: fromCoordinates.lat,
+    lng: fromCoordinates.lng
+  } : gps?.position ? { 
     lat: gps.position.latitude, 
     lng: gps.position.longitude 
   } : undefined;
@@ -240,7 +245,7 @@ export function SimplifiedRouteDrawer({
                 value={category.value}
                 className="h-12 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                 data-testid={`poi-category-${category.value}`}
-                disabled={!isGPSReady}
+                disabled={!fromCoordinates && !isGPSReady}
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {category.label}
@@ -249,14 +254,14 @@ export function SimplifiedRouteDrawer({
           })}
         </ToggleGroup>
 
-        {!isGPSReady && (
+        {!fromCoordinates && !isGPSReady && (
           <p className="text-xs text-muted-foreground text-center">
-            {hasGPSError ? 'GPS unavailable - enable location to search nearby places' : 'Waiting for GPS...'}
+            {hasGPSError ? 'Click the GPS button above to search nearby places' : 'Waiting for GPS...'}
           </p>
         )}
 
         {/* POI Results */}
-        {selectedPOICategory && isGPSReady && (
+        {selectedPOICategory && (fromCoordinates || isGPSReady) && (
           <div className="mt-3 space-y-2">
             {isLoadingPOI && (
               <div className="flex items-center justify-center py-4">
