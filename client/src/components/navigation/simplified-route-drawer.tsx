@@ -16,6 +16,8 @@ import {
 interface SimplifiedRouteDrawerProps {
   fromLocation: string;
   toLocation: string;
+  fromCoordinates?: {lat: number, lng: number} | null;
+  toCoordinates?: {lat: number, lng: number} | null;
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
   onFromCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
@@ -29,6 +31,8 @@ interface SimplifiedRouteDrawerProps {
 export function SimplifiedRouteDrawer({
   fromLocation,
   toLocation,
+  fromCoordinates,
+  toCoordinates,
   onFromLocationChange,
   onToLocationChange,
   onFromCoordinatesChange,
@@ -127,6 +131,7 @@ export function SimplifiedRouteDrawer({
               value={fromLocation}
               onChange={onFromLocationChange}
               onCoordinatesChange={onFromCoordinatesChange}
+              coordinates={fromCoordinates}
               placeholder=""
               testId="input-from-location"
               className="flex-1"
@@ -178,6 +183,7 @@ export function SimplifiedRouteDrawer({
               value={toLocation}
               onChange={onToLocationChange}
               onCoordinatesChange={onToCoordinatesChange}
+              coordinates={toCoordinates}
               placeholder=""
               testId="input-to-location"
               className="flex-1"

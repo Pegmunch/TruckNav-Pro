@@ -2434,6 +2434,8 @@ function NavigationPageContent() {
                   <SimplifiedRouteDrawer
                     fromLocation={fromLocation}
                     toLocation={toLocation}
+                    fromCoordinates={fromCoordinates}
+                    toCoordinates={toCoordinates}
                     onFromLocationChange={setFromLocation}
                     onToLocationChange={setToLocation}
                     onFromCoordinatesChange={setFromCoordinates}

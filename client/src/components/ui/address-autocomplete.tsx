@@ -35,6 +35,7 @@ interface AddressAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   onCoordinatesChange?: (coords: {lat: number, lng: number} | null) => void;
+  coordinates?: {lat: number, lng: number} | null;
   placeholder: string;
   id: string;
   className?: string;
@@ -45,6 +46,7 @@ export function AddressAutocomplete({
   value,
   onChange,
   onCoordinatesChange,
+  coordinates,
   placeholder,
   id,
   className,
@@ -92,9 +94,19 @@ export function AddressAutocomplete({
   });
 
   // Get GPS coordinates for location-biased search (POI near me)
-  // CRITICAL: Use GPS coordinates when ready, or manual location as fallback
+  // CRITICAL: Use passed coordinates first, then GPS coordinates, then manual location as fallback
   const gpsCoordinates = useMemo(() => {
-    // First priority: Fresh GPS position
+    // First priority: Explicitly passed coordinates (from GPS button click)
+    if (coordinates) {
+      console.log('[ADDRESS-AUTOCOMPLETE] Using passed coordinates for location-biased search:', {
+        lat: coordinates.lat,
+        lng: coordinates.lng,
+        source: 'explicit'
+      });
+      return coordinates;
+    }
+    
+    // Second priority: Fresh GPS position
     if (isGPSReady && gps?.position) {
       console.log('[ADDRESS-AUTOCOMPLETE] Using fresh GPS for location-biased search:', {
         lat: gps.position.latitude,
@@ -107,7 +119,7 @@ export function AddressAutocomplete({
       };
     }
     
-    // Second priority: Manual location when GPS unavailable
+    // Third priority: Manual location when GPS unavailable
     if (gps?.manualLocation) {
       console.log('[ADDRESS-AUTOCOMPLETE] Using manual location for location-biased search:', {
         lat: gps.manualLocation.latitude,
@@ -122,7 +134,7 @@ export function AddressAutocomplete({
     
     console.log('[ADDRESS-AUTOCOMPLETE] No location available for biased search - status:', gps?.status);
     return undefined;
-  }, [gps?.position, gps?.status, gps?.manualLocation, isGPSReady]);
+  }, [coordinates, gps?.position, gps?.status, gps?.manualLocation, isGPSReady]);
 
   // Fetch Photon suggestions (worldwide address search with GPS bias for POI)
   const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
