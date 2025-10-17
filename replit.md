@@ -38,6 +38,8 @@ Preferred communication style: Simple, everyday language.
 
 ## Technical Implementations & System Design
 - **Smart Route Planning**: Calculates routes avoiding restrictions based on vehicle profiles.
+    - **TomTom Truck Routing API**: Primary routing engine with full truck-specific support including vehicle dimensions (height, width, length, weight), axle weight distribution, hazmat routing, and commercial vehicle restrictions.
+    - **GraphHopper Fallback**: Secondary routing engine for reliability when TomTom is unavailable.
     - **Intelligent Restriction Avoidance**: Global coverage with country-specific filtering, spatial validation (Turf.js), critical violation detection, automatic rerouting, safety blocking for unsafe routes, and dimensional checking (height, width, weight, length).
 - **Facility Discovery**: Search for truck-friendly facilities by type and location.
 - **Interactive Mapping**:

@@ -190,6 +190,229 @@ async function callGraphHopperAPI(
   }
 }
 
+// TomTom Truck Routing API integration with full vehicle dimension support
+async function callTomTomRoutingAPI(
+  startCoords: { lat: number; lng: number },
+  endCoords: { lat: number; lng: number },
+  vehicleProfile: VehicleProfile,
+  options?: { avoidTolls?: boolean; avoidFerries?: boolean }
+): Promise<{
+  distance: number;
+  duration: number;
+  coordinates: Array<{ lat: number; lng: number }>;
+  geometry: any;
+  instructions?: Array<{ text: string; distance: number; time: number; sign: number }>;
+  summary?: { lengthInMeters: number; travelTimeInSeconds: number; trafficDelayInSeconds: number };
+} | null> {
+  try {
+    const TOMTOM_API_KEY = process.env.VITE_TOMTOM_API_KEY;
+    
+    if (!TOMTOM_API_KEY) {
+      console.error('[TOMTOM-ROUTING] API key not found');
+      return null;
+    }
+
+    // Convert vehicle dimensions from feet to meters for TomTom API
+    const heightMeters = vehicleProfile.height * 0.3048;
+    const widthMeters = vehicleProfile.width * 0.3048;
+    const lengthMeters = (vehicleProfile.length || 0) * 0.3048;
+    
+    // Convert weight from tons to kilograms
+    const weightKg = (vehicleProfile.weight || 0) * 1000;
+    
+    // Build locations string (lat,lng:lat,lng)
+    const locations = `${startCoords.lat},${startCoords.lng}:${endCoords.lat},${endCoords.lng}`;
+    
+    // Build TomTom Routing API URL
+    const tomtomUrl = new URL(`https://api.tomtom.com/routing/1/calculateRoute/${locations}/json`);
+    
+    // Add API key
+    tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+    
+    // Set travel mode to truck for commercial vehicle routing
+    tomtomUrl.searchParams.set('travelMode', 'truck');
+    
+    // Add vehicle dimensions and specifications
+    if (heightMeters > 0) {
+      tomtomUrl.searchParams.set('vehicleHeight', heightMeters.toFixed(2));
+    }
+    if (widthMeters > 0) {
+      tomtomUrl.searchParams.set('vehicleWidth', widthMeters.toFixed(2));
+    }
+    if (lengthMeters > 0) {
+      tomtomUrl.searchParams.set('vehicleLength', lengthMeters.toFixed(2));
+    }
+    if (weightKg > 0) {
+      tomtomUrl.searchParams.set('vehicleWeight', weightKg.toString());
+    }
+    
+    // Add axle count if specified
+    if (vehicleProfile.axles) {
+      // TomTom uses axleWeight parameter - distribute total weight across axles
+      const axleWeight = Math.round(weightKg / vehicleProfile.axles);
+      tomtomUrl.searchParams.set('vehicleAxleWeight', axleWeight.toString());
+    }
+    
+    // Set commercial vehicle flag for trucks
+    if (vehicleProfile.type !== 'car' && vehicleProfile.type !== 'car_caravan') {
+      tomtomUrl.searchParams.set('vehicleCommercial', 'true');
+    }
+    
+    // Add hazmat restrictions if vehicle carries hazardous materials
+    if (vehicleProfile.isHazmat) {
+      tomtomUrl.searchParams.set('vehicleLoadType', 'otherHazmatGeneral');
+    }
+    
+    // Add route preferences
+    const avoidOptions: string[] = [];
+    if (options?.avoidTolls) {
+      avoidOptions.push('tollRoads');
+    }
+    if (options?.avoidFerries) {
+      avoidOptions.push('ferries');
+    }
+    if (avoidOptions.length > 0) {
+      tomtomUrl.searchParams.set('avoid', avoidOptions.join(','));
+    }
+    
+    // Add traffic information
+    tomtomUrl.searchParams.set('traffic', 'true');
+    
+    // Request detailed instructions
+    tomtomUrl.searchParams.set('instructionsType', 'text');
+    tomtomUrl.searchParams.set('routeType', 'fastest'); // Optimize for time
+    
+    // Add language preference
+    tomtomUrl.searchParams.set('language', 'en-GB');
+    
+    console.log('[TOMTOM-ROUTING] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    const response = await fetch(tomtomUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'TruckNav-Pro/1.0'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[TOMTOM-ROUTING] API error: HTTP ${response.status}`, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    
+    if (!data.routes || data.routes.length === 0) {
+      console.error('[TOMTOM-ROUTING] No route found');
+      return null;
+    }
+
+    const route = data.routes[0];
+    const summary = route.summary;
+    const legs = route.legs || [];
+    
+    // Extract coordinates from route geometry
+    const coordinates: Array<{ lat: number; lng: number }> = [];
+    
+    for (const leg of legs) {
+      if (leg.points && Array.isArray(leg.points)) {
+        for (const point of leg.points) {
+          coordinates.push({
+            lat: point.latitude,
+            lng: point.longitude
+          });
+        }
+      }
+    }
+    
+    // Build GeoJSON geometry
+    const geometry = {
+      type: "LineString" as const,
+      coordinates: coordinates.map(coord => [coord.lng, coord.lat])
+    };
+    
+    // Map TomTom maneuver strings to GraphHopper-style numeric sign codes
+    const mapTomTomManeuverToSign = (maneuver: string): number => {
+      const maneuverMap: Record<string, number> = {
+        'ARRIVE': 4,
+        'ARRIVE_LEFT': 4,
+        'ARRIVE_RIGHT': 4,
+        'DEPART': 0,
+        'STRAIGHT': 0,
+        'KEEP_STRAIGHT': 0,
+        'BEAR_LEFT': -7,
+        'BEAR_RIGHT': 7,
+        'TURN_LEFT': -2,
+        'TURN_RIGHT': 2,
+        'SHARP_LEFT': -3,
+        'SHARP_RIGHT': 3,
+        'U_TURN_LEFT': -8,
+        'U_TURN_RIGHT': 8,
+        'ENTER_MOTORWAY': 0,
+        'EXIT_MOTORWAY': 6,
+        'ENTER_FREEWAY': 0,
+        'EXIT_FREEWAY': 6,
+        'ROUNDABOUT_LEFT': -2,
+        'ROUNDABOUT_RIGHT': 2,
+        'ROUNDABOUT_CROSS': 0,
+        'TAKE_EXIT': 6
+      };
+      
+      return maneuverMap[maneuver] || 0;
+    };
+    
+    // Extract turn-by-turn instructions
+    const instructions: Array<{ text: string; distance: number; time: number; sign: number }> = [];
+    
+    for (const leg of legs) {
+      if (leg.instructions && Array.isArray(leg.instructions)) {
+        for (const instruction of leg.instructions) {
+          // Use lengthInMeters for per-instruction distance, not routeOffsetInMeters (cumulative)
+          const distanceMeters = instruction.lengthInMeters || instruction.routeOffsetInMeters || 0;
+          
+          instructions.push({
+            text: instruction.message || instruction.instruction || '',
+            distance: Math.round(distanceMeters / 1609.34 * 100) / 100, // meters to miles
+            time: Math.round((instruction.travelTimeInSeconds || 0)), // seconds
+            sign: mapTomTomManeuverToSign(instruction.maneuver || '')
+          });
+        }
+      }
+    }
+    
+    console.log('[TOMTOM-ROUTING] Success:', {
+      distance: Math.round(summary.lengthInMeters / 1609.34 * 100) / 100,
+      duration: Math.round(summary.travelTimeInSeconds / 60),
+      points: coordinates.length,
+      instructions: instructions.length
+    });
+    
+    return {
+      distance: Math.round(summary.lengthInMeters / 1609.34 * 100) / 100, // meters to miles
+      duration: Math.round(summary.travelTimeInSeconds / 60), // seconds to minutes
+      coordinates,
+      geometry,
+      instructions,
+      summary: {
+        lengthInMeters: summary.lengthInMeters,
+        travelTimeInSeconds: summary.travelTimeInSeconds,
+        trafficDelayInSeconds: summary.trafficDelayInSeconds || 0
+      }
+    };
+  } catch (error) {
+    console.error('[TOMTOM-ROUTING] API call failed:', error);
+    return null;
+  }
+}
+
 // Enhanced strict vehicle class routing function with actual spatial validation
 async function calculateStrictVehicleClassRoute(
   startCoords: { lat: number; lng: number },
@@ -206,11 +429,19 @@ async function calculateStrictVehicleClassRoute(
   isRouteAllowed: boolean;
 } | null> {
   try {
-    // Get route from GraphHopper API
-    const routeResult = await callGraphHopperAPI(startCoords, endCoords, vehicleProfile);
+    // Get route from TomTom Truck Routing API (primary) with GraphHopper as fallback
+    let routeResult = await callTomTomRoutingAPI(startCoords, endCoords, vehicleProfile);
+    
     if (!routeResult) {
-      console.error('Failed to get route from GraphHopper API');
-      return null;
+      console.log('[ROUTING] TomTom routing failed, falling back to GraphHopper');
+      routeResult = await callGraphHopperAPI(startCoords, endCoords, vehicleProfile);
+      
+      if (!routeResult) {
+        console.error('Failed to get route from both TomTom and GraphHopper APIs');
+        return null;
+      }
+    } else {
+      console.log('[ROUTING] Using TomTom truck routing with vehicle dimensions');
     }
 
     // Now perform spatial validation with actual route geometry
