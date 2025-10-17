@@ -143,6 +143,20 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
+  // Detect if running as PWA (standalone mode)
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                (window.navigator as any).standalone === true;
+  
+  // Disable toasts in PWA mode to prevent transparent pop-up layering issues
+  if (isPWA) {
+    console.log('[TOAST-PWA] Toast disabled in PWA mode:', props.title);
+    return {
+      id: '',
+      dismiss: () => {},
+      update: () => {},
+    };
+  }
+
   const id = genId()
 
   const update = (props: ToasterToast) =>
