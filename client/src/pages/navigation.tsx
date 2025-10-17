@@ -41,6 +41,7 @@ import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 import TurnIndicator from "@/components/navigation/turn-indicator";
+import ComprehensiveMobileMenu from "@/components/navigation/comprehensive-mobile-menu";
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
@@ -116,6 +117,9 @@ function NavigationPageContent() {
   
   // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
   const [showVehicleSettings, setShowVehicleSettings] = useState(false);
+  
+  // Comprehensive mobile menu state
+  const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
   
   // Current road name from GPS position (for speedometer display)
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
@@ -2116,9 +2120,9 @@ function NavigationPageContent() {
                     </div>
                   </div>
 
-                  {/* Plan Route FAB - Opens route planner (Bottom Right) */}
+                  {/* Plan Route FAB - Opens comprehensive menu on mobile (Bottom Right) */}
                   <Button
-                    onClick={() => setSidebarState('open')}
+                    onClick={() => setShowComprehensiveMenu(true)}
                     size="lg"
                     className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                     style={{
@@ -2126,7 +2130,7 @@ function NavigationPageContent() {
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
                     data-testid="button-plan-route-fab"
-                    aria-label="Open route planner"
+                    aria-label="Open menu"
                   >
                     <Menu className="w-6 h-6" />
                   </Button>
@@ -2691,6 +2695,22 @@ function NavigationPageContent() {
         onInteraction={() => {
           setHasInteractedWithIncidentFeed(true);
         }}
+      />
+
+      {/* Comprehensive Mobile Menu */}
+      <ComprehensiveMobileMenu
+        open={showComprehensiveMenu}
+        onOpenChange={setShowComprehensiveMenu}
+        onFromLocationChange={setFromLocation}
+        onToLocationChange={setToLocation}
+        onStartNavigation={handleStartNavigation}
+        currentRoute={currentRoute}
+        selectedProfile={selectedProfile}
+        onProfileSelect={(profile) => {
+          setSelectedProfile(profile);
+          queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+        }}
+        coordinates={currentGPSLocation}
       />
 
       {/* Destination Reached Dialog */}
