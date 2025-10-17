@@ -1403,6 +1403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fuel: '7311,7312,7313', // Multiple fuel categories
         parking: '7309',
         restaurant: '7318',
+        supermarket: '7332', // Supermarkets and grocery stores
       };
       
       const poiType = type as string;

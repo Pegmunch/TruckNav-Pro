@@ -12,6 +12,7 @@ import {
   ParkingMeter, 
   Utensils, 
   Bed, 
+  ShoppingCart,
   ShowerHead,
   Wifi,
   Phone
@@ -70,6 +71,7 @@ export default function FacilitySearch({ coordinates, onSelectFacility }: Facili
     { value: "fuel", label: "Fuel", icon: Fuel },
     { value: "parking", label: "ParkingMeter", icon: ParkingMeter },
     { value: "restaurant", label: "Food", icon: Utensils },
+    { value: "supermarket", label: "Supermarkets", icon: ShoppingCart },
     { value: "hotel", label: "Hotels", icon: Bed },
   ];
 
