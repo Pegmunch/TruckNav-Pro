@@ -370,10 +370,7 @@ export function AddressAutocomplete({
             onChange(address);
             onCoordinatesChange?.({ lat: latitude, lng: longitude });
             
-            toast({
-              title: "GPS Location Set",
-              description: `Using: ${address}`,
-            });
+            // Toast removed per user request - transparent pop-up issue in PWA mode
           }
         } else {
           // Fallback to coordinates
@@ -382,10 +379,7 @@ export function AddressAutocomplete({
           onChange(coordAddress);
           onCoordinatesChange?.({ lat: latitude, lng: longitude });
           
-          toast({
-            title: "GPS Location Set",
-            description: "Using GPS coordinates",
-          });
+          // Toast removed per user request - transparent pop-up issue in PWA mode
         }
       } catch (error) {
         // Fallback to coordinates on error
@@ -395,10 +389,7 @@ export function AddressAutocomplete({
         onChange(coordAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
         
-        toast({
-          title: "GPS Location Set",
-          description: "Using GPS coordinates",
-        });
+        // Toast removed per user request - transparent pop-up issue in PWA mode
       } finally {
         setIsGettingLocation(false);
       }
@@ -411,16 +402,10 @@ export function AddressAutocomplete({
         lng: gps.manualLocation.longitude 
       });
       
-      toast({
-        title: "Manual Location Set",
-        description: `Using: ${gps.manualLocation.address}`,
-      });
+      // Toast removed per user request - transparent pop-up issue in PWA mode
     } else {
-      toast({
-        title: "GPS Unavailable",
-        description: "Please enable location services or enter address manually",
-        variant: "destructive",
-      });
+      // Toast removed per user request - transparent pop-up issue in PWA mode
+      console.warn('[GPS-LOCATION] GPS unavailable - location services disabled or not available');
     }
   }, [gps, onChange, onCoordinatesChange, toast]);
 

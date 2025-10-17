@@ -164,23 +164,24 @@ const SpeedDisplay = memo(function SpeedDisplay({
       )}
       data-testid="speed-display"
     >
-      {/* Speed Limit Section (Left) */}
+      {/* Speed Limit Section (Left) - Traditional UK Speed Limit Sign */}
       <div className="flex items-center gap-3" data-testid="speed-limit-section">
         <div 
           className={cn(
             "flex items-center justify-center",
-            "w-12 h-12 rounded-full bg-white shadow-lg",
-            "border-[4px]",
-            convertedSpeedLimit ? "border-red-600 text-black" : "border-gray-400 text-gray-400"
+            "w-16 h-16 rounded-full bg-white shadow-xl",
+            "border-[5px]",
+            convertedSpeedLimit ? "border-red-600 text-black" : "border-gray-400 text-gray-400",
+            "ring-2 ring-black/10"
           )}
           data-testid="speed-limit-sign"
         >
           {convertedSpeedLimit ? (
-            <span className="text-lg font-black leading-none" data-testid="speed-limit-value">
+            <span className="text-2xl font-black leading-none tracking-tight" data-testid="speed-limit-value">
               {convertedSpeedLimit}
             </span>
           ) : (
-            <Shield className="w-5 h-5" />
+            <Shield className="w-6 h-6" />
           )}
         </div>
         {convertedSpeedLimit && (
