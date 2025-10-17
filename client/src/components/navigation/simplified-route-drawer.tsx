@@ -131,33 +131,15 @@ export function SimplifiedRouteDrawer({
           <Label htmlFor="from-location" className="text-sm font-medium">
             From
           </Label>
-          <div className="flex gap-2">
-            {/* Address Autocomplete - TEMPORARILY DISABLED */}
-            <Input
-              id="from-location"
-              value={fromLocation}
-              onChange={(e) => onFromLocationChange(e.target.value)}
-              placeholder="Autocomplete temporarily disabled"
-              data-testid="input-from-location-disabled"
-              className="flex-1"
-              disabled={true}
-              title="Address autocomplete temporarily disabled"
-            />
-            {/* GPS Button - TEMPORARILY DISABLED */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                alert('GPS functionality temporarily disabled for reconstruction');
-              }}
-              disabled={true}
-              className="h-10 w-10 shrink-0 opacity-50 cursor-not-allowed"
-              data-testid="button-current-location-disabled"
-              title="GPS functionality temporarily disabled"
-            >
-              <Crosshair className="w-5 h-5 text-muted-foreground" />
-            </Button>
-          </div>
+          <AddressAutocomplete
+            id="from-location"
+            value={fromLocation}
+            onChange={onFromLocationChange}
+            onCoordinatesChange={onFromCoordinatesChange}
+            placeholder="Search for address, postcode, or POI..."
+            testId="input-from-location"
+            className="flex-1"
+          />
 
           {/* GPS Status Indicator */}
           {gps && (
@@ -189,16 +171,14 @@ export function SimplifiedRouteDrawer({
             To
           </Label>
           <div className="flex gap-2">
-            {/* Address Autocomplete - TEMPORARILY DISABLED */}
-            <Input
+            <AddressAutocomplete
               id="to-location"
               value={toLocation}
-              onChange={(e) => onToLocationChange(e.target.value)}
-              placeholder="Autocomplete temporarily disabled"
-              data-testid="input-to-location-disabled"
+              onChange={onToLocationChange}
+              onCoordinatesChange={onToCoordinatesChange}
+              placeholder="Search for destination..."
+              testId="input-to-location"
               className="flex-1"
-              disabled={true}
-              title="Address autocomplete temporarily disabled"
             />
             <Button
               variant="default"
