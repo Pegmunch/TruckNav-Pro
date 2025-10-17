@@ -218,11 +218,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
   );
   
   const { data: facilities = [], isLoading: isFacilitiesLoading, error: facilitiesError, refetch: refetchFacilities } = useQuery<Facility[]>({
-    queryKey: ['/api/facilities', searchParams],
+    queryKey: ['/api/poi-search', searchParams],
     queryFn: async () => {
-      const response = await fetch(`/api/facilities?${searchParams}`);
+      const response = await fetch(`/api/poi-search?${searchParams}`);
       if (!response.ok) {
-        throw new Error(`Failed to fetch facilities: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch POIs: ${response.status} ${response.statusText}`);
       }
       return response.json();
     },

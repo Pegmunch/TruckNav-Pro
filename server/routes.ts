@@ -1383,6 +1383,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Live POI Search (TomTom + Photon fallback)
+  app.get("/api/poi-search", async (req: Request, res: Response) => {
+    try {
+      const { type, lat, lng, radius, q } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "Latitude and longitude are required" });
+      }
+      
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
+      const searchRadius = radius ? parseFloat(radius as string) : 10;
+      const radiusInMeters = Math.round(searchRadius * 1000);
+      
+      // Map POI types to TomTom category codes
+      const tomtomCategoryMap: Record<string, string> = {
+        truck_stop: '7315',
+        fuel: '7311,7312,7313', // Multiple fuel categories
+        parking: '7309',
+        restaurant: '7318',
+      };
+      
+      const poiType = type as string;
+      const tomtomCategory = tomtomCategoryMap[poiType];
+      
+      let facilities: any[] = [];
+      
+      // Try TomTom first for truck-specific POIs
+      if (tomtomCategory && TOMTOM_API_KEY) {
+        try {
+          const tomtomUrl = new URL('https://api.tomtom.com/search/2/categorySearch/.json');
+          tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+          tomtomUrl.searchParams.set('lat', latitude.toString());
+          tomtomUrl.searchParams.set('lon', longitude.toString());
+          tomtomUrl.searchParams.set('radius', radiusInMeters.toString());
+          tomtomUrl.searchParams.set('categorySet', tomtomCategory);
+          tomtomUrl.searchParams.set('limit', '20');
+          
+          if (poiType === 'parking') {
+            tomtomUrl.searchParams.set('vehicleType', 'truck');
+          }
+          
+          const tomtomResponse = await fetch(tomtomUrl.toString());
+          
+          if (tomtomResponse.ok) {
+            const data = await tomtomResponse.json();
+            
+            if (data.results && data.results.length > 0) {
+              facilities = data.results.map((result: any, index: number) => ({
+                id: `tomtom-${poiType}-${index}`,
+                name: result.poi?.name || 'Unknown',
+                type: poiType,
+                latitude: result.position?.lat || latitude,
+                longitude: result.position?.lon || longitude,
+                address: result.address?.freeformAddress || '',
+                amenities: [],
+                city: result.address?.municipality || result.address?.localName || '',
+                state: result.address?.countrySubdivision || '',
+                zip: result.address?.postalCode || '',
+                country: result.address?.country || '',
+                phone: result.poi?.phone || null,
+                website: result.poi?.url || null,
+                rating: null,
+                imageUrl: null,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('[POI-SEARCH] TomTom search failed:', error);
+        }
+      }
+      
+      // Fallback to Photon for general POIs or if TomTom returned nothing
+      if (facilities.length === 0) {
+        try {
+          // Map POI types to OpenStreetMap tags
+          const osmTagMap: Record<string, string> = {
+            truck_stop: 'highway:services',
+            fuel: 'amenity:fuel',
+            parking: 'amenity:parking',
+            restaurant: 'amenity:restaurant',
+          };
+          
+          const osmTag = osmTagMap[poiType] || poiType;
+          const photonUrl = new URL('https://photon.komoot.io/api/');
+          photonUrl.searchParams.set('lat', latitude.toString());
+          photonUrl.searchParams.set('lon', longitude.toString());
+          photonUrl.searchParams.set('limit', '20');
+          photonUrl.searchParams.set('osm_tag', osmTag);
+          
+          if (q) {
+            photonUrl.searchParams.set('q', q as string);
+          }
+          
+          const photonResponse = await fetch(photonUrl.toString());
+          
+          if (photonResponse.ok) {
+            const data = await photonResponse.json();
+            
+            if (data.features && data.features.length > 0) {
+              facilities = data.features
+                .filter((f: any) => {
+                  const coords = f.geometry?.coordinates;
+                  if (!coords) return false;
+                  
+                  const distance = Math.sqrt(
+                    Math.pow((coords[1] - latitude) * 111.32, 2) +
+                    Math.pow((coords[0] - longitude) * 111.32 * Math.cos(latitude * Math.PI / 180), 2)
+                  );
+                  
+                  return distance <= searchRadius;
+                })
+                .map((feature: any, index: number) => ({
+                  id: `photon-${poiType}-${index}`,
+                  name: feature.properties?.name || feature.properties?.street || 'Unknown',
+                  type: poiType,
+                  latitude: feature.geometry.coordinates[1],
+                  longitude: feature.geometry.coordinates[0],
+                  address: feature.properties?.street || '',
+                  amenities: [],
+                  city: feature.properties?.city || feature.properties?.county || '',
+                  state: feature.properties?.state || '',
+                  zip: feature.properties?.postcode || '',
+                  country: feature.properties?.country || '',
+                  phone: null,
+                  website: null,
+                  rating: null,
+                  imageUrl: null,
+                }));
+            }
+          }
+        } catch (error) {
+          console.error('[POI-SEARCH] Photon search failed:', error);
+        }
+      }
+      
+      res.json(facilities);
+    } catch (error) {
+      console.error('[POI-SEARCH] Error:', error);
+      res.status(500).json({ message: "Failed to search POIs" });
+    }
+  });
+
   // Route Validation and Compliance Checking
   app.post("/api/routes/validate", requireSubscription, validateRoute, validateRequest, async (req: Request, res: Response) => {
     try {
