@@ -608,7 +608,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       {/* Overlay backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-40 lg:hidden overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none" 
+          className="fixed inset-0 bg-black z-40 lg:hidden overlay-safe-mode:bg-transparent overlay-safe-mode:pointer-events-none" 
           onClick={onClose}
           data-testid="unified-search-panel-backdrop"
         />
@@ -726,7 +726,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                     variant="ghost"
                     size="sm"
                     onClick={handleClearSearch}
-                    className="w-full bg-muted/50 dark:bg-muted/50 hover:bg-muted dark:hover:bg-muted text-foreground dark:text-foreground"
+                    className="w-full bg-muted dark:bg-muted hover:bg-muted/80 dark:hover:bg-muted/80 text-foreground dark:text-foreground"
                     data-testid="button-clear-search"
                     aria-label="Clear search"
                   >
