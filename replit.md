@@ -88,15 +88,34 @@ Preferred communication style: Simple, everyday language.
 - **Wouter**: Lightweight client-side routing.
 - **Geolocation APIs**: Browser-based location services.
 
-## Traffic Data Services
-- **TomTom Traffic Flow API**: Real-time traffic visualization.
-  - **Required Environment Variable**: `VITE_TOMTOM_API_KEY`
+## TomTom API Integration Suite
+All TomTom features use the `VITE_TOMTOM_API_KEY` environment variable.
 
-## Address Autocomplete Services
-- **TomTom Search API**: Worldwide address autocomplete and truck-specific POI search.
-  - **Required Environment Variable**: `VITE_TOMTOM_API_KEY`
-  - **Endpoints**: Fuzzy Search, POI Search with category filtering
-- **postcodes.io**: UK postcode fallback geocoding service.
+### 1. TomTom Search API
+- **Endpoint**: `/api/tomtom-search`
+- **Features**: Worldwide address autocomplete with GPS-biased results, fuzzy matching, typeahead support
+- **Search Types**: City names, street addresses, landmarks, postcodes (3-char minimum, 300ms debouncing)
+- **POI Categories**: Truck stops (7315), Gas stations (7311), Rest areas (9920), Service areas
+- **Fallback**: postcodes.io for UK postcode geocoding
+
+### 2. TomTom Truck Routing API  
+- **Integration**: Primary routing engine in `calculateStrictVehicleClassRoute`
+- **Features**: Full truck-specific support with vehicle dimensions (height, width, length, weight), axle weight distribution, hazmat routing, commercial vehicle restrictions
+- **Maneuver Mapping**: TomTom string maneuvers → GraphHopper numeric sign codes for UI compatibility
+- **Traffic**: Real-time traffic-aware routing
+- **Fallback**: GraphHopper for reliability when TomTom unavailable
+
+### 3. TomTom Traffic Flow API
+- **Purpose**: Real-time traffic visualization with color-coding
+- **Refresh**: 5-minute auto-refresh
+- **Display**: Traffic-aware route overlay with speed ratio visualization
+
+### 4. TomTom Traffic Incidents API
+- **Endpoint**: `/api/tomtom/traffic-incidents`
+- **Features**: Real-time verified incident data (accidents, construction, hazards, road closures, delays)
+- **Data**: Severity levels (low/medium/high), geographic filtering, delay magnitude, incident types
+- **Mapping**: TomTom icon categories → app incident types
+- **Geometry**: Point and LineString support with midpoint extraction
 
 ## Mapping Libraries
 - **MapLibre GL JS**: Primary vector map engine.
