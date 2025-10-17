@@ -7,12 +7,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGPS } from '@/contexts/gps-context';
 import React, { useState } from 'react';
-import { 
-  usePhotonAutocomplete, 
-  formatPhotonDisplay, 
-  extractPhotonCoordinates,
-  type PhotonFeature 
-} from '@/hooks/use-photon-autocomplete';
+import { useQuery } from '@tanstack/react-query';
+import type { Facility } from '@shared/schema';
 
 interface SimplifiedRouteDrawerProps {
   fromLocation: string;
@@ -53,12 +49,12 @@ export function SimplifiedRouteDrawer({
   const isGPSReady = gps?.position !== null && !hasGPSError;
   const isGPSInitializing = gps?.isTracking && !gps?.position && !hasGPSError;
 
-  // POI Categories
+  // POI Categories - mapped to TomTom POI types
   const poiCategories = [
-    { value: 'shop:supermarket', label: 'Supermarket', icon: ShoppingCart },
-    { value: 'amenity:restaurant', label: 'Restaurant', icon: UtensilsCrossed },
-    { value: 'amenity:fuel', label: 'Fuel', icon: Fuel },
-    { value: 'shop', label: 'Shop', icon: Store },
+    { value: 'restaurant', label: 'Restaurant', icon: UtensilsCrossed },
+    { value: 'fuel', label: 'Fuel', icon: Fuel },
+    { value: 'parking', label: 'Parking', icon: Store },
+    { value: 'truck_stop', label: 'Truck Stop', icon: ShoppingCart },
   ];
 
   // When POI category selected, automatically search with available location
@@ -66,28 +62,7 @@ export function SimplifiedRouteDrawer({
   const hasSearchableLocation = fromCoordinates || (isGPSReady && gps?.position);
   const shouldSearchPOI = selectedPOICategory && hasSearchableLocation;
   
-  // Build search query with location context
-  const poiSearchText = shouldSearchPOI 
-    ? `${selectedPOICategory.split(':')[1] || selectedPOICategory} near me`
-    : '';
-  
-  // DEBUG: Log POI search activation
-  React.useEffect(() => {
-    if (selectedPOICategory) {
-      console.log('[POI-DEBUG] POI Category Selected:', selectedPOICategory);
-      console.log('[POI-DEBUG] Has searchable location:', hasSearchableLocation);
-      console.log('[POI-DEBUG] From Coordinates:', fromCoordinates);
-      console.log('[POI-DEBUG] GPS Ready:', isGPSReady);
-      console.log('[POI-DEBUG] GPS Position:', gps?.position ? {
-        lat: gps.position.latitude,
-        lng: gps.position.longitude
-      } : 'not available');
-      console.log('[POI-DEBUG] Using:', fromCoordinates ? 'Manual address coordinates' : isGPSReady ? 'GPS coordinates' : 'No coordinates');
-    }
-  }, [selectedPOICategory, hasSearchableLocation, fromCoordinates, gps, isGPSReady]);
-
-  // Fetch POI results using Photon with osm_tag filtering and GPS coordinates
-  // Use fromCoordinates first (from GPS button click), then fall back to direct GPS position
+  // Get coordinates for POI search
   const gpsCoords = fromCoordinates ? {
     lat: fromCoordinates.lat,
     lng: fromCoordinates.lng
@@ -96,27 +71,29 @@ export function SimplifiedRouteDrawer({
     lng: gps.position.longitude 
   } : undefined;
   
-  // DEBUG: Log GPS coordinates being passed to POI search
-  if (selectedPOICategory) {
-    console.log('[POI-DEBUG] POI Category Selected:', selectedPOICategory);
-    console.log('[POI-DEBUG] GPS Position Available:', !!gps?.position);
-    console.log('[POI-DEBUG] GPS Coordinates:', gpsCoords);
-    console.log('[POI-DEBUG] Search Text:', poiSearchText);
-    console.log('[POI-DEBUG] Should Search:', shouldSearchPOI);
-  }
+  // Build POI search parameters for TomTom API
+  const poiSearchParams = gpsCoords && selectedPOICategory ? 
+    `lat=${gpsCoords.lat}&lng=${gpsCoords.lng}&radius=25&type=${selectedPOICategory}` : null;
   
-  const { results: poiResults, isLoading: isLoadingPOI } = usePhotonAutocomplete(
-    poiSearchText,
-    !!shouldSearchPOI,
-    undefined, // No country restriction for POI
-    selectedPOICategory, // Pass osm_tag filter
-    gpsCoords // Pass GPS coordinates for location-biased search
-  );
+  // Fetch POI results using TomTom-based /api/poi-search endpoint
+  const { data: poiResults = [], isLoading: isLoadingPOI } = useQuery<Facility[]>({
+    queryKey: ['/api/poi-search', poiSearchParams],
+    queryFn: async () => {
+      if (!poiSearchParams) return [];
+      const response = await fetch(`/api/poi-search?${poiSearchParams}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch POIs: ${response.status}`);
+      }
+      return response.json();
+    },
+    enabled: !!shouldSearchPOI && !!poiSearchParams,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   // Handle POI selection
-  const handleSelectPOI = (poi: PhotonFeature) => {
-    const displayLabel = formatPhotonDisplay(poi);
-    const coordinates = extractPhotonCoordinates(poi);
+  const handleSelectPOI = (poi: Facility) => {
+    const displayLabel = `${poi.name}${poi.address ? `, ${poi.address}` : ''}${poi.city ? `, ${poi.city}` : ''}`;
+    const coordinates = { lat: poi.latitude, lng: poi.longitude };
     
     onToLocationChange(displayLabel);
     onToCoordinatesChange?.(coordinates);
@@ -265,7 +242,7 @@ export function SimplifiedRouteDrawer({
 
             {!isLoadingPOI && poiResults.length === 0 && (
               <p className="text-xs text-muted-foreground text-center py-2">
-                No {selectedPOICategory.split(':')[1] || 'places'} found nearby
+                No {selectedPOICategory.replace('_', ' ')}s found nearby
               </p>
             )}
 
@@ -274,9 +251,9 @@ export function SimplifiedRouteDrawer({
                 <p className="text-xs font-medium text-muted-foreground px-2">
                   Found {poiResults.length} nearby:
                 </p>
-                {poiResults.slice(0, 5).map((poi, index) => (
+                {poiResults.slice(0, 10).map((poi, index) => (
                   <Button
-                    key={index}
+                    key={poi.id || index}
                     variant="ghost"
                     className="w-full justify-start h-auto py-2 px-2 text-left"
                     onClick={() => handleSelectPOI(poi)}
@@ -285,11 +262,11 @@ export function SimplifiedRouteDrawer({
                     <MapPin className="w-4 h-4 mr-2 shrink-0 text-primary" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {poi.properties.name || poi.properties.street || 'Unknown'}
+                        {poi.name}
                       </p>
-                      {poi.properties.city && (
+                      {(poi.address || poi.city) && (
                         <p className="text-xs text-muted-foreground truncate">
-                          {poi.properties.city}
+                          {poi.address ? `${poi.address}${poi.city ? `, ${poi.city}` : ''}` : poi.city}
                         </p>
                       )}
                     </div>
