@@ -342,12 +342,20 @@ export function AddressAutocomplete({
         const { latitude, longitude } = gps.position;
         
         // Try reverse geocoding to get address
-        const response = await fetch(
-          `https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`,
-          { signal: AbortSignal.timeout(5000) }
-        );
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         
-        if (response.ok) {
+        let response;
+        try {
+          response = await fetch(
+            `https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`,
+            { signal: controller.signal }
+          );
+        } finally {
+          clearTimeout(timeoutId);
+        }
+        
+        if (response?.ok) {
           const data = await response.json();
           if (data.features && data.features.length > 0) {
             const feature = data.features[0];
