@@ -102,9 +102,10 @@ All TomTom features use the `VITE_TOMTOM_API_KEY` environment variable.
 - **Endpoint**: `/api/poi-search`
 - **Purpose**: Location-aware truck-specific POI search replacing unreliable Photon-based searches
 - **Features**: Real-time POI discovery with accurate location biasing, truck-relevant categories, 10-25km search radius
-- **POI Types**: fuel (7311/7312/7313), parking (7309), restaurant (7318), truck_stop (7315)
-- **Integration Points**: NavigationSidebar Tools & Widgets (10km radius), SimplifiedRouteDrawer POI section (25km radius)
-- **Location Sources**: GPS position → manual location → fromCoordinates (address input fallback)
+- **POI Types**: fuel (7311/7312/7313), parking (7309), restaurant (7318), truck_stop (7315), supermarket (7332)
+- **Integration Points**: NavigationSidebar Tools & Widgets (10km radius), UnifiedSearchPanel (all categories)
+- **Location Sources**: Complete 3-tier fallback chain - GPS position → manual location → route fromCoordinates (address input fallback)
+- **User Feedback**: Intelligent toast messages inform users which location source is being used (GPS, manual location, or route location) or guide them to enable GPS/enter location if none available
 - **Fallback**: Photon/OSM search if TomTom returns no results
 - **Response Format**: Normalized Facility objects with id, name, address, city, coordinates, type, amenities
 
