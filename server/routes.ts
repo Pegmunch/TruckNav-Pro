@@ -2064,6 +2064,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TomTom Traffic Incidents API - Real-time incidents from TomTom
+  app.get("/api/tomtom/traffic-incidents", async (req, res) => {
+    try {
+      const { north, south, east, west } = req.query;
+      
+      if (!north || !south || !east || !west) {
+        return res.status(400).json({ message: "Bounding box coordinates are required (north, south, east, west)" });
+      }
+      
+      const TOMTOM_API_KEY = process.env.VITE_TOMTOM_API_KEY;
+      
+      if (!TOMTOM_API_KEY) {
+        console.error('[TOMTOM-INCIDENTS] API key not found');
+        return res.status(500).json({ message: "TomTom API key not configured" });
+      }
+      
+      // Build TomTom Traffic Incidents API URL
+      // API format: https://api.tomtom.com/traffic/services/5/incidentDetails
+      const tomtomUrl = new URL('https://api.tomtom.com/traffic/services/5/incidentDetails');
+      
+      // Add API key
+      tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+      
+      // Set bounding box (minLon,minLat,maxLon,maxLat)
+      const bbox = `${west},${south},${east},${north}`;
+      tomtomUrl.searchParams.set('bbox', bbox);
+      
+      // Request fields for detailed incident information
+      tomtomUrl.searchParams.set('fields', '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description,code,iconCategory},startTime,endTime,from,to,length,delay,roadNumbers,aci{probabilityOfOccurrence,numberOfReports,lastReportTime}}}}');
+      
+      // Language preference
+      tomtomUrl.searchParams.set('language', 'en-GB');
+      
+      // Output format
+      tomtomUrl.searchParams.set('categoryFilter', 'all');
+      tomtomUrl.searchParams.set('timeValidityFilter', 'present');
+      
+      console.log('[TOMTOM-INCIDENTS] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
+      
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(tomtomUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'TruckNav-Pro/1.0'
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[TOMTOM-INCIDENTS] API error: HTTP ${response.status}`, errorText);
+        return res.status(response.status).json({ message: "TomTom API error", details: errorText });
+      }
+
+      const data = await response.json();
+      
+      // Transform TomTom incidents to our app's format
+      const incidents = (data.incidents || []).map((incident: any) => {
+        const props = incident.properties || {};
+        const geometry = incident.geometry || {};
+        const events = props.events || [];
+        
+        // Map TomTom icon category to our incident types
+        const iconCategoryMap: Record<number, string> = {
+          0: 'other',
+          1: 'accident',
+          2: 'fog',
+          3: 'hazard',
+          4: 'construction',
+          5: 'ice',
+          6: 'jam',
+          7: 'lane_closed',
+          8: 'road_closed',
+          9: 'road_works',
+          10: 'wind',
+          11: 'flooding',
+          14: 'broken_down_vehicle'
+        };
+        
+        const incidentType = iconCategoryMap[props.iconCategory] || 'other';
+        
+        // Get coordinates (TomTom uses GeoJSON format)
+        let latitude = 0;
+        let longitude = 0;
+        
+        if (geometry.type === 'Point' && geometry.coordinates && geometry.coordinates.length >= 2) {
+          longitude = geometry.coordinates[0];
+          latitude = geometry.coordinates[1];
+        } else if (geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length > 0) {
+          // Use midpoint of line for better representation
+          const midIndex = Math.floor(geometry.coordinates.length / 2);
+          const midpoint = geometry.coordinates[midIndex];
+          if (midpoint && midpoint.length >= 2) {
+            longitude = midpoint[0];
+            latitude = midpoint[1];
+          }
+        } else if (geometry.coordinates && Array.isArray(geometry.coordinates) && geometry.coordinates.length >= 2) {
+          // Fallback: try to extract coordinates from any array format
+          longitude = geometry.coordinates[0];
+          latitude = geometry.coordinates[1];
+        }
+        
+        // Build description from events
+        const description = events.map((e: any) => e.description).filter(Boolean).join('. ') || 'Traffic incident';
+        
+        // Calculate severity based on delay magnitude (TomTom scale: 0=Unknown, 1=Minor, 2=Moderate, 3=Major, 4=Undefined)
+        // Also consider delay time in seconds
+        const delayMagnitude = props.magnitudeOfDelay || 0;
+        const delaySeconds = props.delay || 0;
+        let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+        
+        // Primary: use delay magnitude
+        if (delayMagnitude === 4 || delayMagnitude === 3) {
+          severity = 'high';
+        } else if (delayMagnitude === 2) {
+          severity = 'medium';
+        } else if (delayMagnitude === 1) {
+          severity = 'low';
+        } else if (delayMagnitude === 0) {
+          // Fallback: use delay time if magnitude is unknown
+          if (delaySeconds >= 1800) severity = 'high'; // 30+ min delay
+          else if (delaySeconds >= 600) severity = 'medium'; // 10+ min delay
+          else severity = 'low';
+        }
+        
+        // Upgrade severity for critical incident types
+        if (props.iconCategory === 1 || props.iconCategory === 8) {
+          // Accident or Road Closed = always high severity
+          severity = 'high';
+        }
+        
+        return {
+          id: `tomtom-${props.id}`,
+          type: incidentType,
+          description: description,
+          latitude: latitude,
+          longitude: longitude,
+          severity: severity,
+          reportedAt: props.startTime || new Date().toISOString(),
+          expiresAt: props.endTime || null,
+          isActive: true,
+          verifiedCount: 1, // TomTom data is pre-verified
+          source: 'tomtom',
+          roadNumbers: props.roadNumbers || [],
+          delay: props.delay || 0,
+          length: props.length || 0,
+          from: props.from || null,
+          to: props.to || null,
+          geometry: geometry
+        };
+      });
+      
+      console.log(`[TOMTOM-INCIDENTS] Retrieved ${incidents.length} incidents`);
+      
+      res.json(incidents);
+    } catch (error) {
+      console.error('[TOMTOM-INCIDENTS] API call failed:', error);
+      res.status(500).json({ message: "Failed to fetch TomTom traffic incidents" });
+    }
+  });
+
   // User-Reported Traffic Incidents API
   app.post("/api/incidents", validateTrafficIncident, validateRequest, async (req: Request, res: Response) => {
     try {

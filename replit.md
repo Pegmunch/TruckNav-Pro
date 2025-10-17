@@ -53,6 +53,7 @@ Preferred communication style: Simple, everyday language.
     - **Turn-by-Turn Indicator**: Large bubble showing next turn direction, distance conversion, optional road name, iOS-safe positioning.
     - **Simplified Navigation Info Bar**: Minimal top bar with ETA and remaining distance.
     - **Real-Time Traffic Visualization**: TomTom Traffic Flow API with color-coding and 5-minute auto-refresh.
+    - **TomTom Traffic Incidents API**: Real-time verified incident data including accidents, construction, hazards, road closures, and delays with severity levels and geographic filtering.
     - **Crowdsourced Incident Reporting**: 23 incident types, real-time feed, map markers, 2-minute auto-refresh, 24-hour auto-expiration.
     - **Automatic GPS Position Lock & Real-Time Bearing Rotation**: Map auto-zooms and rotates to travel direction.
     - **GPS Singleton Provider**: Centralized, battery-optimized GPS tracking with EMA heading smoothing.
