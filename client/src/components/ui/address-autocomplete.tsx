@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { MapPin, Loader2, Star, Clock, Globe, AlertTriangle, ShoppingCart, UtensilsCrossed, Fuel, Store, Map } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Loader2, Star, Clock, Globe, AlertTriangle, ShoppingCart, UtensilsCrossed, Fuel, Store, Map, Navigation2, Crosshair, MapPinned } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   useTomTomAutocomplete, 
@@ -329,6 +331,90 @@ export function AddressAutocomplete({
   }, []);
 
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  // GPS Quick-Set Handler
+  const handleUseGPSLocation = useCallback(async () => {
+    if (gps?.status === 'ready' && gps?.position) {
+      setIsGettingLocation(true);
+      
+      try {
+        const { latitude, longitude } = gps.position;
+        
+        // Try reverse geocoding to get address
+        const response = await fetch(
+          `https://photon.komoot.io/reverse?lon=${longitude}&lat=${latitude}`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.features && data.features.length > 0) {
+            const feature = data.features[0];
+            const props = feature.properties;
+            const address = props.name || 
+                          `${props.street || ''} ${props.housenumber || ''}`.trim() ||
+                          props.city || 
+                          props.state || 
+                          'Current Location';
+            
+            setSearchTerm(address);
+            onChange(address);
+            onCoordinatesChange?.({ lat: latitude, lng: longitude });
+            
+            toast({
+              title: "GPS Location Set",
+              description: `Using: ${address}`,
+            });
+          }
+        } else {
+          // Fallback to coordinates
+          const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          setSearchTerm(coordAddress);
+          onChange(coordAddress);
+          onCoordinatesChange?.({ lat: latitude, lng: longitude });
+          
+          toast({
+            title: "GPS Location Set",
+            description: "Using GPS coordinates",
+          });
+        }
+      } catch (error) {
+        // Fallback to coordinates on error
+        const { latitude, longitude } = gps.position;
+        const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        setSearchTerm(coordAddress);
+        onChange(coordAddress);
+        onCoordinatesChange?.({ lat: latitude, lng: longitude });
+        
+        toast({
+          title: "GPS Location Set",
+          description: "Using GPS coordinates",
+        });
+      } finally {
+        setIsGettingLocation(false);
+      }
+    } else if (gps?.manualLocation) {
+      // Use manual location if available
+      setSearchTerm(gps.manualLocation.address || 'Manual Location');
+      onChange(gps.manualLocation.address || 'Manual Location');
+      onCoordinatesChange?.({ 
+        lat: gps.manualLocation.latitude, 
+        lng: gps.manualLocation.longitude 
+      });
+      
+      toast({
+        title: "Manual Location Set",
+        description: `Using: ${gps.manualLocation.address}`,
+      });
+    } else {
+      toast({
+        title: "GPS Unavailable",
+        description: "Please enable location services or enter address manually",
+        variant: "destructive",
+      });
+    }
+  }, [gps, onChange, onCoordinatesChange, toast]);
 
   // Dynamic placeholder based on POI category
   const dynamicPlaceholder = useMemo(() => {
@@ -339,62 +425,98 @@ export function AddressAutocomplete({
   }, [poiCategory, placeholder]);
 
   return (
-    <div className="space-y-2">
-      {/* POI Category Selector - Truck-Specific */}
-      <ToggleGroup 
-        type="single" 
-        value={poiCategory} 
-        onValueChange={(value) => {
-          setPoiCategory(value);
-          // Clear search when switching categories
-          if (value !== poiCategory) {
-            setSearchTerm('');
-            setDebouncedSearch('');
-          }
-        }}
-        className="justify-start gap-2 flex-wrap"
-      >
-        <ToggleGroupItem 
-          value="" 
-          aria-label="Search addresses"
-          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          data-testid="poi-category-addresses"
+    <div className="space-y-3">
+      {/* POI Category Selector - Enhanced Design */}
+      <div className="flex flex-col gap-2">
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          Search Type
+        </Label>
+        <ToggleGroup 
+          type="single" 
+          value={poiCategory} 
+          onValueChange={(value) => {
+            setPoiCategory(value);
+            // Clear search when switching categories
+            if (value !== poiCategory) {
+              setSearchTerm('');
+              setDebouncedSearch('');
+            }
+          }}
+          className="justify-start gap-2 flex-wrap"
         >
-          <MapPin className="h-4 w-4 mr-1.5" />
-          Addresses
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="7315" 
-          aria-label="Truck stops"
-          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          data-testid="poi-category-truck-stops"
+          <ToggleGroupItem 
+            value="" 
+            aria-label="Search addresses"
+            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-blue-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-blue-500/50 hover:scale-105"
+            data-testid="poi-category-addresses"
+          >
+            <MapPin className="h-4 w-4 mr-2" />
+            Addresses
+          </ToggleGroupItem>
+          <ToggleGroupItem 
+            value="7315" 
+            aria-label="Truck stops"
+            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-emerald-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-emerald-500/50 hover:scale-105"
+            data-testid="poi-category-truck-stops"
+          >
+            <Store className="h-4 w-4 mr-2" />
+            Truck Stops
+          </ToggleGroupItem>
+          <ToggleGroupItem 
+            value="7311" 
+            aria-label="Gas stations"
+            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-orange-600 data-[state=on]:to-orange-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-orange-500/50 hover:scale-105"
+            data-testid="poi-category-gas-stations"
+          >
+            <Fuel className="h-4 w-4 mr-2" />
+            Gas Stations
+          </ToggleGroupItem>
+          <ToggleGroupItem 
+            value="9920" 
+            aria-label="Rest areas"
+            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-purple-600 data-[state=on]:to-purple-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-purple-500/50 hover:scale-105"
+            data-testid="poi-category-rest-areas"
+          >
+            <UtensilsCrossed className="h-4 w-4 mr-2" />
+            Rest Areas
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
+      {/* GPS Quick Access Button - Premium Design */}
+      {(gps?.status === 'ready' || gps?.manualLocation) && (
+        <Button
+          onClick={handleUseGPSLocation}
+          disabled={isGettingLocation}
+          variant="outline"
+          className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200 group"
+          data-testid="button-use-gps-location"
         >
-          <Store className="h-4 w-4 mr-1.5" />
-          Truck Stops
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="7311" 
-          aria-label="Gas stations"
-          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          data-testid="poi-category-gas-stations"
-        >
-          <Fuel className="h-4 w-4 mr-1.5" />
-          Gas Stations
-        </ToggleGroupItem>
-        <ToggleGroupItem 
-          value="9920" 
-          aria-label="Rest areas"
-          className="h-9 px-3 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          data-testid="poi-category-rest-areas"
-        >
-          <UtensilsCrossed className="h-4 w-4 mr-1.5" />
-          Rest Areas
-        </ToggleGroupItem>
-      </ToggleGroup>
+          {isGettingLocation ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Getting Location...
+            </>
+          ) : (
+            <>
+              <Crosshair className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                Use My Current Location
+              </span>
+              {gps?.position && (
+                <Badge variant="secondary" className="ml-auto bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                  GPS Ready
+                </Badge>
+              )}
+            </>
+          )}
+        </Button>
+      )}
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className="relative">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity blur-sm"></div>
             <Input
               id={id}
               value={searchTerm}
@@ -403,7 +525,7 @@ export function AddressAutocomplete({
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
               placeholder={dynamicPlaceholder}
-              className={cn("h-12 text-base pr-10", className)}
+              className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all", className)}
               data-testid={testId}
               autoComplete="off"
               autoCorrect="off"
@@ -412,11 +534,12 @@ export function AddressAutocomplete({
               data-form-type="other"
               data-lpignore="true"
             />
-            {isLoading && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {isLoading && (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
+              )}
+              <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            </div>
           </div>
         </PopoverTrigger>
       <PopoverContent 
