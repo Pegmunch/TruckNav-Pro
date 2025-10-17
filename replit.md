@@ -98,6 +98,16 @@ All TomTom features use the `VITE_TOMTOM_API_KEY` environment variable.
 - **POI Categories**: Truck stops (7315), Gas stations (7311), Rest areas (9920), Service areas
 - **Fallback**: postcodes.io for UK postcode geocoding
 
+### 5. TomTom POI Search API
+- **Endpoint**: `/api/poi-search`
+- **Purpose**: Location-aware truck-specific POI search replacing unreliable Photon-based searches
+- **Features**: Real-time POI discovery with accurate location biasing, truck-relevant categories, 10-25km search radius
+- **POI Types**: fuel (7311/7312/7313), parking (7309), restaurant (7318), truck_stop (7315)
+- **Integration Points**: NavigationSidebar Tools & Widgets (10km radius), SimplifiedRouteDrawer POI section (25km radius)
+- **Location Sources**: GPS position → manual location → fromCoordinates (address input fallback)
+- **Fallback**: Photon/OSM search if TomTom returns no results
+- **Response Format**: Normalized Facility objects with id, name, address, city, coordinates, type, amenities
+
 ### 2. TomTom Truck Routing API  
 - **Integration**: Primary routing engine in `calculateStrictVehicleClassRoute`
 - **Features**: Full truck-specific support with vehicle dimensions (height, width, length, weight), axle weight distribution, hazmat routing, commercial vehicle restrictions
