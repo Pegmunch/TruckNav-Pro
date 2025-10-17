@@ -46,7 +46,6 @@ import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import SpeedDisplay from "@/components/map/speed-display";
 import SpeedometerHUD from "@/components/navigation/speedometer-hud";
-import ManualSearchPanel from "@/components/navigation/manual-search-panel";
 import { GPSProvider, useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 import { geocodeUKPostcode } from "@/lib/uk-postcode-geocoding";
@@ -2089,23 +2088,6 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* GPS Unavailable Alert - Shows manual location UI */}
-                  {(gpsData?.status === 'unavailable' || gpsData?.status === 'error' || gpsData?.errorType === 'PERMISSION_DENIED') && (
-                    <div className="absolute left-4 right-4 z-[101]" style={{ top: 'calc(3.5rem + var(--safe-area-top))' }}>
-                      <ManualSearchPanel
-                        fromLocation={fromLocation}
-                        toLocation={toLocation}
-                        onFromLocationChange={setFromLocation}
-                        onToLocationChange={setToLocation}
-                        onFromCoordinatesChange={setFromCoordinates}
-                        onToCoordinatesChange={setToCoordinates}
-                        onPlanRoute={handlePlanRoute}
-                        currentRoute={currentRoute}
-                        selectedProfile={selectedProfile}
-                        isCalculating={calculateRouteMutation.isPending}
-                      />
-                    </div>
-                  )}
 
                   {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
                   <div 
