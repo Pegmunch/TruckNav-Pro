@@ -455,21 +455,15 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     setSelectedCategory(isSelecting ? categoryType : "");
     setSearchQuery(""); // Clear text search when selecting category
     
-    // Provide feedback to user
+    // Toast removed per user request - transparent pop-up issue in PWA mode
     if (isSelecting) {
       const categoryLabel = POI_CATEGORIES.find(c => c.type === categoryType)?.label || categoryType;
+      // Location info logged to console instead of toast
       if (hasLocation) {
         const source = gpsPosition ? 'GPS' : manualLocation ? 'your location' : 'route location';
-        toast({
-          title: `Searching for ${categoryLabel}`,
-          description: `Finding nearby locations using ${source}...`,
-        });
+        console.log(`[POI-SEARCH] Searching for ${categoryLabel} using ${source}`);
       } else {
-        toast({
-          title: `${categoryLabel} search ready`,
-          description: "Enter a location in route planner or enable GPS to find nearby options",
-          duration: 5000,
-        });
+        console.log(`[POI-SEARCH] ${categoryLabel} search ready - waiting for location`);
       }
     }
   };
