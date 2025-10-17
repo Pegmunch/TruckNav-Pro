@@ -116,9 +116,10 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const { toast } = useToast();
   const { formatDistance } = useMeasurement();
   
-  // Get GPS position for POI search
+  // Get GPS position and manual location for POI search
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
+  const manualLocation = gps?.manualLocation ?? null;
   
   // Weather data hook
   const { weatherData, isLoading: isWeatherLoading, error: weatherError, refreshWeather } = useWeatherData();
@@ -283,19 +284,20 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
 
   // Use Photon API for POI search with 150km radius filtering
   const { data: photonData, isLoading: isPhotonLoading, error: photonError } = useQuery({
-    queryKey: ['/api/photon-autocomplete', selectedCategory, searchQuery, gpsPosition?.latitude, gpsPosition?.longitude, coordinates?.lat, coordinates?.lng],
+    queryKey: ['/api/photon-autocomplete', selectedCategory, searchQuery, gpsPosition?.latitude, gpsPosition?.longitude, manualLocation?.latitude, manualLocation?.longitude, coordinates?.lat, coordinates?.lng],
     queryFn: async () => {
-      // Use GPS position first, then coordinates prop
-      // NO HARDCODED FALLBACK - real GPS only
-      const lat = gpsPosition?.latitude || coordinates?.lat;
-      const lng = gpsPosition?.longitude || coordinates?.lng;
+      // CRITICAL: Use GPS first, then manual location, then route coordinates
+      // Priority: 1) GPS position → 2) Manual location → 3) Route fromCoordinates
+      const lat = gpsPosition?.latitude || manualLocation?.latitude || coordinates?.lat;
+      const lng = gpsPosition?.longitude || manualLocation?.longitude || coordinates?.lng;
       
       if (!lat || !lng) {
-        console.log('[UNIFIED-SEARCH] No GPS available - skipping POI search');
+        console.log('[UNIFIED-SEARCH] No location available - skipping POI search');
         return [];
       }
       
-      console.log('[UNIFIED-SEARCH] POI search with GPS:', { lat, lng });
+      const source = gpsPosition ? 'GPS' : manualLocation ? 'Manual' : 'Route';
+      console.log(`[UNIFIED-SEARCH] POI search with ${source} location:`, { lat, lng });
       
       const url = new URL('/api/photon-autocomplete', window.location.origin);
       url.searchParams.set('q', selectedCategory ? POI_CATEGORIES.find(c => c.type === selectedCategory)?.label || searchQuery : searchQuery || 'amenity');
@@ -442,8 +444,34 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
 
   // Handle category selection
   const handleCategorySelect = (categoryType: string) => {
-    setSelectedCategory(categoryType === selectedCategory ? "" : categoryType);
+    // Check if we have any location available
+    const hasLocation = Boolean(
+      gpsPosition || 
+      manualLocation || 
+      coordinates
+    );
+    
+    const isSelecting = categoryType !== selectedCategory;
+    setSelectedCategory(isSelecting ? categoryType : "");
     setSearchQuery(""); // Clear text search when selecting category
+    
+    // Provide feedback to user
+    if (isSelecting) {
+      const categoryLabel = POI_CATEGORIES.find(c => c.type === categoryType)?.label || categoryType;
+      if (hasLocation) {
+        const source = gpsPosition ? 'GPS' : manualLocation ? 'your location' : 'route location';
+        toast({
+          title: `Searching for ${categoryLabel}`,
+          description: `Finding nearby locations using ${source}...`,
+        });
+      } else {
+        toast({
+          title: `${categoryLabel} search ready`,
+          description: "Enter a location in route planner or enable GPS to find nearby options",
+          duration: 5000,
+        });
+      }
+    }
   };
   
   // Handle keyboard navigation for POI chips

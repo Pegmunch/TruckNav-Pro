@@ -483,14 +483,30 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   // POI Search handlers - now perform real searches
   const handlePOISearch = (category: string) => {
+    // Check if we have any location available
+    const hasLocation = Boolean(
+      gpsData?.position || 
+      gpsData?.manualLocation || 
+      coordinates
+    );
+    
     setSelectedPOICategory(category === selectedPOICategory ? "" : category);
     setFacilitySearchInput(""); // Clear text search when selecting category
     
     if (category !== selectedPOICategory) {
-      toast({
-        title: `Searching for ${category.replace('_', ' ')}`,
-        description: "Finding nearby locations...",
-      });
+      if (hasLocation) {
+        const source = gpsData?.position ? 'GPS' : gpsData?.manualLocation ? 'your location' : 'route location';
+        toast({
+          title: `Searching for ${category.replace('_', ' ')}`,
+          description: `Finding nearby locations using ${source}...`,
+        });
+      } else {
+        toast({
+          title: `${category.replace('_', ' ')} search ready`,
+          description: "Enter a location above or enable GPS to find nearby options",
+          duration: 5000,
+        });
+      }
     } else {
       toast({
         title: "Search cleared",
