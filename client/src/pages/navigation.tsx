@@ -1945,17 +1945,20 @@ function NavigationPageContent() {
     }
   };
 
-  // Get current coordinates for search - use actual GPS position
+  // Get current coordinates for search - use GPS position, manual location, or fromCoordinates
   const currentCoordinates = gpsData?.position 
     ? { lat: gpsData.position.latitude, lng: gpsData.position.longitude }
-    : null;
+    : gpsData?.manualLocation
+    ? { lat: gpsData.manualLocation.latitude, lng: gpsData.manualLocation.longitude }
+    : fromCoordinates;
   
   // Log GPS usage for debugging
   useEffect(() => {
     if (currentCoordinates) {
-      console.log('[NAVIGATION] Using GPS coordinates:', currentCoordinates);
+      const source = gpsData?.position ? 'GPS' : gpsData?.manualLocation ? 'manual location' : 'fromCoordinates';
+      console.log(`[NAVIGATION] Using ${source} coordinates:`, currentCoordinates);
     } else {
-      console.log('[NAVIGATION] No GPS coordinates available - waiting for GPS signal');
+      console.log('[NAVIGATION] No coordinates available - waiting for GPS signal or manual location');
     }
   }, [currentCoordinates?.lat, currentCoordinates?.lng]);
   
@@ -2522,7 +2525,7 @@ function NavigationPageContent() {
             onShowVehicleSettings={setShowVehicleSettings}
             
             // Search functionality props
-            coordinates={currentCoordinates}
+            coordinates={currentCoordinates ?? undefined}
             onSelectFacility={handleSelectFacility}
             onNavigateToLocation={handleNavigateToLocation}
             
