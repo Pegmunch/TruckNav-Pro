@@ -302,42 +302,20 @@ export default function ManualSearchPanel({
             // Success: Set the reverse geocoded address AND coordinates
             onFromLocationChange(result.address);
             onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-            toast({
-              title: "Using current location",
-              description: `${result.address} (accuracy: ${Math.round(accuracy)}m)`,
-            });
+            // Toast removed per user request - transparent pop-up issue in PWA mode
           } else {
             // Error result from reverse geocoding
             const coordsString = formatCoordinatesAsAddress(latitude, longitude);
             onFromLocationChange(coordsString);
             onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-            
-            // Show error-specific messages
-            const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
-                              result.error === 'RATE_LIMIT' ? 'Too many requests' :
-                              result.error === 'NO_RESULTS' ? 'No address found' :
-                              'Unable to get address';
-            
-            toast({
-              title: errorTitle,
-              description: `${result.message}. Using coordinates: ${coordsString}`,
-              variant: result.error === 'RATE_LIMIT' ? 'destructive' : 'default',
-              action: (result.error === 'TIMEOUT' || result.error === 'NETWORK') ? (
-                <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
-                  Retry
-                </Button>
-              ) : undefined,
-            });
+            // Toast removed per user request - transparent pop-up issue in PWA mode
           }
         } catch (error) {
           // Unexpected error: Fallback to coordinates
           const coordsString = formatCoordinatesAsAddress(latitude, longitude);
           onFromLocationChange(coordsString);
           onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-          toast({
-            title: "Using GPS coordinates",
-            description: `Unable to determine address. Using: ${coordsString} (accuracy: ${Math.round(accuracy)}m)`,
-          });
+          // Toast removed per user request - transparent pop-up issue in PWA mode
         } finally {
           setIsReverseGeocoding(false);
         }
@@ -364,16 +342,7 @@ export default function ManualSearchPanel({
             break;
         }
         
-        toast({
-          title: errorMessage,
-          description: errorDescription,
-          variant: "destructive",
-          action: (
-            <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
-              Retry
-            </Button>
-          )
-        });
+        // Toast removed per user request - transparent pop-up issue in PWA mode
         
         console.error('[GPS-BUTTON] Error getting position:', error);
       },
