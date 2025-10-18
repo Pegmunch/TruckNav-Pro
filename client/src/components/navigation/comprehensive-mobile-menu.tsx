@@ -351,35 +351,36 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* From Location with Autocomplete */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                       <Label htmlFor="from-input" className="text-sm font-medium">
                         From
                       </Label>
-                      <Popover open={fromOpen} onOpenChange={setFromOpen}>
-                        <PopoverTrigger asChild>
-                          <Input
-                            id="from-input"
-                            placeholder="Enter starting location..."
-                            value={fromInput}
-                            onChange={(e) => {
-                              setFromInput(e.target.value);
-                              onFromLocationChange(e.target.value);
-                              if (e.target.value.length >= 2) {
-                                setFromOpen(true);
-                              } else {
-                                setFromOpen(false);
-                              }
-                            }}
-                            data-testid="input-from-location"
-                            className="h-11"
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent
-                          side="bottom"
-                          align="start"
-                          className="w-[--radix-popover-trigger-width] p-0"
-                          onOpenAutoFocus={(e) => e.preventDefault()}
-                        >
+                      <Input
+                        id="from-input"
+                        placeholder="Enter starting location..."
+                        value={fromInput}
+                        onChange={(e) => {
+                          setFromInput(e.target.value);
+                          onFromLocationChange(e.target.value);
+                          if (e.target.value.length >= 2) {
+                            setFromOpen(true);
+                          } else {
+                            setFromOpen(false);
+                          }
+                        }}
+                        onFocus={() => {
+                          if (fromInput.length >= 2) {
+                            setFromOpen(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setFromOpen(false), 200);
+                        }}
+                        data-testid="input-from-location"
+                        className="h-11"
+                      />
+                      {fromOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-950 border rounded-md shadow-lg">
                           <Command>
                             <CommandList className="max-h-[200px]">
                               {fromLoading && (
@@ -411,40 +412,41 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                               )}
                             </CommandList>
                           </Command>
-                        </PopoverContent>
-                      </Popover>
+                        </div>
+                      )}
                     </div>
 
                     {/* To Location with Autocomplete */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                       <Label htmlFor="to-input" className="text-sm font-medium">
                         To
                       </Label>
-                      <Popover open={toOpen} onOpenChange={setToOpen}>
-                        <PopoverTrigger asChild>
-                          <Input
-                            id="to-input"
-                            placeholder="Enter destination..."
-                            value={toInput}
-                            onChange={(e) => {
-                              setToInput(e.target.value);
-                              onToLocationChange(e.target.value);
-                              if (e.target.value.length >= 2) {
-                                setToOpen(true);
-                              } else {
-                                setToOpen(false);
-                              }
-                            }}
-                            data-testid="input-to-location"
-                            className="h-11"
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent
-                          side="bottom"
-                          align="start"
-                          className="w-[--radix-popover-trigger-width] p-0"
-                          onOpenAutoFocus={(e) => e.preventDefault()}
-                        >
+                      <Input
+                        id="to-input"
+                        placeholder="Enter destination..."
+                        value={toInput}
+                        onChange={(e) => {
+                          setToInput(e.target.value);
+                          onToLocationChange(e.target.value);
+                          if (e.target.value.length >= 2) {
+                            setToOpen(true);
+                          } else {
+                            setToOpen(false);
+                          }
+                        }}
+                        onFocus={() => {
+                          if (toInput.length >= 2) {
+                            setToOpen(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setToOpen(false), 200);
+                        }}
+                        data-testid="input-to-location"
+                        className="h-11"
+                      />
+                      {toOpen && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-950 border rounded-md shadow-lg">
                           <Command>
                             <CommandList className="max-h-[200px]">
                               {toLoading && (
@@ -476,8 +478,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                               )}
                             </CommandList>
                           </Command>
-                        </PopoverContent>
-                      </Popover>
+                        </div>
+                      )}
                     </div>
 
                     {/* Current Vehicle Info */}
