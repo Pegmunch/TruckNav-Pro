@@ -80,7 +80,7 @@ function NavigationControlsStack({
 }: NavigationControlsStackProps) {
   return (
     <div 
-      className="fixed z-[500] flex flex-col gap-2 pointer-events-auto" 
+      className="fixed z-[1600] flex flex-col gap-2 pointer-events-auto" 
       style={{ 
         top: mode === 'navigate' ? 'calc(140px + var(--safe-area-top))' : 'calc(7.5rem + var(--safe-area-top))',
         right: 'calc(0.75rem + var(--safe-area-right))'
@@ -2325,6 +2325,7 @@ function NavigationPageContent() {
     <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
+        <>
         <div className="mobile-layout">
           
           {/* AR Mode (Full Replacement) */}
@@ -2481,25 +2482,7 @@ function NavigationPageContent() {
                     </div>
                   </div>
 
-                  {/* BULLETPROOF: Reusable Navigation Controls - ALL 8 BUTTONS */}
-                  <NavigationControlsStack
-                    mapRef={mapRef}
-                    mapBearing={mapBearing}
-                    map3DMode={map3DMode}
-                    onToggle3D={() => {
-                      mapRef.current?.toggle3DMode();
-                      setMap3DMode(!map3DMode);
-                    }}
-                    showTrafficLayer={showTrafficLayer}
-                    onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
-                    mapViewMode={mapViewMode}
-                    onToggleMapView={() => {
-                      const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
-                      setMapViewMode(newMode);
-                      mapRef.current?.toggleMapView();
-                    }}
-                    mode="preview"
-                  />
+                  {/* Navigation Controls moved outside MapShell - see bottom of mobile layout */}
 
                   {/* Start Navigation Button - Bottom Center (Preview Mode) */}
                   <Button
@@ -2584,25 +2567,7 @@ function NavigationPageContent() {
                   )}
 
 
-                  {/* BULLETPROOF: Reusable Navigation Controls - ALL 8 BUTTONS (Navigate Mode) */}
-                  <NavigationControlsStack
-                    mapRef={mapRef}
-                    mapBearing={mapBearing}
-                    map3DMode={map3DMode}
-                    onToggle3D={() => {
-                      mapRef.current?.toggle3DMode();
-                      setMap3DMode(!map3DMode);
-                    }}
-                    showTrafficLayer={showTrafficLayer}
-                    onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
-                    mapViewMode={mapViewMode}
-                    onToggleMapView={() => {
-                      const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
-                      setMapViewMode(newMode);
-                      mapRef.current?.toggleMapView();
-                    }}
-                    mode="navigate"
-                  />
+                  {/* Navigation Controls moved outside MapShell - see bottom of mobile layout */}
 
                   {/* Professional Oval Speedometer HUD - THINNER/Smaller Footer */}
                   <div 
@@ -2720,6 +2685,29 @@ function NavigationPageContent() {
           )}
 
         </div>
+
+        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] */}
+        {(mobileNavMode === 'preview' || mobileNavMode === 'navigate') && (
+          <NavigationControlsStack
+            mapRef={mapRef}
+            mapBearing={mapBearing}
+            map3DMode={map3DMode}
+            onToggle3D={() => {
+              mapRef.current?.toggle3DMode();
+              setMap3DMode(!map3DMode);
+            }}
+            showTrafficLayer={showTrafficLayer}
+            onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
+            mapViewMode={mapViewMode}
+            onToggleMapView={() => {
+              const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+              setMapViewMode(newMode);
+              mapRef.current?.toggleMapView();
+            }}
+            mode={mobileNavMode === 'navigate' ? 'navigate' : 'preview'}
+          />
+        )}
+        </>
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */
         <div className={cn(
