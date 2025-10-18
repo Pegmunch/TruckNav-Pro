@@ -2740,6 +2740,178 @@ function NavigationPageContent() {
                   </div>
                 )}
                 
+                {/* NAVIGATE MODE OVERLAYS - Desktop (same as mobile) */}
+                {isNavigating && (
+                  <>
+                    {/* Simplified Navigation HUD - Minimal Info Bar */}
+                    {currentRoute && (
+                      <div className="absolute top-0 left-0 right-0 z-[95] bg-black/80 backdrop-blur-sm text-white shadow-lg" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
+                        <div className="px-4 py-2 flex items-center justify-center">
+                          <span className="text-sm font-medium">
+                            Arrive: {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} • {(currentRoute.distance || 0).toFixed(1)} mi
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Turn Indicator - Large bubble at top center */}
+                    {nextTurn && (
+                      <TurnIndicator
+                        direction={nextTurn.direction}
+                        distance={nextTurn.distance}
+                        unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                        roadName={nextTurn.roadName}
+                      />
+                    )}
+
+                    {/* Map Control Buttons - Right Side Stack (z-[500]+) */}
+                    <div 
+                      className="fixed z-[500] flex flex-col gap-3 pointer-events-auto" 
+                      style={{ 
+                        top: 'calc(4.5rem + var(--safe-area-top))',
+                        right: 'calc(1rem + var(--safe-area-right))'
+                      }}
+                      data-testid="navigation-controls-right"
+                    >
+                      <Button
+                        size="icon"
+                        onClick={() => mapRef.current?.resetBearing()}
+                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        data-testid="button-compass-reset-navigate"
+                        aria-label="Reset bearing to North"
+                      >
+                        <Compass 
+                          className="h-5 w-5 transition-transform duration-300" 
+                          style={{ transform: `rotate(${mapBearing}deg)` }}
+                        />
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => {
+                          if (mapRef.current) {
+                            mapRef.current.zoomToUserLocation({
+                              zoom: 17.5,
+                              pitch: 45,
+                              duration: 1500
+                            });
+                          }
+                        }}
+                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        data-testid="button-recenter-navigate"
+                        aria-label="Recenter on current location"
+                      >
+                        <Crosshair className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => mapRef.current?.zoomIn()}
+                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        data-testid="button-zoom-in-navigate"
+                        aria-label="Zoom in"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => mapRef.current?.zoomOut()}
+                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        data-testid="button-zoom-out-navigate"
+                        aria-label="Zoom out"
+                      >
+                        <Minus className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMap3DMode(!map3DMode);
+                        }}
+                        className={cn(
+                          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                          map3DMode 
+                            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
+                            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                        )}
+                        data-testid="button-tilt-map-navigate"
+                        aria-label={map3DMode ? "Switch to flat view" : "Switch to tilted view"}
+                      >
+                        <Box className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => setShowTrafficLayer(!showTrafficLayer)}
+                        className={cn(
+                          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                          showTrafficLayer 
+                            ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 hover:scale-105 border-orange-400/50"
+                            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                        )}
+                        data-testid="button-traffic-toggle-navigate"
+                        aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
+                      >
+                        <Layers className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        onClick={() => {
+                          const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                          setMapViewMode(newMode);
+                          mapRef.current?.toggleMapView();
+                        }}
+                        className={cn(
+                          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                          mapViewMode === 'satellite'
+                            ? "bg-gradient-to-br from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:scale-105 border-green-400/50"
+                            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                        )}
+                        data-testid="button-map-view-toggle-navigate"
+                        aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
+                      >
+                        <Map className="h-5 w-5" />
+                      </Button>
+                    </div>
+
+                    {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
+                    <div 
+                      className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                      style={{
+                        bottom: 'calc(20px + var(--safe-area-bottom, 0px))'
+                      }}
+                      data-testid="speedometer-hud-navigate"
+                    >
+                      <SpeedometerHUD 
+                        className="shadow-2xl" 
+                        speedLimit={currentSpeedLimit || undefined}
+                        roadInfo={roadInfo}
+                        isNavigating={true}
+                      />
+                    </div>
+
+                    {/* Cancel Route Button - Square X button at bottom-left */}
+                    <Button
+                      onClick={handleStopNavigation}
+                      size="icon"
+                      variant="destructive"
+                      className={cn(
+                        "fixed z-[170] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
+                        completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
+                      )}
+                      style={{
+                        bottom: 'calc(20px + var(--safe-area-bottom, 0px))',
+                        left: 'calc(20px + var(--safe-area-left, 0px))'
+                      }}
+                      data-testid="button-cancel-route"
+                      aria-label="Cancel route and return to start"
+                    >
+                      {completeJourneyMutation.isPending ? (
+                        <Loader2 className="w-7 h-7 animate-spin" />
+                      ) : (
+                        <X className="w-7 h-7" />
+                      )}
+                    </Button>
+                  </>
+                )}
+                
                 {/* Legal Ownership Section - Desktop */}
                 <MapLegalOwnership compact={true} className="hidden sm:block" />
               </>
