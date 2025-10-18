@@ -700,70 +700,65 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     try {
-      // Custom style with OpenStreetMap tiles
-      const customStyle = {
-        version: 8,
-        sources: {
-          'osm-tiles': {
-            type: 'raster',
-            tiles: [
-              'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-            ],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors'
-          },
-          'satellite-tiles': {
-            type: 'raster',
-            tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-            ],
-            tileSize: 256,
-            attribution: '© Esri'
-          }
-        },
-        layers: [
-          {
-            id: 'roads-2d-layer',
-            type: 'raster',
-            source: 'osm-tiles',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: { visibility: 'visible' }
-          },
-          {
-            id: 'roads-3d-layer',
-            type: 'raster',
-            source: 'osm-tiles',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: { visibility: 'none' }
-          },
-          {
-            id: 'satellite-2d-layer',
-            type: 'raster',
-            source: 'satellite-tiles',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: { visibility: 'none' }
-          },
-          {
-            id: 'satellite-3d-layer',
-            type: 'raster',
-            source: 'satellite-tiles',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: { visibility: 'none' }
-          }
-        ]
-      };
-
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: customStyle as any,
-        // CRITICAL: Don't use any default center - wait for GPS
-        // Using world view (0,0) with low zoom while waiting for GPS
+        style: {
+          version: 8,
+          sources: {
+            'osm-tiles': {
+              type: 'raster',
+              tiles: [
+                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              ],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            },
+            'satellite-tiles': {
+              type: 'raster',
+              tiles: [
+                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              ],
+              tileSize: 256,
+              attribution: '© Esri'
+            }
+          },
+          layers: [
+            {
+              id: 'roads-2d-layer',
+              type: 'raster',
+              source: 'osm-tiles',
+              minzoom: 0,
+              maxzoom: 22,
+              layout: { visibility: 'visible' }
+            },
+            {
+              id: 'roads-3d-layer',
+              type: 'raster',
+              source: 'osm-tiles',
+              minzoom: 0,
+              maxzoom: 22,
+              layout: { visibility: 'none' }
+            },
+            {
+              id: 'satellite-2d-layer',
+              type: 'raster',
+              source: 'satellite-tiles',
+              minzoom: 0,
+              maxzoom: 22,
+              layout: { visibility: 'none' }
+            },
+            {
+              id: 'satellite-3d-layer',
+              type: 'raster',
+              source: 'satellite-tiles',
+              minzoom: 0,
+              maxzoom: 22,
+              layout: { visibility: 'none' }
+            }
+          ]
+        } as any,
         center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [0, 0],
         zoom: gpsPosition ? preferences.zoomLevel : 2,
         pitch: 0,
