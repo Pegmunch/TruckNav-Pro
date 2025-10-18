@@ -2703,8 +2703,10 @@ function NavigationPageContent() {
         onOpenChange={setShowComprehensiveMenu}
         onFromLocationChange={setFromLocation}
         onToLocationChange={setToLocation}
+        onPlanRoute={handlePlanRoute}
         onStartNavigation={handleStartNavigation}
         currentRoute={currentRoute}
+        isCalculating={calculateRouteMutation.isPending}
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);

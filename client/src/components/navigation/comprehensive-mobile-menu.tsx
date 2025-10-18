@@ -80,8 +80,10 @@ interface ComprehensiveMobileMenuProps {
   // Route planning
   onFromLocationChange: (value: string) => void;
   onToLocationChange: (value: string) => void;
+  onPlanRoute: () => Promise<void>;
   onStartNavigation: () => void;
   currentRoute: RouteType | null;
+  isCalculating?: boolean;
   // Vehicle
   selectedProfile: VehicleProfile | null;
   onProfileSelect: (profile: VehicleProfile) => void;
@@ -95,8 +97,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   onOpenChange,
   onFromLocationChange,
   onToLocationChange,
+  onPlanRoute,
   onStartNavigation,
   currentRoute,
+  isCalculating = false,
   selectedProfile,
   onProfileSelect,
   coordinates,
@@ -493,18 +497,32 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Plan Route Button */}
+                    {/* Start Navigation Button */}
                     <Button
-                      onClick={() => {
+                      onClick={async () => {
+                        // Calculate route first if not already calculated
+                        if (!currentRoute) {
+                          await onPlanRoute();
+                        }
+                        // Then start navigation
                         onStartNavigation();
                         onOpenChange(false);
                       }}
                       className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
-                      disabled={!fromInput || !toInput}
+                      disabled={!fromInput || !toInput || isCalculating}
                       data-testid="button-start-navigation"
                     >
-                      <Navigation className="h-5 w-5 mr-2" />
-                      Start Navigation
+                      {isCalculating ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Calculating Route...
+                        </>
+                      ) : (
+                        <>
+                          <Navigation className="h-5 w-5 mr-2" />
+                          Start Navigation
+                        </>
+                      )}
                     </Button>
 
                     {currentRoute && (
