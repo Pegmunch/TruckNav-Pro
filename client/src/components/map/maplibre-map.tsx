@@ -963,7 +963,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }
       });
 
-      // Add white outline for maximum visibility
+      // Add dark outline for professional navigation appearance
       map.current.addLayer({
         id: 'route-outline',
         type: 'line',
@@ -973,13 +973,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#ffffff', // White outline
-          'line-width': 16,
-          'line-opacity': 0.95
+          'line-color': '#1e3a5f', // Dark blue outline
+          'line-width': 10,
+          'line-opacity': 0.9
         }
       });
 
-      // Main route line with maximum visibility
+      // Main route line - Professional cyan/turquoise navigation color
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -989,8 +989,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#60a5fa', // Light blue
-          'line-width': 12,
+          'line-color': '#06b6d4', // Professional cyan/turquoise
+          'line-width': 7,
           'line-opacity': 1
         }
       });
