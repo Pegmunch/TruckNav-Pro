@@ -2705,8 +2705,10 @@ function NavigationPageContent() {
         onToLocationChange={setToLocation}
         onPlanRoute={handlePlanRoute}
         onStartNavigation={handleStartNavigation}
+        onStopNavigation={handleStopNavigation}
         currentRoute={currentRoute}
         isCalculating={calculateRouteMutation.isPending}
+        isNavigating={isNavigating}
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);

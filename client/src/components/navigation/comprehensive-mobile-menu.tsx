@@ -82,8 +82,10 @@ interface ComprehensiveMobileMenuProps {
   onToLocationChange: (value: string) => void;
   onPlanRoute: () => Promise<void>;
   onStartNavigation: () => void;
+  onStopNavigation?: () => void;
   currentRoute: RouteType | null;
   isCalculating?: boolean;
+  isNavigating?: boolean;
   // Vehicle
   selectedProfile: VehicleProfile | null;
   onProfileSelect: (profile: VehicleProfile) => void;
@@ -99,8 +101,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   onToLocationChange,
   onPlanRoute,
   onStartNavigation,
+  onStopNavigation,
   currentRoute,
   isCalculating = false,
+  isNavigating = false,
   selectedProfile,
   onProfileSelect,
   coordinates,
@@ -497,33 +501,49 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Start Navigation Button */}
-                    <Button
-                      onClick={async () => {
-                        // Calculate route first if not already calculated
-                        if (!currentRoute) {
-                          await onPlanRoute();
-                        }
-                        // Then start navigation
-                        onStartNavigation();
-                        onOpenChange(false);
-                      }}
-                      className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
-                      disabled={!fromInput || !toInput || isCalculating}
-                      data-testid="button-start-navigation"
-                    >
-                      {isCalculating ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Calculating Route...
-                        </>
-                      ) : (
-                        <>
-                          <Navigation className="h-5 w-5 mr-2" />
-                          Start Navigation
-                        </>
-                      )}
-                    </Button>
+                    {/* Navigation Control Buttons */}
+                    {isNavigating ? (
+                      <Button
+                        onClick={() => {
+                          if (onStopNavigation) {
+                            onStopNavigation();
+                          }
+                          onOpenChange(false);
+                        }}
+                        className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                        data-testid="button-stop-navigation"
+                      >
+                        <X className="h-5 w-5 mr-2" />
+                        Stop Navigation
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={async () => {
+                          // Calculate route first if not already calculated
+                          if (!currentRoute) {
+                            await onPlanRoute();
+                          }
+                          // Then start navigation
+                          onStartNavigation();
+                          onOpenChange(false);
+                        }}
+                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                        disabled={!fromInput || !toInput || isCalculating}
+                        data-testid="button-start-navigation"
+                      >
+                        {isCalculating ? (
+                          <>
+                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                            Calculating Route...
+                          </>
+                        ) : (
+                          <>
+                            <Navigation className="h-5 w-5 mr-2" />
+                            Start Navigation
+                          </>
+                        )}
+                      </Button>
+                    )}
 
                     {currentRoute && (
                       <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
