@@ -2294,7 +2294,7 @@ function NavigationPageContent() {
                     onViewIncidents={() => setShowIncidentFeed(true)}
                     className="fixed z-[200] pointer-events-auto"
                     style={{
-                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      bottom: 'calc(100px + var(--safe-area-bottom))',
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
                   />
@@ -2508,7 +2508,7 @@ function NavigationPageContent() {
                     onViewIncidents={() => setShowIncidentFeed(true)}
                     className="fixed z-[200] pointer-events-auto"
                     style={{
-                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      bottom: 'calc(100px + var(--safe-area-bottom))',
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
                     data-testid="mobile-fab-navigate"
