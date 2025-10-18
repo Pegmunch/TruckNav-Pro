@@ -2476,8 +2476,8 @@ function NavigationPageContent() {
           "automotive-layout desktop-sidebar"
         )}>
           
-          {/* Desktop Hamburger Menu - Only visible on desktop when sidebar closed and NOT navigating */}
-          {!isSidebarOpen && !isNavigating && (
+          {/* Desktop Hamburger Menu - Always visible on desktop when sidebar closed */}
+          {!isSidebarOpen && (
             <Button
               variant="default"
               size="icon"
