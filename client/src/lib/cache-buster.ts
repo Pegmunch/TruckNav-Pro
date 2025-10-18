@@ -1,6 +1,6 @@
 // Cache Buster - Forces PWA update when version changes
 const STORAGE_KEY = 'trucknav_app_version';
-const VERSION_CHECK_INTERVAL = 60000; // Check every minute
+const VERSION_CHECK_INTERVAL = 30000; // Check every 30 seconds for faster updates
 
 export async function checkAppVersion(): Promise<void> {
   try {
@@ -11,8 +11,14 @@ export async function checkAppVersion(): Promise<void> {
       return;
     }
     
-    // Fetch the current version from server
-    const response = await fetch('/app-version.json?t=' + Date.now());
+    // Fetch the current version from server with aggressive no-cache headers
+    const response = await fetch('/app-version.json?t=' + Date.now(), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
     if (!response.ok) {
       console.warn('[CACHE-BUSTER] Could not fetch version file');
       return;

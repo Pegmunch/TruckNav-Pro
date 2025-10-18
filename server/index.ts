@@ -23,6 +23,20 @@ app.use(sessionBridge);
 // Re-enable security middleware for reliable navigation functionality
 applySecurityMiddleware(app);
 
+// DEVELOPMENT ONLY: Aggressive no-cache headers to prevent browser caching issues
+// This ensures changes are immediately visible without hard refresh
+if (app.get("env") === "development") {
+  app.use((req, res, next) => {
+    // Set aggressive no-cache headers on all responses
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    next();
+  });
+  log('🚫 Development mode: Aggressive cache prevention enabled');
+}
+
 // Handle Stripe webhooks with raw body before JSON parsing
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' })); // Reduced payload size to save memory
