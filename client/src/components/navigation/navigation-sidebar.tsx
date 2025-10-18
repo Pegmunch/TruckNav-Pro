@@ -638,7 +638,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 h-screen bg-card border-r border-border z-[40] shadow-lg",
+          "fixed left-0 top-0 h-screen bg-white border-r border-border z-[40] shadow-lg",
           "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
