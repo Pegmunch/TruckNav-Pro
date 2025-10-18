@@ -1,10 +1,13 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 export type MeasurementSystem = "imperial" | "metric";
+export type Region = "uk" | "usa" | "europe";
 
 interface MeasurementContextType {
   system: MeasurementSystem;
   setSystem: (system: MeasurementSystem) => void;
+  region: Region;
+  setRegion: (region: Region) => void;
   formatDistance: (distance: number, unit: "miles" | "km" | "yards" | "meters" | "feet") => string;
   formatSpeed: (speed: number, unit: "mph" | "kmh") => string;
   formatHeight: (heightInFeet: number) => string;
@@ -16,13 +19,28 @@ interface MeasurementContextType {
 const MeasurementContext = createContext<MeasurementContextType | undefined>(undefined);
 
 export function MeasurementProvider({ children }: { children: React.ReactNode }) {
-  const [system, setSystemState] = useState<MeasurementSystem>("metric");
+  const [system, setSystemState] = useState<MeasurementSystem>("imperial");
+  const [region, setRegionState] = useState<Region>("uk");
 
-  // Load measurement system from localStorage on mount
+  // Load measurement system and region from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem("measurement-system");
-    if (saved === "imperial" || saved === "metric") {
-      setSystemState(saved);
+    const savedSystem = localStorage.getItem("measurement-system");
+    const savedRegion = localStorage.getItem("measurement-region");
+    
+    if (savedRegion === "uk" || savedRegion === "usa" || savedRegion === "europe") {
+      setRegionState(savedRegion);
+      // Set default measurement system based on region if not already saved
+      if (!savedSystem) {
+        if (savedRegion === "uk" || savedRegion === "usa") {
+          setSystemState("imperial");
+        } else {
+          setSystemState("metric");
+        }
+      }
+    }
+    
+    if (savedSystem === "imperial" || savedSystem === "metric") {
+      setSystemState(savedSystem);
     }
   }, []);
 
@@ -30,6 +48,19 @@ export function MeasurementProvider({ children }: { children: React.ReactNode })
   const setSystem = (newSystem: MeasurementSystem) => {
     setSystemState(newSystem);
     localStorage.setItem("measurement-system", newSystem);
+  };
+
+  // Save to localStorage when region changes
+  const setRegion = (newRegion: Region) => {
+    setRegionState(newRegion);
+    localStorage.setItem("measurement-region", newRegion);
+    
+    // Auto-set measurement system based on region
+    if (newRegion === "uk" || newRegion === "usa") {
+      setSystem("imperial"); // UK and USA use MPH
+    } else {
+      setSystem("metric"); // Europe uses KPH
+    }
   };
 
   // Conversion functions
@@ -168,6 +199,8 @@ export function MeasurementProvider({ children }: { children: React.ReactNode })
   const value: MeasurementContextType = {
     system,
     setSystem,
+    region,
+    setRegion,
     formatDistance,
     formatSpeed,
     formatHeight,

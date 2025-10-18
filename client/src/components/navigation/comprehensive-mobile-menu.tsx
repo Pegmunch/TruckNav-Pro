@@ -67,6 +67,8 @@ import { ThemeSelector } from "@/components/theme/theme-selector";
 import { AutoThemeSettings } from "@/components/theme/auto-theme-settings";
 import { GrayscaleSelector } from "@/components/theme/grayscale-selector";
 import { ColorSpectrumPicker } from "@/components/theme/color-spectrum-picker";
+import { RegionSelector } from "@/components/measurement/region-selector";
+import { MeasurementSelector } from "@/components/measurement/measurement-selector";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import WeatherWidget from "@/components/weather/weather-widget";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -684,7 +686,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                                   </div>
                                   {result.dist !== undefined && (
                                     <div className="text-xs text-muted-foreground mt-1">
-                                      {formatDistance(result.dist, 'm')} away
+                                      {formatDistance(result.dist, 'meters')} away
                                     </div>
                                   )}
                                 </div>
@@ -931,6 +933,23 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                   </CardHeader>
                   <CardContent>
                     <GrayscaleSelector />
+                  </CardContent>
+                </Card>
+
+                {/* Region / Speed Limit Style */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      Region & Speed Limit Sign
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Select your region to use local speed limit signs and units
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <RegionSelector />
+                    <Separator />
+                    <MeasurementSelector />
                   </CardContent>
                 </Card>
               </TabsContent>
