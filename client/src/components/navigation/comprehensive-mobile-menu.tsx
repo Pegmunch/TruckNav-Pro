@@ -12,7 +12,7 @@
 
 import { useState, memo, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -213,9 +213,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[90vh] h-full p-0 gap-0 bg-background">
+        <DialogContent className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col">
           {/* Header */}
-          <DialogHeader className="px-4 py-3 border-b bg-muted/30">
+          <DialogHeader className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Menu</DialogTitle>
               <Button
@@ -228,11 +228,14 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                 <X className="h-5 w-5" />
               </Button>
             </div>
+            <DialogDescription className="sr-only">
+              Comprehensive menu for route planning, destinations, vehicle profiles, theme settings, and tools
+            </DialogDescription>
           </DialogHeader>
 
           {/* Tabbed Content */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
-            <TabsList className="w-full grid grid-cols-5 rounded-none border-b bg-muted/20 h-auto p-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+            <TabsList className="w-full grid grid-cols-5 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
               <TabsTrigger 
                 value="plan" 
                 className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
