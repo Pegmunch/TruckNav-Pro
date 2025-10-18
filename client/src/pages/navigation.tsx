@@ -2545,12 +2545,9 @@ function NavigationPageContent() {
 
                   {/* Navigation Controls moved outside MapShell - see bottom of mobile layout */}
 
-                  {/* Professional Oval Speedometer HUD - THINNER/Smaller Footer */}
+                  {/* Professional Oval Speedometer HUD - Centered on screen */}
                   <div 
-                    className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto scale-90"
-                    style={{
-                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))' // Positioned next to cancel button, thinner
-                    }}
+                    className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] pointer-events-none"
                     data-testid="speedometer-hud-navigate"
                   >
                     <SpeedometerHUD 
@@ -2977,13 +2974,10 @@ function NavigationPageContent() {
                       </Button>
                     </div>
 
-                    {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
+                    {/* Professional Oval Speedometer HUD - Centered on screen - DESKTOP */}
                     <div 
-                      className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
-                      style={{
-                        bottom: 'calc(20px + var(--safe-area-bottom, 0px))'
-                      }}
-                      data-testid="speedometer-hud-navigate"
+                      className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] pointer-events-none"
+                      data-testid="speedometer-hud-navigate-desktop"
                     >
                       <SpeedometerHUD 
                         className="shadow-2xl" 
