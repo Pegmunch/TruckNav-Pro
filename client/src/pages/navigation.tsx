@@ -2209,16 +2209,6 @@ function NavigationPageContent() {
                     <div className="w-full z-[5] pointer-events-auto">
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
-
-                    {/* Professional Oval Speedometer HUD - Above legal (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto" data-testid="speedometer-hud-plan">
-                      <SpeedometerHUD 
-                        className="shadow-2xl" 
-                        speedLimit={currentSpeedLimit || undefined}
-                        roadInfo={roadInfo}
-                        isNavigating={false}
-                      />
-                    </div>
                   </div>
 
                   {/* Plan Route FAB - Opens comprehensive menu on mobile (Bottom Right) */}
@@ -2272,16 +2262,6 @@ function NavigationPageContent() {
                     {/* Legal Ownership - Bottom layer (z-[5]) */}
                     <div className="w-full z-[5] pointer-events-auto">
                       <MapLegalOwnership compact={true} className="sm:hidden" />
-                    </div>
-
-                    {/* Professional Oval Speedometer HUD - Above legal (z-[160]) */}
-                    <div className="z-[160] pointer-events-auto" data-testid="speedometer-hud-preview">
-                      <SpeedometerHUD 
-                        className="shadow-2xl" 
-                        speedLimit={currentSpeedLimit || undefined}
-                        roadInfo={roadInfo}
-                        isNavigating={false}
-                      />
                     </div>
                   </div>
 

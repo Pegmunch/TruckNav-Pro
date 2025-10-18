@@ -167,10 +167,12 @@ export default function LegalDisclaimerV2({ onClose, onVersionSwitch }: LegalDis
         window.opener.postMessage({ type: 'legal_disclaimer_accepted' }, window.location.origin);
       }
       
-      // Close immediately - state is already updated synchronously
-      if (onClose) {
-        onClose();
-      }
+      // CRITICAL FIX: Force page reload to ensure state syncs across all components
+      // The useLegalConsent hook uses useState, which gives each component its own isolated state
+      // Reloading ensures all components see the updated localStorage value
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
   };
 
