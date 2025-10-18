@@ -981,7 +981,7 @@ function NavigationPageContent() {
     if (mobileNavMode !== 'navigate') return;
 
     const checkSpeedometerVisibility = () => {
-      const speedometer = document.querySelector('[data-testid="speed-display-navigate"]');
+      const speedometer = document.querySelector('[data-testid="speedometer-hud-navigate"]');
       if (!speedometer) {
         console.error('[NAV-MODE] CRITICAL: Speedometer not found in navigate mode!');
         // Attempt recovery by forcing re-render
