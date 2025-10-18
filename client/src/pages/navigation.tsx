@@ -1268,6 +1268,63 @@ function NavigationPageContent() {
         
         // Close route planning panel if open
         setSidebarState('collapsed');
+        
+        // Auto-zoom to show the calculated route with current location
+        setTimeout(() => {
+          // Priority: GPS position → Manual location → Route bounds
+          if (gpsData.position) {
+            console.log('[ROUTE-PREVIEW] ✅ Zooming to current GPS position');
+            const previewPosition = {
+              lat: gpsData.position.latitude,
+              lng: gpsData.position.longitude,
+              zoom: 14,  // Medium zoom to show route context
+              pitch: 0,  // Top-down view for route overview
+              bearing: 0
+            };
+            
+            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+              detail: { 
+                position: previewPosition,
+                mapStyle: 'roads'
+              }
+            });
+            window.dispatchEvent(autoZoomEvent);
+          } else if (gpsData.manualLocation) {
+            console.log('[ROUTE-PREVIEW] 📍 Zooming to manual location');
+            const previewPosition = {
+              lat: gpsData.manualLocation.latitude,
+              lng: gpsData.manualLocation.longitude,
+              zoom: 14,
+              pitch: 0,
+              bearing: 0
+            };
+            
+            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+              detail: { 
+                position: previewPosition,
+                mapStyle: 'roads'
+              }
+            });
+            window.dispatchEvent(autoZoomEvent);
+          } else if (route.startCoordinates) {
+            console.log('[ROUTE-PREVIEW] 🗺️ Zooming to route start');
+            const previewPosition = {
+              lat: route.startCoordinates.lat,
+              lng: route.startCoordinates.lng,
+              zoom: 14,
+              pitch: 0,
+              bearing: 0
+            };
+            
+            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+              detail: { 
+                position: previewPosition,
+                mapStyle: 'roads'
+              }
+            });
+            window.dispatchEvent(autoZoomEvent);
+          }
+        }, 500); // Small delay to let route render first
       } else {
         console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
       }
@@ -1737,7 +1794,7 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(streetViewActivationEvent);
 
-      // Auto-zoom to professional 3D navigation view
+      // Auto-zoom to professional 3D navigation view at current location
       // Professional forward-looking perspective matching TomTom/Waze style
       const applyNavigationView = (lat: number, lng: number, bearing: number = 0) => {
         const navigationPosition = {
@@ -1760,43 +1817,30 @@ function NavigationPageContent() {
         window.dispatchEvent(autoZoomEvent);
       };
       
-      // Try GPS first, then fallback to route start
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            console.log('[NAV-VIEW] GPS available - using current position');
-            applyNavigationView(
-              position.coords.latitude,
-              position.coords.longitude,
-              position.coords.heading || 0
-            );
-          },
-          (error) => {
-            console.warn('[NAV-VIEW] GPS unavailable, using route start:', error.message);
-            
-            if (route.startCoordinates) {
-              applyNavigationView(
-                route.startCoordinates.lat,
-                route.startCoordinates.lng,
-                0
-              );
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-          }
+      // Priority: GPS position → Manual location → Route start
+      if (gpsData.position) {
+        console.log('[NAV-VIEW] ✅ Using current GPS position');
+        applyNavigationView(
+          gpsData.position.latitude,
+          gpsData.position.longitude,
+          gpsData.position.smoothedHeading || gpsData.position.heading || 0
+        );
+      } else if (gpsData.manualLocation) {
+        console.log('[NAV-VIEW] 📍 Using manual location');
+        applyNavigationView(
+          gpsData.manualLocation.latitude,
+          gpsData.manualLocation.longitude,
+          0
+        );
+      } else if (route.startCoordinates) {
+        console.log('[NAV-VIEW] 🗺️ Using route start coordinates (GPS unavailable)');
+        applyNavigationView(
+          route.startCoordinates.lat,
+          route.startCoordinates.lng,
+          0
         );
       } else {
-        console.log('[NAV-VIEW] Geolocation not supported - using route start');
-        if (route.startCoordinates) {
-          applyNavigationView(
-            route.startCoordinates.lat,
-            route.startCoordinates.lng,
-            0
-          );
-        }
+        console.warn('[NAV-VIEW] ⚠️ No location available - cannot auto-zoom');
       }
 
       setTimeout(() => {
