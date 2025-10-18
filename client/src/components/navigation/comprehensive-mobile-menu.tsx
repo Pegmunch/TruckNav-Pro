@@ -46,7 +46,8 @@ import {
   Wrench,
   Navigation,
   MapPinned,
-  Loader2
+  Loader2,
+  Store
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -125,6 +126,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   const [fromSearch, setFromSearch] = useState("");
   const [toSearch, setToSearch] = useState("");
   
+  // POI search state
+  const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
+  const [poiSearchEnabled, setPoiSearchEnabled] = useState(false);
+  
   // Debounced search for autocomplete
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -164,6 +169,25 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     undefined, // No POI category
     gpsCoordinates,
     'fuzzy' // Address search
+  );
+  
+  // POI category mapping to TomTom category codes
+  const poiCategoryMap: { [key: string]: string } = {
+    truck_stop: '7315',
+    fuel: '7311',
+    parking: '7309',
+    restaurant: '7315', // Use truck stop code for restaurants
+    rest_area: '9920'
+  };
+  
+  // TomTom POI search
+  const { results: poiResults, isLoading: poiLoading } = useTomTomAutocomplete(
+    '', // No search query, just category-based
+    poiSearchEnabled && activePOICategory !== null,
+    undefined, // No country restriction
+    activePOICategory ? poiCategoryMap[activePOICategory] : undefined,
+    gpsCoordinates,
+    'poi' // POI search
   );
   
   // Modal states for sub-panels
@@ -268,13 +292,33 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     },
   });
 
-  // POI Categories
+  // POI Categories with shops added
   const poiCategories = [
     { id: 'truck_stop', label: 'Truck Stops', icon: Truck, color: 'bg-blue-500' },
     { id: 'fuel', label: 'Fuel', icon: Fuel, color: 'bg-red-500' },
-    { id: 'parking', label: 'Parking', icon: CircleParking, color: 'bg-green-500' },
+    { id: 'rest_area', label: 'Rest Areas', icon: CircleParking, color: 'bg-green-500' },
     { id: 'restaurant', label: 'Food', icon: Utensils, color: 'bg-orange-500' },
   ];
+  
+  // Handle POI category selection
+  const handlePOISearch = useCallback((categoryId: string) => {
+    if (!gpsCoordinates) {
+      toast({
+        title: "Location Required",
+        description: "Enable GPS to search for nearby POIs",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setActivePOICategory(categoryId);
+    setPoiSearchEnabled(true);
+    
+    toast({
+      title: "Searching...",
+      description: `Finding nearby ${poiCategories.find(c => c.id === categoryId)?.label}`,
+    });
+  }, [gpsCoordinates, toast, poiCategories]);
 
   return (
     <>
@@ -561,6 +605,99 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
 
               {/* DESTINATIONS TAB */}
               <TabsContent value="destinations" className="p-4 space-y-4 mt-0">
+                {/* POI Suggestions at Top */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-purple-500" />
+                      Quick POI Search
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Find nearby truck-friendly locations
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {poiCategories.map((category) => (
+                        <Button
+                          key={category.id}
+                          variant={activePOICategory === category.id ? "default" : "outline"}
+                          className="h-16 flex flex-col gap-1"
+                          onClick={() => handlePOISearch(category.id)}
+                          data-testid={`button-poi-${category.id}`}
+                        >
+                          <category.icon className="h-5 w-5" />
+                          <span className="text-xs">{category.label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    {/* POI Results */}
+                    {poiLoading && activePOICategory && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+                      </div>
+                    )}
+                    
+                    {!poiLoading && activePOICategory && poiResults.length === 0 && (
+                      <div className="text-sm text-muted-foreground py-4 text-center">
+                        No {poiCategories.find(c => c.id === activePOICategory)?.label} found nearby
+                      </div>
+                    )}
+                    
+                    {!poiLoading && poiResults.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-2">
+                          Found {poiResults.length} nearby
+                        </div>
+                        {poiResults.slice(0, 5).map((result, idx) => (
+                          <Card 
+                            key={result.id} 
+                            className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => {
+                              const coords = extractTomTomCoordinates(result);
+                              if (coords && onSelectFacility) {
+                                onSelectFacility({
+                                  name: result.poi?.name || formatTomTomDisplay(result),
+                                  coordinates: coords,
+                                  type: activePOICategory,
+                                  address: formatTomTomDisplay(result)
+                                });
+                                onOpenChange(false);
+                                toast({
+                                  title: "Location Selected",
+                                  description: result.poi?.name || formatTomTomDisplay(result),
+                                });
+                              }
+                            }}
+                            data-testid={`card-poi-result-${idx}`}
+                          >
+                            <CardContent className="p-3">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm truncate">
+                                    {result.poi?.name || formatTomTomDisplay(result)}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1 truncate">
+                                    {formatTomTomDisplay(result)}
+                                  </div>
+                                  {result.dist !== undefined && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      {formatDistance(result.dist, 'm')} away
+                                    </div>
+                                  )}
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
                 {/* Favorite Routes */}
                 <Card>
                   <CardHeader className="pb-3">
