@@ -1737,50 +1737,49 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(streetViewActivationEvent);
 
-      // Auto-zoom to GPS position with robust fallback
+      // Auto-zoom to professional 3D navigation view
+      // Professional forward-looking perspective matching TomTom/Waze style
+      const applyNavigationView = (lat: number, lng: number, bearing: number = 0) => {
+        const navigationPosition = {
+          lat,
+          lng,
+          zoom: 18.5,      // Professional street navigation zoom
+          pitch: 67,       // Forward-looking 3D perspective
+          bearing: bearing // Heading-up rotation
+        };
+        
+        console.log('[NAV-VIEW] Applying professional navigation view:', navigationPosition);
+        
+        // Switch to 2D roads mode and fly to navigation position
+        const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
+          detail: { 
+            position: navigationPosition,
+            mapStyle: 'roads'
+          }
+        });
+        window.dispatchEvent(autoZoomEvent);
+      };
+      
+      // Try GPS first, then fallback to route start
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            // GPS available - zoom to exact position (nearly maximum zoom for street view)
-            const gpsPosition = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-              zoom: 19.5,
-              pitch: 60,
-              bearing: position.coords.heading || 0
-            };
-            
-            // Switch to roads mode and fly to GPS position
-            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-              detail: { 
-                position: gpsPosition,
-                mapStyle: 'roads'
-              }
-            });
-            window.dispatchEvent(autoZoomEvent);
+            console.log('[NAV-VIEW] GPS available - using current position');
+            applyNavigationView(
+              position.coords.latitude,
+              position.coords.longitude,
+              position.coords.heading || 0
+            );
           },
           (error) => {
-            // GPS failed - fallback to route start with user notification
-            console.warn('GPS unavailable, using route start:', error.message);
+            console.warn('[NAV-VIEW] GPS unavailable, using route start:', error.message);
             
             if (route.startCoordinates) {
-              const fallbackPosition = {
-                lat: route.startCoordinates.lat,
-                lng: route.startCoordinates.lng,
-                zoom: 19.5,
-                pitch: 60,
-                bearing: 0
-              };
-              
-              const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-                detail: { 
-                  position: fallbackPosition,
-                  mapStyle: 'roads'
-                }
-              });
-              window.dispatchEvent(autoZoomEvent);
-              
-              // REMOVED TOAST: No popups per user request
+              applyNavigationView(
+                route.startCoordinates.lat,
+                route.startCoordinates.lng,
+                0
+              );
             }
           },
           {
@@ -1790,23 +1789,13 @@ function NavigationPageContent() {
           }
         );
       } else {
-        // Geolocation not supported - use route start
+        console.log('[NAV-VIEW] Geolocation not supported - using route start');
         if (route.startCoordinates) {
-          const fallbackPosition = {
-            lat: route.startCoordinates.lat,
-            lng: route.startCoordinates.lng,
-            zoom: 19.5,
-            pitch: 60,
-            bearing: 0
-          };
-          
-          const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-            detail: { 
-              position: fallbackPosition,
-              mapStyle: 'roads'
-            }
-          });
-          window.dispatchEvent(autoZoomEvent);
+          applyNavigationView(
+            route.startCoordinates.lat,
+            route.startCoordinates.lng,
+            0
+          );
         }
       }
 
