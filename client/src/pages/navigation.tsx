@@ -2848,7 +2848,7 @@ function NavigationPageContent() {
                   </div>
                 )}
                 
-                {/* NAVIGATE MODE OVERLAYS - Desktop (same as mobile) */}
+                {/* NAVIGATE MODE OVERLAYS - Desktop */}
                 {isNavigating && (
                   <>
                     {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
