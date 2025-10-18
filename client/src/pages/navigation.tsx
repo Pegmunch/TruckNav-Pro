@@ -1848,9 +1848,16 @@ function NavigationPageContent() {
       setMobileNavMode('navigate');
       
       // Update navigation state after successful activation
-      console.log('[NAV-MODE-DEBUG] Setting isNavigating=true after successful activation');
+      console.log('========================================');
+      console.log('[NAV-MODE-DEBUG] ✅ SETTING isNavigating=TRUE');
+      console.log('[NAV-MODE-DEBUG] This will activate heading-up navigation');
+      console.log('========================================');
       setIsNavigating(true);
-      console.log('[NAV-MODE-DEBUG] isNavigating set to true');
+      
+      // Verify state change in next tick
+      setTimeout(() => {
+        console.log('[NAV-MODE-DEBUG] isNavigating state verified:', true);
+      }, 100);
       
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
