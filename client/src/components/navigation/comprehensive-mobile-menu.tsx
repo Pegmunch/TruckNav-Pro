@@ -596,7 +596,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         <Button
                           key={category.id}
                           variant={activePOICategory === category.id ? "default" : "outline"}
-                          className="h-16 flex flex-col gap-1 transition-all hover:scale-105 active:scale-95"
+                          className="h-16 flex flex-col gap-1 transition-opacity hover:opacity-90 active:opacity-70"
                           onClick={() => handlePOISearch(category.id)}
                           data-testid={`button-poi-${category.id}`}
                         >
@@ -628,7 +628,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         {poiResults.slice(0, 5).map((result, idx) => (
                           <Card 
                             key={result.id} 
-                            className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                            className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:translate-x-1 active:translate-x-0"
                             onClick={() => {
                               const coords = extractTomTomCoordinates(result);
                               if (coords && onSelectFacility) {
@@ -687,7 +687,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       favoriteRoutes.map((route) => (
                         <Card 
                           key={route.id} 
-                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:translate-x-1 active:translate-x-0"
                           onClick={() => handleLoadFavorite(route)}
                           data-testid={`card-favorite-route-${route.id}`}
                         >
@@ -751,7 +751,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       recentJourneys.map((journey) => (
                         <Card 
                           key={journey.id} 
-                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:translate-x-1 active:translate-x-0"
                           onClick={() => handleLoadJourney(journey)}
                           data-testid={`card-journey-${journey.id}`}
                         >
@@ -816,9 +816,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       <div className="space-y-3">
                         {[1, 2, 3].map((i) => (
                           <Card key={i} className="animate-pulse">
-                            <CardContent className="p-3">
-                              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                              <div className="h-3 bg-muted rounded w-1/2"></div>
+                            <CardContent className="p-3 space-y-2">
+                              <div className="h-4 bg-muted rounded-md w-3/4"></div>
+                              <div className="h-3 bg-muted rounded-md w-1/2"></div>
                             </CardContent>
                           </Card>
                         ))}
@@ -832,15 +832,15 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         <Card 
                           key={profile.id} 
                           className={cn(
-                            "cursor-pointer transition-all hover:bg-muted/50 hover:scale-[1.02] active:scale-[0.98]",
+                            "cursor-pointer transition-all hover:bg-muted/50 hover:translate-x-1 active:translate-x-0",
                             selectedProfile?.id === profile.id && "border-primary"
                           )}
                           onClick={() => onProfileSelect(profile)}
                           data-testid={`card-vehicle-profile-${profile.id}`}
                         >
-                          <CardContent className="p-3">
+                          <CardContent className="p-3 space-y-2">
                             <div className="font-medium text-sm">{profile.name || 'Unnamed Vehicle'}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
+                            <div className="text-xs text-muted-foreground">
                               {profile.height}m × {profile.width}m × {profile.length}m
                             </div>
                           </CardContent>
