@@ -499,12 +499,12 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         onStartNavigation();
                         onOpenChange(false);
                       }}
-                      className="w-full h-12 bg-blue-600 hover:bg-blue-700"
+                      className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
                       disabled={!fromInput || !toInput}
-                      data-testid="button-plan-route"
+                      data-testid="button-start-navigation"
                     >
                       <Navigation className="h-5 w-5 mr-2" />
-                      Plan Route
+                      Start Navigation
                     </Button>
 
                     {currentRoute && (
