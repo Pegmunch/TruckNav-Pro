@@ -749,16 +749,52 @@ function NavigationPageContent() {
     return () => clearInterval(interval);
   }, [mobileNavMode, setMobileNavModeDebounced]);
   
-  // Real-time bearing rotation during navigation
+  // Real-time bearing rotation during navigation - BULLETPROOF with route fallback
   useEffect(() => {
     const updateBearing = () => {
-      if (mapRef.current && isNavigating && gpsData?.position?.smoothedHeading !== null && gpsData?.position?.smoothedHeading !== undefined) {
-        try {
-          const mapInstance = mapRef.current.getMap();
-          if (!mapInstance) return;
+      if (!mapRef.current || !isNavigating) {
+        // When not navigating, just track the current bearing for compass display
+        if (mapRef.current) {
+          const bearing = mapRef.current.getBearing();
+          setMapBearing(bearing);
+        }
+        return;
+      }
 
+      try {
+        const mapInstance = mapRef.current.getMap();
+        if (!mapInstance) return;
+
+        let targetBearing: number | null = null;
+
+        // Priority 1: Use GPS heading if available
+        if (gpsData?.position?.smoothedHeading !== null && gpsData?.position?.smoothedHeading !== undefined) {
+          targetBearing = gpsData.position.smoothedHeading;
+          console.log('[NAV-BEARING] Using GPS heading:', targetBearing);
+        }
+        // Priority 2: Calculate bearing from route direction (works without GPS!)
+        else if (currentRoute && currentRoute.routePath && currentRoute.routePath.length >= 2) {
+          const path = currentRoute.routePath;
+          // Use first two points to determine route direction
+          const start = path[0];
+          const end = path[1];
+          
+          // Calculate bearing between two points
+          const lon1 = start.lng * Math.PI / 180;
+          const lon2 = end.lng * Math.PI / 180;
+          const lat1 = start.lat * Math.PI / 180;
+          const lat2 = end.lat * Math.PI / 180;
+          
+          const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+          const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+          const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+          
+          targetBearing = bearing;
+          console.log('[NAV-BEARING] Using route bearing (no GPS):', targetBearing);
+        }
+
+        if (targetBearing !== null) {
           const currentBearing = mapRef.current.getBearing();
-          const targetBearing = gpsData.position.smoothedHeading;
           
           // Only update if significant change (>5 degrees) to prevent jitter
           let delta = targetBearing - currentBearing;
@@ -772,26 +808,22 @@ function NavigationPageContent() {
           if (normalizedDelta > 5) {
             mapInstance.easeTo({
               bearing: targetBearing,
-              duration: 500,
+              duration: 800,
               easing: (t) => t * (2 - t)
             });
           }
           
           setMapBearing(targetBearing);
-        } catch (err) {
-          console.error('[NAV] Bearing update failed:', err);
         }
-      } else if (mapRef.current) {
-        // When not navigating, just track the current bearing for compass display
-        const bearing = mapRef.current.getBearing();
-        setMapBearing(bearing);
+      } catch (err) {
+        console.error('[NAV] Bearing update failed:', err);
       }
     };
 
     const interval = setInterval(updateBearing, 500);
     
     return () => clearInterval(interval);
-  }, [isNavigating, gpsData?.position?.smoothedHeading]);
+  }, [isNavigating, gpsData?.position?.smoothedHeading, currentRoute]);
   
   // Extract current road name from GPS position for speedometer display
   useEffect(() => {
