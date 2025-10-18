@@ -2269,7 +2269,7 @@ function NavigationPageContent() {
                   <div 
                     className="fixed z-[500] flex flex-col gap-2 pointer-events-auto" 
                     style={{ 
-                      top: 'calc(4rem + var(--safe-area-top))',
+                      top: 'calc(5rem + var(--safe-area-top))',
                       right: 'calc(0.75rem + var(--safe-area-right))'
                     }}
                     data-testid="navigation-controls-right-preview"
