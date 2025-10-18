@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
+import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
 
 /**
  * Legal Popup Page
@@ -19,12 +19,7 @@ export default function LegalPopupPage() {
     };
   }, []);
 
-  const handleClose = () => {
-    // Close the popup window
-    window.close();
-  };
-
   return (
-    <LegalDisclaimerPopup onClose={handleClose} />
+    <LegalDisclaimerSimple />
   );
 }
