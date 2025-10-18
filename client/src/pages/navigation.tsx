@@ -2292,6 +2292,8 @@ function NavigationPageContent() {
                     onMenuClick={() => setIsAlternativeRoutesOpen(!isAlternativeRoutesOpen)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
+                    onCompassClick={() => mapRef.current?.resetBearing()}
+                    bearing={mapBearing}
                     className="fixed z-[200] pointer-events-auto"
                     style={{
                       bottom: 'calc(100px + var(--safe-area-bottom))',
@@ -2506,6 +2508,8 @@ function NavigationPageContent() {
                     onLayersClick={() => setShowTrafficLayer(!showTrafficLayer)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
+                    onCompassClick={() => mapRef.current?.resetBearing()}
+                    bearing={mapBearing}
                     className="fixed z-[200] pointer-events-auto"
                     style={{
                       bottom: 'calc(100px + var(--safe-area-bottom))',

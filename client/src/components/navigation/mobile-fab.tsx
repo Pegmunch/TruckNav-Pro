@@ -21,8 +21,47 @@ interface MobileFABProps {
   onLayersClick?: () => void;
   onReportIncident?: () => void;
   onViewIncidents?: () => void;
+  onCompassClick?: () => void;
+  bearing?: number;
   className?: string;
   style?: React.CSSProperties;
+}
+
+// Custom Compass Icon with red top pointer and blue bottom pointer
+function CompassIcon({ bearing = 0, className = "" }: { bearing?: number; className?: string }) {
+  return (
+    <svg 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      style={{ transform: `rotate(${bearing}deg)` }}
+    >
+      {/* Compass circle */}
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+      
+      {/* Red North pointer (top) */}
+      <path 
+        d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
+        fill="#EF4444" 
+        stroke="#DC2626" 
+        strokeWidth="0.5"
+      />
+      
+      {/* Blue South pointer (bottom) */}
+      <path 
+        d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
+        fill="#3B82F6" 
+        stroke="#2563EB" 
+        strokeWidth="0.5"
+      />
+      
+      {/* Center dot */}
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  );
 }
 
 export function MobileFAB({
@@ -33,6 +72,8 @@ export function MobileFAB({
   onLayersClick,
   onReportIncident,
   onViewIncidents,
+  onCompassClick,
+  bearing = 0,
   className,
   style
 }: MobileFABProps) {
@@ -53,6 +94,14 @@ export function MobileFAB({
   }, [mode, isExpanded]);
 
   const speedDialOptions = [
+    {
+      id: 'compass',
+      icon: null,
+      customIcon: <CompassIcon bearing={bearing} className="w-5 h-5" />,
+      label: 'Reset Compass',
+      onClick: onCompassClick,
+      showInModes: ['plan', 'preview', 'navigate']
+    },
     {
       id: 'view-incidents',
       icon: AlertCircle,
@@ -130,7 +179,7 @@ export function MobileFAB({
               )}
               data-testid={`fab-option-${option.id}`}
             >
-              <Icon className="w-4.5 h-4.5" />
+              {option.customIcon ? option.customIcon : Icon && <Icon className="w-4.5 h-4.5" />}
               <span className="sr-only">{option.label}</span>
             </Button>
           );
