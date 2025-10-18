@@ -1678,10 +1678,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [gpsPosition, gpsStatus, isGPSReady, isLoaded, selectedProfile]); // Include GPS status for proper marker updates
   
-  // HEADING-UP NAVIGATION MODE: Continuous map rotation based on GPS heading
-  // Separate effect for continuous rotation during navigation
+  // HEADING-UP NAVIGATION MODE: BULLETPROOF rotation (works with OR without GPS!)
+  // Rotates map so route always points upward, using GPS heading OR route geometry
   useEffect(() => {
-    if (!map.current || !isLoaded || !isNavigating || !gpsPosition) {
+    if (!map.current || !isLoaded || !isNavigating) {
       console.log('[HEADING-UP] Not ready or not navigating');
       return;
     }
@@ -1693,64 +1693,93 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     
     // Continuous rotation function
     const updateHeadingUp = () => {
-      if (!gpsPosition) {
-        animationFrame = requestAnimationFrame(updateHeadingUp);
-        return;
-      }
-      
       const now = Date.now();
       const deltaTime = now - lastUpdateTime;
       
       // Update at 30 FPS (every ~33ms) for smoother performance
       if (deltaTime > 33) {
-        const latitude = gpsPosition.latitude;
-        const longitude = gpsPosition.longitude;
-        const bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
+        let bearing = 0;
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+        let shouldUpdate = false;
+        
+        // PRIORITY 1: Use GPS position and heading if available
+        if (gpsPosition?.latitude && gpsPosition?.longitude) {
+          latitude = gpsPosition.latitude;
+          longitude = gpsPosition.longitude;
+          bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
+          shouldUpdate = true;
+          console.log('[HEADING-UP] Using GPS - Bearing:', bearing.toFixed(1), '°');
+        }
+        // PRIORITY 2: Calculate bearing from route geometry (NO GPS REQUIRED!)
+        else if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+          const path = currentRoute.routePath;
+          const start = path[0];
+          const end = path[1];
+          
+          // Use route start point for centering
+          latitude = start.lat;
+          longitude = start.lng;
+          
+          // Calculate bearing from first two route points
+          const lon1 = start.lng * Math.PI / 180;
+          const lon2 = end.lng * Math.PI / 180;
+          const lat1 = start.lat * Math.PI / 180;
+          const lat2 = end.lat * Math.PI / 180;
+          
+          const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+          const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+          bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+          
+          shouldUpdate = true;
+          console.log('[HEADING-UP] Using route bearing (NO GPS) - Bearing:', bearing.toFixed(1), '°');
+        }
         
         // Store last bearing for fallback
         if (bearing !== 0) {
           lastBearing = bearing;
         }
         
-        // Get current map state
-        const currentBearing = mapInstance.getBearing();
-        const currentCenter = mapInstance.getCenter();
-        const centerDelta = Math.sqrt(
-          Math.pow(longitude - currentCenter.lng, 2) + 
-          Math.pow(latitude - currentCenter.lat, 2)
-        );
-        
-        // Calculate bearing delta with circular interpolation
-        let bearingDelta = bearing - currentBearing;
-        while (bearingDelta > 180) bearingDelta -= 360;
-        while (bearingDelta < -180) bearingDelta += 360;
-        
-        // Update compass bearing display
-        setBearing(bearing);
-        
-        // Only update if significant change or continuous movement
-        // Reduced threshold for smoother rotation
-        if (Math.abs(bearingDelta) > 0.3 || centerDelta > 0.000005) {
-          mapInstance.easeTo({
-            center: [longitude, latitude],
-            zoom: 18.5, // Optimal street-level zoom for navigation
-            pitch: 67, // Professional 3D perspective
-            bearing: bearing, // Rotate map so heading points up (route always points north)
-            padding: { 
-              top: 280, // Increased space for HUD elements and centering marker above speedometer
-              bottom: 120, // Space for speedometer at bottom
-              left: 0, 
-              right: 0 
-            },
-            duration: 250, // Faster for more responsive feel
-            easing: (t) => t * (2 - t), // Smooth ease-out for better feel
-            essential: true
-          });
+        if (shouldUpdate && latitude !== null && longitude !== null) {
+          // Get current map state
+          const currentBearing = mapInstance.getBearing();
+          const currentCenter = mapInstance.getCenter();
+          const centerDelta = Math.sqrt(
+            Math.pow(longitude - currentCenter.lng, 2) + 
+            Math.pow(latitude - currentCenter.lat, 2)
+          );
           
-          // Debug logging with rate limiting
-          if (deltaTime > 1000) { // Log every second max
-            console.log('[HEADING-UP] Map rotation - Bearing:', bearing.toFixed(1), 
-                       '°, GPS:', latitude.toFixed(6), longitude.toFixed(6));
+          // Calculate bearing delta with circular interpolation
+          let bearingDelta = bearing - currentBearing;
+          while (bearingDelta > 180) bearingDelta -= 360;
+          while (bearingDelta < -180) bearingDelta += 360;
+          
+          // Update compass bearing display
+          setBearing(bearing);
+          
+          // Only update if significant change or continuous movement
+          // Reduced threshold for smoother rotation
+          if (Math.abs(bearingDelta) > 0.3 || centerDelta > 0.000005) {
+            mapInstance.easeTo({
+              center: [longitude, latitude],
+              zoom: 18.5, // Optimal street-level zoom for navigation
+              pitch: 67, // Professional 3D perspective
+              bearing: bearing, // Rotate map so heading points up (route always points north)
+              padding: { 
+                top: 280, // Increased space for HUD elements and centering marker above speedometer
+                bottom: 120, // Space for speedometer at bottom
+                left: 0, 
+                right: 0 
+              },
+              duration: 250, // Faster for more responsive feel
+              easing: (t) => t * (2 - t), // Smooth ease-out for better feel
+              essential: true
+            });
+            
+            // Debug logging with rate limiting
+            if (deltaTime > 1000) { // Log every second max
+              console.log('[HEADING-UP] Map rotation applied - Bearing:', bearing.toFixed(1), '°');
+            }
           }
         }
         
@@ -1762,8 +1791,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
     
     // Start continuous rotation
-    console.log('[HEADING-UP] ✓ Starting continuous rotation for navigation mode');
-    console.log('[HEADING-UP] GPS heading will rotate map so route always points upward');
+    console.log('[HEADING-UP] ✅ BULLETPROOF rotation active - works with OR without GPS!');
     updateHeadingUp();
     
     // Cleanup animation frame on unmount
@@ -1773,7 +1801,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         console.log('[HEADING-UP] ✓ Stopped continuous rotation');
       }
     };
-  }, [isNavigating, isLoaded, gpsPosition]);
+  }, [isNavigating, isLoaded, gpsPosition, currentRoute]);
 
   // Listen for auto-zoom to GPS position event
   useEffect(() => {

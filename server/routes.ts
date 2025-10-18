@@ -2013,6 +2013,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single route by ID
+  app.get("/api/routes/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const route = await storage.getRoute(id);
+      
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+      
+      res.json(route);
+    } catch (error) {
+      console.error("[ROUTE-GET] Error fetching route:", error);
+      res.status(500).json({ message: "Failed to get route" });
+    }
+  });
+
   app.get("/api/routes/favorites", requireSubscription, async (req, res) => {
     try {
       const routes = await storage.getFavoriteRoutes();

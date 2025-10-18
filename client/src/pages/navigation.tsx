@@ -1039,11 +1039,17 @@ function NavigationPageContent() {
       // CRITICAL FIX: Load the route data from the journey's routeId
       if (currentJourney.routeId) {
         console.log('[JOURNEY-LOAD] Journey has routeId, fetching route:', currentJourney.routeId);
-        // Fetch the route using the routeId
+        // Fetch the route using the routeId with proper error handling
         fetch(`/api/routes/${currentJourney.routeId}`)
-          .then(res => res.json())
+          .then(res => {
+            console.log('[JOURNEY-LOAD] Route fetch response:', res.status, res.statusText);
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.json();
+          })
           .then(route => {
-            console.log('[JOURNEY-LOAD] Loading route from journey:', route);
+            console.log('[JOURNEY-LOAD] ✅ Successfully loaded route from journey:', route);
             setCurrentRoute(route);
             
             // CRITICAL FIX: Populate location fields from route data
@@ -1061,7 +1067,8 @@ function NavigationPageContent() {
             }
           })
           .catch(err => {
-            console.error('[JOURNEY-LOAD] Failed to fetch route:', err);
+            console.error('[JOURNEY-LOAD] ❌ Failed to fetch route:', err.message || err);
+            console.error('[JOURNEY-LOAD] Route ID:', currentJourney.routeId);
           });
       }
       
