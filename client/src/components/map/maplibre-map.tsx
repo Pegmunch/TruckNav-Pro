@@ -2031,7 +2031,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           <div 
             className="absolute right-3 flex flex-col gap-3 pointer-events-auto safe-area-top"
             style={{ 
-              top: 'calc(8.5rem + var(--safe-area-top))',
+              top: 'calc(7.5rem + var(--safe-area-top))',
               zIndex: isNavigating ? 500 : 450
             }}
           >
