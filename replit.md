@@ -6,6 +6,13 @@ This project is a specialized web application for truck navigation, providing sa
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes
+
+## October 18, 2025 - Navigation UI Fixes
+- Fixed duplicate speedometer bug: Removed speedometers from plan and preview modes, kept only in navigate mode
+- Fixed navigation controls visibility: Removed CSS `z-index: 50 !important` override that was hiding the 7 navigation buttons (compass, recenter, zoom in/out, 3D toggle, traffic toggle, map view toggle)
+- Confirmed route line colors: White outline (#ffffff, width 16) + light blue center (#60a5fa, width 12) correctly configured in MapLibre
+
 # System Architecture
 
 ## Frontend
