@@ -702,81 +702,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     try {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: {
-        version: 8,
-        sources: {
-          'roads-2d': {
-            type: 'raster',
-            tiles: ['https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            maxzoom: 20,
-            attribution: '© Stadia Maps © OpenStreetMap contributors'
-          },
-          'roads-3d': {
-            type: 'raster',
-            tiles: ['https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'],
-            tileSize: 256,
-            maxzoom: 20,
-            attribution: '© Google Maps with 3D Buildings'
-          },
-          'satellite-2d': {
-            type: 'raster',
-            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: '© Esri, DigitalGlobe, GeoEye'
-          },
-          'satellite-3d': {
-            type: 'raster',
-            tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
-            tileSize: 256,
-            maxzoom: 20,
-            attribution: '© Google Satellite with 3D Terrain'
-          }
-        },
-        layers: [
-          {
-            id: 'roads-2d-layer',
-            type: 'raster',
-            source: 'roads-2d',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: {
-              visibility: preferences.mapViewMode === 'roads' ? 'visible' : 'none'
-            }
-          },
-          {
-            id: 'roads-3d-layer',
-            type: 'raster',
-            source: 'roads-3d',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: {
-              visibility: 'none'
-            }
-          },
-          {
-            id: 'satellite-2d-layer',
-            type: 'raster',
-            source: 'satellite-2d',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: {
-              visibility: preferences.mapViewMode === 'satellite' ? 'visible' : 'none'
-            }
-          },
-          {
-            id: 'satellite-3d-layer',
-            type: 'raster',
-            source: 'satellite-3d',
-            minzoom: 0,
-            maxzoom: 22,
-            layout: {
-              visibility: 'none'
-            }
-          }
-        ]
-        },
+        style: 'https://demotiles.maplibre.org/style.json',
         // CRITICAL: Don't use any default center - wait for GPS
         // Using world view (0,0) with low zoom while waiting for GPS
         center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [0, 0],
@@ -851,8 +777,64 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       });
 
       map.current.once('load', () => {
+        const mapInstance = map.current;
+        if (!mapInstance) return;
+
+        // Customize style to remove road outlines
+        const style = mapInstance.getStyle();
+        if (style && style.layers) {
+          style.layers.forEach((layer: any) => {
+            if (layer.type === 'line' && layer.id.includes('road')) {
+              // Remove all road outlines by setting outline width to 0 or removing outline color
+              if (layer.paint) {
+                if ('line-gap-width' in layer.paint) {
+                  mapInstance.setPaintProperty(layer.id, 'line-gap-width', 0);
+                }
+                // Make road casings (outlines) transparent
+                if (layer.id.includes('case') || layer.id.includes('casing') || layer.id.includes('outline')) {
+                  mapInstance.setPaintProperty(layer.id, 'line-opacity', 0);
+                }
+              }
+            }
+          });
+        }
+
+        // Add satellite sources for mode toggle
+        mapInstance.addSource('satellite-2d', {
+          type: 'raster',
+          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+          tileSize: 256,
+          maxzoom: 19
+        });
+
+        mapInstance.addSource('satellite-3d', {
+          type: 'raster',
+          tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+          tileSize: 256,
+          maxzoom: 20
+        });
+
+        // Add satellite layers (initially hidden)
+        mapInstance.addLayer({
+          id: 'satellite-2d-layer',
+          type: 'raster',
+          source: 'satellite-2d',
+          layout: {
+            visibility: 'none'
+          }
+        });
+
+        mapInstance.addLayer({
+          id: 'satellite-3d-layer',
+          type: 'raster',
+          source: 'satellite-3d',
+          layout: {
+            visibility: 'none'
+          }
+        });
+
         setIsLoaded(true);
-        console.log('✅ MapLibre GL loaded with persistent tile sources');
+        console.log('✅ MapLibre GL loaded - road outlines removed, satellite sources added');
       });
 
       map.current.on('error', (e) => {
