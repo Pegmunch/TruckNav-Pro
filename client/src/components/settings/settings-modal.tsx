@@ -53,7 +53,6 @@ import LanguageSelector from "@/components/language/language-selector";
 import CountryLanguageSelector from "@/components/country/country-language-selector";
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import LegalNotices from "@/components/legal/legal-notices";
-import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
 
 // Types
 interface SettingsModalProps {
@@ -175,9 +174,6 @@ const SettingsModal = memo(function SettingsModal({
   const [entertainmentSettings, setEntertainmentSettings] = useState<EntertainmentSettings>(() => 
     loadSettings(ENTERTAINMENT_SETTINGS_KEY, defaultEntertainmentSettings)
   );
-  
-  // Legal disclaimer dialog state
-  const [isLegalDisclaimerOpen, setIsLegalDisclaimerOpen] = useState(false);
   
   // Mock state for demonstration - in real app these would come from context/hooks
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -700,18 +696,6 @@ const SettingsModal = memo(function SettingsModal({
                             </CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start"
-                              onClick={() => setIsLegalDisclaimerOpen(true)}
-                              data-testid="button-view-legal-disclaimer"
-                            >
-                              <FileText className="w-4 h-4 mr-2" />
-                              View Legal Terms & Disclaimers
-                            </Button>
-                            
-                            <Separator />
-                            
                             <div className="space-y-2">
                               <Label className="text-base font-medium">Legal Notices</Label>
                               <div className="text-sm text-muted-foreground space-y-1">
@@ -737,14 +721,6 @@ const SettingsModal = memo(function SettingsModal({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Legal Disclaimer Dialog - only render when main modal is open */}
-      {open && (
-        <LegalDisclaimerDialog
-          open={isLegalDisclaimerOpen}
-          onOpenChange={setIsLegalDisclaimerOpen}
-        />
-      )}
     </>
   );
 });
