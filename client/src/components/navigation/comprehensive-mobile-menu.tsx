@@ -874,31 +874,20 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Sun className="h-4 w-4" />
-                      Theme Mode
+                      Theme Settings
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Select day, night, or auto theme
+                      Select day, night, or auto theme with color customization
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ThemeSelector showLabels={false} />
-                  </CardContent>
-
-                </Card>
-
-                {/* Auto Theme Settings */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Auto Mode Schedule
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Configure automatic theme switching
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AutoThemeSettings showTrigger={false} />
+                    <ThemeSelector 
+                      showLabels={true}
+                      showGrayscale={false}
+                      showColorSpectrum={false}
+                      showAutoSettings={true}
+                      showAutoStatus={true}
+                    />
                   </CardContent>
                 </Card>
 

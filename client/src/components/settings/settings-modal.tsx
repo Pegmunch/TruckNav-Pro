@@ -47,7 +47,6 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 // Import existing components
-import { ThemeSelector } from "@/components/theme/theme-selector";
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import LanguageSelector from "@/components/language/language-selector";
@@ -218,12 +217,6 @@ const SettingsModal = memo(function SettingsModal({
       label: "Map & Traffic",
       icon: Map,
       description: "Map layers and traffic settings"
-    },
-    {
-      id: "theme",
-      label: "Theme", 
-      icon: Palette,
-      description: "Appearance and theme settings"
     },
     {
       id: "language",
@@ -604,7 +597,7 @@ const SettingsModal = memo(function SettingsModal({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               {/* Tab Navigation */}
               <div className="px-6 py-3 border-b bg-muted/30">
-                <TabsList className="grid grid-cols-7 w-full h-auto p-1">
+                <TabsList className="grid grid-cols-6 w-full h-auto p-1">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -628,28 +621,6 @@ const SettingsModal = memo(function SettingsModal({
                   <div className="p-6">
                     <TabsContent value="map-traffic" className="mt-0">
                       {renderMapTrafficTab()}
-                    </TabsContent>
-
-                    <TabsContent value="theme" className="mt-0">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Palette className="w-5 h-5" />
-                            Theme & Appearance
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ThemeSelector
-                            showLabels={true}
-                            size="default"
-                            variant="outline"
-                            showGrayscale={true}
-                            showColorSpectrum={true}
-                            showAutoSettings={true}
-                            showAutoStatus={true}
-                          />
-                        </CardContent>
-                      </Card>
                     </TabsContent>
 
                     <TabsContent value="language" className="mt-0">
