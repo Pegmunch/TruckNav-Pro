@@ -2453,6 +2453,45 @@ function NavigationPageContent() {
                     >
                       <Map className="h-5 w-5" />
                     </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => mapRef.current?.resetBearing()}
+                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                      data-testid="button-compass-dial-navigate"
+                      aria-label="Reset compass to North"
+                    >
+                      <svg 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="transition-transform duration-300"
+                        style={{ transform: `rotate(${mapBearing}deg)` }}
+                      >
+                        {/* Compass circle */}
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                        
+                        {/* Red North pointer (top) */}
+                        <path 
+                          d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
+                          fill="#EF4444" 
+                          stroke="#DC2626" 
+                          strokeWidth="0.5"
+                        />
+                        
+                        {/* Blue South pointer (bottom) */}
+                        <path 
+                          d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
+                          fill="#3B82F6" 
+                          stroke="#2563EB" 
+                          strokeWidth="0.5"
+                        />
+                        
+                        {/* Center dot */}
+                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                      </svg>
+                    </Button>
                   </div>
 
                   {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
