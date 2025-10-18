@@ -38,8 +38,10 @@ export default function MapLegalOwnership({
       className={cn(
         // Base positioning - fixed for viewport positioning, centered at bottom
         "fixed bottom-0 left-1/2 -translate-x-1/2 z-[100] pointer-events-none",
-        // Padding and spacing
-        compact ? "px-3 py-2" : "px-4 py-3",
+        // Padding and spacing - thinner for PWA mode
+        compact ? "px-3 py-1" : "px-4 py-3",
+        // Solid white background
+        "bg-white",
         // Ensure readable on any map background
         "text-foreground",
         // Responsive adjustments - max width for bottom right positioning
