@@ -2282,8 +2282,8 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* NAVIGATE MODE OVERLAYS (z-10+) */}
-              {mobileNavMode === 'navigate' && (
+              {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
+              {(mobileNavMode === 'navigate' || isNavigating) && (
                 <>
                   {/* Simplified Navigation HUD - Minimal Info Bar */}
                   {currentRoute && (
@@ -2327,13 +2327,14 @@ function NavigationPageContent() {
                   )}
 
 
-                  {/* Map Control Buttons - Right Side Stack (z-[120]+) - All buttons clickable */}
+                  {/* Map Control Buttons - Right Side Stack (z-[120]+) - BULLETPROOF: Always visible during navigation */}
                   <div 
                     className="absolute z-[120] flex flex-col gap-3 pointer-events-auto" 
                     style={{ 
                       top: 'calc(4.5rem + var(--safe-area-top))',
                       right: 'calc(1rem + var(--safe-area-right))'
                     }}
+                    data-testid="navigation-controls-right"
                   >
                     <Button
                       size="icon"
@@ -2449,29 +2450,29 @@ function NavigationPageContent() {
                     />
                   </div>
 
-                  {/* Stop Navigation Button - Fixed position at bottom-left side (smaller) */}
+                  {/* Cancel Route Button - Fixed position at bottom-left side (more prominent) */}
                   <Button
                     onClick={handleStopNavigation}
                     variant="destructive"
                     className={cn(
-                      "fixed z-[170] h-9 px-4 text-xs font-medium rounded-lg shadow-xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50 transition-all duration-200 hover:scale-105 active:scale-95",
+                      "fixed z-[170] h-12 px-6 text-sm font-bold rounded-xl shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-red-400/70 transition-all duration-200 hover:scale-105 active:scale-95",
                       completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
                     )}
                     style={{
-                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))',
-                      left: 'calc(16px + var(--safe-area-left, 0px))'
+                      bottom: 'calc(24px + var(--safe-area-bottom, 0px))',
+                      left: 'calc(24px + var(--safe-area-left, 0px))'
                     }}
-                    data-testid="button-stop-navigation"
+                    data-testid="button-cancel-route"
                   >
                     {completeJourneyMutation.isPending ? (
                       <>
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        <span>Stopping...</span>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <span>Canceling...</span>
                       </>
                     ) : (
                       <>
-                        <X className="w-3 h-3 mr-1" />
-                        <span>Stop</span>
+                        <X className="w-4 h-4 mr-2" />
+                        <span>Cancel Route</span>
                       </>
                     )}
                   </Button>
@@ -2481,7 +2482,7 @@ function NavigationPageContent() {
                     <MapLegalOwnership compact={true} className="sm:hidden" />
                   </div>
 
-                  {/* MobileFAB - Bottom Right (separate fixed position) */}
+                  {/* MobileFAB - Bottom Right (separate fixed position) - BULLETPROOF: Hamburger menu always visible */}
                   <MobileFAB
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
@@ -2495,6 +2496,7 @@ function NavigationPageContent() {
                       bottom: 'calc(24px + var(--safe-area-bottom))',
                       right: 'calc(24px + var(--safe-area-right))'
                     }}
+                    data-testid="mobile-fab-navigate"
                   />
                 </>
               )}
