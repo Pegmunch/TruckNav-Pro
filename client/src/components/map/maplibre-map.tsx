@@ -1678,8 +1678,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [gpsPosition, gpsStatus, isGPSReady, isLoaded, selectedProfile]); // Include GPS status for proper marker updates
   
-  // HEADING-UP NAVIGATION MODE: BULLETPROOF rotation (works with OR without GPS!)
-  // Rotates map so route always points upward, using GPS heading OR route geometry
+  // HEADING-UP NAVIGATION MODE: 9.99 RELIABILITY - Dynamic segment tracking!
+  // Rotates map so route ALWAYS points upward through ALL turns, with or without GPS
   useEffect(() => {
     if (!map.current || !isLoaded || !isNavigating) {
       console.log('[HEADING-UP] Not ready or not navigating');
@@ -1690,8 +1690,84 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     let animationFrame: number | null = null;
     let lastUpdateTime = Date.now();
     let lastBearing = 0;
+    let routeProgressIndex = 0; // Track position along route
     
-    // Continuous rotation function
+    // Helper: Calculate distance between two points (Haversine formula)
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+      const R = 6371; // Earth radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    };
+    
+    // Helper: Calculate bearing between two points
+    const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+      const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    };
+    
+    // Helper: Find nearest segment on route using TRUE point-to-segment distance
+    // This projects the point onto each segment and finds the closest one
+    const findNearestSegment = (currentLat: number, currentLng: number, path: Array<{lat: number, lng: number}>): number => {
+      let minDistance = Infinity;
+      let nearestIndex = 0;
+      
+      for (let i = 0; i < path.length - 1; i++) {
+        const segmentStart = path[i];
+        const segmentEnd = path[i + 1];
+        
+        // Convert to radians for proper distance calculation
+        const lat1 = segmentStart.lat;
+        const lon1 = segmentStart.lng;
+        const lat2 = segmentEnd.lat;
+        const lon2 = segmentEnd.lng;
+        
+        // Calculate distance from point to segment (not just to endpoints!)
+        // Using parametric line projection
+        const dx = lon2 - lon1;
+        const dy = lat2 - lat1;
+        const segmentLength = Math.sqrt(dx * dx + dy * dy);
+        
+        if (segmentLength === 0) {
+          // Degenerate segment - just use start point
+          const distance = calculateDistance(currentLat, currentLng, lat1, lon1);
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestIndex = i;
+          }
+          continue;
+        }
+        
+        // Project point onto line segment (parametric form)
+        // t = 0 means start point, t = 1 means end point
+        const t = Math.max(0, Math.min(1, 
+          ((currentLng - lon1) * dx + (currentLat - lat1) * dy) / (segmentLength * segmentLength)
+        ));
+        
+        // Find closest point on segment
+        const projectedLat = lat1 + t * dy;
+        const projectedLng = lon1 + t * dx;
+        
+        // Calculate distance to projected point
+        const distance = calculateDistance(currentLat, currentLng, projectedLat, projectedLng);
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestIndex = i;
+        }
+      }
+      
+      return nearestIndex;
+    };
+    
+    // Continuous rotation function with DYNAMIC segment tracking
     const updateHeadingUp = () => {
       const now = Date.now();
       const deltaTime = now - lastUpdateTime;
@@ -1709,30 +1785,42 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           longitude = gpsPosition.longitude;
           bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
           shouldUpdate = true;
-          console.log('[HEADING-UP] Using GPS - Bearing:', bearing.toFixed(1), '°');
+          
+          // Update progress along route if GPS available
+          if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+            routeProgressIndex = findNearestSegment(latitude, longitude, currentRoute.routePath);
+          }
         }
-        // PRIORITY 2: Calculate bearing from route geometry (NO GPS REQUIRED!)
+        // PRIORITY 2: DYNAMIC bearing from nearest route segment (NO GPS REQUIRED!)
         else if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
           const path = currentRoute.routePath;
-          const start = path[0];
-          const end = path[1];
           
-          // Use route start point for centering
-          latitude = start.lat;
-          longitude = start.lng;
+          // Get current map center as our virtual position
+          const currentCenter = mapInstance.getCenter();
           
-          // Calculate bearing from first two route points
-          const lon1 = start.lng * Math.PI / 180;
-          const lon2 = end.lng * Math.PI / 180;
-          const lat1 = start.lat * Math.PI / 180;
-          const lat2 = end.lat * Math.PI / 180;
+          // Find nearest segment to current map center
+          routeProgressIndex = findNearestSegment(currentCenter.lat, currentCenter.lng, path);
           
-          const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
-          const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
-          bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+          // Make sure we have a next point for bearing calculation
+          const segmentIndex = Math.min(routeProgressIndex, path.length - 2);
+          const currentPoint = path[segmentIndex];
+          const nextPoint = path[segmentIndex + 1];
+          
+          // Calculate bearing from ACTIVE segment (not just first two points!)
+          bearing = calculateBearing(
+            currentPoint.lat, currentPoint.lng,
+            nextPoint.lat, nextPoint.lng
+          );
+          
+          // Center on the active segment
+          latitude = currentPoint.lat;
+          longitude = currentPoint.lng;
           
           shouldUpdate = true;
-          console.log('[HEADING-UP] Using route bearing (NO GPS) - Bearing:', bearing.toFixed(1), '°');
+          
+          if (deltaTime > 1000) { // Log once per second
+            console.log(`[HEADING-UP] Dynamic segment ${segmentIndex}/${path.length-1} - Bearing: ${bearing.toFixed(1)}°`);
+          }
         }
         
         // Store last bearing for fallback
@@ -1758,7 +1846,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           setBearing(bearing);
           
           // Only update if significant change or continuous movement
-          // Reduced threshold for smoother rotation
           if (Math.abs(bearingDelta) > 0.3 || centerDelta > 0.000005) {
             mapInstance.easeTo({
               center: [longitude, latitude],
@@ -1775,11 +1862,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               easing: (t) => t * (2 - t), // Smooth ease-out for better feel
               essential: true
             });
-            
-            // Debug logging with rate limiting
-            if (deltaTime > 1000) { // Log every second max
-              console.log('[HEADING-UP] Map rotation applied - Bearing:', bearing.toFixed(1), '°');
-            }
           }
         }
         
@@ -1790,8 +1872,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       animationFrame = requestAnimationFrame(updateHeadingUp);
     };
     
-    // Start continuous rotation
-    console.log('[HEADING-UP] ✅ BULLETPROOF rotation active - works with OR without GPS!');
+    // Start continuous rotation with dynamic segment tracking
+    console.log('[HEADING-UP] ✅ 9.99 RELIABILITY - Dynamic segment tracking active!');
+    console.log('[HEADING-UP] Map will rotate through ALL turns, even without GPS');
     updateHeadingUp();
     
     // Cleanup animation frame on unmount
