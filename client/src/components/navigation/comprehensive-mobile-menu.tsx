@@ -229,7 +229,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   });
 
   // Fetch vehicle profiles
-  const { data: vehicleProfiles = [] } = useQuery<VehicleProfile[]>({
+  const { data: vehicleProfiles = [], isLoading: isLoadingProfiles } = useQuery<VehicleProfile[]>({
     queryKey: ["/api/vehicle-profiles"],
     enabled: open,
   });
@@ -596,7 +596,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         <Button
                           key={category.id}
                           variant={activePOICategory === category.id ? "default" : "outline"}
-                          className="h-16 flex flex-col gap-1"
+                          className="h-16 flex flex-col gap-1 transition-all hover:scale-105 active:scale-95"
                           onClick={() => handlePOISearch(category.id)}
                           data-testid={`button-poi-${category.id}`}
                         >
@@ -628,7 +628,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         {poiResults.slice(0, 5).map((result, idx) => (
                           <Card 
                             key={result.id} 
-                            className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                            className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.01] active:scale-[0.99]"
                             onClick={() => {
                               const coords = extractTomTomCoordinates(result);
                               if (coords && onSelectFacility) {
@@ -685,7 +685,12 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     ) : (
                       favoriteRoutes.map((route) => (
-                        <Card key={route.id} className="bg-muted/30">
+                        <Card 
+                          key={route.id} 
+                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                          onClick={() => handleLoadFavorite(route)}
+                          data-testid={`card-favorite-route-${route.id}`}
+                        >
                           <CardContent className="p-3">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -746,7 +751,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       recentJourneys.map((journey) => (
                         <Card 
                           key={journey.id} 
-                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:scale-[1.01] active:scale-[0.99]"
                           onClick={() => handleLoadJourney(journey)}
                           data-testid={`card-journey-${journey.id}`}
                         >
@@ -807,24 +812,41 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     )}
 
                     {/* Vehicle Profile List */}
-                    {vehicleProfiles.map((profile) => (
-                      <Card 
-                        key={profile.id} 
-                        className={cn(
-                          "cursor-pointer transition-colors hover:bg-muted/50",
-                          selectedProfile?.id === profile.id && "border-primary"
-                        )}
-                        onClick={() => onProfileSelect(profile)}
-                        data-testid={`card-vehicle-profile-${profile.id}`}
-                      >
-                        <CardContent className="p-3">
-                          <div className="font-medium text-sm">{profile.name || 'Unnamed Vehicle'}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {profile.height}m × {profile.width}m × {profile.length}m
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {isLoadingProfiles ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <Card key={i} className="animate-pulse">
+                            <CardContent className="p-3">
+                              <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                              <div className="h-3 bg-muted rounded w-1/2"></div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : vehicleProfiles.length === 0 ? (
+                      <div className="text-sm text-muted-foreground py-4 text-center">
+                        No vehicle profiles yet. Create one to get started!
+                      </div>
+                    ) : (
+                      vehicleProfiles.map((profile) => (
+                        <Card 
+                          key={profile.id} 
+                          className={cn(
+                            "cursor-pointer transition-all hover:bg-muted/50 hover:scale-[1.02] active:scale-[0.98]",
+                            selectedProfile?.id === profile.id && "border-primary"
+                          )}
+                          onClick={() => onProfileSelect(profile)}
+                          data-testid={`card-vehicle-profile-${profile.id}`}
+                        >
+                          <CardContent className="p-3">
+                            <div className="font-medium text-sm">{profile.name || 'Unnamed Vehicle'}</div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {profile.height}m × {profile.width}m × {profile.length}m
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
 
                     {/* Create New Profile Button */}
                     <Button
