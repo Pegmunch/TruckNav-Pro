@@ -1017,162 +1017,22 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
   }, [currentRoute, isLoaded, isNavigating, gpsPosition]);
 
-  // Traffic-aware route coloring
+  // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
+  // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
   useEffect(() => {
     if (!map.current || !isLoaded || !currentRoute?.routePath) return;
     if (!map.current.isStyleLoaded()) return;
 
     const mapInstance = map.current;
-    const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
-    // Wait for traffic layer to be available before querying
-    const trafficLayerId = 'traffic-flow-layer';
-    
-    if (!isTrafficLayerReady) {
-      // If traffic layer is not ready, remove traffic route overlay if it exists
-      if (mapInstance.getLayer('route-traffic-overlay')) {
-        mapInstance.removeLayer('route-traffic-overlay');
-      }
-      if (mapInstance.getSource('route-traffic')) {
-        mapInstance.removeSource('route-traffic');
-      }
-      return;
+    // ALWAYS remove traffic overlay to show beautiful cyan route underneath
+    if (mapInstance.getLayer('route-traffic-overlay')) {
+      mapInstance.removeLayer('route-traffic-overlay');
     }
-
-    // Sample traffic data along the route
-    const sampleTrafficAlongRoute = () => {
-      const trafficSegments: Array<{
-        coordinates: number[][];
-        color: string;
-        width: number;
-      }> = [];
-
-      // Sample every 10 points or at least 20 samples along the route
-      const sampleInterval = Math.max(1, Math.floor(routeCoordinates.length / Math.max(20, routeCoordinates.length / 10)));
-      
-      for (let i = 0; i < routeCoordinates.length - 1; i += sampleInterval) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[Math.min(i + sampleInterval, routeCoordinates.length - 1)];
-        
-        // Query traffic features at the midpoint
-        const midLng = (start[0] + end[0]) / 2;
-        const midLat = (start[1] + end[1]) / 2;
-        const point = mapInstance.project([midLng, midLat]);
-        
-        let speedRatio = 1.0; // Default: free flow
-        let color = '#2563eb'; // Blue: free flow/normal
-        let width = 6;
-
-        try {
-          const features = mapInstance.queryRenderedFeatures(point, {
-            layers: [trafficLayerId]
-          });
-
-          if (features && features.length > 0) {
-            const trafficData = features[0].properties;
-            if (trafficData && typeof trafficData.speed_ratio === 'number') {
-              speedRatio = trafficData.speed_ratio;
-              
-              // Apply traffic-based coloring
-              if (speedRatio < 0.3) {
-                color = '#DC2626'; // Red: heavy traffic
-                width = 8; // Thicker for emphasis
-              } else if (speedRatio < 0.6) {
-                color = '#F59E0B'; // Orange: moderate traffic
-                width = 7;
-              } else if (speedRatio < 0.8) {
-                color = '#FDE047'; // Yellow: light traffic
-                width = 6;
-              }
-              // else: keep default blue for free flow
-            }
-          }
-        } catch (error) {
-          // If query fails, keep default color
-          console.debug('Traffic query failed for segment, using default color');
-        }
-
-        // Create segment coordinates
-        const segmentCoords = routeCoordinates.slice(i, Math.min(i + sampleInterval + 1, routeCoordinates.length));
-        
-        trafficSegments.push({
-          coordinates: segmentCoords,
-          color,
-          width
-        });
-      }
-
-      // Create GeoJSON feature collection with colored segments
-      const features = trafficSegments.map(segment => ({
-        type: 'Feature' as const,
-        properties: {
-          color: segment.color,
-          width: segment.width
-        },
-        geometry: {
-          type: 'LineString' as const,
-          coordinates: segment.coordinates
-        }
-      }));
-
-      const trafficRouteData = {
-        type: 'FeatureCollection' as const,
-        features
-      };
-
-      // Add or update traffic-aware route overlay
-      if (!mapInstance.getSource('route-traffic')) {
-        mapInstance.addSource('route-traffic', {
-          type: 'geojson',
-          data: trafficRouteData
-        });
-
-        mapInstance.addLayer({
-          id: 'route-traffic-overlay',
-          type: 'line',
-          source: 'route-traffic',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-color': ['get', 'color'],
-            'line-width': ['get', 'width'],
-            'line-opacity': 0.9
-          }
-        });
-      } else {
-        const source = mapInstance.getSource('route-traffic') as maplibregl.GeoJSONSource;
-        if (source && source.setData) {
-          source.setData(trafficRouteData);
-        }
-      }
-    };
-
-    // Initial sampling
-    sampleTrafficAlongRoute();
-
-    // Re-sample when map moves/zooms (traffic tiles might load)
-    const handleMapMove = () => {
-      if (mapInstance.isStyleLoaded()) {
-        sampleTrafficAlongRoute();
-      }
-    };
-
-    mapInstance.on('moveend', handleMapMove);
-
-    // Auto-refresh traffic route coloring every 2 minutes
-    const refreshInterval = setInterval(() => {
-      if (mapInstance.isStyleLoaded()) {
-        sampleTrafficAlongRoute();
-      }
-    }, 2 * 60 * 1000);
-
-    return () => {
-      mapInstance.off('moveend', handleMapMove);
-      clearInterval(refreshInterval);
-    };
-  }, [currentRoute, isLoaded, isTrafficLayerReady]);
+    if (mapInstance.getSource('route-traffic')) {
+      mapInstance.removeSource('route-traffic');
+    }
+  }, [currentRoute, isLoaded]);
 
   // Traffic Flow Layer Implementation with TomTom API
   useEffect(() => {
