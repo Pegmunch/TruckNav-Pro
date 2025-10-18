@@ -1,9 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Copyright, Shield, FileText } from "lucide-react";
-import TermsOfService from "./terms-of-service";
 
 export default function LegalNotices() {
   return (
@@ -100,22 +97,6 @@ export default function LegalNotices() {
 
               {/* Legal Links */}
               <div className="flex flex-wrap items-center gap-3">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" data-testid="link-view-terms">
-                      View Complete Terms
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-6xl max-h-[90vh]">
-                    <DialogHeader>
-                      <DialogTitle>Complete Terms of Service & Legal Protections</DialogTitle>
-                    </DialogHeader>
-                    <TermsOfService />
-                  </DialogContent>
-                </Dialog>
-
-                <Separator orientation="vertical" className="h-4" />
-                
                 <a 
                   href="mailto:legal@bespokemarketing.ai" 
                   className="text-xs text-muted-foreground hover:text-primary transition-colors"
