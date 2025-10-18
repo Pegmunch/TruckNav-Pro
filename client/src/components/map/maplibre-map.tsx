@@ -707,10 +707,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         sources: {
           'roads-2d': {
             type: 'raster',
-            tiles: ['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
+            tiles: ['https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png'],
             tileSize: 256,
-            maxzoom: 19,
-            attribution: '© CARTO, © OpenStreetMap contributors'
+            maxzoom: 20,
+            attribution: '© Stadia Maps © OpenStreetMap contributors'
           },
           'roads-3d': {
             type: 'raster',
