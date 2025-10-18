@@ -2582,6 +2582,9 @@ body.navigation-active [data-testid*="button-"] {
   image-rendering: crisp-edges;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  /* Lighten map tiles to reduce dark road appearance */
+  filter: brightness(1.15) contrast(0.92);
+  -webkit-filter: brightness(1.15) contrast(0.92);
 }
 
 .leaflet-tile-loaded {
@@ -2598,6 +2601,9 @@ body.navigation-active [data-testid*="button-"] {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: optimizeQuality;
   image-rendering: smooth;
+  /* Additional lightening for smooth tiles */
+  filter: brightness(1.15) contrast(0.92);
+  -webkit-filter: brightness(1.15) contrast(0.92);
 }
 
 /* GPU acceleration for better performance */

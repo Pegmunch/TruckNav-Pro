@@ -1111,9 +1111,9 @@ const InteractiveMap = memo(function InteractiveMap({
             {/* Main route polyline */}
             <Polyline
               positions={currentRoute.routePath.map((coord: { lat: number; lng: number }) => [coord.lat, coord.lng])}
-              color="#2563eb"
+              color="#60a5fa"
               weight={6}
-              opacity={0.8}
+              opacity={0.95}
               smoothFactor={1}
               data-testid="route-polyline"
             />

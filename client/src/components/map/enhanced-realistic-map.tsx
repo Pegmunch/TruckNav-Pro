@@ -162,21 +162,21 @@ const createIncidentIcon = (incident: TrafficIncident) => {
 const getRouteStyle = (routeType: 'main' | 'alternative' | 'preview' = 'main') => {
   const styles = {
     main: {
-      color: '#3B82F6',
+      color: '#60a5fa',
       weight: 6,
-      opacity: 0.9,
+      opacity: 0.95,
       dashArray: undefined
     },
     alternative: {
-      color: '#10B981',
+      color: '#34d399',
       weight: 4,
-      opacity: 0.7,
+      opacity: 0.85,
       dashArray: '10, 5'
     },
     preview: {
-      color: '#F59E0B',
+      color: '#fbbf24',
       weight: 5,
-      opacity: 0.8,
+      opacity: 0.9,
       dashArray: '5, 5'
     }
   };

@@ -969,9 +969,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#1e3a8a',
+          'line-color': '#ffffff',
           'line-width': 14,
-          'line-opacity': 0.4
+          'line-opacity': 0.8
         }
       });
 
@@ -985,7 +985,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#3b82f6',
+          'line-color': '#60a5fa',
           'line-width': 10,
           'line-opacity': 0.95
         }
@@ -1912,20 +1912,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             >
               <Layers className="h-5 w-5" />
             </Button>
-            {!hideCompass && (
-              <Button
-                size="icon"
-                onClick={handleCompassClick}
-                className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
-                data-testid="button-compass-reset"
-                aria-label="Reset bearing to North"
-              >
-                <Compass 
-                  className="h-5 w-5 transition-transform duration-300" 
-                  style={{ transform: `rotate(${bearing}deg)` }}
-                />
-              </Button>
-            )}
             <Button
               size="icon"
               onClick={handleRecenter}
@@ -1953,6 +1939,20 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             >
               <Minus className="h-5 w-5" />
             </Button>
+            {!hideCompass && (
+              <Button
+                size="icon"
+                onClick={handleCompassClick}
+                className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
+                data-testid="button-compass-reset"
+                aria-label="Reset bearing to North"
+              >
+                <Compass 
+                  className="h-5 w-5 transition-transform duration-300" 
+                  style={{ transform: `rotate(${bearing}deg)` }}
+                />
+              </Button>
+            )}
             <Button
               size="icon"
               onClick={toggle3DMode}
