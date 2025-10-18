@@ -172,45 +172,29 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
         {/* Inner container with horizontal layout */}
         <div className="absolute inset-0 flex items-center justify-between px-4">
           
-          {/* LEFT: Speed Limit Badge (pill shape) */}
+          {/* LEFT: Speed Limit Sign (round with red border like road sign) */}
           <div className="flex items-center gap-3">
             <div
               className={cn(
-                // Pill shape instead of circle
-                'flex items-center gap-2 px-3 py-1.5',
+                // Perfect circle shape like traditional speed limit sign
+                'flex items-center justify-center',
+                'w-12 h-12',
                 'rounded-full',
-                // Background colors adapted for white background
-                isSpeeding 
-                  ? 'bg-white/90 border-2 border-white' // White on red when speeding
-                  : convertedSpeedLimit 
-                    ? 'bg-red-500 dark:bg-red-500 border-2 border-red-400' // Red badge on white
-                    : 'bg-gray-200 dark:bg-gray-300 border-2 border-gray-400',
+                // White background with red border (standard speed limit sign)
+                convertedSpeedLimit 
+                  ? 'bg-white dark:bg-white border-[3px] border-red-600' 
+                  : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
                 'shadow-md',
                 'transition-all duration-300'
               )}
               data-testid="speed-limit-display"
             >
-              <Shield className={cn(
-                "w-4 h-4",
-                isSpeeding 
-                  ? "text-gray-900" // Dark icon on white badge when speeding
-                  : convertedSpeedLimit 
-                    ? "text-white" // White icon on red badge
-                    : "text-gray-600" // Gray icon on gray badge
-              )} />
               {convertedSpeedLimit ? (
-                <span className={cn(
-                  "text-lg font-bold tabular-nums",
-                  isSpeeding 
-                    ? "text-gray-900" // Dark text on white badge when speeding
-                    : convertedSpeedLimit 
-                      ? "text-white" // White text on red badge
-                      : "text-gray-700" // Gray text on gray badge
-                )}>
+                <span className="text-xl font-bold tabular-nums text-gray-900">
                   {convertedSpeedLimit}
                 </span>
               ) : (
-                <span className="text-sm font-medium text-gray-500">--</span>
+                <span className="text-base font-medium text-gray-500">--</span>
               )}
             </div>
             

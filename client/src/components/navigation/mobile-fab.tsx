@@ -83,10 +83,10 @@ export function MobileFAB({
     },
     {
       id: 'menu',
-      icon: MapPin,
-      label: 'Route Options',
+      icon: Menu,
+      label: 'Menu',
       onClick: onMenuClick,
-      showInModes: ['preview']
+      showInModes: ['preview', 'navigate']
     },
     {
       id: 'layers',

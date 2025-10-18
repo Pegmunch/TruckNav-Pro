@@ -2439,6 +2439,7 @@ function NavigationPageContent() {
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
                     onClearRoute={handleStopNavigation}
+                    onMenuClick={() => setShowComprehensiveMenu(true)}
                     onLayersClick={() => setShowTrafficLayer(!showTrafficLayer)}
                     onReportIncident={() => setShowIncidentReportDialog(true)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
