@@ -1719,13 +1719,16 @@ function NavigationPageContent() {
 
   // Production-grade robust navigation flow
   const handleStartNavigation = async () => {
-    console.log('[NAV-START-DEBUG] Start Navigation clicked!');
-    console.log('[NAV-START-DEBUG] currentRoute:', currentRoute);
-    console.log('[NAV-START-DEBUG] fromLocation:', fromLocation);
-    console.log('[NAV-START-DEBUG] toLocation:', toLocation);
-    console.log('[NAV-START-DEBUG] selectedProfile:', selectedProfile);
-    console.log('[NAV-START-DEBUG] mobileNavMode:', mobileNavMode);
-    console.log('[NAV-START-DEBUG] canStartNavigation():', canStartNavigation());
+    console.log('========================================');
+    console.log('[NAV-ACTIVATION] 🚀 START NAVIGATION CLICKED');
+    console.log('========================================');
+    console.log('[NAV-ACTIVATION] currentRoute:', currentRoute);
+    console.log('[NAV-ACTIVATION] fromLocation:', fromLocation);
+    console.log('[NAV-ACTIVATION] toLocation:', toLocation);
+    console.log('[NAV-ACTIVATION] selectedProfile:', selectedProfile);
+    console.log('[NAV-ACTIVATION] mobileNavMode (current):', mobileNavMode);
+    console.log('[NAV-ACTIVATION] isNavigating (current):', isNavigating);
+    console.log('[NAV-ACTIVATION] canStartNavigation():', canStartNavigation());
     
     // Clear any pending debounced mode transitions
     if (modeTransitionTimeoutRef.current) {
@@ -1734,34 +1737,38 @@ function NavigationPageContent() {
     
     // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
-      console.log('[NAV-START-DEBUG] canStartNavigation() returned FALSE - blocking navigation');
+      console.error('[NAV-ACTIVATION] ❌ canStartNavigation() returned FALSE - blocking navigation');
       // REMOVED TOAST: No popups per user request
       return;
     }
     
-    console.log('[NAV-START-DEBUG] Validation passed, proceeding with navigation start');
+    console.log('[NAV-ACTIVATION] ✅ Validation passed, proceeding with navigation start');
     
     // Additional comprehensive validation before starting
     if (!fromLocation || !toLocation) {
+      console.error('[NAV-ACTIVATION] ❌ Missing location data');
       // REMOVED TOAST: No popups per user request
       return;
     }
 
     if (!selectedProfile) {
+      console.error('[NAV-ACTIVATION] ❌ Missing vehicle profile');
       // REMOVED TOAST: No popups per user request
       return;
     }
 
     if (startJourneyMutation.isPending || activateJourneyMutation.isPending) {
+      console.warn('[NAV-ACTIVATION] ⏳ Navigation already starting, preventing duplicate');
       return; // Prevent double-clicks/race conditions
     }
 
     try {
-      
+      console.log('[NAV-ACTIVATION] Step 1: Set navigation active state for CSS styling');
       // Set navigation active state for CSS styling
       document.body.classList.add('navigation-active');
       document.documentElement.classList.add('overlay-safe-mode');
       
+      console.log('[NAV-ACTIVATION] Step 2: Close overlays and prepare UI');
       // Close all known overlay components using proper state management
       setIsAlternativeRoutesOpen(false);
       
@@ -1771,6 +1778,7 @@ function NavigationPageContent() {
       // Generate idempotency key for this navigation start
       const idempotencyKey = generateIdempotencyKey('start');
       
+      console.log('[NAV-ACTIVATION] Step 3: Ensure route exists');
       // Ensure we have a route (calculate if needed, use returned value not state)
       let route = currentRoute;
       
@@ -1844,94 +1852,60 @@ function NavigationPageContent() {
         idempotencyKey 
       });
       
-      // Set navigate mode AFTER successful activation
-      setMobileNavMode('navigate');
+      console.log('[NAV-ACTIVATION] Step 4: ✅ Journey activated successfully');
       
-      // Update navigation state after successful activation
+      // CRITICAL: Set navigation states FIRST (before any events)
+      // React state updates are async, so set them early
       console.log('========================================');
-      console.log('[NAV-MODE-DEBUG] ✅ SETTING isNavigating=TRUE');
-      console.log('[NAV-MODE-DEBUG] This will activate heading-up navigation');
+      console.log('[NAV-ACTIVATION] 🎯 SETTING NAVIGATION STATES');
+      console.log('[NAV-ACTIVATION] Setting mobileNavMode = navigate');
+      console.log('[NAV-ACTIVATION] Setting isNavigating = true');
       console.log('========================================');
+      
+      setMobileNavMode('navigate');
       setIsNavigating(true);
       
-      // Verify state change in next tick
-      setTimeout(() => {
-        console.log('[NAV-MODE-DEBUG] isNavigating state verified:', true);
-      }, 100);
-      
+      // Store route ID for persistence
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
       }
+      
+      // Store navigation activation context for useEffect
+      // This will trigger the auto-zoom useEffect after state updates
+      const navigationContext = {
+        route,
+        gpsPosition: gpsData?.position,
+        manualLocation: gpsData?.manualLocation
+      };
+      
+      // Store in a ref so useEffect can access it
+      if (!pendingNavigationContextRef.current) {
+        pendingNavigationContextRef.current = navigationContext;
+      }
 
+      console.log('[NAV-ACTIVATION] Step 5: Dispatch secondary events');
+      
       // Automatically enable street view in navigation mode when navigation starts
       const streetViewActivationEvent = new CustomEvent('activate_street_view_navigation', {
         detail: { route: route, profile: selectedProfile }
       });
       window.dispatchEvent(streetViewActivationEvent);
 
-      // Auto-zoom to professional 3D navigation view at current location
-      // Professional forward-looking perspective matching TomTom/Waze style
-      const applyNavigationView = (lat: number, lng: number, bearing: number = 0) => {
-        const navigationPosition = {
-          lat,
-          lng,
-          zoom: 18.5,      // Professional street navigation zoom
-          pitch: 67,       // Forward-looking 3D perspective
-          bearing: bearing // Heading-up rotation
-        };
-        
-        console.log('[NAV-VIEW] Applying professional navigation view:', navigationPosition);
-        
-        // Switch to 2D roads mode and fly to navigation position
-        const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-          detail: { 
-            position: navigationPosition,
-            mapStyle: 'roads'
-          }
-        });
-        window.dispatchEvent(autoZoomEvent);
-      };
-      
-      // Priority: GPS position → Manual location → Route start
-      if (gpsData?.position) {
-        console.log('[NAV-VIEW] ✅ Using current GPS position');
-        applyNavigationView(
-          gpsData.position.latitude,
-          gpsData.position.longitude,
-          gpsData.position.smoothedHeading || gpsData.position.heading || 0
-        );
-      } else if (gpsData?.manualLocation) {
-        console.log('[NAV-VIEW] 📍 Using manual location');
-        applyNavigationView(
-          gpsData.manualLocation.latitude,
-          gpsData.manualLocation.longitude,
-          0
-        );
-      } else if (route.startCoordinates) {
-        console.log('[NAV-VIEW] 🗺️ Using route start coordinates (GPS unavailable)');
-        applyNavigationView(
-          route.startCoordinates.lat,
-          route.startCoordinates.lng,
-          0
-        );
-      } else {
-        console.warn('[NAV-VIEW] ⚠️ No location available - cannot auto-zoom');
-      }
-
+      // Expand map after brief delay for smoother transition
       setTimeout(() => {
         setIsMapExpanded(true);
       }, 300);
 
       // Dispatch navigation started event for notification system
       const navigationStartedEvent = new CustomEvent('navigation:started', {
-        detail: { route: currentRoute, profile: selectedProfile }
+        detail: { route: route, profile: selectedProfile }
       });
       window.dispatchEvent(navigationStartedEvent);
-
-      // Hide toast in mobile view - user requested no popups
-      if (window.innerWidth >= 768) {
-        // REMOVED TOAST: No popups per user request
-      }
+      
+      console.log('========================================');
+      console.log('[NAV-ACTIVATION] ✅ Navigation activation complete!');
+      console.log('[NAV-ACTIVATION] States set - waiting for useEffect to trigger auto-zoom');
+      console.log('========================================');
 
     } catch (error) {
       console.error('Navigation start failed:', error);
