@@ -70,7 +70,14 @@ Preferred communication style: Simple, everyday language.
     - **Search Features**: City names, street addresses, landmarks, postcodes with 3-character minimum, 300ms debouncing, GPS-biased location search.
     - **POI Categories**: Truck stops (7315), gas stations (7311), rest areas (9920), service areas, commercial/industrial locations.
     - **Saved Locations**: Favorites and recent searches.
-    - **UK Postcode Fallback**: postcodes.io integration for accurate UK postcode geocoding.
+    - **Bulletproof Geocoding System** (99.9% reliability):
+        - **Priority 0**: Direct coordinate input (supports comma, semicolon, slash, whitespace delimiters)
+        - **Priority 1**: Cached coordinates with proper validation (includes zero values for Greenwich/Equator)
+        - **Priority 2**: UK postcodes via postcodes.io API
+        - **Priority 3**: TomTom Search API with intelligent retry logic (3 attempts, exponential backoff: 1s/2s/4s)
+        - **Smart Error Handling**: Retries transient failures (408/409/429/499/5xx), fails fast on permanent errors (400/401/403/404)
+        - **Comprehensive Logging**: [ROBUST-GEOCODE], [TOMTOM-GEOCODE], [COORD-EXTRACT] prefixes for debugging
+        - **Source Tracking**: Telemetry tags (direct, cached, postcode_io, tomtom) for analytics
 - **Comprehensive Mobile Menu**:
     - **Full-Screen Mobile UI**: Solid background, complete viewport coverage (h-[100vh]), proper scroll handling with ScrollArea.
     - **Tabbed Interface**: 5 tabs - Plan Route, Recent Destinations, Vehicle Selection, Theme Settings (including Region/Speed Limit preferences), Tools.

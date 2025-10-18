@@ -10,7 +10,7 @@ export interface GeocodeResult {
   coordinates: { lat: number; lng: number };
   address: string;
   confidence: number;
-  source: 'cached' | 'postcode_io' | 'tomtom' | 'fallback';
+  source: 'direct' | 'cached' | 'postcode_io' | 'tomtom' | 'fallback';
 }
 
 /**
@@ -32,7 +32,7 @@ export async function robustGeocode(
       coordinates: directCoords,
       address: `${directCoords.lat}, ${directCoords.lng}`,
       confidence: 1.0,
-      source: 'cached'
+      source: 'direct'
     };
   }
 
@@ -148,14 +148,21 @@ async function geocodeWithTomTom(address: string): Promise<GeocodeResult | null>
   if (!response.ok) {
     const errorText = await response.text().catch(() => 'Unable to read error');
     
-    // Differentiate between client errors (4xx) and server/network errors (5xx)
+    // Retryable 4xx errors: rate limiting, timeouts, conflicts
+    const retryable4xxErrors = [408, 409, 429, 499];
+    
+    if (retryable4xxErrors.includes(response.status)) {
+      console.warn(`[TOMTOM-GEOCODE] Retryable error ${response.status}:`, errorText);
+      throw new Error(`TomTom API retryable error ${response.status}: ${errorText}`);
+    }
+    
+    // Non-retryable client errors (400, 401, 403, 404, etc.)
     if (response.status >= 400 && response.status < 500) {
-      console.error(`[TOMTOM-GEOCODE] Client error ${response.status}:`, errorText);
-      // Don't retry client errors - return null
+      console.error(`[TOMTOM-GEOCODE] Permanent client error ${response.status}:`, errorText);
       return null;
     }
     
-    // Throw for server errors so retry logic can handle them
+    // Server errors (5xx) - always retry
     throw new Error(`TomTom API server error ${response.status}: ${errorText}`);
   }
 
@@ -232,18 +239,28 @@ export function validateCoordinates(coords: { lat: number; lng: number }): boole
 
 /**
  * Extract coordinates from various input formats
+ * Supports multiple delimiters: comma, semicolon, slash, whitespace
  */
 export function extractCoordinatesFromString(input: string): { lat: number; lng: number } | null {
-  // Try to match coordinate patterns: "lat, lng" or "lat,lng"
-  const coordPattern = /^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/;
-  const match = input.trim().match(coordPattern);
+  // Normalize common delimiters to comma for consistent parsing
+  const normalized = input
+    .trim()
+    .replace(/[;/\s]+/g, ',')  // Replace semicolon, slash, or whitespace with comma
+    .replace(/,+/g, ',');      // Collapse multiple commas to single
+  
+  // Try to match coordinate patterns: "lat,lng"
+  const coordPattern = /^(-?\d+\.?\d*),(-?\d+\.?\d*)$/;
+  const match = normalized.match(coordPattern);
 
   if (match) {
     const lat = parseFloat(match[1]);
     const lng = parseFloat(match[2]);
 
     if (validateCoordinates({ lat, lng })) {
+      console.log(`[COORD-EXTRACT] ✅ Extracted coordinates: ${lat}, ${lng} from "${input}"`);
       return { lat, lng };
+    } else {
+      console.warn(`[COORD-EXTRACT] Invalid coordinates: ${lat}, ${lng}`);
     }
   }
 
