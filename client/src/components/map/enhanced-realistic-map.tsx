@@ -158,25 +158,25 @@ const createIncidentIcon = (incident: TrafficIncident) => {
   });
 };
 
-// Enhanced route styling for maximum visibility
+// Enhanced route styling - Professional navigation colors
 const getRouteStyle = (routeType: 'main' | 'alternative' | 'preview' = 'main') => {
   const styles = {
     main: {
-      color: '#60a5fa',
+      color: '#06b6d4', // Professional cyan/turquoise for main route
       weight: 7,
       opacity: 1,
       dashArray: undefined
     },
     alternative: {
-      color: '#34d399',
+      color: '#8b5cf6', // Purple for alternative routes
       weight: 5,
-      opacity: 0.9,
+      opacity: 0.85,
       dashArray: '10, 5'
     },
     preview: {
-      color: '#fbbf24',
+      color: '#f59e0b', // Amber for preview routes
       weight: 6,
-      opacity: 0.95,
+      opacity: 0.9,
       dashArray: '5, 5'
     }
   };

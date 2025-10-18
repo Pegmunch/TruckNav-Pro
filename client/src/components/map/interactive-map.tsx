@@ -1108,19 +1108,19 @@ const InteractiveMap = memo(function InteractiveMap({
         {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
         {currentRoute && currentRoute.routePath && currentRoute.routePath.length > 0 && (
           <>
-            {/* White outline for route visibility */}
+            {/* Dark outline for professional navigation appearance */}
             <Polyline
               positions={currentRoute.routePath.map((coord: { lat: number; lng: number }) => [coord.lat, coord.lng])}
-              color="#ffffff"
+              color="#1e3a5f"
               weight={10}
-              opacity={0.95}
+              opacity={0.9}
               smoothFactor={1}
             />
             
-            {/* Main route polyline */}
+            {/* Main route polyline - Professional cyan/turquoise navigation color */}
             <Polyline
               positions={currentRoute.routePath.map((coord: { lat: number; lng: number }) => [coord.lat, coord.lng])}
-              color="#60a5fa"
+              color="#06b6d4"
               weight={7}
               opacity={1}
               smoothFactor={1}
