@@ -2329,7 +2329,7 @@ function NavigationPageContent() {
 
                   {/* Map Control Buttons - Right Side Stack (z-[120]+) - BULLETPROOF: Always visible during navigation */}
                   <div 
-                    className="absolute z-[120] flex flex-col gap-3 pointer-events-auto" 
+                    className="fixed z-[120] flex flex-col gap-3 pointer-events-auto" 
                     style={{ 
                       top: 'calc(4.5rem + var(--safe-area-top))',
                       right: 'calc(1rem + var(--safe-area-right))'
@@ -2434,11 +2434,11 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Professional Oval Speedometer HUD - Fixed position above Stop button (moved up) */}
+                  {/* Professional Oval Speedometer HUD - Fixed position closer to bottom */}
                   <div 
                     className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                     style={{
-                      bottom: 'calc(160px + var(--safe-area-bottom, 0px))' // Moved up to 160px for better visibility
+                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))' // Moved down closer to bottom
                     }}
                     data-testid="speedometer-hud-navigate"
                   >
@@ -2450,17 +2450,17 @@ function NavigationPageContent() {
                     />
                   </div>
 
-                  {/* Cancel Route Button - Fixed position at bottom-left side (more prominent) */}
+                  {/* Cancel Route Button - Fixed position at bottom-left side (compact) */}
                   <Button
                     onClick={handleStopNavigation}
                     variant="destructive"
                     className={cn(
-                      "fixed z-[170] h-12 px-6 text-sm font-bold rounded-xl shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-red-400/70 transition-all duration-200 hover:scale-105 active:scale-95",
+                      "fixed z-[170] h-10 px-4 text-xs font-semibold rounded-lg shadow-xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/70 transition-all duration-200 hover:scale-105 active:scale-95",
                       completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
                     )}
                     style={{
-                      bottom: 'calc(24px + var(--safe-area-bottom, 0px))',
-                      left: 'calc(24px + var(--safe-area-left, 0px))'
+                      bottom: 'calc(20px + var(--safe-area-bottom, 0px))',
+                      left: 'calc(20px + var(--safe-area-left, 0px))'
                     }}
                     data-testid="button-cancel-route"
                   >
