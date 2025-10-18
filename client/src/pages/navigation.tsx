@@ -54,6 +54,179 @@ import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
+// Reusable Navigation Controls Stack - Used in BOTH Preview and Navigate modes
+interface NavigationControlsStackProps {
+  mapRef: React.RefObject<MapLibreMapRef>;
+  mapBearing: number;
+  map3DMode: boolean;
+  onToggle3D: () => void;
+  showTrafficLayer: boolean;
+  onToggleTraffic: () => void;
+  mapViewMode: 'roads' | 'satellite';
+  onToggleMapView: () => void;
+  mode: 'preview' | 'navigate';
+}
+
+function NavigationControlsStack({
+  mapRef,
+  mapBearing,
+  map3DMode,
+  onToggle3D,
+  showTrafficLayer,
+  onToggleTraffic,
+  mapViewMode,
+  onToggleMapView,
+  mode
+}: NavigationControlsStackProps) {
+  return (
+    <div 
+      className="fixed z-[500] flex flex-col gap-2 pointer-events-auto" 
+      style={{ 
+        top: 'calc(7.5rem + var(--safe-area-top))',
+        right: 'calc(0.75rem + var(--safe-area-right))'
+      }}
+      data-testid={`navigation-controls-right-${mode}`}
+    >
+      {/* 1. Compass Reset Button */}
+      <Button
+        size="icon"
+        onClick={() => mapRef.current?.resetBearing()}
+        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+        data-testid={`button-compass-reset-${mode}`}
+        aria-label="Reset bearing to North"
+      >
+        <Compass 
+          className="h-5 w-5 transition-transform duration-300" 
+          style={{ transform: `rotate(${mapBearing}deg)` }}
+        />
+      </Button>
+
+      {/* 2. Recenter Button */}
+      <Button
+        size="icon"
+        onClick={() => {
+          if (mapRef.current) {
+            mapRef.current.zoomToUserLocation({
+              zoom: 17.5,
+              pitch: 45,
+              duration: 1500
+            });
+          }
+        }}
+        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+        data-testid={`button-recenter-${mode}`}
+        aria-label="Recenter on current location"
+      >
+        <Crosshair className="h-5 w-5" />
+      </Button>
+
+      {/* 3. Zoom In Button */}
+      <Button
+        size="icon"
+        onClick={() => mapRef.current?.zoomIn()}
+        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+        data-testid={`button-zoom-in-${mode}`}
+        aria-label="Zoom in"
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
+
+      {/* 4. Zoom Out Button */}
+      <Button
+        size="icon"
+        onClick={() => mapRef.current?.zoomOut()}
+        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+        data-testid={`button-zoom-out-${mode}`}
+        aria-label="Zoom out"
+      >
+        <Minus className="h-5 w-5" />
+      </Button>
+
+      {/* 5. 3D Toggle Button - BLUE when active */}
+      <Button
+        size="icon"
+        onClick={onToggle3D}
+        className={cn(
+          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+          map3DMode 
+            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
+            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+        )}
+        data-testid={`button-tilt-map-${mode}`}
+        aria-label={map3DMode ? "Switch to flat view" : "Switch to tilted view"}
+      >
+        <Box className="h-5 w-5" />
+      </Button>
+
+      {/* 6. Traffic Toggle Button - ORANGE when active */}
+      <Button
+        size="icon"
+        onClick={onToggleTraffic}
+        className={cn(
+          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+          showTrafficLayer 
+            ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 hover:scale-105 border-orange-400/50"
+            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+        )}
+        data-testid={`button-traffic-toggle-${mode}`}
+        aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
+      >
+        <Layers className="h-5 w-5" />
+      </Button>
+
+      {/* 7. Satellite/Map Toggle Button - GREEN when satellite */}
+      <Button
+        size="icon"
+        onClick={onToggleMapView}
+        className={cn(
+          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+          mapViewMode === 'satellite'
+            ? "bg-gradient-to-br from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:scale-105 border-green-400/50"
+            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+        )}
+        data-testid={`button-map-view-toggle-${mode}`}
+        aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
+      >
+        <Map className="h-5 w-5" />
+      </Button>
+
+      {/* 8. Compass Dial Button */}
+      <Button
+        size="icon"
+        onClick={() => mapRef.current?.resetBearing()}
+        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+        data-testid={`button-compass-dial-${mode}`}
+        aria-label="Reset compass to North"
+      >
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          className="transition-transform duration-300"
+          style={{ transform: `rotate(${mapBearing}deg)` }}
+        >
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+          <path 
+            d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
+            fill="#EF4444" 
+            stroke="#DC2626" 
+            strokeWidth="0.5"
+          />
+          <path 
+            d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
+            fill="#3B82F6" 
+            stroke="#2563EB" 
+            strokeWidth="0.5"
+          />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+      </Button>
+    </div>
+  );
+}
+
 // Inner component that uses GPS context
 function NavigationPageContent() {
   const { t } = useTranslation();
@@ -2308,6 +2481,26 @@ function NavigationPageContent() {
                     </div>
                   </div>
 
+                  {/* BULLETPROOF: Reusable Navigation Controls - ALL 8 BUTTONS */}
+                  <NavigationControlsStack
+                    mapRef={mapRef}
+                    mapBearing={mapBearing}
+                    map3DMode={map3DMode}
+                    onToggle3D={() => {
+                      mapRef.current?.toggle3DMode();
+                      setMap3DMode(!map3DMode);
+                    }}
+                    showTrafficLayer={showTrafficLayer}
+                    onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
+                    mapViewMode={mapViewMode}
+                    onToggleMapView={() => {
+                      const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                      setMapViewMode(newMode);
+                      mapRef.current?.toggleMapView();
+                    }}
+                    mode="preview"
+                  />
+
                   {/* Start Navigation Button - Bottom Center (Preview Mode) */}
                   <Button
                     onClick={() => {
@@ -2391,151 +2584,25 @@ function NavigationPageContent() {
                   )}
 
 
-                  {/* Map Control Buttons - Right Side Stack (z-[500]+) - BULLETPROOF: Always visible during navigation */}
-                  <div 
-                    className="fixed z-[500] flex flex-col gap-2 pointer-events-auto" 
-                    style={{ 
-                      top: 'calc(7.5rem + var(--safe-area-top))',
-                      right: 'calc(0.75rem + var(--safe-area-right))'
+                  {/* BULLETPROOF: Reusable Navigation Controls - ALL 8 BUTTONS (Navigate Mode) */}
+                  <NavigationControlsStack
+                    mapRef={mapRef}
+                    mapBearing={mapBearing}
+                    map3DMode={map3DMode}
+                    onToggle3D={() => {
+                      mapRef.current?.toggle3DMode();
+                      setMap3DMode(!map3DMode);
                     }}
-                    data-testid="navigation-controls-right"
-                  >
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.resetBearing()}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-compass-reset-navigate"
-                      aria-label="Reset bearing to North"
-                    >
-                      <Compass 
-                        className="h-5 w-5 transition-transform duration-300" 
-                        style={{ transform: `rotate(${mapBearing}deg)` }}
-                      />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        if (mapRef.current) {
-                          mapRef.current.zoomToUserLocation({
-                            zoom: 17.5,
-                            pitch: 45,
-                            duration: 1500
-                          });
-                        }
-                      }}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-recenter-navigate"
-                      aria-label="Recenter on current location"
-                    >
-                      <Crosshair className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.zoomIn()}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-zoom-in-navigate"
-                      aria-label="Zoom in"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.zoomOut()}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-zoom-out-navigate"
-                      aria-label="Zoom out"
-                    >
-                      <Minus className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMap3DMode(!map3DMode);
-                      }}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        map3DMode 
-                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-tilt-map-navigate"
-                      aria-label={map3DMode ? "Switch to flat view" : "Switch to tilted view"}
-                    >
-                      <Box className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        showTrafficLayer 
-                          ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 hover:scale-105 border-orange-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-traffic-toggle-navigate"
-                      aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
-                    >
-                      <Layers className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => {
-                        const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
-                        setMapViewMode(newMode);
-                        mapRef.current?.toggleMapView();
-                      }}
-                      className={cn(
-                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
-                        mapViewMode === 'satellite'
-                          ? "bg-gradient-to-br from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:scale-105 border-green-400/50"
-                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
-                      )}
-                      data-testid="button-map-view-toggle-navigate"
-                      aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
-                    >
-                      <Map className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      onClick={() => mapRef.current?.resetBearing()}
-                      className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                      data-testid="button-compass-dial-navigate"
-                      aria-label="Reset compass to North"
-                    >
-                      <svg 
-                        width="24" 
-                        height="24" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="transition-transform duration-300"
-                        style={{ transform: `rotate(${mapBearing}deg)` }}
-                      >
-                        {/* Compass circle */}
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-                        
-                        {/* Red North pointer (top) */}
-                        <path 
-                          d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
-                          fill="#EF4444" 
-                          stroke="#DC2626" 
-                          strokeWidth="0.5"
-                        />
-                        
-                        {/* Blue South pointer (bottom) */}
-                        <path 
-                          d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
-                          fill="#3B82F6" 
-                          stroke="#2563EB" 
-                          strokeWidth="0.5"
-                        />
-                        
-                        {/* Center dot */}
-                        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                      </svg>
-                    </Button>
-                  </div>
+                    showTrafficLayer={showTrafficLayer}
+                    onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
+                    mapViewMode={mapViewMode}
+                    onToggleMapView={() => {
+                      const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                      setMapViewMode(newMode);
+                      mapRef.current?.toggleMapView();
+                    }}
+                    mode="navigate"
+                  />
 
                   {/* Professional Oval Speedometer HUD - THINNER/Smaller Footer */}
                   <div 
