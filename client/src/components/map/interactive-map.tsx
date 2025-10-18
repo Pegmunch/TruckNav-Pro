@@ -34,8 +34,6 @@ import { useCurrentTrafficConditions, useTrafficIncidents } from "@/hooks/use-tr
 import NextManeuverGuidance from "@/components/route/next-maneuver-guidance";
 import { useCountryMap } from "@/hooks/use-country-preferences";
 import { cn } from "@/lib/utils";
-import LegalDisclaimerDialog from "@/components/legal/legal-disclaimer-dialog";
-import { useLegalConsent } from "@/hooks/use-legal-consent";
 import SpeedDisplay from "@/components/map/speed-display";
 import StreetView from "@/components/map/street-view";
 import { useGPS } from "@/contexts/gps-context";
@@ -142,10 +140,6 @@ const InteractiveMap = memo(function InteractiveMap({
 }: InteractiveMapProps) {
   // Use country-based map provider
   const { mapProvider, getMapConfig, country } = useCountryMap();
-  
-  // Legal disclaimer dialog state
-  const [isLegalDisclaimerOpen, setIsLegalDisclaimerOpen] = useState(false);
-  const { hasAcceptedTerms } = useLegalConsent();
   
   // Load preferences on mount and merge with country-specific provider
   const [preferences, setPreferences] = useState<MapPreferences>(() => {
@@ -625,14 +619,6 @@ const InteractiveMap = memo(function InteractiveMap({
       }, AUTO_HIDE_DELAY);
     }
   }, [panelHover, hasUserInteracted]);
-
-  // Handle legal disclaimer toggle
-  const handleToggleLegalDisclaimer = useCallback(() => {
-    console.log('Legal disclaimer button clicked! Current state:', isLegalDisclaimerOpen);
-    setIsLegalDisclaimerOpen(!isLegalDisclaimerOpen);
-    resetAutoHideTimer();
-    console.log('Legal disclaimer will open:', !isLegalDisclaimerOpen);
-  }, [isLegalDisclaimerOpen, resetAutoHideTimer]);
 
   // Handle map click (desktop mouse clicks)
   const handleMapClick = useCallback((event: React.MouseEvent) => {
@@ -1640,53 +1626,6 @@ const InteractiveMap = memo(function InteractiveMap({
           />
         </div>
       )}
-
-      {/* Floating Legal Disclaimer Button - Top Right Corner */}
-      <div className={cn(
-        "absolute z-[1200] transition-all duration-300 ease-in-out pointer-events-auto",
-        "top-4 right-4", // Positioned at top right corner
-        "opacity-100 translate-y-0"
-      )}
-      onPointerDown={(e) => { e.stopPropagation(); }}>
-        <Button
-            onClick={handleToggleLegalDisclaimer}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleToggleLegalDisclaimer();
-            }}
-            size="icon"
-            className={cn(
-              "automotive-button floating-action-button",
-              "min-h-[clamp(48px,14vw,60px)] min-w-[clamp(48px,14vw,60px)]",
-              "bg-white hover:bg-gray-50 text-gray-900",
-              "border-2 border-red-600 hover:border-red-700",
-              "shadow-xl hover:shadow-2xl transition-all duration-300 ease-out",
-              "touch-manipulation cursor-pointer pointer-events-auto",
-              // Visual indicator for new users who haven't accepted terms yet
-              !hasAcceptedTerms && "ring-2 ring-red-400 ring-opacity-75"
-            )}
-            data-testid="button-legal-disclaimer"
-            aria-label={isLegalDisclaimerOpen ? "Close legal disclaimer" : "Open legal disclaimer"}
-          >
-            <div className="relative">
-              <Shield className={cn(
-                "scalable-control-icon text-red-600",
-                isLegalDisclaimerOpen && "rotate-45"
-              )} />
-              {/* Alert indicator for users who haven't accepted terms */}
-              {!hasAcceptedTerms && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border border-white animate-pulse"></div>
-              )}
-            </div>
-          </Button>
-      </div>
-      
-      {/* Legal Disclaimer Dialog */}
-      <LegalDisclaimerDialog
-        open={isLegalDisclaimerOpen}
-        onOpenChange={setIsLegalDisclaimerOpen}
-      />
       
       {/* Speed Display - raised higher to avoid FAB overlap on mobile */}
       <div className="absolute bottom-24 md:bottom-14 left-[48%] transform -translate-x-1/2 z-[1150]">
