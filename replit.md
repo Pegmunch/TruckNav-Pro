@@ -13,6 +13,9 @@ Preferred communication style: Simple, everyday language.
 - Fixed navigation controls visibility: Removed CSS `z-index: 50 !important` override that was hiding the 7 navigation buttons (compass, recenter, zoom in/out, 3D toggle, traffic toggle, map view toggle)
 - Confirmed route line colors: White outline (#ffffff, width 16) + light blue center (#60a5fa, width 12) correctly configured in MapLibre
 - Fixed NavigationSidebar transparency: Changed Tools & Widgets panel background from `bg-card` to `bg-white` for solid white coverage
+- Mobile header improvements: Made Settings gear button green (bg-green-600), increased header thickness (py-3), thicker border (border-b-2)
+- Footer optimization: Made legal ownership footer thinner (py-1) while maintaining solid white background
+- Navigation controls spacing: Moved right-side buttons down (5.5rem) to prevent overlap with thicker header
 
 # System Architecture
 
