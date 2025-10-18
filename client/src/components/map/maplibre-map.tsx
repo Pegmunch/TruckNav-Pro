@@ -624,30 +624,34 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     const handleControls = () => {
       if (!map.current) return;
       
-      if (hideControls || hideCompass) {
-        if (navigationControlRef.current) {
+      // Always remove existing control first to avoid duplicates
+      if (navigationControlRef.current) {
+        try {
           map.current.removeControl(navigationControlRef.current);
-          navigationControlRef.current = null;
+        } catch (e) {
+          // Control may not be on map, ignore
         }
-      } else {
-        if (!navigationControlRef.current) {
-          navigationControlRef.current = new maplibregl.NavigationControl({
-            visualizePitch: true,
-            showCompass: true,
-            showZoom: false
-          });
-          map.current.addControl(navigationControlRef.current, 'top-right');
-          
-          // Reposition the navigation control container above compass button
-          setTimeout(() => {
-            const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
-            if (navControl) {
-              (navControl as HTMLElement).style.top = 'auto';
-              (navControl as HTMLElement).style.bottom = '320px';
-              (navControl as HTMLElement).style.right = '16px';
-            }
-          }, 100);
-        }
+        navigationControlRef.current = null;
+      }
+      
+      // Add control if not hidden
+      if (!hideControls && !hideCompass) {
+        navigationControlRef.current = new maplibregl.NavigationControl({
+          visualizePitch: true,
+          showCompass: true,
+          showZoom: false
+        });
+        map.current.addControl(navigationControlRef.current, 'top-right');
+        
+        // Reposition the navigation control container above compass button
+        setTimeout(() => {
+          const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
+          if (navControl) {
+            (navControl as HTMLElement).style.top = 'auto';
+            (navControl as HTMLElement).style.bottom = '320px';
+            (navControl as HTMLElement).style.right = '16px';
+          }
+        }, 100);
       }
     };
     
