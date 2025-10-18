@@ -64,6 +64,7 @@ interface NavigationControlsStackProps {
   onToggleTraffic: () => void;
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
+  onViewIncidents?: () => void;
   mode: 'preview' | 'navigate';
 }
 
@@ -76,6 +77,7 @@ function NavigationControlsStack({
   onToggleTraffic,
   mapViewMode,
   onToggleMapView,
+  onViewIncidents,
   mode
 }: NavigationControlsStackProps) {
   return (
@@ -209,6 +211,19 @@ function NavigationControlsStack({
       >
         <Map className="h-5 w-5" />
       </Button>
+
+      {/* 8. View Incidents Button - PURPLE when viewing */}
+      {onViewIncidents && (
+        <Button
+          size="icon"
+          onClick={onViewIncidents}
+          className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+          data-testid={`button-view-incidents-${mode}`}
+          aria-label="View traffic incidents"
+        >
+          <AlertCircle className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -2680,6 +2695,7 @@ function NavigationPageContent() {
               setMapViewMode(newMode);
               mapRef.current?.toggleMapView();
             }}
+            onViewIncidents={() => setShowIncidentFeed(true)}
             mode={mobileNavMode === 'navigate' ? 'navigate' : 'preview'}
           />
         )}
