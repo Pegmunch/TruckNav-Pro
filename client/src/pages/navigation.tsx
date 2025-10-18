@@ -2267,10 +2267,10 @@ function NavigationPageContent() {
 
                   {/* Map Control Buttons - Right Side Stack (Preview Mode) */}
                   <div 
-                    className="fixed z-[500] flex flex-col gap-3 pointer-events-auto" 
+                    className="fixed z-[500] flex flex-col gap-2 pointer-events-auto" 
                     style={{ 
-                      top: 'calc(5.5rem + var(--safe-area-top))',
-                      right: 'calc(1rem + var(--safe-area-right))'
+                      top: 'calc(4rem + var(--safe-area-top))',
+                      right: 'calc(0.75rem + var(--safe-area-right))'
                     }}
                     data-testid="navigation-controls-right-preview"
                   >
@@ -2445,11 +2445,11 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
               {(mobileNavMode === 'navigate' || isNavigating) && (
                 <>
-                  {/* Simplified Navigation HUD - Minimal Info Bar */}
+                  {/* Simplified Navigation HUD - THICKER Header Bar */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black/80 backdrop-blur-sm text-white shadow-lg" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
-                      <div className="px-4 py-2 flex items-center justify-center">
-                        <span className="text-sm font-medium">
+                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black/90 backdrop-blur-sm text-white shadow-lg" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
+                      <div className="px-4 py-4 flex items-center justify-center">
+                        <span className="text-base font-semibold">
                           Arrive: {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} • {(currentRoute.distance || 0).toFixed(1)} mi
                         </span>
                       </div>
@@ -2489,10 +2489,10 @@ function NavigationPageContent() {
 
                   {/* Map Control Buttons - Right Side Stack (z-[500]+) - BULLETPROOF: Always visible during navigation */}
                   <div 
-                    className="fixed z-[500] flex flex-col gap-3 pointer-events-auto" 
+                    className="fixed z-[500] flex flex-col gap-2 pointer-events-auto" 
                     style={{ 
-                      top: 'calc(5.5rem + var(--safe-area-top))',
-                      right: 'calc(1rem + var(--safe-area-right))'
+                      top: 'calc(4rem + var(--safe-area-top))',
+                      right: 'calc(0.75rem + var(--safe-area-right))'
                     }}
                     data-testid="navigation-controls-right"
                   >
@@ -2633,11 +2633,11 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
+                  {/* Professional Oval Speedometer HUD - THINNER/Smaller Footer */}
                   <div 
-                    className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                    className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto scale-90"
                     style={{
-                      bottom: 'calc(20px + var(--safe-area-bottom, 0px))' // Positioned next to cancel button
+                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))' // Positioned next to cancel button, thinner
                     }}
                     data-testid="speedometer-hud-navigate"
                   >
