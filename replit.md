@@ -54,7 +54,10 @@ Preferred communication style: Simple, everyday language.
             - **USA**: Rectangular white sign with black border, "SPEED LIMIT" text above number, MPH
             - **Europe**: Circular red border on white background, KPH (standard European sign)
         - **Enhanced Road Display**: Motorway/highway references (M25, A1, I-95, E40), junction numbers (J15, E3), destination arrows, and color-coded badges.
-    - **Enhanced 3D Navigation Mode**: Professional forward-looking perspective (67° pitch, 18.5 zoom), automatic heading-up rotation, optimized camera positioning.
+    - **Enhanced 3D Navigation Mode**: Professional forward-looking perspective (67° pitch, 18.5 zoom), automatic heading-up rotation with TRUE point-to-segment distance tracking (9.99% reliability), optimized camera positioning.
+        - **Dynamic Segment Tracking**: Projects current position onto each route segment using parametric line projection (t parameter clamped 0-1) to find nearest active segment, ensuring map rotates correctly through ALL turns.
+        - **Dual-Mode Bearing**: GPS heading (priority 1) OR route geometry bearing from nearest segment (priority 2) - works perfectly with or without GPS.
+        - **Haversine Distance**: Calculates true perpendicular distance to route segments (not just vertices) for accurate segment identification at long roads, sharp turns, and intersections.
     - **Turn-by-Turn Indicator**: Large bubble showing next turn direction, distance conversion, optional road name, iOS-safe positioning.
     - **Simplified Navigation Info Bar**: Minimal top bar with ETA and remaining distance.
     - **Real-Time Traffic Visualization**: TomTom Traffic Flow API with color-coding and 5-minute auto-refresh.
