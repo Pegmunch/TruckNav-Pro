@@ -22,7 +22,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
 import { 
   Settings, 
   Clock, 
@@ -56,7 +55,6 @@ export function AutoThemeSettings({
   triggerVariant = "outline"
 }: AutoThemeSettingsProps) {
   const { currentTheme, effectiveTheme } = useTheme();
-  const { toast } = useToast();
   
   const [config, setConfig] = useState<AutoThemeConfig>(defaultAutoThemeConfig);
   const [isOpen, setIsOpen] = useState(false);
@@ -82,12 +80,7 @@ export function AutoThemeSettings({
     const newConfig = { ...config, ...updates };
     setConfig(newConfig);
     saveAutoThemeConfig(newConfig);
-    
-    toast({
-      title: "Auto-theme settings updated",
-      description: "Your preferences have been saved automatically.",
-    });
-  }, [config, toast]);
+  }, [config]);
   
   // Handle geolocation request
   const handleRequestLocation = useCallback(async () => {
@@ -102,37 +95,20 @@ export function AutoThemeSettings({
       
       setCoordinates(coords);
       handleConfigChange({ useGeolocation: true });
-      
-      toast({
-        title: "Location access granted",
-        description: "Using GPS coordinates for accurate sunrise/sunset times.",
-      });
     } catch (error) {
       console.warn("Failed to get location:", error);
-      
-      toast({
-        title: "Location access failed",
-        description: "Using time-based detection instead.",
-        variant: "destructive",
-      });
-      
       handleConfigChange({ useGeolocation: false });
     } finally {
       setIsLoadingLocation(false);
     }
-  }, [handleConfigChange, toast]);
+  }, [handleConfigChange]);
   
   // Reset to defaults
   const handleReset = useCallback(() => {
     setConfig(defaultAutoThemeConfig);
     saveAutoThemeConfig(defaultAutoThemeConfig);
     setCoordinates(null);
-    
-    toast({
-      title: "Settings reset",
-      description: "Auto-theme settings have been reset to defaults.",
-    });
-  }, [toast]);
+  }, []);
   
   // Preview time selection
   const handlePreviewTime = useCallback((timeString: string) => {
