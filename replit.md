@@ -66,6 +66,12 @@ Preferred communication style: Simple, everyday language.
     - **POI Categories**: Truck stops (7315), gas stations (7311), rest areas (9920), service areas, commercial/industrial locations.
     - **Saved Locations**: Favorites and recent searches.
     - **UK Postcode Fallback**: postcodes.io integration for accurate UK postcode geocoding.
+- **Comprehensive Mobile Menu**:
+    - **Full-Screen Mobile UI**: Solid background, complete viewport coverage (h-[100vh]), proper scroll handling with ScrollArea.
+    - **Tabbed Interface**: 5 tabs - Plan Route, Recent Destinations, Vehicle Selection, Theme Settings, Tools.
+    - **Route Planning with Live Autocomplete**: Both From/To inputs feature TomTom-powered autocomplete dropdowns positioned below inputs using Popover (side="bottom"). Debounced search (300ms), GPS-biased results, loading states, empty states.
+    - **Integration**: Reuses useTomTomAutocomplete hook with formatTomTomDisplay helper for consistent address formatting.
+    - **Accessibility**: Full ARIA support with DialogDescription for screen readers.
 - **Mobile Compatibility & PWA**:
     - **Progressive Web App**: Offline support via service worker and IndexedDB caching.
     - **iOS Enhancements**: Custom splash screens, meta tags for fullscreen and status bar.

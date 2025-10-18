@@ -10,7 +10,7 @@
  * - General Settings
  */
 
-import { useState, memo, useCallback } from "react";
+import { useState, memo, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { 
   X,
   History,
@@ -43,13 +45,21 @@ import {
   Layers,
   Wrench,
   Navigation,
-  MapPinned
+  MapPinned,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { type Route as RouteType, type Journey, type VehicleProfile } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { 
+  useTomTomAutocomplete, 
+  formatTomTomDisplay, 
+  extractTomTomCoordinates,
+  type TomTomResult 
+} from "@/hooks/use-tomtom-autocomplete";
+import { useGPS } from "@/contexts/gps-context";
 
 // Import existing components
 import { ThemeSelector } from "@/components/theme/theme-selector";
@@ -94,11 +104,59 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
 }: ComprehensiveMobileMenuProps) {
   const { toast } = useToast();
   const { formatDistance } = useMeasurement();
+  const gps = useGPS();
   const [activeTab, setActiveTab] = useState("plan");
   
   // Local state for route planning inputs
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
+  
+  // Autocomplete state
+  const [fromOpen, setFromOpen] = useState(false);
+  const [toOpen, setToOpen] = useState(false);
+  const [fromSearch, setFromSearch] = useState("");
+  const [toSearch, setToSearch] = useState("");
+  
+  // Debounced search for autocomplete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFromSearch(fromInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fromInput]);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setToSearch(toInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [toInput]);
+  
+  // Get GPS coordinates for location-biased search
+  const gpsCoordinates = gps?.position ? {
+    lat: gps.position.latitude,
+    lng: gps.position.longitude
+  } : undefined;
+  
+  // TomTom autocomplete for From input
+  const { results: fromResults, isLoading: fromLoading } = useTomTomAutocomplete(
+    fromSearch,
+    fromOpen && fromSearch.length >= 3,
+    undefined, // No country restriction
+    undefined, // No POI category
+    gpsCoordinates,
+    'fuzzy' // Address search
+  );
+  
+  // TomTom autocomplete for To input
+  const { results: toResults, isLoading: toLoading } = useTomTomAutocomplete(
+    toSearch,
+    toOpen && toSearch.length >= 3,
+    undefined, // No country restriction
+    undefined, // No POI category
+    gpsCoordinates,
+    'fuzzy' // Address search
+  );
   
   // Modal states for sub-panels
   const [showVehicleSetup, setShowVehicleSetup] = useState(false);
@@ -292,40 +350,134 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* From Location */}
+                    {/* From Location with Autocomplete */}
                     <div className="space-y-2">
                       <Label htmlFor="from-input" className="text-sm font-medium">
                         From
                       </Label>
-                      <Input
-                        id="from-input"
-                        placeholder="Enter starting location..."
-                        value={fromInput}
-                        onChange={(e) => {
-                          setFromInput(e.target.value);
-                          onFromLocationChange(e.target.value);
-                        }}
-                        data-testid="input-from-location"
-                        className="h-11"
-                      />
+                      <Popover open={fromOpen} onOpenChange={setFromOpen}>
+                        <PopoverTrigger asChild>
+                          <Input
+                            id="from-input"
+                            placeholder="Enter starting location..."
+                            value={fromInput}
+                            onChange={(e) => {
+                              setFromInput(e.target.value);
+                              onFromLocationChange(e.target.value);
+                              if (e.target.value.length >= 2) {
+                                setFromOpen(true);
+                              } else {
+                                setFromOpen(false);
+                              }
+                            }}
+                            data-testid="input-from-location"
+                            className="h-11"
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent
+                          side="bottom"
+                          align="start"
+                          className="w-[--radix-popover-trigger-width] p-0"
+                          onOpenAutoFocus={(e) => e.preventDefault()}
+                        >
+                          <Command>
+                            <CommandList className="max-h-[200px]">
+                              {fromLoading && (
+                                <div className="flex items-center justify-center py-6">
+                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                </div>
+                              )}
+                              {!fromLoading && fromResults.length === 0 && fromSearch.length >= 3 && (
+                                <CommandEmpty>No locations found.</CommandEmpty>
+                              )}
+                              {fromResults.length > 0 && (
+                                <CommandGroup>
+                                  {fromResults.map((result) => (
+                                    <CommandItem
+                                      key={result.id}
+                                      onSelect={() => {
+                                        const display = formatTomTomDisplay(result);
+                                        setFromInput(display);
+                                        onFromLocationChange(display);
+                                        setFromOpen(false);
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                                      <span className="text-sm">{formatTomTomDisplay(result)}</span>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
-                    {/* To Location */}
+                    {/* To Location with Autocomplete */}
                     <div className="space-y-2">
                       <Label htmlFor="to-input" className="text-sm font-medium">
                         To
                       </Label>
-                      <Input
-                        id="to-input"
-                        placeholder="Enter destination..."
-                        value={toInput}
-                        onChange={(e) => {
-                          setToInput(e.target.value);
-                          onToLocationChange(e.target.value);
-                        }}
-                        data-testid="input-to-location"
-                        className="h-11"
-                      />
+                      <Popover open={toOpen} onOpenChange={setToOpen}>
+                        <PopoverTrigger asChild>
+                          <Input
+                            id="to-input"
+                            placeholder="Enter destination..."
+                            value={toInput}
+                            onChange={(e) => {
+                              setToInput(e.target.value);
+                              onToLocationChange(e.target.value);
+                              if (e.target.value.length >= 2) {
+                                setToOpen(true);
+                              } else {
+                                setToOpen(false);
+                              }
+                            }}
+                            data-testid="input-to-location"
+                            className="h-11"
+                          />
+                        </PopoverTrigger>
+                        <PopoverContent
+                          side="bottom"
+                          align="start"
+                          className="w-[--radix-popover-trigger-width] p-0"
+                          onOpenAutoFocus={(e) => e.preventDefault()}
+                        >
+                          <Command>
+                            <CommandList className="max-h-[200px]">
+                              {toLoading && (
+                                <div className="flex items-center justify-center py-6">
+                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                </div>
+                              )}
+                              {!toLoading && toResults.length === 0 && toSearch.length >= 3 && (
+                                <CommandEmpty>No locations found.</CommandEmpty>
+                              )}
+                              {toResults.length > 0 && (
+                                <CommandGroup>
+                                  {toResults.map((result) => (
+                                    <CommandItem
+                                      key={result.id}
+                                      onSelect={() => {
+                                        const display = formatTomTomDisplay(result);
+                                        setToInput(display);
+                                        onToLocationChange(display);
+                                        setToOpen(false);
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                                      <span className="text-sm">{formatTomTomDisplay(result)}</span>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Current Vehicle Info */}
