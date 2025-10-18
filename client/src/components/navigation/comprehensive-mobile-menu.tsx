@@ -906,11 +906,15 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     <GrayscaleSelector />
                   </CardContent>
                 </Card>
+              </TabsContent>
 
+              {/* TOOLS TAB */}
+              <TabsContent value="tools" className="p-4 space-y-4 mt-0">
                 {/* Region / Speed Limit Style */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MapPinned className="h-4 w-4 text-blue-500" />
                       Region & Speed Limit Sign
                     </CardTitle>
                     <CardDescription className="text-xs">
@@ -921,34 +925,6 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     <RegionSelector />
                     <Separator />
                     <MeasurementSelector />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* TOOLS TAB */}
-              <TabsContent value="tools" className="p-4 space-y-4 mt-0">
-                {/* Quick POI Search */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Quick POI Search
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-2">
-                      {poiCategories.map((category) => (
-                        <Button
-                          key={category.id}
-                          variant="outline"
-                          className="h-16 flex flex-col gap-1"
-                          data-testid={`button-poi-${category.id}`}
-                        >
-                          <category.icon className="h-5 w-5" />
-                          <span className="text-xs">{category.label}</span>
-                        </Button>
-                      ))}
-                    </div>
                   </CardContent>
                 </Card>
 
