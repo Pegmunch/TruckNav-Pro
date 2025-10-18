@@ -30,7 +30,7 @@ import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
-import LegalDisclaimerPopup from "@/components/legal/legal-disclaimer-popup";
+import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
 import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
@@ -2102,7 +2102,7 @@ function NavigationPageContent() {
   }
 
   if (!hasAcceptedTerms) {
-    return <LegalDisclaimerPopup />;
+    return <LegalDisclaimerSimple />;
   }
 
   return (
