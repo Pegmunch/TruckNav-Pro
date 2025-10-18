@@ -158,25 +158,25 @@ const createIncidentIcon = (incident: TrafficIncident) => {
   });
 };
 
-// Enhanced route styling for professional appearance
+// Enhanced route styling for maximum visibility
 const getRouteStyle = (routeType: 'main' | 'alternative' | 'preview' = 'main') => {
   const styles = {
     main: {
       color: '#60a5fa',
-      weight: 6,
-      opacity: 0.95,
+      weight: 7,
+      opacity: 1,
       dashArray: undefined
     },
     alternative: {
       color: '#34d399',
-      weight: 4,
-      opacity: 0.85,
+      weight: 5,
+      opacity: 0.9,
       dashArray: '10, 5'
     },
     preview: {
       color: '#fbbf24',
-      weight: 5,
-      opacity: 0.9,
+      weight: 6,
+      opacity: 0.95,
       dashArray: '5, 5'
     }
   };

@@ -1108,12 +1108,21 @@ const InteractiveMap = memo(function InteractiveMap({
         {/* CRITICAL FIX: Route Visualization - Display current route as polyline */}
         {currentRoute && currentRoute.routePath && currentRoute.routePath.length > 0 && (
           <>
+            {/* White outline for route visibility */}
+            <Polyline
+              positions={currentRoute.routePath.map((coord: { lat: number; lng: number }) => [coord.lat, coord.lng])}
+              color="#ffffff"
+              weight={10}
+              opacity={0.95}
+              smoothFactor={1}
+            />
+            
             {/* Main route polyline */}
             <Polyline
               positions={currentRoute.routePath.map((coord: { lat: number; lng: number }) => [coord.lat, coord.lng])}
               color="#60a5fa"
-              weight={6}
-              opacity={0.95}
+              weight={7}
+              opacity={1}
               smoothFactor={1}
               data-testid="route-polyline"
             />

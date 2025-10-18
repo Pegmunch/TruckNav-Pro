@@ -959,7 +959,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }
       });
 
-      // Add route outline for better visibility
+      // Add route outline for maximum visibility
       map.current.addLayer({
         id: 'route-outline',
         type: 'line',
@@ -970,12 +970,12 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         },
         paint: {
           'line-color': '#ffffff',
-          'line-width': 14,
-          'line-opacity': 0.8
+          'line-width': 16,
+          'line-opacity': 0.95
         }
       });
 
-      // Main route line with improved visibility
+      // Main route line with maximum visibility
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -986,8 +986,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         },
         paint: {
           'line-color': '#60a5fa',
-          'line-width': 10,
-          'line-opacity': 0.95
+          'line-width': 12,
+          'line-opacity': 1
         }
       });
     } else {
