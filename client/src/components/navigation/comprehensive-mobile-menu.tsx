@@ -511,10 +511,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                           onOpenChange(false);
                         }}
                         className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold"
-                        data-testid="button-stop-navigation"
+                        data-testid="button-cancel-route"
                       >
                         <X className="h-5 w-5 mr-2" />
-                        Stop Navigation
+                        Cancel Route
                       </Button>
                     ) : (
                       <Button
