@@ -117,14 +117,22 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   // Fetch recent journeys (last 5)
   const { data: recentJourneys = [], isLoading: isLoadingJourneys } = useQuery<Journey[]>({
     queryKey: ["/api/journeys"],
-    queryFn: () => fetch("/api/journeys?limit=5", { credentials: "include" }).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch("/api/journeys?limit=5", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
     enabled: open,
   });
 
   // Fetch favorite routes
   const { data: favoriteRoutes = [], isLoading: isLoadingFavorites } = useQuery<RouteType[]>({
     queryKey: ["/api/routes", "favorites"],
-    queryFn: () => fetch("/api/routes/favorites", { credentials: "include" }).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch("/api/routes/favorites", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
     enabled: open,
   });
 
