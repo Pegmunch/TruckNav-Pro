@@ -2327,28 +2327,17 @@ function NavigationPageContent() {
               {/* MAP - ALWAYS RENDERED - Base Layer (z-0) */}
               <div className="absolute inset-0 z-0">
                 <MapShell className="h-full w-full">
-                  {isMapLibre ? (
-                    <MapLibreMap
-                      ref={mapRef}
-                      currentRoute={currentRoute}
-                      selectedProfile={selectedProfile || activeProfile}
-                      showTraffic={showTrafficLayer}
-                      showIncidents={showIncidents}
-                      hideControls={mobileNavMode === 'navigate'}
-                      hideCompass={mobileNavMode === 'navigate'}
-                      onMapClick={handleMapClick}
-                      isNavigating={isNavigating}
-                    />
-                  ) : (
-                    <InteractiveMap
-                      currentRoute={currentRoute}
-                      selectedProfile={selectedProfile || activeProfile}
-                      alternativeRoutes={alternatives}
-                      previewRoute={previewRoute}
-                      showTrafficLayer={showTrafficLayer}
-                      showIncidents={showIncidents}
-                    />
-                  )}
+                  <MapLibreMap
+                    ref={mapRef}
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile || activeProfile}
+                    showTraffic={showTrafficLayer}
+                    showIncidents={showIncidents}
+                    hideControls={mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'navigate'}
+                    onMapClick={handleMapClick}
+                    isNavigating={isNavigating}
+                  />
                 </MapShell>
               </div>
               
@@ -2797,33 +2786,17 @@ function NavigationPageContent() {
                     }, 100);
                   }}
                 >
-                  {isMapLibre ? (
-                    <MapLibreMap
-                      ref={mapRef}
-                      currentRoute={currentRoute}
-                      selectedProfile={selectedProfile || activeProfile}
-                      showTraffic={showTrafficLayer}
-                      showIncidents={showIncidents}
-                      hideControls={mobileNavMode === 'navigate'}
-                      hideCompass={mobileNavMode === 'navigate'}
-                      onMapClick={handleMapClick}
-                      isNavigating={isNavigating}
-                    />
-                  ) : (
-                    <EnhancedRealisticMap
-                      currentRoute={currentRoute}
-                      selectedProfile={selectedProfile || activeProfile}
-                      alternativeRoutes={alternatives}
-                      previewRoute={previewRoute}
-                      showTrafficLayer={showTrafficLayer}
-                      showIncidents={showIncidents}
-                      isNavigating={isNavigating}
-                      currentLocation={currentGPSLocation}
-                      onMapClick={handleMapClick}
-                      isMapExpanded={isMapExpanded}
-                      sidebarState={sidebarState}
-                    />
-                  )}
+                  <MapLibreMap
+                    ref={mapRef}
+                    currentRoute={currentRoute}
+                    selectedProfile={selectedProfile || activeProfile}
+                    showTraffic={showTrafficLayer}
+                    showIncidents={showIncidents}
+                    hideControls={mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'navigate'}
+                    onMapClick={handleMapClick}
+                    isNavigating={isNavigating}
+                  />
                 </MapShell>
                 
                 {/* GPS Loading Indicator - Desktop */}
