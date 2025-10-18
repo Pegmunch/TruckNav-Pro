@@ -51,6 +51,7 @@ import { GPSProvider, useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
 import { geocodeUKPostcode } from "@/lib/uk-postcode-geocoding";
 import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
+import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 // Inner component that uses GPS context
@@ -1748,16 +1749,60 @@ function NavigationPageContent() {
       const idempotencyKey = generateIdempotencyKey('start');
       
       // Ensure we have a route (calculate if needed, use returned value not state)
-      const route = currentRoute ?? await calculateRouteMutation.mutateAsync({
-        startLocation: fromLocation,
-        endLocation: toLocation,
-        vehicleProfileId: selectedProfile?.id?.toString(),
-        routePreference: 'fastest'
-      });
+      let route = currentRoute;
+      
+      if (!route) {
+        console.log('[NAV-START] No route exists - calculating route with bulletproof geocoding...');
+        
+        // Use bulletproof geocoding that handles ALL address formats
+        let finalStartCoords = fromCoordinates;
+        let finalEndCoords = toCoordinates;
+        
+        // Geocode start location using robust multi-fallback approach
+        if (!fromLocation) {
+          throw new Error('Start location is required');
+        }
+        
+        console.log('[NAV-START] Geocoding start location...');
+        const startResult = await robustGeocode(fromLocation, fromCoordinates);
+        finalStartCoords = startResult.coordinates;
+        setFromCoordinates(finalStartCoords);
+        console.log('[NAV-START] ✅ Start location geocoded:', finalStartCoords, `(source: ${startResult.source})`);
+        
+        // Geocode end location using robust multi-fallback approach
+        if (!toLocation) {
+          throw new Error('End location is required');
+        }
+        
+        console.log('[NAV-START] Geocoding end location...');
+        const endResult = await robustGeocode(toLocation, toCoordinates);
+        finalEndCoords = endResult.coordinates;
+        setToCoordinates(finalEndCoords);
+        console.log('[NAV-START] ✅ End location geocoded:', finalEndCoords, `(source: ${endResult.source})`);
+        
+        // Now calculate route with guaranteed coordinates
+        console.log('[NAV-START] Calculating route with coordinates:', {
+          start: finalStartCoords,
+          end: finalEndCoords
+        });
+        
+        route = await calculateRouteMutation.mutateAsync({
+          startLocation: fromLocation,
+          endLocation: toLocation,
+          startCoordinates: finalStartCoords,
+          endCoordinates: finalEndCoords,
+          vehicleProfileId: selectedProfile?.id?.toString(),
+          routePreference: 'fastest'
+        });
+        
+        console.log('[NAV-START] ✅ Route calculation complete:', route);
+      }
       
       if (!route?.id) {
-        throw new Error('Route calculation failed');
+        throw new Error('Route calculation failed - no route ID returned');
       }
+      
+      console.log('[NAV-START] ✅ Route ready, proceeding to start journey');
 
       // Single linear navigation flow with proper mutation sequence
       let journeyId: number;
