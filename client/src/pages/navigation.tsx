@@ -2179,8 +2179,8 @@ function NavigationPageContent() {
                   "transition-opacity duration-200",
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
-                  {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between pb-1 px-4 border-b border-gray-100 bg-white">
+                  {/* Header - Thicker for better accessibility */}
+                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-3 px-4 border-b-2 border-gray-200 bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -2189,10 +2189,10 @@ function NavigationPageContent() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-8 w-8"
+                      className="h-10 w-10 bg-green-600 hover:bg-green-700 text-white rounded-full"
                       data-testid="button-settings"
                     >
-                      <Settings className="w-4 h-4" />
+                      <Settings className="w-5 h-5" />
                     </Button>
                   </div>
 
@@ -2234,8 +2234,8 @@ function NavigationPageContent() {
                   "transition-opacity duration-200",
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
-                  {/* Header - Thinner Overlay on top */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between pb-1 px-4 border-b border-gray-100 bg-white">
+                  {/* Header - Thicker for better accessibility */}
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 border-b-2 border-gray-200 bg-white">
                     <div className="flex items-center gap-2">
                       <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
@@ -2244,10 +2244,10 @@ function NavigationPageContent() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-8 w-8"
+                      className="h-10 w-10 bg-green-600 hover:bg-green-700 text-white rounded-full"
                       data-testid="button-settings-preview"
                     >
-                      <Settings className="w-4 h-4" />
+                      <Settings className="w-5 h-5" />
                     </Button>
                   </div>
 
