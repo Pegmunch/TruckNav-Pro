@@ -694,39 +694,114 @@ function NavigationPageContent() {
     }
   }, [isNavigating]);
   
-  // Force 3D navigation view when navigation starts with GPS lock
+  // Force 3D navigation view when navigation starts - WITH OR WITHOUT GPS
   const hasInitialized3DRef = useRef(false);
   
   useEffect(() => {
-    if (isNavigating && gpsData?.position && !hasInitialized3DRef.current && mapRef.current) {
+    if (isNavigating && !hasInitialized3DRef.current && mapRef.current && currentRoute) {
       hasInitialized3DRef.current = true;
 
-      // Get bearing from GPS (use smoothedHeading for smoother rotation, fallback to heading)
-      const gpsBearing = gpsData.position.smoothedHeading ?? gpsData.position.heading ?? 0;
+      console.log('[NAV-ZOOM] ========================================');
+      console.log('[NAV-ZOOM] 🚀 Initializing navigation auto-zoom');
+      console.log('[NAV-ZOOM] Has GPS:', !!gpsData?.position);
+      console.log('[NAV-ZOOM] Has Route:', !!currentRoute);
+      console.log('[NAV-ZOOM] ========================================');
 
-      // Force 3D perspective with GPS-aligned bearing
-      mapRef.current.zoomToUserLocation({
-        pitch: 67,
-        zoom: 18.5,
-        bearing: gpsBearing,
-        duration: 1500,
-        onSuccess: (location) => {
-          setMap3DMode(true);
-        },
-        onError: (error) => {
-          // Still set 3D mode flag even if zoom fails
-          setMap3DMode(true);
+      // Calculate bearing from route path (first two waypoints)
+      let initialBearing = 0;
+      let targetLat: number;
+      let targetLng: number;
+
+      if (currentRoute.routePath && currentRoute.routePath.length >= 2) {
+        const start = currentRoute.routePath[0];
+        const end = currentRoute.routePath[1];
+        
+        // Calculate bearing between two points using Haversine formula
+        const lon1 = start.lng * Math.PI / 180;
+        const lon2 = end.lng * Math.PI / 180;
+        const lat1 = start.lat * Math.PI / 180;
+        const lat2 = end.lat * Math.PI / 180;
+        
+        const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+        initialBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        
+        // Use route start as target
+        targetLat = start.lat;
+        targetLng = start.lng;
+        
+        console.log('[NAV-ZOOM] Using route bearing:', initialBearing.toFixed(1), '°');
+        console.log('[NAV-ZOOM] Centering on route start:', targetLat.toFixed(5), ',', targetLng.toFixed(5));
+      } else {
+        console.error('[NAV-ZOOM] ❌ Route has no path - using GPS or manual position');
+        
+        // Fallback to GPS or manual location
+        if (gpsData?.position) {
+          targetLat = gpsData.position.latitude;
+          targetLng = gpsData.position.longitude;
+          initialBearing = gpsData.position.smoothedHeading ?? gpsData.position.heading ?? 0;
+        } else if (gpsData?.manualLocation) {
+          targetLat = gpsData.manualLocation.latitude;
+          targetLng = gpsData.manualLocation.longitude;
+        } else {
+          console.error('[NAV-ZOOM] ❌ No position available - cannot zoom');
+          return;
         }
-      });
+      }
 
-      // Set 3D mode flag immediately
-      setMap3DMode(true);
+      // Get map instance and fly to position with heading-up view
+      const mapInstance = mapRef.current.getMap();
+      if (mapInstance && mapInstance.isStyleLoaded()) {
+        console.log('[NAV-ZOOM] Flying to navigation start position...');
+        
+        mapInstance.flyTo({
+          center: [targetLng, targetLat],
+          zoom: 18.5,  // Optimal street-level zoom
+          pitch: 67,   // Professional 3D perspective
+          bearing: initialBearing, // Route pointing upward (heading-up)
+          padding: { 
+            top: 280,    // Space for HUD
+            bottom: 120, // Space for speedometer
+            left: 0, 
+            right: 0 
+          },
+          duration: 1500,
+          essential: true
+        });
+        
+        // Set 3D mode flag immediately
+        setMap3DMode(true);
+        
+        console.log('[NAV-ZOOM] ✅ Auto-zoom complete - heading-up navigation active');
+      } else {
+        console.warn('[NAV-ZOOM] ⚠️ Map not ready - retrying in 500ms');
+        
+        // Retry after brief delay if map not ready
+        setTimeout(() => {
+          if (mapRef.current) {
+            const retryMap = mapRef.current.getMap();
+            if (retryMap) {
+              retryMap.flyTo({
+                center: [targetLng, targetLat],
+                zoom: 18.5,
+                pitch: 67,
+                bearing: initialBearing,
+                padding: { top: 280, bottom: 120, left: 0, right: 0 },
+                duration: 1500,
+                essential: true
+              });
+              setMap3DMode(true);
+              console.log('[NAV-ZOOM] ✅ Auto-zoom complete (retry succeeded)');
+            }
+          }
+        }, 500);
+      }
     }
     
     if (!isNavigating) {
       hasInitialized3DRef.current = false;
     }
-  }, [isNavigating, gpsData?.position]);
+  }, [isNavigating, currentRoute, gpsData?.position, gpsData?.manualLocation]);
   
   // Automated visibility check for speedometer during navigation
   useEffect(() => {
@@ -1868,19 +1943,6 @@ function NavigationPageContent() {
       // Store route ID for persistence
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
-      }
-      
-      // Store navigation activation context for useEffect
-      // This will trigger the auto-zoom useEffect after state updates
-      const navigationContext = {
-        route,
-        gpsPosition: gpsData?.position,
-        manualLocation: gpsData?.manualLocation
-      };
-      
-      // Store in a ref so useEffect can access it
-      if (!pendingNavigationContextRef.current) {
-        pendingNavigationContextRef.current = navigationContext;
       }
 
       console.log('[NAV-ACTIVATION] Step 5: Dispatch secondary events');
