@@ -35,6 +35,7 @@ Preferred communication style: Simple, everyday language.
 - **Restrictions**: Geographic and type-based limits.
 - **Facilities**: Truck stops, fuel stations, parking areas with amenities.
 - **Routes**: Saved routes including start/end, coordinates, and calculated paths.
+- **Region Preferences**: UK, USA, or Europe selection automatically sets speed limit sign style and measurement units (imperial/metric).
 
 ## Technical Implementations & System Design
 - **Smart Route Planning**: Calculates routes avoiding restrictions based on vehicle profiles.
@@ -48,6 +49,10 @@ Preferred communication style: Simple, everyday language.
     - **Mobile Layout**: Map mounted at z-0 with HUD elements overlaid.
     - **Professional Navigation HUD**: Lowered GPS marker, elongated oval speedometer with speed limit, current speed, and dynamic road info.
         - **Enhanced Speed Limit System**: Queries OpenStreetMap Overpass API (5s, 100m radius), intelligent fallback estimates, confidence indicators, and mph/km/h conversions.
+        - **Region-Specific Speed Limit Signs**: Three distinct sign styles matching local road signage standards:
+            - **UK**: Circular red border on white background, MPH (traditional UK road sign)
+            - **USA**: Rectangular white sign with black border, "SPEED LIMIT" text above number, MPH
+            - **Europe**: Circular red border on white background, KPH (standard European sign)
         - **Enhanced Road Display**: Motorway/highway references (M25, A1, I-95, E40), junction numbers (J15, E3), destination arrows, and color-coded badges.
     - **Enhanced 3D Navigation Mode**: Professional forward-looking perspective (67° pitch, 18.5 zoom), automatic heading-up rotation, optimized camera positioning.
     - **Turn-by-Turn Indicator**: Large bubble showing next turn direction, distance conversion, optional road name, iOS-safe positioning.
@@ -68,7 +73,7 @@ Preferred communication style: Simple, everyday language.
     - **UK Postcode Fallback**: postcodes.io integration for accurate UK postcode geocoding.
 - **Comprehensive Mobile Menu**:
     - **Full-Screen Mobile UI**: Solid background, complete viewport coverage (h-[100vh]), proper scroll handling with ScrollArea.
-    - **Tabbed Interface**: 5 tabs - Plan Route, Recent Destinations, Vehicle Selection, Theme Settings, Tools.
+    - **Tabbed Interface**: 5 tabs - Plan Route, Recent Destinations, Vehicle Selection, Theme Settings (including Region/Speed Limit preferences), Tools.
     - **Route Planning with Live Autocomplete**: Both From/To inputs feature TomTom-powered autocomplete dropdowns positioned below inputs using Popover (side="bottom"). Debounced search (300ms), GPS-biased results, loading states, empty states.
     - **Integration**: Reuses useTomTomAutocomplete hook with formatTomTomDisplay helper for consistent address formatting.
     - **Accessibility**: Full ARIA support with DialogDescription for screen readers.

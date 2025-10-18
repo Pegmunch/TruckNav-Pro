@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -2063,8 +2063,8 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideControls={false}
-                      hideCompass={false}
+                      hideControls={mobileNavMode === 'navigate'}
+                      hideCompass={mobileNavMode === 'navigate'}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
@@ -2384,6 +2384,24 @@ function NavigationPageContent() {
                     >
                       <Layers className="h-5 w-5" />
                     </Button>
+                    <Button
+                      size="icon"
+                      onClick={() => {
+                        const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                        setMapViewMode(newMode);
+                        mapRef.current?.toggleMapView();
+                      }}
+                      className={cn(
+                        "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                        mapViewMode === 'satellite'
+                          ? "bg-gradient-to-br from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:scale-105 border-green-400/50"
+                          : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                      )}
+                      data-testid="button-map-view-toggle-navigate"
+                      aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
+                    >
+                      <Map className="h-5 w-5" />
+                    </Button>
                   </div>
 
                   {/* Professional Oval Speedometer HUD - Fixed position above Stop button (moved up) */}
@@ -2612,8 +2630,8 @@ function NavigationPageContent() {
                       selectedProfile={selectedProfile || activeProfile}
                       showTraffic={showTrafficLayer}
                       showIncidents={showIncidents}
-                      hideControls={false}
-                      hideCompass={false}
+                      hideControls={mobileNavMode === 'navigate'}
+                      hideCompass={mobileNavMode === 'navigate'}
                       onMapClick={handleMapClick}
                       isNavigating={isNavigating}
                     />
