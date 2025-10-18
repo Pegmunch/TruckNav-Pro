@@ -2525,14 +2525,15 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
               {(mobileNavMode === 'navigate' || isNavigating) && (
                 <>
-                  {/* Simplified Navigation HUD - DOUBLE THICKNESS Header Bar */}
+                  {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95] bg-black/90 backdrop-blur-sm text-white shadow-lg" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
-                      <div className="px-4 py-8 flex items-center justify-center">
-                        <span className="text-base font-semibold">
-                          Arrive: {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} • {(currentRoute.distance || 0).toFixed(1)} mi
-                        </span>
-                      </div>
+                    <div className="absolute top-0 left-0 right-0 z-[95]" style={{ paddingTop: 'var(--safe-area-top)' }}>
+                      <CompactTripStrip
+                        eta={currentRoute.duration || 0}
+                        distanceRemaining={currentRoute.distance || 0}
+                        nextManeuver={nextTurn?.roadName || 'Continue'}
+                        nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                      />
                     </div>
                   )}
                   
@@ -2864,14 +2865,15 @@ function NavigationPageContent() {
                 {/* NAVIGATE MODE OVERLAYS - Desktop (same as mobile) */}
                 {isNavigating && (
                   <>
-                    {/* Simplified Navigation HUD - DOUBLE THICKNESS Header Bar */}
+                    {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
                     {currentRoute && (
-                      <div className="absolute top-0 left-0 right-0 z-[95] bg-black/90 backdrop-blur-sm text-white shadow-lg" style={{ paddingTop: 'var(--safe-area-top)' }} data-testid="navigation-hud">
-                        <div className="px-4 py-8 flex items-center justify-center">
-                          <span className="text-base font-semibold">
-                            Arrive: {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} • {(currentRoute.distance || 0).toFixed(1)} mi
-                          </span>
-                        </div>
+                      <div className="absolute top-0 left-0 right-0 z-[95]" style={{ paddingTop: 'var(--safe-area-top)' }}>
+                        <CompactTripStrip
+                          eta={currentRoute.duration || 0}
+                          distanceRemaining={currentRoute.distance || 0}
+                          nextManeuver={nextTurn?.roadName || 'Continue'}
+                          nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                        />
                       </div>
                     )}
                     
