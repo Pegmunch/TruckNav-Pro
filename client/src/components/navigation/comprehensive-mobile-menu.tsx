@@ -241,11 +241,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     onFromLocationChange(route.startLocation);
     onToLocationChange(route.endLocation);
     setActiveTab("plan"); // Switch to plan tab to show loaded route
-    toast({
-      title: "Route loaded",
-      description: `Loaded ${route.name || 'favorite route'}`,
-    });
-  }, [onFromLocationChange, onToLocationChange, toast]);
+  }, [onFromLocationChange, onToLocationChange]);
 
   // Load recent journey as a template for new route
   const handleLoadJourney = useCallback(async (journey: Journey) => {
@@ -265,20 +261,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
       onFromLocationChange(route.startLocation);
       onToLocationChange(route.endLocation);
       setActiveTab("plan"); // Switch to plan tab to show loaded route
-      
-      toast({
-        title: "Journey loaded",
-        description: `Route from ${route.startLocation} to ${route.endLocation}`,
-      });
     } catch (error) {
       console.error("Failed to load journey route:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load journey route",
-        variant: "destructive",
-      });
     }
-  }, [onFromLocationChange, onToLocationChange, toast]);
+  }, [onFromLocationChange, onToLocationChange]);
 
   // Delete favorite route
   const deleteFavoriteMutation = useMutation({
@@ -287,10 +273,6 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/routes", "favorites"] });
-      toast({
-        title: "Route deleted",
-        description: "Favorite route has been removed",
-      });
     },
   });
 
@@ -305,29 +287,19 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   // Handle POI category selection
   const handlePOISearch = useCallback((categoryId: string) => {
     if (!gpsCoordinates) {
-      toast({
-        title: "Location Required",
-        description: "Enable GPS to search for nearby POIs",
-        variant: "destructive"
-      });
       return;
     }
     
     setActivePOICategory(categoryId);
     setPoiSearchEnabled(true);
-    
-    toast({
-      title: "Searching...",
-      description: `Finding nearby ${poiCategories.find(c => c.id === categoryId)?.label}`,
-    });
-  }, [gpsCoordinates, toast, poiCategories]);
+  }, [gpsCoordinates, poiCategories]);
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col">
+        <DialogContent className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col" data-testid="comprehensive-mobile-menu">
           {/* Header */}
-          <DialogHeader className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0">
+          <DialogHeader className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0 relative z-10">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">Menu</DialogTitle>
               <Button
@@ -667,10 +639,6 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                                   address: formatTomTomDisplay(result)
                                 });
                                 onOpenChange(false);
-                                toast({
-                                  title: "Location Selected",
-                                  description: result.poi?.name || formatTomTomDisplay(result),
-                                });
                               }
                             }}
                             data-testid={`card-poi-result-${idx}`}
@@ -862,7 +830,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => setShowVehicleSetup(true)}
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowVehicleSetup(true);
+                      }}
                       data-testid="button-create-vehicle-profile"
                     >
                       <Truck className="h-4 w-4 mr-2" />
@@ -993,7 +964,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => setShowWeather(true)}
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowWeather(true);
+                      }}
                       data-testid="button-tool-weather"
                     >
                       <Cloud className="h-4 w-4 mr-2" />
@@ -1002,7 +976,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => setShowEntertainment(true)}
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowEntertainment(true);
+                      }}
                       data-testid="button-tool-entertainment"
                     >
                       <Music className="h-4 w-4 mr-2" />
@@ -1020,7 +997,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => setShowSettings(true)}
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowSettings(true);
+                      }}
                       data-testid="button-tool-settings"
                     >
                       <Settings className="h-4 w-4 mr-2" />
@@ -1042,8 +1022,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       variant="outline"
                       className="w-full justify-start"
                       onClick={() => {
+                        onOpenChange(false);
                         setShowSettings(true);
-                        setActiveTab("tools");
                       }}
                       data-testid="button-map-settings"
                     >
