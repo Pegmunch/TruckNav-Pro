@@ -2500,9 +2500,9 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
               {(mobileNavMode === 'navigate' || isNavigating) && (
                 <>
-                  {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
+                  {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
                   {currentRoute && (
-                    <div className="absolute top-0 left-0 right-0 z-[95]" style={{ paddingTop: 'var(--safe-area-top)' }}>
+                    <div className="absolute left-0 right-0 z-[95]" style={{ top: 'var(--safe-area-top, 0px)' }}>
                       <CompactTripStrip
                         eta={currentRoute.duration || 0}
                         distanceRemaining={currentRoute.distance || 0}
@@ -2824,9 +2824,9 @@ function NavigationPageContent() {
                 {/* NAVIGATE MODE OVERLAYS - Desktop */}
                 {isNavigating && (
                   <>
-                    {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
+                    {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - DESKTOP */}
                     {currentRoute && (
-                      <div className="absolute top-0 left-0 right-0 z-[95]" style={{ paddingTop: 'var(--safe-area-top)' }}>
+                      <div className="absolute left-0 right-0 z-[95]" style={{ top: 'var(--safe-area-top, 0px)' }}>
                         <CompactTripStrip
                           eta={currentRoute.duration || 0}
                           distanceRemaining={currentRoute.distance || 0}
