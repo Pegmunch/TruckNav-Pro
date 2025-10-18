@@ -87,7 +87,7 @@ function NavigationControlsStack({
       }}
       data-testid={`navigation-controls-right-${mode}`}
     >
-      {/* 1. Compass Dial Button - Fancy compass with red/blue needle at TOP */}
+      {/* 1. COMPASS DIAL - Red/Blue needle compass at TOP (Position 1) */}
       <Button
         size="icon"
         onClick={() => mapRef.current?.resetBearing()}
