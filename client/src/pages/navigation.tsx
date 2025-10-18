@@ -87,18 +87,38 @@ function NavigationControlsStack({
       }}
       data-testid={`navigation-controls-right-${mode}`}
     >
-      {/* 1. Compass Reset Button */}
+      {/* 1. Compass Dial Button - Fancy compass with red/blue needle at TOP */}
       <Button
         size="icon"
         onClick={() => mapRef.current?.resetBearing()}
         className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-        data-testid={`button-compass-reset-${mode}`}
-        aria-label="Reset bearing to North"
+        data-testid={`button-compass-dial-${mode}`}
+        aria-label="Reset compass to North"
       >
-        <Compass 
-          className="h-5 w-5 transition-transform duration-300" 
+        <svg 
+          width="24" 
+          height="24" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          className="transition-transform duration-300"
           style={{ transform: `rotate(${mapBearing}deg)` }}
-        />
+        >
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+          <path 
+            d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
+            fill="#EF4444" 
+            stroke="#DC2626" 
+            strokeWidth="0.5"
+          />
+          <path 
+            d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
+            fill="#3B82F6" 
+            stroke="#2563EB" 
+            strokeWidth="0.5"
+          />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        </svg>
       </Button>
 
       {/* 2. Recenter Button */}
@@ -188,40 +208,6 @@ function NavigationControlsStack({
         aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
       >
         <Map className="h-5 w-5" />
-      </Button>
-
-      {/* 8. Compass Dial Button */}
-      <Button
-        size="icon"
-        onClick={() => mapRef.current?.resetBearing()}
-        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-        data-testid={`button-compass-dial-${mode}`}
-        aria-label="Reset compass to North"
-      >
-        <svg 
-          width="24" 
-          height="24" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
-          className="transition-transform duration-300"
-          style={{ transform: `rotate(${mapBearing}deg)` }}
-        >
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-          <path 
-            d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
-            fill="#EF4444" 
-            stroke="#DC2626" 
-            strokeWidth="0.5"
-          />
-          <path 
-            d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
-            fill="#3B82F6" 
-            stroke="#2563EB" 
-            strokeWidth="0.5"
-          />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-        </svg>
       </Button>
     </div>
   );
@@ -2896,18 +2882,41 @@ function NavigationPageContent() {
                       }}
                       data-testid="navigation-controls-right"
                     >
+                      {/* 1. Compass Dial Button - Fancy compass with red/blue needle at TOP */}
                       <Button
                         size="icon"
                         onClick={() => mapRef.current?.resetBearing()}
                         className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                        data-testid="button-compass-reset-navigate"
-                        aria-label="Reset bearing to North"
+                        data-testid="button-compass-dial-navigate"
+                        aria-label="Reset compass to North"
                       >
-                        <Compass 
-                          className="h-5 w-5 transition-transform duration-300" 
+                        <svg 
+                          width="24" 
+                          height="24" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="transition-transform duration-300"
                           style={{ transform: `rotate(${mapBearing}deg)` }}
-                        />
+                        >
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+                          <path 
+                            d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
+                            fill="#EF4444" 
+                            stroke="#DC2626" 
+                            strokeWidth="0.5"
+                          />
+                          <path 
+                            d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
+                            fill="#3B82F6" 
+                            stroke="#2563EB" 
+                            strokeWidth="0.5"
+                          />
+                          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                        </svg>
                       </Button>
+                      
+                      {/* 2. Recenter Button */}
                       <Button
                         size="icon"
                         onClick={() => {
@@ -2925,6 +2934,7 @@ function NavigationPageContent() {
                       >
                         <Crosshair className="h-5 w-5" />
                       </Button>
+                      {/* 3. Zoom In Button */}
                       <Button
                         size="icon"
                         onClick={() => mapRef.current?.zoomIn()}
@@ -2991,40 +3001,6 @@ function NavigationPageContent() {
                         aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
                       >
                         <Map className="h-5 w-5" />
-                      </Button>
-                      
-                      {/* 8. Compass Dial Button - Fancy compass with red/blue needle */}
-                      <Button
-                        size="icon"
-                        onClick={() => mapRef.current?.resetBearing()}
-                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                        data-testid="button-compass-dial-navigate"
-                        aria-label="Reset compass to North"
-                      >
-                        <svg 
-                          width="24" 
-                          height="24" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="transition-transform duration-300"
-                          style={{ transform: `rotate(${mapBearing}deg)` }}
-                        >
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-                          <path 
-                            d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
-                            fill="#EF4444" 
-                            stroke="#DC2626" 
-                            strokeWidth="0.5"
-                          />
-                          <path 
-                            d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
-                            fill="#3B82F6" 
-                            stroke="#2563EB" 
-                            strokeWidth="0.5"
-                          />
-                          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                        </svg>
                       </Button>
                     </div>
 
