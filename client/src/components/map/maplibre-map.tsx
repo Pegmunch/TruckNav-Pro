@@ -1257,16 +1257,36 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     
     // Show different markers based on status
     if (!hasPosition && gpsStatus !== 'manual') {
-      console.log('[GPS-MARKER] No position available - status:', gpsStatus);
+      console.log('[GPS-MARKER] No GPS position - checking fallbacks...');
       
-      // Show orange GPS-unavailable marker at last known position if available
+      // CRITICAL: In Navigate mode, ALWAYS show marker using fallback position
+      // Priority: Cached position → Route start → Map center
+      let fallbackLat: number | null = null;
+      let fallbackLng: number | null = null;
+      let fallbackSource = '';
+      
       const lastKnown = getLastKnownPosition();
-      if (lastKnown && !userMarkerRef.current) {
-        const fallbackLat = lastKnown.lat;
-        const fallbackLng = lastKnown.lng;
+      if (lastKnown) {
+        fallbackLat = lastKnown.lat;
+        fallbackLng = lastKnown.lng;
+        fallbackSource = 'cached position';
+      } else if (isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0) {
+        // In Navigate mode, use route start as fallback
+        fallbackLat = currentRoute.routePath[0].lat;
+        fallbackLng = currentRoute.routePath[0].lng;
+        fallbackSource = 'route start';
+      } else if (currentRoute?.startCoordinates) {
+        // Use route start coordinates
+        fallbackLat = currentRoute.startCoordinates.lat;
+        fallbackLng = currentRoute.startCoordinates.lng;
+        fallbackSource = 'route origin';
+      }
+      
+      if (fallbackLat !== null && fallbackLng !== null) {
+        console.log(`[GPS-MARKER] Using fallback position from ${fallbackSource}:`, { lat: fallbackLat, lng: fallbackLng });
         
         if (!userMarkerRef.current) {
-          // Create orange unavailable GPS marker
+          // Create orange unavailable GPS marker with route bearing if in Navigate mode
           const markerSize = 48;
           const el = document.createElement('div');
           el.className = 'user-position-marker-unavailable';
@@ -1298,15 +1318,34 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           
           userMarkerRef.current = new maplibregl.Marker({
             element: el,
-            anchor: 'center'
+            anchor: 'center',
+            rotationAlignment: 'map',
+            pitchAlignment: 'map'
           })
             .setLngLat([fallbackLng, fallbackLat])
             .addTo(mapInstance);
+          
+          // Apply z-index to parent for visibility above all UI
+          setTimeout(() => {
+            if (el.parentElement) {
+              el.parentElement.style.zIndex = '9999';
+              el.parentElement.style.pointerEvents = 'none';
+              console.log('[GPS-MARKER] Z-index 9999 applied to fallback marker');
+            }
+          }, 0);
+          
+          console.log('[GPS-MARKER] ✅ Fallback marker created');
+        } else {
+          // Update existing fallback marker position
+          userMarkerRef.current.setLngLat([fallbackLng, fallbackLat]);
+          console.log('[GPS-MARKER] ✅ Fallback marker updated');
         }
         return;
       }
       
-      if (userMarkerRef.current && !lastKnown) {
+      // No fallback position available - remove marker
+      console.log('[GPS-MARKER] No fallback position available');
+      if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
       }
