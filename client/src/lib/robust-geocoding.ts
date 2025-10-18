@@ -24,8 +24,20 @@ export async function robustGeocode(
   console.log(`[ROBUST-GEOCODE] Geocoding: "${address}"`);
   console.log(`[ROBUST-GEOCODE] Existing coordinates:`, existingCoordinates);
 
-  // Priority 1: Use existing coordinates if available
-  if (existingCoordinates && existingCoordinates.lat && existingCoordinates.lng) {
+  // Priority 0: Check if address is direct coordinate input (highest priority)
+  const directCoords = extractCoordinatesFromString(address);
+  if (directCoords) {
+    console.log(`[ROBUST-GEOCODE] ✅ Direct coordinate input detected`);
+    return {
+      coordinates: directCoords,
+      address: `${directCoords.lat}, ${directCoords.lng}`,
+      confidence: 1.0,
+      source: 'cached'
+    };
+  }
+
+  // Priority 1: Use existing cached coordinates if valid (including zero values)
+  if (existingCoordinates && validateCoordinates(existingCoordinates)) {
     console.log(`[ROBUST-GEOCODE] ✅ Using cached coordinates`);
     return {
       coordinates: existingCoordinates,
@@ -57,16 +69,16 @@ export async function robustGeocode(
     console.log(`[ROBUST-GEOCODE] Not a UK postcode, will use TomTom`);
   }
 
-  // Priority 3: TomTom Search API (universal geocoder)
-  console.log(`[ROBUST-GEOCODE] Using TomTom search API`);
+  // Priority 3: TomTom Search API with retry/backoff (universal geocoder)
+  console.log(`[ROBUST-GEOCODE] Using TomTom search API with retry logic`);
   try {
-    const tomtomResult = await geocodeWithTomTom(address);
+    const tomtomResult = await geocodeWithTomTomRetry(address);
     if (tomtomResult) {
       console.log(`[ROBUST-GEOCODE] ✅ TomTom geocoded successfully`);
       return tomtomResult;
     }
   } catch (error) {
-    console.error(`[ROBUST-GEOCODE] TomTom geocoding failed:`, error);
+    console.error(`[ROBUST-GEOCODE] TomTom geocoding failed after retries:`, error);
   }
 
   // If all methods fail, throw comprehensive error
@@ -77,64 +89,104 @@ export async function robustGeocode(
 }
 
 /**
- * Geocode using TomTom Search API
+ * Geocode using TomTom Search API with retry/backoff
+ * Handles transient network errors and API rate limits
+ */
+async function geocodeWithTomTomRetry(
+  address: string,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<GeocodeResult | null> {
+  console.log(`[TOMTOM-GEOCODE] Starting geocode with retry for: "${address}"`);
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await geocodeWithTomTom(address);
+      if (result) {
+        return result;
+      }
+      
+      // If no result but no error, it might be a valid "not found" - don't retry
+      if (attempt < maxRetries) {
+        console.log(`[TOMTOM-GEOCODE] Attempt ${attempt} returned no results, retrying...`);
+      }
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries;
+      console.error(`[TOMTOM-GEOCODE] Attempt ${attempt}/${maxRetries} failed:`, error);
+      
+      if (isLastAttempt) {
+        throw error;
+      }
+      
+      // Exponential backoff: wait before retrying
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`[TOMTOM-GEOCODE] Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Geocode using TomTom Search API (single attempt)
  * Handles full addresses, partial addresses, and landmarks
  */
 async function geocodeWithTomTom(address: string): Promise<GeocodeResult | null> {
-  console.log(`[TOMTOM-GEOCODE] Starting geocode for: "${address}"`);
+  const url = `/api/tomtom-search?` +
+    `q=${encodeURIComponent(address)}` +
+    `&limit=1` +
+    `&searchType=fuzzy`;
   
-  try {
-    const url = `/api/tomtom-search?` +
-      `q=${encodeURIComponent(address)}` +
-      `&limit=1` +
-      `&searchType=fuzzy`;
-    
-    console.log(`[TOMTOM-GEOCODE] Fetching: ${url}`);
-    
-    // Call our backend proxy for TomTom search
-    const response = await fetch(url);
+  console.log(`[TOMTOM-GEOCODE] Fetching: ${url}`);
+  
+  // Call our backend proxy for TomTom search
+  const response = await fetch(url);
 
-    console.log(`[TOMTOM-GEOCODE] Response status: ${response.status}`);
+  console.log(`[TOMTOM-GEOCODE] Response status: ${response.status}`);
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unable to read error');
-      console.error(`[TOMTOM-GEOCODE] API returned ${response.status}:`, errorText);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unable to read error');
+    
+    // Differentiate between client errors (4xx) and server/network errors (5xx)
+    if (response.status >= 400 && response.status < 500) {
+      console.error(`[TOMTOM-GEOCODE] Client error ${response.status}:`, errorText);
+      // Don't retry client errors - return null
       return null;
     }
-
-    const data = await response.json();
-    console.log(`[TOMTOM-GEOCODE] Response data:`, data);
-
-    if (!data.results || data.results.length === 0) {
-      console.warn(`[TOMTOM-GEOCODE] No results found for: ${address}`);
-      return null;
-    }
-
-    const result = data.results[0];
-    console.log(`[TOMTOM-GEOCODE] First result:`, result);
     
-    if (!result.position || typeof result.position.lat !== 'number' || typeof result.position.lon !== 'number') {
-      console.error(`[TOMTOM-GEOCODE] Invalid position data:`, result.position);
-      return null;
-    }
+    // Throw for server errors so retry logic can handle them
+    throw new Error(`TomTom API server error ${response.status}: ${errorText}`);
+  }
 
-    const geocoded: GeocodeResult = {
-      coordinates: {
-        lat: result.position.lat,
-        lng: result.position.lon
-      },
-      address: result.address?.freeformAddress || address,
-      confidence: result.score || 0.8,
-      source: 'tomtom'
-    };
+  const data = await response.json();
+  console.log(`[TOMTOM-GEOCODE] Response data:`, data);
 
-    console.log(`[TOMTOM-GEOCODE] ✅ Success:`, geocoded);
-    return geocoded;
-
-  } catch (error) {
-    console.error(`[TOMTOM-GEOCODE] Request failed with exception:`, error);
+  if (!data.results || data.results.length === 0) {
+    console.warn(`[TOMTOM-GEOCODE] No results found for: ${address}`);
     return null;
   }
+
+  const result = data.results[0];
+  console.log(`[TOMTOM-GEOCODE] First result:`, result);
+  
+  if (!result.position || typeof result.position.lat !== 'number' || typeof result.position.lon !== 'number') {
+    console.error(`[TOMTOM-GEOCODE] Invalid position data:`, result.position);
+    return null;
+  }
+
+  const geocoded: GeocodeResult = {
+    coordinates: {
+      lat: result.position.lat,
+      lng: result.position.lon
+    },
+    address: result.address?.freeformAddress || address,
+    confidence: result.score || 0.8,
+    source: 'tomtom'
+  };
+
+  console.log(`[TOMTOM-GEOCODE] ✅ Success:`, geocoded);
+  return geocoded;
 }
 
 /**

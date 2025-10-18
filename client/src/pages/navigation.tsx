@@ -1380,48 +1380,32 @@ function NavigationPageContent() {
       return;
     }
 
-    // Geocode missing coordinates before sending to backend
+    // Geocode missing coordinates using robust multi-fallback approach
     let finalStartCoords = fromCoordinates;
     let finalEndCoords = toCoordinates;
 
-    // Try to geocode start location if coordinates are missing
-    if (!finalStartCoords && finalStartLoc) {
-      console.log('[GEOCODE] Attempting to geocode start location:', finalStartLoc);
-      
-      if (looksLikePostcode(finalStartLoc) && detectPostcodeCountry(finalStartLoc) === 'UK') {
-        const result = await geocodeUKPostcode(finalStartLoc);
-        if (result) {
-          console.log('[GEOCODE] Start location geocoded successfully:', result.coordinates);
-          finalStartCoords = result.coordinates;
-          setFromCoordinates(result.coordinates); // Update state for future use
-        } else {
-          // REMOVED TOAST: No popups per user request
-          return;
-        }
-      } else {
-        // REMOVED TOAST: No popups per user request
-        return;
+    try {
+      // Geocode start location if coordinates are missing
+      if (!finalStartCoords && finalStartLoc) {
+        console.log('[PLAN-ROUTE] Geocoding start location with robust geocoding...');
+        const startResult = await robustGeocode(finalStartLoc, fromCoordinates);
+        finalStartCoords = startResult.coordinates;
+        setFromCoordinates(finalStartCoords);
+        console.log('[PLAN-ROUTE] ✅ Start location geocoded:', finalStartCoords, `(source: ${startResult.source})`);
       }
-    }
 
-    // Try to geocode end location if coordinates are missing
-    if (!finalEndCoords && finalEndLoc) {
-      console.log('[GEOCODE] Attempting to geocode end location:', finalEndLoc);
-      
-      if (looksLikePostcode(finalEndLoc) && detectPostcodeCountry(finalEndLoc) === 'UK') {
-        const result = await geocodeUKPostcode(finalEndLoc);
-        if (result) {
-          console.log('[GEOCODE] End location geocoded successfully:', result.coordinates);
-          finalEndCoords = result.coordinates;
-          setToCoordinates(result.coordinates); // Update state for future use
-        } else {
-          // REMOVED TOAST: No popups per user request
-          return;
-        }
-      } else {
-        // REMOVED TOAST: No popups per user request
-        return;
+      // Geocode end location if coordinates are missing
+      if (!finalEndCoords && finalEndLoc) {
+        console.log('[PLAN-ROUTE] Geocoding end location with robust geocoding...');
+        const endResult = await robustGeocode(finalEndLoc, toCoordinates);
+        finalEndCoords = endResult.coordinates;
+        setToCoordinates(finalEndCoords);
+        console.log('[PLAN-ROUTE] ✅ End location geocoded:', finalEndCoords, `(source: ${endResult.source})`);
       }
+    } catch (error) {
+      console.error('[PLAN-ROUTE] Geocoding failed:', error);
+      // REMOVED TOAST: Error will be displayed in UI
+      return;
     }
 
     const routeData = {
