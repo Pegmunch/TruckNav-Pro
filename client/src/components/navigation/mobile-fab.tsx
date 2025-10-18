@@ -96,7 +96,7 @@ export function MobileFAB({
   const speedDialOptions = [
     {
       id: 'compass',
-      icon: null,
+      icon: null as any,
       customIcon: <CompassIcon bearing={bearing} className="w-5 h-5" />,
       label: 'Reset Compass',
       onClick: onCompassClick,
@@ -105,6 +105,7 @@ export function MobileFAB({
     {
       id: 'view-incidents',
       icon: AlertCircle,
+      customIcon: null,
       label: 'View Incidents',
       onClick: onViewIncidents,
       showInModes: ['plan', 'preview', 'navigate']
@@ -112,6 +113,7 @@ export function MobileFAB({
     {
       id: 'report',
       icon: AlertTriangle,
+      customIcon: null,
       label: 'Report Incident',
       onClick: onReportIncident,
       showInModes: ['plan', 'preview', 'navigate']
@@ -119,6 +121,7 @@ export function MobileFAB({
     {
       id: 'settings',
       icon: Settings,
+      customIcon: null,
       label: 'Settings',
       onClick: onSettingsClick,
       showInModes: ['plan', 'preview', 'navigate']
@@ -126,6 +129,7 @@ export function MobileFAB({
     {
       id: 'clear',
       icon: X,
+      customIcon: null,
       label: 'Clear Route',
       onClick: onClearRoute,
       showInModes: ['preview', 'navigate']
@@ -133,6 +137,7 @@ export function MobileFAB({
     {
       id: 'menu',
       icon: Menu,
+      customIcon: null,
       label: 'Menu',
       onClick: onMenuClick,
       showInModes: ['preview', 'navigate']
@@ -140,6 +145,7 @@ export function MobileFAB({
     {
       id: 'layers',
       icon: Layers,
+      customIcon: null,
       label: 'Map Layers',
       onClick: onLayersClick,
       showInModes: ['preview', 'navigate']
