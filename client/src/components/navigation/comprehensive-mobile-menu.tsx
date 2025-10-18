@@ -307,9 +307,11 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                 size="icon"
                 onClick={() => onOpenChange(false)}
                 className="h-8 w-8"
+                aria-label="Close menu"
                 data-testid="button-close-menu"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Close menu</span>
               </Button>
             </div>
             <DialogDescription className="sr-only">
