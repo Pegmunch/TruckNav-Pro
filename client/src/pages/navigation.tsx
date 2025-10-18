@@ -1272,7 +1272,7 @@ function NavigationPageContent() {
         // Auto-zoom to show the calculated route with current location
         setTimeout(() => {
           // Priority: GPS position → Manual location → Route bounds
-          if (gpsData.position) {
+          if (gpsData?.position) {
             console.log('[ROUTE-PREVIEW] ✅ Zooming to current GPS position');
             const previewPosition = {
               lat: gpsData.position.latitude,
@@ -1289,7 +1289,7 @@ function NavigationPageContent() {
               }
             });
             window.dispatchEvent(autoZoomEvent);
-          } else if (gpsData.manualLocation) {
+          } else if (gpsData?.manualLocation) {
             console.log('[ROUTE-PREVIEW] 📍 Zooming to manual location');
             const previewPosition = {
               lat: gpsData.manualLocation.latitude,
@@ -1818,14 +1818,14 @@ function NavigationPageContent() {
       };
       
       // Priority: GPS position → Manual location → Route start
-      if (gpsData.position) {
+      if (gpsData?.position) {
         console.log('[NAV-VIEW] ✅ Using current GPS position');
         applyNavigationView(
           gpsData.position.latitude,
           gpsData.position.longitude,
           gpsData.position.smoothedHeading || gpsData.position.heading || 0
         );
-      } else if (gpsData.manualLocation) {
+      } else if (gpsData?.manualLocation) {
         console.log('[NAV-VIEW] 📍 Using manual location');
         applyNavigationView(
           gpsData.manualLocation.latitude,
