@@ -84,7 +84,7 @@ function NavigationControlsStack({
     <div 
       className="fixed z-[1600] flex flex-col gap-2 pointer-events-auto" 
       style={{ 
-        top: mode === 'navigate' ? 'calc(140px + var(--safe-area-top))' : 'calc(7.5rem + var(--safe-area-top))',
+        top: 'calc(70px + var(--safe-area-top))',
         right: 'calc(0.75rem + var(--safe-area-right))'
       }}
       data-testid={`navigation-controls-right-${mode}`}
@@ -2517,7 +2517,7 @@ function NavigationPageContent() {
                 <>
                   {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
                   {currentRoute && (
-                    <div className="absolute left-0 right-0 z-[95]" style={{ top: 'var(--safe-area-top, 0px)' }}>
+                    <div className="fixed top-0 left-0 right-0 z-[1700]" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
                       <CompactTripStrip
                         eta={currentRoute.duration || 0}
                         distanceRemaining={currentRoute.distance || 0}
@@ -2677,8 +2677,8 @@ function NavigationPageContent() {
 
         </div>
 
-        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] */}
-        {(mobileNavMode === 'preview' || mobileNavMode === 'navigate') && (
+        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] - ONLY DURING NAVIGATION */}
+        {mobileNavMode === 'navigate' && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2696,7 +2696,7 @@ function NavigationPageContent() {
               mapRef.current?.toggleMapView();
             }}
             onViewIncidents={() => setShowIncidentFeed(true)}
-            mode={mobileNavMode === 'navigate' ? 'navigate' : 'preview'}
+            mode="navigate"
           />
         )}
         </>
