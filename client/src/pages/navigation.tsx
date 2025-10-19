@@ -1547,9 +1547,9 @@ function NavigationPageContent() {
       console.log('[AUTO-NAV] Route calculated - showing preview mode only');
       console.log('[AUTO-NAV] isMobile:', isMobile);
       console.log('[AUTO-NAV] route exists:', !!route);
-      console.log('[AUTO-NAV] coordinates length:', route?.coordinates?.length || 0);
+      console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
       
-      if (isMobile && route && route.coordinates && route.coordinates.length > 0) {
+      if (isMobile && route && route.routePath && route.routePath.length > 0) {
         console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
         
         // Show preview mode - user must manually click "Start Navigation" button
