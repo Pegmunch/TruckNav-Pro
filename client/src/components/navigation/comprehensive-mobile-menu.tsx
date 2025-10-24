@@ -133,14 +133,12 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     window.history.replaceState({}, '', url.pathname);
     
     toast({
-      title: "Cleared Old Route",
-      description: "Old route data has been removed. Refreshing page...",
+      title: "Route Cleared",
+      description: "Map reset to clean state",
     });
     
-    // Refresh page after short delay
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    // Refresh page to ensure clean state
+    window.location.reload();
   };
   
   // Autocomplete state

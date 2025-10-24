@@ -54,7 +54,7 @@ import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
-// Navigation Controls Stack - 8 buttons on right side ONLY during navigation mode
+// Navigation Controls Stack - 8 buttons on right side for preview and navigation modes
 interface NavigationControlsStackProps {
   mapRef: React.RefObject<MapLibreMapRef>;
   mapBearing: number;
@@ -65,7 +65,7 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents?: () => void;
-  mode: 'navigate';
+  mode: 'preview' | 'navigate';
 }
 
 function NavigationControlsStack({
@@ -344,7 +344,7 @@ function NavigationPageContent() {
   
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
-  const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('plan');
+  const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
   
   // Mode transition debouncing to prevent race conditions
   const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -853,13 +853,16 @@ function NavigationPageContent() {
     if (isNavigating) {
       // Always switch to navigate mode when navigation starts
       setMobileNavModeDebounced('navigate');
-    } else if (!currentRoute && mobileNavMode !== 'plan') {
-      // Only switch to plan mode if no route AND not already in plan mode
+    } else if (!currentRoute && showComprehensiveMenu) {
+      // Only switch to plan mode if menu is open and actively planning
       setMobileNavModeDebounced('plan');
+    } else if (!currentRoute && !showComprehensiveMenu) {
+      // Default to preview mode when no route and menu is closed
+      setMobileNavModeDebounced('preview');
     }
     // REMOVED: Auto-switch to preview when route exists - this was interrupting user input
     // The route calculation onSuccess handler will explicitly set preview mode when needed
-  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode]);
+  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode, showComprehensiveMenu]);
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
   useEffect(() => {
@@ -2660,8 +2663,8 @@ function NavigationPageContent() {
 
         </div>
 
-        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] - ONLY DURING NAVIGATION */}
-        {mobileNavMode === 'navigate' && (
+        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] - PREVIEW AND NAVIGATE MODES */}
+        {(mobileNavMode === 'navigate' || mobileNavMode === 'preview') && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2679,7 +2682,7 @@ function NavigationPageContent() {
               mapRef.current?.toggleMapView();
             }}
             onViewIncidents={() => setShowIncidentFeed(true)}
-            mode="navigate"
+            mode={mobileNavMode as 'preview' | 'navigate'}
           />
         )}
         </>
