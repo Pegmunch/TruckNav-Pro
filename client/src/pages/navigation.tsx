@@ -1507,9 +1507,12 @@ function NavigationPageContent() {
       }
       
       // If route calculation includes a plannedJourney (from route calculation), set it as active
+      // NOTE: We don't persist to localStorage here - only persist when user actually starts navigation
+      // This prevents preview routes from reappearing on app reload
       if (route.plannedJourney) {
         setActiveJourney(route.plannedJourney);
-        localStorage.setItem('activeJourneyId', route.plannedJourney.id.toString());
+        // Removed: localStorage.setItem('activeJourneyId', route.plannedJourney.id.toString());
+        // Only startNavigationMutation (line ~1417) persists to localStorage
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
