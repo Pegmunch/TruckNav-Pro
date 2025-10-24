@@ -2474,7 +2474,7 @@ function NavigationPageContent() {
 
                   {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) */}
                   <Button
-                    onClick={() => setSidebarState('open')}
+                    onClick={() => setShowComprehensiveMenu(true)}
                     size="lg"
                     className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                     style={{
