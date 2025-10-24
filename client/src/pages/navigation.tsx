@@ -2686,26 +2686,6 @@ function NavigationPageContent() {
           />
         )}
         
-        {/* MobileFAB - PREVIEW MODE - Bottom Right Hamburger Menu */}
-        {mobileNavMode === 'preview' && (
-          <MobileFAB
-            mode="preview"
-            onSettingsClick={() => setShowVehicleSettings(true)}
-            onClearRoute={handleClearRoute}
-            onMenuClick={() => setShowComprehensiveMenu(true)}
-            onLayersClick={() => setShowTrafficLayer(!showTrafficLayer)}
-            onReportIncident={() => setShowIncidentReport(true)}
-            onViewIncidents={() => setShowIncidentFeed(true)}
-            onCompassClick={() => mapRef.current?.resetBearing()}
-            bearing={mapBearing}
-            className="fixed z-[200] pointer-events-auto"
-            style={{
-              bottom: 'calc(24px + var(--safe-area-bottom))',
-              right: 'calc(24px + var(--safe-area-right))'
-            }}
-            data-testid="mobile-fab-preview"
-          />
-        )}
         </>
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */
