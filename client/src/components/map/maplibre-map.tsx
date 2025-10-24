@@ -1223,11 +1223,17 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [incidents, isLoaded, showIncidents]);
 
-  // GPS tracking disabled - marker removed per user request
-  // USER REQUEST: GPS marker permanently removed
+  // GPS tracking and user position marker (using centralized GPS hook)
+  // CRITICAL: GPS marker must ALWAYS be visible on any map scenario
   useEffect(() => {
-    // GPS marker functionality disabled
-    return;
+    console.log('[GPS-MARKER] Effect triggered - map:', !!map.current, 'isLoaded:', isLoaded, 'status:', gpsStatus, 'hasPosition:', !!gpsPosition);
+    
+    if (!map.current || !isLoaded) {
+      console.log('[GPS-MARKER] Skipping - map or isLoaded not ready');
+      return;
+    }
+
+    const mapInstance = map.current;
     
     // CRITICAL: Show marker based on GPS/Manual status
     const hasGPS = isGPSReady && !!gpsPosition;

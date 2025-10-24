@@ -228,18 +228,15 @@ export function useMapEngine() {
         
         toast({
           title: "Map Loading Issue",
-          description: `MapLibre failed to load (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS}). Tap "Retry" to try again.`,
+          description: `MapLibre failed to load (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS}). Reloading...`,
           variant: "destructive",
           duration: 10000,
-          action: {
-            altText: "Retry MapLibre",
-            onClick: () => {
-              console.log('🗺️ User requested MapLibre retry');
-              retryMapLibre();
-            },
-            children: "Retry"
-          } as any
         });
+        
+        // Auto-retry after showing toast
+        setTimeout(() => {
+          retryMapLibre();
+        }, 2000);
         
         // Increment retry count
         setRetryCount(newRetryCount);
