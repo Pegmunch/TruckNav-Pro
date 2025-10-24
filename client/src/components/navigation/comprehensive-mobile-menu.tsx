@@ -47,7 +47,8 @@ import {
   Navigation,
   MapPinned,
   Loader2,
-  Store
+  Store,
+  ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -179,30 +180,24 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     'fuzzy' // Address search
   );
   
-  // POI category mapping to TomTom category codes and search terms
-  const poiCategoryMap: { [key: string]: string } = {
-    truck_stop: '7315',
-    fuel: '7311',
-    parking: '7309',
-    restaurant: '7315', // Use truck stop code for restaurants
-    rest_area: '9920'
-  };
-  
-  // Search query for each POI category
+  // Search query for each POI category (no categorySet - let TomTom find best matches)
   const poiSearchQueryMap: { [key: string]: string } = {
     truck_stop: 'truck stop',
-    fuel: 'fuel station',
-    parking: 'truck parking',
+    fuel: 'petrol station',
+    parking: 'parking',
     restaurant: 'restaurant',
-    rest_area: 'rest area'
+    rest_area: 'rest area',
+    shops: 'shop',
+    supermarket: 'supermarket'
   };
   
   // TomTom POI search - uses "From" location if set, otherwise GPS
+  // Note: Removed categorySet filter to get broader, more accurate results
   const { results: poiResults, isLoading: poiLoading } = useTomTomAutocomplete(
     activePOICategory ? poiSearchQueryMap[activePOICategory] : '', // Use category-specific search term
     poiSearchEnabled && activePOICategory !== null,
     undefined, // No country restriction
-    activePOICategory ? poiCategoryMap[activePOICategory] : undefined,
+    undefined, // No category restriction - let search query find best matches
     poiSearchCoordinates, // Use From location or GPS
     'poi', // POI search
     9656 // 6-mile radius in meters
@@ -300,12 +295,14 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     },
   });
 
-  // POI Categories with shops added
+  // POI Categories including shops and supermarkets
   const poiCategories = [
     { id: 'truck_stop', label: 'Truck Stops', icon: Truck, color: 'bg-blue-500' },
     { id: 'fuel', label: 'Fuel', icon: Fuel, color: 'bg-red-500' },
     { id: 'rest_area', label: 'Rest Areas', icon: CircleParking, color: 'bg-green-500' },
     { id: 'restaurant', label: 'Food', icon: Utensils, color: 'bg-orange-500' },
+    { id: 'shops', label: 'Shops', icon: Store, color: 'bg-purple-500' },
+    { id: 'supermarket', label: 'Supermarkets', icon: ShoppingCart, color: 'bg-pink-500' },
   ];
   
   // Handle POI category selection
