@@ -510,6 +510,90 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       )}
                     </div>
 
+                    {/* Quick POI Search - Integrated into Plan Tab */}
+                    <div className="space-y-3 pt-2">
+                      <Separator />
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-purple-500" />
+                          Or find nearby truck-friendly locations
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {poiCategories.map((category) => (
+                            <Button
+                              key={category.id}
+                              variant={activePOICategory === category.id ? "default" : "outline"}
+                              className="h-14 flex flex-col gap-1 transition-opacity hover:opacity-90 active:opacity-70"
+                              onClick={() => handlePOISearch(category.id)}
+                              data-testid={`button-poi-${category.id}-plan`}
+                            >
+                              <category.icon className="h-4 w-4" />
+                              <span className="text-xs">{category.label}</span>
+                            </Button>
+                          ))}
+                        </div>
+                        
+                        {/* POI Results in Plan Tab */}
+                        {poiLoading && activePOICategory && (
+                          <div className="flex items-center justify-center py-3 bg-muted/30 rounded-lg">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-xs text-muted-foreground">Searching nearby...</span>
+                          </div>
+                        )}
+                        
+                        {!poiLoading && activePOICategory && poiResults.length === 0 && (
+                          <div className="text-xs text-muted-foreground py-3 text-center bg-muted/20 rounded-lg">
+                            No {poiCategories.find(c => c.id === activePOICategory)?.label} found nearby
+                          </div>
+                        )}
+                        
+                        {!poiLoading && poiResults.length > 0 && (
+                          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                            <div className="text-xs font-medium text-muted-foreground">
+                              Found {poiResults.length} nearby
+                            </div>
+                            {poiResults.slice(0, 8).map((result, idx) => (
+                              <Card 
+                                key={result.id} 
+                                className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:translate-x-1 active:translate-x-0"
+                                onClick={() => {
+                                  const display = formatTomTomDisplay(result);
+                                  setToInput(display);
+                                  onToLocationChange(display);
+                                  setActivePOICategory(null);
+                                  setPoiSearchEnabled(false);
+                                  toast({
+                                    title: "Destination set",
+                                    description: `Route to: ${result.poi?.name || display}`,
+                                  });
+                                }}
+                                data-testid={`card-poi-result-plan-${idx}`}
+                              >
+                                <CardContent className="p-2.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-xs truncate">
+                                        {result.poi?.name || formatTomTomDisplay(result)}
+                                      </div>
+                                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                                        {formatTomTomDisplay(result)}
+                                      </div>
+                                      {result.dist !== undefined && (
+                                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                                          {formatDistance(result.dist, 'meters')} away
+                                        </div>
+                                      )}
+                                    </div>
+                                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Current Vehicle Info */}
                     {selectedProfile && (
                       <div className="p-3 bg-muted/30 rounded-lg">
