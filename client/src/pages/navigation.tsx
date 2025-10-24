@@ -1217,14 +1217,15 @@ function NavigationPageContent() {
         const response = await apiRequest("GET", `/api/journeys/${urlJourneyId}`);
         const journey = await response.json();
         
-        // CRITICAL: Only load active/planned journeys, clear completed ones
-        if (journey && (journey.status === 'active' || journey.status === 'planned')) {
+        // CRITICAL: Only restore ACTIVE navigation, not preview routes
+        // Preview routes are 'planned' and should NOT persist across sessions
+        if (journey && journey.status === 'active') {
           // Store in localStorage for future use
           localStorage.setItem('activeJourneyId', journey.id);
           return journey;
         } else {
-          // Clear completed/cancelled journey from URL
-          console.log('[JOURNEY-CLEAR] Clearing completed journey from URL:', urlJourneyId);
+          // Clear non-active journey from URL
+          console.log('[JOURNEY-CLEAR] Clearing non-active journey from URL:', urlJourneyId, 'status:', journey?.status);
           const url = new URL(window.location.href);
           url.searchParams.delete('journey');
           window.history.replaceState({}, '', url.pathname);
@@ -1238,10 +1239,12 @@ function NavigationPageContent() {
       if (storedJourneyId) {
         const response = await apiRequest("GET", `/api/journeys/${storedJourneyId}`);
         const journey = await response.json();
-        if (journey.status === 'active' || journey.status === 'planned') {
+        // CRITICAL: Only restore ACTIVE navigation, not 'planned' preview routes
+        if (journey.status === 'active') {
           return journey;
         } else {
-          // Clean up completed/cancelled journey from localStorage
+          // Clean up non-active journey from localStorage
+          console.log('[JOURNEY-CLEAR] Clearing non-active journey from storage:', storedJourneyId, 'status:', journey?.status);
           localStorage.removeItem('activeJourneyId');
         }
       }
