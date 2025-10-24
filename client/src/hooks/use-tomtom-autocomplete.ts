@@ -280,13 +280,14 @@ export const useTomTomAutocomplete = (
         // Add POI category filter if specified
         if (poiCategory && searchType === 'poi') {
           backendUrl.searchParams.set('categorySet', poiCategory);
+          console.log(`[TOMTOM] POI category search: ${poiCategory}`);
         }
         
         // Add GPS coordinates for location-biased search
         if (gpsCoordinates) {
           backendUrl.searchParams.set('lat', gpsCoordinates.lat.toString());
           backendUrl.searchParams.set('lon', gpsCoordinates.lng.toString());
-          console.log(`[TOMTOM] Using GPS location: lat=${gpsCoordinates.lat}, lng=${gpsCoordinates.lng}`);
+          console.log(`[TOMTOM] Using location: lat=${gpsCoordinates.lat}, lng=${gpsCoordinates.lng}`);
         }
         
         // Add search radius if specified
@@ -299,6 +300,8 @@ export const useTomTomAutocomplete = (
         if (countryCode) {
           backendUrl.searchParams.set('countrySet', countryCode);
         }
+        
+        console.log(`[TOMTOM] ${searchType === 'poi' ? 'POI' : 'Address'} search query: "${trimmedQuery}"`);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);

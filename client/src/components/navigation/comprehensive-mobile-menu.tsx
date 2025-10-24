@@ -179,7 +179,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     'fuzzy' // Address search
   );
   
-  // POI category mapping to TomTom category codes
+  // POI category mapping to TomTom category codes and search terms
   const poiCategoryMap: { [key: string]: string } = {
     truck_stop: '7315',
     fuel: '7311',
@@ -188,9 +188,18 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     rest_area: '9920'
   };
   
+  // Search query for each POI category
+  const poiSearchQueryMap: { [key: string]: string } = {
+    truck_stop: 'truck stop',
+    fuel: 'fuel station',
+    parking: 'truck parking',
+    restaurant: 'restaurant',
+    rest_area: 'rest area'
+  };
+  
   // TomTom POI search - uses "From" location if set, otherwise GPS
   const { results: poiResults, isLoading: poiLoading } = useTomTomAutocomplete(
-    '', // No search query, just category-based
+    activePOICategory ? poiSearchQueryMap[activePOICategory] : '', // Use category-specific search term
     poiSearchEnabled && activePOICategory !== null,
     undefined, // No country restriction
     activePOICategory ? poiCategoryMap[activePOICategory] : undefined,
@@ -304,6 +313,14 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     // Use From location coordinates if available, otherwise GPS
     const searchCenter = fromCoordinates || gpsCoordinates;
     
+    console.log('[POI-SEARCH] Button clicked:', {
+      categoryId,
+      fromCoordinates,
+      gpsCoordinates,
+      searchCenter,
+      gpsAvailable: !!gps?.position
+    });
+    
     if (!searchCenter) {
       toast({
         title: "Location needed",
@@ -313,9 +330,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
       return;
     }
     
+    console.log('[POI-SEARCH] Starting search with coordinates:', searchCenter);
     setActivePOICategory(categoryId);
     setPoiSearchEnabled(true);
-  }, [fromCoordinates, gpsCoordinates, toast]);
+  }, [fromCoordinates, gpsCoordinates, toast, gps]);
 
   return (
     <>
