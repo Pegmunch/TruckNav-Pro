@@ -54,7 +54,7 @@ import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
-// Reusable Navigation Controls Stack - Used in BOTH Preview and Navigate modes
+// Navigation Controls Stack - 8 buttons on right side ONLY during navigation mode
 interface NavigationControlsStackProps {
   mapRef: React.RefObject<MapLibreMapRef>;
   mapBearing: number;
@@ -65,7 +65,7 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents?: () => void;
-  mode: 'preview' | 'navigate';
+  mode: 'navigate';
 }
 
 function NavigationControlsStack({
@@ -82,7 +82,7 @@ function NavigationControlsStack({
 }: NavigationControlsStackProps) {
   return (
     <div 
-      className="fixed z-[1600] flex flex-col gap-2 pointer-events-auto" 
+      className="fixed z-[1600] flex flex-col gap-2 pointer-events-auto max-h-[calc(100vh-140px)] overflow-y-auto overflow-x-visible scrollbar-hide" 
       style={{ 
         top: 'calc(70px + var(--safe-area-top))',
         right: 'calc(0.75rem + var(--safe-area-right))'

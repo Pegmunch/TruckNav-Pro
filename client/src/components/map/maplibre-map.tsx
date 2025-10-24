@@ -714,14 +714,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               ],
               tileSize: 256,
               attribution: '© OpenStreetMap contributors'
-            },
-            'satellite-tiles': {
-              type: 'raster',
-              tiles: [
-                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-              ],
-              tileSize: 256,
-              attribution: '© Esri'
             }
           },
           layers: [
@@ -737,22 +729,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               id: 'roads-3d-layer',
               type: 'raster',
               source: 'osm-tiles',
-              minzoom: 0,
-              maxzoom: 22,
-              layout: { visibility: 'none' }
-            },
-            {
-              id: 'satellite-2d-layer',
-              type: 'raster',
-              source: 'satellite-tiles',
-              minzoom: 0,
-              maxzoom: 22,
-              layout: { visibility: 'none' }
-            },
-            {
-              id: 'satellite-3d-layer',
-              type: 'raster',
-              source: 'satellite-tiles',
               minzoom: 0,
               maxzoom: 22,
               layout: { visibility: 'none' }
@@ -834,61 +810,50 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         const mapInstance = map.current;
         if (!mapInstance) return;
 
-        // Customize style to remove road outlines
-        const style = mapInstance.getStyle();
-        if (style && style.layers) {
-          style.layers.forEach((layer: any) => {
-            if (layer.type === 'line' && layer.id.includes('road')) {
-              // Remove all road outlines by setting outline width to 0 or removing outline color
-              if (layer.paint) {
-                if ('line-gap-width' in layer.paint) {
-                  mapInstance.setPaintProperty(layer.id, 'line-gap-width', 0);
-                }
-                // Make road casings (outlines) transparent
-                if (layer.id.includes('case') || layer.id.includes('casing') || layer.id.includes('outline')) {
-                  mapInstance.setPaintProperty(layer.id, 'line-opacity', 0);
-                }
-              }
+        // Add satellite sources for map view toggle
+        if (!mapInstance.getSource('satellite-2d')) {
+          mapInstance.addSource('satellite-2d', {
+            type: 'raster',
+            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tileSize: 256,
+            maxzoom: 19
+          });
+        }
+
+        if (!mapInstance.getSource('satellite-3d')) {
+          mapInstance.addSource('satellite-3d', {
+            type: 'raster',
+            tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+            tileSize: 256,
+            maxzoom: 20
+          });
+        }
+
+        // Add satellite layers (initially hidden)
+        if (!mapInstance.getLayer('satellite-2d-layer')) {
+          mapInstance.addLayer({
+            id: 'satellite-2d-layer',
+            type: 'raster',
+            source: 'satellite-2d',
+            layout: {
+              visibility: 'none'
             }
           });
         }
 
-        // Add satellite sources for mode toggle
-        mapInstance.addSource('satellite-2d', {
-          type: 'raster',
-          tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-          tileSize: 256,
-          maxzoom: 19
-        });
-
-        mapInstance.addSource('satellite-3d', {
-          type: 'raster',
-          tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
-          tileSize: 256,
-          maxzoom: 20
-        });
-
-        // Add satellite layers (initially hidden)
-        mapInstance.addLayer({
-          id: 'satellite-2d-layer',
-          type: 'raster',
-          source: 'satellite-2d',
-          layout: {
-            visibility: 'none'
-          }
-        });
-
-        mapInstance.addLayer({
-          id: 'satellite-3d-layer',
-          type: 'raster',
-          source: 'satellite-3d',
-          layout: {
-            visibility: 'none'
-          }
-        });
+        if (!mapInstance.getLayer('satellite-3d-layer')) {
+          mapInstance.addLayer({
+            id: 'satellite-3d-layer',
+            type: 'raster',
+            source: 'satellite-3d',
+            layout: {
+              visibility: 'none'
+            }
+          });
+        }
 
         setIsLoaded(true);
-        console.log('✅ MapLibre GL loaded - road outlines removed, satellite sources added');
+        console.log('✅ MapLibre GL loaded - satellite sources added for map view toggle');
       });
 
       map.current.on('error', (e) => {
