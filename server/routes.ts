@@ -2707,7 +2707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // TomTom Search API Proxy - Address Autocomplete & POI Search
   app.get("/api/tomtom-search", async (req: Request, res: Response) => {
     try {
-      const { q, limit, searchType, categorySet, lat, lon, countrySet } = req.query;
+      const { q, limit, searchType, categorySet, lat, lon, countrySet, radius } = req.query;
       
       if (!q || typeof q !== 'string') {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
@@ -2735,6 +2735,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tomtomUrl.searchParams.set('lat', userLat.toString());
         tomtomUrl.searchParams.set('lon', userLon.toString());
         console.log(`[TOMTOM-PROXY] Location-biased search: lat=${userLat}, lon=${userLon}`);
+      }
+      
+      // Add search radius in meters (e.g., 6 miles = 9656 meters)
+      if (radius && typeof radius === 'string') {
+        const radiusMeters = parseInt(radius, 10);
+        if (!isNaN(radiusMeters) && radiusMeters > 0) {
+          tomtomUrl.searchParams.set('radius', radiusMeters.toString());
+          console.log(`[TOMTOM-PROXY] Search radius: ${radiusMeters}m (${(radiusMeters / 1609.34).toFixed(1)} miles)`);
+        }
       }
       
       // Add POI category filter

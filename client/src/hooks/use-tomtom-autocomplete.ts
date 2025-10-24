@@ -189,7 +189,8 @@ export const useTomTomAutocomplete = (
   countryCode?: string,
   poiCategory?: string, // TomTom category ID or name
   gpsCoordinates?: { lat: number; lng: number },
-  searchType: 'fuzzy' | 'poi' = 'fuzzy' // fuzzy for addresses, poi for points of interest
+  searchType: 'fuzzy' | 'poi' = 'fuzzy', // fuzzy for addresses, poi for points of interest
+  radiusMeters?: number // Search radius in meters (e.g., 6 miles = 9656 meters)
 ) => {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -227,7 +228,7 @@ export const useTomTomAutocomplete = (
   const shouldFetch = enabled && debouncedQuery.length >= 3;
 
   const { data, isLoading, error } = useQuery<{ results: TomTomResult[]; error: string | null }>({
-    queryKey: ["/api/tomtom-search", debouncedQuery, countryCode, poiCategory, gpsCoordinates?.lat, gpsCoordinates?.lng, searchType],
+    queryKey: ["/api/tomtom-search", debouncedQuery, countryCode, poiCategory, gpsCoordinates?.lat, gpsCoordinates?.lng, searchType, radiusMeters],
     queryFn: async () => {
       const trimmedQuery = debouncedQuery.trim();
       
@@ -286,6 +287,12 @@ export const useTomTomAutocomplete = (
           backendUrl.searchParams.set('lat', gpsCoordinates.lat.toString());
           backendUrl.searchParams.set('lon', gpsCoordinates.lng.toString());
           console.log(`[TOMTOM] Using GPS location: lat=${gpsCoordinates.lat}, lng=${gpsCoordinates.lng}`);
+        }
+        
+        // Add search radius if specified
+        if (radiusMeters !== undefined && radiusMeters > 0) {
+          backendUrl.searchParams.set('radius', radiusMeters.toString());
+          console.log(`[TOMTOM] Search radius: ${radiusMeters}m (${(radiusMeters / 1609.34).toFixed(1)} miles)`);
         }
         
         // Add country filter

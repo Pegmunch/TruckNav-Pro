@@ -128,6 +128,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   const [fromSearch, setFromSearch] = useState("");
   const [toSearch, setToSearch] = useState("");
   
+  // Store coordinates from "From" location for POI search
+  const [fromCoordinates, setFromCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  
   // POI search state
   const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
   const [poiSearchEnabled, setPoiSearchEnabled] = useState(false);
@@ -152,6 +155,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     lat: gps.position.latitude,
     lng: gps.position.longitude
   } : undefined;
+  
+  // Use "From" location coordinates for POI search if available, otherwise use GPS
+  const poiSearchCoordinates = fromCoordinates || gpsCoordinates;
   
   // TomTom autocomplete for From input
   const { results: fromResults, isLoading: fromLoading } = useTomTomAutocomplete(
@@ -182,14 +188,15 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     rest_area: '9920'
   };
   
-  // TomTom POI search
+  // TomTom POI search - uses "From" location if set, otherwise GPS
   const { results: poiResults, isLoading: poiLoading } = useTomTomAutocomplete(
     '', // No search query, just category-based
     poiSearchEnabled && activePOICategory !== null,
     undefined, // No country restriction
     activePOICategory ? poiCategoryMap[activePOICategory] : undefined,
-    gpsCoordinates,
-    'poi' // POI search
+    poiSearchCoordinates, // Use From location or GPS
+    'poi', // POI search
+    9656 // 6-mile radius in meters
   );
   
   // Modal states for sub-panels
@@ -240,6 +247,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     setToInput(route.endLocation);
     onFromLocationChange(route.startLocation);
     onToLocationChange(route.endLocation);
+    // Clear stored coordinates and POI search when loading a route template
+    setFromCoordinates(null);
+    setActivePOICategory(null);
+    setPoiSearchEnabled(false);
     setActiveTab("plan"); // Switch to plan tab to show loaded route
   }, [onFromLocationChange, onToLocationChange]);
 
@@ -260,6 +271,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
       setToInput(route.endLocation);
       onFromLocationChange(route.startLocation);
       onToLocationChange(route.endLocation);
+      // Clear stored coordinates and POI search when loading a route template
+      setFromCoordinates(null);
+      setActivePOICategory(null);
+      setPoiSearchEnabled(false);
       setActiveTab("plan"); // Switch to plan tab to show loaded route
     } catch (error) {
       console.error("Failed to load journey route:", error);
@@ -286,13 +301,21 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   
   // Handle POI category selection
   const handlePOISearch = useCallback((categoryId: string) => {
-    if (!gpsCoordinates) {
+    // Use From location coordinates if available, otherwise GPS
+    const searchCenter = fromCoordinates || gpsCoordinates;
+    
+    if (!searchCenter) {
+      toast({
+        title: "Location needed",
+        description: "Please enter a location in the 'From' field or enable GPS to search for nearby POIs.",
+        variant: "destructive",
+      });
       return;
     }
     
     setActivePOICategory(categoryId);
     setPoiSearchEnabled(true);
-  }, [gpsCoordinates, poiCategories]);
+  }, [fromCoordinates, gpsCoordinates, toast]);
 
   return (
     <>
@@ -390,6 +413,11 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         onChange={(e) => {
                           setFromInput(e.target.value);
                           onFromLocationChange(e.target.value);
+                          // Clear stored coordinates when manually editing the field
+                          setFromCoordinates(null);
+                          // Clear any active POI search
+                          setActivePOICategory(null);
+                          setPoiSearchEnabled(false);
                           if (e.target.value.length >= 2) {
                             setFromOpen(true);
                           } else {
@@ -426,8 +454,13 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                                       key={result.id}
                                       onSelect={() => {
                                         const display = formatTomTomDisplay(result);
+                                        const coords = extractTomTomCoordinates(result);
                                         setFromInput(display);
                                         onFromLocationChange(display);
+                                        // Store coordinates for POI search
+                                        if (coords) {
+                                          setFromCoordinates(coords);
+                                        }
                                         setFromOpen(false);
                                       }}
                                       className="cursor-pointer"
