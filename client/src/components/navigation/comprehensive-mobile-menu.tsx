@@ -123,6 +123,26 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
   
+  // Temporary function to clear old route data
+  const handleClearOldRoute = () => {
+    localStorage.removeItem('activeJourneyId');
+    localStorage.removeItem('trucknav_active_journey');
+    // Clear any URL parameters
+    const url = new URL(window.location.href);
+    url.searchParams.delete('journey');
+    window.history.replaceState({}, '', url.pathname);
+    
+    toast({
+      title: "Cleared Old Route",
+      description: "Old route data has been removed. Refreshing page...",
+    });
+    
+    // Refresh page after short delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  };
+  
   // Autocomplete state
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
@@ -1105,6 +1125,17 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     >
                       <Music className="h-4 w-4 mr-2" />
                       Entertainment
+                    </Button>
+                    
+                    {/* TEMPORARY: Clear Old Route Button */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-orange-500 text-orange-600 hover:bg-orange-50"
+                      onClick={handleClearOldRoute}
+                      data-testid="button-clear-old-route"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Old Route (Fix Map)
                     </Button>
                     <Button
                       variant="outline"
