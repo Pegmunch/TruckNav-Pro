@@ -2348,8 +2348,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'navigate'}
+                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                   />
@@ -2472,6 +2472,20 @@ function NavigationPageContent() {
                     </div>
                   </div>
 
+                  {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) */}
+                  <Button
+                    onClick={() => setSidebarState('open')}
+                    size="lg"
+                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    style={{
+                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      right: 'calc(24px + var(--safe-area-right))'
+                    }}
+                    data-testid="button-open-input-preview"
+                    aria-label="Open route planning"
+                  >
+                    <Menu className="w-6 h-6" />
+                  </Button>
                 </div>
               )}
 
@@ -2771,8 +2785,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'navigate'}
+                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                   />
