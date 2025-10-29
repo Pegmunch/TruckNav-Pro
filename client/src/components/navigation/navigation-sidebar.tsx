@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +48,6 @@ import WeatherWidget from "@/components/weather/weather-widget";
 import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
 import { type VehicleProfile, type Route, type Journey, type Facility } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import IncidentReportingForm from "@/components/traffic/incident-reporting-form";
@@ -143,7 +142,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
   showRoutePreview = true,
   onRoutePreviewToggle,
 }: NavigationSidebarProps) {
-  const { toast } = useToast();
   const gpsData = useGPS();
   
   // State for Quick Picks modal components
@@ -154,6 +152,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const [showIncidentReporting, setShowIncidentReporting] = useState(false);
   const [showVoiceNavigation, setShowVoiceNavigation] = useState(false);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
 
   // Search functionality state
   const [facilitySearchInput, setFacilitySearchInput] = useState("");
@@ -162,6 +161,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Route preference selection
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   
+  // Track the coordinates from the "From" field for POI searches
+  const handleFromCoordinatesUpdate = (coords: {lat: number, lng: number} | null) => {
+    setFromCoordinates(coords);
+    onFromCoordinatesChange?.(coords);
+  };
+
   // Get saved POI radius from localStorage
   const getPoiRadius = () => {
     try {
@@ -180,11 +185,11 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const buildFacilitySearchParams = () => {
     const params = new URLSearchParams();
     
-    // Use GPS coordinates first, then manual location, then provided coordinates
+    // Use GPS coordinates first, then manual location, then from field coordinates, then provided coordinates
     const gpsPosition = gpsData?.position;
     const manualLocation = gpsData?.manualLocation;
-    const lat = gpsPosition?.latitude || manualLocation?.latitude || coordinates?.lat;
-    const lng = gpsPosition?.longitude || manualLocation?.longitude || coordinates?.lng;
+    const lat = gpsPosition?.latitude || manualLocation?.latitude || fromCoordinates?.lat || coordinates?.lat;
+    const lng = gpsPosition?.longitude || manualLocation?.longitude || fromCoordinates?.lng || coordinates?.lng;
     
     // Only proceed if we have valid coordinates
     if (!lat || !lng) {
@@ -249,43 +254,18 @@ const NavigationSidebar = memo(function NavigationSidebar({
         if (result.success) {
           // Success: Set the reverse geocoded address AND coordinates
           onFromLocationChange(result.address);
-          onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-          toast({
-            title: "Using current location",
-            description: result.address,
-          });
+          handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
         } else {
           // Error result from reverse geocoding
           const coordsString = formatCoordinatesAsAddress(latitude, longitude);
           onFromLocationChange(coordsString);
-          onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-          
-          // Show error-specific messages
-          const errorTitle = result.error === 'TIMEOUT' ? 'Address lookup timeout' :
-                            result.error === 'RATE_LIMIT' ? 'Too many requests' :
-                            result.error === 'NO_RESULTS' ? 'No address found' :
-                            'Unable to get address';
-          
-          toast({
-            title: errorTitle,
-            description: `${result.message}. Using coordinates: ${coordsString}`,
-            variant: result.error === 'RATE_LIMIT' ? 'destructive' : 'default',
-            action: (result.error === 'TIMEOUT' || result.error === 'NETWORK') ? (
-              <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
-                Retry
-              </Button>
-            ) : undefined,
-          });
+          handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
         }
       } catch (error) {
         // Unexpected error: Fallback to coordinates
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         onFromLocationChange(coordsString);
-        onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-        toast({
-          title: "Using GPS coordinates",
-          description: `Unable to determine address. Using: ${coordsString}`,
-        });
+        handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
       } finally {
         setIsReverseGeocoding(false);
       }
@@ -293,21 +273,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
       // Use manual location if available
       const { latitude, longitude, address } = gpsData.manualLocation;
       onFromLocationChange(address || formatCoordinatesAsAddress(latitude, longitude));
-      onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-      toast({
-        title: "Using manual location",
-        description: address || formatCoordinatesAsAddress(latitude, longitude),
-      });
+      handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
     } else {
       // No GPS or manual location - actively request GPS
       setIsReverseGeocoding(true);
       
       if (!navigator.geolocation) {
-        toast({
-          title: "GPS not supported",
-          description: "Your browser doesn't support geolocation",
-          variant: "destructive"
-        });
+        console.warn("GPS not supported - browser doesn't support geolocation");
         setIsReverseGeocoding(false);
         return;
       }
@@ -322,28 +294,16 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
             if (result.success) {
               onFromLocationChange(result.address);
-              onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-              toast({
-                title: "Location acquired",
-                description: result.address,
-              });
+              handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
             } else {
               const coordsString = formatCoordinatesAsAddress(latitude, longitude);
               onFromLocationChange(coordsString);
-              onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-              toast({
-                title: "Using GPS coordinates",
-                description: coordsString,
-              });
+              handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
             }
           } catch (error) {
             const coordsString = formatCoordinatesAsAddress(latitude, longitude);
             onFromLocationChange(coordsString);
-            onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-            toast({
-              title: "Using GPS coordinates",
-              description: coordsString,
-            });
+            handleFromCoordinatesUpdate({ lat: latitude, lng: longitude });
           } finally {
             setIsReverseGeocoding(false);
           }
@@ -369,16 +329,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
               break;
           }
           
-          toast({
-            title: errorMessage,
-            description: errorDescription,
-            variant: "destructive",
-            action: (
-              <Button variant="outline" size="sm" onClick={handleUseCurrentLocation}>
-                Retry
-              </Button>
-            )
-          });
+          console.warn(`GPS Error: ${errorMessage} - ${errorDescription}`);
         },
         {
           enableHighAccuracy: true,
@@ -398,11 +349,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       if (currentRoute && selectedProfile) {
         onStartNavigation();
       } else {
-        toast({
-          title: "Route not ready",
-          description: "Please set both locations and vehicle profile first",
-          variant: "destructive"
-        });
+        console.warn("Route not ready - Please set both locations and vehicle profile first");
       }
     }
   };
@@ -417,54 +364,30 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const handleVehicleTypeClick = () => {
     console.log('Lane Guidance clicked');
     onShowLaneGuidance?.();
-    toast({
-      title: "Lane Guidance",
-      description: "Opening lane guidance popup...",
-    });
   };
 
   const handleVehicleSettingsClick = () => {
     console.log('Vehicle Settings clicked');
-    toast({
-      title: "Vehicle Settings",
-      description: "Opening vehicle settings...",
-    });
     onShowVehicleSettings?.(true);
   };
 
   const handleEntertainmentClick = () => {
     console.log('Entertainment clicked');
-    toast({
-      title: "Entertainment",
-      description: "Opening entertainment panel...",
-    });
     setShowEntertainmentPanel(true);
   };
 
   const handleThemeClick = () => {
     console.log('Theme clicked');
-    toast({
-      title: "Themes",
-      description: "Opening theme selector...",
-    });
     setShowThemeSelector(true);
   };
 
   const handleWeatherClick = () => {
     console.log('Weather clicked');
-    toast({
-      title: "Weather",
-      description: "Opening weather widget...",
-    });
     setShowWeatherWidget(true);
   };
 
   const handleIncidentReportClick = () => {
     console.log('Incident Report clicked');
-    toast({
-      title: "Report Incident",
-      description: "Opening incident reporting form...",
-    });
     setShowIncidentReporting(true);
   };
 
@@ -477,10 +400,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   // Handle facility selection
   const handleFacilitySelect = (facility: Facility) => {
     onSelectFacility?.(facility);
-    toast({
-      title: "Facility selected",
-      description: `Selected: ${facility.name}`,
-    });
+    console.log(`Facility selected: ${facility.name}`);
   };
 
   // POI Search handlers - now perform real searches
@@ -498,29 +418,19 @@ const NavigationSidebar = memo(function NavigationSidebar({
     if (category !== selectedPOICategory) {
       if (hasLocation) {
         const source = gpsData?.position ? 'GPS' : gpsData?.manualLocation ? 'your location' : 'route location';
-        toast({
-          title: `Searching for ${category.replace('_', ' ')}`,
-          description: `Finding nearby locations using ${source}...`,
-        });
+        console.log(`Searching for ${category.replace('_', ' ')} using ${source}...`);
       } else {
-        toast({
-          title: `${category.replace('_', ' ')} search ready`,
-          description: "Enter a location above or enable GPS to find nearby options",
-          duration: 5000,
-        });
+        console.log(`${category.replace('_', ' ')} search ready - need location`);
       }
     } else {
-      toast({
-        title: "Search cleared",
-        description: "Category filter removed",
-      });
+      console.log("Search category cleared");
     }
   };
 
   // Handle facility text search
   const handleFacilitySearch = () => {
     if (!facilitySearchInput.trim()) {
-      toast({
+      console.log({
         title: "Please enter search terms",
         description: "Enter a location or facility name to search for",
         variant: "destructive"
@@ -530,7 +440,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     
     setSelectedPOICategory(""); // Clear category when doing text search
     
-    toast({
+    console.log({
       title: "Searching facilities",
       description: `Looking for: ${facilitySearchInput.trim()}`,
     });
@@ -542,7 +452,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     onNavigateToLocation?.(locationString);
     onToLocationChange(locationString);
     
-    toast({
+    console.log({
       title: "Destination set",
       description: `Navigating to: ${facility.name}`,
     });
@@ -550,7 +460,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
   const handleTruckStopsClick = () => {
     console.log('Truck Stops clicked');
-    toast({
+    console.log({
       title: "Truck Stops",
       description: "Searching for nearby truck stops...",
     });
@@ -559,7 +469,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleFuelStationsClick = () => {
     console.log('Fuel Stations clicked');
-    toast({
+    console.log({
       title: "Fuel Stations", 
       description: "Searching for nearby fuel stations...",
     });
@@ -568,7 +478,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleParkingClick = () => {
     console.log('Parking clicked');
-    toast({
+    console.log({
       title: "Parking",
       description: "Searching for nearby parking...",
     });
@@ -577,7 +487,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleRestaurantsClick = () => {
     console.log('Restaurants clicked');
-    toast({
+    console.log({
       title: "Restaurants",
       description: "Searching for nearby restaurants...",
     });
@@ -586,7 +496,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleShopsClick = () => {
     console.log('Shops clicked');
-    toast({
+    console.log({
       title: "Shops",
       description: "Searching for Tesco, Sainsbury's, Co-op, and other local shops...",
     });
@@ -684,7 +594,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   if (currentRoute && selectedProfile) {
                     onStartNavigation();
                   } else {
-                    toast({
+                    console.log({
                       title: "Route required",
                       description: "Set both locations and vehicle profile to calculate a route",
                       variant: "destructive"
@@ -1462,7 +1372,7 @@ Calculating route...
           onClose={() => setShowIncidentReporting(false)}
           onIncidentCreated={() => {
             // Incident created successfully, could show success message
-            toast({
+            console.log({
               title: "Incident Reported",
               description: "Your incident report has been submitted successfully.",
             });
