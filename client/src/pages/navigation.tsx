@@ -2445,7 +2445,7 @@ function NavigationPageContent() {
               )}
 
               {/* PREVIEW MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
-              {mobileNavMode === 'preview' && currentRoute && (
+              {mobileNavMode === 'preview' && (
                 <div className={cn(
                   "transition-opacity duration-200",
                   isNavigating && "opacity-0 pointer-events-none"
