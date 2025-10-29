@@ -34,6 +34,8 @@ import {
   Wrench,
   Camera,
   AlertTriangle,
+  Store,
+  ShoppingCart,
   CheckCircle,
   Eye,
   Mic,
@@ -581,6 +583,15 @@ const NavigationSidebar = memo(function NavigationSidebar({
     });
     handlePOISearch("restaurant");
   };
+  
+  const handleShopsClick = () => {
+    console.log('Shops clicked');
+    toast({
+      title: "Shops",
+      description: "Searching for Tesco, Sainsbury's, Co-op, and other local shops...",
+    });
+    handlePOISearch("shop");
+  };
 
   return (
     <>
@@ -990,6 +1001,17 @@ Calculating route...
                     >
                       <Utensils className="w-4 h-4 flex-shrink-0" />
                       <span className="text-center leading-tight">Restaurants</span>
+                    </Button>
+                    
+                    <Button
+                      onClick={handleShopsClick}
+                      variant="outline"
+                      size="sm"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
+                      data-testid="button-shops"
+                    >
+                      <Store className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Shops</span>
                     </Button>
                   </div>
                 </div>

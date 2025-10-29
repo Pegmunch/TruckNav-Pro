@@ -1388,6 +1388,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { type, lat, lng, radius, q } = req.query;
       
+      console.log('[POI-SEARCH] Request received:', { type, lat, lng, radius, q });
+      
       if (!lat || !lng) {
         return res.status(400).json({ message: "Latitude and longitude are required" });
       }
@@ -1397,6 +1399,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchRadius = radius ? parseFloat(radius as string) : 10;
       const radiusInMeters = Math.round(searchRadius * 1000);
       
+      // Get TomTom API key
+      const TOMTOM_API_KEY = process.env.VITE_TOMTOM_API_KEY;
+      
       // Map POI types to TomTom category codes
       const tomtomCategoryMap: Record<string, string> = {
         truck_stop: '7315',
@@ -1404,6 +1409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parking: '7309',
         restaurant: '7318',
         supermarket: '7332', // Supermarkets and grocery stores
+        shop: '7332,9361,9362' // Supermarkets, convenience stores, grocery stores
       };
       
       const poiType = type as string;
@@ -1411,8 +1417,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let facilities: any[] = [];
       
-      // Try TomTom first for truck-specific POIs
-      if (tomtomCategory && TOMTOM_API_KEY) {
+      // Special handling for shops - use text search for specific stores
+      if (poiType === 'shop' && TOMTOM_API_KEY) {
+        try {
+          console.log('[POI-SEARCH] Searching for shops with TomTom API');
+          // Search for specific shop chains the user wants
+          const shopSearchTerms = ['Tesco Express', 'Sainsburys Local', 'Co-op', 'Morrisons Local', 'M&S BP', 'convenience store'];
+          const allShopResults: any[] = [];
+          
+          for (const searchTerm of shopSearchTerms) {
+            const tomtomUrl = new URL('https://api.tomtom.com/search/2/poiSearch.json');
+            tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+            tomtomUrl.searchParams.set('query', searchTerm);
+            tomtomUrl.searchParams.set('lat', latitude.toString());
+            tomtomUrl.searchParams.set('lon', longitude.toString());
+            tomtomUrl.searchParams.set('radius', radiusInMeters.toString());
+            tomtomUrl.searchParams.set('limit', '5');
+            
+            console.log(`[POI-SEARCH] Searching for: ${searchTerm}`);
+            const tomtomResponse = await fetch(tomtomUrl.toString());
+            
+            if (tomtomResponse.ok) {
+              const data = await tomtomResponse.json();
+              if (data.results) {
+                allShopResults.push(...data.results);
+              }
+            }
+          }
+          
+          if (allShopResults.length > 0) {
+            facilities = allShopResults.map((result: any, index: number) => ({
+              id: `tomtom-shop-${index}`,
+              name: result.poi?.name || 'Unknown Shop',
+              type: 'shop',
+              latitude: result.position?.lat || latitude,
+              longitude: result.position?.lon || longitude,
+              address: result.address?.freeformAddress || '',
+              amenities: [],
+              city: result.address?.municipality || result.address?.localName || '',
+              state: result.address?.countrySubdivision || '',
+              zip: result.address?.postalCode || '',
+              country: result.address?.country || '',
+              phone: result.poi?.phone || null,
+              website: result.poi?.url || null,
+              rating: null,
+              imageUrl: null,
+            }));
+          }
+        } catch (error) {
+          console.error('[POI-SEARCH] Shop search failed:', error);
+        }
+      }
+      // Try TomTom for other POI types
+      else if (tomtomCategory && TOMTOM_API_KEY) {
         try {
           const tomtomUrl = new URL('https://api.tomtom.com/search/2/categorySearch/.json');
           tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);

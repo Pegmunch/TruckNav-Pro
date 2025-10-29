@@ -205,7 +205,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     parking: 'parking',
     restaurant: 'restaurant',
     rest_area: 'rest area',
-    shops: 'shop',
+    shops: 'Tesco Express Sainsburys Local Co-op Morrisons Local M&S BP convenience store general store',
     supermarket: 'supermarket'
   };
   
