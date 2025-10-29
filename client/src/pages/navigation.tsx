@@ -2663,8 +2663,8 @@ function NavigationPageContent() {
 
         </div>
 
-        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] - PREVIEW AND NAVIGATE MODES */}
-        {(mobileNavMode === 'navigate' || mobileNavMode === 'preview') && (
+        {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] - NAVIGATE MODE ONLY */}
+        {mobileNavMode === 'navigate' && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2682,7 +2682,7 @@ function NavigationPageContent() {
               mapRef.current?.toggleMapView();
             }}
             onViewIncidents={() => setShowIncidentFeed(true)}
-            mode={mobileNavMode as 'preview' | 'navigate'}
+            mode="navigate"
           />
         )}
         
