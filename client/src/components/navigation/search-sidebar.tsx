@@ -101,37 +101,37 @@ const SearchSidebar = memo(function SearchSidebar({
           setSelectedCategory(category.type);
           setSearchQuery("");
           
-          toast({
-            title: "Voice search activated",
-            description: `Searching for ${category.label.toLowerCase()}`,
-          });
+          // toast({
+          //   title: "Voice search activated",
+          //   description: `Searching for ${category.label.toLowerCase()}`,
+          // });
         } else {
           setSearchQuery(poiType);
           setSelectedCategory("");
           
-          toast({
-            title: "Voice search activated",
-            description: `Searching for "${poiType}"`,
-          });
+          // toast({
+          //   title: "Voice search activated",
+          //   description: `Searching for "${poiType}"`,
+          // });
         }
       } else if (intent.action === 'search_location' && locationEntities.length > 0) {
         const location = locationEntities[0].value;
         setSearchQuery(location);
         setSelectedCategory("");
         
-        toast({
-          title: "Voice search activated",
-          description: `Searching for "${location}"`,
-        });
+        // toast({
+        //   title: "Voice search activated",
+        //   description: `Searching for "${location}"`,
+        // });
       }
     },
     
     unknown: async (intent) => {
-      toast({
-        title: "Voice command not recognized",
-        description: "Try saying 'find nearest fuel station' or 'search for restaurants'",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Voice command not recognized",
+      //   description: "Try saying 'find nearest fuel station' or 'search for restaurants'",
+      //   variant: "destructive",
+      // });
     }
   };
 
@@ -152,11 +152,11 @@ const SearchSidebar = memo(function SearchSidebar({
       },
       onError: (error: any) => {
         setIsVoiceSearchActive(false);
-        toast({
-          title: "Voice search error",
-          description: error.message,
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Voice search error",
+        //   description: error.message,
+        //   variant: "destructive",
+        // });
       },
     }
   );
@@ -221,11 +221,11 @@ const SearchSidebar = memo(function SearchSidebar({
   // Show error toast when query fails
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Search Error",
-        description: "Failed to search facilities. Please check your connection and try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Search Error",
+      //   description: "Failed to search facilities. Please check your connection and try again.",
+      //   variant: "destructive",
+      // });
     }
   }, [error, toast]);
 
@@ -255,10 +255,10 @@ const SearchSidebar = memo(function SearchSidebar({
   // Handle facility selection
   const handleFacilitySelect = (facility: Facility) => {
     onSelectFacility?.(facility);
-    toast({
-      title: "Facility selected",
-      description: `Selected ${facility.name}`,
-    });
+    // toast({
+    //   title: "Facility selected",
+    //   description: `Selected ${facility.name}`,
+    // });
   };
 
   // Get amenity icon

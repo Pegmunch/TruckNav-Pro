@@ -130,12 +130,12 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   const handleMotorwayClick = () => {
     if (roadInfo.junction) {
       setShowJunctionInfo(true);
-      toast({
-        title: `${roadInfo.roadRef || 'Road'} Junction ${roadInfo.junction.ref}`,
-        description: roadInfo.junction.exitTo ? `Exit to: ${roadInfo.junction.exitTo}` : 
-                     roadInfo.destination ? `Towards: ${roadInfo.destination}` : 
-                     'Junction information',
-      });
+      // toast({
+      //   title: `${roadInfo.roadRef || 'Road'} Junction ${roadInfo.junction.ref}`,
+      //   description: roadInfo.junction.exitTo ? `Exit to: ${roadInfo.junction.exitTo}` : 
+      //                roadInfo.destination ? `Towards: ${roadInfo.destination}` : 
+      //                'Junction information',
+      // });
       setTimeout(() => setShowJunctionInfo(false), 3000);
     }
   };

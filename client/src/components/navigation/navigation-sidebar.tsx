@@ -496,11 +496,17 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleShopsClick = () => {
     console.log('Shops clicked');
-    console.log({
-      title: "Shops",
-      description: "Searching for Tesco, Sainsbury's, Co-op, and other local shops...",
+    console.log('[SHOPS] Current coordinates:', {
+      fromCoordinates,
+      providedCoordinates: coordinates,
+      gpsPosition: gpsData?.position,
+      manualLocation: gpsData?.manualLocation
     });
+    console.log('[SHOPS] Search params:', buildFacilitySearchParams());
+    console.log('[SHOPS] Should fetch facilities:', shouldFetchFacilities);
+    console.log('[SHOPS] Selected POI Category before:', selectedPOICategory);
     handlePOISearch("shop");
+    console.log('[SHOPS] Selected POI Category after:', selectedPOICategory);
   };
 
   return (

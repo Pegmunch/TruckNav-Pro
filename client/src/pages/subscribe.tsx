@@ -50,29 +50,29 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
 
       if (error) {
         setErrorMessage(error.message || 'Payment failed. Please try again.');
-        toast({
-          title: "Payment Failed",
-          description: error.message || 'An error occurred during payment processing.',
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Payment Failed",
+        //   description: error.message || 'An error occurred during payment processing.',
+        //   variant: "destructive",
+        // });
       } else {
         // Save consent on successful payment
         setConsentAccepted();
         
-        toast({
-          title: "Subscription Activated!",
-          description: `You now have access to ${plan.name}.`,
-        });
+        // toast({
+        //   title: "Subscription Activated!",
+        //   description: `You now have access to ${plan.name}.`,
+        // });
         setLocation('/');
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
-      toast({
-        title: "Payment Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Payment Error",
+      //   description: errorMsg,
+      //   variant: "destructive",
+      // });
     } finally {
       setIsProcessing(false);
     }
@@ -244,11 +244,11 @@ export default function SubscribePage() {
       setClientSecret(data.clientSecret);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Subscription Error",
-        description: error.message || "Failed to create subscription. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Subscription Error",
+      //   description: error.message || "Failed to create subscription. Please try again.",
+      //   variant: "destructive",
+      // });
       setLocation('/pricing');
     },
   });

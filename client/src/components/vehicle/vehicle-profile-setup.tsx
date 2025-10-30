@@ -133,18 +133,18 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
       return response.json();
     },
     onSuccess: (profile) => {
-      toast({
-        title: "Vehicle Profile Created",
-        description: "Your vehicle profile has been saved successfully.",
-      });
+      // toast({
+      //   title: "Vehicle Profile Created",
+      //   description: "Your vehicle profile has been saved successfully.",
+      // });
       onProfileCreated(profile);
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create vehicle profile. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to create vehicle profile. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 

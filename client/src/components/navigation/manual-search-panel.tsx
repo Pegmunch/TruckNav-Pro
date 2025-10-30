@@ -81,69 +81,69 @@ export default function ManualSearchPanel({
   // Handle current location search
   const handleCurrentLocationSearch = useCallback(() => {
     if (!currentLocationSearch.trim()) {
-      toast({
-        title: "Please enter a location",
-        description: "Enter a current location to search for",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Please enter a location",
+      //   description: "Enter a current location to search for",
+      //   variant: "destructive"
+      // });
       return;
     }
     
     onFromLocationChange(currentLocationSearch.trim());
     
-    toast({
-      title: "Current location set",
-      description: `Starting point updated to: ${currentLocationSearch.trim()}`
-    });
+    // toast({
+    //   title: "Current location set",
+    //   description: `Starting point updated to: ${currentLocationSearch.trim()}`
+    // });
   }, [currentLocationSearch, onFromLocationChange, toast]);
 
   // Handle destination search
   const handleDestinationSearch = useCallback(() => {
     if (!destinationSearch.trim()) {
-      toast({
-        title: "Please enter a destination",
-        description: "Enter a destination to search for",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Please enter a destination",
+      //   description: "Enter a destination to search for",
+      //   variant: "destructive"
+      // });
       return;
     }
     
     onToLocationChange(destinationSearch.trim());
     
-    toast({
-      title: "Destination set",
-      description: `Destination updated to: ${destinationSearch.trim()}`
-    });
+    // toast({
+    //   title: "Destination set",
+    //   description: `Destination updated to: ${destinationSearch.trim()}`
+    // });
   }, [destinationSearch, onToLocationChange, toast]);
 
   // Handle postcode search
   const handlePostcodeSearch = useCallback(() => {
     if (!postcodeSearch.trim()) {
-      toast({
-        title: "Please enter a postcode",
-        description: "Enter a valid postcode to search for",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Please enter a postcode",
+      //   description: "Enter a valid postcode to search for",
+      //   variant: "destructive"
+      // });
       return;
     }
     
     // Use postcode as destination by default
     onToLocationChange(postcodeSearch.trim());
     
-    toast({
-      title: "Postcode search complete",
-      description: `Destination set to: ${postcodeSearch.trim()}`
-    });
+    // toast({
+    //   title: "Postcode search complete",
+    //   description: `Destination set to: ${postcodeSearch.trim()}`
+    // });
   }, [postcodeSearch, onToLocationChange, toast]);
 
   // Handle swap locations
   const handleSwapLocations = useCallback(() => {
     if (!fromLocation && !toLocation) {
-      toast({
-        title: "No locations to swap",
-        description: "Please set both starting point and destination first",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "No locations to swap",
+      //   description: "Please set both starting point and destination first",
+      //   variant: "destructive"
+      // });
       return;
     }
     
@@ -151,20 +151,20 @@ export default function ManualSearchPanel({
     onFromLocationChange(toLocation);
     onToLocationChange(temp);
     
-    toast({
-      title: "Locations swapped",
-      description: "Starting point and destination have been switched"
-    });
+    // toast({
+    //   title: "Locations swapped",
+    //   description: "Starting point and destination have been switched"
+    // });
   }, [fromLocation, toLocation, onFromLocationChange, onToLocationChange, toast]);
   
   // Handle manual location setting when GPS unavailable
   const handleSetManualLocation = useCallback(async () => {
     if (!manualLocationInput.trim()) {
-      toast({
-        title: "Please enter a location",
-        description: "Enter an address or postcode (e.g., 'Luton LU2 7FG')",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Please enter a location",
+      //   description: "Enter an address or postcode (e.g., 'Luton LU2 7FG')",
+      //   variant: "destructive"
+      // });
       return;
     }
     
@@ -197,10 +197,10 @@ export default function ManualSearchPanel({
         onFromLocationChange(address);
         onFromCoordinatesChange?.({ lat, lng });
         
-        toast({
-          title: "Manual location set",
-          description: `Location set to: ${address}`,
-        });
+        // toast({
+        //   title: "Manual location set",
+        //   description: `Location set to: ${address}`,
+        // });
         
         setManualLocationDialogOpen(false);
         setManualLocationInput("");
@@ -233,10 +233,10 @@ export default function ManualSearchPanel({
             onFromLocationChange(address);
             onFromCoordinatesChange?.({ lat, lng });
             
-            toast({
-              title: "Manual location set",
-              description: `Location set to coordinates: ${address}`,
-            });
+            // toast({
+            //   title: "Manual location set",
+            //   description: `Location set to coordinates: ${address}`,
+            // });
             
             setManualLocationDialogOpen(false);
             setManualLocationInput("");
@@ -249,11 +249,11 @@ export default function ManualSearchPanel({
       }
     } catch (error) {
       console.error('[MANUAL-LOCATION] Error setting manual location:', error);
-      toast({
-        title: "Unable to set location",
-        description: "Please try a different address or enter coordinates (lat, lng)",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "Unable to set location",
+      //   description: "Please try a different address or enter coordinates (lat, lng)",
+      //   variant: "destructive"
+      // });
     } finally {
       setIsGeocodingManualLocation(false);
     }
@@ -262,21 +262,21 @@ export default function ManualSearchPanel({
   // Handle clearing manual location
   const handleClearManualLocation = useCallback(() => {
     gpsData?.clearManualLocation();
-    toast({
-      title: "Manual location cleared",
-      description: "GPS acquisition will be attempted",
-    });
+    // toast({
+    //   title: "Manual location cleared",
+    //   description: "GPS acquisition will be attempted",
+    // });
   }, [gpsData, toast]);
 
   // Handle use current location - directly request GPS position each time
   const handleUseCurrentLocation = useCallback(async () => {
     // Check if geolocation is supported
     if (!navigator.geolocation) {
-      toast({
-        title: "GPS not supported",
-        description: "Your browser doesn't support GPS location",
-        variant: "destructive"
-      });
+      // toast({
+      //   title: "GPS not supported",
+      //   description: "Your browser doesn't support GPS location",
+      //   variant: "destructive"
+      // });
       return;
     }
 
@@ -562,10 +562,10 @@ export default function ManualSearchPanel({
                 onToLocationChange(temp);
               }
               
-              toast({
-                title: "Locations swapped",
-                description: "Starting point and destination have been switched"
-              });
+              // toast({
+              //   title: "Locations swapped",
+              //   description: "Starting point and destination have been switched"
+              // });
             }}
             variant="outline"
             size="sm"

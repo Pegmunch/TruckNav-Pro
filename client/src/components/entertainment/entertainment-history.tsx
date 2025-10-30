@@ -77,18 +77,18 @@ export default function EntertainmentHistory({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/entertainment/history'] });
-      toast({
-        title: "History Cleared",
-        description: "Your entertainment history has been cleared.",
-      });
+      // toast({
+      //   title: "History Cleared",
+      //   description: "Your entertainment history has been cleared.",
+      // });
     },
     onError: (error) => {
       console.error('Failed to clear history:', error);
-      toast({
-        title: "Error",
-        description: "Failed to clear history. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to clear history. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 

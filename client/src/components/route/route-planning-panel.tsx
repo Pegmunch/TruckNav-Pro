@@ -176,29 +176,29 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   const handleZoomIn = useCallback(() => {
     // Send zoom in command to map service
     window.dispatchEvent(new CustomEvent('map:zoom', { detail: { direction: 'in' } }));
-    toast({ title: "Zoom in", description: "Map zoomed in" });
+    // toast({ title: "Zoom in", description: "Map zoomed in" });
   }, [toast]);
 
   const handleZoomOut = useCallback(() => {
     // Send zoom out command to map service
     window.dispatchEvent(new CustomEvent('map:zoom', { detail: { direction: 'out' } }));
-    toast({ title: "Zoom out", description: "Map zoomed out" });
+    // toast({ title: "Zoom out", description: "Map zoomed out" });
   }, [toast]);
 
   const handleCenterMap = useCallback(() => {
     // Send center map command to map service
     window.dispatchEvent(new CustomEvent('map:center', { detail: {} }));
-    toast({ title: "Map centered", description: "Map view centered" });
+    // toast({ title: "Map centered", description: "Map view centered" });
   }, [toast]);
 
   const handleToggleTraffic = useCallback(() => {
     const newState = !trafficVisible;
     setTrafficVisible(newState);
     window.dispatchEvent(new CustomEvent('map:traffic', { detail: { show: newState } }));
-    toast({ 
-      title: newState ? "Traffic shown" : "Traffic hidden", 
-      description: `Traffic layer ${newState ? 'enabled' : 'disabled'}` 
-    });
+    // toast({ 
+    //   title: newState ? "Traffic shown" : "Traffic hidden", 
+    //   description: `Traffic layer ${newState ? 'enabled' : 'disabled'}` 
+    // });
   }, [trafficVisible, toast]);
 
   const handleFullscreen = useCallback(() => {
@@ -208,7 +208,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     } else {
       document.documentElement.requestFullscreen();
     }
-    toast({ title: "Fullscreen", description: "Toggled fullscreen mode" });
+    // toast({ title: "Fullscreen", description: "Toggled fullscreen mode" });
   }, [toast]);
 
   const handleAvoidTolls = useCallback(() => {
@@ -216,7 +216,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     if (currentRoute) {
       onPlanRoute(); // Recalculate with new preference
     }
-    toast({ title: "Route preference", description: "Avoiding tolls" });
+    // toast({ title: "Route preference", description: "Avoiding tolls" });
   }, [currentRoute, onPlanRoute, toast]);
 
   const handleFastestRoute = useCallback(() => {
@@ -224,30 +224,30 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
     if (currentRoute) {
       onPlanRoute(); // Recalculate with new preference
     }
-    toast({ title: "Route preference", description: "Fastest route selected" });
+    // toast({ title: "Route preference", description: "Fastest route selected" });
   }, [currentRoute, onPlanRoute, toast]);
 
   const handleReroute = useCallback(() => {
     if (currentRoute) {
       onPlanRoute();
-      toast({ title: "Recalculating", description: "Finding new route..." });
+      // toast({ title: "Recalculating", description: "Finding new route..." });
     }
   }, [currentRoute, onPlanRoute, toast]);
 
   const handleAlternatives = useCallback(() => {
     // Request alternative routes
     window.dispatchEvent(new CustomEvent('route:alternatives', { detail: { routeId: currentRoute?.id } }));
-    toast({ title: "Alternative routes", description: "Searching for alternatives..." });
+    // toast({ title: "Alternative routes", description: "Searching for alternatives..." });
   }, [currentRoute, toast]);
 
   const handleToggleAudio = useCallback(() => {
     const newMutedState = !isAudioMuted;
     setIsAudioMuted(newMutedState);
     window.dispatchEvent(new CustomEvent('audio:navigation', { detail: { muted: newMutedState } }));
-    toast({ 
-      title: newMutedState ? "Audio muted" : "Audio unmuted", 
-      description: `Navigation audio ${newMutedState ? 'muted' : 'unmuted'}` 
-    });
+    // toast({ 
+    //   title: newMutedState ? "Audio muted" : "Audio unmuted", 
+    //   description: `Navigation audio ${newMutedState ? 'muted' : 'unmuted'}` 
+    // });
   }, [isAudioMuted, toast]);
 
   const handleFindFacility = useCallback((facilityType: 'fuel' | 'parking' | 'rest' | 'truck_stop') => {
@@ -264,10 +264,10 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
         location: currentRoute ? 'route' : 'current' 
       } 
     }));
-    toast({ 
-      title: "Searching", 
-      description: `Finding nearest ${facilityNames[facilityType]}...` 
-    });
+    // toast({ 
+    //   title: "Searching", 
+    //   description: `Finding nearest ${facilityNames[facilityType]}...` 
+    // });
   }, [currentRoute, toast]);
 
   // Voice command handlers for route planning  
@@ -276,12 +276,12 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
       if (intent.action === 'start_navigation') {
         if (canStartNavigation) {
           onStartNavigation();
-          toast({ title: "Navigation started", description: "Voice command executed" });
+          // toast({ title: "Navigation started", description: "Voice command executed" });
         }
       } else if (intent.action === 'stop_navigation') {
         if (isNavigating && onStopNavigation) {
           onStopNavigation();
-          toast({ title: "Navigation stopped", description: "Voice command executed" });
+          // toast({ title: "Navigation stopped", description: "Voice command executed" });
         }
       }
     },
@@ -308,7 +308,7 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
         }
       } else if (intent.action === 'search_location') {
         setShowSearchPanel(true);
-        toast({ title: "Search activated", description: "Voice command executed" });
+        // toast({ title: "Search activated", description: "Voice command executed" });
       }
     },
     controls: async (intent, entities) => {
@@ -348,11 +348,11 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
         automotive: true, // Optimize for automotive displays
         fallbackToFullscreen: true,
         onPopupBlocked: () => {
-          toast({
-            title: "Popup Blocked",
-            description: TruckNavWindowManager.getPopupBlockedMessage(),
-            variant: "destructive",
-          });
+          // toast({
+          //   title: "Popup Blocked",
+          //   description: TruckNavWindowManager.getPopupBlockedMessage(),
+          //   variant: "destructive",
+          // });
         },
         onWindowClosed: () => {
           windowSync.closeMapWindow();
@@ -361,18 +361,18 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
 
       if (mapWindow) {
         windowSync.openMapWindow();
-        toast({
-          title: "Map window opened",
-          description: "Your map is now displayed in a separate window.",
-        });
+        // toast({
+        //   title: "Map window opened",
+        //   description: "Your map is now displayed in a separate window.",
+        // });
       }
     } catch (error) {
       console.error('Failed to open map window:', error);
-      toast({
-        title: "Failed to open map window",
-        description: "There was an error opening the map in a new window.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Failed to open map window",
+      //   description: "There was an error opening the map in a new window.",
+      //   variant: "destructive",
+      // });
     }
   };
 
@@ -380,20 +380,20 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
   const handleGoNavigation = async () => {
     if (!canStartNavigation) {
       if (!selectedProfile) {
-        toast({
-          title: "Vehicle profile required",
-          description: "Please set up your vehicle profile before starting navigation.",
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Vehicle profile required",
+        //   description: "Please set up your vehicle profile before starting navigation.",
+        //   variant: "destructive",
+        // });
         return;
       }
       
       if (!fromLocation || !toLocation) {
-        toast({
-          title: "Locations required",
-          description: "Please set both starting point and destination.",
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Locations required",
+        //   description: "Please set both starting point and destination.",
+        //   variant: "destructive",
+        // });
         return;
       }
       
@@ -411,17 +411,17 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
       // Open map window automatically
       await handleOpenMapWindow();
       
-      toast({
-        title: "Navigation started",
-        description: "TruckNav Pro is now guiding your journey.",
-      });
+      // toast({
+      //   title: "Navigation started",
+      //   description: "TruckNav Pro is now guiding your journey.",
+      // });
     } catch (error) {
       console.error('Failed to start navigation:', error);
-      toast({
-        title: "Failed to start navigation",
-        description: "There was an error starting navigation. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Failed to start navigation",
+      //   description: "There was an error starting navigation. Please try again.",
+      //   variant: "destructive",
+      // });
     }
   };
 
@@ -463,10 +463,10 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                   onClick={() => {
                     onFromLocationChange(toLocation);
                     onToLocationChange(fromLocation);
-                    toast({
-                      title: "Locations swapped",
-                      description: "Origin and destination have been swapped",
-                    });
+                    // toast({
+                    //   title: "Locations swapped",
+                    //   description: "Origin and destination have been swapped",
+                    // });
                   }}
                   className="shrink-0 h-10 w-10 p-0"
                   data-testid="button-swap-locations"
@@ -482,10 +482,10 @@ const RoutePlanningPanel = memo(function RoutePlanningPanel({
                   size="sm"
                   onClick={() => {
                     onToLocationChange('');
-                    toast({
-                      title: "Destination cleared",
-                      description: "Destination has been cleared",
-                    });
+                    // toast({
+                    //   title: "Destination cleared",
+                    //   description: "Destination has been cleared",
+                    // });
                   }}
                   className="shrink-0 h-10 w-10 p-0"
                   data-testid="button-clear-destination"
@@ -925,10 +925,10 @@ Calculating truck-safe route...
               variant="outline" 
               size="sm" 
               onClick={() => {
-                toast({
-                  title: "Entertainment panel",
-                  description: "Opening entertainment controls"
-                });
+                // toast({
+                //   title: "Entertainment panel",
+                //   description: "Opening entertainment controls"
+                // });
               }}
               className="flex flex-col h-16 p-2"
               data-testid="button-quick-entertainment"
@@ -1234,7 +1234,7 @@ Calculating truck-safe route...
                     size="sm" 
                     onClick={() => {
                       window.dispatchEvent(new CustomEvent('entertainment:toggle', { detail: { type: 'music' } }));
-                      toast({ title: "Music", description: "Opening music player" });
+                      // toast({ title: "Music", description: "Opening music player" });
                     }}
                     className="flex-1 h-12 automotive-button"
                     data-testid="button-music"
@@ -1246,7 +1246,7 @@ Calculating truck-safe route...
                     size="sm" 
                     onClick={() => {
                       window.dispatchEvent(new CustomEvent('entertainment:toggle', { detail: { type: 'radio' } }));
-                      toast({ title: "Radio", description: "Opening radio player" });
+                      // toast({ title: "Radio", description: "Opening radio player" });
                     }}
                     className="flex-1 h-12 automotive-button"
                     data-testid="button-radio"

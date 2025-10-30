@@ -86,18 +86,18 @@ export default function EntertainmentPresets({
       setShowAddPreset(false);
       setPresetName('');
       setPresetNumber('');
-      toast({
-        title: "Preset Added",
-        description: "Station has been added to your presets.",
-      });
+      // toast({
+      //   title: "Preset Added",
+      //   description: "Station has been added to your presets.",
+      // });
     },
     onError: (error) => {
       console.error('Failed to add preset:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add preset. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to add preset. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 
@@ -120,18 +120,18 @@ export default function EntertainmentPresets({
       setEditingPreset(null);
       setPresetName('');
       setPresetNumber('');
-      toast({
-        title: "Preset Updated",
-        description: "Preset has been updated successfully.",
-      });
+      // toast({
+      //   title: "Preset Updated",
+      //   description: "Preset has been updated successfully.",
+      // });
     },
     onError: (error) => {
       console.error('Failed to update preset:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update preset. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to update preset. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 
@@ -146,29 +146,29 @@ export default function EntertainmentPresets({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/entertainment/presets'] });
-      toast({
-        title: "Preset Deleted",
-        description: "Preset has been removed from your favorites.",
-      });
+      // toast({
+      //   title: "Preset Deleted",
+      //   description: "Preset has been removed from your favorites.",
+      // });
     },
     onError: (error) => {
       console.error('Failed to delete preset:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete preset. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to delete preset. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 
   // Handle add current station as preset
   const handleAddCurrentStation = useCallback(() => {
     if (!currentStation) {
-      toast({
-        title: "No Station Selected",
-        description: "Please select a station first to add as preset.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "No Station Selected",
+      //   description: "Please select a station first to add as preset.",
+      //   variant: "destructive",
+      // });
       return;
     }
 

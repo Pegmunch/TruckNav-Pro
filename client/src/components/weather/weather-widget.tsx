@@ -86,10 +86,10 @@ export default function WeatherWidget({
         humidity: Math.round(Math.random() * 40 + 40),
       });
       setIsLoading(false);
-      toast({
-        title: "Weather Updated",
-        description: "Current conditions refreshed",
-      });
+      // toast({
+      //   title: "Weather Updated",
+      //   description: "Current conditions refreshed",
+      // });
     }, 1000);
   };
 

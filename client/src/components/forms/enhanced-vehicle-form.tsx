@@ -146,11 +146,11 @@ export function EnhancedVehicleForm({
 
   const handleFormSubmit = (data: VehicleFormData) => {
     onSave(data);
-    toast({
-      title: "Vehicle profile saved",
-      description: `${data.name} has been configured successfully.`,
-      duration: 3000,
-    });
+    // toast({
+    //   title: "Vehicle profile saved",
+    //   description: `${data.name} has been configured successfully.`,
+    //   duration: 3000,
+    // });
   };
 
   const applyDefaults = () => {
@@ -159,10 +159,10 @@ export function EnhancedVehicleForm({
     form.setValue('width', defaults.width);
     form.setValue('weight', defaults.weight);
     form.setValue('axles', defaults.axles);
-    toast({
-      title: "Defaults applied",
-      description: `Standard dimensions for ${currentConfig.label} have been set.`,
-    });
+    // toast({
+    //   title: "Defaults applied",
+    //   description: `Standard dimensions for ${currentConfig.label} have been set.`,
+    // });
   };
 
   return (

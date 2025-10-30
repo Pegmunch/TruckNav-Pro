@@ -103,18 +103,18 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
   // Handle opening feature windows
   const handleOpenWindow = (featureType: FeatureWindowType) => {
     if (getOpenWindowCount() >= 10) {
-      toast({
-        title: "Window Limit Reached",
-        description: "Maximum of 10 windows can be open at once. Please close some windows first.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Window Limit Reached",
+      //   description: "Maximum of 10 windows can be open at once. Please close some windows first.",
+      //   variant: "destructive",
+      // });
       return;
     }
     openFeatureWindow(featureType);
-    toast({
-      title: "Window Opened",
-      description: `${featureType.charAt(0).toUpperCase() + featureType.slice(1)} window opened successfully.`,
-    });
+    // toast({
+    //   title: "Window Opened",
+    //   description: `${featureType.charAt(0).toUpperCase() + featureType.slice(1)} window opened successfully.`,
+    // });
   };
 
   return (

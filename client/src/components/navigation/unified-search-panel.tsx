@@ -147,11 +147,11 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     setSelectedCategory(""); // This will show all facility categories
     
     // Trigger helpful toast
-    toast({
-      title: "🚛 Facilities Search",
-      description: "Search for nearby truck stops, fuel stations, and parking areas above.",
-      duration: 4000,
-    });
+    // toast({
+    //   title: "🚛 Facilities Search",
+    //   description: "Search for nearby truck stops, fuel stations, and parking areas above.",
+    //   duration: 4000,
+    // });
     
     // Call the parent handler to record activity
     onFocusOnFacilities?.();
@@ -180,11 +180,11 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     }, 100); // Small delay to ensure DOM is ready
     
     // Show helpful toast
-    toast({
-      title: "📍 Navigation History",
-      description: "Your recent routes and saved favorites are shown below.",
-      duration: 4000,
-    });
+    // toast({
+    //   title: "📍 Navigation History",
+    //   description: "Your recent routes and saved favorites are shown below.",
+    //   duration: 4000,
+    // });
     
     // Call the parent handler to record activity
     onShowHistory?.();
@@ -232,11 +232,11 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     },
     
     unknown: async (intent) => {
-      toast({
-        title: "Voice command not recognized",
-        description: "Try saying 'find nearest fuel station' or 'search for restaurants'",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Voice command not recognized",
+      //   description: "Try saying 'find nearest fuel station' or 'search for restaurants'",
+      //   variant: "destructive",
+      // });
     }
   };
 
@@ -257,7 +257,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       },
       onError: (error: any) => {
         setIsVoiceSearchActive(false);
-        toast({
+        // toast({
           title: "Voice search error",
           description: error.message,
           variant: "destructive",
@@ -384,7 +384,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/routes", "favorites"] });
-      toast({
+      // toast({
         title: "Route saved",
         description: "Route has been added to your favorites",
       });
@@ -392,7 +392,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       setRouteName("");
     },
     onError: (error) => {
-      toast({
+      // toast({
         title: "Error saving route",
         description: error instanceof Error ? error.message : "Failed to save route",
         variant: "destructive",
@@ -419,7 +419,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
     },
     onSuccess: (journey) => {
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
-      toast({
+      // toast({
         title: "Journey resumed",
         description: "Navigation has been restarted",
       });
@@ -428,7 +428,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
       }
     },
     onError: (error) => {
-      toast({
+      // toast({
         title: "Error resuming journey",
         description: error instanceof Error ? error.message : "Failed to resume journey",
         variant: "destructive",
@@ -529,15 +529,15 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const handleLoadFavoriteRoute = useCallback((route: RouteType) => {
     onFromLocationChange(route.startLocation);
     onToLocationChange(route.endLocation);
-    toast({
-      title: "Route loaded",
-      description: `Loaded ${route.name || 'favorite route'}`,
-    });
+    // toast({
+    //   title: "Route loaded",
+    //   description: `Loaded ${route.name || 'favorite route'}`,
+    // });
   }, [onFromLocationChange, onToLocationChange, toast]);
 
   const handleSaveCurrentRoute = useCallback(() => {
     if (!currentRoute) {
-      toast({
+      // toast({
         title: "No route to save",
         description: "Please plan a route first",
         variant: "destructive",
@@ -612,12 +612,12 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
   const handleWeatherRefresh = useCallback(async () => {
     try {
       await refreshWeather();
-      toast({
+      // toast({
         title: "Weather Updated",
         description: "Current conditions refreshed",
       });
     } catch (error) {
-      toast({
+      // toast({
         title: "Weather Refresh Failed",
         description: "Please try again later",
         variant: "destructive",
@@ -1212,7 +1212,7 @@ const UnifiedSearchPanel = memo(function UnifiedSearchPanel({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onNavigateToLocation?.(`${facility.name}, ${facility.address}`);
-                                    toast({
+                                    // toast({
                                       title: "Navigation started",
                                       description: `Navigating to ${facility.name}`
                                     });

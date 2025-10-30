@@ -132,10 +132,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     url.searchParams.delete('journey');
     window.history.replaceState({}, '', url.pathname);
     
-    toast({
-      title: "Route Cleared",
-      description: "Map reset to clean state",
-    });
+    // toast({
+    //   title: "Route Cleared",
+    //   description: "Map reset to clean state",
+    // });
     
     // Refresh page to ensure clean state
     window.location.reload();
@@ -337,11 +337,11 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     });
     
     if (!searchCenter) {
-      toast({
-        title: "Location needed",
-        description: "Please enter a location in the 'From' field or enable GPS to search for nearby POIs.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Location needed",
+      //   description: "Please enter a location in the 'From' field or enable GPS to search for nearby POIs.",
+      //   variant: "destructive",
+      // });
       return;
     }
     
@@ -628,10 +628,10 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                                   onToLocationChange(display);
                                   setActivePOICategory(null);
                                   setPoiSearchEnabled(false);
-                                  toast({
-                                    title: "Destination set",
-                                    description: `Route to: ${result.poi?.name || display}`,
-                                  });
+                                  // toast({
+                                  //   title: "Destination set",
+                                  //   description: `Route to: ${result.poi?.name || display}`,
+                                  // });
                                 }}
                                 data-testid={`card-poi-result-plan-${idx}`}
                               >

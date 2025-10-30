@@ -26,24 +26,24 @@ export default function RouteWindow() {
   };
 
   const handleLocationChange = (from: string, to: string) => {
-    toast({
-      title: "Location Updated",
-      description: `Route updated: ${from} → ${to}`
-    });
+    // toast({
+    //   title: "Location Updated",
+    //   description: `Route updated: ${from} → ${to}`
+    // });
   };
 
   const handlePlanRoute = () => {
-    toast({
-      title: "Planning Route",
-      description: "Calculating optimal truck route..."
-    });
+    // toast({
+    //   title: "Planning Route",
+    //   description: "Calculating optimal truck route..."
+    // });
   };
 
   const handleStartNavigation = () => {
-    toast({
-      title: "Navigation Started",
-      description: "TruckNav Pro is guiding your journey"
-    });
+    // toast({
+    //   title: "Navigation Started",
+    //   description: "TruckNav Pro is guiding your journey"
+    // });
   };
 
   return (

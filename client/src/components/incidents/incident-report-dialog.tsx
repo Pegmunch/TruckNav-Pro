@@ -40,10 +40,10 @@ export function IncidentReportDialog({
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Incident Reported",
-        description: "Thank you for helping keep other drivers safe!",
-      });
+      // toast({
+      //   title: "Incident Reported",
+      //   description: "Thank you for helping keep other drivers safe!",
+      // });
       
       queryClient.invalidateQueries({ queryKey: ['/api/traffic-incidents'] });
       
@@ -55,11 +55,11 @@ export function IncidentReportDialog({
     },
     onError: (error) => {
       console.error('Failed to report incident:', error);
-      toast({
-        title: "Failed to Report Incident",
-        description: "Unable to submit your report. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Failed to Report Incident",
+      //   description: "Unable to submit your report. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 

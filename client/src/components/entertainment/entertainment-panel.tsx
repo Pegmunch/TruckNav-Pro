@@ -115,18 +115,18 @@ export default function EntertainmentPanel({
       queryClient.invalidateQueries({ queryKey: ['/api/entertainment/playback-state'] });
       queryClient.invalidateQueries({ queryKey: ['/api/entertainment/history'] });
       
-      toast({
-        title: "Now Playing",
-        description: `${station.name} - ${station.genre}`,
-      });
+      // toast({
+      //   title: "Now Playing",
+      //   description: `${station.name} - ${station.genre}`,
+      // });
     },
     onError: (error) => {
       console.error('Failed to play station:', error);
-      toast({
-        title: "Playback Error",
-        description: error instanceof Error ? error.message : "Failed to start playback",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Playback Error",
+      //   description: error instanceof Error ? error.message : "Failed to start playback",
+      //   variant: "destructive",
+      // });
     },
   });
 
@@ -162,11 +162,11 @@ export default function EntertainmentPanel({
       }
     } catch (error) {
       console.error('Playback control error:', error);
-      toast({
-        title: "Playback Error",
-        description: "Failed to control playback",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Playback Error",
+      //   description: "Failed to control playback",
+      //   variant: "destructive",
+      // });
     }
   }, [playbackStatus.isPlaying, currentStation, toast]);
 

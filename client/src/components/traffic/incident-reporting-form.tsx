@@ -100,20 +100,20 @@ export default function IncidentReportingForm({
       return response.json();
     },
     onSuccess: (incident) => {
-      toast({
-        title: "Incident Reported",
-        description: "Thank you for reporting this traffic incident. It will be reviewed and verified.",
-      });
+      // toast({
+      //   title: "Incident Reported",
+      //   description: "Thank you for reporting this traffic incident. It will be reviewed and verified.",
+      // });
       queryClient.invalidateQueries({ queryKey: ["/api/traffic-incidents"] });
       onIncidentCreated?.(incident);
       onClose();
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to report incident. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to report incident. Please try again.",
+      //   variant: "destructive",
+      // });
     },
   });
 

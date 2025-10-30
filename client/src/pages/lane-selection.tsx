@@ -305,18 +305,18 @@ export default function LaneSelectionPage({ params }: LaneSelectionPageProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/routes", routeId, "lanes"] });
       queryClient.invalidateQueries({ queryKey: ["/api/routes", routeId] });
       
-      toast({
-        title: "Lane selections saved",
-        description: "Your lane preferences have been saved for this route.",
-      });
+      // toast({
+      //   title: "Lane selections saved",
+      //   description: "Your lane preferences have been saved for this route.",
+      // });
       setHasUnsavedChanges(false);
     },
     onError: (error: any) => {
-      toast({
-        title: "Failed to save selections",
-        description: error.message || "An error occurred while saving your lane selections.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Failed to save selections",
+      //   description: error.message || "An error occurred while saving your lane selections.",
+      //   variant: "destructive",
+      // });
     },
   });
 
@@ -329,11 +329,11 @@ export default function LaneSelectionPage({ params }: LaneSelectionPageProps) {
 
   const handleSaveSelections = () => {
     if (Object.keys(laneSelections).length === 0) {
-      toast({
-        title: "No selections to save",
-        description: "Please select lanes for at least one maneuver before saving.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "No selections to save",
+      //   description: "Please select lanes for at least one maneuver before saving.",
+      //   variant: "destructive",
+      // });
       return;
     }
 

@@ -88,19 +88,19 @@ const HistoryFavoritesPanel = memo(function HistoryFavoritesPanel({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/routes", "favorites"] });
-      toast({
-        title: "Route saved",
-        description: "Route has been added to your favorites",
-      });
+      // toast({
+      //   title: "Route saved",
+      //   description: "Route has been added to your favorites",
+      // });
       setSaveRouteDialogOpen(false);
       setRouteName("");
     },
     onError: (error) => {
-      toast({
-        title: "Error saving route",
-        description: error instanceof Error ? error.message : "Failed to save route",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error saving route",
+      //   description: error instanceof Error ? error.message : "Failed to save route",
+      //   variant: "destructive",
+      // });
     },
   });
 
@@ -123,21 +123,21 @@ const HistoryFavoritesPanel = memo(function HistoryFavoritesPanel({
     },
     onSuccess: (journey) => {
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
-      toast({
-        title: "Journey resumed",
-        description: "Navigation has been restarted",
-      });
+      // toast({
+      //   title: "Journey resumed",
+      //   description: "Navigation has been restarted",
+      // });
       // Call the navigation start handler if available
       if (lastJourneyRoute) {
         onStartNavigation();
       }
     },
     onError: (error) => {
-      toast({
-        title: "Error resuming journey",
-        description: error instanceof Error ? error.message : "Failed to resume journey",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error resuming journey",
+      //   description: error instanceof Error ? error.message : "Failed to resume journey",
+      //   variant: "destructive",
+      // });
     },
   });
 
@@ -145,19 +145,19 @@ const HistoryFavoritesPanel = memo(function HistoryFavoritesPanel({
   const handleLoadFavoriteRoute = useCallback((route: RouteType) => {
     onFromLocationChange(route.startLocation);
     onToLocationChange(route.endLocation);
-    toast({
-      title: "Route loaded",
-      description: `Loaded ${route.name || 'favorite route'}`,
-    });
+    // toast({
+    //   title: "Route loaded",
+    //   description: `Loaded ${route.name || 'favorite route'}`,
+    // });
   }, [onFromLocationChange, onToLocationChange, toast]);
 
   const handleSaveCurrentRoute = useCallback(() => {
     if (!currentRoute) {
-      toast({
-        title: "No route to save",
-        description: "Please plan a route first",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "No route to save",
+      //   description: "Please plan a route first",
+      //   variant: "destructive",
+      // });
       return;
     }
     setSaveRouteDialogOpen(true);

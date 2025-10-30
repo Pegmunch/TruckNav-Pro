@@ -124,12 +124,12 @@ export function useMapEngine() {
         
         // Show toast notification (non-blocking, informational)
         setTimeout(() => {
-          toast({
-            title: "Map Engine: Leaflet (2D)",
-            description: "Your device doesn't support WebGL. Using 2D maps.",
-            variant: "default",
-            duration: 5000,
-          });
+          // toast({
+          //   title: "Map Engine: Leaflet (2D)",
+          //   description: "Your device doesn't support WebGL. Using 2D maps.",
+          //   variant: "default",
+          //   duration: 5000,
+          // });
         }, 1000);
         
         return 'leaflet';
@@ -146,12 +146,12 @@ export function useMapEngine() {
         
         // Show toast notification with details
         setTimeout(() => {
-          toast({
-            title: "Map Engine: Leaflet (2D)",
-            description: `WebGL extensions missing. Using 2D maps for compatibility.`,
-            variant: "default",
-            duration: 7000,
-          });
+          // toast({
+          //   title: "Map Engine: Leaflet (2D)",
+          //   description: `WebGL extensions missing. Using 2D maps for compatibility.`,
+          //   variant: "default",
+          //   duration: 7000,
+          // });
         }, 1000);
         
         return 'leaflet';
@@ -208,12 +208,12 @@ export function useMapEngine() {
       if (retryCount >= MAX_RETRY_ATTEMPTS) {
         console.log('🗺️ Max retry attempts reached, forcing Leaflet fallback');
         
-        toast({
-          title: "Switched to Leaflet (2D)",
-          description: "MapLibre failed to initialize after multiple attempts. Using 2D maps.",
-          variant: "destructive",
-          duration: 8000,
-        });
+        // toast({
+        //   title: "Switched to Leaflet (2D)",
+        //   description: "MapLibre failed to initialize after multiple attempts. Using 2D maps.",
+        //   variant: "destructive",
+        //   duration: 8000,
+        // });
         
         // Force fallback to Leaflet
         setMapEngine('leaflet');
@@ -226,12 +226,12 @@ export function useMapEngine() {
         // Show toast with retry option
         const newRetryCount = retryCount + 1;
         
-        toast({
-          title: "Map Loading Issue",
-          description: `MapLibre failed to load (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS}). Reloading...`,
-          variant: "destructive",
-          duration: 10000,
-        });
+        // toast({
+        //   title: "Map Loading Issue",
+        //   description: `MapLibre failed to load (attempt ${newRetryCount}/${MAX_RETRY_ATTEMPTS}). Reloading...`,
+        //   variant: "destructive",
+        //   duration: 10000,
+        // });
         
         // Auto-retry after showing toast
         setTimeout(() => {
@@ -261,12 +261,12 @@ export function useMapEngine() {
     const capabilities = detectWebGLCapabilities();
     
     if (!capabilities.hasWebGL || !capabilities.hasRequiredExtensions) {
-      toast({
-        title: "Cannot Retry",
-        description: "WebGL is still not available. Please check your device settings or use 2D maps.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      // toast({
+      //   title: "Cannot Retry",
+      //   description: "WebGL is still not available. Please check your device settings or use 2D maps.",
+      //   variant: "destructive",
+      //   duration: 5000,
+      // });
       return;
     }
     
@@ -275,11 +275,11 @@ export function useMapEngine() {
     localStorage.setItem(MAP_ENGINE_KEY, 'maplibre');
     
     // Show loading toast
-    toast({
-      title: "Retrying MapLibre",
-      description: "Reloading page to retry 3D map engine...",
-      duration: 2000,
-    });
+    // toast({
+    //   title: "Retrying MapLibre",
+    //   description: "Reloading page to retry 3D map engine...",
+    //   duration: 2000,
+    // });
     
     setTimeout(() => {
       window.location.reload();
@@ -295,12 +295,12 @@ export function useMapEngine() {
       const capabilities = detectWebGLCapabilities();
       
       if (!capabilities.hasWebGL || !capabilities.hasRequiredExtensions) {
-        toast({
-          title: "MapLibre Not Supported",
-          description: "Your device doesn't support the required WebGL features for 3D maps.",
-          variant: "destructive",
-          duration: 5000,
-        });
+        // toast({
+        //   title: "MapLibre Not Supported",
+        //   description: "Your device doesn't support the required WebGL features for 3D maps.",
+        //   variant: "destructive",
+        //   duration: 5000,
+        // });
         return;
       }
       
@@ -312,11 +312,11 @@ export function useMapEngine() {
     setMapEngine(newEngine);
     
     // Reload to apply changes
-    toast({
-      title: `Switching to ${newEngine === 'maplibre' ? 'MapLibre (3D)' : 'Leaflet (2D)'}`,
-      description: "Reloading page to apply changes...",
-      duration: 2000,
-    });
+    // toast({
+    //   title: `Switching to ${newEngine === 'maplibre' ? 'MapLibre (3D)' : 'Leaflet (2D)'}`,
+    //   description: "Reloading page to apply changes...",
+    //   duration: 2000,
+    // });
     
     setTimeout(() => {
       window.location.reload();
@@ -328,11 +328,11 @@ export function useMapEngine() {
     setMapEngine('leaflet');
     localStorage.setItem(MAP_ENGINE_KEY, 'leaflet');
     
-    toast({
-      title: "Switched to Leaflet (2D)",
-      description: "Using 2D maps for better compatibility.",
-      duration: 3000,
-    });
+    // toast({
+    //   title: "Switched to Leaflet (2D)",
+    //   description: "Using 2D maps for better compatibility.",
+    //   duration: 3000,
+    // });
   }, []);
 
   return {

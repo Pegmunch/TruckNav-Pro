@@ -198,10 +198,10 @@ const SettingsModal = memo(function SettingsModal({
    * Handle country/language change
    */
   const handleCountryLanguageChange = (countryCode: string, languageCode: string) => {
-    toast({
-      title: "Language Updated",
-      description: `Changed to ${languageCode} for ${countryCode}`,
-    });
+    // toast({
+    //   title: "Language Updated",
+    //   description: `Changed to ${languageCode} for ${countryCode}`,
+    // });
   };
 
   /**
@@ -431,10 +431,10 @@ const SettingsModal = memo(function SettingsModal({
             className="w-full justify-start"
             onClick={() => {
               setMapPreferences(defaultMapPreferences);
-              toast({
-                title: "Settings Reset",
-                description: "Map preferences have been reset to defaults",
-              });
+              // toast({
+              //   title: "Settings Reset",
+              //   description: "Map preferences have been reset to defaults",
+              // });
             }}
             data-testid="button-reset-map-settings"
           >
@@ -678,10 +678,10 @@ const SettingsModal = memo(function SettingsModal({
                         isNavigating={isNavigating}
                         notificationCount={notificationCount}
                         onTestNotification={() => {
-                          toast({
-                            title: "Test Notification",
-                            description: "This is a test notification to verify your settings.",
-                          });
+                          // toast({
+                          //   title: "Test Notification",
+                          //   description: "This is a test notification to verify your settings.",
+                          // });
                         }}
                       />
                     </TabsContent>

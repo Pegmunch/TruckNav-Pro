@@ -80,18 +80,18 @@ const TrafficSettingsPanel = memo(function TrafficSettingsPanel({
   const onSubmit = (values: SettingsFormValues) => {
     updateSettingsMutation.mutate(values, {
       onSuccess: () => {
-        toast({
-          title: "Settings Updated",
-          description: "Your traffic preferences have been saved successfully.",
-        });
+        // toast({
+        //   title: "Settings Updated",
+        //   description: "Your traffic preferences have been saved successfully.",
+        // });
         onClose();
       },
       onError: () => {
-        toast({
-          title: "Update Failed",
-          description: "Unable to save settings. Please try again.",
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "Update Failed",
+        //   description: "Unable to save settings. Please try again.",
+        //   variant: "destructive",
+        // });
       },
     });
   };
