@@ -496,17 +496,30 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleShopsClick = () => {
     console.log('Shops clicked');
-    console.log('[SHOPS] Current coordinates:', {
+    console.log('[SHOPS] Current fromCoordinates:', fromCoordinates);
+    console.log('[SHOPS] Current coordinates priority:', {
+      gpsPosition: gpsData?.position,
+      manualLocation: gpsData?.manualLocation,
       fromCoordinates,
       providedCoordinates: coordinates,
-      gpsPosition: gpsData?.position,
-      manualLocation: gpsData?.manualLocation
     });
-    console.log('[SHOPS] Search params:', buildFacilitySearchParams());
-    console.log('[SHOPS] Should fetch facilities:', shouldFetchFacilities);
-    console.log('[SHOPS] Selected POI Category before:', selectedPOICategory);
+    
+    // Build params before setting category to see what we have
+    const currentParams = buildFacilitySearchParams();
+    console.log('[SHOPS] Search params BEFORE setting category:', currentParams);
+    
     handlePOISearch("shop");
-    console.log('[SHOPS] Selected POI Category after:', selectedPOICategory);
+    
+    // Check params after setting category
+    setTimeout(() => {
+      const newParams = buildFacilitySearchParams();
+      console.log('[SHOPS] Search params AFTER setting category:', newParams);
+      console.log('[SHOPS] Should fetch facilities:', shouldFetchFacilities);
+      console.log('[SHOPS] Selected POI Category:', selectedPOICategory);
+      if (newParams) {
+        console.log('[SHOPS] API call should be made to:', `/api/poi-search?${newParams}`);
+      }
+    }, 100);
   };
 
   return (
@@ -696,7 +709,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   <AddressAutocomplete
                     value={fromLocation}
                     onChange={onFromLocationChange}
-                    onCoordinatesChange={onFromCoordinatesChange}
+                    onCoordinatesChange={handleFromCoordinatesUpdate}
                     placeholder="Enter your current location..."
                     id="current-location-input"
                     testId="input-current-location"
