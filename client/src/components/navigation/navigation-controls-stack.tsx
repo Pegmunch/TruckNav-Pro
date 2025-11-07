@@ -39,8 +39,8 @@ export function NavigationControlsStack({
   mode,
   className
 }: NavigationControlsStackProps) {
-  // Only show in navigate mode
-  if (mode !== 'navigate') {
+  // Show in both navigate and preview modes
+  if (!mode || (mode !== 'navigate' && mode !== 'preview')) {
     return null;
   }
 
