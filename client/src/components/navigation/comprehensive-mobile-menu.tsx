@@ -205,21 +205,59 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
     parking: 'parking',
     restaurant: 'restaurant',
     rest_area: 'rest area',
-    shops: 'Tesco Express Sainsburys Local Co-op Morrisons Local M&S BP convenience store general store',
+    shops: '', // Shops use our custom /api/poi-search endpoint instead
     supermarket: 'supermarket'
   };
   
   // TomTom POI search - uses "From" location if set, otherwise GPS
-  // Note: Removed categorySet filter to get broader, more accurate results
-  const { results: poiResults, isLoading: poiLoading } = useTomTomAutocomplete(
-    activePOICategory ? poiSearchQueryMap[activePOICategory] : '', // Use category-specific search term
-    poiSearchEnabled && activePOICategory !== null,
+  // Note: Shops use our custom endpoint, other categories use TomTom
+  const { results: tomtomPoiResults, isLoading: tomtomPoiLoading } = useTomTomAutocomplete(
+    activePOICategory && activePOICategory !== 'shops' ? poiSearchQueryMap[activePOICategory] : '', // Skip TomTom for shops
+    poiSearchEnabled && activePOICategory !== null && activePOICategory !== 'shops', // Don't use TomTom for shops
     undefined, // No country restriction
     undefined, // No category restriction - let search query find best matches
     poiSearchCoordinates, // Use From location or GPS
     'poi', // POI search
     9656 // 6-mile radius in meters
   );
+  
+  // Custom shop search using our API
+  const { data: shopResults = [], isLoading: shopLoading } = useQuery<any[]>({
+    queryKey: ['/api/poi-search', poiSearchCoordinates?.lat, poiSearchCoordinates?.lng, 'shop'],
+    queryFn: async () => {
+      if (!poiSearchCoordinates?.lat || !poiSearchCoordinates?.lng) {
+        return [];
+      }
+      const params = new URLSearchParams({
+        lat: poiSearchCoordinates.lat.toString(),
+        lng: poiSearchCoordinates.lng.toString(),
+        radius: '10', // 10km (6 miles)
+        type: 'shop'
+      });
+      const response = await fetch(`/api/poi-search?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch shops');
+      }
+      return response.json();
+    },
+    enabled: poiSearchEnabled && activePOICategory === 'shops' && Boolean(poiSearchCoordinates),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+  
+  // Combine results based on active category
+  const poiResults = activePOICategory === 'shops' 
+    ? shopResults.map(shop => ({
+        id: shop.id,
+        type: 'POI' as const,
+        score: 100,
+        poi: { name: shop.name },
+        address: { freeformAddress: shop.address },
+        dist: shop.distance * 1000, // Convert km to meters
+        position: { lat: shop.lat || shop.latitude, lon: shop.lng || shop.longitude }
+      }))
+    : tomtomPoiResults;
+  
+  const poiLoading = activePOICategory === 'shops' ? shopLoading : tomtomPoiLoading;
   
   // Modal states for sub-panels
   const [showVehicleSetup, setShowVehicleSetup] = useState(false);
