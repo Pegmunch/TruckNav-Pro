@@ -2497,7 +2497,7 @@ function NavigationPageContent() {
         </div>
 
         {/* NAVIGATION CONTROLS - OUTSIDE MapShell for visibility - z-[1600] - NAVIGATE MODE ONLY */}
-        {mobileNavMode === 'navigate' && (
+        {(mobileNavMode === 'navigate' || isNavigating) && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
