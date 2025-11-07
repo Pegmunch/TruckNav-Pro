@@ -1420,12 +1420,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For shops, skip category search and use text search directly
       if (poiType === 'shop' && TOMTOM_API_KEY) {
         try {
-          console.log(`[POI-SEARCH] Shop search - using direct text search for UK shop brands`);
+          console.log(`[POI-SEARCH] Enhanced shop search - using parallel text search for UK shop brands`);
           
-          // Expanded list of UK shop brands with variations
+          // Comprehensive list of UK shop brands with variations
           const shopBrands = [
+            // Major supermarkets
             'Tesco Express', 
             'Tesco Metro',
+            'Tesco Extra',
             'Tesco',
             'Sainsburys Local',
             'Sainsburys',
@@ -1436,89 +1438,238 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'ASDA',
             'Waitrose',
             'M&S Food',
+            'M&S Simply Food',
             'Marks & Spencer',
+            
+            // Discount chains
             'Iceland',
             'Aldi',
             'Lidl',
+            'Poundland',
+            'Poundstretcher',
+            'B&M',
+            'Home Bargains',
+            
+            // Convenience stores
             'Spar',
             'Premier',
             'Costcutter',
             'Budgens',
             'Nisa',
+            'Nisa Local',
+            'Nisa Extra',
             'Best-one',
             'Londis',
             'McColls',
-            'One Stop'
+            'One Stop',
+            'Family Shopper',
+            'Select & Save',
+            
+            // Petrol station shops
+            'BP Shop',
+            'Shell Select',
+            'Esso Express',
+            
+            // Other chains
+            'Boots',
+            'Superdrug',
+            'WHSmith',
+            'Martin\'s',
+            'Post Office'
           ];
           
-          const allShopResults = [];
+          // Calculate distance between two coordinates in meters
+          const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+            const R = 6371000; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c;
+          };
           
-          // Search for each brand
-          for (const brand of shopBrands) {
+          // Parallel fetch with timeout
+          const fetchWithTimeout = async (url: string, timeout: number = 5000): Promise<any> => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            try {
+              const response = await fetch(url, { signal: controller.signal });
+              clearTimeout(timeoutId);
+              
+              if (response.ok) {
+                return await response.json();
+              }
+              return null;
+            } catch (error) {
+              clearTimeout(timeoutId);
+              return null;
+            }
+          };
+          
+          // Create search promises for parallel execution
+          const searchPromises = shopBrands.map(async (brand) => {
             const shopSearchUrl = new URL(`https://api.tomtom.com/search/2/search/${encodeURIComponent(brand)}.json`);
             shopSearchUrl.searchParams.set('key', TOMTOM_API_KEY);
             shopSearchUrl.searchParams.set('lat', latitude.toString());
             shopSearchUrl.searchParams.set('lon', longitude.toString());
             shopSearchUrl.searchParams.set('radius', radiusInMeters.toString());
             shopSearchUrl.searchParams.set('limit', '3'); // Limit per brand to avoid too many results
-            shopSearchUrl.searchParams.set('countrySet', 'GB');
+            shopSearchUrl.searchParams.set('countrySet', 'GB,IE'); // Include Ireland
             shopSearchUrl.searchParams.set('idxSet', 'POI');
             shopSearchUrl.searchParams.set('typeahead', 'false');
             
-            try {
-              const shopResponse = await fetch(shopSearchUrl.toString());
-              
-              if (shopResponse.ok) {
-                const shopData = await shopResponse.json();
-                
-                if (shopData.results && shopData.results.length > 0) {
-                  console.log(`[POI-SEARCH] Found ${shopData.results.length} ${brand} locations`);
-                  allShopResults.push(...shopData.results);
-                }
-              }
-            } catch (error) {
-              console.log(`[POI-SEARCH] Error searching for ${brand}:`, error);
+            const shopData = await fetchWithTimeout(shopSearchUrl.toString(), 3000);
+            
+            if (shopData && shopData.results && shopData.results.length > 0) {
+              console.log(`[POI-SEARCH] Found ${shopData.results.length} ${brand} locations`);
+              return shopData.results;
             }
-          }
+            
+            return [];
+          });
+          
+          // Execute searches in parallel
+          const searchResults = await Promise.all(searchPromises);
+          const allShopResults = searchResults.flat();
           
           if (allShopResults.length > 0) {
             console.log(`[POI-SEARCH] Total shops found: ${allShopResults.length}`);
             
-            // Remove duplicates and sort by distance
+            // Enhanced deduplication with location clustering
+            const seenLocations = new Set<string>();
             const uniqueShops = allShopResults
-              .filter((shop, index, self) => 
-                index === self.findIndex(s => 
-                  s.poi?.name === shop.poi?.name && 
-                  Math.abs((s.position?.lat || 0) - (shop.position?.lat || 0)) < 0.0001
-                )
-              )
-              .sort((a, b) => (a.dist || 0) - (b.dist || 0))
-              .slice(0, 50);
+              .filter(shop => {
+                if (!shop.position?.lat || !shop.position?.lon) return false;
+                
+                // Create a location key with reduced precision to cluster nearby shops
+                const locKey = `${Math.round(shop.position.lat * 10000) / 10000},${Math.round(shop.position.lon * 10000) / 10000}`;
+                
+                // Also check for exact name matches at similar locations
+                const nameKey = `${shop.poi?.name?.toLowerCase().replace(/\s+/g, '')}:${locKey}`;
+                
+                if (seenLocations.has(nameKey)) {
+                  return false;
+                }
+                
+                seenLocations.add(nameKey);
+                return true;
+              })
+              .map(shop => {
+                // Calculate actual distance
+                const distance = calculateDistance(
+                  latitude,
+                  longitude,
+                  shop.position?.lat || latitude,
+                  shop.position?.lon || longitude
+                );
+                
+                return {
+                  ...shop,
+                  calculatedDistance: distance
+                };
+              })
+              // Sort by calculated distance
+              .sort((a, b) => a.calculatedDistance - b.calculatedDistance)
+              // Take top results
+              .slice(0, 60);
             
-            facilities = uniqueShops.map((result: any, index: number) => ({
-              id: `tomtom-shop-${index}`,
-              name: result.poi?.name || 'Unknown Shop',
-              type: 'shop',
-              latitude: result.position?.lat || latitude,
-              longitude: result.position?.lon || longitude,
-              address: result.address?.freeformAddress || '',
-              amenities: [],
-              city: result.address?.municipality || result.address?.localName || '',
-              state: result.address?.countrySubdivision || '',
-              zip: result.address?.postalCode || '',
-              country: result.address?.country || '',
-              phone: result.poi?.phone || null,
-              website: result.poi?.url || null,
-              rating: null,
-              imageUrl: null,
-            }));
+            facilities = uniqueShops.map((result: any, index: number) => {
+              const distanceKm = (result.calculatedDistance / 1000).toFixed(2);
+              
+              return {
+                id: `tomtom-shop-${index}`,
+                name: result.poi?.name || 'Unknown Shop',
+                type: 'shop',
+                latitude: result.position?.lat || latitude,
+                longitude: result.position?.lon || longitude,
+                address: result.address?.freeformAddress || '',
+                amenities: result.poi?.categories || [],
+                city: result.address?.municipality || result.address?.localName || '',
+                state: result.address?.countrySubdivision || '',
+                zip: result.address?.postalCode || '',
+                country: result.address?.country || '',
+                phone: result.poi?.phone || null,
+                website: result.poi?.url || null,
+                rating: result.score || null,
+                imageUrl: null,
+                distance: `${distanceKm} km`,
+                distanceMeters: result.calculatedDistance,
+                openingHours: result.poi?.openingHours || null
+              };
+            });
             
             console.log(`[POI-SEARCH] Returning ${facilities.length} unique shop results`);
           } else {
-            console.log('[POI-SEARCH] No shop results found from brand searches');
+            console.log('[POI-SEARCH] No shop results found from brand searches - trying general search');
+            
+            // Fallback: Try a general search for "shop" or "store"
+            try {
+              const generalSearchUrl = new URL('https://api.tomtom.com/search/2/search/shop store convenience.json');
+              generalSearchUrl.searchParams.set('key', TOMTOM_API_KEY);
+              generalSearchUrl.searchParams.set('lat', latitude.toString());
+              generalSearchUrl.searchParams.set('lon', longitude.toString());
+              generalSearchUrl.searchParams.set('radius', radiusInMeters.toString());
+              generalSearchUrl.searchParams.set('limit', '30');
+              generalSearchUrl.searchParams.set('countrySet', 'GB,IE');
+              generalSearchUrl.searchParams.set('idxSet', 'POI');
+              
+              const generalData = await fetchWithTimeout(generalSearchUrl.toString(), 5000);
+              
+              if (generalData && generalData.results && generalData.results.length > 0) {
+                  console.log(`[POI-SEARCH] Found ${generalData.results.length} shops from general search`);
+                  
+                  facilities = generalData.results
+                    .filter((result: any) => result.position?.lat && result.position?.lon)
+                    .map((result: any, index: number) => {
+                      const distance = calculateDistance(
+                        latitude,
+                        longitude,
+                        result.position?.lat || latitude,
+                        result.position?.lon || longitude
+                      );
+                      const distanceKm = (distance / 1000).toFixed(2);
+                      
+                      return {
+                        id: `tomtom-shop-${index}`,
+                        name: result.poi?.name || 'Shop',
+                        type: 'shop',
+                        latitude: result.position?.lat || latitude,
+                        longitude: result.position?.lon || longitude,
+                        address: result.address?.freeformAddress || '',
+                        amenities: result.poi?.categories || [],
+                        city: result.address?.municipality || '',
+                        state: result.address?.countrySubdivision || '',
+                        zip: result.address?.postalCode || '',
+                        country: result.address?.country || '',
+                        phone: result.poi?.phone || null,
+                        website: result.poi?.url || null,
+                        rating: result.score || null,
+                        imageUrl: null,
+                        distance: `${distanceKm} km`,
+                        distanceMeters: distance,
+                        openingHours: result.poi?.openingHours || null
+                      };
+                    })
+                    .sort((a: any, b: any) => a.distanceMeters - b.distanceMeters)
+                    .slice(0, 30);
+                  
+                  console.log(`[POI-SEARCH] Returning ${facilities.length} shops from general search`);
+                }
+            } catch (fallbackError) {
+              console.error('[POI-SEARCH] Fallback general search also failed:', fallbackError);
+            }
           }
         } catch (error) {
           console.error('[POI-SEARCH] Shop search failed:', error);
+          // Fallback to empty results rather than crashing
+          facilities = [];
         }
       }
       // Try TomTom for non-shop POI types

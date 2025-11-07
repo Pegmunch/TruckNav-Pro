@@ -185,11 +185,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
   const buildFacilitySearchParams = () => {
     const params = new URLSearchParams();
     
-    // Use GPS coordinates first, then manual location, then from field coordinates, then provided coordinates
+    // Prioritize fromCoordinates (from the "Current Location" field) when available
+    // This ensures shop search uses the location the user typed in
     const gpsPosition = gpsData?.position;
     const manualLocation = gpsData?.manualLocation;
-    const lat = gpsPosition?.latitude || manualLocation?.latitude || fromCoordinates?.lat || coordinates?.lat;
-    const lng = gpsPosition?.longitude || manualLocation?.longitude || fromCoordinates?.lng || coordinates?.lng;
+    const lat = fromCoordinates?.lat || gpsPosition?.latitude || manualLocation?.latitude || coordinates?.lat;
+    const lng = fromCoordinates?.lng || gpsPosition?.longitude || manualLocation?.longitude || coordinates?.lng;
     
     // Only proceed if we have valid coordinates
     if (!lat || !lng) {
@@ -197,7 +198,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
       return null;
     }
     
-    const source = gpsPosition ? 'GPS' : manualLocation ? 'Manual' : 'Provided';
+    const source = fromCoordinates ? 'Current Location field' : gpsPosition ? 'GPS' : manualLocation ? 'Manual' : 'Provided';
     console.log(`[NAV-SIDEBAR] Building search with ${source} location:`, { lat, lng });
     params.set('lat', lat.toString());
     params.set('lng', lng.toString());
@@ -1097,6 +1098,7 @@ Calculating route...
                                facility.type === 'fuel' ? <Fuel className="w-4 h-4 text-orange-600" /> :
                                facility.type === 'parking' ? <CircleParking className="w-4 h-4 text-green-600" /> :
                                facility.type === 'restaurant' ? <Utensils className="w-4 h-4 text-red-600" /> :
+                               facility.type === 'shop' ? <Store className="w-4 h-4 text-purple-600" /> :
                                <MapPin className="w-4 h-4 text-gray-600" />}
                             </div>
                             <div className="flex-1 min-w-0">
