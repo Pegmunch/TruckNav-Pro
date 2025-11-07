@@ -1077,7 +1077,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
-          visibility: 'visible'
+          visibility: mapViewMode === 'satellite' ? 'none' : 'visible'
         },
         paint: {
           'line-color': [
@@ -1100,8 +1100,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       // Mark layer as ready after adding
       setIsTrafficLayerReady(true);
     } else {
-      // Update visibility if layer exists
-      map.current.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
+      // Update visibility if layer exists - but not in satellite mode
+      const visibility = mapViewMode === 'satellite' ? 'none' : 'visible';
+      map.current.setLayoutProperty(trafficLayerId, 'visibility', visibility);
       // Mark layer as ready
       setIsTrafficLayerReady(true);
     }
@@ -1122,7 +1123,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     return () => {
       clearInterval(refreshInterval);
     };
-  }, [isLoaded, showTraffic]);
+  }, [isLoaded, showTraffic, mapViewMode]);
 
   // Render incident markers
   useEffect(() => {
