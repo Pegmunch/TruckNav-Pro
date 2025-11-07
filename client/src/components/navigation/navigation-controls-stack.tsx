@@ -39,8 +39,8 @@ export function NavigationControlsStack({
   mode,
   className
 }: NavigationControlsStackProps) {
-  // Show in both navigate and preview modes
-  if (!mode || (mode !== 'navigate' && mode !== 'preview')) {
+  // CRITICAL: Only show in navigate mode - Required for PWA navigation
+  if (mode !== 'navigate') {
     return null;
   }
 

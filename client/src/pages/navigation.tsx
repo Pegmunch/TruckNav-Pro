@@ -2496,8 +2496,8 @@ function NavigationPageContent() {
 
         </div>
 
-        {/* NAVIGATION CONTROLS - Show in both preview and navigate modes when route exists */}
-        {currentRoute && (mobileNavMode === 'preview' || mobileNavMode === 'navigate' || isNavigating) && (
+        {/* NAVIGATION CONTROLS - ONLY IN NAVIGATION MODE - CRITICAL FOR PWA */}
+        {isNavigating && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2515,7 +2515,7 @@ function NavigationPageContent() {
               mapRef.current?.toggleMapView();
             }}
             onViewIncidents={() => setShowIncidentFeed(true)}
-            mode={mobileNavMode === 'navigate' || isNavigating ? 'navigate' : 'preview'}
+            mode="navigate"
           />
         )}
         
