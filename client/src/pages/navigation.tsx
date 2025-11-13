@@ -1724,7 +1724,9 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     setActiveJourney(null);
     setIsNavigating(false);
-    setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button visible
+    
+    // Immediately set preview mode (no delay)
+    setMobileNavMode('preview');
     
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
@@ -2013,7 +2015,9 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     setActiveJourney(null);
     setIsNavigating(false);
-    setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button visible
+    
+    // Immediately set preview mode (no delay)
+    setMobileNavMode('preview');
     
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
@@ -2186,14 +2190,14 @@ function NavigationPageContent() {
                 <MapShell className="h-full w-full">
                   <MapLibreMap
                     ref={mapRef}
-                    currentRoute={mobileNavMode === 'navigate' ? currentRoute : null}
+                    currentRoute={isNavigating ? currentRoute : null}
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
                     hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
-                    isNavigating={mobileNavMode === 'navigate'}
+                    isNavigating={isNavigating}
                   />
                 </MapShell>
               </div>
@@ -2624,14 +2628,14 @@ function NavigationPageContent() {
                 >
                   <MapLibreMap
                     ref={mapRef}
-                    currentRoute={mobileNavMode === 'navigate' ? currentRoute : null}
+                    currentRoute={isNavigating ? currentRoute : null}
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
                     hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
-                    isNavigating={mobileNavMode === 'navigate'}
+                    isNavigating={isNavigating}
                   />
                 </MapShell>
                 
