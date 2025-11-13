@@ -1295,7 +1295,7 @@ function NavigationPageContent() {
       setActiveJourney(null);
       setIsNavigating(false);
       setCurrentRoute(null);
-      setMobileNavModeDebounced('plan');
+      setMobileNavModeDebounced('preview'); // Return to preview mode
       localStorage.removeItem('activeJourneyId');
       // Invalidate all journey-related queries to keep UI consistent
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
@@ -1724,13 +1724,13 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     setActiveJourney(null);
     setIsNavigating(false);
-    setMobileNavModeDebounced('plan');
+    setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button visible
     
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
     }
     
-    console.log('[ROUTE-CANCEL] ✅ Route cancelled - fresh start page restored');
+    console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to preview mode');
   };
 
   // Handle use current location with reverse geocoding
@@ -2013,7 +2013,7 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     setActiveJourney(null);
     setIsNavigating(false);
-    setMobileNavModeDebounced('plan');
+    setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button visible
     
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
@@ -2966,10 +2966,10 @@ function NavigationPageContent() {
                   window.history.replaceState({}, '', url.pathname);
                 }
                 
-                // Clear route and return to plan mode
+                // Clear route and return to preview mode
                 setCurrentRoute(null);
                 setIsNavigating(false);
-                setMobileNavModeDebounced('plan');
+                setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
                 
