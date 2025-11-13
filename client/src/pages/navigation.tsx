@@ -2860,8 +2860,9 @@ function NavigationPageContent() {
 
       {/* Removed unused Navigation Status Drawer that was creating grey overlay */}
 
-      {/* Mobile Notification Stack - Overlay for all layouts with error boundary */}
-      {Array.isArray(activeNotifications) && activeNotifications.length > 0 ? (
+      {/* Mobile Notification Stack - DISABLED per user request */}
+      {/* Notifications were showing route optimization alerts that user doesn't want */}
+      {false && Array.isArray(activeNotifications) && activeNotifications.length > 0 ? (
         <MobileNotificationStack
           notifications={activeNotifications}
           onDismiss={dismissNotification}
