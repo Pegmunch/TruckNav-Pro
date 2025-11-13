@@ -2509,13 +2509,13 @@ function NavigationPageContent() {
             showTrafficLayer={showTrafficLayer}
             onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
             mapViewMode={mapViewMode}
+            mode="navigate"
             onToggleMapView={() => {
               const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
               setMapViewMode(newMode);
               mapRef.current?.toggleMapView();
             }}
             onViewIncidents={() => setShowIncidentFeed(true)}
-            mode="navigate"
           />
         )}
         
