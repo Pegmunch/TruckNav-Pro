@@ -984,8 +984,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         },
         paint: {
           'line-color': '#3b82f6', // Professional blue (matches reference images)
-          'line-width': 10,  // Thicker for better visibility
-          'line-opacity': 0.9
+          'line-width': 16,  // Extra thick for maximum visibility
+          'line-opacity': 1.0  // Full opacity for prominence
         }
       });
     } else {
