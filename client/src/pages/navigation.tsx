@@ -2660,10 +2660,9 @@ function NavigationPageContent() {
                 {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                 {isNavigating && (
                   <>
-                    {(() => { console.log('[NAV-BUTTONS-DEBUG] isNavigating is TRUE, rendering navigation controls'); return null; })()}
                     {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
                     {currentRoute && (
-                      <div className="absolute left-0 right-0 z-[95]" style={{ top: 'var(--safe-area-top, 0px)' }}>
+                      <div className="absolute left-0 right-0 z-[1700]" style={{ top: 'var(--safe-area-top, 0px)' }}>
                         <CompactTripStrip
                           eta={currentRoute.duration || 0}
                           distanceRemaining={currentRoute.distance || 0}
@@ -2683,88 +2682,63 @@ function NavigationPageContent() {
                       />
                     )}
 
-                    {/* Map Control Buttons - Right Side Stack (z-[500]+) - Mobile & Desktop */}
+                    {/* 8 Navigation Control Buttons - Right Side Stack - FIXED FOR MOBILE */}
                     <div 
-                      className="fixed z-[500] flex flex-col gap-3 pointer-events-auto visible" 
+                      className="fixed flex flex-col gap-2" 
                       style={{ 
-                        top: 'calc(7rem + var(--safe-area-top))',
-                        right: 'calc(1rem + var(--safe-area-right))',
-                        display: 'flex'
+                        top: 'calc(120px + env(safe-area-inset-top, 0px))',
+                        right: 'calc(16px + env(safe-area-inset-right, 0px))',
+                        zIndex: 1600,
+                        display: 'flex',
+                        visibility: 'visible'
                       }}
                       data-testid="navigation-controls-right"
                     >
-                      {(() => { console.log('[NAV-BUTTONS-DEBUG] Rendering 8 navigation control buttons'); return null; })()}
-                      {/* 1. Compass Dial Button - Fancy compass with red/blue needle at TOP */}
+                      {/* 1. Compass Button */}
                       <Button
                         size="icon"
                         onClick={() => mapRef.current?.resetBearing()}
-                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
-                        data-testid="button-compass-dial-navigate"
+                        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200 transition-all duration-200"
+                        data-testid="button-compass-navigate"
                         aria-label="Reset compass to North"
                       >
-                        <svg 
-                          width="24" 
-                          height="24" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="transition-transform duration-300"
-                          style={{ transform: `rotate(${mapBearing}deg)` }}
-                        >
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-                          <path 
-                            d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
-                            fill="#EF4444" 
-                            stroke="#DC2626" 
-                            strokeWidth="0.5"
-                          />
-                          <path 
-                            d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
-                            fill="#3B82F6" 
-                            stroke="#2563EB" 
-                            strokeWidth="0.5"
-                          />
-                          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                        </svg>
+                        <Compass className="w-6 h-6 text-blue-600" style={{ transform: `rotate(${-mapBearing}deg)` }} />
                       </Button>
                       
                       {/* 2. Recenter Button */}
                       <Button
                         size="icon"
-                        onClick={() => {
-                          if (mapRef.current) {
-                            mapRef.current.zoomToUserLocation({
-                              zoom: 17.5,
-                              pitch: 45,
-                              duration: 1500
-                            });
-                          }
-                        }}
-                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        onClick={() => mapRef.current?.zoomToUserLocation({ zoom: 17, duration: 1000 })}
+                        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
                         data-testid="button-recenter-navigate"
-                        aria-label="Recenter on current location"
+                        aria-label="Center on GPS location"
                       >
-                        <Crosshair className="h-5 w-5" />
+                        <MapPin className="w-6 h-6 text-gray-700" />
                       </Button>
+                      
                       {/* 3. Zoom In Button */}
                       <Button
                         size="icon"
                         onClick={() => mapRef.current?.zoomIn()}
-                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
                         data-testid="button-zoom-in-navigate"
                         aria-label="Zoom in"
                       >
-                        <Plus className="h-5 w-5" />
+                        <Plus className="w-6 h-6 text-gray-700" />
                       </Button>
+                      
+                      {/* 4. Zoom Out Button */}
                       <Button
                         size="icon"
                         onClick={() => mapRef.current?.zoomOut()}
-                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
                         data-testid="button-zoom-out-navigate"
                         aria-label="Zoom out"
                       >
-                        <Minus className="h-5 w-5" />
+                        <Minus className="w-6 h-6 text-gray-700" />
                       </Button>
+                      
+                      {/* 5. 3D Mode Toggle */}
                       <Button
                         size="icon"
                         onClick={() => {
@@ -2772,30 +2746,34 @@ function NavigationPageContent() {
                           setMap3DMode(!map3DMode);
                         }}
                         className={cn(
-                          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                          "h-12 w-12 shadow-lg backdrop-blur-sm border",
                           map3DMode 
-                            ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 border-blue-400/50"
-                            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                            ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-400"
+                            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
                         )}
-                        data-testid="button-tilt-map-navigate"
-                        aria-label={map3DMode ? "Switch to flat view" : "Switch to tilted view"}
+                        data-testid="button-3d-toggle-navigate"
+                        aria-label={map3DMode ? "Switch to 2D" : "Switch to 3D"}
                       >
-                        <Box className="h-5 w-5" />
+                        <Box className="w-6 h-6" />
                       </Button>
+                      
+                      {/* 6. Traffic Layer Toggle */}
                       <Button
                         size="icon"
                         onClick={() => setShowTrafficLayer(!showTrafficLayer)}
                         className={cn(
-                          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                          "h-12 w-12 shadow-lg backdrop-blur-sm border",
                           showTrafficLayer 
-                            ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 hover:scale-105 border-orange-400/50"
-                            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                            ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-400"
+                            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
                         )}
                         data-testid="button-traffic-toggle-navigate"
-                        aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
+                        aria-label={showTrafficLayer ? "Hide traffic" : "Show traffic"}
                       >
-                        <Layers className="h-5 w-5" />
+                        <Layers className="w-6 h-6" />
                       </Button>
+                      
+                      {/* 7. Map View Toggle (Road/Satellite) */}
                       <Button
                         size="icon"
                         onClick={() => {
@@ -2804,25 +2782,26 @@ function NavigationPageContent() {
                           mapRef.current?.toggleMapView();
                         }}
                         className={cn(
-                          "h-11 w-11 rounded-xl shadow-2xl pointer-events-auto transition-all duration-200 border active:scale-95",
+                          "h-12 w-12 shadow-lg backdrop-blur-sm border",
                           mapViewMode === 'satellite'
-                            ? "bg-gradient-to-br from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:scale-105 border-green-400/50"
-                            : "bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border-white/50"
+                            ? "bg-green-500 hover:bg-green-600 text-white border-green-400"
+                            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
                         )}
                         data-testid="button-map-view-toggle-navigate"
-                        aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
+                        aria-label={mapViewMode === 'roads' ? "Satellite view" : "Road view"}
                       >
-                        <Map className="h-5 w-5" />
+                        <Map className="w-6 h-6" />
                       </Button>
+                      
                       {/* 8. Report Incident Button */}
                       <Button
                         size="icon"
                         onClick={() => setShowIncidentReportDialog(true)}
-                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
                         data-testid="button-report-incident-navigate"
-                        aria-label="Report a road incident"
+                        aria-label="Report incident"
                       >
-                        <AlertCircle className="h-5 w-5" />
+                        <AlertCircle className="w-6 h-6 text-red-600" />
                       </Button>
                     </div>
 

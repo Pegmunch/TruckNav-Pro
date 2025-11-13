@@ -983,9 +983,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#06b6d4', // Professional cyan/turquoise
-          'line-width': 8,  // Slightly thicker for better visibility without outline
-          'line-opacity': 1
+          'line-color': '#3b82f6', // Professional blue (matches reference images)
+          'line-width': 10,  // Thicker for better visibility
+          'line-opacity': 0.9
         }
       });
     } else {
