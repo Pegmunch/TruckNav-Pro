@@ -2186,14 +2186,14 @@ function NavigationPageContent() {
                 <MapShell className="h-full w-full">
                   <MapLibreMap
                     ref={mapRef}
-                    currentRoute={currentRoute}
+                    currentRoute={mobileNavMode === 'navigate' ? currentRoute : null}
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
                     hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
-                    isNavigating={isNavigating}
+                    isNavigating={mobileNavMode === 'navigate'}
                   />
                 </MapShell>
               </div>
@@ -2497,7 +2497,7 @@ function NavigationPageContent() {
         </div>
 
         {/* NAVIGATION CONTROLS - ONLY IN NAVIGATION MODE - CRITICAL FOR PWA */}
-        {isNavigating && (
+        {mobileNavMode === 'navigate' && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2624,14 +2624,14 @@ function NavigationPageContent() {
                 >
                   <MapLibreMap
                     ref={mapRef}
-                    currentRoute={currentRoute}
+                    currentRoute={mobileNavMode === 'navigate' ? currentRoute : null}
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
                     hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
-                    isNavigating={isNavigating}
+                    isNavigating={mobileNavMode === 'navigate'}
                   />
                 </MapShell>
                 
