@@ -2657,10 +2657,11 @@ function NavigationPageContent() {
                   </div>
                 )}
                 
-                {/* NAVIGATE MODE OVERLAYS - Desktop */}
+                {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                 {isNavigating && (
                   <>
-                    {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - DESKTOP */}
+                    {(() => { console.log('[NAV-BUTTONS-DEBUG] isNavigating is TRUE, rendering navigation controls'); return null; })()}
+                    {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
                     {currentRoute && (
                       <div className="absolute left-0 right-0 z-[95]" style={{ top: 'var(--safe-area-top, 0px)' }}>
                         <CompactTripStrip
@@ -2682,15 +2683,17 @@ function NavigationPageContent() {
                       />
                     )}
 
-                    {/* Map Control Buttons - Right Side Stack (z-[500]+) */}
+                    {/* Map Control Buttons - Right Side Stack (z-[500]+) - Mobile & Desktop */}
                     <div 
-                      className="fixed z-[500] flex flex-col gap-3 pointer-events-auto" 
+                      className="fixed z-[500] flex flex-col gap-3 pointer-events-auto visible" 
                       style={{ 
                         top: 'calc(7rem + var(--safe-area-top))',
-                        right: 'calc(1rem + var(--safe-area-right))'
+                        right: 'calc(1rem + var(--safe-area-right))',
+                        display: 'flex'
                       }}
                       data-testid="navigation-controls-right"
                     >
+                      {(() => { console.log('[NAV-BUTTONS-DEBUG] Rendering 8 navigation control buttons'); return null; })()}
                       {/* 1. Compass Dial Button - Fancy compass with red/blue needle at TOP */}
                       <Button
                         size="icon"
@@ -2810,6 +2813,16 @@ function NavigationPageContent() {
                         aria-label={mapViewMode === 'roads' ? "Switch to satellite view" : "Switch to road view"}
                       >
                         <Map className="h-5 w-5" />
+                      </Button>
+                      {/* 8. Report Incident Button */}
+                      <Button
+                        size="icon"
+                        onClick={() => setShowIncidentReportDialog(true)}
+                        className="h-11 w-11 rounded-xl shadow-2xl bg-white/95 backdrop-blur-md hover:bg-white hover:scale-105 text-gray-800 border border-white/50 pointer-events-auto transition-all duration-200 active:scale-95"
+                        data-testid="button-report-incident-navigate"
+                        aria-label="Report a road incident"
+                      >
+                        <AlertCircle className="h-5 w-5" />
                       </Button>
                     </div>
 
