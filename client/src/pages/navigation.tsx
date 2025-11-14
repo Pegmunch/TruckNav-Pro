@@ -2564,7 +2564,7 @@ function NavigationPageContent() {
                       onCancel={handleStopNavigation}
                       onReportIncident={() => setShowIncidentReportDialog(true)}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
-                      isCancelling={completeJourneyMutation.isPending}
+                      isNavigating={isNavigating}
                     />
                   }
                   rightStack={
@@ -2589,9 +2589,9 @@ function NavigationPageContent() {
                   }
                   bottomBar={
                     <BottomInstrumentationBar
+                      speed={0} // GPS speed not available yet
                       speedLimit={currentSpeedLimit || undefined}
-                      roadInfo={roadInfo}
-                      currentSpeed={undefined} // GPS speed not available yet
+                      hasGpsSignal={!!gpsData?.position}
                     />
                   }
                 />
