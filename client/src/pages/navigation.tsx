@@ -2511,50 +2511,91 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
+              {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {isNavigating && (
-                <>
-                  {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
-                  {isNavigating && currentRoute && (
-                    <div className="fixed top-0 left-0 right-0 z-[1700]" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
+                <NavigationLayout
+                  isNavigating={isNavigating}
+                  mapContent={
+                    <>
+                      {/* Map is already rendered in base layer, add overlays here */}
+                      {/* Turn Indicator - Large bubble at top center */}
+                      {nextTurn && (
+                        <TurnIndicator
+                          direction={nextTurn.direction}
+                          distance={nextTurn.distance}
+                          unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                          roadName={nextTurn.roadName}
+                        />
+                      )}
+                      
+                      {/* GPS Loading Indicator */}
+                      {gpsLoadingState?.isLoading && (
+                        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[150] pointer-events-none">
+                          <Card className="px-4 py-3 shadow-xl border-blue-500/50 bg-white/95 backdrop-blur-sm">
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                <Crosshair className="h-6 w-6 text-blue-500 animate-pulse" />
+                                <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+                              </div>
+                              <div className="text-sm">
+                                <div className="font-medium text-gray-900">Acquiring GPS Signal</div>
+                                <div className="text-xs text-gray-600">
+                                  Attempt {gpsLoadingState.attempt}/{gpsLoadingState.maxAttempts}
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        </div>
+                      )}
+                    </>
+                  }
+                  topStrip={
+                    currentRoute && (
                       <CompactTripStrip
                         eta={currentRoute.duration || 0}
                         distanceRemaining={currentRoute.distance || 0}
                         nextManeuver={nextTurn?.roadName || 'Continue'}
                         nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
                       />
-                    </div>
-                  )}
-                  
-                  {/* Turn Indicator - Large bubble at top center */}
-                  {nextTurn && (
-                    <TurnIndicator
-                      direction={nextTurn.direction}
-                      distance={nextTurn.distance}
-                      unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                      roadName={nextTurn.roadName}
+                    )
+                  }
+                  leftStack={
+                    <LeftActionStack
+                      onCancel={handleStopNavigation}
+                      onReportIncident={() => setShowIncidentReportDialog(true)}
+                      onOpenMenu={() => setShowComprehensiveMenu(true)}
+                      isCancelling={completeJourneyMutation.isPending}
                     />
-                  )}
-
-                  {/* GPS Loading Indicator */}
-                  {gpsLoadingState?.isLoading && (
-                    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[150] pointer-events-none">
-                      <Card className="px-4 py-3 shadow-xl border-blue-500/50 bg-white/95 backdrop-blur-sm">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <Crosshair className="h-6 w-6 text-blue-500 animate-pulse" />
-                            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
-                          </div>
-                          <div className="text-sm">
-                            <div className="font-medium text-gray-900">Acquiring GPS Signal</div>
-                            <div className="text-xs text-gray-600">
-                              Attempt {gpsLoadingState.attempt}/{gpsLoadingState.maxAttempts}
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-                    </div>
-                  )}
+                  }
+                  rightStack={
+                    <NavigationControlsStack
+                      mapRef={mapRef}
+                      mapBearing={mapBearing}
+                      map3DMode={map3DMode}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMap3DMode(!map3DMode);
+                      }}
+                      showTrafficLayer={showTrafficLayer}
+                      onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
+                      mapViewMode={mapViewMode}
+                      onToggleMapView={() => {
+                        const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                        setMapViewMode(newMode);
+                        mapRef.current?.toggleMapView();
+                      }}
+                      onViewIncidents={() => setShowIncidentFeed(true)}
+                    />
+                  }
+                  bottomBar={
+                    <BottomInstrumentationBar
+                      speedLimit={currentSpeedLimit || undefined}
+                      roadInfo={roadInfo}
+                      currentSpeed={undefined} // GPS speed not available yet
+                    />
+                  }
+                />
+              )}
 
 
                   {/* Navigation Controls moved outside MapShell - see bottom of mobile layout */}
