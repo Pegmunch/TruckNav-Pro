@@ -1207,14 +1207,19 @@ function NavigationPageContent() {
           });
       }
       
-      // CRITICAL FIX: Restore navigation state if journey is active
-      if (currentJourney.status === 'active') {
-        console.log('[JOURNEY-LOAD] Active journey detected - restoring navigation state');
+      // CRITICAL FIX: Only restore navigation if user explicitly started navigation
+      // Check localStorage flag to ensure this is a real navigation session, not just route planning
+      const navigationStarted = localStorage.getItem('navigation_mode') === 'navigate';
+      
+      if (currentJourney.status === 'active' && navigationStarted) {
+        console.log('[JOURNEY-LOAD] Active journey detected WITH navigation flag - restoring navigation state');
         setIsNavigating(true);
         setMobileNavMode('navigate');
         console.log('[JOURNEY-LOAD] Navigation state restored: isNavigating=true, mobileNavMode=navigate');
       } else {
-        console.log('[JOURNEY-LOAD] Journey status is:', currentJourney.status, '- not starting navigation');
+        console.log('[JOURNEY-LOAD] Journey status is:', currentJourney.status, ', navigationStarted:', navigationStarted, '- not auto-starting navigation');
+        // Keep isNavigating false until user explicitly presses Start Navigation
+        setIsNavigating(false);
       }
     } else {
       // No journey - ensure clean state
@@ -1226,10 +1231,23 @@ function NavigationPageContent() {
     }
   }, [currentJourney]);
 
-  // Handle page refresh - restore navigation state
+  // Handle page refresh - restore navigation state ONLY if explicitly started
   useEffect(() => {
+    // CRITICAL: Clear navigation state on initial load unless navigation was explicitly started
+    const navigationMode = localStorage.getItem('navigation_mode');
     const storedJourneyId = localStorage.getItem('activeJourneyId');
-    if (storedJourneyId && !activeJourney) {
+    
+    if (navigationMode !== 'navigate') {
+      // User hasn't explicitly started navigation - ensure clean state
+      console.log('[INIT] Clearing navigation state - no explicit navigation start');
+      setIsNavigating(false);
+      setMobileNavMode('plan');
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('activeJourneyId');
+      localStorage.removeItem('activeRouteId');
+    } else if (storedJourneyId && !activeJourney) {
+      // Navigation was explicitly started - restore it
+      console.log('[INIT] Restoring navigation - user had started navigation');
       refetchCurrentJourney();
     }
   }, []);
@@ -2019,6 +2037,10 @@ function NavigationPageContent() {
       setIsNavigating(true);
       console.log('[NAV-ACTIVATION] Called setIsNavigating(true)');
       
+      // CRITICAL: Set flag to indicate navigation was explicitly started by user
+      localStorage.setItem('navigation_mode', 'navigate');
+      console.log('[NAV-ACTIVATION] Set navigation_mode flag in localStorage');
+      
       // Store route ID for persistence
       if (route.id) {
         localStorage.setItem('activeRouteId', route.id.toString());
@@ -2063,6 +2085,8 @@ function NavigationPageContent() {
     
     // CRITICAL: Clear all route persistence - fresh start page
     localStorage.removeItem('activeJourneyId');
+    localStorage.removeItem('navigation_mode'); // Clear navigation flag
+    localStorage.removeItem('activeRouteId');
     
     // Clear URL parameter
     const url = new URL(window.location.href);
