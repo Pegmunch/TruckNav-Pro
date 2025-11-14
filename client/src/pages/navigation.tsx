@@ -55,6 +55,7 @@ import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 import { NavigationControlsStack } from "@/components/navigation/navigation-controls-stack";
+import { navigationVoice } from "@/lib/navigation-voice";
 
 // Removed duplicate NavigationControlsStack - now imported from component
 
@@ -466,6 +467,24 @@ function NavigationPageContent() {
     }
   }, [isNavigating, currentRoute, gpsData?.position]);
   
+  // Announce turn-by-turn navigation with voice
+  useEffect(() => {
+    if (!isNavigating || !nextTurn || !professionalVoiceEnabled) {
+      return;
+    }
+    
+    // Get the measurement unit (mi or km)
+    const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
+    
+    // Announce the turn based on distance
+    navigationVoice.announceTurn(
+      nextTurn.direction,
+      nextTurn.distance, // Already in meters
+      nextTurn.roadName,
+      unit
+    );
+  }, [nextTurn, isNavigating, professionalVoiceEnabled, measurementSystem]);
+  
   // Detect when destination is reached
   useEffect(() => {
     // Only check during active navigation
@@ -499,6 +518,10 @@ function NavigationPageContent() {
       console.log(`[DESTINATION] Reached! Distance: ${distance.toFixed(1)}m`);
       setShowDestinationReached(true);
       hasShownDestinationDialogRef.current = true;
+      // Announce arrival with voice
+      if (professionalVoiceEnabled) {
+        navigationVoice.announceArrival();
+      }
     }
   }, [isNavigating, currentRoute, gpsData?.position]);
   
