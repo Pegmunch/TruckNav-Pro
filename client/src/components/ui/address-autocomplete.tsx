@@ -216,11 +216,12 @@ export function AddressAutocomplete({
     .slice(0, 5);
 
   // Helper to detect mobile/PWA context - prevents dropdown flicker on mobile
-  const isMobileOrPWA = useMemo(() => {
+  // Evaluated dynamically on each call to handle viewport changes
+  const checkIsMobileOrPWA = () => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isMobile = window.innerWidth < 768;
     return isStandalone || isMobile;
-  }, []);
+  };
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -228,14 +229,14 @@ export function AddressAutocomplete({
     onChange(newValue);
     
     // Only auto-open dropdown on desktop - prevents flicker loop on mobile/PWA
-    if (!isMobileOrPWA) {
+    if (!checkIsMobileOrPWA()) {
       if (newValue.length >= 2) {
         setOpen(true);
       } else {
         setOpen(false);
       }
     }
-  }, [onChange, isMobileOrPWA]);
+  }, [onChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && open) {
@@ -323,13 +324,13 @@ export function AddressAutocomplete({
 
   const handleInputFocus = useCallback(() => {
     // Don't open dropdown in mobile/PWA mode - prevents flicker loop
-    if (isMobileOrPWA) {
+    if (checkIsMobileOrPWA()) {
       return;
     }
     
     // Open dropdown on desktop only
     setOpen(true);
-  }, [isMobileOrPWA]);
+  }, []);
 
   const handleInputBlur = useCallback(() => {
     setTimeout(() => {
