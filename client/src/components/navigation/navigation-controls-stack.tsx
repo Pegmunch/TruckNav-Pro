@@ -42,44 +42,28 @@ export function NavigationControlsStack({
   console.log('[NAV-CONTROLS] Navigation controls rendering - parent has confirmed isNavigating=true');
 
   const handleCompassClick = () => {
-    if (!mapRef.current) {
-      console.warn('[NAV-CONTROLS] Map ref not available for compass reset');
-      return;
-    }
-    mapRef.current.resetBearing();
+    mapRef.current?.resetBearing();
   };
 
   const handleCenterOnGPS = () => {
-    if (!mapRef.current) {
-      console.warn('[NAV-CONTROLS] Map ref not available for GPS centering');
-      return;
-    }
-    mapRef.current.zoomToUserLocation({
+    mapRef.current?.zoomToUserLocation({
       zoom: 17,
       duration: 1000
     });
   };
 
   const handleZoomIn = () => {
-    if (!mapRef.current) {
-      console.warn('[NAV-CONTROLS] Map ref not available for zoom in');
-      return;
-    }
-    mapRef.current.zoomIn();
+    mapRef.current?.zoomIn();
   };
 
   const handleZoomOut = () => {
-    if (!mapRef.current) {
-      console.warn('[NAV-CONTROLS] Map ref not available for zoom out');
-      return;
-    }
-    mapRef.current.zoomOut();
+    mapRef.current?.zoomOut();
   };
 
   return (
     <div 
       className={cn(
-        "fixed right-4 flex flex-col gap-2 z-[1800] pointer-events-auto",
+        "fixed right-4 flex flex-col gap-2 z-[1800]",
         className
       )}
       style={{

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useReducer } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -62,130 +62,6 @@ import { navigationVoice } from "@/lib/navigation-voice";
 // NavigationControlsStack has been moved to its own component file
 // Import is at the top of this file
 
-// ============================================
-// FINITE STATE MACHINE FOR NAVIGATION STATE
-// ============================================
-type NavigationState = 'IDLE' | 'PREVIEW' | 'NAVIGATING';
-
-interface NavigationFSM {
-  state: NavigationState;
-  route: Route | null;
-  journey: Journey | null;
-  mobileNavMode: 'plan' | 'preview' | 'navigate';
-  isNavigating: boolean;
-}
-
-type NavigationAction = 
-  | { type: 'INIT' }
-  | { type: 'PLAN_SUCCESS'; route: Route }
-  | { type: 'START_NAVIGATION'; journey?: Journey }
-  | { type: 'CANCEL_ROUTE' }
-  | { type: 'STOP_NAVIGATION' }
-  | { type: 'ERROR_RESET' }
-  | { type: 'RESTORE_JOURNEY'; journey: Journey; route: Route };
-
-function navigationReducer(state: NavigationFSM, action: NavigationAction): NavigationFSM {
-  console.log('[NAV-FSM] Action:', action.type, 'Current state:', state.state);
-  
-  switch (action.type) {
-    case 'INIT':
-      // Clear any corrupted localStorage on init
-      localStorage.removeItem('navigation_mode');
-      localStorage.removeItem('navigation_timestamp');
-      return {
-        state: 'IDLE',
-        route: null,
-        journey: null,
-        mobileNavMode: 'plan',
-        isNavigating: false
-      };
-      
-    case 'PLAN_SUCCESS':
-      // Only transition to preview if not already navigating
-      if (state.state === 'NAVIGATING') {
-        return state; // Don't interrupt active navigation
-      }
-      return {
-        state: 'PREVIEW',
-        route: action.route,
-        journey: state.journey,
-        mobileNavMode: 'preview',
-        isNavigating: false
-      };
-      
-    case 'START_NAVIGATION':
-      // Only allow starting from preview state
-      if (state.state !== 'PREVIEW') {
-        console.warn('[NAV-FSM] Cannot start navigation from state:', state.state);
-        return state;
-      }
-      // Set localStorage flags for persistence
-      localStorage.setItem('navigation_mode', 'navigate');
-      localStorage.setItem('navigation_timestamp', Date.now().toString());
-      return {
-        state: 'NAVIGATING',
-        route: state.route,
-        journey: action.journey || state.journey,
-        mobileNavMode: 'navigate',
-        isNavigating: true
-      };
-      
-    case 'CANCEL_ROUTE':
-      // Clear all navigation state and localStorage
-      localStorage.removeItem('navigation_mode');
-      localStorage.removeItem('navigation_timestamp');
-      localStorage.removeItem('activeJourneyId');
-      localStorage.removeItem('activeRouteId');
-      return {
-        state: 'IDLE',
-        route: null,
-        journey: null,
-        mobileNavMode: 'plan',
-        isNavigating: false
-      };
-      
-    case 'STOP_NAVIGATION':
-      // Stop navigation but keep route in preview
-      localStorage.removeItem('navigation_mode');
-      localStorage.removeItem('navigation_timestamp');
-      localStorage.removeItem('activeJourneyId');
-      return {
-        state: state.route ? 'PREVIEW' : 'IDLE',
-        route: state.route,
-        journey: null,
-        mobileNavMode: state.route ? 'preview' : 'plan',
-        isNavigating: false
-      };
-      
-    case 'ERROR_RESET':
-      // Emergency reset - clear everything
-      localStorage.removeItem('navigation_mode');
-      localStorage.removeItem('navigation_timestamp');
-      localStorage.removeItem('activeJourneyId');
-      localStorage.removeItem('activeRouteId');
-      return {
-        state: 'IDLE',
-        route: null,
-        journey: null,
-        mobileNavMode: 'plan',
-        isNavigating: false
-      };
-      
-    case 'RESTORE_JOURNEY':
-      // Restore from localStorage after page reload
-      return {
-        state: 'NAVIGATING',
-        route: action.route,
-        journey: action.journey,
-        mobileNavMode: 'navigate',
-        isNavigating: true
-      };
-      
-    default:
-      return state;
-  }
-}
-
 // Inner component that uses GPS context
 function NavigationPageContent() {
   const { t } = useTranslation();
@@ -203,48 +79,14 @@ function NavigationPageContent() {
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
-  
-  // ============================================
-  // FINITE STATE MACHINE FOR NAVIGATION
-  // ============================================
-  const [navState, dispatch] = useReducer(navigationReducer, {
-    state: 'IDLE',
-    route: null,
-    journey: null,
-    mobileNavMode: 'plan',
-    isNavigating: false
-  });
-  
-  // Derived state for backward compatibility
-  const currentRoute = navState.route;
-  const activeJourney = navState.journey;
-  const isNavigating = navState.isNavigating;
-  const mobileNavMode = navState.mobileNavMode;
-  
-  // Helper to update route/journey without full state transition
-  const setCurrentRoute = (route: Route | null) => {
-    if (route) {
-      dispatch({ type: 'PLAN_SUCCESS', route });
-    } else {
-      dispatch({ type: 'CANCEL_ROUTE' });
-    }
-  };
-  
-  const setActiveJourney = (journey: Journey | null) => {
-    // Journey is managed by the FSM, this is just for compatibility
-    console.log('[NAV-FSM] Journey update requested:', journey?.id);
-  };
-  
-  const setIsNavigating = (navigating: boolean) => {
-    // This should only be called through proper FSM transitions
-    console.warn('[NAV-FSM] Direct setIsNavigating called - should use dispatch instead');
-  };
-  
+  const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
   const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [toCoordinates, setToCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
+  const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
   // Unified sidebar state management - single source of truth
@@ -336,7 +178,7 @@ function NavigationPageContent() {
   
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
-  // Removed - mobileNavMode now comes from navigation FSM on line 225
+  const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
   
   // Debug logging whenever mode changes
   useEffect(() => {
@@ -344,20 +186,32 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
-  // Helper functions for FSM dispatch actions
-  const startNavigationMode = useCallback((journey: NavigationJourney) => {
-    console.log('[FSM] Starting navigation mode');
-    dispatch({ type: 'START_NAVIGATION', journey });
+  // Mode transition debouncing to prevent race conditions
+  const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const setMobileNavModeDebounced = useCallback((newMode: MobileNavMode) => {
+    console.log(`[NAV-MODE-DEBOUNCED] Requesting transition to ${newMode} mode (50ms delay)`);
+    
+    // Clear any pending transition
+    if (modeTransitionTimeoutRef.current) {
+      clearTimeout(modeTransitionTimeoutRef.current);
+    }
+
+    // Prevent rapid mode changes (50ms debounce)
+    modeTransitionTimeoutRef.current = setTimeout(() => {
+      console.log(`[NAV-MODE-DEBOUNCED] Executing transition to ${newMode} mode`);
+      setMobileNavMode(newMode);
+      console.log(`[NAV-MODE] Transition to ${newMode} mode completed`);
+    }, 50);
   }, []);
 
-  const stopNavigationMode = useCallback(() => {
-    console.log('[FSM] Stopping navigation, returning to preview');
-    dispatch({ type: 'STOP_NAVIGATION' });
-  }, []);
-
-  const cancelNavigation = useCallback(() => {
-    console.log('[FSM] Cancelling route and navigation');
-    dispatch({ type: 'CANCEL_ROUTE' });
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (modeTransitionTimeoutRef.current) {
+        clearTimeout(modeTransitionTimeoutRef.current);
+      }
+    };
   }, []);
   
   // Map reference for compass and 3D tilt control
@@ -856,8 +710,39 @@ function NavigationPageContent() {
     
   }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
   
-  // REMOVED: Auto-sync effect - FSM now handles all state transitions explicitly
-  // All navigation mode changes are driven by user actions and async results
+  // Auto-update mobile navigation mode based on state
+  // IMPORTANT: Only auto-switch when appropriate, don't interrupt user interactions
+  useEffect(() => {
+    console.log('[NAV-MODE-AUTO] useEffect triggered:');
+    console.log('[NAV-MODE-AUTO] - isMobile:', isMobile);
+    console.log('[NAV-MODE-AUTO] - isNavigating:', isNavigating);
+    console.log('[NAV-MODE-AUTO] - currentRoute exists:', !!currentRoute);
+    console.log('[NAV-MODE-AUTO] - showComprehensiveMenu:', showComprehensiveMenu);
+    console.log('[NAV-MODE-AUTO] - current mobileNavMode:', mobileNavMode);
+    
+    if (!isMobile) {
+      console.log('[NAV-MODE-AUTO] Not mobile - skipping mode update');
+      return; // Only applies to mobile
+    }
+    
+    if (isNavigating) {
+      console.log('[NAV-MODE-AUTO] Navigation active - switching to navigate mode');
+      // Always switch to navigate mode when navigation starts
+      setMobileNavModeDebounced('navigate');
+    } else if (!currentRoute && showComprehensiveMenu) {
+      console.log('[NAV-MODE-AUTO] No route + menu open - switching to plan mode');
+      // Only switch to plan mode if menu is open and actively planning
+      setMobileNavModeDebounced('plan');
+    } else if (!currentRoute && !showComprehensiveMenu) {
+      console.log('[NAV-MODE-AUTO] No route + menu closed - switching to preview mode');
+      // Default to preview mode when no route and menu is closed
+      setMobileNavModeDebounced('preview');
+    } else {
+      console.log('[NAV-MODE-AUTO] No mode change needed');
+    }
+    // REMOVED: Auto-switch to preview when route exists - this was interrupting user input
+    // The route calculation onSuccess handler will explicitly set preview mode when needed
+  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode, showComprehensiveMenu]);
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
   useEffect(() => {
@@ -983,7 +868,8 @@ function NavigationPageContent() {
       const speedometer = document.querySelector('[data-testid="speedometer-hud-navigate"]');
       if (!speedometer) {
         console.error('[NAV-MODE] CRITICAL: Speedometer not found in navigate mode!');
-        // Log the anomaly - NavigationControls will re-render from navState
+        // Attempt recovery by forcing re-render
+        setMobileNavModeDebounced('navigate');
       } else {
         console.log('[NAV-MODE] ✓ Speedometer visibility confirmed');
       }
@@ -993,7 +879,7 @@ function NavigationPageContent() {
     const interval = setInterval(checkSpeedometerVisibility, 3000);
 
     return () => clearInterval(interval);
-  }, [mobileNavMode]);
+  }, [mobileNavMode, setMobileNavModeDebounced]);
   
   // Real-time bearing rotation during navigation - BULLETPROOF with route fallback
   useEffect(() => {
@@ -1338,20 +1224,18 @@ function NavigationPageContent() {
       if (currentJourney.status === 'active' && navigationStarted && !isStale) {
         console.log('[JOURNEY-LOAD] Active journey WITH recent navigation flag - restoring navigation');
         setIsNavigating(true);
-        startNavigationMode(currentJourney); // Use FSM dispatch
+        setMobileNavMode('navigate');
       } else if (currentJourney.status === 'active') {
         console.log('[JOURNEY-LOAD] Active journey but stale/missing navigation flag - showing preview');
         setIsNavigating(false);
-        dispatch({ type: 'STOP_NAVIGATION' }); // Use FSM to go to preview
+        setMobileNavMode('preview');
         // Clear stale navigation flags
         localStorage.removeItem('navigation_mode');
         localStorage.removeItem('navigation_timestamp');
       } else if (currentJourney.status === 'planned') {
         console.log('[JOURNEY-LOAD] Planned journey - showing preview mode');
         setIsNavigating(false);
-        if (navState.state === 'IDLE' && currentJourney.route) {
-          dispatch({ type: 'PLAN_SUCCESS', route: currentJourney.route });
-        }
+        setMobileNavMode('preview');
         // Clear any navigation flags for planned journeys
         localStorage.removeItem('navigation_mode');
         localStorage.removeItem('navigation_timestamp');
@@ -1362,7 +1246,7 @@ function NavigationPageContent() {
       setCurrentRoute(null);
       setActiveJourney(null);
       setIsNavigating(false);
-      dispatch({ type: 'CANCEL_ROUTE' }); // Clear everything
+      setMobileNavMode('preview');
     }
   }, [currentJourney]);
 
@@ -1381,7 +1265,7 @@ function NavigationPageContent() {
       // User hasn't explicitly started navigation or state is stale - ensure clean state
       console.log('[INIT] Clearing navigation state - no explicit/recent navigation start');
       setIsNavigating(false);
-      // FSM starts in IDLE state by default, no dispatch needed
+      setMobileNavMode('plan');
       localStorage.removeItem('navigation_mode');
       localStorage.removeItem('navigation_timestamp');
       localStorage.removeItem('activeJourneyId');
@@ -1402,7 +1286,7 @@ function NavigationPageContent() {
       localStorage.removeItem('activeJourneyId');
       localStorage.removeItem('activeRouteId');
       setIsNavigating(false);
-      dispatch({ type: 'CANCEL_ROUTE' }); // Clear all navigation
+      setMobileNavMode('plan');
     };
     
     // Handle page hide (mobile browser minimized or PWA closed)
@@ -1571,7 +1455,7 @@ function NavigationPageContent() {
       setActiveJourney(null);
       setIsNavigating(false);
       setCurrentRoute(null);
-      stopNavigationMode(); // Return to preview mode using FSM
+      setMobileNavModeDebounced('preview'); // Return to preview mode
       localStorage.removeItem('activeJourneyId');
       // Invalidate all journey-related queries to keep UI consistent
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
@@ -1662,21 +1546,16 @@ function NavigationPageContent() {
 
       // DISABLED: Auto-transition to navigation mode - User must manually click "Start Navigation"
       // Show preview mode only, let user manually start navigation
-      console.log('[AUTO-NAV] Route calculated - checking if should show preview mode');
+      console.log('[AUTO-NAV] Route calculated - showing preview mode only');
       console.log('[AUTO-NAV] isMobile:', isMobile);
       console.log('[AUTO-NAV] route exists:', !!route);
       console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
-      console.log('[AUTO-NAV] isNavigating:', isNavigating);
-      console.log('[AUTO-NAV] mobileNavMode:', mobileNavMode);
       
-      // CRITICAL FIX: Only set preview mode if navigation hasn't already started
-      // This prevents overwriting 'navigate' mode after Start Navigation is pressed
-      if (isMobile && route && route.routePath && route.routePath.length > 0 && 
-          !isNavigating && mobileNavMode !== 'navigate') {
+      if (isMobile && route && route.routePath && route.routePath.length > 0) {
         console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
         
         // Show preview mode - user must manually click "Start Navigation" button
-        dispatch({ type: 'PLAN_SUCCESS', route });
+        setMobileNavMode('preview');
         
         // Close route planning panel if open
         setSidebarState('collapsed');
@@ -2007,7 +1886,7 @@ function NavigationPageContent() {
     setIsNavigating(false);
     
     // Immediately set preview mode (no delay)
-    stopNavigationMode();
+    setMobileNavMode('preview');
     
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
@@ -2237,9 +2116,9 @@ function NavigationPageContent() {
       console.log('[NAV-ACTIVATION] Setting isNavigating = true');
       console.log('========================================');
       
-      // Use FSM dispatch for immediate update
-      startNavigationMode(journey);
-      console.log('[NAV-ACTIVATION] Called startNavigationMode(journey) via FSM');
+      // Use direct setter, not debounced version, for immediate update
+      setMobileNavMode('navigate');
+      console.log('[NAV-ACTIVATION] Called setMobileNavMode("navigate") directly');
       
       setIsNavigating(true);
       console.log('[NAV-ACTIVATION] Called setIsNavigating(true)');
@@ -2311,7 +2190,7 @@ function NavigationPageContent() {
     setIsNavigating(false);
     
     // Immediately set preview mode (no delay)
-    stopNavigationMode();
+    setMobileNavMode('preview');
     
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
@@ -2488,8 +2367,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
-                    hideCompass={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
+                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                   />
@@ -2629,11 +2508,11 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during NAVIGATING state */}
-              {navState.state === 'NAVIGATING' && (
+              {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
+              {isNavigating && (
                 <>
                   {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
-                  {navState.state === 'NAVIGATING' && currentRoute && (
+                  {isNavigating && currentRoute && (
                     <div className="fixed top-0 left-0 right-0 z-[1700]" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
                       <CompactTripStrip
                         eta={currentRoute.duration || 0}
@@ -2815,9 +2694,10 @@ function NavigationPageContent() {
 
         {/* NAVIGATION CONTROLS - ONLY IN NAVIGATION MODE - CRITICAL FOR PWA */}
         {console.log('[NAV-CONTROLS-RENDER] Checking if controls should render:')}
-        {console.log('[NAV-CONTROLS-RENDER] - navState.state:', navState.state)}
-        {console.log('[NAV-CONTROLS-RENDER] - Should render:', navState.state === 'NAVIGATING')}
-        {navState.state === 'NAVIGATING' && (
+        {console.log('[NAV-CONTROLS-RENDER] - mobileNavMode:', mobileNavMode)}
+        {console.log('[NAV-CONTROLS-RENDER] - isNavigating:', isNavigating)}
+        {console.log('[NAV-CONTROLS-RENDER] - Should render:', isNavigating)}
+        {isNavigating && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2947,8 +2827,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
-                    hideCompass={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
+                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                   />
@@ -3252,7 +3132,7 @@ function NavigationPageContent() {
         onStopNavigation={handleStopNavigation}
         currentRoute={currentRoute}
         isCalculating={calculateRouteMutation.isPending}
-        isNavigating={navState.state === 'NAVIGATING'}
+        isNavigating={isNavigating}
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);
@@ -3289,7 +3169,7 @@ function NavigationPageContent() {
                 // Clear route and return to preview mode
                 setCurrentRoute(null);
                 setIsNavigating(false);
-                cancelNavigation(); // Return to initial state using FSM
+                setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
                 

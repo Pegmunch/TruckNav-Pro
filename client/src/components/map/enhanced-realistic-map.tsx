@@ -481,8 +481,25 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         {/* Map Click Handler */}
         <MapClickHandler onMapClick={onMapClick} />
 
-        {/* Current Location Marker - REMOVED per user request */}
-        {/* Blue truck icon removed - no vehicle marker displayed on map */}
+        {/* Current Location Marker */}
+        {displayLocation && (
+          <Marker
+            position={[displayLocation.lat, displayLocation.lng]}
+            icon={createTruckIcon(isNavigating)}
+          >
+            <Popup closeOnClick={true} autoClose={true}>
+              <div className="text-center">
+                <div className="font-semibold">Current Location</div>
+                <div className="text-sm text-gray-600">
+                  {displayLocation.lat.toFixed(4)}, {displayLocation.lng.toFixed(4)}
+                </div>
+                {isNavigating && (
+                  <Badge variant="default" className="mt-1">Navigation Active</Badge>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         {/* Traffic Incidents */}
         {showIncidents && incidents.map((incident) => {
