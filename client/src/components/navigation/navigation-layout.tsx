@@ -38,12 +38,8 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack */}
-      {isNavigating && rightStack && (
-        <div className="absolute right-4 top-24 z-[1800] safe-top">
-          {rightStack}
-        </div>
-      )}
+      {/* Right navigation controls stack - renders with its own fixed positioning */}
+      {isNavigating && rightStack && rightStack}
 
       {/* Bottom instrumentation bar */}
       {isNavigating && bottomBar && (

@@ -26,7 +26,7 @@ export function LeftActionStack({
         variant="ghost"
         size="lg"
         onClick={onNavigate}
-        className="h-14 w-14 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        className="h-12 w-12 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="button-nav-left"
       >
         <Navigation className="h-6 w-6" />
@@ -37,7 +37,7 @@ export function LeftActionStack({
         variant="ghost"
         size="lg"
         onClick={onReportIncident}
-        className="h-14 w-14 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+        className="h-12 w-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
         data-testid="button-report-incident"
       >
         <AlertCircle className="h-6 w-6" />
@@ -48,7 +48,7 @@ export function LeftActionStack({
         variant="ghost"
         size="lg"
         onClick={onCancel}
-        className="h-14 w-14 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        className="h-12 w-12 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="button-cancel-nav"
       >
         <X className="h-6 w-6" />
@@ -59,7 +59,7 @@ export function LeftActionStack({
         variant="ghost"
         size="lg"
         onClick={onOpenMenu}
-        className="h-14 w-14 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-lg mt-8"
+        className="h-12 w-12 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-lg mt-8"
         data-testid="button-menu"
       >
         <svg
