@@ -2400,7 +2400,7 @@ function NavigationPageContent() {
               {(mobileNavMode === 'navigate' || isNavigating) && (
                 <>
                   {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
-                  {currentRoute && (
+                  {isNavigating && currentRoute && (
                     <div className="fixed top-0 left-0 right-0 z-[1700]" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
                       <CompactTripStrip
                         eta={currentRoute.duration || 0}
@@ -2466,7 +2466,7 @@ function NavigationPageContent() {
                     size="icon"
                     variant="destructive"
                     className={cn(
-                      "fixed z-[170] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
+                      "fixed z-[1900] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
                       completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
                     )}
                     style={{
@@ -2565,8 +2565,8 @@ function NavigationPageContent() {
         {console.log('[NAV-CONTROLS-RENDER] Checking if controls should render:')}
         {console.log('[NAV-CONTROLS-RENDER] - mobileNavMode:', mobileNavMode)}
         {console.log('[NAV-CONTROLS-RENDER] - isNavigating:', isNavigating)}
-        {console.log('[NAV-CONTROLS-RENDER] - Should render:', mobileNavMode === 'navigate')}
-        {mobileNavMode === 'navigate' && (
+        {console.log('[NAV-CONTROLS-RENDER] - Should render:', isNavigating)}
+        {isNavigating && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -2730,7 +2730,7 @@ function NavigationPageContent() {
                 {isNavigating && (
                   <>
                     {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
-                    {currentRoute && (
+                    {isNavigating && currentRoute && (
                       <div className="absolute left-0 right-0 z-[1700]" style={{ top: 'var(--safe-area-top, 0px)' }}>
                         <CompactTripStrip
                           eta={currentRoute.duration || 0}
