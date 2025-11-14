@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,130 @@ import { navigationVoice } from "@/lib/navigation-voice";
 // NavigationControlsStack has been moved to its own component file
 // Import is at the top of this file
 
+// ============================================
+// FINITE STATE MACHINE FOR NAVIGATION STATE
+// ============================================
+type NavigationState = 'IDLE' | 'PREVIEW' | 'NAVIGATING';
+
+interface NavigationFSM {
+  state: NavigationState;
+  route: Route | null;
+  journey: Journey | null;
+  mobileNavMode: 'plan' | 'preview' | 'navigate';
+  isNavigating: boolean;
+}
+
+type NavigationAction = 
+  | { type: 'INIT' }
+  | { type: 'PLAN_SUCCESS'; route: Route }
+  | { type: 'START_NAVIGATION'; journey?: Journey }
+  | { type: 'CANCEL_ROUTE' }
+  | { type: 'STOP_NAVIGATION' }
+  | { type: 'ERROR_RESET' }
+  | { type: 'RESTORE_JOURNEY'; journey: Journey; route: Route };
+
+function navigationReducer(state: NavigationFSM, action: NavigationAction): NavigationFSM {
+  console.log('[NAV-FSM] Action:', action.type, 'Current state:', state.state);
+  
+  switch (action.type) {
+    case 'INIT':
+      // Clear any corrupted localStorage on init
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
+      return {
+        state: 'IDLE',
+        route: null,
+        journey: null,
+        mobileNavMode: 'plan',
+        isNavigating: false
+      };
+      
+    case 'PLAN_SUCCESS':
+      // Only transition to preview if not already navigating
+      if (state.state === 'NAVIGATING') {
+        return state; // Don't interrupt active navigation
+      }
+      return {
+        state: 'PREVIEW',
+        route: action.route,
+        journey: state.journey,
+        mobileNavMode: 'preview',
+        isNavigating: false
+      };
+      
+    case 'START_NAVIGATION':
+      // Only allow starting from preview state
+      if (state.state !== 'PREVIEW') {
+        console.warn('[NAV-FSM] Cannot start navigation from state:', state.state);
+        return state;
+      }
+      // Set localStorage flags for persistence
+      localStorage.setItem('navigation_mode', 'navigate');
+      localStorage.setItem('navigation_timestamp', Date.now().toString());
+      return {
+        state: 'NAVIGATING',
+        route: state.route,
+        journey: action.journey || state.journey,
+        mobileNavMode: 'navigate',
+        isNavigating: true
+      };
+      
+    case 'CANCEL_ROUTE':
+      // Clear all navigation state and localStorage
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
+      localStorage.removeItem('activeJourneyId');
+      localStorage.removeItem('activeRouteId');
+      return {
+        state: 'IDLE',
+        route: null,
+        journey: null,
+        mobileNavMode: 'plan',
+        isNavigating: false
+      };
+      
+    case 'STOP_NAVIGATION':
+      // Stop navigation but keep route in preview
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
+      localStorage.removeItem('activeJourneyId');
+      return {
+        state: state.route ? 'PREVIEW' : 'IDLE',
+        route: state.route,
+        journey: null,
+        mobileNavMode: state.route ? 'preview' : 'plan',
+        isNavigating: false
+      };
+      
+    case 'ERROR_RESET':
+      // Emergency reset - clear everything
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
+      localStorage.removeItem('activeJourneyId');
+      localStorage.removeItem('activeRouteId');
+      return {
+        state: 'IDLE',
+        route: null,
+        journey: null,
+        mobileNavMode: 'plan',
+        isNavigating: false
+      };
+      
+    case 'RESTORE_JOURNEY':
+      // Restore from localStorage after page reload
+      return {
+        state: 'NAVIGATING',
+        route: action.route,
+        journey: action.journey,
+        mobileNavMode: 'navigate',
+        isNavigating: true
+      };
+      
+    default:
+      return state;
+  }
+}
+
 // Inner component that uses GPS context
 function NavigationPageContent() {
   const { t } = useTranslation();
@@ -79,14 +203,48 @@ function NavigationPageContent() {
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
-  const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
+  
+  // ============================================
+  // FINITE STATE MACHINE FOR NAVIGATION
+  // ============================================
+  const [navState, dispatch] = useReducer(navigationReducer, {
+    state: 'IDLE',
+    route: null,
+    journey: null,
+    mobileNavMode: 'plan',
+    isNavigating: false
+  });
+  
+  // Derived state for backward compatibility
+  const currentRoute = navState.route;
+  const activeJourney = navState.journey;
+  const isNavigating = navState.isNavigating;
+  const mobileNavMode = navState.mobileNavMode;
+  
+  // Helper to update route/journey without full state transition
+  const setCurrentRoute = (route: Route | null) => {
+    if (route) {
+      dispatch({ type: 'PLAN_SUCCESS', route });
+    } else {
+      dispatch({ type: 'CANCEL_ROUTE' });
+    }
+  };
+  
+  const setActiveJourney = (journey: Journey | null) => {
+    // Journey is managed by the FSM, this is just for compatibility
+    console.log('[NAV-FSM] Journey update requested:', journey?.id);
+  };
+  
+  const setIsNavigating = (navigating: boolean) => {
+    // This should only be called through proper FSM transitions
+    console.warn('[NAV-FSM] Direct setIsNavigating called - should use dispatch instead');
+  };
+  
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
   const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [toCoordinates, setToCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
-  const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
   // Unified sidebar state management - single source of truth
@@ -178,7 +336,7 @@ function NavigationPageContent() {
   
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
-  const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
+  // Removed - mobileNavMode now comes from navigation FSM on line 225
   
   // Debug logging whenever mode changes
   useEffect(() => {
@@ -189,21 +347,8 @@ function NavigationPageContent() {
   // Mode transition debouncing to prevent race conditions
   const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const setMobileNavModeDebounced = useCallback((newMode: MobileNavMode) => {
-    console.log(`[NAV-MODE-DEBOUNCED] Requesting transition to ${newMode} mode (50ms delay)`);
-    
-    // Clear any pending transition
-    if (modeTransitionTimeoutRef.current) {
-      clearTimeout(modeTransitionTimeoutRef.current);
-    }
-
-    // Prevent rapid mode changes (50ms debounce)
-    modeTransitionTimeoutRef.current = setTimeout(() => {
-      console.log(`[NAV-MODE-DEBOUNCED] Executing transition to ${newMode} mode`);
-      setMobileNavMode(newMode);
-      console.log(`[NAV-MODE] Transition to ${newMode} mode completed`);
-    }, 50);
-  }, []);
+  // Removed setMobileNavModeDebounced - now using FSM dispatch
+  // Navigation mode changes are handled through the reducer
 
   // Cleanup on unmount
   useEffect(() => {
