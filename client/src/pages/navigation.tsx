@@ -2836,11 +2836,11 @@ function NavigationPageContent() {
                 )}
                 
                 {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
-                {isNavigating && (
+                {isNavUIActive && (
                   <>
                     {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
-                    {isNavigating && currentRoute && (
-                      <div className="absolute left-0 right-0 z-[1700]" style={{ top: 'var(--safe-area-top, 0px)' }}>
+                    {currentRoute && (
+                      <div className="absolute top-0 left-0 right-0 z-[1700]">
                         <CompactTripStrip
                           eta={currentRoute.duration || 0}
                           distanceRemaining={currentRoute.distance || 0}
@@ -3046,8 +3046,8 @@ function NavigationPageContent() {
           onDismiss={dismissNotification}
           getIcon={getNotificationIcon}
           dndEnabled={dndState?.enabled || false}
-          isNavigating={isNavigating}
-          hasNavigationGuidance={isNavigating && currentRoute !== null}
+          isNavigating={isNavUIActive}
+          hasNavigationGuidance={isNavUIActive && currentRoute !== null}
         />
       ) : null}
 
