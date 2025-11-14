@@ -215,16 +215,27 @@ export function AddressAutocomplete({
     .sort((a, b) => (b.useCount || 0) - (a.useCount || 0))
     .slice(0, 5);
 
+  // Helper to detect mobile/PWA context - prevents dropdown flicker on mobile
+  const isMobileOrPWA = useMemo(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isMobile = window.innerWidth < 768;
+    return isStandalone || isMobile;
+  }, []);
+
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchTerm(newValue);
     onChange(newValue);
-    if (newValue.length >= 2) {
-      setOpen(true);
-    } else {
-      setOpen(false);
+    
+    // Only auto-open dropdown on desktop - prevents flicker loop on mobile/PWA
+    if (!isMobileOrPWA) {
+      if (newValue.length >= 2) {
+        setOpen(true);
+      } else {
+        setOpen(false);
+      }
     }
-  }, [onChange]);
+  }, [onChange, isMobileOrPWA]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && open) {
@@ -311,18 +322,14 @@ export function AddressAutocomplete({
   }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
 
   const handleInputFocus = useCallback(() => {
-    // Check if in mobile/PWA mode - don't show popups in standalone mode
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isMobile = window.innerWidth < 768;
-    
-    // Don't open dropdown in mobile/PWA mode
-    if (isStandalone || isMobile) {
+    // Don't open dropdown in mobile/PWA mode - prevents flicker loop
+    if (isMobileOrPWA) {
       return;
     }
     
     // Open dropdown on desktop only
     setOpen(true);
-  }, []);
+  }, [isMobileOrPWA]);
 
   const handleInputBlur = useCallback(() => {
     setTimeout(() => {
