@@ -2507,7 +2507,7 @@ function NavigationPageContent() {
                     <MapLegalOwnership compact={true} className="sm:hidden" />
                   </div>
 
-                  {/* MobileFAB - Bottom Right (separate fixed position) - BULLETPROOF: Hamburger menu always visible */}
+                  {/* MobileFAB - Bottom Left (moved from right to avoid overlap with navigation controls) */}
                   <MobileFAB
                     mode="navigate"
                     onSettingsClick={() => setShowVehicleSettings(true)}
@@ -2520,8 +2520,8 @@ function NavigationPageContent() {
                     bearing={mapBearing}
                     className="fixed z-[200] pointer-events-auto"
                     style={{
-                      bottom: 'calc(100px + var(--safe-area-bottom))',
-                      right: 'calc(24px + var(--safe-area-right))'
+                      bottom: 'calc(160px + var(--safe-area-bottom))',
+                      left: 'calc(20px + var(--safe-area-left))'
                     }}
                     data-testid="mobile-fab-navigate"
                   />
