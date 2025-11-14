@@ -5,10 +5,10 @@
  * Handles building and syncing for iOS and Android platforms
  */
 
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const path = require('path');
-const fs = require('fs').promises;
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import fs from 'fs/promises';
 
 const execAsync = promisify(exec);
 

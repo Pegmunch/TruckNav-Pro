@@ -5,8 +5,8 @@
  * Creates app icons and splash screens for iOS and Android
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+import fs from 'fs/promises';
+import path from 'path';
 
 // SVG template for the app icon
 const iconSVG = `
