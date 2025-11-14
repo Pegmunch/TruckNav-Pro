@@ -2597,92 +2597,10 @@ function NavigationPageContent() {
                 />
               )}
 
-
-                  {/* Navigation Controls moved outside MapShell - see bottom of mobile layout */}
-
-                  {/* Professional Oval Speedometer HUD - THINNER/Smaller Footer */}
-                  <div 
-                    className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto scale-90"
-                    style={{
-                      bottom: 'calc(16px + var(--safe-area-bottom, 0px))' // Positioned next to cancel button, thinner
-                    }}
-                    data-testid="speedometer-hud-navigate"
-                  >
-                    <SpeedometerHUD 
-                      className="shadow-2xl" 
-                      speedLimit={currentSpeedLimit || undefined}
-                      roadInfo={roadInfo}
-                      isNavigating={true}
-                    />
-                  </div>
-
-                  {/* Incident Feed Button - Above cancel button on left */}
-                  <Button
-                    onClick={() => {
-                      setShowIncidentFeed(true);
-                      setHasInteractedWithIncidentFeed(true);
-                    }}
-                    size="icon"
-                    variant="secondary"
-                    className="fixed z-[1750] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95 text-white"
-                    style={{
-                      bottom: 'calc(90px + var(--safe-area-bottom, 0px))',
-                      left: 'calc(20px + var(--safe-area-left, 0px))'
-                    }}
-                    data-testid="button-incident-feed"
-                    aria-label="View traffic incidents"
-                  >
-                    <AlertCircle className="w-7 h-7" />
-                  </Button>
-
-                  {/* Cancel Route Button - Square X button at bottom-left */}
-                  <Button
-                    onClick={handleStopNavigation}
-                    size="icon"
-                    variant="destructive"
-                    className={cn(
-                      "fixed z-[1900] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
-                      completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
-                    )}
-                    style={{
-                      bottom: 'calc(20px + var(--safe-area-bottom, 0px))',
-                      left: 'calc(20px + var(--safe-area-left, 0px))'
-                    }}
-                    data-testid="button-cancel-route"
-                    aria-label="Cancel route and return to start"
-                  >
-                    {completeJourneyMutation.isPending ? (
-                      <Loader2 className="w-7 h-7 animate-spin" />
-                    ) : (
-                      <X className="w-7 h-7" />
-                    )}
-                  </Button>
-
-                  {/* Legal Ownership - Bottom of screen */}
-                  <div className="fixed bottom-0 left-0 right-0 w-full z-[5] pointer-events-auto">
-                    <MapLegalOwnership compact={true} className="sm:hidden" />
-                  </div>
-
-                  {/* MobileFAB - Bottom Left (moved from right to avoid overlap with navigation controls) */}
-                  <MobileFAB
-                    mode={isNavigating ? 'navigate' : 'preview'}
-                    onSettingsClick={() => setShowVehicleSettings(true)}
-                    onClearRoute={handleStopNavigation}
-                    onMenuClick={() => setShowComprehensiveMenu(true)}
-                    onLayersClick={() => setShowTrafficLayer(!showTrafficLayer)}
-                    onReportIncident={() => setShowIncidentReportDialog(true)}
-                    onViewIncidents={() => setShowIncidentFeed(true)}
-                    onCompassClick={() => mapRef.current?.resetBearing()}
-                    bearing={mapBearing}
-                    className="fixed z-[200] pointer-events-auto"
-                    style={{
-                      bottom: 'calc(160px + var(--safe-area-bottom))',
-                      left: 'calc(20px + var(--safe-area-left))'
-                    }}
-                    data-testid="mobile-fab-navigate"
-                  />
-                </>
-              )}
+              {/* Legal Ownership - Bottom of screen */}
+              <div className="fixed bottom-0 left-0 right-0 w-full z-[5] pointer-events-auto">
+                <MapLegalOwnership compact={true} className="sm:hidden" />
+              </div>
             </>
           )}
 
