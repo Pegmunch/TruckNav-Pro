@@ -344,19 +344,20 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
-  // Mode transition debouncing to prevent race conditions
-  const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Helper functions for FSM dispatch actions
+  const startNavigationMode = useCallback((journey: NavigationJourney) => {
+    console.log('[FSM] Starting navigation mode');
+    dispatch({ type: 'START_NAVIGATION', journey });
+  }, []);
 
-  // Removed setMobileNavModeDebounced - now using FSM dispatch
-  // Navigation mode changes are handled through the reducer
+  const stopNavigationMode = useCallback(() => {
+    console.log('[FSM] Stopping navigation, returning to preview');
+    dispatch({ type: 'STOP_NAVIGATION' });
+  }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (modeTransitionTimeoutRef.current) {
-        clearTimeout(modeTransitionTimeoutRef.current);
-      }
-    };
+  const cancelNavigation = useCallback(() => {
+    console.log('[FSM] Cancelling route and navigation');
+    dispatch({ type: 'CANCEL_ROUTE' });
   }, []);
   
   // Map reference for compass and 3D tilt control
@@ -1369,18 +1370,20 @@ function NavigationPageContent() {
       if (currentJourney.status === 'active' && navigationStarted && !isStale) {
         console.log('[JOURNEY-LOAD] Active journey WITH recent navigation flag - restoring navigation');
         setIsNavigating(true);
-        setMobileNavMode('navigate');
+        startNavigationMode(currentJourney); // Use FSM dispatch
       } else if (currentJourney.status === 'active') {
         console.log('[JOURNEY-LOAD] Active journey but stale/missing navigation flag - showing preview');
         setIsNavigating(false);
-        setMobileNavMode('preview');
+        dispatch({ type: 'STOP_NAVIGATION' }); // Use FSM to go to preview
         // Clear stale navigation flags
         localStorage.removeItem('navigation_mode');
         localStorage.removeItem('navigation_timestamp');
       } else if (currentJourney.status === 'planned') {
         console.log('[JOURNEY-LOAD] Planned journey - showing preview mode');
         setIsNavigating(false);
-        setMobileNavMode('preview');
+        if (navState.state === 'IDLE' && currentJourney.route) {
+          dispatch({ type: 'PLAN_SUCCESS', route: currentJourney.route });
+        }
         // Clear any navigation flags for planned journeys
         localStorage.removeItem('navigation_mode');
         localStorage.removeItem('navigation_timestamp');
@@ -1391,7 +1394,7 @@ function NavigationPageContent() {
       setCurrentRoute(null);
       setActiveJourney(null);
       setIsNavigating(false);
-      setMobileNavMode('preview');
+      dispatch({ type: 'CANCEL_ROUTE' }); // Clear everything
     }
   }, [currentJourney]);
 
@@ -1410,7 +1413,7 @@ function NavigationPageContent() {
       // User hasn't explicitly started navigation or state is stale - ensure clean state
       console.log('[INIT] Clearing navigation state - no explicit/recent navigation start');
       setIsNavigating(false);
-      setMobileNavMode('plan');
+      // FSM starts in IDLE state by default, no dispatch needed
       localStorage.removeItem('navigation_mode');
       localStorage.removeItem('navigation_timestamp');
       localStorage.removeItem('activeJourneyId');
@@ -1431,7 +1434,7 @@ function NavigationPageContent() {
       localStorage.removeItem('activeJourneyId');
       localStorage.removeItem('activeRouteId');
       setIsNavigating(false);
-      setMobileNavMode('plan');
+      dispatch({ type: 'CANCEL_ROUTE' }); // Clear all navigation
     };
     
     // Handle page hide (mobile browser minimized or PWA closed)
