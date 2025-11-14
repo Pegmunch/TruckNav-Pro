@@ -39,10 +39,17 @@ export function NavigationControlsStack({
   mode,
   className
 }: NavigationControlsStackProps) {
+  // Debug logging
+  console.log('[NAV-CONTROLS] Component rendered with mode:', mode);
+  console.log('[NAV-CONTROLS] Should render:', mode === 'navigate');
+  
   // CRITICAL: Only show in navigate mode - Required for PWA navigation
   if (mode !== 'navigate') {
+    console.log('[NAV-CONTROLS] Not rendering - mode is not navigate');
     return null;
   }
+  
+  console.log('[NAV-CONTROLS] Rendering navigation control buttons');
 
   const handleCompassClick = () => {
     mapRef.current?.resetBearing();

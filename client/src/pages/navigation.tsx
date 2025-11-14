@@ -179,10 +179,18 @@ function NavigationPageContent() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
   
+  // Debug logging whenever mode changes
+  useEffect(() => {
+    console.log('[NAV-MODE-STATE] mobileNavMode changed to:', mobileNavMode);
+    console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
+  }, [mobileNavMode, isNavigating]);
+  
   // Mode transition debouncing to prevent race conditions
   const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const setMobileNavModeDebounced = useCallback((newMode: MobileNavMode) => {
+    console.log(`[NAV-MODE-DEBOUNCED] Requesting transition to ${newMode} mode (50ms delay)`);
+    
     // Clear any pending transition
     if (modeTransitionTimeoutRef.current) {
       clearTimeout(modeTransitionTimeoutRef.current);
@@ -190,6 +198,7 @@ function NavigationPageContent() {
 
     // Prevent rapid mode changes (50ms debounce)
     modeTransitionTimeoutRef.current = setTimeout(() => {
+      console.log(`[NAV-MODE-DEBOUNCED] Executing transition to ${newMode} mode`);
       setMobileNavMode(newMode);
       console.log(`[NAV-MODE] Transition to ${newMode} mode completed`);
     }, 50);
@@ -681,17 +690,32 @@ function NavigationPageContent() {
   // Auto-update mobile navigation mode based on state
   // IMPORTANT: Only auto-switch when appropriate, don't interrupt user interactions
   useEffect(() => {
-    if (!isMobile) return; // Only applies to mobile
+    console.log('[NAV-MODE-AUTO] useEffect triggered:');
+    console.log('[NAV-MODE-AUTO] - isMobile:', isMobile);
+    console.log('[NAV-MODE-AUTO] - isNavigating:', isNavigating);
+    console.log('[NAV-MODE-AUTO] - currentRoute exists:', !!currentRoute);
+    console.log('[NAV-MODE-AUTO] - showComprehensiveMenu:', showComprehensiveMenu);
+    console.log('[NAV-MODE-AUTO] - current mobileNavMode:', mobileNavMode);
+    
+    if (!isMobile) {
+      console.log('[NAV-MODE-AUTO] Not mobile - skipping mode update');
+      return; // Only applies to mobile
+    }
     
     if (isNavigating) {
+      console.log('[NAV-MODE-AUTO] Navigation active - switching to navigate mode');
       // Always switch to navigate mode when navigation starts
       setMobileNavModeDebounced('navigate');
     } else if (!currentRoute && showComprehensiveMenu) {
+      console.log('[NAV-MODE-AUTO] No route + menu open - switching to plan mode');
       // Only switch to plan mode if menu is open and actively planning
       setMobileNavModeDebounced('plan');
     } else if (!currentRoute && !showComprehensiveMenu) {
+      console.log('[NAV-MODE-AUTO] No route + menu closed - switching to preview mode');
       // Default to preview mode when no route and menu is closed
       setMobileNavModeDebounced('preview');
+    } else {
+      console.log('[NAV-MODE-AUTO] No mode change needed');
     }
     // REMOVED: Auto-switch to preview when route exists - this was interrupting user input
     // The route calculation onSuccess handler will explicitly set preview mode when needed
@@ -1160,13 +1184,22 @@ function NavigationPageContent() {
           });
       }
       
-      // Note: Don't automatically start navigation even if status is 'active'
-      // User should manually click "Start Navigation" to begin
+      // CRITICAL FIX: Restore navigation state if journey is active
+      if (currentJourney.status === 'active') {
+        console.log('[JOURNEY-LOAD] Active journey detected - restoring navigation state');
+        setIsNavigating(true);
+        setMobileNavMode('navigate');
+        console.log('[JOURNEY-LOAD] Navigation state restored: isNavigating=true, mobileNavMode=navigate');
+      } else {
+        console.log('[JOURNEY-LOAD] Journey status is:', currentJourney.status, '- not starting navigation');
+      }
     } else {
       // No journey - ensure clean state
       console.log('[JOURNEY-LOAD] No journey - ensuring clean state');
       setCurrentRoute(null);
       setActiveJourney(null);
+      setIsNavigating(false);
+      setMobileNavMode('preview');
     }
   }, [currentJourney]);
 
@@ -1951,12 +1984,17 @@ function NavigationPageContent() {
       // React state updates are async, so set them early
       console.log('========================================');
       console.log('[NAV-ACTIVATION] 🎯 SETTING NAVIGATION STATES');
-      console.log('[NAV-ACTIVATION] Setting mobileNavMode = navigate');
+      console.log('[NAV-ACTIVATION] Current mobileNavMode:', mobileNavMode);
+      console.log('[NAV-ACTIVATION] Setting mobileNavMode = navigate (DIRECT, NO DEBOUNCE)');
       console.log('[NAV-ACTIVATION] Setting isNavigating = true');
       console.log('========================================');
       
+      // Use direct setter, not debounced version, for immediate update
       setMobileNavMode('navigate');
+      console.log('[NAV-ACTIVATION] Called setMobileNavMode("navigate") directly');
+      
       setIsNavigating(true);
+      console.log('[NAV-ACTIVATION] Called setIsNavigating(true)');
       
       // Store route ID for persistence
       if (route.id) {
@@ -2501,6 +2539,10 @@ function NavigationPageContent() {
         </div>
 
         {/* NAVIGATION CONTROLS - ONLY IN NAVIGATION MODE - CRITICAL FOR PWA */}
+        {console.log('[NAV-CONTROLS-RENDER] Checking if controls should render:')}
+        {console.log('[NAV-CONTROLS-RENDER] - mobileNavMode:', mobileNavMode)}
+        {console.log('[NAV-CONTROLS-RENDER] - isNavigating:', isNavigating)}
+        {console.log('[NAV-CONTROLS-RENDER] - Should render:', mobileNavMode === 'navigate')}
         {mobileNavMode === 'navigate' && (
           <NavigationControlsStack
             mapRef={mapRef}
