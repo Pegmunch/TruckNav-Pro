@@ -73,7 +73,7 @@ export function NavigationControlsStack({
   return (
     <div 
       className={cn(
-        "fixed right-4 flex flex-col gap-2 z-[1600]",
+        "fixed right-4 flex flex-col gap-2 z-[1800]",
         className
       )}
       style={{
