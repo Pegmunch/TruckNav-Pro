@@ -16,8 +16,9 @@ export function LeftActionStack({
   onOpenMenu,
   isNavigating
 }: LeftActionStackProps) {
+  // Defensive check - ensures component can't be rendered outside navigation mode
   if (!isNavigating) return null;
-
+  
   return (
     <>
       {/* Navigation button - red navigation arrow */}
