@@ -23,6 +23,8 @@ interface NavigationControlsStackProps {
   onToggleMapView: () => void;
   onViewIncidents: () => void;
   className?: string;
+  topOffset?: string;
+  rightOffset?: string;
 }
 
 export function NavigationControlsStack({
@@ -35,7 +37,9 @@ export function NavigationControlsStack({
   mapViewMode,
   onToggleMapView,
   onViewIncidents,
-  className
+  className,
+  topOffset = 'calc(120px + var(--safe-area-top))',
+  rightOffset = 'calc(16px + var(--safe-area-right))'
 }: NavigationControlsStackProps) {
   // CRITICAL: Component should ALWAYS render when parent mounts it based on isNavigating
   // Parent already handles conditional rendering, so we trust it completely
@@ -67,8 +71,8 @@ export function NavigationControlsStack({
         className
       )}
       style={{
-        top: 'calc(120px + var(--safe-area-top))',
-        right: 'calc(16px + var(--safe-area-right))'
+        top: topOffset,
+        right: rightOffset
       }}
     >
       {/* 1. Compass - Top Position */}

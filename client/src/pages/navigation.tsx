@@ -55,6 +55,9 @@ import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
 import { NavigationControlsStack } from "@/components/navigation/navigation-controls-stack";
+import { NavigationLayout } from "@/components/navigation/navigation-layout";
+import { LeftActionStack } from "@/components/navigation/left-action-stack";
+import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 
 // Removed duplicate NavigationControlsStack - now imported from component
