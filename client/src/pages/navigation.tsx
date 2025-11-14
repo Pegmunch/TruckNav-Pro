@@ -2460,6 +2460,25 @@ function NavigationPageContent() {
                     />
                   </div>
 
+                  {/* Incident Feed Button - Above cancel button on left */}
+                  <Button
+                    onClick={() => {
+                      setShowIncidentFeed(true);
+                      setHasInteractedWithIncidentFeed(true);
+                    }}
+                    size="icon"
+                    variant="secondary"
+                    className="fixed z-[1750] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95 text-white"
+                    style={{
+                      bottom: 'calc(90px + var(--safe-area-bottom, 0px))',
+                      left: 'calc(20px + var(--safe-area-left, 0px))'
+                    }}
+                    data-testid="button-incident-feed"
+                    aria-label="View traffic incidents"
+                  >
+                    <AlertCircle className="w-7 h-7" />
+                  </Button>
+
                   {/* Cancel Route Button - Square X button at bottom-left */}
                   <Button
                     onClick={handleStopNavigation}

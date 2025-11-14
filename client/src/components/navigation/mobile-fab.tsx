@@ -108,7 +108,7 @@ export function MobileFAB({
       customIcon: null,
       label: 'View Incidents',
       onClick: onViewIncidents,
-      showInModes: ['plan', 'preview', 'navigate']
+      showInModes: ['plan', 'preview'] // Removed from navigate mode - now has dedicated button on left
     },
     {
       id: 'report',
