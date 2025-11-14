@@ -1416,6 +1416,7 @@ function NavigationPageContent() {
     onSuccess: (journey) => {
       setActiveJourney(journey);
       setIsNavigating(true);
+      setMobileNavMode('navigate'); // Ensure mobile nav mode is set for navigation controls to appear
       localStorage.setItem('activeJourneyId', journey.id.toString());
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
       refetchCurrentJourney();
