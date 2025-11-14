@@ -2397,7 +2397,7 @@ function NavigationPageContent() {
               )}
 
               {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
-              {(mobileNavMode === 'navigate' || isNavigating) && (
+              {isNavigating && (
                 <>
                   {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
                   {isNavigating && currentRoute && (
@@ -2509,7 +2509,7 @@ function NavigationPageContent() {
 
                   {/* MobileFAB - Bottom Left (moved from right to avoid overlap with navigation controls) */}
                   <MobileFAB
-                    mode="navigate"
+                    mode={isNavigating ? 'navigate' : 'preview'}
                     onSettingsClick={() => setShowVehicleSettings(true)}
                     onClearRoute={handleStopNavigation}
                     onMenuClick={() => setShowComprehensiveMenu(true)}
@@ -2597,7 +2597,7 @@ function NavigationPageContent() {
             showTrafficLayer={showTrafficLayer}
             onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
             mapViewMode={mapViewMode}
-            mode="navigate"
+            mode={isNavigating ? 'navigate' : 'preview'}
             onToggleMapView={() => {
               const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
               setMapViewMode(newMode);
