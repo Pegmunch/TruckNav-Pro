@@ -2597,7 +2597,6 @@ function NavigationPageContent() {
             showTrafficLayer={showTrafficLayer}
             onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
             mapViewMode={mapViewMode}
-            mode={isNavigating ? 'navigate' : 'preview'}
             onToggleMapView={() => {
               const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
               setMapViewMode(newMode);

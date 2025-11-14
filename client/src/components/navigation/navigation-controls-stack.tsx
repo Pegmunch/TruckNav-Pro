@@ -22,7 +22,6 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
-  mode: 'preview' | 'navigate';
   className?: string;
 }
 
@@ -36,20 +35,11 @@ export function NavigationControlsStack({
   mapViewMode,
   onToggleMapView,
   onViewIncidents,
-  mode,
   className
 }: NavigationControlsStackProps) {
-  // Debug logging
-  console.log('[NAV-CONTROLS] Component rendered with mode:', mode);
-  console.log('[NAV-CONTROLS] Should render:', mode === 'navigate');
-  
-  // CRITICAL: Only show in navigate mode - Required for PWA navigation
-  if (mode !== 'navigate') {
-    console.log('[NAV-CONTROLS] Not rendering - mode is not navigate');
-    return null;
-  }
-  
-  console.log('[NAV-CONTROLS] Rendering navigation control buttons');
+  // CRITICAL: Component should ALWAYS render when parent mounts it based on isNavigating
+  // Parent already handles conditional rendering, so we trust it completely
+  console.log('[NAV-CONTROLS] Navigation controls rendering - parent has confirmed isNavigating=true');
 
   const handleCompassClick = () => {
     mapRef.current?.resetBearing();
