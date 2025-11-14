@@ -2656,11 +2656,9 @@ function NavigationPageContent() {
         </div>
 
         {/* Navigation controls are now properly rendered inside NavigationLayout only */}
-        {console.log('[NAV-CONTROLS-RENDER] Checking if controls should render:')}
-        {console.log('[NAV-CONTROLS-RENDER] - mobileNavMode:', mobileNavMode)}
-        {console.log('[NAV-CONTROLS-RENDER] - isNavigating:', isNavigating)}
-        {console.log('[NAV-CONTROLS-RENDER] - Should render:', isNavigating)}
-        {console.log('[NAV-CONTROLS] Navigation controls properly gated inside NavigationLayout')}
+        {console.log('[NAV-CONTROLS] Controls state check - isNavigating:', isNavigating, ', mode:', mobileNavMode)}
+        {!isNavigating && console.log('[NAV-CONTROLS] ✅ Controls properly hidden in preview mode')}
+        {isNavigating && console.log('[NAV-CONTROLS] ✅ Controls properly shown in navigation mode')}
         
         </>
       ) : (
