@@ -2411,7 +2411,6 @@ function NavigationPageContent() {
                   {/* Header - Thicker for better accessibility */}
                   <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-3 px-4 border-b-2 border-gray-200 bg-white">
                     <div className="flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-primary" />
                       <span className="text-sm font-semibold">TruckNav Pro</span>
                     </div>
                     <Button
@@ -2467,7 +2466,6 @@ function NavigationPageContent() {
                   <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm" 
                        style={{ paddingTop: 'calc(12px + var(--safe-area-top))' }}>
                     <div className="flex items-center gap-2">
-                      <Truck className="w-5 h-5 text-blue-600" />
                       <span className="text-lg font-semibold text-gray-900">TruckNav Pro</span>
                     </div>
                     <Button
