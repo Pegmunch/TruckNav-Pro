@@ -856,39 +856,8 @@ function NavigationPageContent() {
     
   }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
   
-  // Auto-update mobile navigation mode based on state
-  // IMPORTANT: Only auto-switch when appropriate, don't interrupt user interactions
-  useEffect(() => {
-    console.log('[NAV-MODE-AUTO] useEffect triggered:');
-    console.log('[NAV-MODE-AUTO] - isMobile:', isMobile);
-    console.log('[NAV-MODE-AUTO] - isNavigating:', isNavigating);
-    console.log('[NAV-MODE-AUTO] - currentRoute exists:', !!currentRoute);
-    console.log('[NAV-MODE-AUTO] - showComprehensiveMenu:', showComprehensiveMenu);
-    console.log('[NAV-MODE-AUTO] - current mobileNavMode:', mobileNavMode);
-    
-    if (!isMobile) {
-      console.log('[NAV-MODE-AUTO] Not mobile - skipping mode update');
-      return; // Only applies to mobile
-    }
-    
-    if (isNavigating) {
-      console.log('[NAV-MODE-AUTO] Navigation active - switching to navigate mode');
-      // Always switch to navigate mode when navigation starts
-      setMobileNavModeDebounced('navigate');
-    } else if (!currentRoute && showComprehensiveMenu) {
-      console.log('[NAV-MODE-AUTO] No route + menu open - switching to plan mode');
-      // Only switch to plan mode if menu is open and actively planning
-      setMobileNavModeDebounced('plan');
-    } else if (!currentRoute && !showComprehensiveMenu) {
-      console.log('[NAV-MODE-AUTO] No route + menu closed - switching to preview mode');
-      // Default to preview mode when no route and menu is closed
-      setMobileNavModeDebounced('preview');
-    } else {
-      console.log('[NAV-MODE-AUTO] No mode change needed');
-    }
-    // REMOVED: Auto-switch to preview when route exists - this was interrupting user input
-    // The route calculation onSuccess handler will explicitly set preview mode when needed
-  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode, showComprehensiveMenu]);
+  // REMOVED: Auto-sync effect - FSM now handles all state transitions explicitly
+  // All navigation mode changes are driven by user actions and async results
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
   useEffect(() => {
@@ -1014,8 +983,7 @@ function NavigationPageContent() {
       const speedometer = document.querySelector('[data-testid="speedometer-hud-navigate"]');
       if (!speedometer) {
         console.error('[NAV-MODE] CRITICAL: Speedometer not found in navigate mode!');
-        // Attempt recovery by forcing re-render
-        setMobileNavModeDebounced('navigate');
+        // Log the anomaly - NavigationControls will re-render from navState
       } else {
         console.log('[NAV-MODE] ✓ Speedometer visibility confirmed');
       }
@@ -1025,7 +993,7 @@ function NavigationPageContent() {
     const interval = setInterval(checkSpeedometerVisibility, 3000);
 
     return () => clearInterval(interval);
-  }, [mobileNavMode, setMobileNavModeDebounced]);
+  }, [mobileNavMode]);
   
   // Real-time bearing rotation during navigation - BULLETPROOF with route fallback
   useEffect(() => {
@@ -1603,7 +1571,7 @@ function NavigationPageContent() {
       setActiveJourney(null);
       setIsNavigating(false);
       setCurrentRoute(null);
-      setMobileNavModeDebounced('preview'); // Return to preview mode
+      stopNavigationMode(); // Return to preview mode using FSM
       localStorage.removeItem('activeJourneyId');
       // Invalidate all journey-related queries to keep UI consistent
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
@@ -1708,7 +1676,7 @@ function NavigationPageContent() {
         console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
         
         // Show preview mode - user must manually click "Start Navigation" button
-        setMobileNavMode('preview');
+        dispatch({ type: 'PLAN_SUCCESS', route });
         
         // Close route planning panel if open
         setSidebarState('collapsed');
@@ -2039,7 +2007,7 @@ function NavigationPageContent() {
     setIsNavigating(false);
     
     // Immediately set preview mode (no delay)
-    setMobileNavMode('preview');
+    stopNavigationMode();
     
     if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
       completeJourneyMutation.mutate(activeJourney.id);
@@ -2269,9 +2237,9 @@ function NavigationPageContent() {
       console.log('[NAV-ACTIVATION] Setting isNavigating = true');
       console.log('========================================');
       
-      // Use direct setter, not debounced version, for immediate update
-      setMobileNavMode('navigate');
-      console.log('[NAV-ACTIVATION] Called setMobileNavMode("navigate") directly');
+      // Use FSM dispatch for immediate update
+      startNavigationMode(journey);
+      console.log('[NAV-ACTIVATION] Called startNavigationMode(journey) via FSM');
       
       setIsNavigating(true);
       console.log('[NAV-ACTIVATION] Called setIsNavigating(true)');
@@ -2343,7 +2311,7 @@ function NavigationPageContent() {
     setIsNavigating(false);
     
     // Immediately set preview mode (no delay)
-    setMobileNavMode('preview');
+    stopNavigationMode();
     
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
@@ -2847,10 +2815,9 @@ function NavigationPageContent() {
 
         {/* NAVIGATION CONTROLS - ONLY IN NAVIGATION MODE - CRITICAL FOR PWA */}
         {console.log('[NAV-CONTROLS-RENDER] Checking if controls should render:')}
-        {console.log('[NAV-CONTROLS-RENDER] - mobileNavMode:', mobileNavMode)}
-        {console.log('[NAV-CONTROLS-RENDER] - isNavigating:', isNavigating)}
-        {console.log('[NAV-CONTROLS-RENDER] - Should render:', isNavigating)}
-        {isNavigating && (
+        {console.log('[NAV-CONTROLS-RENDER] - navState.state:', navState.state)}
+        {console.log('[NAV-CONTROLS-RENDER] - Should render:', navState.state === 'NAVIGATING')}
+        {navState.state === 'NAVIGATING' && (
           <NavigationControlsStack
             mapRef={mapRef}
             mapBearing={mapBearing}
@@ -3322,7 +3289,7 @@ function NavigationPageContent() {
                 // Clear route and return to preview mode
                 setCurrentRoute(null);
                 setIsNavigating(false);
-                setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button
+                cancelNavigation(); // Return to initial state using FSM
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
                 
