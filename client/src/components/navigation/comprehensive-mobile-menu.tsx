@@ -720,17 +720,18 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     {/* Navigation Control Buttons */}
                     {isNavigating ? (
                       <Button
+                        variant="outline"
                         onClick={() => {
                           if (onStopNavigation) {
                             onStopNavigation();
                           }
                           onOpenChange(false);
                         }}
-                        className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                        className="w-full h-10 border-red-500 text-red-600 hover:bg-red-50"
                         data-testid="button-cancel-route"
                       >
-                        <X className="h-5 w-5 mr-2" />
-                        Cancel Route
+                        <X className="h-4 w-4 mr-2" />
+                        Stop Navigation
                       </Button>
                     ) : (
                       <Button

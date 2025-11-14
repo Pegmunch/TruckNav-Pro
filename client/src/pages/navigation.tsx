@@ -2564,7 +2564,8 @@ function NavigationPageContent() {
               )}
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
-              {isNavUIActive && (
+              {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
+              {isNavUIActive && !showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
                   isNavUIActive={isNavUIActive}
