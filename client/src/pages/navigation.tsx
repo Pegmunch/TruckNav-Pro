@@ -2347,7 +2347,7 @@ function NavigationPageContent() {
                 <MapShell className="h-full w-full">
                   <MapLibreMap
                     ref={mapRef}
-                    currentRoute={isNavigating ? currentRoute : null}
+                    currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
@@ -2802,7 +2802,7 @@ function NavigationPageContent() {
                 >
                   <MapLibreMap
                     ref={mapRef}
-                    currentRoute={isNavigating ? currentRoute : null}
+                    currentRoute={currentRoute}
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
