@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { WifiOff, Wifi, CloudOff } from 'lucide-react';
+import { isRunningAsPWA } from '@/lib/pwa-registration';
 
 interface OfflineDetectorProps {
   children: React.ReactNode;
@@ -107,8 +108,8 @@ export function OfflineDetector({
         </Alert>
       )}
 
-      {/* Persistent Connection Indicator */}
-      {showPersistentIndicator && (
+      {/* Persistent Connection Indicator - HIDDEN IN PWA MODE */}
+      {showPersistentIndicator && !isRunningAsPWA() && (
         <div className="fixed top-12 md:top-8 left-1/2 transform -translate-x-1/2 z-40" data-testid="connection-indicator">
           <Badge 
             variant={isOnline ? "secondary" : "destructive"}

@@ -51,6 +51,7 @@ interface MapLibreMapProps {
   hideControls?: boolean;
   hideCompass?: boolean;
   isNavigating?: boolean;
+  showUserMarker?: boolean;
 }
 
 interface MapPreferences {
@@ -108,7 +109,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   showIncidents = false,
   hideControls = false,
   hideCompass = false,
-  isNavigating = false
+  isNavigating = false,
+  showUserMarker = true
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -1236,7 +1238,17 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   // GPS tracking and user position marker (using centralized GPS hook)
   // CRITICAL: GPS marker must ALWAYS be visible on any map scenario
   useEffect(() => {
-    console.log('[GPS-MARKER] Effect triggered - map:', !!map.current, 'isLoaded:', isLoaded, 'status:', gpsStatus, 'hasPosition:', !!gpsPosition);
+    console.log('[GPS-MARKER] Effect triggered - map:', !!map.current, 'isLoaded:', isLoaded, 'status:', gpsStatus, 'hasPosition:', !!gpsPosition, 'showUserMarker:', showUserMarker);
+    
+    // CRITICAL FIX: Hide GPS marker in PWA navigation mode
+    if (!showUserMarker) {
+      console.log('[GPS-MARKER] Marker disabled via showUserMarker prop - removing');
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      return;
+    }
     
     if (!map.current || !isLoaded) {
       console.log('[GPS-MARKER] Skipping - map or isLoaded not ready');
@@ -1570,7 +1582,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         userMarkerRef.current = null;
       }
     };
-  }, [gpsPosition, gpsStatus, isGPSReady, isLoaded, selectedProfile]); // Include GPS status for proper marker updates
+  }, [gpsPosition, gpsStatus, isGPSReady, isLoaded, selectedProfile, showUserMarker]); // Include GPS status and showUserMarker for proper marker updates
   
   // HEADING-UP NAVIGATION MODE: 10/10 RELIABILITY - Dynamic segment tracking!
   // Rotates map so route ALWAYS points upward through ALL turns, with or without GPS

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map } from "lucide-react";
+import { isRunningAsPWA } from "@/lib/pwa-registration";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -201,6 +202,17 @@ function NavigationPageContent() {
   // CRITICAL FIX: Derive navigation UI state from BOTH conditions
   // NavigationLayout only renders when BOTH navigation is active AND mode is navigate
   const isNavUIActive = isNavigating && mobileNavMode === 'navigate';
+  
+  // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
+  // Use useMemo to stabilize calculation and prevent initial render issues
+  const showUserMarker = useMemo(() => {
+    // Default to showing marker (true) unless ALL conditions are met:
+    // 1. Running as PWA standalone app
+    // 2. Navigation is active
+    // 3. Mobile nav mode is 'navigate'
+    const isPWANavigating = isRunningAsPWA() && isNavigating && mobileNavMode === 'navigate';
+    return !isPWANavigating;
+  }, [isNavigating, mobileNavMode]);
   
   // Debug logging whenever mode changes
   useEffect(() => {
@@ -2355,13 +2367,14 @@ function NavigationPageContent() {
                     hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
+                    showUserMarker={showUserMarker}
                   />
                 </MapShell>
               </div>
               
               {/* GPS Permission Button removed - moved to route planning panel */}
-              {/* GPS Loading Indicator - Production-Grade Visual Feedback */}
-              {gpsLoadingState?.isLoading && (
+              {/* GPS Loading Indicator - Production-Grade Visual Feedback - HIDDEN IN PWA MODE */}
+              {gpsLoadingState?.isLoading && !isRunningAsPWA() && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator">
                   <Card className="px-4 py-2 shadow-lg border-blue-500/50 bg-white/95 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
@@ -2552,7 +2565,8 @@ function NavigationPageContent() {
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {isNavUIActive && (
                 <NavigationLayout
-                  isNavigating={isNavUIActive}
+                  isNavigating={isNavigating}
+                  isNavUIActive={isNavUIActive}
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
@@ -2810,6 +2824,7 @@ function NavigationPageContent() {
                     hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
+                    showUserMarker={showUserMarker}
                   />
                 </MapShell>
                 

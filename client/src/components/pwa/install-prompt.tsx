@@ -133,20 +133,7 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
 
   // Don't show if already installed or no prompt available
   if (isInstalled || !showInstallPrompt) {
-    // Show installed badge if applicable
-    if (isInstalled && showBadge) {
-      return (
-        <div className={`pwa-install-status ${className}`} data-testid="pwa-installed-badge">
-          <Badge 
-            variant="secondary"
-            className="fixed bottom-4 left-4 flex items-center gap-1 px-2 py-1 text-xs z-40"
-          >
-            <Download className="h-3 w-3 text-green-600" />
-            <span>Installed</span>
-          </Badge>
-        </div>
-      );
-    }
+    // REMOVED: Don't show "Installed" badge when running as PWA - it's redundant and clutters the interface
     return null;
   }
 
