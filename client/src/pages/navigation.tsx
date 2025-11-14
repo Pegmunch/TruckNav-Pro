@@ -2488,8 +2488,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
+                    hideCompass={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                   />
@@ -2629,11 +2629,11 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during isNavigating */}
-              {isNavigating && (
+              {/* NAVIGATE MODE OVERLAYS (z-10+) - BULLETPROOF: Always show during NAVIGATING state */}
+              {navState.state === 'NAVIGATING' && (
                 <>
                   {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver - MOBILE */}
-                  {isNavigating && currentRoute && (
+                  {navState.state === 'NAVIGATING' && currentRoute && (
                     <div className="fixed top-0 left-0 right-0 z-[1700]" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
                       <CompactTripStrip
                         eta={currentRoute.duration || 0}
@@ -2947,8 +2947,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
+                    hideCompass={navState.state === 'PREVIEW' || navState.state === 'NAVIGATING'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                   />
@@ -3252,7 +3252,7 @@ function NavigationPageContent() {
         onStopNavigation={handleStopNavigation}
         currentRoute={currentRoute}
         isCalculating={calculateRouteMutation.isPending}
-        isNavigating={isNavigating}
+        isNavigating={navState.state === 'NAVIGATING'}
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);
