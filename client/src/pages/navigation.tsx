@@ -2463,17 +2463,18 @@ function NavigationPageContent() {
                   "transition-opacity duration-200",
                   isNavigating && "opacity-0 pointer-events-none"
                 )}>
-                  {/* Header - Thicker for better accessibility */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 border-b-2 border-gray-200 bg-white">
+                  {/* Clean Header with Title and Settings */}
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm" 
+                       style={{ paddingTop: 'calc(12px + var(--safe-area-top))' }}>
                     <div className="flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold">TruckNav Pro</span>
+                      <Truck className="w-5 h-5 text-blue-600" />
+                      <span className="text-lg font-semibold text-gray-900">TruckNav Pro</span>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-10 w-10 bg-green-600 hover:bg-green-700 text-white rounded-full"
+                      className="h-11 w-11 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md"
                       data-testid="button-settings-preview"
                     >
                       <Settings className="w-5 h-5" />
