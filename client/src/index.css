@@ -6,12 +6,26 @@
 @media (display-mode: standalone) {
   #replit-dev-banner,
   [id^="replit-"],
+  [id^="__replit"],
   [class*="replit-banner"],
-  [class*="dev-banner"] {
+  [class*="dev-banner"],
+  [class*="replit"],
+  div[style*="position: fixed"][style*="top: 0"],
+  div[style*="position: fixed"][style*="left: 0"][style*="z-index"] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
+    width: 0 !important;
     opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Additional fallback - hide all Replit injected elements globally in PWA */
+@media (display-mode: standalone) {
+  body > div:not(#root):first-child,
+  body > div[data-testid^="replit"] {
+    display: none !important;
   }
 }
 
