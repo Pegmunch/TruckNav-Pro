@@ -2034,6 +2034,30 @@ function NavigationPageContent() {
       return; // Prevent double-clicks/race conditions
     }
 
+    // CRITICAL FIX: Set navigation state IMMEDIATELY when button is pressed
+    // This ensures navigation controls appear even if async operations fail
+    console.log('[NAV-ACTIVATION] 🎯 IMMEDIATE STATE UPDATE - Setting navigation mode');
+    setIsNavigating(true);
+    setMobileNavMode('navigate');
+    console.log('[NAV-ACTIVATION] ✅ Navigation states set - controls should appear immediately');
+    
+    // Force zoom to navigation level regardless of GPS status
+    if (mapRef.current && (fromCoordinates || toCoordinates)) {
+      const zoomTarget = fromCoordinates || toCoordinates;
+      if (zoomTarget) {
+        console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
+        // Use zoomToUserLocation with fallback coordinates for consistent API
+        mapRef.current.zoomToUserLocation({
+          zoom: 16, // Close street-level zoom for navigation
+          pitch: isMapLibre ? 45 : 0, // Tilt for 3D effect if MapLibre
+          bearing: 0,
+          duration: 1500,
+          fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },
+          forceStreetMode: true
+        });
+      }
+    }
+    
     try {
       console.log('[NAV-ACTIVATION] Step 1: Set navigation active state for CSS styling');
       // Set navigation active state for CSS styling
@@ -2126,21 +2150,8 @@ function NavigationPageContent() {
       
       console.log('[NAV-ACTIVATION] Step 4: ✅ Journey activated successfully');
       
-      // CRITICAL: Set navigation states FIRST (before any events)
-      // React state updates are async, so set them early
-      console.log('========================================');
-      console.log('[NAV-ACTIVATION] 🎯 SETTING NAVIGATION STATES');
-      console.log('[NAV-ACTIVATION] Current mobileNavMode:', mobileNavMode);
-      console.log('[NAV-ACTIVATION] Setting mobileNavMode = navigate (DIRECT, NO DEBOUNCE)');
-      console.log('[NAV-ACTIVATION] Setting isNavigating = true');
-      console.log('========================================');
-      
-      // Use direct setter, not debounced version, for immediate update
-      setMobileNavMode('navigate');
-      console.log('[NAV-ACTIVATION] Called setMobileNavMode("navigate") directly');
-      
-      setIsNavigating(true);
-      console.log('[NAV-ACTIVATION] Called setIsNavigating(true)');
+      // Navigation states already set at the beginning of function
+      console.log('[NAV-ACTIVATION] Navigation states were already set at function start');
       
       // CRITICAL: Set flag and timestamp to indicate navigation was explicitly started by user
       localStorage.setItem('navigation_mode', 'navigate');
@@ -2661,10 +2672,10 @@ function NavigationPageContent() {
                     />
                   }
                   bottomBar={
-                    <BottomInstrumentationBar
-                      speed={0} // GPS speed not available yet
+                    <SpeedometerHUD
+                      currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
                       speedLimit={currentSpeedLimit || undefined}
-                      hasGpsSignal={!!gpsData?.position}
+                      isNavigating={isNavigating}
                     />
                   }
                 />

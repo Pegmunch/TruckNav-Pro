@@ -52,12 +52,22 @@ export function useManualLocation() {
   }, []);
 
   return {
-    isDialogOpen,
-    locationInput,
-    setLocationInput,
-    isGeocoding,
+    // Dialog state
+    showManualLocationDialog: isDialogOpen,
+    setShowManualLocationDialog: setIsDialogOpen,
+    
+    // Input state
+    manualLocationAddress: locationInput,
+    setManualLocationAddress: setLocationInput,
+    
+    // Submit handling
+    isSubmitting: isGeocoding,
+    handleManualLocationSubmit: handleSetManualLocation,
+    
+    // Error state
     error,
-    handleSetManualLocation,
+    
+    // Helper functions
     openDialog,
     closeDialog
   };
