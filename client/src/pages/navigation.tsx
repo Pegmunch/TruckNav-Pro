@@ -1207,19 +1207,38 @@ function NavigationPageContent() {
           });
       }
       
-      // CRITICAL FIX: Only restore navigation if user explicitly started navigation
-      // Check localStorage flag to ensure this is a real navigation session, not just route planning
-      const navigationStarted = localStorage.getItem('navigation_mode') === 'navigate';
+      // CRITICAL FIX: Only restore navigation if user explicitly started navigation AND it's recent
+      // Check localStorage flag and timestamp to ensure this is a real, recent navigation session
+      const navigationMode = localStorage.getItem('navigation_mode');
+      const navigationTimestamp = localStorage.getItem('navigation_timestamp');
+      const navigationStarted = navigationMode === 'navigate';
+      const isStale = navigationTimestamp ? 
+        (Date.now() - parseInt(navigationTimestamp)) > 30 * 60 * 1000 : true;
       
-      if (currentJourney.status === 'active' && navigationStarted) {
-        console.log('[JOURNEY-LOAD] Active journey detected WITH navigation flag - restoring navigation state');
+      console.log('[JOURNEY-LOAD] Navigation state:', {
+        navigationStarted,
+        isStale,
+        journeyStatus: currentJourney.status
+      });
+      
+      if (currentJourney.status === 'active' && navigationStarted && !isStale) {
+        console.log('[JOURNEY-LOAD] Active journey WITH recent navigation flag - restoring navigation');
         setIsNavigating(true);
         setMobileNavMode('navigate');
-        console.log('[JOURNEY-LOAD] Navigation state restored: isNavigating=true, mobileNavMode=navigate');
-      } else {
-        console.log('[JOURNEY-LOAD] Journey status is:', currentJourney.status, ', navigationStarted:', navigationStarted, '- not auto-starting navigation');
-        // Keep isNavigating false until user explicitly presses Start Navigation
+      } else if (currentJourney.status === 'active') {
+        console.log('[JOURNEY-LOAD] Active journey but stale/missing navigation flag - showing preview');
         setIsNavigating(false);
+        setMobileNavMode('preview');
+        // Clear stale navigation flags
+        localStorage.removeItem('navigation_mode');
+        localStorage.removeItem('navigation_timestamp');
+      } else if (currentJourney.status === 'planned') {
+        console.log('[JOURNEY-LOAD] Planned journey - showing preview mode');
+        setIsNavigating(false);
+        setMobileNavMode('preview');
+        // Clear any navigation flags for planned journeys
+        localStorage.removeItem('navigation_mode');
+        localStorage.removeItem('navigation_timestamp');
       }
     } else {
       // No journey - ensure clean state
@@ -1231,25 +1250,92 @@ function NavigationPageContent() {
     }
   }, [currentJourney]);
 
-  // Handle page refresh - restore navigation state ONLY if explicitly started
+  // Handle page refresh - restore navigation state ONLY if explicitly started AND recent
   useEffect(() => {
     // CRITICAL: Clear navigation state on initial load unless navigation was explicitly started
     const navigationMode = localStorage.getItem('navigation_mode');
+    const navigationTimestamp = localStorage.getItem('navigation_timestamp');
     const storedJourneyId = localStorage.getItem('activeJourneyId');
     
-    if (navigationMode !== 'navigate') {
-      // User hasn't explicitly started navigation - ensure clean state
-      console.log('[INIT] Clearing navigation state - no explicit navigation start');
+    // Check if navigation state is stale (older than 30 minutes)
+    const isStale = navigationTimestamp ? 
+      (Date.now() - parseInt(navigationTimestamp)) > 30 * 60 * 1000 : true;
+    
+    if (navigationMode !== 'navigate' || isStale) {
+      // User hasn't explicitly started navigation or state is stale - ensure clean state
+      console.log('[INIT] Clearing navigation state - no explicit/recent navigation start');
       setIsNavigating(false);
       setMobileNavMode('plan');
       localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
       localStorage.removeItem('activeJourneyId');
       localStorage.removeItem('activeRouteId');
     } else if (storedJourneyId && !activeJourney) {
-      // Navigation was explicitly started - restore it
-      console.log('[INIT] Restoring navigation - user had started navigation');
+      // Navigation was explicitly started and is recent - restore it
+      console.log('[INIT] Restoring navigation - user had recently started navigation');
       refetchCurrentJourney();
     }
+  }, []);
+  
+  // PWA/Mobile lifecycle management - clean up navigation state properly
+  useEffect(() => {
+    const clearNavigationState = () => {
+      console.log('[LIFECYCLE] App suspending/closing - clearing navigation state');
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
+      localStorage.removeItem('activeJourneyId');
+      localStorage.removeItem('activeRouteId');
+      setIsNavigating(false);
+      setMobileNavMode('plan');
+    };
+    
+    // Handle page hide (mobile browser minimized or PWA closed)
+    const handlePageHide = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        // Page is being cached, clear navigation state
+        clearNavigationState();
+      }
+    };
+    
+    // Handle visibility change (tab switching, minimize)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Only clear if navigation is active and app is being hidden for extended time
+        const navMode = localStorage.getItem('navigation_mode');
+        if (navMode === 'navigate') {
+          // Update timestamp to track when app was hidden
+          localStorage.setItem('navigation_timestamp', Date.now().toString());
+        }
+      }
+    };
+    
+    // Handle freeze event (modern lifecycle API)
+    const handleFreeze = () => {
+      clearNavigationState();
+    };
+    
+    // Handle beforeunload (page closing)
+    const handleBeforeUnload = () => {
+      // Only clear if in navigation mode
+      const navMode = localStorage.getItem('navigation_mode');
+      if (navMode === 'navigate') {
+        clearNavigationState();
+      }
+    };
+    
+    // Register all lifecycle listeners
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('freeze', handleFreeze);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Cleanup listeners on unmount
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('freeze', handleFreeze);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   // Android hardware back button handling for professional truck navigation
@@ -2037,9 +2123,10 @@ function NavigationPageContent() {
       setIsNavigating(true);
       console.log('[NAV-ACTIVATION] Called setIsNavigating(true)');
       
-      // CRITICAL: Set flag to indicate navigation was explicitly started by user
+      // CRITICAL: Set flag and timestamp to indicate navigation was explicitly started by user
       localStorage.setItem('navigation_mode', 'navigate');
-      console.log('[NAV-ACTIVATION] Set navigation_mode flag in localStorage');
+      localStorage.setItem('navigation_timestamp', Date.now().toString());
+      console.log('[NAV-ACTIVATION] Set navigation_mode flag and timestamp in localStorage');
       
       // Store route ID for persistence
       if (route.id) {
@@ -2086,6 +2173,7 @@ function NavigationPageContent() {
     // CRITICAL: Clear all route persistence - fresh start page
     localStorage.removeItem('activeJourneyId');
     localStorage.removeItem('navigation_mode'); // Clear navigation flag
+    localStorage.removeItem('navigation_timestamp'); // Clear timestamp
     localStorage.removeItem('activeRouteId');
     
     // Clear URL parameter
