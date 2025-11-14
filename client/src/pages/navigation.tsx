@@ -198,9 +198,9 @@ function NavigationPageContent() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
   
-  // CRITICAL FIX: Derive navigation UI state from mobileNavMode
-  // This ensures NavigationLayout renders when in navigate mode
-  const isNavUIActive = mobileNavMode === 'navigate';
+  // CRITICAL FIX: Derive navigation UI state from BOTH conditions
+  // NavigationLayout only renders when BOTH navigation is active AND mode is navigate
+  const isNavUIActive = isNavigating && mobileNavMode === 'navigate';
   
   // Debug logging whenever mode changes
   useEffect(() => {
@@ -626,7 +626,7 @@ function NavigationPageContent() {
         
         mapRef.current?.zoomToUserLocation({
           forceStreetMode: false,  // Respect user's map view preference
-          zoom: 17.5,              // Street-level zoom for good context
+          zoom: 14.5,              // Wider view for better route context
           pitch: 45,               // 3D tilt for better spatial awareness
           duration: 2000,          // Smooth 2-second animation
           onSuccess: (location) => {
@@ -788,7 +788,7 @@ function NavigationPageContent() {
         
         mapInstance.flyTo({
           center: [targetLng, targetLat],
-          zoom: 18.5,  // Optimal street-level zoom
+          zoom: 14.5,  // Wider view for better route overview
           pitch: 67,   // Professional 3D perspective
           bearing: initialBearing, // Route pointing upward (heading-up)
           padding: { 
@@ -2002,7 +2002,7 @@ function NavigationPageContent() {
         console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
         // Use zoomToUserLocation with fallback coordinates for consistent API
         mapRef.current.zoomToUserLocation({
-          zoom: 16, // Close street-level zoom for navigation
+          zoom: 14.5, // Wider view for better route overview
           pitch: isMapLibre ? 45 : 0, // Tilt for 3D effect if MapLibre
           bearing: 0,
           duration: 1500,
@@ -2602,7 +2602,7 @@ function NavigationPageContent() {
                       onCancel={handleStopNavigation}
                       onReportIncident={() => setShowIncidentReportDialog(true)}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
-                      isNavigating={isNavigating}
+                      isNavigating={isNavUIActive}
                     />
                   }
                   rightStack={
@@ -2629,7 +2629,7 @@ function NavigationPageContent() {
                     <SpeedometerHUD
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
                       speedLimit={currentSpeedLimit || undefined}
-                      isNavigating={isNavigating}
+                      isNavigating={isNavUIActive}
                     />
                   }
                 />
