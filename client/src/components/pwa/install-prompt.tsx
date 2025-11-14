@@ -3,7 +3,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, X, Smartphone, Monitor, Share, Plus } from 'lucide-react';
-import { isIOSDevice, isRunningAsPWA, canInstallIOSPWA } from '@/lib/pwa-registration';
+import { usePWAEnvironment } from '@/contexts/pwa-environment';
+import { canInstallIOSPWA } from '@/lib/pwa-registration';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -21,40 +22,19 @@ interface PWAInstallPromptProps {
  * Shows installation options for mobile and desktop platforms
  */
 export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstallPromptProps) {
+  const { isStandalone, platform: envPlatform, isIOSDevice: isIOS } = usePWAEnvironment();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
-  const [platform, setPlatform] = useState<'mobile' | 'desktop' | 'ios' | 'unknown'>('unknown');
-  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Detect iOS
-    const iosDevice = isIOSDevice();
-    setIsIOS(iosDevice);
-
-    // Detect platform
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-    
-    if (iosDevice) {
-      setPlatform('ios');
-    } else if (isMobile) {
-      setPlatform('mobile');
-    } else {
-      setPlatform('desktop');
-    }
-
-    // Check if already installed
-    const alreadyInstalled = isRunningAsPWA();
-    
-    if (alreadyInstalled) {
-      setIsInstalled(true);
+    // Don't show install prompt if already installed
+    if (isStandalone) {
       return;
     }
 
     // For iOS, show install prompt if not in standalone mode
-    if (iosDevice && canInstallIOSPWA()) {
+    if (isIOS && canInstallIOSPWA()) {
       // Show iOS install prompt after delay
       setTimeout(() => {
         setShowInstallPrompt(true);
@@ -78,7 +58,6 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
     // Handle app installed event
     const handleAppInstalled = () => {
       console.log('[PWA Install] App was installed');
-      setIsInstalled(true);
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
     };
@@ -90,7 +69,7 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [isStandalone, isIOS]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -132,8 +111,7 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
   }
 
   // Don't show if already installed or no prompt available
-  if (isInstalled || !showInstallPrompt) {
-    // REMOVED: Don't show "Installed" badge when running as PWA - it's redundant and clutters the interface
+  if (isStandalone || !showInstallPrompt) {
     return null;
   }
 
@@ -203,8 +181,8 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
     return null;
   }
 
-  const PlatformIcon = platform === 'mobile' ? Smartphone : Monitor;
-  const platformText = platform === 'mobile' ? 'phone' : 'computer';
+  const PlatformIcon = envPlatform === 'ios' || envPlatform === 'android' ? Smartphone : Monitor;
+  const platformText = envPlatform === 'ios' || envPlatform === 'android' ? 'phone' : 'computer';
 
   return (
     <div className={`pwa-install-prompt ${className}`} data-testid="pwa-install-prompt">

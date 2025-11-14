@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider, useTheme } from "@/components/theme/theme-provider";
 import { MeasurementProvider } from "@/components/measurement/measurement-provider";
 import { GPSProvider } from "@/contexts/gps-context";
+import { PWAEnvironmentProvider } from "@/contexts/pwa-environment";
 import { OfflineDetector } from "@/components/offline/offline-detector";
 import { ServiceWorkerUpdates } from "@/components/offline/service-worker-updates";
 import { PWAInstallPrompt } from "@/components/pwa/install-prompt";
@@ -67,27 +68,29 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="day" storageKey="theme-mode">
-      <MobileThemeEnforcer />
-      <GPSProvider 
-        enableHighAccuracy={true}
-        timeout={30000}
-        maximumAge={0}
-        enableHeadingSmoothing={true}
-      >
-        <MeasurementProvider>
-          <TooltipProvider>
-            <OfflineDetector showPersistentIndicator={true}>
-              <Toaster />
-              <ServiceWorkerUpdates />
-              <PWAInstallPrompt showBadge={true} />
-              {/* Main Application with PWA and Offline Support */}
-              <Router />
-            </OfflineDetector>
-          </TooltipProvider>
-        </MeasurementProvider>
-      </GPSProvider>
-    </ThemeProvider>
+    <PWAEnvironmentProvider>
+      <ThemeProvider defaultTheme="day" storageKey="theme-mode">
+        <MobileThemeEnforcer />
+        <GPSProvider 
+          enableHighAccuracy={true}
+          timeout={30000}
+          maximumAge={0}
+          enableHeadingSmoothing={true}
+        >
+          <MeasurementProvider>
+            <TooltipProvider>
+              <OfflineDetector showPersistentIndicator={true}>
+                <Toaster />
+                <ServiceWorkerUpdates />
+                <PWAInstallPrompt showBadge={true} />
+                {/* Main Application with PWA and Offline Support */}
+                <Router />
+              </OfflineDetector>
+            </TooltipProvider>
+          </MeasurementProvider>
+        </GPSProvider>
+      </ThemeProvider>
+    </PWAEnvironmentProvider>
   );
 }
 

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map } from "lucide-react";
-import { isRunningAsPWA } from "@/lib/pwa-registration";
+import { usePWAEnvironment } from "@/contexts/pwa-environment";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
@@ -77,6 +77,7 @@ function NavigationPageContent() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const { isStandalone } = usePWAEnvironment();
   const { mapEngine, toggleMapEngine, isMapLibre } = useMapEngine();
   
   // Get GPS data from singleton provider
@@ -210,9 +211,9 @@ function NavigationPageContent() {
     // 1. Running as PWA standalone app
     // 2. Navigation is active
     // 3. Mobile nav mode is 'navigate'
-    const isPWANavigating = isRunningAsPWA() && isNavigating && mobileNavMode === 'navigate';
+    const isPWANavigating = isStandalone && isNavigating && mobileNavMode === 'navigate';
     return !isPWANavigating;
-  }, [isNavigating, mobileNavMode]);
+  }, [isStandalone, isNavigating, mobileNavMode]);
   
   // Debug logging whenever mode changes
   useEffect(() => {
@@ -2374,7 +2375,7 @@ function NavigationPageContent() {
               
               {/* GPS Permission Button removed - moved to route planning panel */}
               {/* GPS Loading Indicator - Production-Grade Visual Feedback - HIDDEN IN PWA MODE */}
-              {gpsLoadingState?.isLoading && !isRunningAsPWA() && (
+              {gpsLoadingState?.isLoading && !isStandalone && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator">
                   <Card className="px-4 py-2 shadow-lg border-blue-500/50 bg-white/95 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
@@ -2580,8 +2581,8 @@ function NavigationPageContent() {
                         />
                       )}
                       
-                      {/* GPS Loading Indicator */}
-                      {gpsLoadingState?.isLoading && (
+                      {/* GPS Loading Indicator - HIDDEN IN PWA MODE */}
+                      {gpsLoadingState?.isLoading && !isStandalone && (
                         <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[150] pointer-events-none">
                           <Card className="px-4 py-3 shadow-xl border-blue-500/50 bg-white/95 backdrop-blur-sm">
                             <div className="flex items-center gap-3">
@@ -2828,8 +2829,8 @@ function NavigationPageContent() {
                   />
                 </MapShell>
                 
-                {/* GPS Loading Indicator - Desktop */}
-                {gpsLoadingState?.isLoading && (
+                {/* GPS Loading Indicator - Desktop - HIDDEN IN PWA MODE */}
+                {gpsLoadingState?.isLoading && !isStandalone && (
                   <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator-desktop">
                     <Card className="px-4 py-2 shadow-lg border-blue-500/50 bg-white/95 backdrop-blur-sm">
                       <div className="flex items-center gap-3">
