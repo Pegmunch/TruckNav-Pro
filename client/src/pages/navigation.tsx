@@ -1546,12 +1546,17 @@ function NavigationPageContent() {
 
       // DISABLED: Auto-transition to navigation mode - User must manually click "Start Navigation"
       // Show preview mode only, let user manually start navigation
-      console.log('[AUTO-NAV] Route calculated - showing preview mode only');
+      console.log('[AUTO-NAV] Route calculated - checking if should show preview mode');
       console.log('[AUTO-NAV] isMobile:', isMobile);
       console.log('[AUTO-NAV] route exists:', !!route);
       console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
+      console.log('[AUTO-NAV] isNavigating:', isNavigating);
+      console.log('[AUTO-NAV] mobileNavMode:', mobileNavMode);
       
-      if (isMobile && route && route.routePath && route.routePath.length > 0) {
+      // CRITICAL FIX: Only set preview mode if navigation hasn't already started
+      // This prevents overwriting 'navigate' mode after Start Navigation is pressed
+      if (isMobile && route && route.routePath && route.routePath.length > 0 && 
+          !isNavigating && mobileNavMode !== 'navigate') {
         console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
         
         // Show preview mode - user must manually click "Start Navigation" button
