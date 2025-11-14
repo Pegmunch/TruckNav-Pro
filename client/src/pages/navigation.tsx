@@ -2655,31 +2655,12 @@ function NavigationPageContent() {
 
         </div>
 
-        {/* NAVIGATION CONTROLS - ONLY IN NAVIGATION MODE - CRITICAL FOR PWA */}
+        {/* Navigation controls are now properly rendered inside NavigationLayout only */}
         {console.log('[NAV-CONTROLS-RENDER] Checking if controls should render:')}
         {console.log('[NAV-CONTROLS-RENDER] - mobileNavMode:', mobileNavMode)}
         {console.log('[NAV-CONTROLS-RENDER] - isNavigating:', isNavigating)}
         {console.log('[NAV-CONTROLS-RENDER] - Should render:', isNavigating)}
-        {isNavigating && (
-          <NavigationControlsStack
-            mapRef={mapRef}
-            mapBearing={mapBearing}
-            map3DMode={map3DMode}
-            onToggle3D={() => {
-              mapRef.current?.toggle3DMode();
-              setMap3DMode(!map3DMode);
-            }}
-            showTrafficLayer={showTrafficLayer}
-            onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
-            mapViewMode={mapViewMode}
-            onToggleMapView={() => {
-              const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
-              setMapViewMode(newMode);
-              mapRef.current?.toggleMapView();
-            }}
-            onViewIncidents={() => setShowIncidentFeed(true)}
-          />
-        )}
+        {console.log('[NAV-CONTROLS] Navigation controls properly gated inside NavigationLayout')}
         
         </>
       ) : (
