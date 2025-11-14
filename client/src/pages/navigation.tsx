@@ -198,6 +198,10 @@ function NavigationPageContent() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
   
+  // CRITICAL FIX: Derive navigation UI state from mobileNavMode
+  // This ensures NavigationLayout renders when in navigate mode
+  const isNavUIActive = mobileNavMode === 'navigate';
+  
   // Debug logging whenever mode changes
   useEffect(() => {
     console.log('[NAV-MODE-STATE] mobileNavMode changed to:', mobileNavMode);
@@ -205,32 +209,10 @@ function NavigationPageContent() {
   }, [mobileNavMode, isNavigating]);
   
   // Mode transition debouncing to prevent race conditions
-  const modeTransitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // REMOVED: Debounced setter was causing race conditions
+  // Now using direct setMobileNavMode for immediate UI updates
 
-  const setMobileNavModeDebounced = useCallback((newMode: MobileNavMode) => {
-    console.log(`[NAV-MODE-DEBOUNCED] Requesting transition to ${newMode} mode (50ms delay)`);
-    
-    // Clear any pending transition
-    if (modeTransitionTimeoutRef.current) {
-      clearTimeout(modeTransitionTimeoutRef.current);
-    }
-
-    // Prevent rapid mode changes (50ms debounce)
-    modeTransitionTimeoutRef.current = setTimeout(() => {
-      console.log(`[NAV-MODE-DEBOUNCED] Executing transition to ${newMode} mode`);
-      setMobileNavMode(newMode);
-      console.log(`[NAV-MODE] Transition to ${newMode} mode completed`);
-    }, 50);
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (modeTransitionTimeoutRef.current) {
-        clearTimeout(modeTransitionTimeoutRef.current);
-      }
-    };
-  }, []);
+  // Cleanup removed - no longer using debounced transitions
   
   // Map reference for compass and 3D tilt control
   const mapRef = useRef<MapLibreMapRef>(null);
@@ -728,39 +710,14 @@ function NavigationPageContent() {
     
   }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
   
-  // Auto-update mobile navigation mode based on state
-  // IMPORTANT: Only auto-switch when appropriate, don't interrupt user interactions
+  // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
+  // Only enforces navigate mode when navigation is active, no other automatic transitions
   useEffect(() => {
-    console.log('[NAV-MODE-AUTO] useEffect triggered:');
-    console.log('[NAV-MODE-AUTO] - isMobile:', isMobile);
-    console.log('[NAV-MODE-AUTO] - isNavigating:', isNavigating);
-    console.log('[NAV-MODE-AUTO] - currentRoute exists:', !!currentRoute);
-    console.log('[NAV-MODE-AUTO] - showComprehensiveMenu:', showComprehensiveMenu);
-    console.log('[NAV-MODE-AUTO] - current mobileNavMode:', mobileNavMode);
-    
-    if (!isMobile) {
-      console.log('[NAV-MODE-AUTO] Not mobile - skipping mode update');
-      return; // Only applies to mobile
+    if (isMobile && isNavigating && mobileNavMode !== 'navigate') {
+      console.log('[NAV-MODE-GUARD] Enforcing navigate mode for active navigation');
+      setMobileNavMode('navigate'); // Direct update, no debounce
     }
-    
-    if (isNavigating) {
-      console.log('[NAV-MODE-AUTO] Navigation active - switching to navigate mode');
-      // Always switch to navigate mode when navigation starts
-      setMobileNavModeDebounced('navigate');
-    } else if (!currentRoute && showComprehensiveMenu) {
-      console.log('[NAV-MODE-AUTO] No route + menu open - switching to plan mode');
-      // Only switch to plan mode if menu is open and actively planning
-      setMobileNavModeDebounced('plan');
-    } else if (!currentRoute && !showComprehensiveMenu) {
-      console.log('[NAV-MODE-AUTO] No route + menu closed - switching to preview mode');
-      // Default to preview mode when no route and menu is closed
-      setMobileNavModeDebounced('preview');
-    } else {
-      console.log('[NAV-MODE-AUTO] No mode change needed');
-    }
-    // REMOVED: Auto-switch to preview when route exists - this was interrupting user input
-    // The route calculation onSuccess handler will explicitly set preview mode when needed
-  }, [isMobile, isNavigating, currentRoute, setMobileNavModeDebounced, mobileNavMode, showComprehensiveMenu]);
+  }, [isMobile, isNavigating, mobileNavMode]);
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
   useEffect(() => {
@@ -887,7 +844,7 @@ function NavigationPageContent() {
       if (!speedometer) {
         console.error('[NAV-MODE] CRITICAL: Speedometer not found in navigate mode!');
         // Attempt recovery by forcing re-render
-        setMobileNavModeDebounced('navigate');
+        setMobileNavMode('navigate');
       } else {
         console.log('[NAV-MODE] ✓ Speedometer visibility confirmed');
       }
@@ -897,7 +854,7 @@ function NavigationPageContent() {
     const interval = setInterval(checkSpeedometerVisibility, 3000);
 
     return () => clearInterval(interval);
-  }, [mobileNavMode, setMobileNavModeDebounced]);
+  }, [mobileNavMode]);
   
   // Real-time bearing rotation during navigation - BULLETPROOF with route fallback
   useEffect(() => {
@@ -1474,7 +1431,7 @@ function NavigationPageContent() {
       setActiveJourney(null);
       setIsNavigating(false);
       setCurrentRoute(null);
-      setMobileNavModeDebounced('preview'); // Return to preview mode
+      setMobileNavMode('preview'); // Return to preview mode
       localStorage.removeItem('activeJourneyId');
       // Invalidate all journey-related queries to keep UI consistent
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
@@ -2002,10 +1959,7 @@ function NavigationPageContent() {
     console.log('[NAV-ACTIVATION] isNavigating (current):', isNavigating);
     console.log('[NAV-ACTIVATION] canStartNavigation():', canStartNavigation());
     
-    // Clear any pending debounced mode transitions
-    if (modeTransitionTimeoutRef.current) {
-      clearTimeout(modeTransitionTimeoutRef.current);
-    }
+    // Mode transitions are now immediate - no cleanup needed
     
     // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
@@ -2596,9 +2550,9 @@ function NavigationPageContent() {
               )}
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
-              {isNavigating && (
+              {isNavUIActive && (
                 <NavigationLayout
-                  isNavigating={isNavigating}
+                  isNavigating={isNavUIActive}
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
@@ -3194,7 +3148,7 @@ function NavigationPageContent() {
                 // Clear route and return to preview mode
                 setCurrentRoute(null);
                 setIsNavigating(false);
-                setMobileNavModeDebounced('preview'); // Return to preview mode with hamburger button
+                setMobileNavMode('preview'); // Return to preview mode with hamburger button
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
                 
