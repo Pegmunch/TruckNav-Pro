@@ -119,9 +119,17 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   const gps = useGPS();
   const [activeTab, setActiveTab] = useState("plan");
   
-  // Local state for route planning inputs
+  // Local state for route planning inputs - Initialize empty, sync from currentRoute when available
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
+  
+  // Sync inputs when currentRoute changes (e.g., when route is calculated outside the menu)
+  useEffect(() => {
+    if (currentRoute) {
+      setFromInput(currentRoute.startLocation || "");
+      setToInput(currentRoute.endLocation || "");
+    }
+  }, [currentRoute]);
   
   // Temporary function to clear old route data
   const handleClearOldRoute = () => {
