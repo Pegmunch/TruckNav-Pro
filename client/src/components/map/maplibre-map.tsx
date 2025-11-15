@@ -480,6 +480,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     },
     toggleMapView: () => {
       const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';
+      console.log('[MAP-VIEW-TOGGLE] Switching view mode:', preferences.mapViewMode, '→', newMode);
       const newPrefs: MapPreferences = { ...preferences, mapViewMode: newMode };
       setPreferences(newPrefs);
       saveMapPreferences(newPrefs);
@@ -906,6 +907,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
   useEffect(() => {
     if (!map.current || !isLoaded) return;
+    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', preferences.mapViewMode, 'zoom:', currentZoom);
     updateLayerVisibility(map.current, preferences.mapViewMode, currentZoom);
   }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom]);
 

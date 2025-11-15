@@ -46,10 +46,12 @@ export function NavigationControlsStack({
   console.log('[NAV-CONTROLS] Navigation controls rendering - parent has confirmed isNavigating=true');
 
   const handleCompassClick = () => {
+    console.log('[BTN-1-COMPASS] ✅ Compass button clicked - Resetting bearing to North');
     mapRef.current?.resetBearing();
   };
 
   const handleCenterOnGPS = () => {
+    console.log('[BTN-2-GPS] ✅ Center on GPS button clicked - Zooming to user location');
     mapRef.current?.zoomToUserLocation({
       zoom: 17,
       duration: 1000
@@ -57,10 +59,12 @@ export function NavigationControlsStack({
   };
 
   const handleZoomIn = () => {
+    console.log('[BTN-3-ZOOM-IN] ✅ Zoom In button clicked');
     mapRef.current?.zoomIn();
   };
 
   const handleZoomOut = () => {
+    console.log('[BTN-4-ZOOM-OUT] ✅ Zoom Out button clicked');
     mapRef.current?.zoomOut();
   };
 

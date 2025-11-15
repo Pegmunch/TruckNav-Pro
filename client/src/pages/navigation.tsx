@@ -2604,18 +2604,26 @@ function NavigationPageContent() {
                       mapBearing={mapBearing}
                       map3DMode={map3DMode}
                       onToggle3D={() => {
+                        console.log('[BTN-5-3D] ✅ 3D Mode toggle clicked - Current:', map3DMode, '→ New:', !map3DMode);
                         mapRef.current?.toggle3DMode();
                         setMap3DMode(!map3DMode);
                       }}
                       showTrafficLayer={showTrafficLayer}
-                      onToggleTraffic={() => setShowTrafficLayer(!showTrafficLayer)}
+                      onToggleTraffic={() => {
+                        console.log('[BTN-6-TRAFFIC] ✅ Traffic toggle clicked - Current:', showTrafficLayer, '→ New:', !showTrafficLayer);
+                        setShowTrafficLayer(!showTrafficLayer);
+                      }}
                       mapViewMode={mapViewMode}
                       onToggleMapView={() => {
                         const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                        console.log('[BTN-7-SATELLITE] ✅ Satellite toggle clicked - Current:', mapViewMode, '→ New:', newMode);
                         setMapViewMode(newMode);
                         mapRef.current?.toggleMapView();
                       }}
-                      onViewIncidents={() => setShowIncidentFeed(true)}
+                      onViewIncidents={() => {
+                        console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
+                        setShowIncidentFeed(true);
+                      }}
                     />
                   }
                   bottomBar={
