@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useQuery, useIsMutating } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 export type NavigationState = 'idle' | 'starting' | 'active' | 'completing';
 
@@ -26,11 +26,22 @@ export function useNavigationSession(): NavigationSession {
     refetchInterval: 2000,
     staleTime: 1000,
   });
+  
+  // Track journey mutation state to implement 'starting' and 'completing' states
+  const isActivatingJourney = useIsMutating({ mutationKey: ['activateJourney'] }) > 0;
+  const isCompletingJourney = useIsMutating({ mutationKey: ['completeJourney'] }) > 0;
 
-  // Derive state from journey status
+  // Derive state from journey status and mutation state
   let state: NavigationState = 'idle';
   
-  if (isLoading && !currentJourney) {
+  // CRITICAL: Check mutation state FIRST to implement 'starting' and 'completing'
+  if (isCompletingJourney) {
+    // Journey is being completed - show completing state
+    state = 'completing';
+  } else if (isActivatingJourney) {
+    // Journey is being activated - show starting state
+    state = 'starting';
+  } else if (isLoading && !currentJourney) {
     // Initial load - use last known state
     state = lastKnownStateRef.current;
   } else if (!currentJourney) {

@@ -35,6 +35,7 @@ import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
+import { useNavigationSession } from "@/hooks/use-navigation-session";
 import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
@@ -105,13 +106,14 @@ function NavigationPageContent() {
   const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [toCoordinates, setToCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
-  const [activeJourney, setActiveJourney] = useState<Journey | null>(null);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
-  // CRITICAL: Ref to track navigation intent - persists across renders/refetches
-  // Used to prevent React Query refetch from resetting navigation state
-  const wasNavigatingRef = useRef(false);
+  // CRITICAL: Single source of truth for navigation state - prevents race conditions
+  const navSession = useNavigationSession();
+  const { state: navState, journeyId, shouldShowHUD, canStart } = navSession;
+  
+  // Backwards compatibility: Derive isNavigating from navSession
+  const isNavigating = navSession.isNavigating;
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -202,11 +204,16 @@ function NavigationPageContent() {
   
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
-  const [mobileNavMode, setMobileNavMode] = useState<MobileNavMode>('preview');
   
-  // CRITICAL FIX: Derive navigation UI state from BOTH conditions
-  // NavigationLayout only renders when BOTH navigation is active AND mode is navigate
-  const isNavUIActive = isNavigating && mobileNavMode === 'navigate';
+  // CRITICAL: Derive mobileNavMode from navSession state (single source of truth)
+  // This prevents competing state from causing race conditions
+  const mobileNavMode: MobileNavMode = navState === 'active' || navState === 'starting' 
+    ? 'navigate' 
+    : 'preview';
+  
+  // CRITICAL FIX: Derive navigation UI state from navSession
+  // NavigationLayout renders when shouldShowHUD is true
+  const isNavUIActive = shouldShowHUD;
   
   // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
   // Use useMemo to stabilize calculation and prevent initial render issues
@@ -732,7 +739,6 @@ function NavigationPageContent() {
   useEffect(() => {
     if (isMobile && isNavigating && mobileNavMode !== 'navigate') {
       console.log('[NAV-MODE-GUARD] Enforcing navigate mode for active navigation');
-      setMobileNavMode('navigate'); // Direct update, no debounce
     }
   }, [isMobile, isNavigating, mobileNavMode]);
   
@@ -860,8 +866,6 @@ function NavigationPageContent() {
       const speedometer = document.querySelector('[data-testid="speedometer-hud"]');
       if (!speedometer) {
         console.error('[NAV-MODE] CRITICAL: Speedometer not found in navigate mode!');
-        // Attempt recovery by forcing re-render
-        setMobileNavMode('navigate');
       } else {
         console.log('[NAV-MODE] ✓ Speedometer visibility confirmed');
       }
@@ -1136,7 +1140,8 @@ function NavigationPageContent() {
     }
   }, [activeProfile]);
 
-  // Sync active journey with current journey from query
+  // SIMPLIFIED: Sync route data with current journey
+  // Navigation state is now automatically derived by useNavigationSession hook
   useEffect(() => {
     if (currentJourney) {
       // CRITICAL: Only load active or planned journeys - ignore completed ones
@@ -1153,7 +1158,6 @@ function NavigationPageContent() {
         
         // CRITICAL: Clear the route from the map!
         setCurrentRoute(null);
-        setActiveJourney(null);
         setFromLocation('');
         setToLocation('');
         setFromCoordinates(null);
@@ -1161,25 +1165,21 @@ function NavigationPageContent() {
         return;
       }
       
-      setActiveJourney(currentJourney);
-      
-      // CRITICAL FIX: Load the route data from the journey's routeId
+      // Load the route data from the journey's routeId
       if (currentJourney.routeId) {
         console.log('[JOURNEY-LOAD] Journey has routeId, fetching route:', currentJourney.routeId);
-        // Fetch the route using the routeId with proper error handling
         fetch(`/api/routes/${currentJourney.routeId}`)
           .then(res => {
-            console.log('[JOURNEY-LOAD] Route fetch response:', res.status, res.statusText);
             if (!res.ok) {
               throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             }
             return res.json();
           })
           .then(route => {
-            console.log('[JOURNEY-LOAD] ✅ Successfully loaded route from journey:', route);
+            console.log('[JOURNEY-LOAD] ✅ Successfully loaded route from journey');
             setCurrentRoute(route);
             
-            // CRITICAL FIX: Populate location fields from route data
+            // Populate location fields from route data
             if (route.startLocation) {
               setFromLocation(route.startLocation);
               if (route.startCoordinates) {
@@ -1195,117 +1195,53 @@ function NavigationPageContent() {
           })
           .catch(err => {
             console.error('[JOURNEY-LOAD] ❌ Failed to fetch route:', err.message || err);
-            console.error('[JOURNEY-LOAD] Route ID:', currentJourney.routeId);
           });
       }
       
-      // CRITICAL FIX: Check if active journey is stale before activating navigation
-      console.log('[JOURNEY-LOAD] Navigation state:', {
-        journeyStatus: currentJourney.status
+      // NOTE: Navigation state is automatically derived from journey status by useNavigationSession
+      // No need to manually set isNavigating or mobileNavMode
+      console.log('[JOURNEY-LOAD] Navigation state auto-derived from navSession:', {
+        journeyStatus: currentJourney.status,
+        navState,
+        shouldShowHUD
       });
-      
-      if (currentJourney.status === 'active') {
-        // Check if journey is stale using the database timestamp (started_at)
-        // A journey is stale if it was started > 30 minutes ago
-        const journeyStartTime = new Date(currentJourney.startedAt).getTime();
-        const currentTime = Date.now();
-        const ageInMinutes = (currentTime - journeyStartTime) / (1000 * 60);
-        const isStale = ageInMinutes > 30;
-        
-        console.log('[JOURNEY-LOAD] Active journey age check:', {
-          startedAt: currentJourney.startedAt,
-          ageInMinutes: ageInMinutes.toFixed(1),
-          isStale
-        });
-        
-        if (isStale) {
-          // Stale active journey - complete it and reset state
-          console.log('[JOURNEY-LOAD] ⚠️ Active journey is STALE (> 30 min old) - completing it');
-          completeJourneyMutation.mutate(currentJourney.id);
-          
-          // Clear stale state
-          localStorage.removeItem('navigation_mode');
-          localStorage.removeItem('navigation_timestamp');
-          localStorage.removeItem('activeJourneyId');
-          setIsNavigating(false);
-          setMobileNavMode('preview');
-          setActiveJourney(null);
-          
-          console.log('[JOURNEY-LOAD] ✅ Stale journey cleaned up - user must start fresh');
-        } else {
-          // Fresh active journey - activate navigation
-          console.log('[JOURNEY-LOAD] Active journey is FRESH - activating navigation mode');
-          setIsNavigating(true);
-          setMobileNavMode('navigate');
-          // Sync localStorage for consistency
-          localStorage.setItem('navigation_mode', 'navigate');
-          localStorage.setItem('navigation_timestamp', Date.now().toString());
-        }
-      } else if (currentJourney.status === 'planned') {
-        console.log('[JOURNEY-LOAD] Planned journey - showing preview mode');
-        setIsNavigating(false);
-        setMobileNavMode('preview');
-        // Clear navigation flags for planned journeys
-        localStorage.removeItem('navigation_mode');
-        localStorage.removeItem('navigation_timestamp');
-      }
     } else {
-      // CRITICAL PWA FIX: Don't reset navigation state during React Query refetch
-      // Check if query is refetching AND navigation was started (ref check)
-      if (isJourneyFetching && wasNavigatingRef.current) {
-        console.log('[JOURNEY-LOAD] Query refetching while navigation active - SKIPPING reset to preserve UI');
-        // Don't reset anything - this is a temporary null during refetch after Start Navigation
-        return;
-      }
-      
-      // No journey AND query is not refetching - ensure clean state
-      console.log('[JOURNEY-LOAD] No journey and query not refetching - ensuring clean state');
+      // No journey - clear route data
+      console.log('[JOURNEY-LOAD] No journey - clearing route data');
       setCurrentRoute(null);
-      setActiveJourney(null);
-      setIsNavigating(false);
-      setMobileNavMode('preview');
-      // Clear the ref since navigation is definitively stopped
-      wasNavigatingRef.current = false;
+      // NOTE: Navigation state is automatically derived by useNavigationSession
     }
-  }, [currentJourney, activeJourney, isJourneyFetching]);
+  }, [currentJourney, navState, shouldShowHUD]);
 
-  // Handle page refresh - restore navigation state ONLY if explicitly started AND recent
+  // Handle page refresh - restore journey if it exists
+  // NOTE: Navigation state is automatically derived by useNavigationSession hook
   useEffect(() => {
-    // CRITICAL: Clear navigation state on initial load unless navigation was explicitly started
-    const navigationMode = localStorage.getItem('navigation_mode');
-    const navigationTimestamp = localStorage.getItem('navigation_timestamp');
     const storedJourneyId = localStorage.getItem('activeJourneyId');
     
-    // Check if navigation state is stale (older than 30 minutes)
-    const isStale = navigationTimestamp ? 
-      (Date.now() - parseInt(navigationTimestamp)) > 30 * 60 * 1000 : true;
-    
-    if (navigationMode !== 'navigate' || isStale) {
-      // User hasn't explicitly started navigation or state is stale - ensure clean state
-      console.log('[INIT] Clearing navigation state - no explicit/recent navigation start');
-      setIsNavigating(false);
-      setMobileNavMode('plan');
+    if (storedJourneyId) {
+      // Journey exists in localStorage - refetch it
+      // The navSession hook will automatically derive the correct navigation state
+      console.log('[INIT] Refetching journey from localStorage:', storedJourneyId);
+      refetchCurrentJourney();
+    } else {
+      // Clean up any stale localStorage flags
+      console.log('[INIT] No stored journey - cleaning up localStorage');
       localStorage.removeItem('navigation_mode');
       localStorage.removeItem('navigation_timestamp');
-      localStorage.removeItem('activeJourneyId');
       localStorage.removeItem('activeRouteId');
-    } else if (storedJourneyId && !activeJourney) {
-      // Navigation was explicitly started and is recent - restore it
-      console.log('[INIT] Restoring navigation - user had recently started navigation');
-      refetchCurrentJourney();
     }
   }, []);
   
-  // PWA/Mobile lifecycle management - clean up navigation state properly
+  // PWA/Mobile lifecycle management - clean up localStorage properly
+  // NOTE: Navigation state is automatically derived by useNavigationSession hook
   useEffect(() => {
     const clearNavigationState = () => {
-      console.log('[LIFECYCLE] App suspending/closing - clearing navigation state');
+      console.log('[LIFECYCLE] App suspending/closing - clearing localStorage');
       localStorage.removeItem('navigation_mode');
       localStorage.removeItem('navigation_timestamp');
       localStorage.removeItem('activeJourneyId');
       localStorage.removeItem('activeRouteId');
-      setIsNavigating(false);
-      setMobileNavMode('plan');
+      // NOTE: No need to set state - navSession will auto-derive when journey is cleared
     };
     
     // Handle page hide (mobile browser minimized or PWA closed)
@@ -1425,22 +1361,20 @@ function NavigationPageContent() {
 
   // Journey mutations
   const activateJourneyMutation = useMutation({
+    mutationKey: ['activateJourney'], // CRITICAL: For useNavigationSession to track 'starting' state
     mutationFn: async ({ journeyId, idempotencyKey }: { journeyId: number; idempotencyKey: string }) => {
       const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/activate`, {}, { idempotencyKey });
       return response.json();
     },
     onSuccess: (journey) => {
-      setActiveJourney(journey);
-      setIsNavigating(true);
-      setMobileNavMode('navigate'); // Ensure mobile nav mode is set for navigation controls to appear
       localStorage.setItem('activeJourneyId', journey.id.toString());
+      // CRITICAL: Invalidate the exact query key that navSession uses
+      queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
       refetchCurrentJourney();
     },
     onError: (error) => {
       console.error('Failed to activate journey:', error);
-      // Reset navigation state on error
-      setIsNavigating(false);
       // Reset any pending state flags on error
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
@@ -1467,20 +1401,18 @@ function NavigationPageContent() {
   });
 
   const completeJourneyMutation = useMutation({
+    mutationKey: ['completeJourney'], // CRITICAL: For useNavigationSession to track 'completing' state
     mutationFn: async (journeyId: number) => {
       const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/complete`, {});
       return response.json();
     },
     onSuccess: (journey) => {
-      setActiveJourney(null);
-      setIsNavigating(false);
       setCurrentRoute(null);
-      setMobileNavMode('preview'); // Return to preview mode
       localStorage.removeItem('activeJourneyId');
-      // Invalidate all journey-related queries to keep UI consistent
+      // CRITICAL: Invalidate the exact query key that navSession uses
+      queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
       queryClient.invalidateQueries({ queryKey: ["/api/journeys", "last"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/journeys", "active"] });
       refetchCurrentJourney();
     },
     onError: (error) => {
@@ -1525,11 +1457,10 @@ function NavigationPageContent() {
         setToLocation(route.endLocation);
       }
       
-      // If route calculation includes a plannedJourney (from route calculation), set it as active
+      // If route calculation includes a plannedJourney (from route calculation), update sync
       // NOTE: We don't persist to localStorage here - only persist when user actually starts navigation
       // This prevents preview routes from reappearing on app reload
       if (route.plannedJourney) {
-        setActiveJourney(route.plannedJourney);
         // Removed: localStorage.setItem('activeJourneyId', route.plannedJourney.id.toString());
         // Only startNavigationMutation (line ~1417) persists to localStorage
         windowSync.updateJourney(route.plannedJourney, false);
@@ -1573,10 +1504,6 @@ function NavigationPageContent() {
       
       if (isMobile && route && route.routePath && route.routePath.length > 0 && !isNavigating) {
         console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
-        
-        // Show preview mode - user must manually click "Start Navigation" button
-        // BUT: Don't reset to preview if navigation is already active!
-        setMobileNavMode('preview');
         
         // Close route planning panel if open
         setSidebarState('collapsed');
@@ -1903,14 +1830,9 @@ function NavigationPageContent() {
     // Clear all route state
     setCurrentRoute(null);
     setPreviewRoute(null);
-    setActiveJourney(null);
-    setIsNavigating(false);
     
-    // Immediately set preview mode (no delay)
-    setMobileNavMode('preview');
-    
-    if (activeJourney?.id && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
-      completeJourneyMutation.mutate(activeJourney.id);
+    if (currentJourney?.id && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
+      completeJourneyMutation.mutate(currentJourney.id);
     }
     
     console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to preview mode');
@@ -2028,7 +1950,7 @@ function NavigationPageContent() {
 
   // Mode validation guard to prevent invalid navigation transitions
   const canStartNavigation = useCallback(() => {
-    if (isMobile && mobileNavMode !== 'preview' && mobileNavMode !== 'plan') {
+    if (isMobile && mobileNavMode !== 'preview' && mobileNavMode !== 'navigate') {
       console.warn('[NAV-MODE] Cannot start navigation - invalid mode:', mobileNavMode);
       return false;
     }
@@ -2098,22 +2020,10 @@ function NavigationPageContent() {
       
       // CRITICAL: Persist route to state so component receives valid route
       setCurrentRoute(route);
-      console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state, proceeding with navigation activation');
+      console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state, proceeding with journey activation');
 
-      // CRITICAL FIX: Set navigation state IMMEDIATELY after route is confirmed
-      // This ensures navigation controls appear with a valid route
-      console.log('[NAV-ACTIVATION] 🎯 IMMEDIATE STATE UPDATE - Setting navigation mode');
-      setIsNavigating(true);
-      setMobileNavMode('navigate');
-      // CRITICAL: Set ref to persist navigation intent across query refetches
-      wasNavigatingRef.current = true;
-      console.log('[NAV-ACTIVATION] ✅ Navigation states set - controls should appear immediately');
-      
-      // CRITICAL: Set flag and timestamp IMMEDIATELY to prevent race condition with useEffect
-      // This must happen BEFORE mutations so the journey-load useEffect doesn't revert to preview
-      localStorage.setItem('navigation_mode', 'navigate');
-      localStorage.setItem('navigation_timestamp', Date.now().toString());
-      console.log('[NAV-ACTIVATION] ✅ Set navigation_mode flag in localStorage BEFORE mutations');
+      // NOTE: Navigation state will be automatically derived by navSession hook
+      // after journey is created/activated - no need to manually set states
       
       // Force zoom to navigation level regardless of GPS status
       if (mapRef.current && (fromCoordinates || toCoordinates)) {
@@ -2151,8 +2061,8 @@ function NavigationPageContent() {
 
       // Single linear navigation flow with proper mutation sequence
       let journeyId: number;
-      if (activeJourney?.status === 'planned') {
-        journeyId = activeJourney.id;
+      if (currentJourney?.status === 'planned') {
+        journeyId = currentJourney.id;
       } else {
         const newJourney = await startJourneyMutation.mutateAsync({ 
           routeId: route.id, 
@@ -2170,16 +2080,12 @@ function NavigationPageContent() {
       console.log('[NAV-ACTIVATION] Step 4: ✅ Journey activated successfully');
       console.log('[NAV-ACTIVATION] Activated journey:', activatedJourney);
       
-      // CRITICAL: Set activeJourney state so useEffect sees status='active' and activates navigation UI
-      setActiveJourney(activatedJourney);
+      // Store journey ID in localStorage for persistence across page refreshes
       localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
-      console.log('[NAV-ACTIVATION] ✅ activeJourney state updated with active journey');
+      console.log('[NAV-ACTIVATION] ✅ Journey ID stored in localStorage');
       
-      // Navigation states already set at the beginning of function
-      console.log('[NAV-ACTIVATION] Navigation states were already set at function start');
-      
-      // Navigation flags were already set BEFORE mutations to prevent race condition
-      console.log('[NAV-ACTIVATION] Navigation flags already set at function start (before mutations)');
+      // NOTE: Navigation state will automatically be derived by navSession hook
+      // from the journey query refetch - no need to manually set states
       
       // Store route ID for persistence
       if (route.id) {
@@ -2219,8 +2125,8 @@ function NavigationPageContent() {
   };
 
   const handleStopNavigation = () => {
-    if (activeJourney && (activeJourney.status === 'active' || activeJourney.status === 'planned')) {
-      completeJourneyMutation.mutate(activeJourney.id);
+    if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
+      completeJourneyMutation.mutate(currentJourney.id);
     }
     
     // CRITICAL: Clear all route persistence - fresh start page
@@ -2239,13 +2145,6 @@ function NavigationPageContent() {
     // Comprehensive state reset - completely cancel navigation
     setCurrentRoute(null);
     setPreviewRoute(null);
-    setActiveJourney(null);
-    setIsNavigating(false);
-    // Clear navigation intent ref
-    wasNavigatingRef.current = false;
-    
-    // Immediately set preview mode (no delay)
-    setMobileNavMode('preview');
     
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
@@ -2455,7 +2354,7 @@ function NavigationPageContent() {
               )}
               
               {/* GPS Fallback Banner - Manual Location Setting */}
-              {(mobileNavMode === 'plan' || mobileNavMode === 'preview') && 
+              {mobileNavMode === 'preview' && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
                !gpsData.manualLocation && (
@@ -2484,7 +2383,7 @@ function NavigationPageContent() {
               )}
               
               {/* Manual Location Active Indicator */}
-              {(mobileNavMode === 'plan' || mobileNavMode === 'preview') && 
+              {mobileNavMode === 'preview' && 
                gpsData?.manualLocation && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] w-[90%] max-w-md pointer-events-auto" data-testid="manual-location-indicator">
                   <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-300 shadow-lg">
@@ -2513,8 +2412,8 @@ function NavigationPageContent() {
               )}
               
 
-              {/* PLAN MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
-              {mobileNavMode === 'plan' && (
+              {/* PREVIEW MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
+              {mobileNavMode === 'preview' && (
                 <div className={cn(
                   "transition-opacity duration-200",
                   isNavigating && "opacity-0 pointer-events-none"
@@ -3222,8 +3121,6 @@ function NavigationPageContent() {
                 
                 // Clear route and return to preview mode
                 setCurrentRoute(null);
-                setIsNavigating(false);
-                setMobileNavMode('preview'); // Return to preview mode with hamburger button
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
                 
