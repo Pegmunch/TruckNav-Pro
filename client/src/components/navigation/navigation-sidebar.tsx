@@ -597,77 +597,55 @@ const NavigationSidebar = memo(function NavigationSidebar({
           )}
         </div>
 
-        {/* Sticky Top Start/Stop Navigation Button */}
-        {!isCollapsed && (
+        {/* Sticky Top Start Navigation Button */}
+        {/* CRITICAL FIX: Only show Start button when not navigating - navigation UI has its own controls */}
+        {!isCollapsed && !isNavigating && (
           <div className="sticky top-0 z-20 bg-card px-3 pt-3 pb-2 border-b border-border/50">
-            {!isNavigating ? (
-              <Button
-                onClick={() => {
-                  console.warn('[START_NAV_DEBUG] Button conditions:', {
-                    currentRoute: !!currentRoute,
-                    selectedProfile: !!selectedProfile, 
-                    fromLocation: !!fromLocation,
-                    toLocation: !!toLocation,
-                    isStartingJourney,
-                    disabled: !currentRoute || !selectedProfile || isStartingJourney
+            <Button
+              onClick={() => {
+                console.warn('[START_NAV_DEBUG] Button conditions:', {
+                  currentRoute: !!currentRoute,
+                  selectedProfile: !!selectedProfile, 
+                  fromLocation: !!fromLocation,
+                  toLocation: !!toLocation,
+                  isStartingJourney,
+                  disabled: !currentRoute || !selectedProfile || isStartingJourney
+                });
+                if (currentRoute && selectedProfile) {
+                  onStartNavigation();
+                } else {
+                  console.log({
+                    title: "Route required",
+                    description: "Set both locations and vehicle profile to calculate a route",
+                    variant: "destructive"
                   });
-                  if (currentRoute && selectedProfile) {
-                    onStartNavigation();
-                  } else {
-                    console.log({
-                      title: "Route required",
-                      description: "Set both locations and vehicle profile to calculate a route",
-                      variant: "destructive"
-                    });
-                  }
-                }}
-                disabled={!currentRoute || !selectedProfile || isStartingJourney}
-                aria-label="Start turn-by-turn navigation with selected route"
-                aria-busy={isStartingJourney}
-                size="lg"
-                className={cn(
-                  "w-full h-11 text-sm font-bold rounded-lg shadow-xl transition-all duration-200",
-                  "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
-                  "border-2 border-blue-400/50 hover:scale-105 active:scale-95",
-                  "focus-visible:ring-4 focus-visible:ring-blue-500",
-                  currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-2xl shadow-blue-500/50"
-                )}
-                data-testid="button-start-navigation-top"
-              >
-                {isStartingJourney ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Starting Navigation...
-                  </>
-                ) : (
-                  <>
-                    <Navigation className="w-5 h-5 mr-2" />
-                    Start Navigation
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button
-                onClick={onStopNavigation}
-                disabled={isCompletingJourney}
-                variant="destructive"
-                size="lg"
-                className="w-full font-semibold h-12"
-                data-testid="button-stop-navigation-top"
-              >
-                {isCompletingJourney ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Stopping Navigation...
-                  </>
-                ) : (
-                  <>
-                    <Square className="w-5 h-5 mr-2" />
-                    Stop Navigation
-                  </>
-                )}
-              </Button>
-            )}
+                }
+              }}
+              disabled={!currentRoute || !selectedProfile || isStartingJourney}
+              aria-label="Start turn-by-turn navigation with selected route"
+              aria-busy={isStartingJourney}
+              size="lg"
+              className={cn(
+                "w-full h-11 text-sm font-bold rounded-lg shadow-xl transition-all duration-200",
+                "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
+                "border-2 border-blue-400/50 hover:scale-105 active:scale-95",
+                "focus-visible:ring-4 focus-visible:ring-blue-500",
+                currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-2xl shadow-blue-500/50"
+              )}
+              data-testid="button-start-navigation-top"
+            >
+              {isStartingJourney ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Starting Navigation...
+                </>
+              ) : (
+                <>
+                  <Navigation className="w-5 h-5 mr-2" />
+                  Start Navigation
+                </>
+              )}
+            </Button>
             
             {/* Route Preview Toggle - Only show during navigation */}
             {isNavigating && typeof onRoutePreviewToggle === 'function' && (
