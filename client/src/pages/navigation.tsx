@@ -1219,17 +1219,18 @@ function NavigationPageContent() {
         localStorage.removeItem('navigation_timestamp');
       }
     } else {
-      // CRITICAL PWA FIX: Don't reset navigation state if activeJourney is already set
-      // This prevents race condition when query invalidation causes temporary null state
-      if (!activeJourney) {
-        // No journey - ensure clean state ONLY if there's truly no active journey
-        console.log('[JOURNEY-LOAD] No journey - ensuring clean state');
+      // CRITICAL PWA FIX: Don't reset navigation state during React Query refetch
+      // If navigation is active (isNavigating=true), keep the state - query is just refreshing
+      if (isNavigating) {
+        console.log('[JOURNEY-LOAD] currentJourney is null but navigation is active - keeping state (query refetch in progress)');
+        // Don't reset anything - this is a temporary null during refetch
+      } else {
+        // No journey AND not navigating - ensure clean state
+        console.log('[JOURNEY-LOAD] No journey and not navigating - ensuring clean state');
         setCurrentRoute(null);
         setActiveJourney(null);
         setIsNavigating(false);
         setMobileNavMode('preview');
-      } else {
-        console.log('[JOURNEY-LOAD] currentJourney is null but activeJourney exists - keeping navigation state (query refetch in progress)');
       }
     }
   }, [currentJourney, activeJourney]);
