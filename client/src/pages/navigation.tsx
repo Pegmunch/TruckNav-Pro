@@ -112,8 +112,15 @@ function NavigationPageContent() {
   const navSession = useNavigationSession();
   const { state: navState, journeyId, shouldShowHUD, canStart } = navSession;
   
-  // Backwards compatibility: Derive isNavigating from navSession
-  const isNavigating = navSession.isNavigating;
+  // LOCAL NAVIGATION UI STATE - Independent of server session state
+  // This fixes PWA session issues where UI disappears when session changes
+  const [isLocalNavActive, setIsLocalNavActive] = useState(() => {
+    // Initialize from localStorage to survive page reloads
+    return localStorage.getItem('navigation_ui_active') === 'true';
+  });
+  
+  // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
+  const isNavigating = isLocalNavActive;
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -205,15 +212,15 @@ function NavigationPageContent() {
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   
-  // CRITICAL: Derive mobileNavMode from navSession state (single source of truth)
-  // This prevents competing state from causing race conditions
-  const mobileNavMode: MobileNavMode = navState === 'active' || navState === 'starting' 
+  // CRITICAL: Derive mobileNavMode from LOCAL navigation state
+  // This prevents UI from disappearing when server session changes in PWA mode
+  const mobileNavMode: MobileNavMode = isLocalNavActive
     ? 'navigate' 
     : 'preview';
   
-  // CRITICAL FIX: Derive navigation UI state from navSession
-  // NavigationLayout renders when shouldShowHUD is true
-  const isNavUIActive = shouldShowHUD;
+  // CRITICAL FIX: Derive navigation UI state from LOCAL state (not server)
+  // This makes UI persist even when server session changes in PWA mode
+  const isNavUIActive = isLocalNavActive;
   
   // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
   // Use useMemo to stabilize calculation and prevent initial render issues
@@ -2084,6 +2091,12 @@ function NavigationPageContent() {
       localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
       console.log('[NAV-ACTIVATION] ✅ Journey ID stored in localStorage');
       
+      // CRITICAL FIX: Set local navigation UI state to persist across session changes
+      // This ensures UI stays visible even if server session changes in PWA mode
+      setIsLocalNavActive(true);
+      localStorage.setItem('navigation_ui_active', 'true');
+      console.log('[NAV-ACTIVATION] ✅ Local navigation UI state activated - UI will persist');
+      
       // NOTE: Navigation state will automatically be derived by navSession hook
       // from the journey query refetch - no need to manually set states
       
@@ -2134,6 +2147,11 @@ function NavigationPageContent() {
     localStorage.removeItem('navigation_mode'); // Clear navigation flag
     localStorage.removeItem('navigation_timestamp'); // Clear timestamp
     localStorage.removeItem('activeRouteId');
+    
+    // CRITICAL FIX: Clear local navigation UI state
+    setIsLocalNavActive(false);
+    localStorage.removeItem('navigation_ui_active');
+    console.log('[NAV-STOP] ✅ Local navigation UI state deactivated');
     
     // Clear URL parameter
     const url = new URL(window.location.href);
