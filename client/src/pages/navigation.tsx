@@ -1195,36 +1195,26 @@ function NavigationPageContent() {
           });
       }
       
-      // CRITICAL FIX: Only restore navigation if user explicitly started navigation AND it's recent
-      // Check localStorage flag and timestamp to ensure this is a real, recent navigation session
-      const navigationMode = localStorage.getItem('navigation_mode');
-      const navigationTimestamp = localStorage.getItem('navigation_timestamp');
-      const navigationStarted = navigationMode === 'navigate';
-      const isStale = navigationTimestamp ? 
-        (Date.now() - parseInt(navigationTimestamp)) > 30 * 60 * 1000 : true;
-      
+      // CRITICAL FIX: Treat activeJourney.status as AUTHORITATIVE source of truth
+      // An 'active' journey ALWAYS means navigation is active - no timestamp checks
+      // Server-side logic handles stale journey cleanup, not client
       console.log('[JOURNEY-LOAD] Navigation state:', {
-        navigationStarted,
-        isStale,
         journeyStatus: currentJourney.status
       });
       
-      if (currentJourney.status === 'active' && navigationStarted && !isStale) {
-        console.log('[JOURNEY-LOAD] Active journey WITH recent navigation flag - restoring navigation');
+      if (currentJourney.status === 'active') {
+        // Active journey = navigation is ALWAYS active (authoritative)
+        console.log('[JOURNEY-LOAD] Active journey - activating navigation mode');
         setIsNavigating(true);
         setMobileNavMode('navigate');
-      } else if (currentJourney.status === 'active') {
-        console.log('[JOURNEY-LOAD] Active journey but stale/missing navigation flag - showing preview');
-        setIsNavigating(false);
-        setMobileNavMode('preview');
-        // Clear stale navigation flags
-        localStorage.removeItem('navigation_mode');
-        localStorage.removeItem('navigation_timestamp');
+        // Sync localStorage for consistency (but not used as source of truth)
+        localStorage.setItem('navigation_mode', 'navigate');
+        localStorage.setItem('navigation_timestamp', Date.now().toString());
       } else if (currentJourney.status === 'planned') {
         console.log('[JOURNEY-LOAD] Planned journey - showing preview mode');
         setIsNavigating(false);
         setMobileNavMode('preview');
-        // Clear any navigation flags for planned journeys
+        // Clear navigation flags for planned journeys
         localStorage.removeItem('navigation_mode');
         localStorage.removeItem('navigation_timestamp');
       }
@@ -2076,6 +2066,12 @@ function NavigationPageContent() {
       setMobileNavMode('navigate');
       console.log('[NAV-ACTIVATION] ✅ Navigation states set - controls should appear immediately');
       
+      // CRITICAL: Set flag and timestamp IMMEDIATELY to prevent race condition with useEffect
+      // This must happen BEFORE mutations so the journey-load useEffect doesn't revert to preview
+      localStorage.setItem('navigation_mode', 'navigate');
+      localStorage.setItem('navigation_timestamp', Date.now().toString());
+      console.log('[NAV-ACTIVATION] ✅ Set navigation_mode flag in localStorage BEFORE mutations');
+      
       // Force zoom to navigation level regardless of GPS status
       if (mapRef.current && (fromCoordinates || toCoordinates)) {
         const zoomTarget = fromCoordinates || toCoordinates;
@@ -2132,10 +2128,8 @@ function NavigationPageContent() {
       // Navigation states already set at the beginning of function
       console.log('[NAV-ACTIVATION] Navigation states were already set at function start');
       
-      // CRITICAL: Set flag and timestamp to indicate navigation was explicitly started by user
-      localStorage.setItem('navigation_mode', 'navigate');
-      localStorage.setItem('navigation_timestamp', Date.now().toString());
-      console.log('[NAV-ACTIVATION] Set navigation_mode flag and timestamp in localStorage');
+      // Navigation flags were already set BEFORE mutations to prevent race condition
+      console.log('[NAV-ACTIVATION] Navigation flags already set at function start (before mutations)');
       
       // Store route ID for persistence
       if (route.id) {
@@ -2376,8 +2370,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2834,8 +2828,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
