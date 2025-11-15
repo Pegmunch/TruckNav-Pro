@@ -77,35 +77,12 @@ export function useNavigationSession(): NavigationSession {
     // No journey exists
     state = 'idle';
   } else {
-    // Check journey staleness using database timestamp
-    const journeyStartTime = currentJourney.startedAt 
-      ? new Date(currentJourney.startedAt).getTime()
-      : 0;
-    const ageInMinutes = journeyStartTime 
-      ? (Date.now() - journeyStartTime) / (1000 * 60)
-      : 0;
-    const isStale = ageInMinutes > 30;
-    
-    console.log('[NAV-STATE] Journey state calculation:', {
-      journeyId: currentJourney.id,
-      status: currentJourney.status,
-      startedAt: currentJourney.startedAt,
-      ageInMinutes,
-      isStale
-    });
-    
-    if (isStale && currentJourney.status === 'active') {
-      // Stale journey should be completed
-      console.log('[NAV-STATE] Journey is STALE - setting state to idle');
-      state = 'idle';
-    } else if (currentJourney.status === 'active') {
-      console.log('[NAV-STATE] Journey is ACTIVE - setting state to active');
+    // Derive state directly from journey status (no staleness check)
+    if (currentJourney.status === 'active') {
       state = 'active';
     } else if (currentJourney.status === 'planned') {
-      console.log('[NAV-STATE] Journey is PLANNED - setting state to idle');
       state = 'idle'; // Planned journeys show Start button
     } else if (currentJourney.status === 'completed') {
-      console.log('[NAV-STATE] Journey is COMPLETED - setting state to idle');
       state = 'idle';
     }
   }
