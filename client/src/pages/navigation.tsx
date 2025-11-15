@@ -109,6 +109,10 @@ function NavigationPageContent() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [showLaneGuidance, setShowLaneGuidance] = useState(false);
   
+  // CRITICAL: Ref to track navigation intent - persists across renders/refetches
+  // Used to prevent React Query refetch from resetting navigation state
+  const wasNavigatingRef = useRef(false);
+  
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
     isMobile ? 'closed' : 'open'
@@ -1076,7 +1080,7 @@ function NavigationPageContent() {
   });
 
   // Get current active journey
-  const { data: currentJourney, refetch: refetchCurrentJourney } = useQuery<Journey | null>({
+  const { data: currentJourney, refetch: refetchCurrentJourney, isFetching: isJourneyFetching } = useQuery<Journey | null>({
     queryKey: ["/api/journeys", "active"],
     queryFn: async () => {
       // Check URL parameter first for journey ID
@@ -1220,20 +1224,23 @@ function NavigationPageContent() {
       }
     } else {
       // CRITICAL PWA FIX: Don't reset navigation state during React Query refetch
-      // If navigation is active (isNavigating=true), keep the state - query is just refreshing
-      if (isNavigating) {
-        console.log('[JOURNEY-LOAD] currentJourney is null but navigation is active - keeping state (query refetch in progress)');
-        // Don't reset anything - this is a temporary null during refetch
-      } else {
-        // No journey AND not navigating - ensure clean state
-        console.log('[JOURNEY-LOAD] No journey and not navigating - ensuring clean state');
-        setCurrentRoute(null);
-        setActiveJourney(null);
-        setIsNavigating(false);
-        setMobileNavMode('preview');
+      // Check if query is refetching AND navigation was started (ref check)
+      if (isJourneyFetching && wasNavigatingRef.current) {
+        console.log('[JOURNEY-LOAD] Query refetching while navigation active - SKIPPING reset to preserve UI');
+        // Don't reset anything - this is a temporary null during refetch after Start Navigation
+        return;
       }
+      
+      // No journey AND query is not refetching - ensure clean state
+      console.log('[JOURNEY-LOAD] No journey and query not refetching - ensuring clean state');
+      setCurrentRoute(null);
+      setActiveJourney(null);
+      setIsNavigating(false);
+      setMobileNavMode('preview');
+      // Clear the ref since navigation is definitively stopped
+      wasNavigatingRef.current = false;
     }
-  }, [currentJourney, activeJourney]);
+  }, [currentJourney, activeJourney, isJourneyFetching]);
 
   // Handle page refresh - restore navigation state ONLY if explicitly started AND recent
   useEffect(() => {
@@ -2071,6 +2078,8 @@ function NavigationPageContent() {
       console.log('[NAV-ACTIVATION] 🎯 IMMEDIATE STATE UPDATE - Setting navigation mode');
       setIsNavigating(true);
       setMobileNavMode('navigate');
+      // CRITICAL: Set ref to persist navigation intent across query refetches
+      wasNavigatingRef.current = true;
       console.log('[NAV-ACTIVATION] ✅ Navigation states set - controls should appear immediately');
       
       // CRITICAL: Set flag and timestamp IMMEDIATELY to prevent race condition with useEffect
@@ -2205,6 +2214,8 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     setActiveJourney(null);
     setIsNavigating(false);
+    // Clear navigation intent ref
+    wasNavigatingRef.current = false;
     
     // Immediately set preview mode (no delay)
     setMobileNavMode('preview');
