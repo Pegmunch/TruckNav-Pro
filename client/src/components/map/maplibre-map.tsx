@@ -941,8 +941,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     if (!map.current || !isLoaded) return;
     if (!map.current.isStyleLoaded()) return;
 
+    console.log('[ROUTE-RENDER] Checking route rendering - currentRoute:', !!currentRoute, 'routePath length:', currentRoute?.routePath?.length);
+
     // Remove route visualization if currentRoute is null
     if (!currentRoute?.routePath) {
+      console.log('[ROUTE-RENDER] No route data - removing route layers');
       try {
         if (map.current.getLayer('route-line')) {
           map.current.removeLayer('route-line');
@@ -959,6 +962,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       return;
     }
 
+    console.log('[ROUTE-RENDER] Drawing route with', currentRoute.routePath.length, 'coordinates');
     let routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
     // During navigation, show only remaining route from current GPS position
@@ -993,6 +997,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     if (!map.current.getSource('route')) {
+      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 24px');
       map.current.addSource('route', {
         type: 'geojson',
         data: {
@@ -1020,7 +1025,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-opacity': 1.0  // Full opacity for prominence
         }
       });
+      console.log('[ROUTE-RENDER] ✅ Route layer added successfully');
     } else {
+      console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
       if (source && source.setData) {
         source.setData({
