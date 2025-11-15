@@ -65,6 +65,7 @@ import { NavigationControlsStack } from "@/components/navigation/navigation-cont
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
+import { VerticalRouteIndicator } from "@/components/navigation/vertical-route-indicator";
 import { navigationVoice } from "@/lib/navigation-voice";
 
 
@@ -2525,6 +2526,9 @@ function NavigationPageContent() {
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
+                      
+                      {/* Fixed Vertical Route Indicator - ALWAYS POINTS UP (map rotates underneath) */}
+                      <VerticalRouteIndicator isNavigating={isNavigating} />
                       
                       {/* Turn Indicator - Large bubble at top center */}
                       {nextTurn && (
