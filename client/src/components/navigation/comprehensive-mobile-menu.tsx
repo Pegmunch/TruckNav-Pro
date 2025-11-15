@@ -761,15 +761,29 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </Button>
                     )}
 
-                    {/* Route Calculated Success Message */}
-                    {currentRoute && (
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="text-sm font-medium text-green-900 dark:text-green-100">
-                          ✓ Route calculated
+                    {/* Route Calculated Success Message + Start Navigation Button */}
+                    {currentRoute && !isNavigating && (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="text-sm font-medium text-green-900 dark:text-green-100">
+                            ✓ Route calculated
+                          </div>
+                          <div className="text-xs text-green-700 dark:text-green-300 mt-1">
+                            {formatDistance(currentRoute.distance || 0, 'km')} • {formatDuration(currentRoute.duration || 0)}
+                          </div>
                         </div>
-                        <div className="text-xs text-green-700 dark:text-green-300 mt-1">
-                          {formatDistance(currentRoute.distance || 0, 'km')} • {formatDuration(currentRoute.duration || 0)}
-                        </div>
+                        
+                        <Button
+                          onClick={() => {
+                            onStartNavigation();
+                            onOpenChange(false);
+                          }}
+                          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                          data-testid="button-start-navigation"
+                        >
+                          <Play className="h-5 w-5 mr-2" />
+                          Start Navigation
+                        </Button>
                       </div>
                     )}
                   </CardContent>
