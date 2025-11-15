@@ -2535,6 +2535,24 @@ function NavigationPageContent() {
                   >
                     <Menu className="w-6 h-6" />
                   </Button>
+
+                  {/* START NAVIGATION FAB - Prominent green button (Bottom Left) */}
+                  {currentRoute && (
+                    <Button
+                      onClick={handleStartNavigation}
+                      size="lg"
+                      className="fixed z-[200] h-16 px-8 rounded-full shadow-2xl bg-green-600 hover:bg-green-700 text-white font-bold text-lg backdrop-blur-sm pointer-events-auto flex items-center gap-2"
+                      style={{
+                        bottom: 'calc(24px + var(--safe-area-bottom))',
+                        left: 'calc(24px + var(--safe-area-left))'
+                      }}
+                      data-testid="button-start-navigation-preview"
+                      aria-label="Start navigation"
+                    >
+                      <Navigation className="w-6 h-6" />
+                      Start Navigation
+                    </Button>
+                  )}
                 </div>
               )}
 
