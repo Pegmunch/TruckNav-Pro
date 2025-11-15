@@ -22,6 +22,35 @@ export function useNavigationSession(): NavigationSession {
   // Query for active journey with keepPreviousData to prevent null flicker during refetch
   const { data: currentJourney, isLoading } = useQuery<any>({
     queryKey: ['/api/journeys/active'],
+    queryFn: async () => {
+      // Check localStorage for active journey ID
+      const storedJourneyId = localStorage.getItem('activeJourneyId');
+      if (!storedJourneyId) {
+        return null;
+      }
+      
+      // Fetch the journey
+      const response = await fetch(`/api/journeys/${storedJourneyId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Journey not found - clear localStorage
+          localStorage.removeItem('activeJourneyId');
+          return null;
+        }
+        throw new Error(`Failed to fetch journey: ${response.statusText}`);
+      }
+      
+      const journey = await response.json();
+      
+      // Only return active or planned journeys
+      if (journey.status === 'active' || journey.status === 'planned') {
+        return journey;
+      }
+      
+      // Journey is completed/cancelled - clear localStorage
+      localStorage.removeItem('activeJourneyId');
+      return null;
+    },
     placeholderData: (previousData: any) => previousData, // Keep previous data during refetch
     refetchInterval: 2000,
     staleTime: 1000,
