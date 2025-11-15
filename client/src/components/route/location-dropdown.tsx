@@ -227,6 +227,7 @@ const LocationDropdown = memo(function LocationDropdown({
       setOpen(false);
     },
     onError: (error) => {
+      // REMOVED TOAST: No popups per user request
       console.error("Postcode not found:", error);
     },
   });
@@ -244,6 +245,7 @@ const LocationDropdown = memo(function LocationDropdown({
       setSaveLabel("");
     },
     onError: (error) => {
+      // REMOVED TOAST: No popups per user request
       console.error("Error saving location:", error);
     },
   });
@@ -272,6 +274,7 @@ const LocationDropdown = memo(function LocationDropdown({
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/locations"] });
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -339,6 +342,7 @@ const LocationDropdown = memo(function LocationDropdown({
 
   const handleSaveLocation = useCallback(() => {
     if (!saveLabel.trim()) {
+      // REMOVED TOAST: No popups per user request
       console.error("Invalid location name - Please enter a name for this location");
       return;
     }

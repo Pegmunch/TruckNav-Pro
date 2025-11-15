@@ -1019,8 +1019,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         source: 'route',
         layout: {
           'line-join': 'round',
-          'line-cap': 'round',
-          visibility: isNavigating ? 'none' : 'visible'
+          'line-cap': 'round'
         },
         paint: {
           'line-color': '#3b82f6', // Professional blue (matches reference images)
@@ -1028,7 +1027,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-opacity': 1.0  // Full opacity for prominence
         }
       });
-      console.log('[ROUTE-RENDER] ✅ Route layer added successfully - visibility:', isNavigating ? 'hidden (using fixed vertical indicator)' : 'visible');
+      console.log('[ROUTE-RENDER] ✅ Route layer added successfully');
     } else {
       console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
@@ -1041,12 +1040,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             coordinates: routeCoordinates
           }
         });
-      }
-      
-      // Toggle route visibility based on navigation state
-      if (map.current.getLayer('route-line')) {
-        map.current.setLayoutProperty('route-line', 'visibility', isNavigating ? 'none' : 'visible');
-        console.log('[ROUTE-RENDER] Route visibility updated:', isNavigating ? 'hidden (using fixed vertical indicator)' : 'visible');
       }
     }
 

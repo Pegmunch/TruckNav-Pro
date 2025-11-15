@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -65,10 +65,12 @@ import { NavigationControlsStack } from "@/components/navigation/navigation-cont
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
-import { VerticalRouteIndicator } from "@/components/navigation/vertical-route-indicator";
 import { navigationVoice } from "@/lib/navigation-voice";
 
+// Removed duplicate NavigationControlsStack - now imported from component
 
+// NavigationControlsStack has been moved to its own component file
+// Import is at the top of this file
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -116,10 +118,6 @@ function NavigationPageContent() {
     // Initialize from localStorage to survive page reloads
     return localStorage.getItem('navigation_ui_active') === 'true';
   });
-  
-  // 10-second preview countdown state (starts when user presses "Start Navigation")
-  const [previewCountdown, setPreviewCountdown] = useState<number | null>(null);
-  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
   const isNavigating = isLocalNavActive;
@@ -673,6 +671,7 @@ function NavigationPageContent() {
             const isCachedPosition = !location.accuracy || (location.timestamp && (Date.now() - location.timestamp) > 60000);
             
             if (isCachedPosition && !cacheWarningShown) {
+              // REMOVED TOAST: No popups per user request
               setCacheWarningShown(true);
             } else if (!isCachedPosition) {
               setCacheWarningShown(false); // Reset when live GPS works
@@ -681,6 +680,7 @@ function NavigationPageContent() {
                                   location.accuracyLevel === 'good' ? '📍 Good accuracy' :
                                   '📍 Position locked';
               
+              // REMOVED TOAST: No popups per user request
             }
             
             console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
@@ -697,15 +697,18 @@ function NavigationPageContent() {
                 // Permanent failure - stop retrying
                 autoZoomState.current.attempts = MAX_ATTEMPTS;
                 
+                // REMOVED TOAST: No popups per user request
               } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS timeout (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
                 
                 if (usedFallback) {
+                  // REMOVED TOAST: No popups per user request
                 }
               } else {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS error code ${gpsError.code} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
                 
                 if (usedFallback) {
+                  // REMOVED TOAST: No popups per user request
                 }
               }
             } else {
@@ -1033,17 +1036,21 @@ function NavigationPageContent() {
   const handleToggleAR = useCallback(() => {
     
     if (!arSupported) {
+      // REMOVED TOAST: No popups per user request
       return;
     }
     
     if (!isNavigating) {
+      // REMOVED TOAST: No popups per user request
       return;
     }
     
     setIsARMode(!isARMode);
     
     if (!isARMode) {
+      // REMOVED TOAST: No popups per user request
     } else {
+      // REMOVED TOAST: No popups per user request
     }
   }, [arSupported, isNavigating, isARMode, toast]);
 
@@ -1316,6 +1323,7 @@ function NavigationPageContent() {
     // High priority: Exit special navigation modes
     if (isARMode) {
       setIsARMode(false);
+      // REMOVED TOAST: No popups per user request
       console.log('🔙 Android back: Exited AR mode');
       return true;
     }
@@ -1349,6 +1357,7 @@ function NavigationPageContent() {
     
     // Professional truck navigation: Don't exit app during navigation
     if (isNavigating) {
+      // REMOVED TOAST: No popups per user request
       console.log('🔙 Android back: Prevented exit during navigation');
       return true;
     }
@@ -1378,6 +1387,7 @@ function NavigationPageContent() {
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
       // Show user-friendly error message with RED styling
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1394,6 +1404,7 @@ function NavigationPageContent() {
       // Comprehensive UI recovery on journey creation failure
       recoverUIOnError();
       // Show user-friendly error message
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1417,6 +1428,7 @@ function NavigationPageContent() {
       // Comprehensive UI recovery on journey completion failure
       recoverUIOnError();
       // Show user-friendly error message
+      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1488,6 +1500,8 @@ function NavigationPageContent() {
       // Small delay to allow route state to update
       setTimeout(handleMapExpansion, 200);
       
+      // DISABLED: Toast notifications removed per user request
+      // Toast pop-ups were interfering with input fields on mobile
 
       // AUTO-TRANSITION: 10-second preview, then auto-start navigation
       // Show preview mode for 10 seconds, then automatically transition to navigation view
@@ -1497,7 +1511,7 @@ function NavigationPageContent() {
       console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
       
       if (isMobile && route && route.routePath && route.routePath.length > 0 && !isNavigating) {
-        console.log('[ROUTE-PREVIEW] Route calculated - showing preview');
+        console.log('[AUTO-NAV] Starting 10-second preview countdown...');
         
         // Close route planning panel if open
         setSidebarState('collapsed');
@@ -1558,8 +1572,20 @@ function NavigationPageContent() {
             window.dispatchEvent(autoZoomEvent);
           }
         }, 500); // Small delay to let route render first
+        
+        // AUTO-START NAVIGATION: 10-second countdown timer
+        console.log('[AUTO-NAV] ⏲️ Setting 10-second auto-start timer...');
+        setTimeout(() => {
+          // Only auto-start if still in preview mode (user hasn't manually started)
+          if (!isNavigating && currentRoute) {
+            console.log('[AUTO-NAV] ⏰ 10 seconds elapsed - auto-starting navigation!');
+            handleStartNavigation();
+          } else {
+            console.log('[AUTO-NAV] ⏸️ Auto-start cancelled - navigation already active or route cleared');
+          }
+        }, 10000); // 10 seconds = 10000ms
       } else {
-        console.log('[ROUTE-PREVIEW] Staying in plan mode');
+        console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
       }
     },
     onError: (error) => {
@@ -1570,6 +1596,7 @@ function NavigationPageContent() {
       setCurrentRoute(null);
       // Comprehensive UI recovery on route calculation failure
       recoverUIOnError();
+      // DISABLED: Toast notifications removed per user request
       // Errors will be handled silently or shown in the UI instead
     },
   });
@@ -1597,6 +1624,7 @@ function NavigationPageContent() {
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
       console.error('[PLAN-ROUTE] ERROR: No vehicle profile selected! Please select a vehicle profile first.');
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1606,6 +1634,7 @@ function NavigationPageContent() {
     
     if (!finalStartLoc || !finalEndLoc) {
       console.error('[PLAN-ROUTE] ERROR: Missing locations - From:', finalStartLoc, 'To:', finalEndLoc);
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1633,6 +1662,7 @@ function NavigationPageContent() {
       }
     } catch (error) {
       console.error('[PLAN-ROUTE] Geocoding failed:', error);
+      // REMOVED TOAST: Error will be displayed in UI
       return;
     }
 
@@ -1651,6 +1681,7 @@ function NavigationPageContent() {
   // Alternative routes preview handlers
   const handlePreviewRoute = (route: AlternativeRoute) => {
     setPreviewRoute(route);
+    // REMOVED TOAST: No popups per user request
   };
 
   const handleSelectRoute = async (route: AlternativeRoute) => {
@@ -1660,12 +1691,14 @@ function NavigationPageContent() {
     try {
       // Ensure we have a valid vehicle profile before applying alternative route
       if (!activeProfile?.id) {
+        // REMOVED TOAST: No popups per user request
         return;
       }
 
       // Apply the alternative route
       // Ensure we have a valid vehicle profile ID
       if (!activeProfileId || activeProfileId.trim().length === 0) {
+        // REMOVED TOAST: No popups per user request
         return;
       }
 
@@ -1685,6 +1718,7 @@ function NavigationPageContent() {
       // Trigger live notification for route change
       triggerLiveNotification('route_change');
       
+      // REMOVED TOAST: No popups per user request
       
       // Update window sync
       windowSync.updateRoute(newRoute);
@@ -1693,6 +1727,7 @@ function NavigationPageContent() {
       console.error('Failed to apply alternative route:', error);
       // Comprehensive UI recovery on alternative route application failure
       recoverUIOnError();
+      // REMOVED TOAST: No popups per user request
     } finally {
       setIsApplyingRoute(false);
       setSelectedAlternativeRouteId(null);
@@ -1765,6 +1800,7 @@ function NavigationPageContent() {
       // Trigger notification about available alternatives
       triggerLiveNotification('route_change');
       
+      // REMOVED TOAST: No popups per user request
     }
   }, [alternatives.length, shouldReroute, timeSavingsAvailable, triggerLiveNotification]);
 
@@ -1857,17 +1893,20 @@ function NavigationPageContent() {
         // Success: Set the reverse geocoded address AND coordinates
         setFromLocation(result.address);
         setFromCoordinates({ lat: latitude, lng: longitude });
+        // REMOVED TOAST: No popups per user request
       } else {
         // Fallback: Use coordinates as string if reverse geocoding fails
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         setFromLocation(coordsString);
         setFromCoordinates({ lat: latitude, lng: longitude });
+        // REMOVED TOAST: No popups per user request
       }
     } catch (error) {
       // Error handling: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       setFromLocation(coordsString);
       setFromCoordinates({ lat: latitude, lng: longitude });
+      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -1946,10 +1985,10 @@ function NavigationPageContent() {
     return true;
   }, [isMobile, mobileNavMode, currentRoute, fromLocation, toLocation, selectedProfile]);
 
-  // ACTUAL navigation activation (called after 10-second countdown)
-  const handleActivateNavigation = async () => {
+  // Production-grade robust navigation flow
+  const handleStartNavigation = async () => {
     console.log('========================================');
-    console.log('[NAV-ACTIVATION] 🚀 ACTIVATING NAVIGATION (10-second countdown complete)');
+    console.log('[NAV-ACTIVATION] 🚀 START NAVIGATION CLICKED');
     console.log('========================================');
     console.log('[NAV-ACTIVATION] currentRoute:', currentRoute);
     console.log('[NAV-ACTIVATION] fromLocation:', fromLocation);
@@ -1964,6 +2003,7 @@ function NavigationPageContent() {
     // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
       console.error('[NAV-ACTIVATION] ❌ canStartNavigation() returned FALSE - blocking navigation');
+      // REMOVED TOAST: No popups per user request
       return;
     }
     
@@ -1972,11 +2012,13 @@ function NavigationPageContent() {
     // Additional comprehensive validation before starting
     if (!fromLocation || !toLocation) {
       console.error('[NAV-ACTIVATION] ❌ Missing location data');
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
     if (!selectedProfile) {
       console.error('[NAV-ACTIVATION] ❌ Missing vehicle profile');
+      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -2104,51 +2146,9 @@ function NavigationPageContent() {
       console.error('Navigation start failed:', error);
       recoverUIOnError();
       
+      // REMOVED TOAST: No popups per user request
     }
   };
-
-  // Start navigation with 10-second preview countdown
-  const handleStartNavigation = () => {
-    console.log('[NAV-START] 🎬 User pressed "Start Navigation" - initiating 10-second countdown');
-    
-    // Clear any existing countdown timer
-    if (previewTimerRef.current) {
-      clearInterval(previewTimerRef.current);
-      previewTimerRef.current = null;
-    }
-    
-    // Start 10-second countdown
-    setPreviewCountdown(10);
-    
-    // Close menu to show preview
-    setShowComprehensiveMenu(false);
-    
-    console.log('[NAV-START] ⏱️ Preview countdown started - 10 seconds until full navigation UI');
-  };
-
-  // Handle preview countdown tick
-  useEffect(() => {
-    if (previewCountdown === null) return;
-    
-    if (previewCountdown > 0) {
-      // Countdown in progress - tick every second
-      previewTimerRef.current = setTimeout(() => {
-        setPreviewCountdown(prev => prev! - 1);
-        console.log('[NAV-COUNTDOWN] ⏰', previewCountdown - 1, 'seconds remaining...');
-      }, 1000);
-    } else if (previewCountdown === 0) {
-      // Countdown complete - activate full navigation
-      console.log('[NAV-COUNTDOWN] ✅ Countdown complete - activating navigation!');
-      setPreviewCountdown(null);
-      handleActivateNavigation();
-    }
-    
-    return () => {
-      if (previewTimerRef.current) {
-        clearTimeout(previewTimerRef.current);
-      }
-    };
-  }, [previewCountdown]);
 
   const handleStopNavigation = () => {
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
@@ -2258,6 +2258,7 @@ function NavigationPageContent() {
     setToLocation(facility.address || facility.name);
     // Hide toast in mobile view - user requested no popups
     if (window.innerWidth >= 768) {
+      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2266,6 +2267,7 @@ function NavigationPageContent() {
     setToLocation(location);
     // Hide toast in mobile view - user requested no popups
     if (window.innerWidth >= 768) {
+      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2551,28 +2553,6 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* 10-SECOND PREVIEW COUNTDOWN OVERLAY */}
-              {previewCountdown !== null && (
-                <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-none">
-                  <Card className="shadow-2xl bg-white/95 backdrop-blur-md pointer-events-auto">
-                    <CardContent className="p-8 text-center">
-                      <div className="mb-4">
-                        <Hourglass className="w-16 h-16 mx-auto text-blue-600 animate-pulse" />
-                      </div>
-                      <div className="text-6xl font-bold text-blue-600 mb-2">
-                        {previewCountdown}
-                      </div>
-                      <div className="text-lg font-medium text-gray-900 mb-1">
-                        Navigation Starting...
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Get ready for turn-by-turn directions
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
               {console.log('[NAV-RENDER] isNavUIActive:', isNavUIActive, 'showComprehensiveMenu:', showComprehensiveMenu, 'shouldRender:', isNavUIActive && !showComprehensiveMenu)}
@@ -2583,9 +2563,6 @@ function NavigationPageContent() {
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
-                      
-                      {/* Fixed Vertical Route Indicator - ALWAYS POINTS UP (map rotates underneath) */}
-                      <VerticalRouteIndicator isNavigating={isNavigating} />
                       
                       {/* Turn Indicator - Large bubble at top center */}
                       {nextTurn && (
@@ -2648,9 +2625,8 @@ function NavigationPageContent() {
                       }}
                       showTrafficLayer={showTrafficLayer}
                       onToggleTraffic={() => {
-                        const newState = !showTrafficLayer;
-                        console.log('[BTN-6-TRAFFIC] ✅ Traffic Flow toggle clicked - Current:', showTrafficLayer, '→ New:', newState);
-                        setShowTrafficLayer(newState);
+                        console.log('[BTN-6-TRAFFIC] ✅ Traffic toggle clicked - Current:', showTrafficLayer, '→ New:', !showTrafficLayer);
+                        setShowTrafficLayer(!showTrafficLayer);
                       }}
                       mapViewMode={mapViewMode}
                       onToggleMapView={() => {
