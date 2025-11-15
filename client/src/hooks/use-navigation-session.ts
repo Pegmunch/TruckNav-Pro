@@ -86,14 +86,26 @@ export function useNavigationSession(): NavigationSession {
       : 0;
     const isStale = ageInMinutes > 30;
     
+    console.log('[NAV-STATE] Journey state calculation:', {
+      journeyId: currentJourney.id,
+      status: currentJourney.status,
+      startedAt: currentJourney.startedAt,
+      ageInMinutes,
+      isStale
+    });
+    
     if (isStale && currentJourney.status === 'active') {
       // Stale journey should be completed
+      console.log('[NAV-STATE] Journey is STALE - setting state to idle');
       state = 'idle';
     } else if (currentJourney.status === 'active') {
+      console.log('[NAV-STATE] Journey is ACTIVE - setting state to active');
       state = 'active';
     } else if (currentJourney.status === 'planned') {
+      console.log('[NAV-STATE] Journey is PLANNED - setting state to idle');
       state = 'idle'; // Planned journeys show Start button
     } else if (currentJourney.status === 'completed') {
+      console.log('[NAV-STATE] Journey is COMPLETED - setting state to idle');
       state = 'idle';
     }
   }
