@@ -916,15 +916,24 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     const mapInstance = map.current;
     
     if (isNavigating) {
-      // Disable manual rotation during navigation - bearing is controlled by GPS heading
+      // CRITICAL: Disable manual rotation during navigation - bearing is controlled by GPS heading
+      // BUT keep zoom enabled for pinch-to-zoom and zoom buttons
       mapInstance.dragRotate.disable();
-      mapInstance.touchZoomRotate.disableRotation();
-      console.log('[MAP-GESTURES] ✅ Rotation disabled - navigation mode active (bearing locked to GPS)');
+      mapInstance.touchZoomRotate.disableRotation(); // Only disables rotation, zoom still works
+      
+      // Explicitly ensure zoom is enabled (pinch-to-zoom + zoom buttons)
+      mapInstance.scrollZoom.enable();
+      mapInstance.doubleClickZoom.enable();
+      
+      console.log('[MAP-GESTURES] ✅ Navigation mode - Rotation disabled (GPS controls bearing), Zoom enabled (pinch + buttons)');
     } else {
-      // Enable rotation when not navigating
+      // Enable all gestures when not navigating
       mapInstance.dragRotate.enable();
       mapInstance.touchZoomRotate.enableRotation();
-      console.log('[MAP-GESTURES] ✅ Rotation enabled - exploration mode');
+      mapInstance.scrollZoom.enable();
+      mapInstance.doubleClickZoom.enable();
+      
+      console.log('[MAP-GESTURES] ✅ Exploration mode - All gestures enabled (rotation + zoom)');
     }
   }, [isNavigating, isLoaded]);
 
