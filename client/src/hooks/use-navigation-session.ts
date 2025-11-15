@@ -19,40 +19,41 @@ interface NavigationSession {
 export function useNavigationSession(): NavigationSession {
   const lastKnownStateRef = useRef<NavigationState>('idle');
   
-  // Query for active journey with keepPreviousData to prevent null flicker during refetch
+  // Query for active journey - ALWAYS fetch from server (PWA-compatible)
   const { data: currentJourney, isLoading } = useQuery<any>({
     queryKey: ['/api/journeys/active'],
     queryFn: async () => {
-      // Check localStorage for active journey ID
-      const storedJourneyId = localStorage.getItem('activeJourneyId');
-      if (!storedJourneyId) {
-        return null;
-      }
+      console.log('[NAV-SESSION] Fetching active journey from server...');
       
-      // Fetch the journey
-      const response = await fetch(`/api/journeys/${storedJourneyId}`);
+      // ALWAYS fetch from server API (PWA contexts can't rely on localStorage)
+      const response = await fetch('/api/journeys/active');
+      
       if (!response.ok) {
-        // Any error (404, 500, etc.) means journey is not accessible - clear localStorage
-        console.warn(`[NAV-SESSION] Journey ${storedJourneyId} fetch failed (${response.status}), clearing localStorage`);
-        localStorage.removeItem('activeJourneyId');
-        return null;
+        if (response.status === 404) {
+          console.log('[NAV-SESSION] No active journey found on server');
+          // Clear localStorage cache if API says no active journey
+          localStorage.removeItem('activeJourneyId');
+          return null;
+        }
+        // Other errors (500, etc.)
+        console.warn(`[NAV-SESSION] API error: ${response.status}`);
+        throw new Error(`Failed to fetch active journey: ${response.statusText}`);
       }
       
       const journey = await response.json();
+      console.log(`[NAV-SESSION] ✅ Found ${journey.status} journey ${journey.id} from server`);
       
-      // Only return active or planned journeys
-      if (journey.status === 'active' || journey.status === 'planned') {
-        return journey;
+      // Sync localStorage as a cache for next page load
+      if (journey.id) {
+        localStorage.setItem('activeJourneyId', journey.id.toString());
       }
       
-      // Journey is completed/cancelled/invalid - clear localStorage
-      console.log(`[NAV-SESSION] Journey ${storedJourneyId} has status ${journey.status}, clearing localStorage`);
-      localStorage.removeItem('activeJourneyId');
-      return null;
+      return journey;
     },
     placeholderData: (previousData: any) => previousData, // Keep previous data during refetch
     refetchInterval: 2000,
     staleTime: 1000,
+    retry: 1, // Only retry once to avoid hammering server
   });
   
   // Track journey mutation state to implement 'starting' and 'completing' states

@@ -3324,6 +3324,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get active journey for current session (no auth required - PWA needs this)
+  app.get("/api/journeys/active", async (req: Request, res: Response) => {
+    try {
+      const sessionId = req.sessionID || 'anonymous';
+      console.log(`[JOURNEY-ACTIVE] Checking for active journey for session: ${sessionId.substring(0, 8)}...`);
+      
+      // Get the most recent journey for this session
+      const journey = await storage.getLastJourney();
+      
+      if (!journey) {
+        console.log('[JOURNEY-ACTIVE] No journeys found');
+        return res.status(404).json({ message: "No active journey" });
+      }
+      
+      // Only return if journey is active or planned
+      if (journey.status === 'active' || journey.status === 'planned') {
+        console.log(`[JOURNEY-ACTIVE] Found ${journey.status} journey ${journey.id}`);
+        res.json(journey);
+      } else {
+        console.log(`[JOURNEY-ACTIVE] Journey ${journey.id} has status ${journey.status}, not active`);
+        res.status(404).json({ message: "No active journey" });
+      }
+    } catch (error) {
+      console.error("[JOURNEY-ACTIVE] Error:", error);
+      res.status(500).json({ message: "Failed to get active journey" });
+    }
+  });
+
   // Get journey by ID with route data
   app.get("/api/journeys/:id", validateNumericId, validateRequest, async (req: Request, res: Response) => {
     try {
