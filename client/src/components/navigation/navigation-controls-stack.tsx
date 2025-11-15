@@ -17,8 +17,6 @@ interface NavigationControlsStackProps {
   mapBearing: number;
   map3DMode: boolean;
   onToggle3D: () => void;
-  showTrafficLayer: boolean;
-  onToggleTraffic: () => void;
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
@@ -32,8 +30,6 @@ export function NavigationControlsStack({
   mapBearing,
   map3DMode,
   onToggle3D,
-  showTrafficLayer,
-  onToggleTraffic,
   mapViewMode,
   onToggleMapView,
   onViewIncidents,

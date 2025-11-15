@@ -2646,20 +2646,15 @@ function NavigationPageContent() {
                         mapRef.current?.toggle3DMode();
                         setMap3DMode(!map3DMode);
                       }}
-                      showTrafficLayer={showTrafficLayer}
-                      onToggleTraffic={() => {
-                        console.log('[BTN-6-TRAFFIC] ✅ Traffic toggle clicked - Current:', showTrafficLayer, '→ New:', !showTrafficLayer);
-                        setShowTrafficLayer(!showTrafficLayer);
-                      }}
                       mapViewMode={mapViewMode}
                       onToggleMapView={() => {
                         const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
-                        console.log('[BTN-7-SATELLITE] ✅ Satellite toggle clicked - Current:', mapViewMode, '→ New:', newMode);
+                        console.log('[BTN-6-SATELLITE] ✅ Satellite toggle clicked - Current:', mapViewMode, '→ New:', newMode);
                         setMapViewMode(newMode);
                         mapRef.current?.toggleMapView();
                       }}
                       onViewIncidents={() => {
-                        console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
+                        console.log('[BTN-7-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
                         setShowIncidentFeed(true);
                       }}
                     />
