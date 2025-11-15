@@ -8,7 +8,8 @@ import {
   Layers,
   Map,
   AlertCircle,
-  Layers3
+  Layers3,
+  Activity
 } from "lucide-react";
 import type { MapLibreMapRef } from "@/components/map/maplibre-map";
 
@@ -17,6 +18,8 @@ interface NavigationControlsStackProps {
   mapBearing: number;
   map3DMode: boolean;
   onToggle3D: () => void;
+  showTrafficLayer: boolean;
+  onToggleTraffic: () => void;
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
@@ -30,6 +33,8 @@ export function NavigationControlsStack({
   mapBearing,
   map3DMode,
   onToggle3D,
+  showTrafficLayer,
+  onToggleTraffic,
   mapViewMode,
   onToggleMapView,
   onViewIncidents,
@@ -167,6 +172,23 @@ export function NavigationControlsStack({
         aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
       >
         <Map className="w-6 h-6" />
+      </Button>
+
+      {/* 7. Traffic Flow Toggle - Live traffic visualization */}
+      <Button
+        size="icon"
+        variant="secondary"
+        onClick={onToggleTraffic}
+        className={cn(
+          "h-12 w-12 shadow-lg backdrop-blur-sm border",
+          showTrafficLayer
+            ? "bg-purple-500 hover:bg-purple-600 text-white border-purple-400"
+            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
+        )}
+        data-testid="nav-control-traffic"
+        aria-label={showTrafficLayer ? "Hide traffic flow" : "Show traffic flow"}
+      >
+        <Activity className="w-6 h-6" />
       </Button>
 
       {/* 8. View Incidents */}
