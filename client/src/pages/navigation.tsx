@@ -2522,6 +2522,7 @@ function NavigationPageContent() {
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
+              {console.log('[NAV-RENDER] isNavUIActive:', isNavUIActive, 'showComprehensiveMenu:', showComprehensiveMenu, 'shouldRender:', isNavUIActive && !showComprehensiveMenu)}
               {isNavUIActive && !showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
