@@ -45,6 +45,7 @@ import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-hand
 import { MapShell } from "@/components/map/map-shell";
 import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
+import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 import TurnIndicator from "@/components/navigation/turn-indicator";
 import ComprehensiveMobileMenu from "@/components/navigation/comprehensive-mobile-menu";
@@ -2529,6 +2530,15 @@ function NavigationPageContent() {
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
+                      
+                      {/* Navigation Guideline Overlay - Fixed vertical blue line */}
+                      <NavigationGuidelineOverlay
+                        isNavigating={isNavUIActive}
+                        routeDistance={currentRoute?.distance ?? undefined}
+                        heading={gpsData?.position?.heading ?? undefined}
+                        routeCoordinates={currentRoute?.routePath?.map(p => [p.lng, p.lat] as [number, number])}
+                      />
+                      
                       {/* Turn Indicator - Large bubble at top center */}
                       {nextTurn && (
                         <TurnIndicator
