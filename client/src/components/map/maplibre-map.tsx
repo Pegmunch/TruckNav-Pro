@@ -1023,7 +1023,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         },
         paint: {
           'line-color': '#3b82f6', // Professional blue (matches reference images)
-          'line-width': 12,  // Reduced from 24 - Professional width that's visible but not overwhelming
+          'line-width': 6,  // Professional width - visible but not overwhelming (Google Maps-style)
           'line-opacity': 1.0  // Full opacity for prominence
         }
       });

@@ -1502,15 +1502,15 @@ function NavigationPageContent() {
       // DISABLED: Toast notifications removed per user request
       // Toast pop-ups were interfering with input fields on mobile
 
-      // DISABLED: Auto-transition to navigation mode - User must manually click "Start Navigation"
-      // Show preview mode only, let user manually start navigation
-      console.log('[AUTO-NAV] Route calculated - showing preview mode only');
+      // AUTO-TRANSITION: 10-second preview, then auto-start navigation
+      // Show preview mode for 10 seconds, then automatically transition to navigation view
+      console.log('[AUTO-NAV] Route calculated - showing 10-second preview before auto-start');
       console.log('[AUTO-NAV] isMobile:', isMobile);
       console.log('[AUTO-NAV] route exists:', !!route);
       console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
       
       if (isMobile && route && route.routePath && route.routePath.length > 0 && !isNavigating) {
-        console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
+        console.log('[AUTO-NAV] Starting 10-second preview countdown...');
         
         // Close route planning panel if open
         setSidebarState('collapsed');
@@ -1571,6 +1571,18 @@ function NavigationPageContent() {
             window.dispatchEvent(autoZoomEvent);
           }
         }, 500); // Small delay to let route render first
+        
+        // AUTO-START NAVIGATION: 10-second countdown timer
+        console.log('[AUTO-NAV] ⏲️ Setting 10-second auto-start timer...');
+        setTimeout(() => {
+          // Only auto-start if still in preview mode (user hasn't manually started)
+          if (!isNavigating && currentRoute) {
+            console.log('[AUTO-NAV] ⏰ 10 seconds elapsed - auto-starting navigation!');
+            handleStartNavigation();
+          } else {
+            console.log('[AUTO-NAV] ⏸️ Auto-start cancelled - navigation already active or route cleared');
+          }
+        }, 10000); // 10 seconds = 10000ms
       } else {
         console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
       }
