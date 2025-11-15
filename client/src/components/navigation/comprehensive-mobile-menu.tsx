@@ -736,13 +736,23 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     ) : (
                       <Button
                         onClick={async () => {
+                          console.log('[MENU-NAV-BUTTON] Start Navigation button clicked!');
+                          console.log('[MENU-NAV-BUTTON] currentRoute:', currentRoute);
+                          console.log('[MENU-NAV-BUTTON] fromInput:', fromInput);
+                          console.log('[MENU-NAV-BUTTON] toInput:', toInput);
+                          
                           // Calculate route first if not already calculated
                           if (!currentRoute) {
+                            console.log('[MENU-NAV-BUTTON] No route - calculating first...');
                             await onPlanRoute();
                           }
+                          
                           // Then start navigation
+                          console.log('[MENU-NAV-BUTTON] Calling onStartNavigation()...');
                           onStartNavigation();
+                          console.log('[MENU-NAV-BUTTON] Closing menu...');
                           onOpenChange(false);
+                          console.log('[MENU-NAV-BUTTON] Navigation should now be active!');
                         }}
                         className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
                         disabled={!fromInput || !toInput || isCalculating}

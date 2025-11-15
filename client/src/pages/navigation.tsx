@@ -1540,10 +1540,11 @@ function NavigationPageContent() {
       console.log('[AUTO-NAV] route exists:', !!route);
       console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
       
-      if (isMobile && route && route.routePath && route.routePath.length > 0) {
+      if (isMobile && route && route.routePath && route.routePath.length > 0 && !isNavigating) {
         console.log('[AUTO-NAV] Setting preview mode - user must click Start Navigation');
         
         // Show preview mode - user must manually click "Start Navigation" button
+        // BUT: Don't reset to preview if navigation is already active!
         setMobileNavMode('preview');
         
         // Close route planning panel if open
