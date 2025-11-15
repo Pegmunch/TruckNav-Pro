@@ -51,8 +51,8 @@ export function useNavigationSession(): NavigationSession {
       return journey;
     },
     placeholderData: (previousData: any) => previousData, // Keep previous data during refetch
-    refetchInterval: 2000,
-    staleTime: 1000,
+    refetchInterval: false, // CRITICAL FIX: Don't auto-refetch - navigation UI controlled by local state
+    staleTime: Infinity, // Once loaded, don't mark as stale
     retry: 1, // Only retry once to avoid hammering server
   });
   

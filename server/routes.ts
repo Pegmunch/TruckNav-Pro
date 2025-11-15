@@ -3459,13 +3459,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
+      // CRITICAL LOGGING: Track who's completing journeys
+      console.log('====================================');
+      console.log(`[JOURNEY-COMPLETE] 🔴 JOURNEY ${id} IS BEING COMPLETED!`);
+      console.log(`[JOURNEY-COMPLETE] Session ID: ${req.sessionID || 'anonymous'}`);
+      console.log(`[JOURNEY-COMPLETE] User-Agent: ${req.headers['user-agent']}`);
+      console.log(`[JOURNEY-COMPLETE] Referer: ${req.headers['referer']}`);
+      console.log(`[JOURNEY-COMPLETE] Origin: ${req.headers['origin']}`);
+      console.log(`[JOURNEY-COMPLETE] Request body:`, req.body);
+      console.log('====================================');
+      
       const journey = await storage.completeJourney(parseInt(id));
       if (!journey) {
         return res.status(404).json({ message: "Journey not found" });
       }
       
+      console.log(`[JOURNEY-COMPLETE] ✅ Journey ${id} marked as completed at ${journey.completedAt}`);
       res.json(journey);
     } catch (error) {
+      console.error(`[JOURNEY-COMPLETE] ❌ Error completing journey ${id}:`, error);
       res.status(500).json({ message: "Failed to complete journey" });
     }
   });
