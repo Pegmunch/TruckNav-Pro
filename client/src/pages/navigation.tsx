@@ -1205,10 +1205,18 @@ function NavigationPageContent() {
       });
       
       if (currentJourney.status === 'active') {
-        // Check if journey is stale (no timestamp or > 30 minutes old)
-        const navigationTimestamp = localStorage.getItem('navigation_timestamp');
-        const isStale = navigationTimestamp ? 
-          (Date.now() - parseInt(navigationTimestamp)) > 30 * 60 * 1000 : true;
+        // Check if journey is stale using the database timestamp (started_at)
+        // A journey is stale if it was started > 30 minutes ago
+        const journeyStartTime = new Date(currentJourney.startedAt).getTime();
+        const currentTime = Date.now();
+        const ageInMinutes = (currentTime - journeyStartTime) / (1000 * 60);
+        const isStale = ageInMinutes > 30;
+        
+        console.log('[JOURNEY-LOAD] Active journey age check:', {
+          startedAt: currentJourney.startedAt,
+          ageInMinutes: ageInMinutes.toFixed(1),
+          isStale
+        });
         
         if (isStale) {
           // Stale active journey - complete it and reset state
