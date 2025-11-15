@@ -96,10 +96,8 @@ export function NavigationGuidelineOverlay({
     
   }, [isNavigating, routeDistance, heading, routeCoordinates]);
   
-  // Only render during active navigation
-  if (!isNavigating) {
-    return null;
-  }
+  // Note: NavigationLayout already gates rendering on isNavUIActive/shouldShowHUD
+  // So we always render when this component is mounted
   
   return (
     <div 

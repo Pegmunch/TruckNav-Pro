@@ -32,12 +32,10 @@ export function useNavigationSession(): NavigationSession {
       // Fetch the journey
       const response = await fetch(`/api/journeys/${storedJourneyId}`);
       if (!response.ok) {
-        if (response.status === 404) {
-          // Journey not found - clear localStorage
-          localStorage.removeItem('activeJourneyId');
-          return null;
-        }
-        throw new Error(`Failed to fetch journey: ${response.statusText}`);
+        // Any error (404, 500, etc.) means journey is not accessible - clear localStorage
+        console.warn(`[NAV-SESSION] Journey ${storedJourneyId} fetch failed (${response.status}), clearing localStorage`);
+        localStorage.removeItem('activeJourneyId');
+        return null;
       }
       
       const journey = await response.json();
@@ -47,7 +45,8 @@ export function useNavigationSession(): NavigationSession {
         return journey;
       }
       
-      // Journey is completed/cancelled - clear localStorage
+      // Journey is completed/cancelled/invalid - clear localStorage
+      console.log(`[NAV-SESSION] Journey ${storedJourneyId} has status ${journey.status}, clearing localStorage`);
       localStorage.removeItem('activeJourneyId');
       return null;
     },
