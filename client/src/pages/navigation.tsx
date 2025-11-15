@@ -67,10 +67,7 @@ import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 
-// Removed duplicate NavigationControlsStack - now imported from component
 
-// NavigationControlsStack has been moved to its own component file
-// Import is at the top of this file
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -671,7 +668,6 @@ function NavigationPageContent() {
             const isCachedPosition = !location.accuracy || (location.timestamp && (Date.now() - location.timestamp) > 60000);
             
             if (isCachedPosition && !cacheWarningShown) {
-              // REMOVED TOAST: No popups per user request
               setCacheWarningShown(true);
             } else if (!isCachedPosition) {
               setCacheWarningShown(false); // Reset when live GPS works
@@ -680,7 +676,6 @@ function NavigationPageContent() {
                                   location.accuracyLevel === 'good' ? '📍 Good accuracy' :
                                   '📍 Position locked';
               
-              // REMOVED TOAST: No popups per user request
             }
             
             console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
@@ -697,18 +692,15 @@ function NavigationPageContent() {
                 // Permanent failure - stop retrying
                 autoZoomState.current.attempts = MAX_ATTEMPTS;
                 
-                // REMOVED TOAST: No popups per user request
               } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS timeout (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
                 
                 if (usedFallback) {
-                  // REMOVED TOAST: No popups per user request
                 }
               } else {
                 console.warn(`[AUTO-ZOOM] ⚠️ GPS error code ${gpsError.code} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
                 
                 if (usedFallback) {
-                  // REMOVED TOAST: No popups per user request
                 }
               }
             } else {
@@ -1036,21 +1028,17 @@ function NavigationPageContent() {
   const handleToggleAR = useCallback(() => {
     
     if (!arSupported) {
-      // REMOVED TOAST: No popups per user request
       return;
     }
     
     if (!isNavigating) {
-      // REMOVED TOAST: No popups per user request
       return;
     }
     
     setIsARMode(!isARMode);
     
     if (!isARMode) {
-      // REMOVED TOAST: No popups per user request
     } else {
-      // REMOVED TOAST: No popups per user request
     }
   }, [arSupported, isNavigating, isARMode, toast]);
 
@@ -1323,7 +1311,6 @@ function NavigationPageContent() {
     // High priority: Exit special navigation modes
     if (isARMode) {
       setIsARMode(false);
-      // REMOVED TOAST: No popups per user request
       console.log('🔙 Android back: Exited AR mode');
       return true;
     }
@@ -1357,7 +1344,6 @@ function NavigationPageContent() {
     
     // Professional truck navigation: Don't exit app during navigation
     if (isNavigating) {
-      // REMOVED TOAST: No popups per user request
       console.log('🔙 Android back: Prevented exit during navigation');
       return true;
     }
@@ -1387,7 +1373,6 @@ function NavigationPageContent() {
       // Comprehensive UI recovery to prevent state corruption
       recoverUIOnError();
       // Show user-friendly error message with RED styling
-      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1404,7 +1389,6 @@ function NavigationPageContent() {
       // Comprehensive UI recovery on journey creation failure
       recoverUIOnError();
       // Show user-friendly error message
-      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1428,7 +1412,6 @@ function NavigationPageContent() {
       // Comprehensive UI recovery on journey completion failure
       recoverUIOnError();
       // Show user-friendly error message
-      // REMOVED TOAST: No popups per user request
     },
   });
 
@@ -1500,8 +1483,6 @@ function NavigationPageContent() {
       // Small delay to allow route state to update
       setTimeout(handleMapExpansion, 200);
       
-      // DISABLED: Toast notifications removed per user request
-      // Toast pop-ups were interfering with input fields on mobile
 
       // AUTO-TRANSITION: 10-second preview, then auto-start navigation
       // Show preview mode for 10 seconds, then automatically transition to navigation view
@@ -1596,7 +1577,6 @@ function NavigationPageContent() {
       setCurrentRoute(null);
       // Comprehensive UI recovery on route calculation failure
       recoverUIOnError();
-      // DISABLED: Toast notifications removed per user request
       // Errors will be handled silently or shown in the UI instead
     },
   });
@@ -1624,7 +1604,6 @@ function NavigationPageContent() {
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
       console.error('[PLAN-ROUTE] ERROR: No vehicle profile selected! Please select a vehicle profile first.');
-      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1634,7 +1613,6 @@ function NavigationPageContent() {
     
     if (!finalStartLoc || !finalEndLoc) {
       console.error('[PLAN-ROUTE] ERROR: Missing locations - From:', finalStartLoc, 'To:', finalEndLoc);
-      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1662,7 +1640,6 @@ function NavigationPageContent() {
       }
     } catch (error) {
       console.error('[PLAN-ROUTE] Geocoding failed:', error);
-      // REMOVED TOAST: Error will be displayed in UI
       return;
     }
 
@@ -1681,7 +1658,6 @@ function NavigationPageContent() {
   // Alternative routes preview handlers
   const handlePreviewRoute = (route: AlternativeRoute) => {
     setPreviewRoute(route);
-    // REMOVED TOAST: No popups per user request
   };
 
   const handleSelectRoute = async (route: AlternativeRoute) => {
@@ -1691,14 +1667,12 @@ function NavigationPageContent() {
     try {
       // Ensure we have a valid vehicle profile before applying alternative route
       if (!activeProfile?.id) {
-        // REMOVED TOAST: No popups per user request
         return;
       }
 
       // Apply the alternative route
       // Ensure we have a valid vehicle profile ID
       if (!activeProfileId || activeProfileId.trim().length === 0) {
-        // REMOVED TOAST: No popups per user request
         return;
       }
 
@@ -1718,7 +1692,6 @@ function NavigationPageContent() {
       // Trigger live notification for route change
       triggerLiveNotification('route_change');
       
-      // REMOVED TOAST: No popups per user request
       
       // Update window sync
       windowSync.updateRoute(newRoute);
@@ -1727,7 +1700,6 @@ function NavigationPageContent() {
       console.error('Failed to apply alternative route:', error);
       // Comprehensive UI recovery on alternative route application failure
       recoverUIOnError();
-      // REMOVED TOAST: No popups per user request
     } finally {
       setIsApplyingRoute(false);
       setSelectedAlternativeRouteId(null);
@@ -1800,7 +1772,6 @@ function NavigationPageContent() {
       // Trigger notification about available alternatives
       triggerLiveNotification('route_change');
       
-      // REMOVED TOAST: No popups per user request
     }
   }, [alternatives.length, shouldReroute, timeSavingsAvailable, triggerLiveNotification]);
 
@@ -1893,20 +1864,17 @@ function NavigationPageContent() {
         // Success: Set the reverse geocoded address AND coordinates
         setFromLocation(result.address);
         setFromCoordinates({ lat: latitude, lng: longitude });
-        // REMOVED TOAST: No popups per user request
       } else {
         // Fallback: Use coordinates as string if reverse geocoding fails
         const coordsString = formatCoordinatesAsAddress(latitude, longitude);
         setFromLocation(coordsString);
         setFromCoordinates({ lat: latitude, lng: longitude });
-        // REMOVED TOAST: No popups per user request
       }
     } catch (error) {
       // Error handling: Fallback to coordinates
       const coordsString = formatCoordinatesAsAddress(latitude, longitude);
       setFromLocation(coordsString);
       setFromCoordinates({ lat: latitude, lng: longitude });
-      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2003,7 +1971,6 @@ function NavigationPageContent() {
     // Mode transition guard for mobile - check BEFORE setting navigate mode
     if (isMobile && !canStartNavigation()) {
       console.error('[NAV-ACTIVATION] ❌ canStartNavigation() returned FALSE - blocking navigation');
-      // REMOVED TOAST: No popups per user request
       return;
     }
     
@@ -2012,13 +1979,11 @@ function NavigationPageContent() {
     // Additional comprehensive validation before starting
     if (!fromLocation || !toLocation) {
       console.error('[NAV-ACTIVATION] ❌ Missing location data');
-      // REMOVED TOAST: No popups per user request
       return;
     }
 
     if (!selectedProfile) {
       console.error('[NAV-ACTIVATION] ❌ Missing vehicle profile');
-      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -2146,7 +2111,6 @@ function NavigationPageContent() {
       console.error('Navigation start failed:', error);
       recoverUIOnError();
       
-      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2258,7 +2222,6 @@ function NavigationPageContent() {
     setToLocation(facility.address || facility.name);
     // Hide toast in mobile view - user requested no popups
     if (window.innerWidth >= 768) {
-      // REMOVED TOAST: No popups per user request
     }
   };
 
@@ -2267,7 +2230,6 @@ function NavigationPageContent() {
     setToLocation(location);
     // Hide toast in mobile view - user requested no popups
     if (window.innerWidth >= 768) {
-      // REMOVED TOAST: No popups per user request
     }
   };
 

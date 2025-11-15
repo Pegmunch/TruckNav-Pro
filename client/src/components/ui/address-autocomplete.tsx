@@ -197,7 +197,6 @@ export function AddressAutocomplete({
       queryClient.invalidateQueries({ queryKey: ["/api/locations"] });
     },
     onError: (error) => {
-      // REMOVED TOAST: No popups per user request
       console.error("Error saving location:", error);
     },
   });
