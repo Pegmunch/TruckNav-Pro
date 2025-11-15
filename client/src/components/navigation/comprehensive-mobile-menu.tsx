@@ -717,8 +717,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Navigation Control Buttons */}
-                    {isNavigating ? (
+                    {/* Navigation Control Buttons - REMOVED: Start Navigation auto-starts after 10 seconds */}
+                    {isNavigating && (
                       <Button
                         variant="outline"
                         onClick={() => {
@@ -732,36 +732,6 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       >
                         <X className="h-4 w-4 mr-2" />
                         Stop Navigation
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => {
-                          console.log('[MENU-NAV-BUTTON] Start Navigation button clicked!');
-                          console.log('[MENU-NAV-BUTTON] currentRoute:', currentRoute);
-                          console.log('[MENU-NAV-BUTTON] fromInput:', fromInput);
-                          console.log('[MENU-NAV-BUTTON] toInput:', toInput);
-                          console.log('[MENU-NAV-BUTTON] Calling onStartNavigation() - it will handle route calculation if needed');
-                          
-                          onStartNavigation();
-                          console.log('[MENU-NAV-BUTTON] Closing menu...');
-                          onOpenChange(false);
-                          console.log('[MENU-NAV-BUTTON] Navigation should now be active!');
-                        }}
-                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
-                        disabled={!fromInput || !toInput || isCalculating}
-                        data-testid="button-start-navigation"
-                      >
-                        {isCalculating ? (
-                          <>
-                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                            Calculating Route...
-                          </>
-                        ) : (
-                          <>
-                            <Navigation className="h-5 w-5 mr-2" />
-                            Start Navigation
-                          </>
-                        )}
                       </Button>
                     )}
 

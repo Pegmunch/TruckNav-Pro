@@ -811,97 +811,50 @@ function NavigationPageContent() {
         }
       }
 
-      // Get map instance and show plan view first, then auto-transition to 3D
+      // Get map instance and start 3D heading-up navigation immediately
       const mapInstance = mapRef.current.getMap();
       if (mapInstance && mapInstance.isStyleLoaded()) {
-        console.log('[NAV-ZOOM] Step 1: Showing plan view (top-down overview)...');
+        console.log('[NAV-ZOOM] Starting 3D heading-up navigation...');
         
-        // STAGE 1: Plan view - Show full route from above (2D, top-down)
+        // Start directly in 3D navigation mode with heading-up orientation
         mapInstance.flyTo({
           center: [targetLng, targetLat],
-          zoom: 13,    // Wider zoom to see full route
-          pitch: 0,    // Top-down view (plan view)
-          bearing: 0,  // North-up orientation
+          zoom: 17,    // Close zoom for navigation
+          pitch: 67,   // Professional 3D perspective
+          bearing: initialBearing, // Route pointing upward (heading-up)
           padding: { 
-            top: 180,
-            bottom: 180,
-            left: 80, 
-            right: 80 
+            top: 280,    // Space for HUD
+            bottom: 120, // Space for speedometer
+            left: 0, 
+            right: 0 
           },
           duration: 1500,
           essential: true
         });
         
-        // Keep 2D mode initially
-        setMap3DMode(false);
+        // Activate 3D mode immediately
+        setMap3DMode(true);
         
-        console.log('[NAV-ZOOM] ✅ Plan view active - auto-transitioning to 3D in 4 seconds...');
-        
-        // STAGE 2: Auto-transition to 3D navigation view after 4 seconds
-        setTimeout(() => {
-          if (mapInstance && isNavigating) {
-            console.log('[NAV-ZOOM] Step 2: Transitioning to 3D navigation view...');
-            
-            mapInstance.flyTo({
-              center: [targetLng, targetLat],
-              zoom: 17,    // Close zoom for navigation
-              pitch: 67,   // Professional 3D perspective
-              bearing: initialBearing, // Route pointing upward (heading-up)
-              padding: { 
-                top: 280,    // Space for HUD
-                bottom: 120, // Space for speedometer
-                left: 0, 
-                right: 0 
-              },
-              duration: 2000,
-              essential: true
-            });
-            
-            // Activate 3D mode
-            setMap3DMode(true);
-            
-            console.log('[NAV-ZOOM] ✅ 3D navigation view active - heading-up navigation started');
-          }
-        }, 4000); // 4 second delay for plan view preview
+        console.log('[NAV-ZOOM] ✅ 3D heading-up navigation active - route vertical and centered')
       } else {
         console.warn('[NAV-ZOOM] ⚠️ Map not ready - retrying in 500ms');
         
-        // Retry with same two-stage transition
+        // Retry with 3D navigation mode
         setTimeout(() => {
           if (mapRef.current) {
             const retryMap = mapRef.current.getMap();
             if (retryMap) {
-              console.log('[NAV-ZOOM-RETRY] Step 1: Showing plan view...');
-              
-              // STAGE 1: Plan view
               retryMap.flyTo({
                 center: [targetLng, targetLat],
-                zoom: 13,
-                pitch: 0,
-                bearing: 0,
-                padding: { top: 180, bottom: 180, left: 80, right: 80 },
+                zoom: 17,
+                pitch: 67,
+                bearing: initialBearing,
+                padding: { top: 280, bottom: 120, left: 0, right: 0 },
                 duration: 1500,
                 essential: true
               });
-              setMap3DMode(false);
-              
-              // STAGE 2: Auto-transition to 3D after 4 seconds
-              setTimeout(() => {
-                if (retryMap && isNavigating) {
-                  console.log('[NAV-ZOOM-RETRY] Step 2: Transitioning to 3D...');
-                  retryMap.flyTo({
-                    center: [targetLng, targetLat],
-                    zoom: 17,
-                    pitch: 67,
-                    bearing: initialBearing,
-                    padding: { top: 280, bottom: 120, left: 0, right: 0 },
-                    duration: 2000,
-                    essential: true
-                  });
-                  setMap3DMode(true);
-                  console.log('[NAV-ZOOM-RETRY] ✅ Auto-zoom complete (retry succeeded)');
-                }
-              }, 4000);
+              setMap3DMode(true);
+              console.log('[NAV-ZOOM] ✅ 3D navigation active (retry succeeded)');
             }
           }
         }, 500);
@@ -2596,23 +2549,7 @@ function NavigationPageContent() {
                     <Menu className="w-6 h-6" />
                   </Button>
 
-                  {/* START NAVIGATION FAB - Prominent green button (Bottom Left) */}
-                  {currentRoute && (
-                    <Button
-                      onClick={handleStartNavigation}
-                      size="lg"
-                      className="fixed z-[200] h-16 px-8 rounded-full shadow-2xl bg-green-600 hover:bg-green-700 text-white font-bold text-lg backdrop-blur-sm pointer-events-auto flex items-center gap-2"
-                      style={{
-                        bottom: 'calc(24px + var(--safe-area-bottom))',
-                        left: 'calc(24px + var(--safe-area-left))'
-                      }}
-                      data-testid="button-start-navigation-preview"
-                      aria-label="Start navigation"
-                    >
-                      <Navigation className="w-6 h-6" />
-                      Start Navigation
-                    </Button>
-                  )}
+                  {/* REMOVED: Start Navigation FAB - Navigation auto-starts after 10 seconds */}
                 </div>
               )}
 
