@@ -735,20 +735,13 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </Button>
                     ) : (
                       <Button
-                        onClick={async () => {
+                        onClick={() => {
                           console.log('[MENU-NAV-BUTTON] Start Navigation button clicked!');
                           console.log('[MENU-NAV-BUTTON] currentRoute:', currentRoute);
                           console.log('[MENU-NAV-BUTTON] fromInput:', fromInput);
                           console.log('[MENU-NAV-BUTTON] toInput:', toInput);
+                          console.log('[MENU-NAV-BUTTON] Calling onStartNavigation() - it will handle route calculation if needed');
                           
-                          // Calculate route first if not already calculated
-                          if (!currentRoute) {
-                            console.log('[MENU-NAV-BUTTON] No route - calculating first...');
-                            await onPlanRoute();
-                          }
-                          
-                          // Then start navigation
-                          console.log('[MENU-NAV-BUTTON] Calling onStartNavigation()...');
                           onStartNavigation();
                           console.log('[MENU-NAV-BUTTON] Closing menu...');
                           onOpenChange(false);

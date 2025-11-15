@@ -29,6 +29,21 @@
   }
 }
 
+/* CRITICAL FIX: Hide ALL MapLibre native controls in PWA standalone mode */
+/* This prevents the blue GeolocateControl badge from appearing in top-left corner */
+@media (display-mode: standalone) {
+  .maplibregl-ctrl-top-left,
+  .maplibregl-ctrl-top-right .maplibregl-ctrl-geolocate,
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl-geolocate,
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl-geolocate,
+  .maplibregl-control-container .maplibregl-ctrl-geolocate {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
 /* Fallback for browsers that don't support dvh */
 @supports not (height: 100dvh) {
   [data-testid="legal-disclaimer-popup"] {

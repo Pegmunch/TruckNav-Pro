@@ -757,7 +757,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         attributionControl: false,
         refreshExpiredTiles: false,
         fadeDuration: 100,
-        maxTileCacheSize: 500
+        maxTileCacheSize: 500,
+        touchZoomRotate: true,
+        dragRotate: !isNavigating
       });
 
       if (!hideControls && !hideCompass) {
@@ -906,6 +908,25 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     if (!map.current || !isLoaded) return;
     updateLayerVisibility(map.current, preferences.mapViewMode, currentZoom);
   }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom]);
+
+  // Dynamically control map rotation gestures during navigation
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    
+    const mapInstance = map.current;
+    
+    if (isNavigating) {
+      // Disable manual rotation during navigation - bearing is controlled by GPS heading
+      mapInstance.dragRotate.disable();
+      mapInstance.touchZoomRotate.disableRotation();
+      console.log('[MAP-GESTURES] ✅ Rotation disabled - navigation mode active (bearing locked to GPS)');
+    } else {
+      // Enable rotation when not navigating
+      mapInstance.dragRotate.enable();
+      mapInstance.touchZoomRotate.enableRotation();
+      console.log('[MAP-GESTURES] ✅ Rotation enabled - exploration mode');
+    }
+  }, [isNavigating, isLoaded]);
 
   useEffect(() => {
     if (!map.current || !isLoaded) return;

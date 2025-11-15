@@ -1943,6 +1943,58 @@ function NavigationPageContent() {
     return crypto.randomUUID();
   };
 
+  // Centralized route acquisition helper - ensures route exists before navigation
+  const ensureRouteReady = useCallback(async (): Promise<Route | null> => {
+    // If route already exists, return it immediately
+    if (currentRoute?.id) {
+      console.log('[ROUTE-READY] ✅ Route already exists:', currentRoute.id);
+      return currentRoute;
+    }
+    
+    // Validate locations before calculating
+    if (!fromLocation || !toLocation) {
+      console.error('[ROUTE-READY] ❌ Missing locations - cannot calculate route');
+      return null;
+    }
+    
+    if (!selectedProfile) {
+      console.error('[ROUTE-READY] ❌ Missing vehicle profile - cannot calculate route');
+      return null;
+    }
+    
+    console.log('[ROUTE-READY] Calculating route atomically...');
+    
+    try {
+      // Geocode locations
+      let finalStartCoords = fromCoordinates;
+      let finalEndCoords = toCoordinates;
+      
+      const startResult = await robustGeocode(fromLocation, fromCoordinates);
+      finalStartCoords = startResult.coordinates;
+      setFromCoordinates(finalStartCoords);
+      
+      const endResult = await robustGeocode(toLocation, toCoordinates);
+      finalEndCoords = endResult.coordinates;
+      setToCoordinates(finalEndCoords);
+      
+      // Calculate route
+      const route = await calculateRouteMutation.mutateAsync({
+        startLocation: fromLocation,
+        endLocation: toLocation,
+        startCoordinates: finalStartCoords,
+        endCoordinates: finalEndCoords,
+        vehicleProfileId: selectedProfile?.id?.toString(),
+        routePreference: 'fastest'
+      });
+      
+      console.log('[ROUTE-READY] ✅ Route calculated:', route?.id);
+      return route;
+    } catch (error) {
+      console.error('[ROUTE-READY] ❌ Route calculation failed:', error);
+      return null;
+    }
+  }, [currentRoute, fromLocation, toLocation, fromCoordinates, toCoordinates, selectedProfile, robustGeocode, calculateRouteMutation]);
+
   // Mode validation guard to prevent invalid navigation transitions
   const canStartNavigation = useCallback(() => {
     if (isMobile && mobileNavMode !== 'preview' && mobileNavMode !== 'plan') {
@@ -2001,38 +2053,52 @@ function NavigationPageContent() {
       console.warn('[NAV-ACTIVATION] ⏳ Navigation already starting, preventing duplicate');
       return; // Prevent double-clicks/race conditions
     }
-
-    // CRITICAL FIX: Set navigation state IMMEDIATELY when button is pressed
-    // This ensures navigation controls appear even if async operations fail
-    console.log('[NAV-ACTIVATION] 🎯 IMMEDIATE STATE UPDATE - Setting navigation mode');
-    setIsNavigating(true);
-    setMobileNavMode('navigate');
-    console.log('[NAV-ACTIVATION] ✅ Navigation states set - controls should appear immediately');
-    
-    // Force zoom to navigation level regardless of GPS status
-    if (mapRef.current && (fromCoordinates || toCoordinates)) {
-      const zoomTarget = fromCoordinates || toCoordinates;
-      if (zoomTarget) {
-        console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
-        // Use zoomToUserLocation with fallback coordinates for consistent API
-        mapRef.current.zoomToUserLocation({
-          zoom: 14.5, // Wider view for better route overview
-          pitch: isMapLibre ? 45 : 0, // Tilt for 3D effect if MapLibre
-          bearing: 0,
-          duration: 1500,
-          fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },
-          forceStreetMode: true
-        });
-      }
-    }
     
     try {
-      console.log('[NAV-ACTIVATION] Step 1: Set navigation active state for CSS styling');
+      console.log('[NAV-ACTIVATION] Step 1: Ensure route exists');
+      // Use centralized route acquisition to ensure route exists atomically
+      const route = await ensureRouteReady();
+      
+      if (!route?.id) {
+        console.error('[NAV-ACTIVATION] ❌ Route acquisition failed - cannot start navigation');
+        // Removed toast - user will see button remains clickable for retry
+        return;
+      }
+      
+      // CRITICAL: Persist route to state so component receives valid route
+      setCurrentRoute(route);
+      console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state, proceeding with navigation activation');
+
+      // CRITICAL FIX: Set navigation state IMMEDIATELY after route is confirmed
+      // This ensures navigation controls appear with a valid route
+      console.log('[NAV-ACTIVATION] 🎯 IMMEDIATE STATE UPDATE - Setting navigation mode');
+      setIsNavigating(true);
+      setMobileNavMode('navigate');
+      console.log('[NAV-ACTIVATION] ✅ Navigation states set - controls should appear immediately');
+      
+      // Force zoom to navigation level regardless of GPS status
+      if (mapRef.current && (fromCoordinates || toCoordinates)) {
+        const zoomTarget = fromCoordinates || toCoordinates;
+        if (zoomTarget) {
+          console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
+          // Use zoomToUserLocation with fallback coordinates for consistent API
+          mapRef.current.zoomToUserLocation({
+            zoom: 14.5, // Wider view for better route overview
+            pitch: isMapLibre ? 45 : 0, // Tilt for 3D effect if MapLibre
+            bearing: 0,
+            duration: 1500,
+            fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },
+            forceStreetMode: true
+          });
+        }
+      }
+      
+      console.log('[NAV-ACTIVATION] Step 2: Set navigation active state for CSS styling');
       // Set navigation active state for CSS styling
       document.body.classList.add('navigation-active');
       document.documentElement.classList.add('overlay-safe-mode');
       
-      console.log('[NAV-ACTIVATION] Step 2: Close overlays and prepare UI');
+      console.log('[NAV-ACTIVATION] Step 3: Close overlays and prepare UI');
       // Close all known overlay components using proper state management
       setIsAlternativeRoutesOpen(false);
       
@@ -2042,62 +2108,7 @@ function NavigationPageContent() {
       // Generate idempotency key for this navigation start
       const idempotencyKey = generateIdempotencyKey('start');
       
-      console.log('[NAV-ACTIVATION] Step 3: Ensure route exists');
-      // Ensure we have a route (calculate if needed, use returned value not state)
-      let route = currentRoute;
-      
-      if (!route) {
-        console.log('[NAV-START] No route exists - calculating route with bulletproof geocoding...');
-        
-        // Use bulletproof geocoding that handles ALL address formats
-        let finalStartCoords = fromCoordinates;
-        let finalEndCoords = toCoordinates;
-        
-        // Geocode start location using robust multi-fallback approach
-        if (!fromLocation) {
-          throw new Error('Start location is required');
-        }
-        
-        console.log('[NAV-START] Geocoding start location...');
-        const startResult = await robustGeocode(fromLocation, fromCoordinates);
-        finalStartCoords = startResult.coordinates;
-        setFromCoordinates(finalStartCoords);
-        console.log('[NAV-START] ✅ Start location geocoded:', finalStartCoords, `(source: ${startResult.source})`);
-        
-        // Geocode end location using robust multi-fallback approach
-        if (!toLocation) {
-          throw new Error('End location is required');
-        }
-        
-        console.log('[NAV-START] Geocoding end location...');
-        const endResult = await robustGeocode(toLocation, toCoordinates);
-        finalEndCoords = endResult.coordinates;
-        setToCoordinates(finalEndCoords);
-        console.log('[NAV-START] ✅ End location geocoded:', finalEndCoords, `(source: ${endResult.source})`);
-        
-        // Now calculate route with guaranteed coordinates
-        console.log('[NAV-START] Calculating route with coordinates:', {
-          start: finalStartCoords,
-          end: finalEndCoords
-        });
-        
-        route = await calculateRouteMutation.mutateAsync({
-          startLocation: fromLocation,
-          endLocation: toLocation,
-          startCoordinates: finalStartCoords,
-          endCoordinates: finalEndCoords,
-          vehicleProfileId: selectedProfile?.id?.toString(),
-          routePreference: 'fastest'
-        });
-        
-        console.log('[NAV-START] ✅ Route calculation complete:', route);
-      }
-      
-      if (!route?.id) {
-        throw new Error('Route calculation failed - no route ID returned');
-      }
-      
-      console.log('[NAV-START] ✅ Route ready, proceeding to start journey');
+      console.log('[NAV-ACTIVATION] Step 4: Start journey');
 
       // Single linear navigation flow with proper mutation sequence
       let journeyId: number;
@@ -2375,7 +2386,7 @@ function NavigationPageContent() {
               </div>
               
               {/* GPS Permission Button removed - moved to route planning panel */}
-              {/* GPS Loading Indicator - Production-Grade Visual Feedback - HIDDEN IN PWA MODE */}
+              {/* GPS Loading Indicator - HIDDEN IN PWA STANDALONE MODE */}
               {gpsLoadingState?.isLoading && !isStandalone && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[150] pointer-events-none" data-testid="gps-loading-indicator">
                   <Card className="px-4 py-2 shadow-lg border-blue-500/50 bg-white/95 backdrop-blur-sm">
