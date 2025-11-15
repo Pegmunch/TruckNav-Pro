@@ -717,7 +717,33 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Navigation Control Buttons - REMOVED: Start Navigation auto-starts after 10 seconds */}
+                    {/* Calculate Route Button - Show when both locations entered but no route yet */}
+                    {fromInput.trim() && toInput.trim() && !currentRoute && !isCalculating && (
+                      <Button
+                        onClick={async () => {
+                          await onPlanRoute();
+                        }}
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                        data-testid="button-calculate-route"
+                      >
+                        <Navigation className="h-5 w-5 mr-2" />
+                        Calculate Route
+                      </Button>
+                    )}
+
+                    {/* Calculating indicator */}
+                    {isCalculating && (
+                      <Button
+                        disabled
+                        className="w-full h-12 bg-blue-500 cursor-not-allowed"
+                        data-testid="button-calculating"
+                      >
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Calculating...
+                      </Button>
+                    )}
+
+                    {/* Stop Navigation Button - Show during active navigation */}
                     {isNavigating && (
                       <Button
                         variant="outline"
@@ -735,6 +761,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </Button>
                     )}
 
+                    {/* Route Calculated Success Message */}
                     {currentRoute && (
                       <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div className="text-sm font-medium text-green-900 dark:text-green-100">
