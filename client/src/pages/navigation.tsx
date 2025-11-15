@@ -2118,12 +2118,19 @@ function NavigationPageContent() {
         journeyId = newJourney.id;
       }
       
-      await activateJourneyMutation.mutateAsync({ 
+      // CRITICAL FIX: Capture the activated journey response and store in state
+      const activatedJourney = await activateJourneyMutation.mutateAsync({ 
         journeyId, 
         idempotencyKey 
       });
       
       console.log('[NAV-ACTIVATION] Step 4: ✅ Journey activated successfully');
+      console.log('[NAV-ACTIVATION] Activated journey:', activatedJourney);
+      
+      // CRITICAL: Set activeJourney state so useEffect sees status='active' and activates navigation UI
+      setActiveJourney(activatedJourney);
+      localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
+      console.log('[NAV-ACTIVATION] ✅ activeJourney state updated with active journey');
       
       // Navigation states already set at the beginning of function
       console.log('[NAV-ACTIVATION] Navigation states were already set at function start');
