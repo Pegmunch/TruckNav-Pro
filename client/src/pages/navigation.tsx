@@ -1199,21 +1199,40 @@ function NavigationPageContent() {
           });
       }
       
-      // CRITICAL FIX: Treat activeJourney.status as AUTHORITATIVE source of truth
-      // An 'active' journey ALWAYS means navigation is active - no timestamp checks
-      // Server-side logic handles stale journey cleanup, not client
+      // CRITICAL FIX: Check if active journey is stale before activating navigation
       console.log('[JOURNEY-LOAD] Navigation state:', {
         journeyStatus: currentJourney.status
       });
       
       if (currentJourney.status === 'active') {
-        // Active journey = navigation is ALWAYS active (authoritative)
-        console.log('[JOURNEY-LOAD] Active journey - activating navigation mode');
-        setIsNavigating(true);
-        setMobileNavMode('navigate');
-        // Sync localStorage for consistency (but not used as source of truth)
-        localStorage.setItem('navigation_mode', 'navigate');
-        localStorage.setItem('navigation_timestamp', Date.now().toString());
+        // Check if journey is stale (no timestamp or > 30 minutes old)
+        const navigationTimestamp = localStorage.getItem('navigation_timestamp');
+        const isStale = navigationTimestamp ? 
+          (Date.now() - parseInt(navigationTimestamp)) > 30 * 60 * 1000 : true;
+        
+        if (isStale) {
+          // Stale active journey - complete it and reset state
+          console.log('[JOURNEY-LOAD] ⚠️ Active journey is STALE (> 30 min old) - completing it');
+          completeJourneyMutation.mutate(currentJourney.id);
+          
+          // Clear stale state
+          localStorage.removeItem('navigation_mode');
+          localStorage.removeItem('navigation_timestamp');
+          localStorage.removeItem('activeJourneyId');
+          setIsNavigating(false);
+          setMobileNavMode('preview');
+          setActiveJourney(null);
+          
+          console.log('[JOURNEY-LOAD] ✅ Stale journey cleaned up - user must start fresh');
+        } else {
+          // Fresh active journey - activate navigation
+          console.log('[JOURNEY-LOAD] Active journey is FRESH - activating navigation mode');
+          setIsNavigating(true);
+          setMobileNavMode('navigate');
+          // Sync localStorage for consistency
+          localStorage.setItem('navigation_mode', 'navigate');
+          localStorage.setItem('navigation_timestamp', Date.now().toString());
+        }
       } else if (currentJourney.status === 'planned') {
         console.log('[JOURNEY-LOAD] Planned journey - showing preview mode');
         setIsNavigating(false);
