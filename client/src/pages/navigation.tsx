@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -116,6 +116,10 @@ function NavigationPageContent() {
     // Initialize from localStorage to survive page reloads
     return localStorage.getItem('navigation_ui_active') === 'true';
   });
+  
+  // 10-second preview countdown state (starts when user presses "Start Navigation")
+  const [previewCountdown, setPreviewCountdown] = useState<number | null>(null);
+  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
   const isNavigating = isLocalNavActive;
@@ -1493,7 +1497,7 @@ function NavigationPageContent() {
       console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
       
       if (isMobile && route && route.routePath && route.routePath.length > 0 && !isNavigating) {
-        console.log('[AUTO-NAV] Starting 10-second preview countdown...');
+        console.log('[ROUTE-PREVIEW] Route calculated - showing preview');
         
         // Close route planning panel if open
         setSidebarState('collapsed');
@@ -1554,20 +1558,8 @@ function NavigationPageContent() {
             window.dispatchEvent(autoZoomEvent);
           }
         }, 500); // Small delay to let route render first
-        
-        // AUTO-START NAVIGATION: 10-second countdown timer
-        console.log('[AUTO-NAV] ⏲️ Setting 10-second auto-start timer...');
-        setTimeout(() => {
-          // Only auto-start if still in preview mode (user hasn't manually started)
-          if (!isNavigating && currentRoute) {
-            console.log('[AUTO-NAV] ⏰ 10 seconds elapsed - auto-starting navigation!');
-            handleStartNavigation();
-          } else {
-            console.log('[AUTO-NAV] ⏸️ Auto-start cancelled - navigation already active or route cleared');
-          }
-        }, 10000); // 10 seconds = 10000ms
       } else {
-        console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
+        console.log('[ROUTE-PREVIEW] Staying in plan mode');
       }
     },
     onError: (error) => {
@@ -1954,10 +1946,10 @@ function NavigationPageContent() {
     return true;
   }, [isMobile, mobileNavMode, currentRoute, fromLocation, toLocation, selectedProfile]);
 
-  // Production-grade robust navigation flow
-  const handleStartNavigation = async () => {
+  // ACTUAL navigation activation (called after 10-second countdown)
+  const handleActivateNavigation = async () => {
     console.log('========================================');
-    console.log('[NAV-ACTIVATION] 🚀 START NAVIGATION CLICKED');
+    console.log('[NAV-ACTIVATION] 🚀 ACTIVATING NAVIGATION (10-second countdown complete)');
     console.log('========================================');
     console.log('[NAV-ACTIVATION] currentRoute:', currentRoute);
     console.log('[NAV-ACTIVATION] fromLocation:', fromLocation);
@@ -2114,6 +2106,49 @@ function NavigationPageContent() {
       
     }
   };
+
+  // Start navigation with 10-second preview countdown
+  const handleStartNavigation = () => {
+    console.log('[NAV-START] 🎬 User pressed "Start Navigation" - initiating 10-second countdown');
+    
+    // Clear any existing countdown timer
+    if (previewTimerRef.current) {
+      clearInterval(previewTimerRef.current);
+      previewTimerRef.current = null;
+    }
+    
+    // Start 10-second countdown
+    setPreviewCountdown(10);
+    
+    // Close menu to show preview
+    setShowComprehensiveMenu(false);
+    
+    console.log('[NAV-START] ⏱️ Preview countdown started - 10 seconds until full navigation UI');
+  };
+
+  // Handle preview countdown tick
+  useEffect(() => {
+    if (previewCountdown === null) return;
+    
+    if (previewCountdown > 0) {
+      // Countdown in progress - tick every second
+      previewTimerRef.current = setTimeout(() => {
+        setPreviewCountdown(prev => prev! - 1);
+        console.log('[NAV-COUNTDOWN] ⏰', previewCountdown - 1, 'seconds remaining...');
+      }, 1000);
+    } else if (previewCountdown === 0) {
+      // Countdown complete - activate full navigation
+      console.log('[NAV-COUNTDOWN] ✅ Countdown complete - activating navigation!');
+      setPreviewCountdown(null);
+      handleActivateNavigation();
+    }
+    
+    return () => {
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+      }
+    };
+  }, [previewCountdown]);
 
   const handleStopNavigation = () => {
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
@@ -2513,6 +2548,28 @@ function NavigationPageContent() {
                   </Button>
 
                   {/* REMOVED: Start Navigation FAB - Navigation auto-starts after 10 seconds */}
+                </div>
+              )}
+
+              {/* 10-SECOND PREVIEW COUNTDOWN OVERLAY */}
+              {previewCountdown !== null && (
+                <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-none">
+                  <Card className="shadow-2xl bg-white/95 backdrop-blur-md pointer-events-auto">
+                    <CardContent className="p-8 text-center">
+                      <div className="mb-4">
+                        <Hourglass className="w-16 h-16 mx-auto text-blue-600 animate-pulse" />
+                      </div>
+                      <div className="text-6xl font-bold text-blue-600 mb-2">
+                        {previewCountdown}
+                      </div>
+                      <div className="text-lg font-medium text-gray-900 mb-1">
+                        Navigation Starting...
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Get ready for turn-by-turn directions
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
