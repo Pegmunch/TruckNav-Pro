@@ -69,11 +69,18 @@ body {
   -webkit-overflow-scrolling: touch;
   /* CRITICAL: Ensure full height for map rendering */
   height: 100%;
-  /* Theme-aware background color */
-  background-color: transparent !important;
+  /* Theme-aware background color - use white for better PWA compatibility */
+  background-color: hsl(var(--background)) !important;
   color: hsl(var(--foreground));
   /* Larger base font size for automotive visibility */
   font-size: 16px;
+}
+
+/* Ensure proper background in standalone PWA mode */
+@media (display-mode: standalone) {
+  html, body {
+    background-color: hsl(var(--background)) !important;
+  }
 }
 
 /* CRITICAL: Ensure root container has full height for map rendering */
