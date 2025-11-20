@@ -42,8 +42,17 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - renders with its own fixed positioning */}
-      {shouldShowUI && rightStack && rightStack}
+      {/* Right navigation controls stack - 8 buttons on right side */}
+      {shouldShowUI && rightStack && (
+        <div className="absolute right-4 top-[120px] z-[1800] flex flex-col gap-2"
+          style={{
+            top: 'calc(120px + var(--safe-area-top))',
+            right: 'calc(16px + var(--safe-area-right))'
+          }}
+        >
+          {rightStack}
+        </div>
+      )}
 
       {/* Bottom instrumentation bar */}
       {shouldShowUI && bottomBar && (

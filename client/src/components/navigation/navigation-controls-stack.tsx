@@ -22,9 +22,6 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
-  className?: string;
-  topOffset?: string;
-  rightOffset?: string;
 }
 
 export function NavigationControlsStack({
@@ -36,10 +33,7 @@ export function NavigationControlsStack({
   onToggleTraffic,
   mapViewMode,
   onToggleMapView,
-  onViewIncidents,
-  className,
-  topOffset = 'calc(120px + var(--safe-area-top))',
-  rightOffset = 'calc(16px + var(--safe-area-right))'
+  onViewIncidents
 }: NavigationControlsStackProps) {
   // CRITICAL: Component should ALWAYS render when parent mounts it based on isNavigating
   // Parent already handles conditional rendering, so we trust it completely
@@ -69,16 +63,7 @@ export function NavigationControlsStack({
   };
 
   return (
-    <div 
-      className={cn(
-        "fixed right-4 flex flex-col gap-2 z-[1800]",
-        className
-      )}
-      style={{
-        top: topOffset,
-        right: rightOffset
-      }}
-    >
+    <>
       {/* 1. Compass - Top Position */}
       <Button
         size="icon"
@@ -201,6 +186,6 @@ export function NavigationControlsStack({
       >
         <AlertCircle className="w-6 h-6 text-red-600" />
       </Button>
-    </div>
+    </>
   );
 }
