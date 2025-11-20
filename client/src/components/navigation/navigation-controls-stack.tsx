@@ -62,7 +62,19 @@ export function NavigationControlsStack({
 
   return (
     <>
-      {/* 1. Compass - Top Position */}
+      {/* 1. View Incidents - Top Position (Red Alert Button) */}
+      <Button
+        size="icon"
+        variant="secondary"
+        onClick={onViewIncidents}
+        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        data-testid="nav-control-incidents"
+        aria-label="View traffic incidents"
+      >
+        <AlertCircle className="w-6 h-6 text-red-600" />
+      </Button>
+
+      {/* 2. Compass */}
       <Button
         size="icon"
         variant="secondary"
@@ -86,7 +98,7 @@ export function NavigationControlsStack({
         </div>
       </Button>
 
-      {/* 2. Center on GPS */}
+      {/* 3. Center on GPS */}
       <Button
         size="icon"
         variant="secondary"
@@ -98,7 +110,7 @@ export function NavigationControlsStack({
         <MapPin className="w-6 h-6 text-gray-700" />
       </Button>
 
-      {/* 3. Zoom In */}
+      {/* 4. Zoom In */}
       <Button
         size="icon"
         variant="secondary"
@@ -110,7 +122,7 @@ export function NavigationControlsStack({
         <Plus className="w-6 h-6 text-gray-700" />
       </Button>
 
-      {/* 4. Zoom Out */}
+      {/* 5. Zoom Out */}
       <Button
         size="icon"
         variant="secondary"
@@ -122,7 +134,7 @@ export function NavigationControlsStack({
         <Minus className="w-6 h-6 text-gray-700" />
       </Button>
 
-      {/* 5. 3D Mode Toggle */}
+      {/* 6. 3D Mode Toggle */}
       <Button
         size="icon"
         variant="secondary"
@@ -139,7 +151,7 @@ export function NavigationControlsStack({
         <Layers3 className="w-6 h-6" />
       </Button>
 
-      {/* 6. Traffic Layer Toggle */}
+      {/* 7. Traffic Layer Toggle */}
       <Button
         size="icon"
         variant="secondary"
@@ -156,7 +168,7 @@ export function NavigationControlsStack({
         <Layers className="w-6 h-6" />
       </Button>
 
-      {/* 7. Satellite View Toggle */}
+      {/* 8. Satellite View Toggle */}
       <Button
         size="icon"
         variant="secondary"
@@ -171,18 +183,6 @@ export function NavigationControlsStack({
         aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
       >
         <Map className="w-6 h-6" />
-      </Button>
-
-      {/* 8. View Incidents */}
-      <Button
-        size="icon"
-        variant="secondary"
-        onClick={onViewIncidents}
-        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
-        data-testid="nav-control-incidents"
-        aria-label="View traffic incidents"
-      >
-        <AlertCircle className="w-6 h-6 text-red-600" />
       </Button>
     </>
   );
