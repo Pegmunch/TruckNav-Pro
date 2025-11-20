@@ -156,7 +156,24 @@ export function NavigationControlsStack({
         <Layers3 className="w-6 h-6" />
       </Button>
 
-      {/* 6. Satellite View Toggle */}
+      {/* 6. Traffic Layer Toggle */}
+      <Button
+        size="icon"
+        variant="secondary"
+        onClick={onToggleTraffic}
+        className={cn(
+          "h-12 w-12 shadow-lg backdrop-blur-sm border",
+          showTrafficLayer
+            ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-400"
+            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
+        )}
+        data-testid="nav-control-traffic"
+        aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
+      >
+        <Layers className="w-6 h-6" />
+      </Button>
+
+      {/* 7. Satellite View Toggle */}
       <Button
         size="icon"
         variant="secondary"
