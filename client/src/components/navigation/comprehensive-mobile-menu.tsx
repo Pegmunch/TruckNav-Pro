@@ -717,33 +717,49 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Navigation Control Buttons - REMOVED: Start Navigation auto-starts after 10 seconds */}
+                    {/* Route Status & Navigation Buttons */}
+                    {currentRoute && !isNavigating && (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="text-sm font-medium text-green-900 dark:text-green-100">
+                            ✓ Route calculated
+                          </div>
+                          <div className="text-xs text-green-700 dark:text-green-300 mt-1">
+                            {formatDistance(currentRoute.distance || 0, 'km')} • {formatDuration(currentRoute.duration || 0)}
+                          </div>
+                        </div>
+                        
+                        {/* Green Start Navigation Button */}
+                        <Button
+                          onClick={() => {
+                            onStartNavigation();
+                            onOpenChange(false);
+                          }}
+                          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
+                          data-testid="button-start-navigation-menu"
+                        >
+                          <Navigation className="h-5 w-5 mr-2" />
+                          Start Navigation
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Stop Navigation Button - Shows when navigating */}
                     {isNavigating && (
                       <Button
-                        variant="outline"
+                        variant="destructive"
                         onClick={() => {
                           if (onStopNavigation) {
                             onStopNavigation();
                           }
                           onOpenChange(false);
                         }}
-                        className="w-full h-10 border-red-500 text-red-600 hover:bg-red-50"
-                        data-testid="button-cancel-route"
+                        className="w-full h-12 font-semibold"
+                        data-testid="button-stop-navigation-menu"
                       >
-                        <X className="h-4 w-4 mr-2" />
+                        <X className="h-5 w-5 mr-2" />
                         Stop Navigation
                       </Button>
-                    )}
-
-                    {currentRoute && (
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="text-sm font-medium text-green-900 dark:text-green-100">
-                          ✓ Route calculated
-                        </div>
-                        <div className="text-xs text-green-700 dark:text-green-300 mt-1">
-                          {formatDistance(currentRoute.distance || 0, 'km')} • {formatDuration(currentRoute.duration || 0)}
-                        </div>
-                      </div>
                     )}
                   </CardContent>
                 </Card>

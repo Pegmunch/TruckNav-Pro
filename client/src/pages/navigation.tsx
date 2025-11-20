@@ -67,7 +67,6 @@ import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
-import { BottomNavigationButton } from "@/components/navigation/bottom-navigation-button";
 
 // Removed duplicate NavigationControlsStack - now imported from component
 
@@ -3239,19 +3238,6 @@ function NavigationPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Bottom Navigation Button - Green Start/Stop Navigation Button */}
-      <BottomNavigationButton
-        currentRoute={currentRoute}
-        selectedProfile={selectedProfile}
-        isNavigating={isNavigating}
-        isStartingJourney={startJourneyMutation.isPending || activateJourneyMutation.isPending}
-        isCompletingJourney={completeJourneyMutation.isPending}
-        fromLocation={fromLocation}
-        toLocation={toLocation}
-        onStartNavigation={handleStartNavigation}
-        onStopNavigation={handleStopNavigation}
-      />
 
     </div>
   );
