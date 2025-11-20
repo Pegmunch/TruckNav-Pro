@@ -1066,7 +1066,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     if (!map.current.getSource('route')) {
-      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 6px');
+      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 8px');
       map.current.addSource('route', {
         type: 'geojson',
         data: {
@@ -1089,7 +1089,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         },
         paint: {
           'line-color': '#3b82f6',
-          'line-width': 6,
+          'line-width': 8,
           'line-opacity': 1.0
         }
       });
