@@ -53,16 +53,16 @@ export default function MapLegalOwnership({
       data-testid="map-legal-ownership"
     >
       {compact ? (
-        /* Compact Layout - All on same horizontal line */
-        <div className="flex flex-row items-center justify-between gap-2 text-xs">
+        /* Compact Layout - Centered */
+        <div className="flex flex-row items-center justify-center gap-2 text-xs">
           {/* Main Ownership Info */}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary shrink-0" />
-            <div className="flex flex-row items-center gap-2 min-w-0">
+            <div className="flex flex-row items-center gap-2">
               <span className="font-semibold text-primary shrink-0">
                 TruckNav Pro
               </span>
-              <span className="text-muted-foreground truncate">
+              <span className="text-muted-foreground">
                 © 2024-2025 Bespoke Marketing.Ai Ltd
               </span>
             </div>
