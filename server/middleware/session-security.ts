@@ -18,9 +18,10 @@ const getSessionStore = () => {
       throw new Error('[SESSION] DATABASE_URL is required for secure session storage');
     }
     
+    // Create store with error suppression for duplicate index/table errors
     const store = new PostgresStore({
       conString: process.env.DATABASE_URL!,
-      createTableIfMissing: true,
+      createTableIfMissing: false, // Don't try to create table - it already exists
       tableName: 'user_sessions',
       pruneSessionInterval: 60 * 15,
       ttl: 60 * 60 * 24,
@@ -35,6 +36,7 @@ const getSessionStore = () => {
       }
     });
     
+    console.log('[SESSION] Using PostgreSQL session store (production)');
     return store;
   } else {
     // Use MemoryStore in development for session stability
