@@ -214,6 +214,9 @@ function NavigationPageContent() {
   const [showDestinationReached, setShowDestinationReached] = useState(false);
   const hasShownDestinationDialogRef = useRef(false);
   
+  // Route cancellation guard to prevent race condition
+  const isCancellingRouteRef = useRef(false);
+  
   // Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{
     direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left';
@@ -1172,6 +1175,12 @@ function NavigationPageContent() {
   // SIMPLIFIED: Sync route data with current journey
   // Navigation state is now automatically derived by useNavigationSession hook
   useEffect(() => {
+    // GUARD: If route is being cancelled, don't re-fetch it
+    if (isCancellingRouteRef.current) {
+      console.log('[JOURNEY-LOAD] ⏸️ Route cancellation in progress - skipping route fetch');
+      return;
+    }
+    
     if (currentJourney) {
       // CRITICAL: Only load active or planned journeys - ignore completed ones
       if (currentJourney.status === 'completed' || currentJourney.status === 'cancelled') {
@@ -1205,6 +1214,12 @@ function NavigationPageContent() {
             return res.json();
           })
           .then(route => {
+            // Double-check guard before setting route (in case cancellation happened during fetch)
+            if (isCancellingRouteRef.current) {
+              console.log('[JOURNEY-LOAD] ⏸️ Route cancelled during fetch - discarding fetched route');
+              return;
+            }
+            
             console.log('[JOURNEY-LOAD] ✅ Successfully loaded route from journey');
             setCurrentRoute(route);
             
@@ -1443,6 +1458,10 @@ function NavigationPageContent() {
       queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
       queryClient.invalidateQueries({ queryKey: ["/api/journeys", "last"] });
       refetchCurrentJourney();
+      
+      // Reset cancellation guard after journey is completed
+      isCancellingRouteRef.current = false;
+      console.log('[JOURNEY-COMPLETE] ✅ Route cancellation guard reset');
     },
     onError: (error) => {
       console.error('Failed to complete journey:', error);
@@ -1450,6 +1469,10 @@ function NavigationPageContent() {
       recoverUIOnError();
       // Show user-friendly error message
       // REMOVED TOAST: No popups per user request
+      
+      // Reset cancellation guard even on error
+      isCancellingRouteRef.current = false;
+      console.log('[JOURNEY-COMPLETE] ⚠️ Route cancellation guard reset (error path)');
     },
   });
 
@@ -1850,6 +1873,11 @@ function NavigationPageContent() {
 
   // Handle cancel route - stop navigation
   const handleCancelRoute = () => {
+    // CRITICAL: Set cancellation guard to prevent race condition where
+    // currentJourney still exists and triggers route re-fetch before completion
+    isCancellingRouteRef.current = true;
+    console.log('[ROUTE-CANCEL] 🛡️ Route cancellation guard activated');
+    
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
     document.documentElement.classList.remove('overlay-safe-mode');
@@ -1874,6 +1902,10 @@ function NavigationPageContent() {
     
     if (currentJourney?.id && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
+    } else {
+      // No journey to complete - reset guard immediately
+      isCancellingRouteRef.current = false;
+      console.log('[ROUTE-CANCEL] ℹ️ No journey to complete - guard reset immediately');
     }
     
     console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to preview mode');
@@ -2172,8 +2204,17 @@ function NavigationPageContent() {
   };
 
   const handleStopNavigation = () => {
+    // CRITICAL: Set cancellation guard to prevent race condition where
+    // currentJourney still exists and triggers route re-fetch before completion
+    isCancellingRouteRef.current = true;
+    console.log('[NAV-STOP] 🛡️ Route cancellation guard activated');
+    
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
+    } else {
+      // No journey to complete - reset guard immediately
+      isCancellingRouteRef.current = false;
+      console.log('[NAV-STOP] ℹ️ No journey to complete - guard reset immediately');
     }
     
     // CRITICAL: Clear all route persistence - fresh start page
