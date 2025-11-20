@@ -43,11 +43,15 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - 8 buttons on right side */}
+      {/* Scrollable container for small viewports to accommodate all 8 buttons */}
       {shouldShowUI && rightStack && (
-        <div className="absolute right-4 top-[120px] z-[1800] flex flex-col gap-2"
+        <div 
+          className="absolute right-4 z-[1800] flex flex-col gap-2 overflow-y-auto"
           style={{
             top: 'calc(120px + var(--safe-area-top))',
-            right: 'calc(16px + var(--safe-area-right))'
+            right: 'calc(16px + var(--safe-area-right))',
+            bottom: 'calc(100px + var(--safe-area-bottom))',
+            maxHeight: 'calc(100vh - 220px - var(--safe-area-top) - var(--safe-area-bottom))'
           }}
         >
           {rightStack}
