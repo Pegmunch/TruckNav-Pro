@@ -935,8 +935,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         clearTimeout(saveTimeoutRef.current);
       }
       // Clean up touch event listener
-      if (touchContainer && touchEndHandler) {
-        touchContainer.removeEventListener('touchend', touchEndHandler);
+      if (touchContainerRef.current && touchEndHandlerRef.current) {
+        touchContainerRef.current.removeEventListener('touchend', touchEndHandlerRef.current);
       }
       if (map.current) {
         map.current.remove();
