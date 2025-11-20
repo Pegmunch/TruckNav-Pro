@@ -4,13 +4,16 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 // Re-enable security middleware for stable navigation functionality
 import { applySecurityMiddleware, authRateLimit, apiRateLimit, sessionBridge } from "./middleware/security";
-import { sessionConfig, sessionDebugAndFallback, sessionRecovery } from "./middleware/session-security";
+import { getSessionConfig, sessionDebugAndFallback, sessionRecovery } from "./middleware/session-security";
 
 const app = express();
 
 // Trust proxy for deployments behind reverse proxies/CDNs (including Replit)
 // Replit runs behind a proxy even in development
 app.set('trust proxy', 1);
+
+// Initialize session configuration (async to wait for database schema setup)
+const sessionConfig = await getSessionConfig();
 
 // Enhanced session security with PostgreSQL store and comprehensive debugging
 app.use(session(sessionConfig));
