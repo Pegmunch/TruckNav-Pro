@@ -2388,61 +2388,41 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* GPS Fallback Banner - Manual Location Setting */}
+              {/* GPS Fallback - Compact Chip (Minimal UI) */}
               {mobileNavMode === 'preview' && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
                !gpsData.manualLocation && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] w-[90%] max-w-md pointer-events-auto" data-testid="gps-fallback-banner">
-                  <Alert className="bg-orange-50 dark:bg-orange-950 border-orange-300 shadow-lg">
-                    <AlertCircle className="h-4 w-4 text-orange-600" />
-                    <AlertDescription className="space-y-2">
-                      <div className="font-medium text-orange-900 dark:text-orange-100">
-                        GPS location unavailable
-                      </div>
-                      <div className="text-sm text-orange-800 dark:text-orange-200">
-                        Set your location manually to use navigation
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => setShowManualLocationDialog(true)}
-                        className="bg-orange-600 hover:bg-orange-700 text-white"
-                        data-testid="button-set-manual-location"
-                      >
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Set Location Manually
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
+                <div 
+                  className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
+                  onClick={() => setShowManualLocationDialog(true)}
+                  data-testid="gps-fallback-chip"
+                >
+                  <div className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-full shadow-lg transition-colors">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">GPS Unavailable - Tap to set location</span>
+                  </div>
                 </div>
               )}
               
-              {/* Manual Location Active Indicator */}
+              {/* Manual Location Active - Compact Chip */}
               {mobileNavMode === 'preview' && 
                gpsData?.manualLocation && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] w-[90%] max-w-md pointer-events-auto" data-testid="manual-location-indicator">
-                  <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-300 shadow-lg">
-                    <MapPin className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="font-medium text-blue-900 dark:text-blue-100">
-                          Manual Location Active
-                        </div>
-                        <div className="text-sm text-blue-700 dark:text-blue-300">
-                          {gpsData.manualLocation.address}
-                        </div>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => gpsData.clearManualLocation()}
-                        className="h-8 w-8 text-blue-600 hover:text-blue-700"
-                        data-testid="button-clear-manual-location"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </AlertDescription>
-                  </Alert>
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto" data-testid="manual-location-indicator">
+                  <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-full shadow-lg">
+                    <MapPin className="h-4 w-4" />
+                    <span className="text-sm font-medium truncate max-w-[180px]">
+                      {gpsData.manualLocation.address}
+                    </span>
+                    <button
+                      onClick={() => gpsData.clearManualLocation()}
+                      className="h-5 w-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                      data-testid="button-clear-manual-location"
+                      aria-label="Clear manual location"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
               )}
               
