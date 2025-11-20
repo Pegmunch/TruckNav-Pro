@@ -2631,6 +2631,34 @@ function NavigationPageContent() {
                       isNavigating={isNavUIActive}
                     />
                   }
+                  rightStack={
+                    <NavigationControlsStack
+                      mapRef={mapRef}
+                      mapBearing={mapBearing}
+                      map3DMode={map3DMode}
+                      onToggle3D={() => {
+                        console.log('[BTN-5-3D] ✅ 3D Mode toggle clicked - Current:', map3DMode, '→ New:', !map3DMode);
+                        mapRef.current?.toggle3DMode();
+                        setMap3DMode(!map3DMode);
+                      }}
+                      showTrafficLayer={showTrafficLayer}
+                      onToggleTraffic={() => {
+                        console.log('[BTN-6-TRAFFIC] ✅ Traffic toggle clicked - Current:', showTrafficLayer, '→ New:', !showTrafficLayer);
+                        setShowTrafficLayer(!showTrafficLayer);
+                      }}
+                      mapViewMode={mapViewMode}
+                      onToggleMapView={() => {
+                        const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
+                        console.log('[BTN-7-SATELLITE] ✅ Satellite toggle clicked - Current:', mapViewMode, '→ New:', newMode);
+                        setMapViewMode(newMode);
+                        mapRef.current?.toggleMapView();
+                      }}
+                      onViewIncidents={() => {
+                        console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
+                        setShowIncidentFeed(true);
+                      }}
+                    />
+                  }
                   bottomBar={
                     <SpeedometerHUD
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
@@ -2639,46 +2667,6 @@ function NavigationPageContent() {
                     />
                   }
                 />
-              )}
-
-              {/* 8 Navigation Control Buttons - Only visible during navigate mode (same as 4 left buttons) */}
-              {isNavUIActive && !showComprehensiveMenu && (
-                <div 
-                  className="absolute right-4 z-[1800] flex flex-col gap-2 overflow-y-auto"
-                  style={{
-                    top: 'calc(120px + var(--safe-area-top))',
-                    right: 'calc(16px + var(--safe-area-right))',
-                    bottom: 'calc(100px + var(--safe-area-bottom))',
-                    maxHeight: 'calc(100vh - 220px - var(--safe-area-top) - var(--safe-area-bottom))'
-                  }}
-                >
-                  <NavigationControlsStack
-                    mapRef={mapRef}
-                    mapBearing={mapBearing}
-                    map3DMode={map3DMode}
-                    onToggle3D={() => {
-                      console.log('[BTN-5-3D] ✅ 3D Mode toggle clicked - Current:', map3DMode, '→ New:', !map3DMode);
-                      mapRef.current?.toggle3DMode();
-                      setMap3DMode(!map3DMode);
-                    }}
-                    showTrafficLayer={showTrafficLayer}
-                    onToggleTraffic={() => {
-                      console.log('[BTN-6-TRAFFIC] ✅ Traffic toggle clicked - Current:', showTrafficLayer, '→ New:', !showTrafficLayer);
-                      setShowTrafficLayer(!showTrafficLayer);
-                    }}
-                    mapViewMode={mapViewMode}
-                    onToggleMapView={() => {
-                      const newMode = mapViewMode === 'roads' ? 'satellite' : 'roads';
-                      console.log('[BTN-7-SATELLITE] ✅ Satellite toggle clicked - Current:', mapViewMode, '→ New:', newMode);
-                      setMapViewMode(newMode);
-                      mapRef.current?.toggleMapView();
-                    }}
-                    onViewIncidents={() => {
-                      console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
-                      setShowIncidentFeed(true);
-                    }}
-                  />
-                </div>
               )}
 
               {/* Legal Ownership - Bottom of screen */}
