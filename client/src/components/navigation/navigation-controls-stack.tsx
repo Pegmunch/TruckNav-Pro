@@ -22,6 +22,7 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
+  isNavigating: boolean;
 }
 
 export function NavigationControlsStack({
@@ -33,10 +34,13 @@ export function NavigationControlsStack({
   onToggleTraffic,
   mapViewMode,
   onToggleMapView,
-  onViewIncidents
+  onViewIncidents,
+  isNavigating
 }: NavigationControlsStackProps) {
-  // CRITICAL: Component should ALWAYS render when parent mounts it based on isNavigating
-  // Parent already handles conditional rendering, so we trust it completely
+  // Defensive check - ensures component can't be rendered outside navigation mode
+  // This matches LeftActionStack pattern for consistent PWA behavior
+  if (!isNavigating) return null;
+  
   console.log('[NAV-CONTROLS] Navigation controls rendering - parent has confirmed isNavigating=true');
 
   const handleCompassClick = () => {

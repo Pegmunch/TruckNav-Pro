@@ -2657,6 +2657,7 @@ function NavigationPageContent() {
                         console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
                         setShowIncidentFeed(true);
                       }}
+                      isNavigating={isNavUIActive}
                     />
                   }
                   bottomBar={
