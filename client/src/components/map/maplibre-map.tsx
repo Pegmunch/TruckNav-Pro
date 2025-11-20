@@ -133,6 +133,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const previousNavigationStateRef = useRef(isNavigating);
   const previousPitchRef = useRef(0);
   const previousBearingRef = useRef(0);
+  const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
+  const touchContainerRef = useRef<HTMLDivElement | null>(null);
   
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
@@ -788,6 +790,40 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         });
       }
 
+      // Two-finger double-tap to zoom out gesture detection
+      let lastTwoFingerTap = 0;
+      const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
+      
+      const handleTouchEnd = (e: TouchEvent) => {
+        // Only trigger on exactly 2 fingers
+        if (e.touches.length === 0 && e.changedTouches.length === 2) {
+          const now = Date.now();
+          const timeSinceLastTap = now - lastTwoFingerTap;
+          
+          if (timeSinceLastTap < TWO_FINGER_DOUBLE_TAP_DELAY && timeSinceLastTap > 0) {
+            // Double-tap detected with two fingers - zoom out
+            if (map.current) {
+              e.preventDefault();
+              e.stopPropagation();
+              map.current.zoomOut({ duration: 300 });
+              console.log('[MAP-GESTURE] ✅ Two-finger double-tap detected - zooming out');
+            }
+            lastTwoFingerTap = 0; // Reset to prevent triple-tap
+          } else {
+            // First tap of potential double-tap
+            lastTwoFingerTap = now;
+          }
+        }
+      };
+
+      touchEndHandlerRef.current = handleTouchEnd;
+      touchContainerRef.current = mapContainer.current;
+      
+      if (touchContainerRef.current) {
+        touchContainerRef.current.addEventListener('touchend', handleTouchEnd, { passive: false });
+        console.log('[MAP-GESTURE] ✅ Two-finger double-tap zoom out enabled');
+      }
+
       map.current.on('moveend', () => {
         if (!map.current) return;
         
@@ -897,6 +933,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+      }
+      // Clean up touch event listener
+      if (touchContainer && touchEndHandler) {
+        touchContainer.removeEventListener('touchend', touchEndHandler);
       }
       if (map.current) {
         map.current.remove();
