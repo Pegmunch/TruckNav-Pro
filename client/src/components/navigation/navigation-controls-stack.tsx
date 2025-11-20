@@ -22,7 +22,6 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
-  isNavigating: boolean;
 }
 
 export function NavigationControlsStack({
@@ -34,14 +33,9 @@ export function NavigationControlsStack({
   onToggleTraffic,
   mapViewMode,
   onToggleMapView,
-  onViewIncidents,
-  isNavigating
+  onViewIncidents
 }: NavigationControlsStackProps) {
-  // Defensive check - ensures component can't be rendered outside navigation mode
-  // This matches LeftActionStack pattern for consistent PWA behavior
-  if (!isNavigating) return null;
-  
-  console.log('[NAV-CONTROLS] Navigation controls rendering - parent has confirmed isNavigating=true');
+  console.log('[NAV-CONTROLS] Navigation controls rendering in both preview and navigate modes');
 
   const handleCompassClick = () => {
     console.log('[BTN-1-COMPASS] ✅ Compass button clicked - Resetting bearing to North');
