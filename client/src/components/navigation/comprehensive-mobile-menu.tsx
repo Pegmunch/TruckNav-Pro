@@ -726,6 +726,30 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       </div>
                     )}
 
+                    {/* Find Route Button - Shows when locations entered but route not calculated */}
+                    {!currentRoute && fromInput && toInput && selectedProfile && (
+                      <Button
+                        onClick={async () => {
+                          await onPlanRoute();
+                        }}
+                        disabled={isCalculating}
+                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
+                        data-testid="button-find-route"
+                      >
+                        {isCalculating ? (
+                          <>
+                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                            Calculating Route...
+                          </>
+                        ) : (
+                          <>
+                            <Navigation className="h-5 w-5 mr-2" />
+                            Find Route
+                          </>
+                        )}
+                      </Button>
+                    )}
+
                     {/* Route Status & Navigation Buttons */}
                     {currentRoute && !isNavigating && (
                       <div className="space-y-3">
