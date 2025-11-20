@@ -48,7 +48,8 @@ import {
   MapPinned,
   Loader2,
   Store,
-  ShoppingCart
+  ShoppingCart,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -423,7 +424,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
 
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-            <TabsList className="w-full grid grid-cols-5 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
+            <TabsList className="w-full grid grid-cols-6 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
               <TabsTrigger 
                 value="plan" 
                 className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
@@ -447,6 +448,14 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
               >
                 <Truck className="h-4 w-4" />
                 <span className="text-xs">Vehicle</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="social" 
+                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                data-testid="tab-social"
+              >
+                <Users className="h-4 w-4" />
+                <span className="text-xs">Social</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="theme" 
@@ -1216,6 +1225,37 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       <Settings className="h-4 w-4 mr-2" />
                       Map Settings
                     </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* SOCIAL TAB - Social Network */}
+              <TabsContent value="social" className="p-4 space-y-4 mt-0">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="h-4 w-4 text-blue-500" />
+                      Social Trucking Network
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Connect with drivers, share routes, and build your network (Phase 1 - Coming Soon!)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Social features are currently in development. Soon you'll be able to:
+                    </p>
+                    <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                      <li>Create and manage your driver profile</li>
+                      <li>Connect with other professional drivers</li>
+                      <li>Share and discover routes from your network</li>
+                      <li>Rate and comment on shared routes</li>
+                    </ul>
+                    <div className="pt-3 border-t">
+                      <Badge variant="secondary" className="w-full justify-center py-2">
+                        Phase 1: Launching Soon
+                      </Badge>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

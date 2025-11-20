@@ -1,7 +1,7 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, and, gte, lte, sql, desc, asc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
 
 // Postcode search result type for storage layer
 export interface PostcodeResult {
@@ -211,6 +211,30 @@ export interface IStorage {
   getOperatorAssignment(operatorId: string): Promise<VehicleAssignment | undefined>;
   assignVehicle(assignment: InsertVehicleAssignment): Promise<VehicleAssignment>;
   unassignVehicle(vehicleId: string): Promise<boolean>;
+
+  // Social Network - Driver Profiles
+  updateUserProfile(userId: string, updates: Partial<User>): Promise<User | undefined>;
+  getUserProfile(userId: string, currentUserId?: string): Promise<User | undefined>;
+  searchDrivers(query: string, currentUserId?: string, limit?: number): Promise<User[]>;
+  areUsersConnected(userId1: string, userId2: string): Promise<boolean>;
+  
+  // Social Network - Driver Connections
+  sendConnectionRequest(requesterId: string, receiverId: string): Promise<any>; // Returns DriverConnection
+  acceptConnection(connectionId: string): Promise<any | undefined>; // Returns DriverConnection
+  rejectConnection(connectionId: string): Promise<any | undefined>; // Returns DriverConnection
+  getConnections(userId: string): Promise<any[]>; // Returns DriverConnection[]
+  getPendingRequests(userId: string): Promise<any[]>; // Returns DriverConnection[]
+  
+  // Social Network - Shared Routes
+  shareRoute(userId: string, routeId: string, data: any): Promise<any>; // InsertSharedRoute -> SharedRoute
+  getSharedRoutes(userId: string): Promise<any[]>; // Returns SharedRoute[]
+  getPublicRoutes(limit?: number): Promise<any[]>; // Returns SharedRoute[]
+  getConnectionRoutes(userId: string): Promise<any[]>; // Returns SharedRoute[] from connections
+  saveSharedRoute(userId: string, sharedRouteId: string): Promise<any>; // Returns SavedRoute
+  unsaveSharedRoute(userId: string, sharedRouteId: string): Promise<boolean>;
+  getSavedRoutes(userId: string): Promise<any[]>; // Returns SavedRoute[]
+  commentOnRoute(sharedRouteId: string, userId: string, comment: string, rating?: number): Promise<any>; // Returns RouteComment
+  getRouteComments(sharedRouteId: string): Promise<any[]>; // Returns RouteComment[]
 
 }
 
@@ -3811,6 +3835,287 @@ export class DatabaseStorage implements IStorage {
       .set({ isActive: false, unassignedAt: new Date() })
       .where(and(eq(vehicleAssignments.vehicleId, vehicleId), eq(vehicleAssignments.isActive, true)));
     return true;
+  }
+
+  // Social Network - Driver Profiles
+  async updateUserProfile(userId: string, updates: Partial<User>): Promise<User | undefined> {
+    const cleanedUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, value]) => 
+        value !== undefined && !Number.isNaN(value)
+      )
+    ) as Partial<User>;
+    
+    if (Object.keys(cleanedUpdates).length === 0) {
+      const existing = await this.getUser(userId);
+      return existing;
+    }
+    
+    const result = await db.update(users).set(cleanedUpdates).where(eq(users.id, userId)).returning();
+    return result[0];
+  }
+
+  async areUsersConnected(userId1: string, userId2: string): Promise<boolean> {
+    if (!userId1 || !userId2) return false;
+    
+    const connection = await db.select()
+      .from(driverConnections)
+      .where(
+        and(
+          or(
+            and(eq(driverConnections.requesterId, userId1), eq(driverConnections.receiverId, userId2)),
+            and(eq(driverConnections.requesterId, userId2), eq(driverConnections.receiverId, userId1))
+          ),
+          eq(driverConnections.status, 'accepted')
+        )
+      )
+      .limit(1);
+    
+    return connection.length > 0;
+  }
+
+  async getUserProfile(userId: string, currentUserId?: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const profile = result[0];
+    
+    if (!profile) {
+      return undefined;
+    }
+
+    // Allow if viewing own profile
+    if (currentUserId && userId === currentUserId) {
+      return profile;
+    }
+
+    // Allow if profile is public
+    if (profile.isPublicProfile) {
+      return profile;
+    }
+
+    // Allow if users are connected
+    if (currentUserId && await this.areUsersConnected(userId, currentUserId)) {
+      return profile;
+    }
+
+    // Privacy check failed
+    return undefined;
+  }
+
+  async searchDrivers(query: string, currentUserId?: string, limit: number = 20): Promise<User[]> {
+    const allUsers = await db.select()
+      .from(users)
+      .where(
+        or(
+          ilike(users.firstName, `%${query}%`),
+          ilike(users.lastName, `%${query}%`),
+          ilike(users.username, `%${query}%`),
+          ilike(users.companyName, `%${query}%`),
+          ilike(users.truckType, `%${query}%`)
+        )
+      )
+      .limit(limit * 2); // Fetch extra to account for filtering
+
+    // Filter based on privacy rules
+    const filteredUsers: User[] = [];
+    for (const user of allUsers) {
+      if (filteredUsers.length >= limit) break;
+      
+      // Skip current user
+      if (currentUserId && user.id === currentUserId) continue;
+
+      // Include if public profile
+      if (user.isPublicProfile) {
+        filteredUsers.push(user);
+        continue;
+      }
+
+      // Include if already connected (even if not public)
+      if (currentUserId && await this.areUsersConnected(user.id, currentUserId)) {
+        filteredUsers.push(user);
+        continue;
+      }
+    }
+
+    return filteredUsers;
+  }
+
+  // Social Network - Driver Connections
+  async sendConnectionRequest(requesterId: string, receiverId: string): Promise<DriverConnection> {
+    // Check if receiver allows connection requests
+    const receiver = await db.select().from(users).where(eq(users.id, receiverId)).limit(1);
+    if (!receiver[0]) {
+      throw new Error('User not found');
+    }
+    
+    if (!receiver[0].allowConnectionRequests) {
+      throw new Error('This user has disabled connection requests');
+    }
+
+    const existing = await db.select()
+      .from(driverConnections)
+      .where(
+        or(
+          and(eq(driverConnections.requesterId, requesterId), eq(driverConnections.receiverId, receiverId)),
+          and(eq(driverConnections.requesterId, receiverId), eq(driverConnections.receiverId, requesterId))
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      throw new Error('Connection request already exists');
+    }
+
+    const result = await db.insert(driverConnections).values({
+      requesterId,
+      receiverId,
+      status: 'pending'
+    }).returning();
+    return result[0];
+  }
+
+  async acceptConnection(connectionId: string): Promise<DriverConnection | undefined> {
+    const result = await db.update(driverConnections)
+      .set({ status: 'accepted', respondedAt: new Date() })
+      .where(eq(driverConnections.id, connectionId))
+      .returning();
+    return result[0];
+  }
+
+  async rejectConnection(connectionId: string): Promise<DriverConnection | undefined> {
+    const result = await db.update(driverConnections)
+      .set({ status: 'rejected', respondedAt: new Date() })
+      .where(eq(driverConnections.id, connectionId))
+      .returning();
+    return result[0];
+  }
+
+  async getConnections(userId: string): Promise<DriverConnection[]> {
+    return await db.select()
+      .from(driverConnections)
+      .where(
+        and(
+          or(
+            eq(driverConnections.requesterId, userId),
+            eq(driverConnections.receiverId, userId)
+          ),
+          eq(driverConnections.status, 'accepted')
+        )
+      )
+      .orderBy(desc(driverConnections.createdAt));
+  }
+
+  async getPendingRequests(userId: string): Promise<DriverConnection[]> {
+    return await db.select()
+      .from(driverConnections)
+      .where(
+        and(
+          eq(driverConnections.receiverId, userId),
+          eq(driverConnections.status, 'pending')
+        )
+      )
+      .orderBy(desc(driverConnections.requestedAt));
+  }
+
+  // Social Network - Shared Routes
+  async shareRoute(userId: string, routeId: string, data: InsertSharedRoute): Promise<SharedRoute> {
+    const result = await db.insert(sharedRoutes).values({
+      ...data,
+      userId,
+      routeId
+    }).returning();
+    return result[0];
+  }
+
+  async getSharedRoutes(userId: string): Promise<SharedRoute[]> {
+    return await db.select()
+      .from(sharedRoutes)
+      .where(eq(sharedRoutes.userId, userId))
+      .orderBy(desc(sharedRoutes.sharedAt));
+  }
+
+  async getPublicRoutes(limit: number = 50): Promise<SharedRoute[]> {
+    return await db.select()
+      .from(sharedRoutes)
+      .where(eq(sharedRoutes.isPublic, true))
+      .orderBy(desc(sharedRoutes.sharedAt))
+      .limit(limit);
+  }
+
+  async getConnectionRoutes(userId: string): Promise<SharedRoute[]> {
+    const connections = await this.getConnections(userId);
+    const connectionIds = connections.map(c => 
+      c.requesterId === userId ? c.receiverId : c.requesterId
+    );
+
+    if (connectionIds.length === 0) {
+      return [];
+    }
+
+    return await db.select()
+      .from(sharedRoutes)
+      .where(
+        and(
+          eq(sharedRoutes.shareWithConnections, true),
+          sql`${sharedRoutes.userId} IN (${sql.join(connectionIds.map(id => sql`${id}`), sql`, `)})`
+        )
+      )
+      .orderBy(desc(sharedRoutes.sharedAt));
+  }
+
+  async saveSharedRoute(userId: string, sharedRouteId: string): Promise<SavedRoute> {
+    const existing = await db.select()
+      .from(savedRoutes)
+      .where(
+        and(
+          eq(savedRoutes.userId, userId),
+          eq(savedRoutes.sharedRouteId, sharedRouteId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    const result = await db.insert(savedRoutes).values({
+      userId,
+      sharedRouteId
+    }).returning();
+    return result[0];
+  }
+
+  async unsaveSharedRoute(userId: string, sharedRouteId: string): Promise<boolean> {
+    await db.delete(savedRoutes)
+      .where(
+        and(
+          eq(savedRoutes.userId, userId),
+          eq(savedRoutes.sharedRouteId, sharedRouteId)
+        )
+      );
+    return true;
+  }
+
+  async getSavedRoutes(userId: string): Promise<SavedRoute[]> {
+    return await db.select()
+      .from(savedRoutes)
+      .where(eq(savedRoutes.userId, userId))
+      .orderBy(desc(savedRoutes.savedAt));
+  }
+
+  async commentOnRoute(sharedRouteId: string, userId: string, comment: string, rating?: number): Promise<RouteComment> {
+    const result = await db.insert(routeComments).values({
+      sharedRouteId,
+      userId,
+      comment,
+      rating: rating || null
+    }).returning();
+    return result[0];
+  }
+
+  async getRouteComments(sharedRouteId: string): Promise<RouteComment[]> {
+    return await db.select()
+      .from(routeComments)
+      .where(eq(routeComments.sharedRouteId, sharedRouteId))
+      .orderBy(desc(routeComments.createdAt));
   }
 
 }

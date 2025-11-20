@@ -23,6 +23,7 @@ import SettingsWindow from "@/pages/window-settings";
 import PricingPage from "@/pages/pricing";
 import SubscribePage from "@/pages/subscribe";
 import FleetManagement from "@/pages/fleet-management";
+import { SocialNetworkPage } from "@/pages/social-network";
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -61,6 +62,7 @@ function Router() {
           <Route path="/window/history" component={HistoryWindow} />
           <Route path="/window/settings" component={SettingsWindow} />
           <Route path="/fleet-management" component={FleetManagement} />
+          <Route path="/social" component={SocialNetworkPage} />
           <Route component={NotFound} />
         </Switch>
       </div>

@@ -154,6 +154,15 @@ export const users = pgTable("users", {
   termsAcceptedAt: timestamp("terms_accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Social network fields
+  bio: text("bio"),
+  companyName: text("company_name"),
+  truckType: text("truck_type"),
+  yearsExperience: integer("years_experience"),
+  preferredRegions: jsonb("preferred_regions").$type<string[]>(),
+  isPublicProfile: boolean("is_public_profile").default(true),
+  allowConnectionRequests: boolean("allow_connection_requests").default(true),
+  allowMessages: boolean("allow_messages").default(true),
 });
 
 // Subscription plans - your specified pricing tiers
@@ -281,6 +290,21 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+// Schema for updating user profile (social network fields)
+export const updateUserProfileSchema = z.object({
+  bio: z.string().max(500).optional(),
+  companyName: z.string().max(100).optional(),
+  truckType: z.string().max(100).optional(),
+  yearsExperience: z.preprocess(
+    (val) => val === "" || val === null || val === undefined ? undefined : val,
+    z.number().int().min(0).max(100)
+  ).optional(),
+  preferredRegions: z.array(z.string()).optional(),
+  isPublicProfile: z.boolean().optional(),
+  allowConnectionRequests: z.boolean().optional(),
+  allowMessages: z.boolean().optional(),
+});
+
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
   id: true,
   createdAt: true,
@@ -322,6 +346,7 @@ export type InsertTrafficIncident = z.infer<typeof insertTrafficIncidentSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
@@ -784,12 +809,92 @@ export const vehicleAssignments = pgTable("vehicle_assignments", {
   notes: text("notes"),
 });
 
+// Driver connections for social trucking network
+export const driverConnections = pgTable("driver_connections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requesterId: varchar("requester_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  receiverId: varchar("receiver_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: text("status").notNull().default('pending'), // 'pending', 'accepted', 'rejected', 'blocked'
+  requestedAt: timestamp("requested_at").notNull().defaultNow(),
+  respondedAt: timestamp("responded_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Ensure each connection pair is unique (prevent duplicate requests)
+  uniqueConnection: index("unique_connection_pair").on(table.requesterId, table.receiverId),
+}));
+
+// Shared routes for social network
+export const sharedRoutes = pgTable("shared_routes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  routeId: varchar("route_id").notNull().references(() => routes.id, { onDelete: 'cascade' }),
+  title: text("title").notNull(),
+  description: text("description"),
+  isPublic: boolean("is_public").default(false), // Public to all or only connections
+  shareWithConnections: boolean("share_with_connections").default(true),
+  tags: jsonb("tags").$type<string[]>(), // ['motorway', 'scenic', 'fuel_efficient']
+  sharedAt: timestamp("shared_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Index for finding routes by user
+  userIdIndex: index("shared_routes_user_id_idx").on(table.userId),
+  // Index for finding routes by original route
+  routeIdIndex: index("shared_routes_route_id_idx").on(table.routeId),
+}));
+
+// Messages between drivers (PHASE 2 - deferred for now)
+export const driverMessages = pgTable("driver_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  receiverId: varchar("receiver_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+}, (table) => ({
+  // Index for finding messages by sender/receiver
+  senderIdIndex: index("driver_messages_sender_id_idx").on(table.senderId),
+  receiverIdIndex: index("driver_messages_receiver_id_idx").on(table.receiverId),
+  sentAtIndex: index("driver_messages_sent_at_idx").on(table.sentAt),
+}));
+
+// Route comments/feedback
+export const routeComments = pgTable("route_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sharedRouteId: varchar("shared_route_id").notNull().references(() => sharedRoutes.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  comment: text("comment").notNull(),
+  rating: integer("rating"), // 1-5 stars (validated in application logic)
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  // Index for finding comments by shared route
+  sharedRouteIdIndex: index("route_comments_shared_route_id_idx").on(table.sharedRouteId),
+}));
+
+// Saved routes from other drivers
+export const savedRoutes = pgTable("saved_routes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sharedRouteId: varchar("shared_route_id").notNull().references(() => sharedRoutes.id, { onDelete: 'cascade' }),
+  savedAt: timestamp("saved_at").notNull().defaultNow(),
+}, (table) => ({
+  // Ensure each user can only save a route once
+  uniqueSavedRoute: index("unique_user_saved_route").on(table.userId, table.sharedRouteId),
+}));
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertServiceRecordSchema = createInsertSchema(serviceRecords).omit({ id: true, createdAt: true });
 export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({ id: true, createdAt: true });
 export const insertVehicleAssignmentSchema = createInsertSchema(vehicleAssignments).omit({ id: true, assignedAt: true });
+
+// Zod schemas for social network
+export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
+export const insertSharedRouteSchema = createInsertSchema(sharedRoutes).omit({ id: true, sharedAt: true, updatedAt: true });
+export const insertDriverMessageSchema = createInsertSchema(driverMessages).omit({ id: true, sentAt: true });
+export const insertRouteCommentSchema = createInsertSchema(routeComments).omit({ id: true, createdAt: true });
+export const insertSavedRouteSchema = createInsertSchema(savedRoutes).omit({ id: true, savedAt: true });
 
 // Type exports for fleet management
 export type FleetVehicle = typeof fleetVehicles.$inferSelect;
@@ -806,4 +911,20 @@ export type InsertFuelLog = z.infer<typeof insertFuelLogSchema>;
 
 export type VehicleAssignment = typeof vehicleAssignments.$inferSelect;
 export type InsertVehicleAssignment = z.infer<typeof insertVehicleAssignmentSchema>;
+
+// Type exports for social network
+export type DriverConnection = typeof driverConnections.$inferSelect;
+export type InsertDriverConnection = z.infer<typeof insertDriverConnectionSchema>;
+
+export type SharedRoute = typeof sharedRoutes.$inferSelect;
+export type InsertSharedRoute = z.infer<typeof insertSharedRouteSchema>;
+
+export type DriverMessage = typeof driverMessages.$inferSelect;
+export type InsertDriverMessage = z.infer<typeof insertDriverMessageSchema>;
+
+export type RouteComment = typeof routeComments.$inferSelect;
+export type InsertRouteComment = z.infer<typeof insertRouteCommentSchema>;
+
+export type SavedRoute = typeof savedRoutes.$inferSelect;
+export type InsertSavedRoute = z.infer<typeof insertSavedRouteSchema>;
 

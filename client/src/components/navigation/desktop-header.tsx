@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Truck, Building2 } from 'lucide-react';
+import { Truck, Building2, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 export function DesktopHeader() {
@@ -37,6 +38,19 @@ export function DesktopHeader() {
               >
                 <Building2 className="w-4 h-4" />
                 Fleet Management
+              </Button>
+            </Link>
+
+            <Link href="/social">
+              <Button
+                variant={location === '/social' ? 'default' : 'ghost'}
+                size="sm"
+                className="gap-2"
+                data-testid="link-social-network"
+              >
+                <Users className="w-4 h-4" />
+                Social Network
+                <Badge variant="secondary" className="ml-1 text-xs">Phase 1</Badge>
               </Button>
             </Link>
           </nav>

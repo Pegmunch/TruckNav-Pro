@@ -6,10 +6,11 @@ import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth } from "./subscriptionMiddleware";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest } from "./middleware/security";
+import rateLimit from "express-rate-limit";
 import OpenAI from "openai";
 import multer from "multer";
 import { createReadStream } from "fs";
@@ -4402,682 +4403,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =============================================================================
 
   // =============================================================================
-  // SOCIAL NETWORKING SYSTEM API ROUTES
-  // =============================================================================
-
-  // Driver Profiles Routes
-  app.get("/api/social/profiles/:id", async (req: Request, res: Response) => {
-    try {
-      const profile = await storage.getDriverProfile(req.params.id);
-      if (!profile) {
-        return res.status(404).json({ message: "Driver profile not found" });
-      }
-      res.json(profile);
-    } catch (error) {
-      console.error('Error getting driver profile:', error);
-      res.status(500).json({ message: "Failed to get driver profile" });
-    }
-  });
-
-  app.get("/api/social/profiles/user/:userId", async (req: Request, res: Response) => {
-    try {
-      const profile = await storage.getDriverProfileByUserId(req.params.userId);
-      if (!profile) {
-        return res.status(404).json({ message: "Driver profile not found for user" });
-      }
-      res.json(profile);
-    } catch (error) {
-      console.error('Error getting driver profile by user ID:', error);
-      res.status(500).json({ message: "Failed to get driver profile" });
-    }
-  });
-
-  app.post("/api/social/profiles", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const result = insertVehicleProfileSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid driver profile data",
-          errors: result.error.errors
-        });
-      }
-
-      const profile = await storage.createDriverProfile(result.data);
-      res.status(201).json(profile);
-    } catch (error) {
-      console.error('Error creating driver profile:', error);
-      res.status(500).json({ message: "Failed to create driver profile" });
-    }
-  });
-
-  app.patch("/api/social/profiles/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      // Basic authorization check - ensure user can only update their own profile
-      // TODO: Add proper session-based authorization
-      
-      const profile = await storage.updateDriverProfile(req.params.id, req.body);
-      if (!profile) {
-        return res.status(404).json({ message: "Driver profile not found" });
-      }
-      res.json(profile);
-    } catch (error) {
-      console.error('Error updating driver profile:', error);
-      res.status(500).json({ message: "Failed to update driver profile" });
-    }
-  });
-
-  app.get("/api/social/profiles", async (req: Request, res: Response) => {
-    try {
-      const { query = "", limit = "50", isOnline } = req.query;
-      
-      const profiles = await storage.searchDriverProfiles(
-        query as string, 
-        {
-          limit: parseInt(limit as string),
-          isOnline: isOnline === "true" ? true : isOnline === "false" ? false : undefined
-        }
-      );
-      res.json(profiles);
-    } catch (error) {
-      console.error('Error searching driver profiles:', error);
-      res.status(500).json({ message: "Failed to search driver profiles" });
-    }
-  });
-
-  // Driver Connections Routes
-  app.get("/api/social/connections/:id", async (req: Request, res: Response) => {
-    try {
-      const connection = await storage.getDriverConnection(req.params.id);
-      if (!connection) {
-        return res.status(404).json({ message: "Connection not found" });
-      }
-      res.json(connection);
-    } catch (error) {
-      console.error('Error getting driver connection:', error);
-      res.status(500).json({ message: "Failed to get driver connection" });
-    }
-  });
-
-  app.post("/api/social/connections", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const connection = await storage.createDriverConnection(req.body);
-      res.status(201).json(connection);
-    } catch (error) {
-      console.error('Error creating driver connection:', error);
-      res.status(500).json({ message: "Failed to create connection request" });
-    }
-  });
-
-  app.get("/api/social/connections/driver/:driverId", async (req: Request, res: Response) => {
-    try {
-      const { status } = req.query;
-      const connections = await storage.getDriverConnections(
-        req.params.driverId, 
-        status as string | undefined
-      );
-      res.json(connections);
-    } catch (error) {
-      console.error('Error getting driver connections:', error);
-      res.status(500).json({ message: "Failed to get driver connections" });
-    }
-  });
-
-  app.patch("/api/social/connections/:id/accept", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const connection = await storage.acceptFriendRequest(req.params.id);
-      if (!connection) {
-        return res.status(404).json({ message: "Connection request not found" });
-      }
-      res.json(connection);
-    } catch (error) {
-      console.error('Error accepting friend request:', error);
-      res.status(500).json({ message: "Failed to accept friend request" });
-    }
-  });
-
-  app.delete("/api/social/connections/:id", async (req: Request, res: Response) => {
-    try {
-      const deleted = await storage.deleteFriendRequest(req.params.id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Connection not found" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      console.error('Error deleting connection:', error);
-      res.status(500).json({ message: "Failed to delete connection" });
-    }
-  });
-
-  // Shared Routes Routes  
-  app.get("/api/social/routes/:id", async (req: Request, res: Response) => {
-    try {
-      const route = await storage.getSharedRoute(req.params.id);
-      if (!route) {
-        return res.status(404).json({ message: "Shared route not found" });
-      }
-      res.json(route);
-    } catch (error) {
-      console.error('Error getting shared route:', error);
-      res.status(500).json({ message: "Failed to get shared route" });
-    }
-  });
-
-  app.post("/api/social/routes", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const result = insertRouteSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid shared route data",
-          errors: result.error.errors
-        });
-      }
-
-      const route = await storage.createSharedRoute(result.data);
-      res.status(201).json(route);
-    } catch (error) {
-      console.error('Error creating shared route:', error);
-      res.status(500).json({ message: "Failed to create shared route" });
-    }
-  });
-
-  app.get("/api/social/routes", async (req: Request, res: Response) => {
-    try {
-      const { visibility, sharedBy, limit = "50", offset = "0" } = req.query;
-      
-      const routes = await storage.getSharedRoutes({
-        visibility: visibility as string | undefined,
-        sharedBy: sharedBy as string | undefined,
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string)
-      });
-      res.json(routes);
-    } catch (error) {
-      console.error('Error getting shared routes:', error);
-      res.status(500).json({ message: "Failed to get shared routes" });
-    }
-  });
-
-  app.patch("/api/social/routes/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const route = await storage.updateSharedRoute(req.params.id, req.body);
-      if (!route) {
-        return res.status(404).json({ message: "Shared route not found" });
-      }
-      res.json(route);
-    } catch (error) {
-      console.error('Error updating shared route:', error);
-      res.status(500).json({ message: "Failed to update shared route" });
-    }
-  });
-
-  app.delete("/api/social/routes/:id", async (req: Request, res: Response) => {
-    try {
-      const deleted = await storage.deleteSharedRoute(req.params.id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Shared route not found" });
-      }
-      res.status(204).send();
-    } catch (error) {
-      console.error('Error deleting shared route:', error);
-      res.status(500).json({ message: "Failed to delete shared route" });
-    }
-  });
-
-  app.post("/api/social/routes/:id/like", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const { driverId } = req.body;
-      if (!driverId) {
-        return res.status(400).json({ message: "Driver ID is required" });
-      }
-
-      await storage.likeSharedRoute(req.params.id, driverId);
-      res.status(200).json({ message: "Route liked successfully" });
-    } catch (error) {
-      console.error('Error liking shared route:', error);
-      res.status(500).json({ message: "Failed to like shared route" });
-    }
-  });
-
-  app.post("/api/social/routes/:id/save", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const { driverId } = req.body;
-      if (!driverId) {
-        return res.status(400).json({ message: "Driver ID is required" });
-      }
-
-      await storage.saveSharedRoute(req.params.id, driverId);
-      res.status(200).json({ message: "Route saved successfully" });
-    } catch (error) {
-      console.error('Error saving shared route:', error);
-      res.status(500).json({ message: "Failed to save shared route" });
-    }
-  });
-
-  // Route Comments Routes
-  app.get("/api/social/routes/:routeId/comments", async (req: Request, res: Response) => {
-    try {
-      const { limit = "50", offset = "0" } = req.query;
-      
-      const comments = await storage.getRouteComments(req.params.routeId, {
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string)
-      });
-      res.json(comments);
-    } catch (error) {
-      console.error('Error getting route comments:', error);
-      res.status(500).json({ message: "Failed to get route comments" });
-    }
-  });
-
-  app.post("/api/social/routes/:routeId/comments", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const commentData = {
-        ...req.body,
-        sharedRouteId: req.params.routeId
-      };
-      
-      const comment = await storage.createRouteComment(commentData);
-      res.status(201).json(comment);
-    } catch (error) {
-      console.error('Error creating route comment:', error);
-      res.status(500).json({ message: "Failed to create comment" });
-    }
-  });
-
-  // Driver Location Routes
-  app.post("/api/social/locations", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const result = insertLocationSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid location data",
-          errors: result.error.errors
-        });
-      }
-
-      const location = await storage.updateDriverLocation(result.data);
-      res.json(location);
-    } catch (error) {
-      console.error('Error updating driver location:', error);
-      res.status(500).json({ message: "Failed to update driver location" });
-    }
-  });
-
-  app.get("/api/social/locations/area", async (req: Request, res: Response) => {
-    try {
-      const { north, south, east, west } = req.query;
-      
-      if (!north || !south || !east || !west) {
-        return res.status(400).json({ 
-          message: "Missing required bounds parameters: north, south, east, west" 
-        });
-      }
-
-      const bounds = {
-        north: parseFloat(north as string),
-        south: parseFloat(south as string),
-        east: parseFloat(east as string),
-        west: parseFloat(west as string)
-      };
-
-      const locations = await storage.getDriverLocationsInArea(bounds);
-      res.json(locations);
-    } catch (error) {
-      console.error('Error getting driver locations in area:', error);
-      res.status(500).json({ message: "Failed to get driver locations in area" });
-    }
-  });
-
-  // Driver Discovery Routes
-  app.post("/api/social/discovery/nearby", async (req: Request, res: Response) => {
-    try {
-      const { coordinates, radiusKm, limit, excludeDriverId } = req.body;
-      
-      if (!coordinates || !coordinates.lat || !coordinates.lng || !radiusKm) {
-        return res.status(400).json({ 
-          message: "Missing required parameters: coordinates (lat, lng) and radiusKm" 
-        });
-      }
-
-      const nearbyDrivers = await storage.findNearbyDrivers(coordinates, radiusKm, {
-        limit,
-        excludeDriverId
-      });
-
-      res.json(nearbyDrivers);
-    } catch (error) {
-      console.error('Error finding nearby drivers:', error);
-      res.status(500).json({ message: "Failed to find nearby drivers" });
-    }
-  });
-
-  app.post("/api/social/discovery/similar-routes", async (req: Request, res: Response) => {
-    try {
-      const { routeId, limit, excludeDriverId } = req.body;
-      
-      if (!routeId) {
-        return res.status(400).json({ 
-          message: "Missing required parameter: routeId" 
-        });
-      }
-
-      const similarDrivers = await storage.findDriversOnSimilarRoutes(routeId, {
-        limit,
-        excludeDriverId
-      });
-
-      res.json(similarDrivers);
-    } catch (error) {
-      console.error('Error finding drivers on similar routes:', error);
-      res.status(500).json({ message: "Failed to find drivers on similar routes" });
-    }
-  });
-
-  app.get("/api/social/discovery/active-count", async (req: Request, res: Response) => {
-    try {
-      const count = await storage.getActiveDriversCount();
-      res.json({ count });
-    } catch (error) {
-      console.error('Error getting active drivers count:', error);
-      res.status(500).json({ message: "Failed to get active drivers count" });
-    }
-  });
-
-  app.post("/api/social/locations/cleanup", async (req: Request, res: Response) => {
-    try {
-      const deletedCount = await storage.cleanupExpiredLocations();
-      res.json({ deletedCount });
-    } catch (error) {
-      console.error('Error cleaning up expired locations:', error);
-      res.status(500).json({ message: "Failed to cleanup expired locations" });
-    }
-  });
-
-  // Driver Messaging Routes
-  app.post("/api/social/messages", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const message = await storage.createDriverMessage(req.body);
-      res.status(201).json(message);
-    } catch (error) {
-      console.error('Error creating message:', error);
-      res.status(500).json({ message: "Failed to send message" });
-    }
-  });
-
-  app.get("/api/social/messages/:id", async (req: Request, res: Response) => {
-    try {
-      const message = await storage.getDriverMessage(req.params.id);
-      if (!message) {
-        return res.status(404).json({ message: "Message not found" });
-      }
-      res.json(message);
-    } catch (error) {
-      console.error('Error getting message:', error);
-      res.status(500).json({ message: "Failed to get message" });
-    }
-  });
-
-  app.put("/api/social/messages/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const updates = req.body;
-      const message = await storage.updateDriverMessage(req.params.id, updates);
-      if (!message) {
-        return res.status(404).json({ message: "Message not found" });
-      }
-      res.json(message);
-    } catch (error) {
-      console.error('Error updating message:', error);
-      res.status(500).json({ message: "Failed to update message" });
-    }
-  });
-
-  app.delete("/api/social/messages/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const success = await storage.deleteDriverMessage(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Message not found" });
-      }
-      res.json({ message: "Message deleted successfully" });
-    } catch (error) {
-      console.error('Error deleting message:', error);
-      res.status(500).json({ message: "Failed to delete message" });
-    }
-  });
-
-  app.get("/api/social/conversations/:driverId", async (req: Request, res: Response) => {
-    try {
-      const { driverId } = req.params;
-      const { limit } = req.query;
-      
-      if (!driverId) {
-        return res.status(400).json({ message: "Driver ID is required" });
-      }
-
-      // For now, using a placeholder for current user ID. In production, get from session
-      const currentDriverId = "current-driver-id"; // TODO: Get from authenticated session
-      
-      const messages = await storage.getConversation(currentDriverId, driverId, 
-        limit ? parseInt(limit as string) : undefined);
-      res.json(messages);
-    } catch (error) {
-      console.error('Error getting conversation:', error);
-      res.status(500).json({ message: "Failed to get conversation" });
-    }
-  });
-
-  app.get("/api/social/conversations", async (req: Request, res: Response) => {
-    try {
-      // For now, using a placeholder for current user ID. In production, get from session
-      const currentDriverId = "current-driver-id"; // TODO: Get from authenticated session
-      
-      const conversations = await storage.getDriverConversations(currentDriverId);
-      res.json(conversations);
-    } catch (error) {
-      console.error('Error getting conversations:', error);
-      res.status(500).json({ message: "Failed to get conversations" });
-    }
-  });
-
-  app.put("/api/social/messages/:id/read", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const message = await storage.markMessageAsRead(req.params.id);
-      if (!message) {
-        return res.status(404).json({ message: "Message not found" });
-      }
-      res.json(message);
-    } catch (error) {
-      console.error('Error marking message as read:', error);
-      res.status(500).json({ message: "Failed to mark message as read" });
-    }
-  });
-
-  app.get("/api/social/messages/unread-count", async (req: Request, res: Response) => {
-    try {
-      // For now, using a placeholder for current user ID. In production, get from session
-      const currentDriverId = "current-driver-id"; // TODO: Get from authenticated session
-      
-      const count = await storage.getUnreadMessageCount(currentDriverId);
-      res.json({ count });
-    } catch (error) {
-      console.error('Error getting unread message count:', error);
-      res.status(500).json({ message: "Failed to get unread message count" });
-    }
-  });
-
-  // Convoy Management Routes
-  app.post("/api/social/convoys", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const result = insertJourneySchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({
-          message: "Invalid convoy data",
-          errors: result.error.errors
-        });
-      }
-
-      const convoy = await storage.createConvoy(result.data);
-      res.status(201).json(convoy);
-    } catch (error) {
-      console.error('Error creating convoy:', error);
-      res.status(500).json({ message: "Failed to create convoy" });
-    }
-  });
-
-  app.get("/api/social/convoys/:id", async (req: Request, res: Response) => {
-    try {
-      const convoy = await storage.getConvoy(req.params.id);
-      if (!convoy) {
-        return res.status(404).json({ message: "Convoy not found" });
-      }
-      res.json(convoy);
-    } catch (error) {
-      console.error('Error getting convoy:', error);
-      res.status(500).json({ message: "Failed to get convoy" });
-    }
-  });
-
-  app.put("/api/social/convoys/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const updates = req.body;
-      const convoy = await storage.updateConvoy(req.params.id, updates);
-      if (!convoy) {
-        return res.status(404).json({ message: "Convoy not found" });
-      }
-      res.json(convoy);
-    } catch (error) {
-      console.error('Error updating convoy:', error);
-      res.status(500).json({ message: "Failed to update convoy" });
-    }
-  });
-
-  app.delete("/api/social/convoys/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const success = await storage.deleteConvoy(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Convoy not found" });
-      }
-      res.json({ message: "Convoy deleted successfully" });
-    } catch (error) {
-      console.error('Error deleting convoy:', error);
-      res.status(500).json({ message: "Failed to delete convoy" });
-    }
-  });
-
-  app.get("/api/social/convoys", async (req: Request, res: Response) => {
-    try {
-      const { status, leaderId, limit, search } = req.query;
-      
-      if (search) {
-        // Search convoys by name/description
-        const convoys = await storage.searchConvoys(search as string, {
-          limit: limit ? parseInt(limit as string) : undefined
-        });
-        return res.json(convoys);
-      }
-      
-      // List convoys with filters
-      const convoys = await storage.getConvoys({
-        status: status as string,
-        leaderId: leaderId as string,
-        limit: limit ? parseInt(limit as string) : undefined
-      });
-      res.json(convoys);
-    } catch (error) {
-      console.error('Error getting convoys:', error);
-      res.status(500).json({ message: "Failed to get convoys" });
-    }
-  });
-
-  // Convoy Member Management Routes
-  app.post("/api/social/convoys/:id/members", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const convoyId = req.params.id;
-      const memberData = {
-        ...req.body,
-        convoyId
-      };
-      
-      const member = await storage.createConvoyMember(memberData);
-      res.status(201).json(member);
-    } catch (error) {
-      console.error('Error adding convoy member:', error);
-      res.status(500).json({ message: "Failed to add convoy member" });
-    }
-  });
-
-  app.get("/api/social/convoys/:id/members", async (req: Request, res: Response) => {
-    try {
-      const convoyId = req.params.id;
-      const members = await storage.getConvoyMembers(convoyId);
-      res.json(members);
-    } catch (error) {
-      console.error('Error getting convoy members:', error);
-      res.status(500).json({ message: "Failed to get convoy members" });
-    }
-  });
-
-  app.put("/api/social/convoy-members/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const updates = req.body;
-      const member = await storage.updateConvoyMember(req.params.id, updates);
-      if (!member) {
-        return res.status(404).json({ message: "Convoy member not found" });
-      }
-      res.json(member);
-    } catch (error) {
-      console.error('Error updating convoy member:', error);
-      res.status(500).json({ message: "Failed to update convoy member" });
-    }
-  });
-
-  app.delete("/api/social/convoy-members/:id", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const success = await storage.removeConvoyMember(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Convoy member not found" });
-      }
-      res.json({ message: "Successfully left convoy" });
-    } catch (error) {
-      console.error('Error removing convoy member:', error);
-      res.status(500).json({ message: "Failed to remove convoy member" });
-    }
-  });
-
-  app.post("/api/social/convoys/:id/join-request", validateRequest, async (req: Request, res: Response) => {
-    try {
-      const convoyId = req.params.id;
-      const { driverId } = req.body;
-      
-      if (!driverId) {
-        return res.status(400).json({ message: "Driver ID is required" });
-      }
-
-      const member = await storage.joinConvoyRequest(convoyId, driverId);
-      res.status(201).json(member);
-    } catch (error) {
-      console.error('Error creating join request:', error);
-      res.status(500).json({ message: "Failed to create join request" });
-    }
-  });
-
-  app.get("/api/social/convoy-members/:id", async (req: Request, res: Response) => {
-    try {
-      const member = await storage.getConvoyMember(req.params.id);
-      if (!member) {
-        return res.status(404).json({ message: "Convoy member not found" });
-      }
-      res.json(member);
-    } catch (error) {
-      console.error('Error getting convoy member:', error);
-      res.status(500).json({ message: "Failed to get convoy member" });
-    }
-  });
-
-  // =============================================================================
-  // END SOCIAL NETWORKING SYSTEM API ROUTES  
-  // =============================================================================
-
-  // =============================================================================
   // FLEET MANAGEMENT SYSTEM API ROUTES (Desktop-only)
   // =============================================================================
 
@@ -5368,6 +4693,280 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =============================================================================
   // END FLEET MANAGEMENT SYSTEM API ROUTES
+  // =============================================================================
+
+  // =============================================================================
+  // SOCIAL NETWORK API ROUTES (Phase 1 - Profiles, Connections, Shared Routes)
+  // =============================================================================
+
+  // Rate limiter for connection requests (max 10 per hour per user)
+  const connectionRequestRateLimit = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10,
+    message: {
+      error: 'Too many connection requests. Please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      timestamp: new Date().toISOString(),
+    },
+    // Use user ID if authenticated, otherwise use request IP (handled by default)
+    skipSuccessfulRequests: false,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Driver Profile Management
+  app.get("/api/social/profile/:userId", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const currentUserId = req.user?.id;
+      const profile = await storage.getUserProfile(req.params.userId, currentUserId);
+      if (!profile) {
+        return res.status(403).json({ message: "This profile is private" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      res.status(500).json({ message: "Failed to get user profile" });
+    }
+  });
+
+  app.put("/api/social/profile/:userId", requireAuth, validateRequest, async (req: Request, res: Response) => {
+    try {
+      if (req.params.userId !== req.user?.id) {
+        return res.status(403).json({ message: "Cannot update another user's profile" });
+      }
+      
+      // Validate and coerce the request body using the updateUserProfileSchema
+      const validationResult = updateUserProfileSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid profile data", 
+          errors: validationResult.error.errors 
+        });
+      }
+      
+      const profile = await storage.updateUserProfile(req.params.userId, validationResult.data);
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
+  app.get("/api/social/drivers/search", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const query = req.query.q as string || '';
+      const limit = parseInt(req.query.limit as string) || 20;
+      const currentUserId = req.user?.id;
+      const drivers = await storage.searchDrivers(query, currentUserId, limit);
+      res.json(drivers);
+    } catch (error) {
+      console.error('Error searching drivers:', error);
+      res.status(500).json({ message: "Failed to search drivers" });
+    }
+  });
+
+  // Driver Connections
+  app.post("/api/social/connections/request", requireAuth, connectionRequestRateLimit, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { receiverId } = req.body;
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      if (req.user.id === receiverId) {
+        return res.status(400).json({ message: "Cannot send connection request to yourself" });
+      }
+      const connection = await storage.sendConnectionRequest(req.user.id, receiverId);
+      res.status(201).json(connection);
+    } catch (error: any) {
+      console.error('Error sending connection request:', error);
+      if (error.message === 'Connection request already exists') {
+        return res.status(409).json({ message: error.message });
+      }
+      if (error.message === 'This user has disabled connection requests') {
+        return res.status(403).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to send connection request" });
+    }
+  });
+
+  app.put("/api/social/connections/:id/accept", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const connection = await storage.acceptConnection(req.params.id);
+      if (!connection) {
+        return res.status(404).json({ message: "Connection request not found" });
+      }
+      res.json(connection);
+    } catch (error) {
+      console.error('Error accepting connection:', error);
+      res.status(500).json({ message: "Failed to accept connection" });
+    }
+  });
+
+  app.put("/api/social/connections/:id/reject", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const connection = await storage.rejectConnection(req.params.id);
+      if (!connection) {
+        return res.status(404).json({ message: "Connection request not found" });
+      }
+      res.json(connection);
+    } catch (error) {
+      console.error('Error rejecting connection:', error);
+      res.status(500).json({ message: "Failed to reject connection" });
+    }
+  });
+
+  app.get("/api/social/connections", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const connections = await storage.getConnections(req.user.id);
+      res.json(connections);
+    } catch (error) {
+      console.error('Error getting connections:', error);
+      res.status(500).json({ message: "Failed to get connections" });
+    }
+  });
+
+  app.get("/api/social/connections/pending", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const requests = await storage.getPendingRequests(req.user.id);
+      res.json(requests);
+    } catch (error) {
+      console.error('Error getting pending requests:', error);
+      res.status(500).json({ message: "Failed to get pending requests" });
+    }
+  });
+
+  // Shared Routes
+  app.post("/api/social/routes/share", requireAuth, validateRequest, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const { routeId, title, description, isPublic, shareWithConnections, tags } = req.body;
+      const sharedRoute = await storage.shareRoute(req.user.id, routeId, {
+        title,
+        description,
+        isPublic,
+        shareWithConnections,
+        tags
+      });
+      res.status(201).json(sharedRoute);
+    } catch (error) {
+      console.error('Error sharing route:', error);
+      res.status(500).json({ message: "Failed to share route" });
+    }
+  });
+
+  app.get("/api/social/routes/shared", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const routes = await storage.getSharedRoutes(req.user.id);
+      res.json(routes);
+    } catch (error) {
+      console.error('Error getting shared routes:', error);
+      res.status(500).json({ message: "Failed to get shared routes" });
+    }
+  });
+
+  app.get("/api/social/routes/public", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const routes = await storage.getPublicRoutes(limit);
+      res.json(routes);
+    } catch (error) {
+      console.error('Error getting public routes:', error);
+      res.status(500).json({ message: "Failed to get public routes" });
+    }
+  });
+
+  app.get("/api/social/routes/connections", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const routes = await storage.getConnectionRoutes(req.user.id);
+      res.json(routes);
+    } catch (error) {
+      console.error('Error getting connection routes:', error);
+      res.status(500).json({ message: "Failed to get connection routes" });
+    }
+  });
+
+  app.post("/api/social/routes/:id/save", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const savedRoute = await storage.saveSharedRoute(req.user.id, req.params.id);
+      res.status(201).json(savedRoute);
+    } catch (error) {
+      console.error('Error saving route:', error);
+      res.status(500).json({ message: "Failed to save route" });
+    }
+  });
+
+  app.delete("/api/social/routes/:id/unsave", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      await storage.unsaveSharedRoute(req.user.id, req.params.id);
+      res.json({ message: "Route unsaved successfully" });
+    } catch (error) {
+      console.error('Error unsaving route:', error);
+      res.status(500).json({ message: "Failed to unsave route" });
+    }
+  });
+
+  app.get("/api/social/routes/saved", requireAuth, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const routes = await storage.getSavedRoutes(req.user.id);
+      res.json(routes);
+    } catch (error) {
+      console.error('Error getting saved routes:', error);
+      res.status(500).json({ message: "Failed to get saved routes" });
+    }
+  });
+
+  app.post("/api/social/routes/:id/comment", requireAuth, validateRequest, async (req: Request, res: Response) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const { comment, rating } = req.body;
+      const routeComment = await storage.commentOnRoute(req.params.id, req.user.id, comment, rating);
+      res.status(201).json(routeComment);
+    } catch (error) {
+      console.error('Error commenting on route:', error);
+      res.status(500).json({ message: "Failed to comment on route" });
+    }
+  });
+
+  app.get("/api/social/routes/:id/comments", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const comments = await storage.getRouteComments(req.params.id);
+      res.json(comments);
+    } catch (error) {
+      console.error('Error getting route comments:', error);
+      res.status(500).json({ message: "Failed to get route comments" });
+    }
+  });
+
+  // =============================================================================
+  // END SOCIAL NETWORK API ROUTES
   // =============================================================================
 
   const httpServer = createServer(app);
