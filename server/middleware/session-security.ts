@@ -18,14 +18,24 @@ const getSessionStore = () => {
       throw new Error('[SESSION] DATABASE_URL is required for secure session storage');
     }
     
-    return new PostgresStore({
+    const store = new PostgresStore({
       conString: process.env.DATABASE_URL!,
       createTableIfMissing: true,
       tableName: 'user_sessions',
       pruneSessionInterval: 60 * 15,
       ttl: 60 * 60 * 24,
       schemaName: 'public',
+      errorLog: (err: Error) => {
+        // Suppress "already exists" errors - they're harmless and expected on redeploy
+        if (err.message && err.message.includes('already exists')) {
+          console.log('[SESSION] Database schema already initialized (expected on redeploy)');
+        } else {
+          console.error('[SESSION-STORE] Error:', err.message);
+        }
+      }
     });
+    
+    return store;
   } else {
     // Use MemoryStore in development for session stability
     console.log('[SESSION] Using MemoryStore for development - sessions will be stable');
