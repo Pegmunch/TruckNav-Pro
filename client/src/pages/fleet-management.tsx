@@ -812,16 +812,47 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
 }
 
 function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
   const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
     queryKey: ['/api/fleet/vehicles/active'],
   });
+
+  const { data: fuelLogs = [] } = useQuery<FuelLog[]>({
+    queryKey: ['/api/fleet/fuel-logs/vehicle', selectedVehicleId],
+    enabled: !!selectedVehicleId,
+  });
+
+  const { data: efficiency } = useQuery<{ averageMPG: number; totalFuelCost: number; totalLiters: number }>({
+    queryKey: ['/api/fleet/fuel-logs/vehicle', selectedVehicleId, 'efficiency'],
+    enabled: !!selectedVehicleId,
+  });
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
+
+  const calculatedStats = selectedVehicleId && fuelLogs.length > 0 ? {
+    totalFillUps: fuelLogs.length,
+    totalLiters: fuelLogs.reduce((sum, log) => sum + (log.liters || 0), 0),
+    totalCost: fuelLogs.reduce((sum, log) => sum + parseFloat(log.totalCost?.toString() || '0'), 0),
+    averageCostPerLiter: fuelLogs.length > 0 
+      ? fuelLogs.reduce((sum, log) => sum + parseFloat(log.costPerLiter?.toString() || '0'), 0) / fuelLogs.filter(log => log.costPerLiter).length
+      : 0,
+    distanceTraveled: fuelLogs.length >= 2
+      ? Math.max(...fuelLogs.map(log => log.odometer || 0)) - Math.min(...fuelLogs.map(log => log.odometer || 0))
+      : 0,
+    averageMPG: efficiency?.averageMPG || 0,
+    costPerMile: 0,
+  } : null;
+
+  if (calculatedStats && calculatedStats.distanceTraveled > 0) {
+    calculatedStats.costPerMile = calculatedStats.totalCost / calculatedStats.distanceTraveled;
+  }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Fuel Logs</CardTitle>
-          <CardDescription>Track fuel consumption and efficiency</CardDescription>
+          <CardDescription>Track fuel consumption and efficiency with automatic calculations</CardDescription>
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
@@ -837,7 +868,110 @@ function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
         {vehicles.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">Add vehicles first to start tracking fuel consumption.</div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">Select a vehicle above to view its fuel logs.</div>
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Label htmlFor="vehicle-select" className="whitespace-nowrap">Select Vehicle:</Label>
+              <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
+                <SelectTrigger id="vehicle-select" className="max-w-md" data-testid="select-fuel-vehicle-filter">
+                  <SelectValue placeholder="Choose a vehicle to view fuel logs" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((vehicle) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id}>
+                      {vehicle.registration} - {vehicle.make} {vehicle.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedVehicleId && calculatedStats && (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Total Fill-Ups</div>
+                    <div className="text-2xl font-bold" data-testid="stat-total-fillups">{calculatedStats.totalFillUps}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Total Fuel (L)</div>
+                    <div className="text-2xl font-bold" data-testid="stat-total-liters">{calculatedStats.totalLiters.toFixed(1)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Total Cost</div>
+                    <div className="text-2xl font-bold text-red-600" data-testid="stat-total-cost">£{calculatedStats.totalCost.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Avg MPG</div>
+                    <div className="text-2xl font-bold text-green-600" data-testid="stat-avg-mpg">
+                      {calculatedStats.averageMPG > 0 ? calculatedStats.averageMPG.toFixed(1) : 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Distance Traveled</div>
+                    <div className="text-2xl font-bold" data-testid="stat-distance">{calculatedStats.distanceTraveled.toLocaleString()} mi</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Avg Cost/Liter</div>
+                    <div className="text-2xl font-bold" data-testid="stat-avg-cost-per-liter">
+                      £{calculatedStats.averageCostPerLiter > 0 ? calculatedStats.averageCostPerLiter.toFixed(3) : '0.000'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Cost per Mile</div>
+                    <div className="text-2xl font-bold" data-testid="stat-cost-per-mile">
+                      £{calculatedStats.costPerMile > 0 ? calculatedStats.costPerMile.toFixed(3) : 'N/A'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">Current Mileage</div>
+                    <div className="text-2xl font-bold" data-testid="stat-current-mileage">
+                      {selectedVehicle?.currentMileage?.toLocaleString() || '0'} mi
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-4">Fuel Log History</h3>
+                  {fuelLogs.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">No fuel logs found for this vehicle.</div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Odometer</TableHead>
+                          <TableHead>Liters</TableHead>
+                          <TableHead>Cost</TableHead>
+                          <TableHead>Cost/L</TableHead>
+                          <TableHead>MPG</TableHead>
+                          <TableHead>Location</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {fuelLogs.map((log) => (
+                          <TableRow key={log.id} data-testid={`row-fuel-log-${log.id}`}>
+                            <TableCell>{log.fillDate ? format(new Date(log.fillDate), 'dd/MM/yyyy') : '—'}</TableCell>
+                            <TableCell>{log.odometer?.toLocaleString() || '—'} mi</TableCell>
+                            <TableCell>{log.liters?.toFixed(1) || '—'} L</TableCell>
+                            <TableCell>£{log.totalCost ? parseFloat(log.totalCost.toString()).toFixed(2) : '—'}</TableCell>
+                            <TableCell>£{log.costPerLiter ? parseFloat(log.costPerLiter.toString()).toFixed(3) : '—'}</TableCell>
+                            <TableCell className={log.mpg && log.mpg > 0 ? 'text-green-600 font-medium' : ''}>
+                              {log.mpg && log.mpg > 0 ? log.mpg.toFixed(1) : '—'}
+                            </TableCell>
+                            <TableCell>{log.location || '—'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!selectedVehicleId && (
+              <div className="text-center py-8 text-muted-foreground">Select a vehicle above to view fuel logs and consumption statistics.</div>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
