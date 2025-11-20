@@ -2498,66 +2498,9 @@ function NavigationPageContent() {
               )}
               
 
-              {/* PREVIEW MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
+              {/* PREVIEW MODE OVERLAYS (z-10+) - Visible only in preview mode */}
               {mobileNavMode === 'preview' && (
-                <div className={cn(
-                  "transition-opacity duration-200",
-                  isNavigating && "opacity-0 pointer-events-none"
-                )}>
-                  {/* Header - Thicker for better accessibility */}
-                  <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between py-3 px-4 border-b-2 border-gray-200 bg-white">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">TruckNav Pro</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowVehicleSettings(true)}
-                      className="h-10 w-10 bg-green-600 hover:bg-green-700 text-white rounded-full"
-                      data-testid="button-settings"
-                    >
-                      <Settings className="w-5 h-5" />
-                    </Button>
-                  </div>
-
-
-                  {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
-                  <div 
-                    className="fixed left-0 right-0 flex flex-col-reverse items-center gap-3 pointer-events-none"
-                    style={{ 
-                      bottom: 'var(--safe-area-bottom, 0px)',
-                      paddingBottom: '0px'
-                    }}
-                  >
-                    {/* Legal Ownership - Bottom layer (z-[5]) */}
-                    <div className="w-full z-[5] pointer-events-auto">
-                      <MapLegalOwnership compact={true} className="sm:hidden" />
-                    </div>
-                  </div>
-
-                  {/* Plan Route FAB - Opens comprehensive menu on mobile (Bottom Right) */}
-                  <Button
-                    onClick={() => setShowComprehensiveMenu(true)}
-                    size="lg"
-                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
-                    style={{
-                      bottom: 'calc(24px + var(--safe-area-bottom))',
-                      right: 'calc(24px + var(--safe-area-right))'
-                    }}
-                    data-testid="button-plan-route-fab"
-                    aria-label="Open menu"
-                  >
-                    <Menu className="w-6 h-6" />
-                  </Button>
-                </div>
-              )}
-
-              {/* PREVIEW MODE OVERLAYS (z-10+) - Always rendered but hidden during navigation */}
-              {mobileNavMode === 'preview' && (
-                <div className={cn(
-                  "transition-opacity duration-200",
-                  isNavigating && "opacity-0 pointer-events-none"
-                )}>
+                <>
                   {/* Clean Header with Title and Settings */}
                   <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm" 
                        style={{ paddingTop: 'calc(12px + var(--safe-area-top))' }}>
@@ -2616,14 +2559,11 @@ function NavigationPageContent() {
                   >
                     <Menu className="w-6 h-6" />
                   </Button>
-
-                  {/* REMOVED: Start Navigation FAB - Navigation auto-starts after 10 seconds */}
-                </div>
+                </>
               )}
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
-              {console.log('[NAV-RENDER] isNavUIActive:', isNavUIActive, 'showComprehensiveMenu:', showComprehensiveMenu, 'shouldRender:', isNavUIActive && !showComprehensiveMenu)}
               {isNavUIActive && !showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
@@ -2775,11 +2715,6 @@ function NavigationPageContent() {
           )}
 
         </div>
-
-        {/* Navigation controls are now properly rendered inside NavigationLayout only */}
-        {console.log('[NAV-CONTROLS] Controls state check - isNavigating:', isNavigating, ', mode:', mobileNavMode)}
-        {!isNavigating && console.log('[NAV-CONTROLS] ✅ Controls properly hidden in preview mode')}
-        {isNavigating && console.log('[NAV-CONTROLS] ✅ Controls properly shown in navigation mode')}
         
         </>
       ) : (
