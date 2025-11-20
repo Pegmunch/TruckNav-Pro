@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Crosshair, Layers, Box, Compass, MapPin } from "lucide-react";
+import { Plus, Minus, Crosshair, Layers, Box, Compass, MapPin, AlertTriangle } from "lucide-react";
 import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
@@ -52,6 +52,16 @@ interface MapLibreMapProps {
   hideCompass?: boolean;
   isNavigating?: boolean;
   showUserMarker?: boolean;
+  restrictionViolations?: Array<{
+    restriction: {
+      id: string;
+      type: string;
+      coordinates?: { lat: number; lng: number };
+      location: string;
+      severity: string;
+    };
+    bypassable: boolean;
+  }>;
 }
 
 interface MapPreferences {
@@ -100,6 +110,21 @@ const formatTimeAgo = (timestamp: string | Date): string => {
   return reported.toLocaleDateString();
 };
 
+// Get severity color for restriction markers
+const getSeverityColor = (severity: string): string => {
+  switch (severity.toLowerCase()) {
+    case 'absolute':
+    case 'high':
+      return '#ef4444'; // red
+    case 'medium':
+      return '#f97316'; // orange
+    case 'low':
+      return '#eab308'; // yellow
+    default:
+      return '#6b7280'; // gray
+  }
+};
+
 const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLibreMap({
   currentRoute,
   selectedProfile,
@@ -110,7 +135,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   hideControls = false,
   hideCompass = false,
   isNavigating = false,
-  showUserMarker = true
+  showUserMarker = true,
+  restrictionViolations
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -126,6 +152,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const restrictionMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const restrictionViolationsRef = useRef(restrictionViolations);
+  const isNavigatingRef = useRef(isNavigating);
   const { reportError } = useMapLibreErrorReporting();
   const resetBearingFailureCountRef = useRef(0);
   const MAX_RESET_BEARING_FAILURES = 3;
@@ -1313,6 +1342,198 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       incidentMarkersRef.current = [];
     };
   }, [incidents, isLoaded, showIncidents]);
+
+  // Keep refs in sync with props (prevents stale closures)
+  // Trigger re-render when violations change
+  useEffect(() => {
+    restrictionViolationsRef.current = restrictionViolations;
+    // Trigger marker re-render if map is ready
+    if (map.current && isLoaded) {
+      renderRestrictionMarkers();
+    }
+  }, [restrictionViolations, isLoaded]);
+
+  // Keep navigation state in sync and trigger cleanup when starting navigation
+  useEffect(() => {
+    isNavigatingRef.current = isNavigating;
+    // Clear markers immediately when navigation starts/stops
+    if (map.current && isLoaded) {
+      renderRestrictionMarkers();
+    }
+  }, [isNavigating, isLoaded]);
+
+  // Stable callback to render restriction markers
+  // Reads from refs to avoid stale closures when styledata fires
+  const renderRestrictionMarkers = useCallback(() => {
+    // Read fresh values from refs (no stale closures)
+    const navigating = isNavigatingRef.current;
+    const violations = restrictionViolationsRef.current;
+    
+    // Skip if map not ready, navigating, or no violations
+    if (!map.current?.isStyleLoaded() || navigating || !violations) {
+      console.log('[RESTRICTION-MARKERS] Skipping render - styleLoaded:', map.current?.isStyleLoaded(), 
+                  'navigating:', navigating, 'hasViolations:', !!violations);
+      // Clean up markers if navigating or no violations
+      if (navigating || !violations) {
+        restrictionMarkersRef.current.forEach(marker => marker.remove());
+        restrictionMarkersRef.current = [];
+      }
+      return;
+    }
+
+    const mapInstance = map.current;
+
+    // Clean up existing markers before rendering new ones
+    restrictionMarkersRef.current.forEach(marker => marker.remove());
+    restrictionMarkersRef.current = [];
+
+    // Count restrictions with and without coordinates
+    const withCoordinates = violations.filter(v => v.restriction.coordinates);
+    const withoutCoordinates = violations.length - withCoordinates.length;
+
+    console.log('[RESTRICTION-MARKERS] Rendering', withCoordinates.length, 'restriction markers (preview mode)', 
+      withoutCoordinates > 0 ? `(${withoutCoordinates} without coordinates)` : '');
+
+    // Create markers for each restriction violation
+    violations.forEach((violation) => {
+      if (!violation.restriction.coordinates) {
+        console.warn('[RESTRICTION-MARKERS] Skipping restriction without coordinates:', violation.restriction.id, violation.restriction.location);
+        return;
+      }
+
+      const { restriction } = violation;
+      const color = getSeverityColor(restriction.severity);
+
+      // Create HTML element for marker with AlertTriangle icon
+      const el = document.createElement('div');
+      el.className = 'restriction-marker';
+      el.setAttribute('data-testid', `restriction-marker-${restriction.id}`);
+      el.style.cssText = `
+        width: 36px;
+        height: 36px;
+        background-color: ${color};
+        border: 3px solid white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        transition: transform 0.2s;
+      `;
+
+      // Add AlertTriangle icon (white color)
+      el.innerHTML = `
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      `;
+
+      // Hover effect
+      el.addEventListener('mouseenter', () => {
+        el.style.transform = 'scale(1.15)';
+      });
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = 'scale(1)';
+      });
+
+      // Format restriction type for display
+      const formatType = (type: string): string => {
+        const typeMap: Record<string, string> = {
+          'height': 'Bridge Height',
+          'width': 'Road Width',
+          'weight': 'Weight Limit',
+          'length': 'Length Restriction'
+        };
+        return typeMap[type.toLowerCase()] || type;
+      };
+
+      // Create popup with restriction details
+      const popupContent = `
+        <div style="padding: 8px; min-width: 200px;">
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; color: ${color};">
+            ${formatType(restriction.type)}
+          </div>
+          <div style="font-size: 12px; margin-bottom: 4px;">
+            <strong>Location:</strong> ${restriction.location}
+          </div>
+          <div style="font-size: 12px; margin-bottom: 4px;">
+            <strong>Severity:</strong> <span style="color: ${color}; font-weight: 600;">${restriction.severity.toUpperCase()}</span>
+          </div>
+          <div style="font-size: 12px;">
+            <strong>Bypassable:</strong> ${violation.bypassable ? 'Yes' : 'No'}
+          </div>
+          ${!violation.bypassable ? `
+            <div style="margin-top: 8px; padding: 6px; background-color: #fee; border-left: 3px solid ${color}; font-size: 11px;">
+              ⚠️ This restriction cannot be bypassed
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      const popup = new maplibregl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false
+      }).setHTML(popupContent);
+
+      // Create and add marker
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([restriction.coordinates!.lng, restriction.coordinates!.lat])
+        .setPopup(popup)
+        .addTo(mapInstance);
+
+      restrictionMarkersRef.current.push(marker);
+    });
+
+    console.log('[RESTRICTION-MARKERS] ✅ Rendered', restrictionMarkersRef.current.length, 'restriction markers');
+  }, []); // No dependencies - uses refs to access latest data
+
+  // Effect to manage restriction markers and style change listener
+  // FALLBACK STRATEGY: RestrictionsWarningPanel shows violations if markers can't render
+  // Callback reads from refs, so no stale closures even if isNavigating/violations change
+  useEffect(() => {
+    if (!map.current || !isLoaded) {
+      console.log('[RESTRICTION-MARKERS] Map not ready, skipping listener setup');
+      // Clean up any existing markers
+      restrictionMarkersRef.current.forEach(marker => marker.remove());
+      restrictionMarkersRef.current = [];
+      return;
+    }
+
+    const mapInstance = map.current;
+
+    // Render immediately (reads from refs for fresh state)
+    renderRestrictionMarkers();
+
+    // Listen for style changes (roads ⇄ satellite/3D) and re-render markers
+    // Handler reads from refs, so always uses latest isNavigating/violations
+    const handleStyleLoad = () => {
+      console.log('[RESTRICTION-MARKERS] Style loaded/changed, re-rendering markers');
+      renderRestrictionMarkers();
+    };
+    
+    mapInstance.on('styledata', handleStyleLoad);
+
+    // Cleanup: remove event listener and clear markers
+    return () => {
+      mapInstance.off('styledata', handleStyleLoad);
+      restrictionMarkersRef.current.forEach(marker => marker.remove());
+      restrictionMarkersRef.current = [];
+    };
+  }, [isLoaded, renderRestrictionMarkers]);
 
   // GPS tracking and user position marker (using centralized GPS hook)
   // CRITICAL: GPS marker must ALWAYS be visible on any map scenario

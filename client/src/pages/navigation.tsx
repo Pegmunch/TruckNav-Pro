@@ -67,11 +67,31 @@ import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
+import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 
 // Removed duplicate NavigationControlsStack - now imported from component
 
 // NavigationControlsStack has been moved to its own component file
 // Import is at the top of this file
+
+// Extended Route type with API-only fields for route calculation responses
+type RouteWithViolations = Route & {
+  violations?: Array<{
+    restriction: {
+      id: string;
+      type: string;
+      limit: number;
+      location: string;
+      description?: string;
+      roadName?: string;
+      severity: string;
+      coordinates?: { lat: number; lng: number };
+    };
+    severity: string;
+    bypassable: boolean;
+  }>;
+  isRouteAllowed?: boolean;
+};
 
 // Inner component that uses GPS context
 function NavigationPageContent() {
@@ -101,7 +121,7 @@ function NavigationPageContent() {
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
-  const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
+  const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
   const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
@@ -2361,6 +2381,7 @@ function NavigationPageContent() {
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
+                    restrictionViolations={currentRoute?.violations || []}
                   />
                 </MapShell>
               </div>
@@ -2517,6 +2538,19 @@ function NavigationPageContent() {
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
                   </div>
+
+                  {/* Restriction Warnings Panel - Mobile Preview Mode */}
+                  {currentRoute?.violations && currentRoute.violations.length > 0 && selectedProfile && (
+                    <RestrictionsWarningPanel
+                      violations={currentRoute.violations}
+                      vehicleProfile={{
+                        ...selectedProfile,
+                        weight: selectedProfile.weight ?? 0,
+                        length: selectedProfile.length ?? 0
+                      }}
+                      isRouteAllowed={currentRoute.isRouteAllowed ?? true}
+                    />
+                  )}
 
                   {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) */}
                   <Button
@@ -2811,6 +2845,7 @@ function NavigationPageContent() {
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
+                    restrictionViolations={currentRoute?.violations || []}
                   />
                 </MapShell>
                 
@@ -2834,6 +2869,19 @@ function NavigationPageContent() {
                       </div>
                     </Card>
                   </div>
+                )}
+
+                {/* Restriction Warnings Panel - Desktop Preview Mode */}
+                {!isNavigating && currentRoute?.violations && currentRoute.violations.length > 0 && selectedProfile && (
+                  <RestrictionsWarningPanel
+                    violations={currentRoute.violations}
+                    vehicleProfile={{
+                      ...selectedProfile,
+                      weight: selectedProfile.weight ?? 0,
+                      length: selectedProfile.length ?? 0
+                    }}
+                    isRouteAllowed={currentRoute.isRouteAllowed ?? true}
+                  />
                 )}
                 
                 {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
