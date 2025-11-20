@@ -22,6 +22,7 @@ import HistoryWindow from "@/pages/window-history";
 import SettingsWindow from "@/pages/window-settings";
 import PricingPage from "@/pages/pricing";
 import SubscribePage from "@/pages/subscribe";
+import FleetManagement from "@/pages/fleet-management";
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -59,6 +60,7 @@ function Router() {
           <Route path="/window/themes" component={ThemesWindow} />
           <Route path="/window/history" component={HistoryWindow} />
           <Route path="/window/settings" component={SettingsWindow} />
+          <Route path="/fleet-management" component={FleetManagement} />
           <Route component={NotFound} />
         </Switch>
       </div>

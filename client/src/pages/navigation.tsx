@@ -66,6 +66,7 @@ import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
+import { DesktopHeader } from "@/components/navigation/desktop-header";
 
 // Removed duplicate NavigationControlsStack - now imported from component
 
@@ -2328,6 +2329,9 @@ function NavigationPageContent() {
 
   return (
     <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
+      {/* Desktop-Only Navigation Header */}
+      <DesktopHeader />
+
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {isMobile ? (
         <>

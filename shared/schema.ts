@@ -687,3 +687,123 @@ export type InsertEntertainmentPlaybackState = z.infer<typeof insertEntertainmen
 
 export type EntertainmentSettings = z.infer<typeof entertainmentSettingsSchema>;
 
+// ==================== FLEET MANAGEMENT SYSTEM ====================
+// Desktop-only fleet management for office/back-end use
+
+// Fleet Vehicles - Main vehicle registry
+export const fleetVehicles = pgTable("fleet_vehicles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  registration: varchar("registration").notNull().unique(), // License plate/registration number
+  trailerNumber: varchar("trailer_number"), // Trailer registration/identification number
+  make: text("make").notNull(), // Vehicle manufacturer (e.g., "Volvo", "Mercedes")
+  model: text("model").notNull(), // Vehicle model (e.g., "FH16", "Actros")
+  year: integer("year").notNull(), // Year of manufacture
+  vin: varchar("vin"), // Vehicle Identification Number
+  vehicleType: text("vehicle_type").notNull(), // 'truck', 'van', 'lorry', 'trailer'
+  fuelType: text("fuel_type").notNull(), // 'diesel', 'petrol', 'electric', 'hybrid'
+  tankCapacity: real("tank_capacity"), // Fuel tank capacity in liters
+  vehicleProfileId: varchar("vehicle_profile_id"), // Links to vehicle_profiles for navigation specs
+  status: text("status").notNull().default('active'), // 'active', 'maintenance', 'decommissioned'
+  purchaseDate: timestamp("purchase_date"),
+  purchasePrice: decimal("purchase_price", { precision: 10, scale: 2 }),
+  currentMileage: real("current_mileage").default(0), // Current odometer reading in miles
+  notes: text("notes"), // Additional notes about the vehicle
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Operators - Drivers/operators registry
+export const operators = pgTable("operators", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: varchar("email"),
+  phone: varchar("phone"),
+  licenseNumber: varchar("license_number").notNull().unique(),
+  licenseType: text("license_type").notNull(), // 'C', 'C+E', 'C1', 'C1+E' (UK license categories)
+  licenseExpiry: timestamp("license_expiry").notNull(),
+  driverCQCExpiry: timestamp("driver_cqc_expiry"), // Driver CPC (Certificate of Professional Competence) expiry
+  tachographCardNumber: varchar("tachograph_card_number"),
+  tachographCardExpiry: timestamp("tachograph_card_expiry"),
+  employeeId: varchar("employee_id"),
+  status: text("status").notNull().default('active'), // 'active', 'inactive', 'suspended'
+  hireDate: timestamp("hire_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Service Records - Vehicle maintenance and service history
+export const serviceRecords = pgTable("service_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  serviceType: text("service_type").notNull(), // 'routine', 'mot', 'repair', 'inspection', 'tachograph_calibration'
+  serviceDate: timestamp("service_date").notNull(),
+  nextServiceDue: timestamp("next_service_due"), // Automatic monitoring uses this
+  mileageAtService: real("mileage_at_service"),
+  serviceCost: decimal("service_cost", { precision: 10, scale: 2 }),
+  serviceProvider: text("service_provider"), // Garage/service center name
+  description: text("description"),
+  partsReplaced: jsonb("parts_replaced").$type<string[]>(), // Array of parts replaced
+  invoiceNumber: varchar("invoice_number"),
+  nextServiceMiles: real("next_service_miles"), // Service due at this mileage
+  status: text("status").default('completed'), // 'scheduled', 'in_progress', 'completed'
+  performedBy: text("performed_by"), // Technician/mechanic name
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Fuel Logs - Track fuel consumption and efficiency
+export const fuelLogs = pgTable("fuel_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  operatorId: varchar("operator_id"), // References operators (who filled up)
+  fillDate: timestamp("fill_date").notNull(),
+  odometer: real("odometer").notNull(), // Odometer reading at fill-up
+  liters: real("liters").notNull(), // Liters of fuel added
+  costPerLiter: decimal("cost_per_liter", { precision: 10, scale: 4 }),
+  totalCost: decimal("total_cost", { precision: 10, scale: 2 }),
+  fuelType: text("fuel_type").notNull(), // 'diesel', 'petrol', 'electric', 'adblue'
+  location: text("location"), // Where fuel was purchased
+  fullTank: boolean("full_tank").default(false), // Whether tank was filled completely
+  mpg: real("mpg"), // Miles per gallon (calculated automatically)
+  receiptnumber: varchar("receipt_number"),
+  paymentMethod: text("payment_method"), // 'company_card', 'cash', 'fuel_card'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Vehicle Assignments - Track which operator is assigned to which vehicle
+export const vehicleAssignments = pgTable("vehicle_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  operatorId: varchar("operator_id").notNull(), // References operators
+  assignedAt: timestamp("assigned_at").notNull().defaultNow(),
+  unassignedAt: timestamp("unassigned_at"),
+  isActive: boolean("is_active").default(true),
+  notes: text("notes"),
+});
+
+// Zod schemas for fleet management
+export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertServiceRecordSchema = createInsertSchema(serviceRecords).omit({ id: true, createdAt: true });
+export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({ id: true, createdAt: true });
+export const insertVehicleAssignmentSchema = createInsertSchema(vehicleAssignments).omit({ id: true, assignedAt: true });
+
+// Type exports for fleet management
+export type FleetVehicle = typeof fleetVehicles.$inferSelect;
+export type InsertFleetVehicle = z.infer<typeof insertFleetVehicleSchema>;
+
+export type Operator = typeof operators.$inferSelect;
+export type InsertOperator = z.infer<typeof insertOperatorSchema>;
+
+export type ServiceRecord = typeof serviceRecords.$inferSelect;
+export type InsertServiceRecord = z.infer<typeof insertServiceRecordSchema>;
+
+export type FuelLog = typeof fuelLogs.$inferSelect;
+export type InsertFuelLog = z.infer<typeof insertFuelLogSchema>;
+
+export type VehicleAssignment = typeof vehicleAssignments.$inferSelect;
+export type InsertVehicleAssignment = z.infer<typeof insertVehicleAssignmentSchema>;
+

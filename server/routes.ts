@@ -5077,6 +5077,299 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // END SOCIAL NETWORKING SYSTEM API ROUTES  
   // =============================================================================
 
+  // =============================================================================
+  // FLEET MANAGEMENT SYSTEM API ROUTES (Desktop-only)
+  // =============================================================================
+
+  // Fleet Vehicles
+  app.get("/api/fleet/vehicles", async (req: Request, res: Response) => {
+    try {
+      const vehicles = await storage.getAllFleetVehicles();
+      res.json(vehicles);
+    } catch (error) {
+      console.error('Error getting fleet vehicles:', error);
+      res.status(500).json({ message: "Failed to get fleet vehicles" });
+    }
+  });
+
+  app.get("/api/fleet/vehicles/active", async (req: Request, res: Response) => {
+    try {
+      const vehicles = await storage.getActiveFleetVehicles();
+      res.json(vehicles);
+    } catch (error) {
+      console.error('Error getting active fleet vehicles:', error);
+      res.status(500).json({ message: "Failed to get active fleet vehicles" });
+    }
+  });
+
+  app.get("/api/fleet/vehicles/:id", async (req: Request, res: Response) => {
+    try {
+      const vehicle = await storage.getFleetVehicle(req.params.id);
+      if (!vehicle) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+      res.json(vehicle);
+    } catch (error) {
+      console.error('Error getting fleet vehicle:', error);
+      res.status(500).json({ message: "Failed to get fleet vehicle" });
+    }
+  });
+
+  app.post("/api/fleet/vehicles", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const vehicle = await storage.createFleetVehicle(req.body);
+      res.status(201).json(vehicle);
+    } catch (error) {
+      console.error('Error creating fleet vehicle:', error);
+      res.status(500).json({ message: "Failed to create fleet vehicle" });
+    }
+  });
+
+  app.put("/api/fleet/vehicles/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const vehicle = await storage.updateFleetVehicle(req.params.id, req.body);
+      if (!vehicle) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+      res.json(vehicle);
+    } catch (error) {
+      console.error('Error updating fleet vehicle:', error);
+      res.status(500).json({ message: "Failed to update fleet vehicle" });
+    }
+  });
+
+  app.delete("/api/fleet/vehicles/:id", async (req: Request, res: Response) => {
+    try {
+      await storage.deleteFleetVehicle(req.params.id);
+      res.json({ message: "Vehicle deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting fleet vehicle:', error);
+      res.status(500).json({ message: "Failed to delete fleet vehicle" });
+    }
+  });
+
+  // Operators
+  app.get("/api/fleet/operators", async (req: Request, res: Response) => {
+    try {
+      const operators = await storage.getAllOperators();
+      res.json(operators);
+    } catch (error) {
+      console.error('Error getting operators:', error);
+      res.status(500).json({ message: "Failed to get operators" });
+    }
+  });
+
+  app.get("/api/fleet/operators/active", async (req: Request, res: Response) => {
+    try {
+      const operators = await storage.getActiveOperators();
+      res.json(operators);
+    } catch (error) {
+      console.error('Error getting active operators:', error);
+      res.status(500).json({ message: "Failed to get active operators" });
+    }
+  });
+
+  app.get("/api/fleet/operators/:id", async (req: Request, res: Response) => {
+    try {
+      const operator = await storage.getOperator(req.params.id);
+      if (!operator) {
+        return res.status(404).json({ message: "Operator not found" });
+      }
+      res.json(operator);
+    } catch (error) {
+      console.error('Error getting operator:', error);
+      res.status(500).json({ message: "Failed to get operator" });
+    }
+  });
+
+  app.post("/api/fleet/operators", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const operator = await storage.createOperator(req.body);
+      res.status(201).json(operator);
+    } catch (error) {
+      console.error('Error creating operator:', error);
+      res.status(500).json({ message: "Failed to create operator" });
+    }
+  });
+
+  app.put("/api/fleet/operators/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const operator = await storage.updateOperator(req.params.id, req.body);
+      if (!operator) {
+        return res.status(404).json({ message: "Operator not found" });
+      }
+      res.json(operator);
+    } catch (error) {
+      console.error('Error updating operator:', error);
+      res.status(500).json({ message: "Failed to update operator" });
+    }
+  });
+
+  app.delete("/api/fleet/operators/:id", async (req: Request, res: Response) => {
+    try {
+      await storage.deleteOperator(req.params.id);
+      res.json({ message: "Operator deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting operator:', error);
+      res.status(500).json({ message: "Failed to delete operator" });
+    }
+  });
+
+  // Service Records
+  app.get("/api/fleet/service-records/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const records = await storage.getServiceRecordsByVehicle(req.params.vehicleId);
+      res.json(records);
+    } catch (error) {
+      console.error('Error getting service records:', error);
+      res.status(500).json({ message: "Failed to get service records" });
+    }
+  });
+
+  app.get("/api/fleet/service-records/upcoming", async (req: Request, res: Response) => {
+    try {
+      const daysAhead = req.query.days ? parseInt(req.query.days as string) : 30;
+      const records = await storage.getUpcomingServices(daysAhead);
+      res.json(records);
+    } catch (error) {
+      console.error('Error getting upcoming services:', error);
+      res.status(500).json({ message: "Failed to get upcoming services" });
+    }
+  });
+
+  app.post("/api/fleet/service-records", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const record = await storage.createServiceRecord(req.body);
+      res.status(201).json(record);
+    } catch (error) {
+      console.error('Error creating service record:', error);
+      res.status(500).json({ message: "Failed to create service record" });
+    }
+  });
+
+  app.put("/api/fleet/service-records/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const record = await storage.updateServiceRecord(req.params.id, req.body);
+      if (!record) {
+        return res.status(404).json({ message: "Service record not found" });
+      }
+      res.json(record);
+    } catch (error) {
+      console.error('Error updating service record:', error);
+      res.status(500).json({ message: "Failed to update service record" });
+    }
+  });
+
+  app.delete("/api/fleet/service-records/:id", async (req: Request, res: Response) => {
+    try {
+      await storage.deleteServiceRecord(req.params.id);
+      res.json({ message: "Service record deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting service record:', error);
+      res.status(500).json({ message: "Failed to delete service record" });
+    }
+  });
+
+  // Fuel Logs
+  app.get("/api/fleet/fuel-logs/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const logs = await storage.getFuelLogsByVehicle(req.params.vehicleId, limit);
+      res.json(logs);
+    } catch (error) {
+      console.error('Error getting fuel logs:', error);
+      res.status(500).json({ message: "Failed to get fuel logs" });
+    }
+  });
+
+  app.get("/api/fleet/fuel-logs/vehicle/:vehicleId/efficiency", async (req: Request, res: Response) => {
+    try {
+      const efficiency = await storage.getVehicleFuelEfficiency(req.params.vehicleId);
+      res.json(efficiency);
+    } catch (error) {
+      console.error('Error getting fuel efficiency:', error);
+      res.status(500).json({ message: "Failed to get fuel efficiency" });
+    }
+  });
+
+  app.post("/api/fleet/fuel-logs", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const log = await storage.createFuelLog(req.body);
+      res.status(201).json(log);
+    } catch (error) {
+      console.error('Error creating fuel log:', error);
+      res.status(500).json({ message: "Failed to create fuel log" });
+    }
+  });
+
+  app.put("/api/fleet/fuel-logs/:id", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const log = await storage.updateFuelLog(req.params.id, req.body);
+      if (!log) {
+        return res.status(404).json({ message: "Fuel log not found" });
+      }
+      res.json(log);
+    } catch (error) {
+      console.error('Error updating fuel log:', error);
+      res.status(500).json({ message: "Failed to update fuel log" });
+    }
+  });
+
+  app.delete("/api/fleet/fuel-logs/:id", async (req: Request, res: Response) => {
+    try {
+      await storage.deleteFuelLog(req.params.id);
+      res.json({ message: "Fuel log deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting fuel log:', error);
+      res.status(500).json({ message: "Failed to delete fuel log" });
+    }
+  });
+
+  // Vehicle Assignments
+  app.post("/api/fleet/assignments", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const assignment = await storage.assignVehicle(req.body);
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error('Error assigning vehicle:', error);
+      res.status(500).json({ message: "Failed to assign vehicle" });
+    }
+  });
+
+  app.post("/api/fleet/assignments/unassign/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      await storage.unassignVehicle(req.params.vehicleId);
+      res.json({ message: "Vehicle unassigned successfully" });
+    } catch (error) {
+      console.error('Error unassigning vehicle:', error);
+      res.status(500).json({ message: "Failed to unassign vehicle" });
+    }
+  });
+
+  app.get("/api/fleet/assignments/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const assignment = await storage.getActiveAssignment(req.params.vehicleId);
+      res.json(assignment || null);
+    } catch (error) {
+      console.error('Error getting vehicle assignment:', error);
+      res.status(500).json({ message: "Failed to get vehicle assignment" });
+    }
+  });
+
+  app.get("/api/fleet/assignments/operator/:operatorId", async (req: Request, res: Response) => {
+    try {
+      const assignment = await storage.getOperatorAssignment(req.params.operatorId);
+      res.json(assignment || null);
+    } catch (error) {
+      console.error('Error getting operator assignment:', error);
+      res.status(500).json({ message: "Failed to get operator assignment" });
+    }
+  });
+
+  // =============================================================================
+  // END FLEET MANAGEMENT SYSTEM API ROUTES
+  // =============================================================================
+
   const httpServer = createServer(app);
   return httpServer;
 }

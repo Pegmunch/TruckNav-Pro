@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc } from "drizzle-orm";
@@ -173,6 +173,44 @@ export interface IStorage {
   // Entertainment Settings
   getEntertainmentSettings(): Promise<EntertainmentSettings>;
   updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings>;
+
+  // Fleet Management - Vehicles
+  getFleetVehicle(id: string): Promise<FleetVehicle | undefined>;
+  getAllFleetVehicles(): Promise<FleetVehicle[]>;
+  getActiveFleetVehicles(): Promise<FleetVehicle[]>;
+  createFleetVehicle(vehicle: InsertFleetVehicle): Promise<FleetVehicle>;
+  updateFleetVehicle(id: string, updates: Partial<FleetVehicle>): Promise<FleetVehicle | undefined>;
+  deleteFleetVehicle(id: string): Promise<boolean>;
+  
+  // Fleet Management - Operators
+  getOperator(id: string): Promise<Operator | undefined>;
+  getAllOperators(): Promise<Operator[]>;
+  getActiveOperators(): Promise<Operator[]>;
+  createOperator(operator: InsertOperator): Promise<Operator>;
+  updateOperator(id: string, updates: Partial<Operator>): Promise<Operator | undefined>;
+  deleteOperator(id: string): Promise<boolean>;
+  
+  // Fleet Management - Service Records
+  getServiceRecord(id: string): Promise<ServiceRecord | undefined>;
+  getServiceRecordsByVehicle(vehicleId: string): Promise<ServiceRecord[]>;
+  getUpcomingServices(daysAhead?: number): Promise<ServiceRecord[]>;
+  createServiceRecord(record: InsertServiceRecord): Promise<ServiceRecord>;
+  updateServiceRecord(id: string, updates: Partial<ServiceRecord>): Promise<ServiceRecord | undefined>;
+  deleteServiceRecord(id: string): Promise<boolean>;
+  
+  // Fleet Management - Fuel Logs
+  getFuelLog(id: string): Promise<FuelLog | undefined>;
+  getFuelLogsByVehicle(vehicleId: string, limit?: number): Promise<FuelLog[]>;
+  createFuelLog(log: InsertFuelLog): Promise<FuelLog>;
+  updateFuelLog(id: string, updates: Partial<FuelLog>): Promise<FuelLog | undefined>;
+  deleteFuelLog(id: string): Promise<boolean>;
+  getVehicleFuelEfficiency(vehicleId: string): Promise<{ averageMPG: number; totalFuelCost: number; totalLiters: number }>;
+  
+  // Fleet Management - Vehicle Assignments
+  getActiveAssignment(vehicleId: string): Promise<VehicleAssignment | undefined>;
+  getOperatorAssignment(operatorId: string): Promise<VehicleAssignment | undefined>;
+  assignVehicle(assignment: InsertVehicleAssignment): Promise<VehicleAssignment>;
+  unassignVehicle(vehicleId: string): Promise<boolean>;
 
 }
 
@@ -3598,6 +3636,181 @@ export class DatabaseStorage implements IStorage {
 
   async updateEntertainmentSettings(settings: Partial<EntertainmentSettings>): Promise<EntertainmentSettings> {
     return await this.getEntertainmentSettings();
+  }
+
+  // ==================== FLEET MANAGEMENT IMPLEMENTATIONS ====================
+
+  // Fleet Vehicles
+  async getFleetVehicle(id: string): Promise<FleetVehicle | undefined> {
+    const result = await db.select().from(fleetVehicles).where(eq(fleetVehicles.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getAllFleetVehicles(): Promise<FleetVehicle[]> {
+    return await db.select().from(fleetVehicles).orderBy(desc(fleetVehicles.createdAt));
+  }
+
+  async getActiveFleetVehicles(): Promise<FleetVehicle[]> {
+    return await db.select().from(fleetVehicles).where(eq(fleetVehicles.status, 'active')).orderBy(asc(fleetVehicles.registration));
+  }
+
+  async createFleetVehicle(vehicle: InsertFleetVehicle): Promise<FleetVehicle> {
+    const result = await db.insert(fleetVehicles).values(vehicle).returning();
+    return result[0];
+  }
+
+  async updateFleetVehicle(id: string, updates: Partial<FleetVehicle>): Promise<FleetVehicle | undefined> {
+    const result = await db.update(fleetVehicles).set({ ...updates, updatedAt: new Date() }).where(eq(fleetVehicles.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteFleetVehicle(id: string): Promise<boolean> {
+    const result = await db.delete(fleetVehicles).where(eq(fleetVehicles.id, id));
+    return true;
+  }
+
+  // Operators
+  async getOperator(id: string): Promise<Operator | undefined> {
+    const result = await db.select().from(operators).where(eq(operators.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getAllOperators(): Promise<Operator[]> {
+    return await db.select().from(operators).orderBy(asc(operators.lastName), asc(operators.firstName));
+  }
+
+  async getActiveOperators(): Promise<Operator[]> {
+    return await db.select().from(operators).where(eq(operators.status, 'active')).orderBy(asc(operators.lastName), asc(operators.firstName));
+  }
+
+  async createOperator(operator: InsertOperator): Promise<Operator> {
+    const result = await db.insert(operators).values(operator).returning();
+    return result[0];
+  }
+
+  async updateOperator(id: string, updates: Partial<Operator>): Promise<Operator | undefined> {
+    const result = await db.update(operators).set({ ...updates, updatedAt: new Date() }).where(eq(operators.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteOperator(id: string): Promise<boolean> {
+    await db.delete(operators).where(eq(operators.id, id));
+    return true;
+  }
+
+  // Service Records
+  async getServiceRecord(id: string): Promise<ServiceRecord | undefined> {
+    const result = await db.select().from(serviceRecords).where(eq(serviceRecords.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getServiceRecordsByVehicle(vehicleId: string): Promise<ServiceRecord[]> {
+    return await db.select().from(serviceRecords).where(eq(serviceRecords.vehicleId, vehicleId)).orderBy(desc(serviceRecords.serviceDate));
+  }
+
+  async getUpcomingServices(daysAhead: number = 30): Promise<ServiceRecord[]> {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + daysAhead);
+    
+    return await db.select()
+      .from(serviceRecords)
+      .where(
+        and(
+          lte(serviceRecords.nextServiceDue, futureDate),
+          gte(serviceRecords.nextServiceDue, new Date())
+        )
+      )
+      .orderBy(asc(serviceRecords.nextServiceDue));
+  }
+
+  async createServiceRecord(record: InsertServiceRecord): Promise<ServiceRecord> {
+    const result = await db.insert(serviceRecords).values(record).returning();
+    return result[0];
+  }
+
+  async updateServiceRecord(id: string, updates: Partial<ServiceRecord>): Promise<ServiceRecord | undefined> {
+    const result = await db.update(serviceRecords).set(updates).where(eq(serviceRecords.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteServiceRecord(id: string): Promise<boolean> {
+    await db.delete(serviceRecords).where(eq(serviceRecords.id, id));
+    return true;
+  }
+
+  // Fuel Logs
+  async getFuelLog(id: string): Promise<FuelLog | undefined> {
+    const result = await db.select().from(fuelLogs).where(eq(fuelLogs.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getFuelLogsByVehicle(vehicleId: string, limit: number = 50): Promise<FuelLog[]> {
+    return await db.select().from(fuelLogs).where(eq(fuelLogs.vehicleId, vehicleId)).orderBy(desc(fuelLogs.fillDate)).limit(limit);
+  }
+
+  async createFuelLog(log: InsertFuelLog): Promise<FuelLog> {
+    const result = await db.insert(fuelLogs).values(log).returning();
+    return result[0];
+  }
+
+  async updateFuelLog(id: string, updates: Partial<FuelLog>): Promise<FuelLog | undefined> {
+    const result = await db.update(fuelLogs).set(updates).where(eq(fuelLogs.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteFuelLog(id: string): Promise<boolean> {
+    await db.delete(fuelLogs).where(eq(fuelLogs.id, id));
+    return true;
+  }
+
+  async getVehicleFuelEfficiency(vehicleId: string): Promise<{ averageMPG: number; totalFuelCost: number; totalLiters: number }> {
+    const logs = await db.select().from(fuelLogs).where(eq(fuelLogs.vehicleId, vehicleId));
+    
+    if (logs.length === 0) {
+      return { averageMPG: 0, totalFuelCost: 0, totalLiters: 0 };
+    }
+
+    const totalLiters = logs.reduce((sum, log) => sum + (log.liters || 0), 0);
+    const totalCost = logs.reduce((sum, log) => sum + parseFloat(log.totalCost?.toString() || '0'), 0);
+    const mpgLogs = logs.filter(log => log.mpg && log.mpg > 0);
+    const averageMPG = mpgLogs.length > 0 ? mpgLogs.reduce((sum, log) => sum + (log.mpg || 0), 0) / mpgLogs.length : 0;
+
+    return { averageMPG, totalFuelCost: totalCost, totalLiters };
+  }
+
+  // Vehicle Assignments
+  async getActiveAssignment(vehicleId: string): Promise<VehicleAssignment | undefined> {
+    const result = await db.select().from(vehicleAssignments)
+      .where(and(eq(vehicleAssignments.vehicleId, vehicleId), eq(vehicleAssignments.isActive, true)))
+      .limit(1);
+    return result[0];
+  }
+
+  async getOperatorAssignment(operatorId: string): Promise<VehicleAssignment | undefined> {
+    const result = await db.select().from(vehicleAssignments)
+      .where(and(eq(vehicleAssignments.operatorId, operatorId), eq(vehicleAssignments.isActive, true)))
+      .limit(1);
+    return result[0];
+  }
+
+  async assignVehicle(assignment: InsertVehicleAssignment): Promise<VehicleAssignment> {
+    await db.update(vehicleAssignments)
+      .set({ isActive: false, unassignedAt: new Date() })
+      .where(and(eq(vehicleAssignments.vehicleId, assignment.vehicleId), eq(vehicleAssignments.isActive, true)));
+    
+    await db.update(vehicleAssignments)
+      .set({ isActive: false, unassignedAt: new Date() })
+      .where(and(eq(vehicleAssignments.operatorId, assignment.operatorId), eq(vehicleAssignments.isActive, true)));
+    
+    const result = await db.insert(vehicleAssignments).values(assignment).returning();
+    return result[0];
+  }
+
+  async unassignVehicle(vehicleId: string): Promise<boolean> {
+    await db.update(vehicleAssignments)
+      .set({ isActive: false, unassignedAt: new Date() })
+      .where(and(eq(vehicleAssignments.vehicleId, vehicleId), eq(vehicleAssignments.isActive, true)));
+    return true;
   }
 
 }
