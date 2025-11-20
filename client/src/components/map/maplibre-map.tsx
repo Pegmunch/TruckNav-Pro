@@ -1663,29 +1663,30 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     };
   }, [gpsPosition, gpsStatus, isGPSReady, isLoaded, selectedProfile, showUserMarker]); // Include GPS status and showUserMarker for proper marker updates
   
-  // HEADING-UP NAVIGATION MODE: 10/10 RELIABILITY - Dynamic segment tracking!
-  // Rotates map so route ALWAYS points upward through ALL turns, with or without GPS
+  // GPS HEADING ROTATION: CRITICAL SAFETY FEATURE
+  // Continuously applies GPS heading to map bearing during navigation
+  // Makes route line appear vertical (south→north) beneath speedometer
   useEffect(() => {
-    console.log('[HEADING-UP] Effect triggered - isLoaded:', isLoaded, 'isNavigating:', isNavigating, 'hasMap:', !!map.current);
+    console.log('[GPS-HEADING] Effect triggered - isLoaded:', isLoaded, 'isNavigating:', isNavigating, 'hasMap:', !!map.current);
     
     if (!map.current || !isLoaded) {
-      console.log('[HEADING-UP] Waiting for map to load...');
+      console.log('[GPS-HEADING] Waiting for map to load...');
       return;
     }
     
     if (!isNavigating) {
-      console.log('[HEADING-UP] Not navigating - standing by');
+      console.log('[GPS-HEADING] Not navigating - standing by');
       return;
     }
     
-    console.log('[HEADING-UP] ✅ ACTIVATING - 10/10 RELIABILITY MODE');
-    console.log('[HEADING-UP] GPS status:', gpsStatus, 'Has route:', !!currentRoute);
+    console.log('[GPS-HEADING] ✅ ACTIVATING GPS HEADING ROTATION');
+    console.log('[GPS-HEADING] GPS status:', gpsStatus, 'Has route:', !!currentRoute);
     
     const mapInstance = map.current;
     let animationFrame: number | null = null;
     let lastUpdateTime = Date.now();
     let lastBearing = 0;
-    let routeProgressIndex = 0; // Track position along route
+    let routeProgressIndex = 0;
     
     // Helper: Calculate distance between two points (Haversine formula)
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -1708,8 +1709,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     };
     
-    // Helper: Find nearest segment on route using TRUE point-to-segment distance
-    // This projects the point onto each segment and finds the closest one
+    // Helper: Find nearest segment on route
     const findNearestSegment = (currentLat: number, currentLng: number, path: Array<{lat: number, lng: number}>): number => {
       let minDistance = Infinity;
       let nearestIndex = 0;
@@ -1718,20 +1718,17 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         const segmentStart = path[i];
         const segmentEnd = path[i + 1];
         
-        // Convert to radians for proper distance calculation
         const lat1 = segmentStart.lat;
         const lon1 = segmentStart.lng;
         const lat2 = segmentEnd.lat;
         const lon2 = segmentEnd.lng;
         
-        // Calculate distance from point to segment (not just to endpoints!)
-        // Using parametric line projection
+        // Calculate distance from point to segment using parametric projection
         const dx = lon2 - lon1;
         const dy = lat2 - lat1;
         const segmentLength = Math.sqrt(dx * dx + dy * dy);
         
         if (segmentLength === 0) {
-          // Degenerate segment - just use start point
           const distance = calculateDistance(currentLat, currentLng, lat1, lon1);
           if (distance < minDistance) {
             minDistance = distance;
@@ -1740,17 +1737,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           continue;
         }
         
-        // Project point onto line segment (parametric form)
-        // t = 0 means start point, t = 1 means end point
+        // Project point onto line segment (t = 0 to 1)
         const t = Math.max(0, Math.min(1, 
           ((currentLng - lon1) * dx + (currentLat - lat1) * dy) / (segmentLength * segmentLength)
         ));
         
-        // Find closest point on segment
         const projectedLat = lat1 + t * dy;
         const projectedLng = lon1 + t * dx;
-        
-        // Calculate distance to projected point
         const distance = calculateDistance(currentLat, currentLng, projectedLat, projectedLng);
         
         if (distance < minDistance) {
@@ -1762,100 +1755,100 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       return nearestIndex;
     };
     
-    // Continuous rotation function with DYNAMIC segment tracking
-    const updateHeadingUp = () => {
+    // Continuous GPS heading rotation - runs at 30 FPS for smooth updates
+    const updateGPSHeading = () => {
       const now = Date.now();
       const deltaTime = now - lastUpdateTime;
       
-      // Update at 30 FPS (every ~33ms) for smoother performance
+      // Update at 30 FPS (every ~33ms) for smooth rotation
       if (deltaTime > 33) {
         let bearing = 0;
         let latitude: number | null = null;
         let longitude: number | null = null;
         let shouldUpdate = false;
         
-        // PRIORITY 1: Use GPS position and heading if available
+        // PRIORITY 1: Use GPS heading when available (CRITICAL for safety)
         if (gpsPosition?.latitude && gpsPosition?.longitude) {
           latitude = gpsPosition.latitude;
           longitude = gpsPosition.longitude;
+          // Use smoothed heading for fluid rotation, fallback to raw heading
           bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
           shouldUpdate = true;
           
-          // Update progress along route if GPS available
+          // Track route progress for fallback
           if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
             routeProgressIndex = findNearestSegment(latitude, longitude, currentRoute.routePath);
           }
+          
+          console.log(`[GPS-HEADING] Using GPS heading: ${bearing.toFixed(1)}° at (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`);
         }
-        // PRIORITY 2: DYNAMIC bearing from nearest route segment (NO GPS REQUIRED!)
+        // PRIORITY 2: Fallback to route segment bearing when GPS unavailable
         else if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
           const path = currentRoute.routePath;
-          
-          // Get current map center as our virtual position
           const currentCenter = mapInstance.getCenter();
           
-          // Find nearest segment to current map center
           routeProgressIndex = findNearestSegment(currentCenter.lat, currentCenter.lng, path);
-          
-          // Make sure we have a next point for bearing calculation
           const segmentIndex = Math.min(routeProgressIndex, path.length - 2);
           const currentPoint = path[segmentIndex];
           const nextPoint = path[segmentIndex + 1];
           
-          // Calculate bearing from ACTIVE segment (not just first two points!)
           bearing = calculateBearing(
             currentPoint.lat, currentPoint.lng,
             nextPoint.lat, nextPoint.lng
           );
           
-          // Center on the active segment
           latitude = currentPoint.lat;
           longitude = currentPoint.lng;
-          
           shouldUpdate = true;
           
-          if (deltaTime > 1000) { // Log once per second
-            console.log(`[HEADING-UP] Dynamic segment ${segmentIndex}/${path.length-1} - Bearing: ${bearing.toFixed(1)}°`);
+          if (deltaTime > 1000) {
+            console.log(`[GPS-HEADING] Fallback - route segment ${segmentIndex}/${path.length-1}, bearing: ${bearing.toFixed(1)}°`);
           }
         }
         
-        // Store last bearing for fallback
+        // Cache bearing for smooth transitions
         if (bearing !== 0) {
           lastBearing = bearing;
         }
         
         if (shouldUpdate && latitude !== null && longitude !== null) {
-          // Get current map state
           const currentBearing = mapInstance.getBearing();
           const currentCenter = mapInstance.getCenter();
+          
+          // Calculate shortest rotation path (avoid spinning 359° when 1° would work)
+          let bearingDelta = bearing - currentBearing;
+          while (bearingDelta > 180) bearingDelta -= 360;
+          while (bearingDelta < -180) bearingDelta += 360;
+          
+          // Calculate position change
           const centerDelta = Math.sqrt(
             Math.pow(longitude - currentCenter.lng, 2) + 
             Math.pow(latitude - currentCenter.lat, 2)
           );
           
-          // Calculate bearing delta with circular interpolation
-          let bearingDelta = bearing - currentBearing;
-          while (bearingDelta > 180) bearingDelta -= 360;
-          while (bearingDelta < -180) bearingDelta += 360;
-          
           // Update compass bearing display
           setBearing(bearing);
           
-          // Only update if significant change or continuous movement
-          if (Math.abs(bearingDelta) > 0.3 || centerDelta > 0.000005) {
+          // CRITICAL FIX: Always apply rotation during navigation (no threshold check)
+          // This ensures continuous smooth rotation even during gradual curves
+          // Only skip update if absolutely no change (prevents unnecessary renders)
+          if (Math.abs(bearingDelta) > 0.05 || centerDelta > 0.0000001) {
             mapInstance.easeTo({
               center: [longitude, latitude],
-              zoom: 18.5, // Optimal street-level zoom for navigation
-              pitch: 67, // Professional 3D perspective
-              bearing: bearing, // Rotate map so heading points up (route always points north)
+              zoom: 18.5, // Street-level navigation zoom
+              pitch: 67, // 3D perspective for better spatial awareness
+              bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
-                top: 280, // Increased space for HUD elements and centering marker above speedometer
-                bottom: 120, // Space for speedometer at bottom
+                // CRITICAL: Camera offset positions vehicle marker in lower third
+                // This centers the blue route line beneath the speedometer
+                top: 300, // More space at top for HUD and maneuver instructions
+                bottom: 100, // Less space at bottom - vehicle marker near bottom third
                 left: 0, 
                 right: 0 
               },
-              duration: 250, // Faster for more responsive feel
-              easing: (t) => t * (2 - t), // Smooth ease-out for better feel
-              essential: true
+              duration: 200, // Short duration for responsive feel (was 250ms, reduced for smoother tracking)
+              easing: (t) => t, // Linear easing prevents acceleration artifacts during rotation
+              essential: true // Ensure animation isn't interrupted by user gestures
             });
           }
         }
@@ -1864,23 +1857,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       }
       
       // Continue animation loop
-      animationFrame = requestAnimationFrame(updateHeadingUp);
+      animationFrame = requestAnimationFrame(updateGPSHeading);
     };
     
-    // Start continuous rotation with dynamic segment tracking
-    console.log('[HEADING-UP] ========================================');
-    console.log('[HEADING-UP] ✅ 10/10 RELIABILITY - ACTIVATED!');
-    console.log('[HEADING-UP] Dynamic segment tracking active!');
-    console.log('[HEADING-UP] Map will rotate through ALL turns');
-    console.log('[HEADING-UP] Works with OR without GPS signal');
-    console.log('[HEADING-UP] ========================================');
-    updateHeadingUp();
+    // Start continuous GPS heading rotation
+    console.log('[GPS-HEADING] ==========================================');
+    console.log('[GPS-HEADING] ✅ GPS HEADING ROTATION ACTIVE');
+    console.log('[GPS-HEADING] Map rotates continuously with GPS heading');
+    console.log('[GPS-HEADING] Route line appears vertical (south→north)');
+    console.log('[GPS-HEADING] Vehicle marker centered in lower third');
+    console.log('[GPS-HEADING] ==========================================');
+    updateGPSHeading();
     
     // Cleanup animation frame on unmount
     return () => {
       if (animationFrame !== null) {
         cancelAnimationFrame(animationFrame);
-        console.log('[HEADING-UP] ✓ Stopped continuous rotation');
+        console.log('[GPS-HEADING] ✓ GPS heading rotation stopped');
       }
     };
   }, [isNavigating, isLoaded, gpsPosition, currentRoute]);
@@ -2007,8 +2000,16 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   };
 
   return (
-    <div className={cn("relative w-full h-full", className)} data-testid="maplibre-container">
-      <div ref={mapContainer} className="absolute inset-0" />
+    <div className={cn("relative w-full h-full overflow-hidden", className)} data-testid="maplibre-container">
+      <div 
+        ref={mapContainer} 
+        className="absolute inset-0" 
+        style={{ 
+          background: 'transparent',
+          border: 'none',
+          outline: 'none'
+        }}
+      />
       
       {!hideControls && (
         <>
