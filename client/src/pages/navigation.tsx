@@ -1878,6 +1878,15 @@ function NavigationPageContent() {
     isCancellingRouteRef.current = true;
     console.log('[ROUTE-CANCEL] 🛡️ Route cancellation guard activated');
     
+    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
+    // This ensures the hamburger button reappears immediately
+    setIsLocalNavActive(false);
+    setShowComprehensiveMenu(false);
+    localStorage.removeItem('navigation_ui_active');
+    localStorage.removeItem('navigation_mode');
+    localStorage.removeItem('navigation_timestamp');
+    console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to preview mode');
+    
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
     document.documentElement.classList.remove('overlay-safe-mode');
@@ -2209,6 +2218,17 @@ function NavigationPageContent() {
     isCancellingRouteRef.current = true;
     console.log('[NAV-STOP] 🛡️ Route cancellation guard activated');
     
+    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
+    // This ensures the hamburger button reappears immediately
+    setIsLocalNavActive(false);
+    setShowComprehensiveMenu(false);
+    localStorage.removeItem('navigation_ui_active');
+    localStorage.removeItem('navigation_mode');
+    localStorage.removeItem('navigation_timestamp');
+    localStorage.removeItem('activeRouteId');
+    localStorage.removeItem('activeJourneyId');
+    console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
+    
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
     } else {
@@ -2216,17 +2236,6 @@ function NavigationPageContent() {
       isCancellingRouteRef.current = false;
       console.log('[NAV-STOP] ℹ️ No journey to complete - guard reset immediately');
     }
-    
-    // CRITICAL: Clear all route persistence - fresh start page
-    localStorage.removeItem('activeJourneyId');
-    localStorage.removeItem('navigation_mode'); // Clear navigation flag
-    localStorage.removeItem('navigation_timestamp'); // Clear timestamp
-    localStorage.removeItem('activeRouteId');
-    
-    // CRITICAL FIX: Clear local navigation UI state
-    setIsLocalNavActive(false);
-    localStorage.removeItem('navigation_ui_active');
-    console.log('[NAV-STOP] ✅ Local navigation UI state deactivated');
     
     // Clear URL parameter
     const url = new URL(window.location.href);
