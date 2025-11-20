@@ -164,6 +164,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const previousBearingRef = useRef(0);
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingStyleListenerRef = useRef<(() => void) | null>(null);
   
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
@@ -1008,38 +1009,35 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
   }, [isNavigating, isLoaded]);
 
-  useEffect(() => {
-    if (!map.current || !isLoaded) return;
-    if (!map.current.isStyleLoaded()) return;
-
-    console.log('[ROUTE-RENDER] Checking route rendering - currentRoute:', !!currentRoute, 'routePath length:', currentRoute?.routePath?.length);
-
-    // Remove route visualization if currentRoute is null
-    if (!currentRoute?.routePath) {
-      console.log('[ROUTE-RENDER] No route data - removing route layers');
-      try {
-        if (map.current.getLayer('route-line')) {
-          map.current.removeLayer('route-line');
-        }
-        if (map.current.getLayer('route-outline')) {
-          map.current.removeLayer('route-outline');
-        }
-        if (map.current.getSource('route')) {
-          map.current.removeSource('route');
-        }
-      } catch (error) {
-        console.warn('Failed to remove route layers:', error);
+  // Helper: Remove route layers
+  const removeRouteLayers = useCallback(() => {
+    if (!map.current) return;
+    try {
+      if (map.current.getLayer('route-line')) {
+        map.current.removeLayer('route-line');
       }
-      return;
+      if (map.current.getLayer('route-outline')) {
+        map.current.removeLayer('route-outline');
+      }
+      if (map.current.getSource('route')) {
+        map.current.removeSource('route');
+      }
+      console.log('[ROUTE-RENDER] ✅ Route layers removed');
+    } catch (error) {
+      console.warn('[ROUTE-RENDER] Failed to remove route layers:', error);
     }
+  }, []);
 
+  // Helper: Render route layers
+  const renderRouteLayers = useCallback(() => {
+    if (!map.current || !currentRoute?.routePath) return;
+    
     console.log('[ROUTE-RENDER] Drawing route with', currentRoute.routePath.length, 'coordinates');
     let routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
     // During navigation, show only remaining route from current GPS position
     if (isNavigating && gpsPosition) {
       const currentPoint = [gpsPosition.longitude, gpsPosition.latitude];
-      const routeLine = { type: 'LineString' as const, coordinates: routeCoordinates };
       
       try {
         // Find nearest point on route to current GPS position
@@ -1068,7 +1066,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     if (!map.current.getSource('route')) {
-      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 24px');
+      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 6px');
       map.current.addSource('route', {
         type: 'geojson',
         data: {
@@ -1081,7 +1079,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }
       });
 
-      // Main route line - Professional cyan/turquoise navigation color (no dark outline)
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -1091,9 +1088,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#3b82f6', // Professional blue (matches reference images)
-          'line-width': 6,  // Professional width - visible but not overwhelming (Google Maps-style)
-          'line-opacity': 1.0  // Full opacity for prominence
+          'line-color': '#3b82f6',
+          'line-width': 6,
+          'line-opacity': 1.0
         }
       });
       console.log('[ROUTE-RENDER] ✅ Route layer added successfully');
@@ -1118,8 +1115,61 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
       map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
     }
+  }, [currentRoute, isNavigating, gpsPosition]);
 
-  }, [currentRoute, isLoaded, isNavigating, gpsPosition]);
+  // Route layer manager effect
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+
+    const mapInstance = map.current;
+    
+    // Clear any existing pending listener
+    if (pendingStyleListenerRef.current) {
+      mapInstance.off('styledata', pendingStyleListenerRef.current);
+      pendingStyleListenerRef.current = null;
+    }
+
+    console.log('[ROUTE-RENDER] Route manager - currentRoute:', !!currentRoute, 'styleLoaded:', mapInstance.isStyleLoaded());
+
+    // Remove route visualization if currentRoute is null
+    if (!currentRoute?.routePath) {
+      console.log('[ROUTE-RENDER] No route data - removing route layers');
+      if (mapInstance.isStyleLoaded()) {
+        removeRouteLayers();
+      } else {
+        // Style not loaded - wait for it then remove
+        const listener = () => {
+          removeRouteLayers();
+          pendingStyleListenerRef.current = null;
+        };
+        pendingStyleListenerRef.current = listener;
+        mapInstance.once('styledata', listener);
+        console.log('[ROUTE-RENDER] Waiting for style load to remove route');
+      }
+    } else {
+      // Render route if currentRoute exists
+      if (mapInstance.isStyleLoaded()) {
+        renderRouteLayers();
+      } else {
+        // Style not loaded - wait for it then render
+        const listener = () => {
+          renderRouteLayers();
+          pendingStyleListenerRef.current = null;
+        };
+        pendingStyleListenerRef.current = listener;
+        mapInstance.once('styledata', listener);
+        console.log('[ROUTE-RENDER] Waiting for style load to render route');
+      }
+    }
+
+    // Cleanup: ALWAYS remove pending listener on unmount or deps change
+    return () => {
+      if (pendingStyleListenerRef.current) {
+        mapInstance.off('styledata', pendingStyleListenerRef.current);
+        pendingStyleListenerRef.current = null;
+      }
+    };
+  }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers]);
 
   // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
   // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
