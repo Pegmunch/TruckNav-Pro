@@ -65,7 +65,7 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
   const [expandState, setExpandState] = useState<'small' | 'fullscreen'>('small');
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ 
-    x: 10, // Far left
+    x: typeof window !== 'undefined' ? (window.innerWidth / 2 - 125) : 100, // Horizontally centered (250px width / 2)
     y: typeof window !== 'undefined' ? (window.innerHeight / 2 - 150) : 100 // Vertically centered
   });
   const dragRef = useRef<HTMLDivElement>(null);
