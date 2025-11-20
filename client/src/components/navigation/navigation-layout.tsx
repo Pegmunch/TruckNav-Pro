@@ -46,7 +46,7 @@ export function NavigationLayout({
       {/* Scrollable container for small viewports to accommodate all 8 buttons */}
       {shouldShowUI && rightStack && (
         <div 
-          className="absolute right-4 z-[1800] flex flex-col gap-2 overflow-y-auto"
+          className="absolute right-4 z-[2100] flex flex-col gap-2 overflow-y-auto"
           style={{
             top: 'calc(120px + var(--safe-area-top))',
             right: 'calc(16px + var(--safe-area-right))',
