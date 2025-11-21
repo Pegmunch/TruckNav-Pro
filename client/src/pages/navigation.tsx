@@ -48,6 +48,7 @@ import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 import TurnIndicator from "@/components/navigation/turn-indicator";
 import ComprehensiveMobileMenu from "@/components/navigation/comprehensive-mobile-menu";
+import { NavigationHeader } from "@/components/navigation/navigation-header";
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
@@ -2872,9 +2873,17 @@ function NavigationPageContent() {
                 {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                 {isNavUIActive && (
                   <>
-                    {/* Compact Trip Strip - Shows ETA, Distance, Next Maneuver */}
+                    {/* 1. Navigation Header - White banner with TruckNav Pro + green gear */}
+                    <NavigationHeader 
+                      onSettingsClick={() => setShowComprehensiveMenu(true)}
+                    />
+                    
+                    {/* 2. Compact Trip Strip - Shows ETA, Distance, Next Maneuver - Below header */}
                     {currentRoute && (
-                      <div className="absolute top-0 left-0 right-0 z-[1700]">
+                      <div 
+                        className="absolute left-0 right-0 z-[1700]"
+                        style={{ top: 'calc(56px + var(--safe-area-top, 0px))' }}
+                      >
                         <CompactTripStrip
                           eta={currentRoute.duration || 0}
                           distanceRemaining={currentRoute.distance || 0}
@@ -2884,14 +2893,20 @@ function NavigationPageContent() {
                       </div>
                     )}
                     
-                    {/* Turn Indicator - Large bubble at top center */}
+                    {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}
                     {nextTurn && (
-                      <TurnIndicator
-                        direction={nextTurn.direction}
-                        distance={nextTurn.distance}
-                        unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                        roadName={nextTurn.roadName}
-                      />
+                      <div 
+                        className="fixed left-0 right-0 z-[190]"
+                        style={{ top: 'calc(112px + var(--safe-area-top, 0px))' }}
+                      >
+                        <TurnIndicator
+                          direction={nextTurn.direction}
+                          distance={nextTurn.distance}
+                          unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                          roadName={nextTurn.roadName}
+                          className="!relative !left-1/2 !-translate-x-1/2"
+                        />
+                      </div>
                     )}
 
                     {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
