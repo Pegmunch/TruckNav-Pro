@@ -2934,7 +2934,7 @@ function NavigationPageContent() {
                     </Button>
 
                     {/* Legal Ownership - Bottom of screen during navigation */}
-                    <MapLegalOwnership compact={true} />
+                    <MapLegalOwnership compact={true} className="!z-[200]" />
                   </>
                 )}
                 
