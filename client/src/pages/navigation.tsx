@@ -2932,11 +2932,16 @@ function NavigationPageContent() {
                         <X className="w-7 h-7" />
                       )}
                     </Button>
+
+                    {/* Legal Ownership - Bottom of screen during navigation */}
+                    <MapLegalOwnership compact={true} />
                   </>
                 )}
                 
-                {/* Legal Ownership Section - Desktop */}
-                <MapLegalOwnership compact={true} className="hidden sm:block" />
+                {/* Legal Ownership Section - Desktop (when NOT navigating) */}
+                {!isNavUIActive && (
+                  <MapLegalOwnership compact={true} className="hidden sm:block" />
+                )}
               </>
             )}
           </div>
