@@ -54,35 +54,16 @@ export default function MapLegalOwnership({
     >
       {compact ? (
         /* Compact Layout - Centered */
-        <div className="flex flex-row items-center justify-center gap-2 text-xs">
+        <div className="flex flex-row items-center justify-center gap-3 text-xs">
           {/* Main Ownership Info */}
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-primary shrink-0" />
-            <div className="flex flex-row items-center gap-2">
-              <span className="font-semibold text-primary shrink-0">
-                TruckNav Pro
-              </span>
-              <span className="text-muted-foreground">
-                © 2024-2025 Bespoke Marketing.Ai Ltd
-              </span>
-            </div>
+            <span className="text-muted-foreground">
+              Owned and made by Bespoke Marketing LTD @ Trucknavpro.com
+            </span>
           </div>
           
-          {/* Protection Indicators & Actions */}
+          {/* Legal Button */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Patent Protection Indicator */}
-            <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300">
-              <Shield className="w-3 h-3" />
-              <span className="text-xs font-medium">PATENTED</span>
-            </div>
-            
-            {/* Trademark Indicator */}
-            <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded text-blue-700 dark:text-blue-300">
-              <FileText className="w-3 h-3" />
-              <span className="text-xs font-medium">™</span>
-            </div>
-            
-            {/* View Full Terms Link */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button 
