@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
@@ -4127,6 +4127,33 @@ export class DatabaseStorage implements IStorage {
       .from(routeComments)
       .where(eq(routeComments.sharedRouteId, sharedRouteId))
       .orderBy(desc(routeComments.createdAt));
+  }
+
+  // Vehicle Attachments
+  async createVehicleAttachment(attachment: InsertVehicleAttachment): Promise<VehicleAttachment> {
+    const result = await db.insert(vehicleAttachments).values(attachment).returning();
+    return result[0];
+  }
+
+  async getVehicleAttachments(vehicleId: string): Promise<VehicleAttachment[]> {
+    return await db.select()
+      .from(vehicleAttachments)
+      .where(eq(vehicleAttachments.vehicleId, vehicleId))
+      .orderBy(desc(vehicleAttachments.uploadedAt));
+  }
+
+  async getVehicleAttachment(attachmentId: string): Promise<VehicleAttachment | undefined> {
+    const result = await db.select()
+      .from(vehicleAttachments)
+      .where(eq(vehicleAttachments.id, attachmentId))
+      .limit(1);
+    return result[0];
+  }
+
+  async deleteVehicleAttachment(attachmentId: string): Promise<boolean> {
+    await db.delete(vehicleAttachments)
+      .where(eq(vehicleAttachments.id, attachmentId));
+    return true;
   }
 
 }
