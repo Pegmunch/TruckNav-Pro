@@ -390,6 +390,7 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
                 <TableHead>License Number</TableHead>
                 <TableHead>License Type</TableHead>
                 <TableHead>Operators License</TableHead>
+                <TableHead>Tachograph Calibration</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -402,6 +403,9 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
                   <TableCell>{operator.licenseType}</TableCell>
                   <TableCell>
                     {operator.licenseExpiry ? format(new Date(operator.licenseExpiry), 'dd/MM/yyyy') : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {operator.tachographCardExpiry ? format(new Date(operator.tachographCardExpiry), 'dd/MM/yyyy') : '—'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={operator.status === 'active' ? 'default' : 'secondary'}>
