@@ -4126,28 +4126,3 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
-
-  // Fleet Notification methods
-  async getFleetNotifications(status: string = 'active'): Promise<FleetNotification[]> {
-    return db
-      .select()
-      .from(fleetNotifications)
-      .where(eq(fleetNotifications.status, status))
-      .orderBy(desc(fleetNotifications.createdAt));
-  }
-
-  async dismissFleetNotification(id: string): Promise<boolean> {
-    const result = await db
-      .update(fleetNotifications)
-      .set({ status: 'dismissed' })
-      .where(eq(fleetNotifications.id, id));
-    return !!result;
-  }
-
-  async resolveFleetNotification(id: string): Promise<boolean> {
-    const result = await db
-      .update(fleetNotifications)
-      .set({ status: 'resolved', resolvedAt: new Date() })
-      .where(eq(fleetNotifications.id, id));
-    return !!result;
-  }
