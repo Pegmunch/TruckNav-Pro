@@ -811,6 +811,22 @@ export const vehicleAssignments = pgTable("vehicle_assignments", {
   notes: text("notes"),
 });
 
+// AMPR/Toll Registration - Track toll payments and renewals
+export const amprTollRegistrations = pgTable("ampr_toll_registrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  tollType: text("toll_type").notNull(), // 'ampr', 'vignette', 'zone', 'congestion', 'bridge', 'other'
+  description: text("description").notNull(), // e.g., "AMPR License", "London Congestion Charge"
+  annualFee: decimal("annual_fee", { precision: 10, scale: 2 }), // Annual cost
+  renewalDate: timestamp("renewal_date"), // When the license/registration expires
+  status: text("status").notNull().default('active'), // 'active', 'inactive', 'expired', 'pending_renewal'
+  licenseNumber: varchar("license_number"), // License or registration number
+  provider: text("provider"), // Provider name (e.g., "TfL", "Vignette Authority")
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Driver connections for social trucking network
 export const driverConnections = pgTable("driver_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -890,6 +906,7 @@ export const insertOperatorSchema = createInsertSchema(operators).omit({ id: tru
 export const insertServiceRecordSchema = createInsertSchema(serviceRecords).omit({ id: true, createdAt: true });
 export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({ id: true, createdAt: true });
 export const insertVehicleAssignmentSchema = createInsertSchema(vehicleAssignments).omit({ id: true, assignedAt: true });
+export const insertAmprTollRegistrationSchema = createInsertSchema(amprTollRegistrations).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
