@@ -46,6 +46,14 @@ const config: CapacitorConfig = {
       event: 'backgroundFetch',
       repeat: true,
       interval: 15
+    },
+    CarPlay: {
+      enabled: true,
+      showAlternativeRoutesButton: true,
+      showMuteButton: true,
+      showSpeedLimitButton: true,
+      showTrafficIncidentsButton: true,
+      displayMode: 'navigation'
     }
   },
   ios: {
