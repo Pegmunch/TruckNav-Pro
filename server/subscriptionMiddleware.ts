@@ -41,3 +41,36 @@ export const requireAuth: RequestHandler = async (req: any, res, next) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const requireFleetSubscription: RequestHandler = async (req: any, res, next) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user.claims.sub;
+    
+    const subscription = await storage.getUserSubscriptionByUserId(userId);
+    
+    if (!subscription) {
+      return res.status(403).json({ message: "Fleet Management subscription required" });
+    }
+    
+    if (subscription.category !== 'fleet_management') {
+      return res.status(403).json({ message: "Fleet Management subscription required" });
+    }
+    
+    if (subscription.status !== 'active') {
+      return res.status(403).json({ message: "Fleet Management subscription not active" });
+    }
+    
+    if (subscription.currentPeriodEnd && new Date() > subscription.currentPeriodEnd) {
+      return res.status(403).json({ message: "Fleet Management subscription expired - please renew to continue" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking fleet subscription:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
