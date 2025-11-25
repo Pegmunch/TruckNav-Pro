@@ -931,6 +931,9 @@ export type InsertFuelLog = z.infer<typeof insertFuelLogSchema>;
 export type VehicleAssignment = typeof vehicleAssignments.$inferSelect;
 export type InsertVehicleAssignment = z.infer<typeof insertVehicleAssignmentSchema>;
 
+export type AmprTollRegistration = typeof amprTollRegistrations.$inferSelect;
+export type InsertAmprTollRegistration = z.infer<typeof insertAmprTollRegistrationSchema>;
+
 // Type exports for social network
 export type DriverConnection = typeof driverConnections.$inferSelect;
 export type InsertDriverConnection = z.infer<typeof insertDriverConnectionSchema>;
