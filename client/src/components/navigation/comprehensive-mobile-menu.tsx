@@ -527,7 +527,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         className="h-11"
                       />
                       {fromOpen && (
-                        <div className="absolute z-[60] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl">
+                        <div className="fixed z-[9999] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto">
                           <Command>
                             <CommandList className="max-h-[200px]">
                               {fromLoading && (
@@ -598,7 +598,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         className="h-11"
                       />
                       {toOpen && (
-                        <div className="absolute z-[60] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl">
+                        <div className="fixed z-[9999] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto">
                           <Command>
                             <CommandList className="max-h-[200px]">
                               {toLoading && (
