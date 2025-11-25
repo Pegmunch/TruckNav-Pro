@@ -389,7 +389,7 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
                 <TableHead>Name</TableHead>
                 <TableHead>License Number</TableHead>
                 <TableHead>License Type</TableHead>
-                <TableHead>License Expiry</TableHead>
+                <TableHead>Operators License</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
