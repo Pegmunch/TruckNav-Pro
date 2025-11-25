@@ -212,6 +212,11 @@ export interface IStorage {
   assignVehicle(assignment: InsertVehicleAssignment): Promise<VehicleAssignment>;
   unassignVehicle(vehicleId: string): Promise<boolean>;
 
+  // Fleet Management - Notifications
+  getFleetNotifications(status?: string): Promise<any[]>;
+  dismissFleetNotification(id: string): Promise<boolean>;
+  resolveFleetNotification(id: string): Promise<boolean>;
+
   // Social Network - Driver Profiles
   updateUserProfile(userId: string, updates: Partial<User>): Promise<User | undefined>;
   getUserProfile(userId: string, currentUserId?: string): Promise<User | undefined>;
@@ -4121,3 +4126,28 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+  // Fleet Notification methods
+  async getFleetNotifications(status: string = 'active'): Promise<FleetNotification[]> {
+    return db
+      .select()
+      .from(fleetNotifications)
+      .where(eq(fleetNotifications.status, status))
+      .orderBy(desc(fleetNotifications.createdAt));
+  }
+
+  async dismissFleetNotification(id: string): Promise<boolean> {
+    const result = await db
+      .update(fleetNotifications)
+      .set({ status: 'dismissed' })
+      .where(eq(fleetNotifications.id, id));
+    return !!result;
+  }
+
+  async resolveFleetNotification(id: string): Promise<boolean> {
+    const result = await db
+      .update(fleetNotifications)
+      .set({ status: 'resolved', resolvedAt: new Date() })
+      .where(eq(fleetNotifications.id, id));
+    return !!result;
+  }

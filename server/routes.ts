@@ -4965,6 +4965,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fleet Notifications API endpoints
+  app.get("/api/fleet/notifications", async (req: Request, res: Response) => {
+    try {
+      const notifications = await storage.getFleetNotifications?.('active') || [];
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/fleet/notifications/:id/dismiss", async (req: Request, res: Response) => {
+    try {
+      const success = await storage.dismissFleetNotification?.(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      res.json({ message: "Notification dismissed" });
+    } catch (error) {
+      console.error('Error dismissing notification:', error);
+      res.status(500).json({ message: "Failed to dismiss notification" });
+    }
+  });
+
+  app.post("/api/fleet/notifications/:id/resolve", async (req: Request, res: Response) => {
+    try {
+      const success = await storage.resolveFleetNotification?.(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      res.json({ message: "Notification resolved" });
+    } catch (error) {
+      console.error('Error resolving notification:', error);
+      res.status(500).json({ message: "Failed to resolve notification" });
+    }
+  });
+
   // =============================================================================
   // END SOCIAL NETWORK API ROUTES
   // =============================================================================
@@ -4972,3 +5009,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+

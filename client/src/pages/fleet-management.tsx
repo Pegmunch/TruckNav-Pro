@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog } from '@shared/schema';
 import { format } from 'date-fns';
 import { DesktopHeader } from '@/components/navigation/desktop-header';
+import { NotificationsBanner } from '@/components/fleet/notifications-banner';
 
 export default function FleetManagement() {
   const { toast } = useToast();
@@ -35,6 +36,9 @@ export default function FleetManagement() {
             <h1 className="text-3xl font-bold text-foreground mb-2">Fleet Management System</h1>
             <p className="text-muted-foreground">Manage vehicles, operators, service records, and fuel consumption</p>
           </div>
+
+          {/* Notifications Banner */}
+          <NotificationsBanner />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">

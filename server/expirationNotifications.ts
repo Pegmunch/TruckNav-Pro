@@ -1,19 +1,7 @@
 import { db } from "./db";
-import { operators, serviceRecords, amprTollRegistrations, fleetVehicles } from "@shared/schema";
+import { operators, serviceRecords, amprTollRegistrations, fleetVehicles, fleetNotifications } from "@shared/schema";
 import { eq, and, lte, gte, isNull, or } from "drizzle-orm";
 import { addDays } from "date-fns";
-import nodemailer from "nodemailer";
-
-// Email transporter setup (using Replit environment variables or local testing)
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "localhost",
-  port: parseInt(process.env.EMAIL_PORT || "587"),
-  secure: process.env.EMAIL_SECURE === "true",
-  auth: process.env.EMAIL_USER && process.env.EMAIL_PASS ? {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  } : undefined,
-});
 
 interface ExpirationAlert {
   type: 'license' | 'cqc' | 'tachograph' | 'service' | 'toll_registration';
@@ -24,10 +12,9 @@ interface ExpirationAlert {
   expiryDate: Date;
   daysUntilExpiry: number;
   description: string;
-  email?: string;
 }
 
-export async function checkAndSendExpirationNotifications() {
+export async function checkAndCreateExpirationNotifications() {
   try {
     const alerts: ExpirationAlert[] = [];
     const today = new Date();
@@ -49,8 +36,7 @@ export async function checkAndSendExpirationNotifications() {
               lte(operators.licenseExpiry, sevenDaysFromNow),
               gte(operators.licenseExpiry, today)
             )
-          ),
-          isNull(operators.status) // Don't notify if already flagged
+          )
         )
       );
 
@@ -64,7 +50,6 @@ export async function checkAndSendExpirationNotifications() {
           expiryDate: op.licenseExpiry,
           daysUntilExpiry: daysUntil,
           description: `Driver's License (${op.licenseType}) for ${op.firstName} ${op.lastName}`,
-          email: op.email || undefined,
         });
       }
     }
@@ -75,17 +60,8 @@ export async function checkAndSendExpirationNotifications() {
       .from(operators)
       .where(
         and(
-          or(
-            and(
-              lte(operators.driverCQCExpiry, twentyEightDaysFromNow),
-              gte(operators.driverCQCExpiry, today)
-            ),
-            and(
-              lte(operators.driverCQCExpiry, sevenDaysFromNow),
-              gte(operators.driverCQCExpiry, today)
-            )
-          ),
-          or(isNull(operators.driverCQCExpiry), isNull(operators.status))
+          lte(operators.driverCQCExpiry, twentyEightDaysFromNow),
+          gte(operators.driverCQCExpiry, today)
         )
       );
 
@@ -100,7 +76,6 @@ export async function checkAndSendExpirationNotifications() {
           expiryDate: op.driverCQCExpiry,
           daysUntilExpiry: daysUntil,
           description: `Driver CPC Certificate for ${op.firstName} ${op.lastName}`,
-          email: op.email || undefined,
         });
       }
     }
@@ -111,17 +86,8 @@ export async function checkAndSendExpirationNotifications() {
       .from(operators)
       .where(
         and(
-          or(
-            and(
-              lte(operators.tachographCardExpiry, twentyEightDaysFromNow),
-              gte(operators.tachographCardExpiry, today)
-            ),
-            and(
-              lte(operators.tachographCardExpiry, sevenDaysFromNow),
-              gte(operators.tachographCardExpiry, today)
-            )
-          ),
-          or(isNull(operators.tachographCardExpiry), isNull(operators.status))
+          lte(operators.tachographCardExpiry, twentyEightDaysFromNow),
+          gte(operators.tachographCardExpiry, today)
         )
       );
 
@@ -136,7 +102,6 @@ export async function checkAndSendExpirationNotifications() {
           expiryDate: op.tachographCardExpiry,
           daysUntilExpiry: daysUntil,
           description: `Tachograph Card (${op.tachographCardNumber}) for ${op.firstName} ${op.lastName}`,
-          email: op.email || undefined,
         });
       }
     }
@@ -151,17 +116,8 @@ export async function checkAndSendExpirationNotifications() {
       .leftJoin(fleetVehicles, eq(serviceRecords.vehicleId, fleetVehicles.id))
       .where(
         and(
-          or(
-            and(
-              lte(serviceRecords.nextServiceDue, twentyEightDaysFromNow),
-              gte(serviceRecords.nextServiceDue, today)
-            ),
-            and(
-              lte(serviceRecords.nextServiceDue, sevenDaysFromNow),
-              gte(serviceRecords.nextServiceDue, today)
-            )
-          ),
-          isNull(serviceRecords.status) // Not yet completed
+          lte(serviceRecords.nextServiceDue, twentyEightDaysFromNow),
+          gte(serviceRecords.nextServiceDue, today)
         )
       );
 
@@ -191,16 +147,8 @@ export async function checkAndSendExpirationNotifications() {
       .where(
         and(
           eq(amprTollRegistrations.status, 'active'),
-          or(
-            and(
-              lte(amprTollRegistrations.renewalDate, twentyEightDaysFromNow),
-              gte(amprTollRegistrations.renewalDate, today)
-            ),
-            and(
-              lte(amprTollRegistrations.renewalDate, sevenDaysFromNow),
-              gte(amprTollRegistrations.renewalDate, today)
-            )
-          )
+          lte(amprTollRegistrations.renewalDate, twentyEightDaysFromNow),
+          gte(amprTollRegistrations.renewalDate, today)
         )
       );
 
@@ -219,62 +167,55 @@ export async function checkAndSendExpirationNotifications() {
       }
     }
 
-    // Send notifications
+    // Create database notifications for each alert
     for (const alert of alerts) {
-      await sendExpirationNotification(alert);
+      await createFleetNotification(alert);
     }
 
-    console.log(`✅ Expiration notifications checked. Found ${alerts.length} alerts.`);
+    console.log(`✅ Expiration notifications created. Found ${alerts.length} alerts.`);
     return alerts;
   } catch (error) {
     console.error('❌ Error checking expiration notifications:', error);
   }
 }
 
-async function sendExpirationNotification(alert: ExpirationAlert) {
+async function createFleetNotification(alert: ExpirationAlert) {
   try {
-    const daysLabel = alert.daysUntilExpiry === 7 ? '7 days' : '28 days';
-    const subject = `⚠️ Fleet Alert: ${alert.description} expires in ${daysLabel}`;
-    
-    const htmlContent = `
-      <h2>Fleet Management Alert</h2>
-      <p>This is an automated notification from your Fleet Management System.</p>
-      <div style="background-color: #f0f0f0; padding: 20px; border-radius: 5px; margin: 20px 0;">
-        <h3>${alert.description}</h3>
-        <p><strong>Expiry Date:</strong> ${alert.expiryDate.toLocaleDateString()}</p>
-        <p><strong>Time Until Expiry:</strong> ${alert.daysUntilExpiry} days</p>
-        <p><strong>Alert Type:</strong> ${alert.type.toUpperCase()}</p>
-        ${alert.vehicleName ? `<p><strong>Vehicle:</strong> ${alert.vehicleName}</p>` : ''}
-        ${alert.operatorName ? `<p><strong>Operator:</strong> ${alert.operatorName}</p>` : ''}
-      </div>
-      <p>Please take action to renew or update the relevant documentation before expiry.</p>
-      <p>Best regards,<br>TruckNav Pro Fleet Management System</p>
-    `;
+    // Check if notification already exists for this item to avoid duplicates
+    const existing = await db
+      .select()
+      .from(fleetNotifications)
+      .where(
+        and(
+          eq(fleetNotifications.notificationType, alert.type),
+          eq(fleetNotifications.status, 'active'),
+          alert.operatorId ? eq(fleetNotifications.operatorId, alert.operatorId) : isNull(fleetNotifications.operatorId),
+          alert.vehicleId ? eq(fleetNotifications.vehicleId, alert.vehicleId) : isNull(fleetNotifications.vehicleId)
+        )
+      );
 
-    // For development/testing, log instead of actually sending
-    if (process.env.EMAIL_HOST === 'localhost' || !alert.email) {
-      console.log(`📧 [EMAIL NOTIFICATION - Not Sent in Dev Mode]`);
-      console.log(`   To: ${alert.email || 'admin@example.com'}`);
-      console.log(`   Subject: ${subject}`);
-      console.log(`   Alert: ${alert.description}`);
-      console.log(`   Days Until Expiry: ${alert.daysUntilExpiry}`);
+    if (existing.length > 0) {
+      console.log(`ℹ️ Notification already exists for ${alert.description}`);
       return;
     }
 
-    // Send actual email if configured
-    if (alert.email) {
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'fleet@trucknav.local',
-        to: alert.email,
-        subject,
-        html: htmlContent,
-      });
-      console.log(`📧 Email sent to ${alert.email} for ${alert.description}`);
-    }
+    const severity = alert.daysUntilExpiry === 7 ? 'high' : 'medium';
+
+    await db.insert(fleetNotifications).values({
+      vehicleId: alert.vehicleId,
+      operatorId: alert.operatorId,
+      notificationType: alert.type,
+      message: alert.description,
+      expiryDate: alert.expiryDate,
+      daysUntilExpiry: alert.daysUntilExpiry,
+      severity,
+      status: 'active',
+    });
+
+    console.log(`📢 Notification created for ${alert.description}`);
   } catch (error) {
-    console.error(`Failed to send notification for ${alert.description}:`, error);
+    console.error(`Failed to create notification for ${alert.description}:`, error);
   }
 }
 
-// Export for manual triggering or testing
-export { sendExpirationNotification };
+export { createFleetNotification };

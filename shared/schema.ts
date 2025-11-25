@@ -827,6 +827,21 @@ export const amprTollRegistrations = pgTable("ampr_toll_registrations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Fleet Notifications - On-screen expiration alerts
+export const fleetNotifications = pgTable("fleet_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id"), // References fleet_vehicles (optional, for vehicle-related alerts)
+  operatorId: varchar("operator_id"), // References operators (optional, for operator-related alerts)
+  notificationType: text("notification_type").notNull(), // 'license', 'cqc', 'tachograph', 'service', 'toll_registration'
+  message: text("message").notNull(), // Human-readable message
+  expiryDate: timestamp("expiry_date").notNull(), // The date when the item expires
+  daysUntilExpiry: integer("days_until_expiry").notNull(), // Number of days until expiry
+  severity: text("severity").default('medium'), // 'low', 'medium', 'high' (high = 7 days, medium = 28 days)
+  status: text("status").notNull().default('active'), // 'active', 'dismissed', 'resolved'
+  resolvedAt: timestamp("resolved_at"), // When the notification was resolved
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Driver connections for social trucking network
 export const driverConnections = pgTable("driver_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -907,6 +922,7 @@ export const insertServiceRecordSchema = createInsertSchema(serviceRecords).omit
 export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({ id: true, createdAt: true });
 export const insertVehicleAssignmentSchema = createInsertSchema(vehicleAssignments).omit({ id: true, assignedAt: true });
 export const insertAmprTollRegistrationSchema = createInsertSchema(amprTollRegistrations).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertFleetNotificationSchema = createInsertSchema(fleetNotifications).omit({ id: true, createdAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -933,6 +949,9 @@ export type InsertVehicleAssignment = z.infer<typeof insertVehicleAssignmentSche
 
 export type AmprTollRegistration = typeof amprTollRegistrations.$inferSelect;
 export type InsertAmprTollRegistration = z.infer<typeof insertAmprTollRegistrationSchema>;
+
+export type FleetNotification = typeof fleetNotifications.$inferSelect;
+export type InsertFleetNotification = z.infer<typeof insertFleetNotificationSchema>;
 
 // Type exports for social network
 export type DriverConnection = typeof driverConnections.$inferSelect;
