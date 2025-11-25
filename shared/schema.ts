@@ -842,6 +842,20 @@ export const fleetNotifications = pgTable("fleet_notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Vehicle Attachments - Store official documents for vehicles
+export const vehicleAttachments = pgTable("vehicle_attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  fileName: varchar("file_name").notNull(), // Original file name
+  fileType: text("file_type").notNull(), // 'registration', 'mot', 'insurance', 'maintenance', 'other'
+  objectPath: text("object_path").notNull(), // Path in object storage
+  fileSize: integer("file_size"), // File size in bytes
+  mimeType: varchar("mime_type"), // MIME type (e.g., 'application/pdf', 'image/jpeg')
+  uploadedBy: varchar("uploaded_by"), // User who uploaded
+  description: text("description"), // Optional notes about the document
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
+
 // Driver connections for social trucking network
 export const driverConnections = pgTable("driver_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -923,6 +937,7 @@ export const insertFuelLogSchema = createInsertSchema(fuelLogs).omit({ id: true,
 export const insertVehicleAssignmentSchema = createInsertSchema(vehicleAssignments).omit({ id: true, assignedAt: true });
 export const insertAmprTollRegistrationSchema = createInsertSchema(amprTollRegistrations).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFleetNotificationSchema = createInsertSchema(fleetNotifications).omit({ id: true, createdAt: true });
+export const insertVehicleAttachmentSchema = createInsertSchema(vehicleAttachments).omit({ id: true, uploadedAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -952,6 +967,9 @@ export type InsertAmprTollRegistration = z.infer<typeof insertAmprTollRegistrati
 
 export type FleetNotification = typeof fleetNotifications.$inferSelect;
 export type InsertFleetNotification = z.infer<typeof insertFleetNotificationSchema>;
+
+export type VehicleAttachment = typeof vehicleAttachments.$inferSelect;
+export type InsertVehicleAttachment = z.infer<typeof insertVehicleAttachmentSchema>;
 
 // Type exports for social network
 export type DriverConnection = typeof driverConnections.$inferSelect;

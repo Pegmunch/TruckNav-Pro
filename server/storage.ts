@@ -217,6 +217,12 @@ export interface IStorage {
   dismissFleetNotification(id: string): Promise<boolean>;
   resolveFleetNotification(id: string): Promise<boolean>;
 
+  // Fleet Management - Vehicle Attachments
+  createVehicleAttachment(attachment: any): Promise<any>;
+  getVehicleAttachments(vehicleId: string): Promise<any[]>;
+  getVehicleAttachment(attachmentId: string): Promise<any | undefined>;
+  deleteVehicleAttachment(attachmentId: string): Promise<boolean>;
+
   // Social Network - Driver Profiles
   updateUserProfile(userId: string, updates: Partial<User>): Promise<User | undefined>;
   getUserProfile(userId: string, currentUserId?: string): Promise<User | undefined>;
