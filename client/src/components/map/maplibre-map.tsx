@@ -1793,105 +1793,37 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         </svg>
       `;
       
-      // Create premium vehicle marker with excellence-grade design
+      // Create arrowhead triangle vehicle marker (moves along blue route line)
       const el = document.createElement('div');
-      el.className = 'user-position-marker';
+      el.className = 'user-position-marker-arrowhead';
       el.innerHTML = `
-        <div style="
-          position: relative;
-          width: ${markerSize}px;
-          height: ${markerSize}px;
-        ">
-          <!-- Outer glow effect -->
-          <div style="
-            position: absolute;
-            inset: -12px;
-            border-radius: 50%;
-            background: radial-gradient(circle, ${accuracyGlow} 0%, transparent 70%);
-            animation: glow-pulse 3s ease-in-out infinite;
-          "></div>
-          
-          <!-- Accuracy ring with gradient -->
-          <div style="
-            position: absolute;
-            inset: -6px;
-            border-radius: 50%;
-            border: 3px solid ${accuracyColor};
-            opacity: 0.6;
-            animation: accuracy-pulse 2s ease-in-out infinite;
-            box-shadow: 0 0 20px ${accuracyGlow};
-          "></div>
-          
-          <!-- Secondary pulse ring -->
-          <div style="
-            position: absolute;
-            inset: -2px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            animation: secondary-pulse 2.5s ease-in-out infinite 0.3s;
-          "></div>
-          
-          <!-- Main marker with premium gradient and thicker borders -->
-          <div style="
-            width: ${markerSize}px;
-            height: ${markerSize}px;
-            background: ${markerBg};
-            border: ${borderWidth}px solid white;
-            border-radius: 50%;
-            box-shadow: 
-              0 0 0 3px ${accuracyGlow},
-              0 12px 36px ${accuracyGlow}, 
-              0 6px 20px rgba(0, 0, 0, 0.8),
-              inset 0 3px 6px rgba(255, 255, 255, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            animation: marker-pulse 2.8s ease-in-out infinite;
-            z-index: 1000;
-          ">
-            ${vehicleIcon}
-            ${hasGPS ? directionChevron : ''}
-          </div>
-        </div>
+        <svg width="40" height="50" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));">
+          <!-- Blue triangle arrowhead pointing forward (north) -->
+          <polygon points="20,2 38,45 2,45" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+          <!-- Inner white accent line for direction clarity -->
+          <line x1="20" y1="8" x2="20" y2="30" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+          <!-- Subtle gradient shimmer effect -->
+          <defs>
+            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:0.8" />
+              <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <polygon points="20,2 38,45 2,45" fill="url(#arrowGradient)" opacity="0.9"/>
+        </svg>
         <style>
-          @keyframes marker-pulse {
+          @keyframes arrow-pulse {
             0%, 100% { 
               transform: scale(1);
-            }
-            50% { 
-              transform: scale(1.06);
-            }
-          }
-          @keyframes accuracy-pulse {
-            0%, 100% { 
-              transform: scale(1);
-              opacity: 0.6;
-            }
-            50% { 
-              transform: scale(1.12);
-              opacity: 0.9;
-            }
-          }
-          @keyframes secondary-pulse {
-            0%, 100% { 
-              transform: scale(1);
-              opacity: 0.3;
+              filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.6));
             }
             50% { 
               transform: scale(1.08);
-              opacity: 0.6;
+              filter: drop-shadow(0 6px 12px rgba(59, 130, 246, 0.8));
             }
           }
-          @keyframes glow-pulse {
-            0%, 100% { 
-              opacity: 0.4;
-              transform: scale(1);
-            }
-            50% { 
-              opacity: 0.7;
-              transform: scale(1.15);
-            }
+          .user-position-marker-arrowhead svg {
+            animation: arrow-pulse 2.5s ease-in-out infinite;
           }
         </style>
       `;
