@@ -5,7 +5,7 @@
  */
 
 import { memo, useState, useEffect } from 'react';
-import { Shield, AlertCircle, ChevronRight } from 'lucide-react';
+import { Shield, AlertCircle, ChevronRight, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGPS } from '@/contexts/gps-context';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
@@ -143,11 +143,18 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   return (
     <div
       className={cn(
-        'relative flex justify-center w-full',
+        'relative flex flex-col items-center justify-center w-full gap-2',
         className
       )}
       data-testid="speedometer-hud"
     >
+      {/* Navigation arrowhead - Only visible during navigation */}
+      {isNavigating && (
+        <div className="flex items-center justify-center">
+          <ArrowUp className="w-6 h-6 text-blue-600 dark:text-blue-400 animate-bounce" />
+        </div>
+      )}
+      
       {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
       <div
         className={cn(
