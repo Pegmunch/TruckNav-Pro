@@ -651,6 +651,13 @@ export function GPSProvider({
       setErrorType(null);
       setErrorMessage(null);
       
+      // Update hysteresis ref to prevent GPS from immediately overwriting manual position
+      lastStateUpdateRef.current = { 
+        lat: location.latitude, 
+        lng: location.longitude, 
+        timestamp: Date.now() 
+      };
+      
       console.log('[MANUAL-LOCATION] Manual location now active');
     }
   }, [isUsingManualLocation, status, position]);
@@ -695,6 +702,13 @@ export function GPSProvider({
       setHasFreshPosition(false);
       setIsUsingCached(false);
       gpsReceivedRef.current = false;
+      
+      // Update hysteresis ref to prevent GPS from immediately overwriting manual position
+      lastStateUpdateRef.current = { 
+        lat: manualLocation.latitude, 
+        lng: manualLocation.longitude, 
+        timestamp: Date.now() 
+      };
       
       console.log('[GPS-PROVIDER] Manual location active - address:', manualLocation.address);
     } else {
