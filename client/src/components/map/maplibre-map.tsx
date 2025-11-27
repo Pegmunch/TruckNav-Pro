@@ -1163,10 +1163,36 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     // Only auto-fit bounds when not navigating (during planning)
+    // HEAD-UP DISPLAY: In preview mode, rotate map so route appears vertical (bottom to top)
     if (!isNavigating) {
       const bounds = new maplibregl.LngLatBounds();
       routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-      map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+      
+      // Calculate bearing from start to end for head-up orientation
+      if (routeCoordinates.length >= 2) {
+        const startCoord = routeCoordinates[0];
+        const endCoord = routeCoordinates[routeCoordinates.length - 1];
+        
+        // Calculate bearing from start to destination
+        const dLon = (endCoord[0] - startCoord[0]) * Math.PI / 180;
+        const lat1 = startCoord[1] * Math.PI / 180;
+        const lat2 = endCoord[1] * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        const routeBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        
+        // Fit bounds first, then rotate to make route vertical
+        map.current.fitBounds(bounds, { 
+          padding: { top: 120, bottom: 180, left: 60, right: 60 }, // Extra bottom for speedometer
+          duration: 800,
+          bearing: routeBearing, // HEAD-UP: Route goes from bottom to top
+          pitch: 45 // Slight 3D perspective for better visualization
+        });
+        
+        console.log('[ROUTE-PREVIEW] Head-up display - route bearing:', routeBearing.toFixed(1), '°');
+      } else {
+        map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+      }
     }
   }, [currentRoute, isNavigating, gpsPosition]);
 

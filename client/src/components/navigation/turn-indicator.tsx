@@ -79,7 +79,9 @@ const TurnIndicator = memo(function TurnIndicator({
         className
       )}
       style={{
-        top: 'calc(48px + env(safe-area-inset-top, 0px))'
+        // DEFAULT POSITION: Below ETA header (CompactTripStrip at 56px + ~44px height)
+        // TurnIndicator top edge should be at bottom of ETA panel
+        top: 'calc(108px + env(safe-area-inset-top, 0px))'
       }}
       data-testid="turn-indicator"
     >
