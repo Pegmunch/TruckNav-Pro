@@ -2,11 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Plus } from 'lucide-react';
+import { useState } from 'react';
 import type { TripTracking } from '@shared/schema';
 import { format } from 'date-fns';
+import { AddTripDialog } from './fleet-add-trip-dialog';
 
 export function TripsTab() {
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const { data: analytics } = useQuery({
     queryKey: ['/api/fleet/analytics/trips'],
     queryFn: async () => {
@@ -65,12 +69,18 @@ export function TripsTab() {
 
       {/* Trips Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Trip Records
-          </CardTitle>
-          <CardDescription>Planned vs actual trip metrics</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Trip Records
+            </CardTitle>
+            <CardDescription>Planned vs actual trip metrics</CardDescription>
+          </div>
+          <Button onClick={() => setIsAddOpen(true)} size="sm" className="gap-2" data-testid="button-add-trip">
+            <Plus className="w-4 h-4" />
+            Record Trip
+          </Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (
