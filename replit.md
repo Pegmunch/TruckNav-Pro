@@ -92,7 +92,7 @@ These settings are LOCKED and must remain unchanged to preserve the user experie
 - **Navigation Mode**: Map continuously rotates based on GPS heading to keep route vertical
 - **Route Line**: ALWAYS begins at top edge of speedometer, goes upward to destination - map rotates beneath it
 - **GPS Heading Rotation**: Runs at 30 FPS for smooth rotation during navigation
-- **Map Padding During Navigation**: bottom: 1360px (aligns route start with speedometer top edge), top: 300px
+- **Map Padding During Navigation**: LOCKED - bottom: 1360px (aligns route start with speedometer top edge), top: 300px - DO NOT CHANGE
 
 ## Mode-Specific Behavior
 - **Plan Mode**: Hamburger FAB in bottom-right corner (h-14 w-14, blue) for menu access
