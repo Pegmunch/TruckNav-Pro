@@ -144,6 +144,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const [is3DMode, setIs3DMode] = useState(false);
+  const is3DModeRef = useRef(false); // Ref to track actual 3D state for imperative handle
   const [isTrafficLayerReady, setIsTrafficLayerReady] = useState(false);
   const [bearing, setBearing] = useState(0);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -364,14 +365,18 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     getMapValidity: () => isMapLibreValid,
     toggle3DMode: () => {
       if (!map.current) return;
-      const newMode = !is3DMode;
+      // Use ref to get current state - prevents stale closure issues
+      const currentMode = is3DModeRef.current;
+      const newMode = !currentMode;
+      console.log('[3D-TOGGLE] Toggle pressed - current:', currentMode, '→ new:', newMode);
+      is3DModeRef.current = newMode; // Update ref immediately
       setIs3DMode(newMode);
       map.current.easeTo({
         pitch: newMode ? 60 : 0,
         duration: 800
       });
     },
-    is3DMode: () => is3DMode,
+    is3DMode: () => is3DModeRef.current,
     zoomIn: () => {
       if (map.current) {
         map.current.zoomIn({ duration: 300 });
@@ -537,6 +542,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   useEffect(() => {
     currentZoomRef.current = currentZoom;
   }, [currentZoom]);
+  
+  // Keep 3D mode ref in sync with state - critical for toggle function
+  useEffect(() => {
+    is3DModeRef.current = is3DMode;
+  }, [is3DMode]);
 
   // Enhanced 3D Navigation Mode: Auto-activate when navigation starts, smooth exit when it ends
   useEffect(() => {
@@ -550,6 +560,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       console.log('[NAV-3D] Navigation started - activating enhanced 3D mode (67° pitch)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
+      is3DModeRef.current = true;
       setIs3DMode(true);
     }
     
@@ -567,6 +578,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       // Reset 3D mode state to match previous pitch
       const was3D = previousPitchRef.current > 30;
+      is3DModeRef.current = was3D;
       setIs3DMode(was3D);
     }
 
@@ -2175,7 +2187,12 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const toggle3DMode = () => {
     if (!map.current) return;
     
-    const newMode = !is3DMode;
+    // Use ref for current state to avoid stale closure
+    const currentMode = is3DModeRef.current;
+    const newMode = !currentMode;
+    console.log('[3D-TOGGLE] ✅ Toggle pressed - current:', currentMode, '→ new:', newMode);
+    
+    is3DModeRef.current = newMode; // Update ref immediately
     setIs3DMode(newMode);
     
     // Smoothly transition between 2D (pitch 0) and 3D (pitch 60)
@@ -2184,21 +2201,19 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       pitch: newMode ? 60 : 0,
       duration: 800
     });
-    
-    console.log('[3D-TOGGLE] ✅ Toggling 3D mode:', newMode ? 'ON (60° tilt)' : 'OFF (0° tilt)');
   };
   
   // AUTO-ENABLE 3D MODE when navigation starts
   useEffect(() => {
-    if (isNavigating && !is3DMode) {
+    if (isNavigating && !is3DModeRef.current) {
       console.log('[3D-AUTO] Automatically enabling 3D mode for navigation');
+      is3DModeRef.current = true;
       setIs3DMode(true);
-    } else if (!isNavigating && previousNavigationStateRef.current && is3DMode) {
+    } else if (!isNavigating && previousNavigationStateRef.current && is3DModeRef.current) {
       console.log('[3D-AUTO] Navigation ended, keeping 3D mode state');
       // Keep 3D mode even after navigation ends - user can manually toggle
     }
-    previousNavigationStateRef.current = isNavigating;
-  }, [isNavigating, is3DMode]);
+  }, [isNavigating]);
 
   const handleCompassClick = () => {
     if (!map.current) return;
