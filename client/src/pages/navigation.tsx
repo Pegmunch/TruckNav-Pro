@@ -2953,22 +2953,6 @@ function NavigationPageContent() {
                       />
                     )}
 
-                    {/* Professional Oval Speedometer HUD - Left side, lower position */}
-                    <div 
-                      className="fixed z-[180] pointer-events-auto"
-                      style={{
-                        left: 'calc(16px + var(--safe-area-left, 0px))',
-                        bottom: 'calc(100px + var(--safe-area-bottom, 0px))'
-                      }}
-                      data-testid="speedometer-hud-navigate"
-                    >
-                      <SpeedometerHUD 
-                        className="shadow-2xl" 
-                        speedLimit={currentSpeedLimit || undefined}
-                        roadInfo={roadInfo}
-                        isNavigating={true}
-                      />
-                    </div>
 
                     {/* Cancel Route Button - Square X button at bottom-left */}
                     <Button
