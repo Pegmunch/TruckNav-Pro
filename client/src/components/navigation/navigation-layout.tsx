@@ -26,11 +26,11 @@ export function NavigationLayout({
       {/* Map content overlays - rendered in normal flow */}
       {mapContent}
 
-      {/* Top navigation strip - ETA Header - FIXED positioning for mobile */}
+      {/* Top navigation strip - ETA Header - FIXED positioning for mobile/PWA */}
       {shouldShowUI && topStrip && (
         <div 
           className="fixed left-0 right-0 z-[1700]"
-          style={{ top: 'var(--safe-area-top, 0px)' }}
+          style={{ top: '0px' }}
         >
           {topStrip}
         </div>
@@ -55,9 +55,9 @@ export function NavigationLayout({
         <div 
           className="fixed z-[1800] flex flex-col gap-2 overflow-y-auto pointer-events-auto"
           style={{
-            top: 'calc(52px + var(--safe-area-top, 0px))',
-            right: 'calc(12px + var(--safe-area-right, 0px))',
-            maxHeight: 'calc(100vh - 180px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
+            top: 'calc(48px + env(safe-area-inset-top, 0px))',
+            right: 'calc(12px + env(safe-area-inset-right, 0px))',
+            maxHeight: 'calc(100vh - 160px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
           }}
         >
           {rightStack}
@@ -69,7 +69,7 @@ export function NavigationLayout({
         <div 
           className="fixed left-1/2 z-[1500] pointer-events-auto"
           style={{
-            bottom: 'calc(80px + var(--safe-area-bottom, 0px))',
+            bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
             transform: 'translateX(-50%)'
           }}
         >

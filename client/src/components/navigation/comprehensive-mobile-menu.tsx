@@ -527,9 +527,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         className="h-11"
                       />
                       {fromOpen && (
-                        <div className="fixed z-[9999] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto">
+                        <div className="absolute left-0 right-0 z-[9999] mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto" style={{ touchAction: 'manipulation' }}>
                           <Command>
-                            <CommandList className="max-h-[200px]">
+                            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                               {fromLoading && (
                                 <div className="flex items-center justify-center py-6">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -598,9 +598,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         className="h-11"
                       />
                       {toOpen && (
-                        <div className="fixed z-[9999] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto">
+                        <div className="absolute left-0 right-0 z-[9999] mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto" style={{ touchAction: 'manipulation' }}>
                           <Command>
-                            <CommandList className="max-h-[200px]">
+                            <CommandList className="max-h-[200px] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                               {toLoading && (
                                 <div className="flex items-center justify-center py-6">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
