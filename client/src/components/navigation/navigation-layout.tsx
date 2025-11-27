@@ -42,16 +42,16 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - 8 buttons on right side */}
-      {/* Scrollable container for small viewports to accommodate all 8 buttons */}
+      {/* Right navigation controls stack - 8 buttons on right side below ETA header */}
+      {/* Positioned just below the CompactTripStrip (ETA header) */}
       {shouldShowUI && rightStack && (
         <div 
           className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto"
           style={{
-            top: 'calc(120px + var(--safe-area-top, 0px))',
-            right: 'calc(16px + var(--safe-area-right, 0px))',
+            top: 'calc(72px + var(--safe-area-top, 0px))',
+            right: 'calc(12px + var(--safe-area-right, 0px))',
             bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-            maxHeight: 'calc(100vh - 220px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
+            maxHeight: 'calc(100vh - 172px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
           }}
         >
           {rightStack}
