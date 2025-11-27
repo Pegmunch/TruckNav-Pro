@@ -1482,11 +1482,22 @@ function NavigationPageContent() {
       vehicleProfileId?: string; 
       routePreference?: string 
     }) => {
+      performance.mark('route-calc-start');
+      console.log('[PERF] 🚀 Route calculation START - from:', routeData.startLocation, 'to:', routeData.endLocation);
+      
       const response = await apiRequest("POST", "/api/routes/calculate", routeData);
       const result = await response.json();
+      
+      performance.mark('route-calc-api-end');
+      performance.measure('route-calc-api', 'route-calc-start', 'route-calc-api-end');
+      const apiMeasure = performance.getEntriesByName('route-calc-api')[0];
+      console.log(`[PERF] ✅ Route API response: ${apiMeasure.duration.toFixed(0)}ms`);
+      
       return result;
     },
     onSuccess: (route) => {
+      performance.mark('route-calc-state-update-start');
+      
       // Trigger live notification for new route
       if (route && route !== currentRoute) {
         triggerLiveNotification('route_change');
@@ -1516,6 +1527,8 @@ function NavigationPageContent() {
       
       // Skip route preview - directly expand map for better route visibility
       const handleMapExpansion = () => {
+        performance.mark('map-expansion-start');
+        
         if (isMapWindowOpen()) {
           // Focus the map window and let it handle auto-expansion
           focusMapWindow();
@@ -1535,6 +1548,11 @@ function NavigationPageContent() {
             setIsMapExpanded(true);
           }
         }
+        
+        performance.mark('map-expansion-end');
+        performance.measure('map-expansion', 'map-expansion-start', 'map-expansion-end');
+        const mapMeasure = performance.getEntriesByName('map-expansion')[0];
+        console.log(`[PERF] 📍 Map expansion completed: ${mapMeasure.duration.toFixed(0)}ms`);
       };
 
       // Small delay to allow route state to update
@@ -1545,6 +1563,8 @@ function NavigationPageContent() {
 
       // AUTO-TRANSITION: 10-second preview, then auto-start navigation
       // Show preview mode for 10 seconds, then automatically transition to navigation view
+      performance.mark('preview-mode-start');
+      console.log('[PERF] 📺 Preview mode START');
       console.log('[AUTO-NAV] Route calculated - showing 10-second preview before auto-start');
       console.log('[AUTO-NAV] isMobile:', isMobile);
       console.log('[AUTO-NAV] route exists:', !!route);
@@ -1616,6 +1636,11 @@ function NavigationPageContent() {
         // AUTO-START NAVIGATION: 10-second countdown timer
         console.log('[AUTO-NAV] ⏲️ Setting 10-second auto-start timer...');
         setTimeout(() => {
+          performance.mark('preview-mode-end');
+          performance.measure('preview-mode-duration', 'preview-mode-start', 'preview-mode-end');
+          const previewMeasure = performance.getEntriesByName('preview-mode-duration')[0];
+          console.log(`[PERF] ⏱️ Preview mode duration: ${previewMeasure.duration.toFixed(0)}ms`);
+          
           // Only auto-start if still in preview mode (user hasn't manually started)
           if (!isNavigating && currentRoute) {
             console.log('[AUTO-NAV] ⏰ 10 seconds elapsed - auto-starting navigation!');
@@ -2045,7 +2070,9 @@ function NavigationPageContent() {
 
   // Production-grade robust navigation flow
   const handleStartNavigation = async () => {
+    performance.mark('nav-activation-start');
     console.log('========================================');
+    console.log('[PERF] 🎬 NAVIGATION ACTIVATION START');
     console.log('[NAV-ACTIVATION] 🚀 START NAVIGATION CLICKED');
     console.log('========================================');
     console.log('[NAV-ACTIVATION] currentRoute:', currentRoute);
@@ -2086,9 +2113,14 @@ function NavigationPageContent() {
     }
     
     try {
+      performance.mark('route-ready-check-start');
       console.log('[NAV-ACTIVATION] Step 1: Ensure route exists');
       // Use centralized route acquisition to ensure route exists atomically
       const route = await ensureRouteReady();
+      performance.mark('route-ready-check-end');
+      performance.measure('route-ready-check', 'route-ready-check-start', 'route-ready-check-end');
+      const routeReadyMeasure = performance.getEntriesByName('route-ready-check')[0];
+      console.log(`[PERF] 🔍 Route ready check: ${routeReadyMeasure.duration.toFixed(0)}ms`);
       
       if (!route?.id) {
         console.error('[NAV-ACTIVATION] ❌ Route acquisition failed - cannot start navigation');
@@ -2135,6 +2167,7 @@ function NavigationPageContent() {
       // Generate idempotency key for this navigation start
       const idempotencyKey = generateIdempotencyKey('start');
       
+      performance.mark('journey-creation-start');
       console.log('[NAV-ACTIVATION] Step 4: Start journey');
 
       // Single linear navigation flow with proper mutation sequence
@@ -2155,6 +2188,11 @@ function NavigationPageContent() {
         idempotencyKey 
       });
       
+      performance.mark('journey-creation-end');
+      performance.measure('journey-creation', 'journey-creation-start', 'journey-creation-end');
+      const journeyMeasure = performance.getEntriesByName('journey-creation')[0];
+      console.log(`[PERF] ⚡ Journey creation & activation: ${journeyMeasure.duration.toFixed(0)}ms`);
+      
       console.log('[NAV-ACTIVATION] Step 4: ✅ Journey activated successfully');
       console.log('[NAV-ACTIVATION] Activated journey:', activatedJourney);
       
@@ -2167,6 +2205,18 @@ function NavigationPageContent() {
       setIsLocalNavActive(true);
       localStorage.setItem('navigation_ui_active', 'true');
       console.log('[NAV-ACTIVATION] ✅ Local navigation UI state activated - UI will persist');
+      
+      performance.mark('nav-activation-end');
+      performance.measure('nav-activation-total', 'nav-activation-start', 'nav-activation-end');
+      const totalMeasure = performance.getEntriesByName('nav-activation-total')[0];
+      console.log(`[PERF] ⏱️ TOTAL Navigation activation time: ${totalMeasure.duration.toFixed(0)}ms`);
+      
+      // Log all performance marks for this session
+      console.log('[PERF] 📊 Performance Summary:');
+      const allMeasures = performance.getEntriesByType('measure').filter(m => m.name.includes('route') || m.name.includes('preview') || m.name.includes('journey') || m.name.includes('nav-activation'));
+      allMeasures.forEach(measure => {
+        console.log(`  - ${measure.name}: ${measure.duration.toFixed(0)}ms`);
+      });
       
       // NOTE: Navigation state will automatically be derived by navSession hook
       // from the journey query refetch - no need to manually set states
