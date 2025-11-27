@@ -1079,6 +1079,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }
       });
 
+      // Add route outline (white background for visibility)
+      map.current.addLayer({
+        id: 'route-outline',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': 10,
+          'line-opacity': 1.0
+        }
+      });
+
+      // Add blue route line on top
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -1093,7 +1110,28 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'line-opacity': 1.0
         }
       });
-      console.log('[ROUTE-RENDER] ✅ Route layer added successfully');
+
+      // Add arrowheads along the route
+      map.current.addLayer({
+        id: 'route-arrows',
+        type: 'symbol',
+        source: 'route',
+        layout: {
+          'symbol-placement': 'line',
+          'text-field': '→',
+          'text-size': 20,
+          'text-font': ['Arial Unicode MS Regular'],
+          'text-rotation-alignment': 'map',
+          'symbol-spacing': 100,
+          'text-keep-upright': false,
+          'text-color': '#1e40af'
+        },
+        paint: {
+          'text-opacity': 0.8
+        }
+      });
+
+      console.log('[ROUTE-RENDER] ✅ Route layers added successfully (outline + line + arrows)');
     } else {
       console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
