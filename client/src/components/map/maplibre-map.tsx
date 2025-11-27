@@ -1123,13 +1123,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           'text-font': ['Arial Unicode MS Regular'],
           'text-rotation-alignment': 'map',
           'symbol-spacing': 100,
-          'text-keep-upright': false,
-          'text-color': '#1e40af'
+          'text-keep-upright': false
         },
         paint: {
+          'text-color': '#1e40af',
           'text-opacity': 0.8
         }
-      });
+      } as any);
 
       console.log('[ROUTE-RENDER] ✅ Route layers added successfully (outline + line + arrows)');
     } else {
