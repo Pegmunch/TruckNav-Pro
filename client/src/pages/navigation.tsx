@@ -136,7 +136,8 @@ function NavigationPageContent() {
   
   // SIMPLIFIED: isNavigating derived directly from navSession state
   // This eliminates localStorage sync issues that caused UI elements to disappear
-  const isNavigating = navState === 'navigating' || navState === 'active' || shouldShowHUD;
+  // NavigationState values: 'idle' | 'starting' | 'active' | 'completing'
+  const isNavigating = navState === 'active' || navState === 'starting' || shouldShowHUD;
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -2460,8 +2461,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={true}
+                    hideCompass={true}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2530,7 +2531,23 @@ function NavigationPageContent() {
                   </div>
                 </div>
               )}
-              
+
+              {/* PLAN MODE - Hamburger FAB to open menu (when no route exists) */}
+              {mobileNavMode === 'plan' && (
+                <Button
+                  onClick={() => setShowComprehensiveMenu(true)}
+                  size="lg"
+                  className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                  style={{
+                    bottom: 'calc(24px + var(--safe-area-bottom))',
+                    right: 'calc(24px + var(--safe-area-right))'
+                  }}
+                  data-testid="button-open-menu-plan"
+                  aria-label="Open menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </Button>
+              )}
 
               {/* PREVIEW MODE OVERLAYS (z-10+) - Visible only in preview mode */}
               {mobileNavMode === 'preview' && (
@@ -2859,8 +2876,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={true}
+                    hideCompass={true}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
