@@ -134,15 +134,9 @@ function NavigationPageContent() {
   const navSession = useNavigationSession();
   const { state: navState, journeyId, shouldShowHUD, canStart } = navSession;
   
-  // LOCAL NAVIGATION UI STATE - Independent of server session state
-  // This fixes PWA session issues where UI disappears when session changes
-  const [isLocalNavActive, setIsLocalNavActive] = useState(() => {
-    // Initialize from localStorage to survive page reloads
-    return localStorage.getItem('navigation_ui_active') === 'true';
-  });
-  
-  // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
-  const isNavigating = isLocalNavActive;
+  // SIMPLIFIED: isNavigating derived directly from navSession state
+  // This eliminates localStorage sync issues that caused UI elements to disappear
+  const isNavigating = navState === 'navigating' || navState === 'active' || shouldShowHUD;
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -237,15 +231,15 @@ function NavigationPageContent() {
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   
-  // CRITICAL: Derive mobileNavMode from LOCAL navigation state
-  // This prevents UI from disappearing when server session changes in PWA mode
-  const mobileNavMode: MobileNavMode = isLocalNavActive
+  // SIMPLIFIED: Derive mobileNavMode from server navigation state
+  // Show 'navigate' when actively navigating, 'preview' when route exists
+  const mobileNavMode: MobileNavMode = isNavigating
     ? 'navigate' 
-    : 'preview';
+    : (currentRoute ? 'preview' : 'plan');
   
-  // CRITICAL FIX: Derive navigation UI state from LOCAL state (not server)
-  // This makes UI persist even when server session changes in PWA mode
-  const isNavUIActive = isLocalNavActive;
+  // SIMPLIFIED: Navigation UI visibility - show when navigating OR when route exists
+  // This ensures ETA header, right buttons, speedometer are always visible during navigation
+  const isNavUIActive = isNavigating || currentRoute !== null;
   
   // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
   // Use useMemo to stabilize calculation and prevent initial render issues
@@ -1246,20 +1240,15 @@ function NavigationPageContent() {
         shouldShowHUD
       });
       
-      // CRITICAL FIX: Sync local UI state with server state when active journey detected
-      // This ensures navigation UI shows even after page refresh or PWA restart
-      if (currentJourney.status === 'active' && shouldShowHUD && !isLocalNavActive) {
-        console.log('[JOURNEY-LOAD] ✅ Syncing local nav UI state with active journey');
-        setIsLocalNavActive(true);
-        localStorage.setItem('navigation_ui_active', 'true');
-      }
+      // Navigation UI visibility is now automatically derived from navSession state
+      // No localStorage sync needed - eliminates race conditions
     } else {
       // No journey - clear route data
       console.log('[JOURNEY-LOAD] No journey - clearing route data');
       setCurrentRoute(null);
       // NOTE: Navigation state is automatically derived by useNavigationSession
     }
-  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive]);
+  }, [currentJourney, navState, shouldShowHUD]);
 
   // Handle page refresh - restore journey if it exists
   // NOTE: Navigation state is automatically derived by useNavigationSession hook
@@ -1907,14 +1896,11 @@ function NavigationPageContent() {
     isCancellingRouteRef.current = true;
     console.log('[ROUTE-CANCEL] 🛡️ Route cancellation guard activated');
     
-    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
-    // This ensures the hamburger button reappears immediately
-    setIsLocalNavActive(false);
+    // Clear the menu and localStorage
     setShowComprehensiveMenu(false);
-    localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
     localStorage.removeItem('navigation_timestamp');
-    console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to preview mode');
+    console.log('[ROUTE-CANCEL] ✅ Clearing route and navigation state');
     
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
@@ -2208,11 +2194,8 @@ function NavigationPageContent() {
       localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
       console.log('[NAV-ACTIVATION] ✅ Journey ID stored in localStorage');
       
-      // CRITICAL FIX: Set local navigation UI state to persist across session changes
-      // This ensures UI stays visible even if server session changes in PWA mode
-      setIsLocalNavActive(true);
-      localStorage.setItem('navigation_ui_active', 'true');
-      console.log('[NAV-ACTIVATION] ✅ Local navigation UI state activated - UI will persist');
+      // Navigation UI visibility is now automatically derived from navSession state
+      console.log('[NAV-ACTIVATION] ✅ Navigation activated - UI derived from navSession');
       
       performance.mark('nav-activation-end');
       performance.measure('nav-activation-total', 'nav-activation-start', 'nav-activation-end');
@@ -2272,16 +2255,13 @@ function NavigationPageContent() {
     isCancellingRouteRef.current = true;
     console.log('[NAV-STOP] 🛡️ Route cancellation guard activated');
     
-    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
-    // This ensures the hamburger button reappears immediately
-    setIsLocalNavActive(false);
+    // Clear the menu and localStorage
     setShowComprehensiveMenu(false);
-    localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
     localStorage.removeItem('navigation_timestamp');
     localStorage.removeItem('activeRouteId');
     localStorage.removeItem('activeJourneyId');
-    console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
+    console.log('[NAV-STOP] ✅ Navigation stopped - UI derived from navSession');
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
