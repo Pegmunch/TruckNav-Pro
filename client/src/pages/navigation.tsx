@@ -2494,19 +2494,19 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* GPS Fallback - Compact Chip (Minimal UI) */}
+              {/* GPS Fallback - DEFAULT: Thin transparent pill (not thick orange oval) */}
               {mobileNavMode === 'preview' && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
                !gpsData.manualLocation && (
                 <div 
-                  className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
+                  className="absolute top-16 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
                   onClick={() => setShowManualLocationDialog(true)}
                   data-testid="gps-fallback-chip"
                 >
-                  <div className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-full shadow-lg transition-colors">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">GPS Unavailable - Tap to set location</span>
+                  <div className="flex items-center gap-1.5 bg-orange-500/80 hover:bg-orange-500/90 text-white px-2.5 py-1 rounded-full shadow-md backdrop-blur-sm transition-colors border border-orange-400/30">
+                    <AlertCircle className="h-3 w-3" />
+                    <span className="text-xs font-medium">GPS Unavailable - Tap to set</span>
                   </div>
                 </div>
               )}
