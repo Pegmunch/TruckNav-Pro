@@ -123,6 +123,7 @@ export function TripsTab() {
           )}
         </CardContent>
       </Card>
+      <AddTripDialog isOpen={isAddOpen} onOpenChange={setIsAddOpen} />
     </div>
   );
 }
