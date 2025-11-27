@@ -131,6 +131,11 @@ const STALE_THRESHOLD_MS = 60000;  // 1 minute
 const STUCK_THRESHOLD_MS = 120000; // 2 minutes
 const NO_UPDATE_WARNING_MS = 30000; // 30 seconds
 
+// GPS UPDATE HYSTERESIS - Reduces unnecessary React re-renders
+// Only update React state if position changed significantly OR enough time passed
+const GPS_UPDATE_MIN_DISTANCE_M = 3; // Minimum 3 meters movement before UI update
+const GPS_UPDATE_MIN_TIME_MS = 1500; // Minimum 1.5 seconds between updates
+
 /**
  * Determine GPS accuracy level based on accuracy value
  */
@@ -545,6 +550,9 @@ export function GPSProvider({
   const permissionRecoveryIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const acquisitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const gpsReceivedRef = useRef<boolean>(false);
+  
+  // GPS update hysteresis - track last state update for throttling
+  const lastStateUpdateRef = useRef<{ lat: number; lng: number; timestamp: number } | null>(null);
 
   /**
    * Clear all cached GPS data and force fresh acquisition
@@ -1066,6 +1074,39 @@ export function GPSProvider({
         // Update last position for movement detection
         lastPositionRef.current = { lat, lng, timestamp };
         lastUpdateTimeRef.current = Date.now();
+        
+        // GPS UPDATE HYSTERESIS - Only update React state if:
+        // 1. First position (no previous state update), OR
+        // 2. Moved more than GPS_UPDATE_MIN_DISTANCE_M, OR
+        // 3. More than GPS_UPDATE_MIN_TIME_MS since last state update
+        const now = Date.now();
+        const lastStateUpdate = lastStateUpdateRef.current;
+        let shouldUpdateState = false;
+        
+        if (!lastStateUpdate) {
+          // First position - always update
+          shouldUpdateState = true;
+        } else {
+          const timeSinceLastUpdate = now - lastStateUpdate.timestamp;
+          const distanceFromLastUpdate = calculateDistance(
+            lat, lng,
+            lastStateUpdate.lat, lastStateUpdate.lng
+          );
+          
+          // Update if moved enough OR enough time passed
+          if (distanceFromLastUpdate >= GPS_UPDATE_MIN_DISTANCE_M || 
+              timeSinceLastUpdate >= GPS_UPDATE_MIN_TIME_MS) {
+            shouldUpdateState = true;
+          }
+        }
+        
+        // Skip React state update if hysteresis not met (reduces re-renders)
+        if (!shouldUpdateState) {
+          return; // Exit early - position stored in refs but no re-render
+        }
+        
+        // Update hysteresis tracking ref
+        lastStateUpdateRef.current = { lat, lng, timestamp: now };
         
         // Save as last good position if confidence is high enough
         if (confidenceScore >= 50 && !isOutOfBounds) {
