@@ -60,7 +60,7 @@ export function NavigationLayout({
 
       {/* Bottom instrumentation bar */}
       {shouldShowUI && bottomBar && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[1500] safe-bottom">
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[1500] safe-bottom">
           {bottomBar}
         </div>
       )}
