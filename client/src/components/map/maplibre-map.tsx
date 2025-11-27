@@ -152,6 +152,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const screenArrowheadRef = useRef<HTMLDivElement | null>(null);
+  const destinationMarkerRef = useRef<maplibregl.Marker | null>(null);
   const restrictionMarkersRef = useRef<maplibregl.Marker[]>([]);
   const restrictionViolationsRef = useRef(restrictionViolations);
   const isNavigatingRef = useRef(isNavigating);
@@ -1111,27 +1113,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }
       });
 
-      // Add arrowheads along the route
-      map.current.addLayer({
-        id: 'route-arrows',
-        type: 'symbol',
-        source: 'route',
-        layout: {
-          'symbol-placement': 'line',
-          'text-field': '→',
-          'text-size': 20,
-          'text-font': ['Arial Unicode MS Regular'],
-          'text-rotation-alignment': 'map',
-          'symbol-spacing': 100,
-          'text-keep-upright': false
-        },
-        paint: {
-          'text-color': '#1e40af',
-          'text-opacity': 0.8
-        }
-      } as any);
-
-      console.log('[ROUTE-RENDER] ✅ Route layers added successfully (outline + line + arrows)');
+      console.log('[ROUTE-RENDER] ✅ Route layers added successfully (outline + line)');
     } else {
       console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
@@ -1145,6 +1127,27 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           }
         });
       }
+    }
+
+    // Add destination flag marker at the end of the route
+    if (isNavigating && routeCoordinates.length > 0) {
+      const lastCoord = routeCoordinates[routeCoordinates.length - 1];
+      if (destinationMarkerRef.current) {
+        destinationMarkerRef.current.remove();
+      }
+      const flagEl = document.createElement('div');
+      flagEl.innerHTML = `
+        <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+          <rect x="6" y="2" width="20" height="14" fill="#ef4444" stroke="white" stroke-width="1.5" rx="2"/>
+          <path d="M16 16 L16 38 M14 38 L18 38" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      `;
+      destinationMarkerRef.current = new maplibregl.Marker({ element: flagEl, anchor: 'bottom' })
+        .setLngLat(lastCoord as [number, number])
+        .addTo(map.current);
+    } else if (destinationMarkerRef.current) {
+      destinationMarkerRef.current.remove();
+      destinationMarkerRef.current = null;
     }
 
     // Only auto-fit bounds when not navigating (during planning)
@@ -1831,68 +1834,50 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         </svg>
       `;
       
-      // Create arrowhead triangle vehicle marker (moves along blue route line)
-      const el = document.createElement('div');
-      el.className = 'user-position-marker-arrowhead';
-      el.innerHTML = `
-        <svg width="40" height="50" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));">
-          <!-- Blue triangle arrowhead pointing forward (north) -->
-          <polygon points="20,2 38,45 2,45" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-          <!-- Inner white accent line for direction clarity -->
-          <line x1="20" y1="8" x2="20" y2="30" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-          <!-- Subtle gradient shimmer effect -->
-          <defs>
-            <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:0.8" />
-              <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <polygon points="20,2 38,45 2,45" fill="url(#arrowGradient)" opacity="0.9"/>
-        </svg>
-        <style>
-          @keyframes arrow-pulse {
-            0%, 100% { 
-              transform: scale(1);
-              filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.6));
-            }
-            50% { 
-              transform: scale(1.08);
-              filter: drop-shadow(0 6px 12px rgba(59, 130, 246, 0.8));
-            }
-          }
-          .user-position-marker-arrowhead svg {
-            animation: arrow-pulse 2.5s ease-in-out infinite;
-          }
-        </style>
-      `;
-
-      userMarkerRef.current = new maplibregl.Marker({
-        element: el,
-        rotation: bearing,
-        rotationAlignment: 'map',
-        anchor: 'center'
-      })
-        .setLngLat([longitude, latitude])
-        .addTo(mapInstance);
-      
-      // CRITICAL: Force marker to appear above all other elements
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
-        if (el.parentElement) {
-          el.parentElement.style.zIndex = '9999';
-          el.parentElement.style.pointerEvents = 'none';
-          console.log('[GPS-MARKER] Z-index applied to parent element');
-        } else {
-          console.warn('[GPS-MARKER] Parent element not found for z-index');
+      // SCREEN-FIXED ARROWHEAD: During navigation, position above speedometer (screen center top)
+      // The map rotates around this fixed point, keeping route line vertical
+      if (isNavigating && mapContainer.current) {
+        if (!screenArrowheadRef.current) {
+          const arrowheadEl = document.createElement('div');
+          arrowheadEl.className = 'screen-fixed-arrowhead';
+          arrowheadEl.innerHTML = `
+            <svg width="40" height="50" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));">
+              <polygon points="20,2 38,45 2,45" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+              <line x1="20" y1="8" x2="20" y2="30" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+              <defs>
+                <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:0.8" />
+                  <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <polygon points="20,2 38,45 2,45" fill="url(#arrowGradient)" opacity="0.9"/>
+            </svg>
+            <style>
+              @keyframes arrow-pulse {
+                0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.6)); }
+                50% { transform: scale(1.08); filter: drop-shadow(0 6px 12px rgba(59, 130, 246, 0.8)); }
+              }
+              .screen-fixed-arrowhead svg { animation: arrow-pulse 2.5s ease-in-out infinite; }
+            </style>
+          `;
+          arrowheadEl.style.cssText = `
+            position: fixed;
+            top: calc(50% - 100px + env(safe-area-inset-top, 0px));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            pointer-events: none;
+          `;
+          mapContainer.current.appendChild(arrowheadEl);
+          screenArrowheadRef.current = arrowheadEl;
+          console.log('[ARROWHEAD] ✅ Screen-fixed arrowhead created above speedometer');
         }
-      }, 0);
+      } else if (screenArrowheadRef.current) {
+        screenArrowheadRef.current.remove();
+        screenArrowheadRef.current = null;
+      }
       
-      console.log('[GPS-MARKER] ✅ New marker added to map at:', [longitude, latitude]);
-    } else {
-      // Update existing marker position and rotation
-      userMarkerRef.current.setLngLat([longitude, latitude]);
-      userMarkerRef.current.setRotation(bearing);
-      console.log('[GPS-MARKER] ✅ Marker updated at:', [longitude, latitude]);
+      console.log('[GPS-MARKER] ✅ Navigation positioning complete');
     }
 
     // Cleanup
