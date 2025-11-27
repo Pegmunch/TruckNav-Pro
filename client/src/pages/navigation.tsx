@@ -180,6 +180,9 @@ function NavigationPageContent() {
   // Comprehensive mobile menu state
   const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
   
+  // Input page toggle state - for route planning overlay
+  const [showInputPage, setShowInputPage] = useState(false);
+
   // Current road name from GPS position (for speedometer display)
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
   
@@ -2698,6 +2701,10 @@ function NavigationPageContent() {
                         console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
                         setShowIncidentFeed(true);
                       }}
+                      onToggleInputPage={() => {
+                        console.log('[BTN-9-HAMBURGER] ✅ Hamburger menu clicked - Toggle input page');
+                        setShowInputPage(!showInputPage);
+                      }}
                     />
                   }
                   bottomBar={
@@ -2713,6 +2720,51 @@ function NavigationPageContent() {
               {/* Legal Ownership - Bottom right corner */}
               <div className="fixed bottom-4 right-4 z-50 pointer-events-auto px-3 py-2">
                 <MapLegalOwnership compact={true} className="sm:hidden" />
+              </div>
+            </>
+          )}
+
+          {/* Input Page Overlay - Toggle via hamburger button */}
+          {showInputPage && (
+            <>
+              {/* Backdrop - tap to close */}
+              <div 
+                className="fixed inset-0 z-40 bg-black/20"
+                onClick={() => setShowInputPage(false)}
+                data-testid="input-page-backdrop"
+              />
+              
+              {/* Input Page Panel */}
+              <div className="fixed inset-0 z-50 bg-white flex flex-col">
+                {/* Header with close button */}
+                <div className="flex items-center justify-between p-4 border-b" style={{ paddingTop: 'calc(16px + var(--safe-area-top))' }}>
+                  <h2 className="text-xl font-semibold">Plan Route</h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowInputPage(false)}
+                    className="h-10 w-10"
+                    data-testid="button-close-input-page"
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+                </div>
+                
+                {/* Input content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  <SimplifiedRouteDrawer
+                    fromLocation={fromLocation}
+                    toLocation={toLocation}
+                    fromCoordinates={fromCoordinates}
+                    toCoordinates={toCoordinates}
+                    onFromLocationChange={setFromLocation}
+                    onToLocationChange={setToLocation}
+                    onRouteChange={handlePlanRoute}
+                    selectedProfile={selectedProfile}
+                    onProfileSelect={setSelectedProfile}
+                    isCalculating={calculateRouteMutation.isPending}
+                  />
+                </div>
               </div>
             </>
           )}
