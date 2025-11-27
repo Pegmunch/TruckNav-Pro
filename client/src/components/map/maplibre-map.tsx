@@ -2236,49 +2236,49 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={toggleMapView}
-              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-toggle-view"
               aria-label="Toggle map view"
             >
-              <Layers className="h-5 w-5" />
+              <Layers className="h-4 w-4" />
             </Button>
             <Button
               size="icon"
               onClick={handleRecenter}
-              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-recenter"
               aria-label="Recenter map"
             >
-              <Crosshair className="h-5 w-5" />
+              <Crosshair className="h-4 w-4" />
             </Button>
             <Button
               size="icon"
               onClick={handleZoomIn}
-              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-in"
               aria-label="Zoom in"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4" />
             </Button>
             <Button
               size="icon"
               onClick={handleZoomOut}
-              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-out"
               aria-label="Zoom out"
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-4 w-4" />
             </Button>
             {!hideCompass && (
               <Button
                 size="icon"
                 onClick={handleCompassClick}
-                className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
+                className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
                 data-testid="button-compass-reset"
                 aria-label="Reset bearing to North"
               >
                 <Compass 
-                  className="h-5 w-5 transition-transform duration-300" 
+                  className="h-4 w-4 transition-transform duration-300" 
                   style={{ transform: `rotate(${bearing}deg)` }}
                 />
               </Button>
@@ -2287,7 +2287,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               size="icon"
               onClick={toggle3DMode}
               className={cn(
-                "h-11 w-11 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
+                "h-10 w-10 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
                 is3DMode 
                   ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-600" 
                   : "bg-white/95 hover:bg-white text-gray-800 border-slate-300"
@@ -2295,7 +2295,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               data-testid="button-toggle-3d"
               aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
             >
-              <Box className="h-5 w-5" />
+              <Box className="h-4 w-4" />
             </Button>
           </div>
 
