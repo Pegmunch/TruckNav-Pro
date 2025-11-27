@@ -2948,11 +2948,11 @@ function NavigationPageContent() {
                       />
                     )}
 
-                    {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
+                    {/* Professional Oval Speedometer HUD - Fixed position above Safari toolbar */}
                     <div 
                       className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                       style={{
-                        bottom: 'calc(12px + var(--safe-area-bottom, 0px))'
+                        bottom: 'calc(85px + var(--safe-area-bottom, 0px))'
                       }}
                       data-testid="speedometer-hud-navigate"
                     >

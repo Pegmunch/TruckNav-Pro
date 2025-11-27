@@ -79,7 +79,7 @@ const TurnIndicator = memo(function TurnIndicator({
         className
       )}
       style={{
-        top: 'calc(112px + var(--safe-area-top, 0px))'
+        top: 'calc(44px + var(--safe-area-top, 0px))'
       }}
       data-testid="turn-indicator"
     >
