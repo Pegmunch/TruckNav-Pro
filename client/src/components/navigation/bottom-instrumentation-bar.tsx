@@ -14,7 +14,7 @@ export function BottomInstrumentationBar({
   hasGpsSignal = false
 }: BottomInstrumentationBarProps) {
   return (
-    <div className="flex items-center justify-center gap-4 bg-white/95 backdrop-blur-md rounded-full px-6 py-3 shadow-2xl border border-gray-200 min-w-[280px] max-w-[360px] mx-auto">
+    <div className="flex items-center justify-center gap-4 bg-white/95 w-full backdrop-blur-md rounded-full px-6 py-3 shadow-2xl border border-gray-200 min-w-[280px] max-w-[360px] mx-auto">
       {/* Speed gauge icon */}
       <div className="flex-shrink-0">
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">

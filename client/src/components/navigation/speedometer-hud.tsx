@@ -143,7 +143,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   return (
     <div
       className={cn(
-        'relative',
+        'relative flex justify-center w-full',
         className
       )}
       data-testid="speedometer-hud"
