@@ -2540,11 +2540,7 @@ function NavigationPageContent() {
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
                   size="lg"
-                  className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
-                  style={{
-                    bottom: 'calc(24px + var(--safe-area-bottom))',
-                    right: 'calc(24px + var(--safe-area-right))'
-                  }}
+                  className="fixed z-50 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 text-white backdrop-blur-sm pointer-events-auto bottom-6 right-6"
                   data-testid="button-open-menu-plan"
                   aria-label="Open menu"
                 >
@@ -2603,11 +2599,7 @@ function NavigationPageContent() {
                   <Button
                     onClick={() => setShowComprehensiveMenu(true)}
                     size="lg"
-                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
-                    style={{
-                      bottom: 'calc(24px + var(--safe-area-bottom))',
-                      right: 'calc(24px + var(--safe-area-right))'
-                    }}
+                    className="fixed z-50 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 text-white backdrop-blur-sm pointer-events-auto bottom-6 right-6"
                     data-testid="button-open-input-preview"
                     aria-label="Open route planning"
                   >
