@@ -417,7 +417,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
             variant="ghost"
             size="sm"
             onClick={onToggleVoice}
-            className="text-gray-300 hover:text-white hover:bg-gray-800 h-10 w-10 p-0"
+            className="text-gray-300 hover:text-white hover:bg-gray-800 h-9 w-9 p-0"
             data-testid="button-toggle-voice"
           >
             {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -427,7 +427,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
             variant="ghost"
             size="sm"
             onClick={onToggleFullscreen}
-            className="text-gray-300 hover:text-white hover:bg-gray-800 h-10 w-10 p-0"
+            className="text-gray-300 hover:text-white hover:bg-gray-800 h-9 w-9 p-0"
             data-testid="button-toggle-fullscreen"
           >
             {isFullscreen ? <Eye className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -438,7 +438,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
             size="sm"
             onClick={onCancelRoute}
             disabled={isCancellingRoute || !onCancelRoute}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border border-red-500 h-10 w-10 p-0"
+            className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border border-red-500 h-9 w-9 p-0"
             data-testid="button-cancel-route"
             title="Cancel Navigation"
           >

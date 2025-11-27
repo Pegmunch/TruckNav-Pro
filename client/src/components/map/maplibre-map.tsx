@@ -2236,7 +2236,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={toggleMapView}
-              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-toggle-view"
               aria-label="Toggle map view"
             >
@@ -2245,7 +2245,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={handleRecenter}
-              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-recenter"
               aria-label="Recenter map"
             >
@@ -2254,7 +2254,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={handleZoomIn}
-              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-in"
               aria-label="Zoom in"
             >
@@ -2263,7 +2263,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={handleZoomOut}
-              className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-out"
               aria-label="Zoom out"
             >
@@ -2273,7 +2273,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               <Button
                 size="icon"
                 onClick={handleCompassClick}
-                className="h-10 w-10 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
+                className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
                 data-testid="button-compass-reset"
                 aria-label="Reset bearing to North"
               >
@@ -2287,7 +2287,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               size="icon"
               onClick={toggle3DMode}
               className={cn(
-                "h-10 w-10 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
+                "h-9 w-9 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
                 is3DMode 
                   ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-600" 
                   : "bg-white/95 hover:bg-white text-gray-800 border-slate-300"
