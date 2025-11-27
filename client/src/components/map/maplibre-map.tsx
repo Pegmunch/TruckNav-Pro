@@ -2092,7 +2092,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
                 // CRITICAL: Camera offset positions vehicle marker below speedometer
                 // Route line begins at top edge of speedometer as default position
                 top: 300, // More space at top for HUD and maneuver instructions
-                bottom: 180, // Route line starts at speedometer top edge (50px bottom + 65px height + 65px safety margin)
+                bottom: 260, // Increased zoom to align route line with speedometer top edge
                 left: 0, 
                 right: 0 
               },
