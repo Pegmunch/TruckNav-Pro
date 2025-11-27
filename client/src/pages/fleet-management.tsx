@@ -373,6 +373,258 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
+  const { toast } = useToast();
+  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
+    queryKey: ['/api/fleet/vehicles'],
+  });
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
+
+  const { data: attachments = [], isLoading: isLoadingAttachments } = useQuery<VehicleAttachment[]>({
+    queryKey: ['/api/fleet/documents', selectedVehicleId],
+    enabled: !!selectedVehicleId,
+    queryFn: async () => {
+      performance.mark('fleet-documents-fetch-start');
+      console.log('[PERF-FLEET] 📄 Fetching documents for vehicle:', selectedVehicleId);
+      const response = await fetch(`/api/fleet/documents/${selectedVehicleId}`);
+      const data = await response.json();
+      performance.mark('fleet-documents-fetch-end');
+      performance.measure('fleet-documents-fetch', 'fleet-documents-fetch-start', 'fleet-documents-fetch-end');
+      const measure = performance.getEntriesByName('fleet-documents-fetch')[0];
+      console.log(`[PERF-FLEET] ✅ Documents loaded: ${data.length} files in ${measure.duration.toFixed(0)}ms`);
+      return data;
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (attachmentId: string) => {
+      performance.mark('fleet-document-delete-start');
+      console.log('[PERF-FLEET] 🗑️ Deleting document:', attachmentId);
+      const response = await fetch(`/api/fleet/documents/${attachmentId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete document');
+      const result = await response.json();
+      performance.mark('fleet-document-delete-end');
+      performance.measure('fleet-document-delete', 'fleet-document-delete-start', 'fleet-document-delete-end');
+      const measure = performance.getEntriesByName('fleet-document-delete')[0];
+      console.log(`[PERF-FLEET] ✅ Document deleted in ${measure.duration.toFixed(0)}ms`);
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/documents', selectedVehicleId] });
+      toast({ title: 'Document deleted successfully' });
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Vehicle Documents</CardTitle>
+          <CardDescription>Manage vehicle registration, MOT, insurance, and maintenance documents</CardDescription>
+        </div>
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-document">
+              <Plus className="w-4 h-4 mr-2" />
+              Upload Document
+            </Button>
+          </DialogTrigger>
+          <AddDocumentDialog onClose={() => setIsAddOpen(false)} />
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="vehicle-select">Select Vehicle</Label>
+            <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
+              <SelectTrigger id="vehicle-select" data-testid="select-document-vehicle">
+                <SelectValue placeholder="Select a vehicle to view documents" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.registration} - {vehicle.make} {vehicle.model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedVehicleId && (
+            <>
+              {isLoadingAttachments ? (
+                <div className="text-center py-8 text-muted-foreground">Loading documents...</div>
+              ) : attachments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No documents uploaded for this vehicle yet.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>File Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Uploaded</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {attachments.map((attachment) => (
+                      <TableRow key={attachment.id} data-testid={`row-document-${attachment.id}`}>
+                        <TableCell className="font-medium">{attachment.fileName}</TableCell>
+                        <TableCell className="capitalize">{attachment.fileType}</TableCell>
+                        <TableCell>{format(new Date(attachment.uploadedAt), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{attachment.fileSize ? `${(attachment.fileSize / 1024 / 1024).toFixed(2)} MB` : '—'}</TableCell>
+                        <TableCell className="space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(`/api/fleet/documents/download/${attachment.id}`, '_blank')}
+                            data-testid={`button-download-document-${attachment.id}`}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(attachment.id)}
+                            data-testid={`button-delete-document-${attachment.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AddDocumentDialog({ onClose }: { onClose: () => void }) {
+  const { toast } = useToast();
+  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
+    queryKey: ['/api/fleet/vehicles'],
+  });
+  const [formData, setFormData] = useState({
+    vehicleId: '',
+    fileType: 'registration' as const,
+    description: '',
+  });
+  const [file, setFile] = useState<File | null>(null);
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!file || !formData.vehicleId) throw new Error('Missing file or vehicle');
+      
+      performance.mark('fleet-document-upload-start');
+      console.log('[PERF-FLEET] 📤 Uploading document:', file.name);
+      
+      const formDataObj = new FormData();
+      formDataObj.append('file', file);
+      formDataObj.append('vehicleId', formData.vehicleId);
+      formDataObj.append('fileType', formData.fileType);
+      formDataObj.append('description', formData.description);
+
+      const response = await fetch('/api/fleet/documents/upload', {
+        method: 'POST',
+        body: formDataObj,
+      });
+      if (!response.ok) throw new Error('Failed to upload document');
+      
+      performance.mark('fleet-document-upload-end');
+      performance.measure('fleet-document-upload', 'fleet-document-upload-start', 'fleet-document-upload-end');
+      const measure = performance.getEntriesByName('fleet-document-upload')[0];
+      console.log(`[PERF-FLEET] ✅ Document uploaded in ${measure.duration.toFixed(0)}ms`);
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/documents', formData.vehicleId] });
+      toast({ title: 'Document uploaded successfully' });
+      onClose();
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate();
+  };
+
+  return (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Upload Vehicle Document</DialogTitle>
+        <DialogDescription>Upload registration, MOT, insurance, or maintenance documents</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="vehicleId">Vehicle *</Label>
+            <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
+              <SelectTrigger data-testid="select-upload-vehicle">
+                <SelectValue placeholder="Select vehicle" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.registration} - {vehicle.make} {vehicle.model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="fileType">Document Type *</Label>
+            <Select value={formData.fileType} onValueChange={(value: any) => setFormData({ ...formData, fileType: value })}>
+              <SelectTrigger data-testid="select-file-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="registration">Registration</SelectItem>
+                <SelectItem value="mot">MOT</SelectItem>
+                <SelectItem value="insurance">Insurance</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="file">File *</Label>
+            <Input
+              id="file"
+              type="file"
+              required
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              data-testid="input-document-file"
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            />
+          </div>
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="e.g., 2024 MOT Certificate"
+              data-testid="input-document-description"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={createMutation.isPending || !file} data-testid="button-submit-document">
+            {createMutation.isPending ? 'Uploading...' : 'Upload Document'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
 function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
   const { toast } = useToast();
   const { data: operators = [], isLoading } = useQuery<Operator[]>({
@@ -626,555 +878,3 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
-  const { toast } = useToast();
-  const { data: upcomingServices = [], isLoading } = useQuery<ServiceRecord[]>({
-    queryKey: ['/api/fleet/service-records/upcoming'],
-  });
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Service Records</CardTitle>
-          <CardDescription>Track vehicle maintenance and services</CardDescription>
-        </div>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-service">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Service Record
-            </Button>
-          </DialogTrigger>
-          <AddServiceDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <h3 className="font-semibold mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-            Upcoming Services (Next 30 Days)
-          </h3>
-        </div>
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading services...</div>
-        ) : upcomingServices.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No upcoming services scheduled.</div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Service Type</TableHead>
-                <TableHead>Next Due Date</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {upcomingServices.map((service) => (
-                <TableRow key={service.id} data-testid={`row-service-${service.id}`}>
-                  <TableCell className="font-medium">{service.vehicleId}</TableCell>
-                  <TableCell className="capitalize">{service.serviceType}</TableCell>
-                  <TableCell>
-                    {service.nextServiceDue ? format(new Date(service.nextServiceDue), 'dd/MM/yyyy') : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{service.status || 'scheduled'}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function AddServiceDialog({ onClose }: { onClose: () => void }) {
-  const { toast } = useToast();
-  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
-    queryKey: ['/api/fleet/vehicles/active'],
-  });
-
-  const [formData, setFormData] = useState({
-    vehicleId: '',
-    serviceType: 'routine',
-    serviceDate: new Date().toISOString().split('T')[0],
-    nextServiceDue: '',
-    mileageAtService: 0,
-    serviceCost: 0,
-    serviceProvider: '',
-    description: '',
-    status: 'completed',
-    notes: '',
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/fleet/service-records', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          serviceDate: new Date(data.serviceDate),
-          nextServiceDue: data.nextServiceDue ? new Date(data.nextServiceDue) : undefined,
-        })
-      });
-      if (!response.ok) throw new Error('Failed to create service record');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/fleet/service-records'] });
-      toast({ title: 'Service record added successfully' });
-      onClose();
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(formData);
-  };
-
-  return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>Add Service Record</DialogTitle>
-        <DialogDescription>Record vehicle maintenance and service details</DialogDescription>
-      </DialogHeader>
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="vehicleId">Vehicle *</Label>
-            <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
-              <SelectTrigger data-testid="select-service-vehicle">
-                <SelectValue placeholder="Select vehicle" />
-              </SelectTrigger>
-              <SelectContent>
-                {vehicles.map((vehicle) => (
-                  <SelectItem key={vehicle.id} value={vehicle.id}>
-                    {vehicle.registration} - {vehicle.make} {vehicle.model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="serviceType">Service Type *</Label>
-            <Select value={formData.serviceType} onValueChange={(value) => setFormData({ ...formData, serviceType: value })}>
-              <SelectTrigger data-testid="select-service-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="routine">Routine Service</SelectItem>
-                <SelectItem value="mot">MOT Test</SelectItem>
-                <SelectItem value="repair">Repair</SelectItem>
-                <SelectItem value="inspection">Inspection</SelectItem>
-                <SelectItem value="tachograph_calibration">Tachograph Calibration</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="serviceDate">Service Date *</Label>
-            <Input
-              id="serviceDate"
-              type="date"
-              required
-              value={formData.serviceDate}
-              onChange={(e) => setFormData({ ...formData, serviceDate: e.target.value })}
-              data-testid="input-service-date"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="nextServiceDue">Next Service Due</Label>
-            <Input
-              id="nextServiceDue"
-              type="date"
-              value={formData.nextServiceDue}
-              onChange={(e) => setFormData({ ...formData, nextServiceDue: e.target.value })}
-              data-testid="input-next-service-due"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mileageAtService">Mileage at Service</Label>
-            <Input
-              id="mileageAtService"
-              type="number"
-              value={formData.mileageAtService}
-              onChange={(e) => setFormData({ ...formData, mileageAtService: parseFloat(e.target.value) })}
-              data-testid="input-service-mileage"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="serviceCost">Service Cost (£)</Label>
-            <Input
-              id="serviceCost"
-              type="number"
-              step="0.01"
-              value={formData.serviceCost}
-              onChange={(e) => setFormData({ ...formData, serviceCost: parseFloat(e.target.value) })}
-              data-testid="input-service-cost"
-            />
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="serviceProvider">Service Provider</Label>
-            <Input
-              id="serviceProvider"
-              value={formData.serviceProvider}
-              onChange={(e) => setFormData({ ...formData, serviceProvider: e.target.value })}
-              placeholder="e.g., ABC Garage Ltd"
-              data-testid="input-service-provider"
-            />
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              data-testid="input-service-description"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service">
-            {createMutation.isPending ? 'Adding...' : 'Add Service Record'}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
-  );
-}
-
-function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
-  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
-    queryKey: ['/api/fleet/vehicles/active'],
-  });
-
-  const { data: fuelLogs = [] } = useQuery<FuelLog[]>({
-    queryKey: ['/api/fleet/fuel-logs/vehicle', selectedVehicleId],
-    enabled: !!selectedVehicleId,
-  });
-
-  const { data: efficiency } = useQuery<{ averageMPG: number; totalFuelCost: number; totalLiters: number }>({
-    queryKey: ['/api/fleet/fuel-logs/vehicle', selectedVehicleId, 'efficiency'],
-    enabled: !!selectedVehicleId,
-  });
-
-  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
-
-  const calculatedStats = selectedVehicleId && fuelLogs.length > 0 ? {
-    totalFillUps: fuelLogs.length,
-    totalLiters: fuelLogs.reduce((sum, log) => sum + (log.liters || 0), 0),
-    totalCost: fuelLogs.reduce((sum, log) => sum + parseFloat(log.totalCost?.toString() || '0'), 0),
-    averageCostPerLiter: fuelLogs.length > 0 
-      ? fuelLogs.reduce((sum, log) => sum + parseFloat(log.costPerLiter?.toString() || '0'), 0) / fuelLogs.filter(log => log.costPerLiter).length
-      : 0,
-    distanceTraveled: fuelLogs.length >= 2
-      ? Math.max(...fuelLogs.map(log => log.odometer || 0)) - Math.min(...fuelLogs.map(log => log.odometer || 0))
-      : 0,
-    averageMPG: efficiency?.averageMPG || 0,
-    costPerMile: 0,
-  } : null;
-
-  if (calculatedStats && calculatedStats.distanceTraveled > 0) {
-    calculatedStats.costPerMile = calculatedStats.totalCost / calculatedStats.distanceTraveled;
-  }
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Fuel Logs</CardTitle>
-          <CardDescription>Track fuel consumption and efficiency with automatic calculations</CardDescription>
-        </div>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-fuel-log">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Fuel Log
-            </Button>
-          </DialogTrigger>
-          <AddFuelLogDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
-      </CardHeader>
-      <CardContent>
-        {vehicles.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">Add vehicles first to start tracking fuel consumption.</div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <Label htmlFor="vehicle-select" className="whitespace-nowrap">Select Vehicle:</Label>
-              <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-                <SelectTrigger id="vehicle-select" className="max-w-md" data-testid="select-fuel-vehicle-filter">
-                  <SelectValue placeholder="Choose a vehicle to view fuel logs" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.registration} - {vehicle.make} {vehicle.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedVehicleId && calculatedStats && (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Total Fill-Ups</div>
-                    <div className="text-2xl font-bold" data-testid="stat-total-fillups">{calculatedStats.totalFillUps}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Total Fuel (L)</div>
-                    <div className="text-2xl font-bold" data-testid="stat-total-liters">{calculatedStats.totalLiters.toFixed(1)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Total Cost</div>
-                    <div className="text-2xl font-bold text-red-600" data-testid="stat-total-cost">£{calculatedStats.totalCost.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Avg MPG</div>
-                    <div className="text-2xl font-bold text-green-600" data-testid="stat-avg-mpg">
-                      {calculatedStats.averageMPG > 0 ? calculatedStats.averageMPG.toFixed(1) : 'N/A'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Distance Traveled</div>
-                    <div className="text-2xl font-bold" data-testid="stat-distance">{calculatedStats.distanceTraveled.toLocaleString()} mi</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Avg Cost/Liter</div>
-                    <div className="text-2xl font-bold" data-testid="stat-avg-cost-per-liter">
-                      £{calculatedStats.averageCostPerLiter > 0 ? calculatedStats.averageCostPerLiter.toFixed(3) : '0.000'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Cost per Mile</div>
-                    <div className="text-2xl font-bold" data-testid="stat-cost-per-mile">
-                      £{calculatedStats.costPerMile > 0 ? calculatedStats.costPerMile.toFixed(3) : 'N/A'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Current Mileage</div>
-                    <div className="text-2xl font-bold" data-testid="stat-current-mileage">
-                      {selectedVehicle?.currentMileage?.toLocaleString() || '0'} mi
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-4">Fuel Log History</h3>
-                  {fuelLogs.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No fuel logs found for this vehicle.</div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Odometer</TableHead>
-                          <TableHead>Liters</TableHead>
-                          <TableHead>Cost</TableHead>
-                          <TableHead>Cost/L</TableHead>
-                          <TableHead>MPG</TableHead>
-                          <TableHead>Location</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {fuelLogs.map((log) => (
-                          <TableRow key={log.id} data-testid={`row-fuel-log-${log.id}`}>
-                            <TableCell>{log.fillDate ? format(new Date(log.fillDate), 'dd/MM/yyyy') : '—'}</TableCell>
-                            <TableCell>{log.odometer?.toLocaleString() || '—'} mi</TableCell>
-                            <TableCell>{log.liters?.toFixed(1) || '—'} L</TableCell>
-                            <TableCell>£{log.totalCost ? parseFloat(log.totalCost.toString()).toFixed(2) : '—'}</TableCell>
-                            <TableCell>£{log.costPerLiter ? parseFloat(log.costPerLiter.toString()).toFixed(3) : '—'}</TableCell>
-                            <TableCell className={log.mpg && log.mpg > 0 ? 'text-green-600 font-medium' : ''}>
-                              {log.mpg && log.mpg > 0 ? log.mpg.toFixed(1) : '—'}
-                            </TableCell>
-                            <TableCell>{log.location || '—'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-              </>
-            )}
-
-            {!selectedVehicleId && (
-              <div className="text-center py-8 text-muted-foreground">Select a vehicle above to view fuel logs and consumption statistics.</div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function AddFuelLogDialog({ onClose }: { onClose: () => void }) {
-  const { toast } = useToast();
-  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
-    queryKey: ['/api/fleet/vehicles/active'],
-  });
-  const { data: operators = [] } = useQuery<Operator[]>({
-    queryKey: ['/api/fleet/operators/active'],
-  });
-
-  const [formData, setFormData] = useState({
-    vehicleId: '',
-    operatorId: '',
-    fillDate: new Date().toISOString().split('T')[0],
-    odometer: 0,
-    liters: 0,
-    costPerLiter: 0,
-    totalCost: 0,
-    fuelType: 'diesel',
-    location: '',
-    fullTank: true,
-    mpg: 0,
-    notes: '',
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/fleet/fuel-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          fillDate: new Date(data.fillDate),
-          operatorId: data.operatorId || undefined,
-        })
-      });
-      if (!response.ok) throw new Error('Failed to create fuel log');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/fleet/fuel-logs'] });
-      toast({ title: 'Fuel log added successfully' });
-      onClose();
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(formData);
-  };
-
-  return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>Add Fuel Log</DialogTitle>
-        <DialogDescription>Record fuel fill-up details</DialogDescription>
-      </DialogHeader>
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="vehicleId">Vehicle *</Label>
-            <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
-              <SelectTrigger data-testid="select-fuel-vehicle">
-                <SelectValue placeholder="Select vehicle" />
-              </SelectTrigger>
-              <SelectContent>
-                {vehicles.map((vehicle) => (
-                  <SelectItem key={vehicle.id} value={vehicle.id}>
-                    {vehicle.registration} - {vehicle.make} {vehicle.model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="operatorId">Operator</Label>
-            <Select value={formData.operatorId} onValueChange={(value) => setFormData({ ...formData, operatorId: value })}>
-              <SelectTrigger data-testid="select-fuel-operator">
-                <SelectValue placeholder="Select operator" />
-              </SelectTrigger>
-              <SelectContent>
-                {operators.map((operator) => (
-                  <SelectItem key={operator.id} value={operator.id}>
-                    {operator.firstName} {operator.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fillDate">Fill Date *</Label>
-            <Input
-              id="fillDate"
-              type="date"
-              required
-              value={formData.fillDate}
-              onChange={(e) => setFormData({ ...formData, fillDate: e.target.value })}
-              data-testid="input-fill-date"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="odometer">Odometer Reading *</Label>
-            <Input
-              id="odometer"
-              type="number"
-              required
-              value={formData.odometer}
-              onChange={(e) => setFormData({ ...formData, odometer: parseFloat(e.target.value) })}
-              data-testid="input-odometer"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="liters">Liters *</Label>
-            <Input
-              id="liters"
-              type="number"
-              step="0.01"
-              required
-              value={formData.liters}
-              onChange={(e) => setFormData({ ...formData, liters: parseFloat(e.target.value) })}
-              data-testid="input-liters"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="totalCost">Total Cost (£) *</Label>
-            <Input
-              id="totalCost"
-              type="number"
-              step="0.01"
-              required
-              value={formData.totalCost}
-              onChange={(e) => setFormData({ ...formData, totalCost: parseFloat(e.target.value) })}
-              data-testid="input-total-cost"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="e.g., Shell Station, M1 Services"
-              data-testid="input-location"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mpg">MPG</Label>
-            <Input
-              id="mpg"
-              type="number"
-              step="0.1"
-              value={formData.mpg}
-              onChange={(e) => setFormData({ ...formData, mpg: parseFloat(e.target.value) })}
-              data-testid="input-mpg"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel-log">
-            {createMutation.isPending ? 'Adding...' : 'Add Fuel Log'}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
-  );
-}
