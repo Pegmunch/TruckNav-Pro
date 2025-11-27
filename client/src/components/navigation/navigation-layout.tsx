@@ -48,10 +48,10 @@ export function NavigationLayout({
         <div 
           className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto"
           style={{
-            top: 'calc(72px + var(--safe-area-top, 0px))',
+            top: 'calc(90px + var(--safe-area-top, 0px))',
             right: 'calc(12px + var(--safe-area-right, 0px))',
             bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-            maxHeight: 'calc(100vh - 172px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
+            maxHeight: 'calc(100vh - 190px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
           }}
         >
           {rightStack}
