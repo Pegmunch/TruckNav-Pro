@@ -2089,10 +2089,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               pitch: 67, // 3D perspective for better spatial awareness
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
-                // CRITICAL: Camera offset positions vehicle marker in lower third
-                // This centers the blue route line beneath the speedometer
+                // CRITICAL: Camera offset positions vehicle marker below speedometer
+                // Route line begins at top edge of speedometer as default position
                 top: 300, // More space at top for HUD and maneuver instructions
-                bottom: 100, // Less space at bottom - vehicle marker near bottom third
+                bottom: 180, // Route line starts at speedometer top edge (50px bottom + 65px height + 65px safety margin)
                 left: 0, 
                 right: 0 
               },

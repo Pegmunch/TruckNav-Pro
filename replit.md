@@ -90,8 +90,9 @@ These settings are LOCKED and must remain unchanged to preserve the user experie
 ## Head-Up Navigation Display (CRITICAL FEATURE)
 - **Preview Mode**: Route bearing calculated from start→destination, map rotated so route appears vertical (bottom-to-top)
 - **Navigation Mode**: Map continuously rotates based on GPS heading to keep route vertical
-- **Route Line**: ALWAYS appears from bottom of screen going to top - map rotates beneath it
+- **Route Line**: ALWAYS begins at top edge of speedometer, goes upward to destination - map rotates beneath it
 - **GPS Heading Rotation**: Runs at 30 FPS for smooth rotation during navigation
+- **Map Padding During Navigation**: bottom: 180px (aligns route start with speedometer top edge), top: 300px
 
 ## Mode-Specific Behavior
 - **Plan Mode**: Hamburger FAB in bottom-right corner (h-14 w-14, blue) for menu access
