@@ -10,9 +10,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { FleetVehicle, Operator, ServiceRecord, FuelLog } from '@shared/schema';
+import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
 import { DesktopHeader } from '@/components/navigation/desktop-header';
 import { NotificationsBanner } from '@/components/fleet/notifications-banner';
@@ -24,6 +24,7 @@ export default function FleetManagement() {
   const [isAddOperatorOpen, setIsAddOperatorOpen] = useState(false);
   const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
   const [isAddFuelLogOpen, setIsAddFuelLogOpen] = useState(false);
+  const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
 
   return (
     <>
@@ -41,7 +42,7 @@ export default function FleetManagement() {
           <NotificationsBanner />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="vehicles" className="flex items-center gap-2" data-testid="tab-vehicles">
               <Truck className="w-4 h-4" />
               Vehicles
@@ -57,6 +58,10 @@ export default function FleetManagement() {
             <TabsTrigger value="fuel" className="flex items-center gap-2" data-testid="tab-fuel">
               <Fuel className="w-4 h-4" />
               Fuel Logs
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-2" data-testid="tab-documents">
+              <FileText className="w-4 h-4" />
+              Documents
             </TabsTrigger>
           </TabsList>
 
@@ -74,6 +79,10 @@ export default function FleetManagement() {
 
           <TabsContent value="fuel">
             <FuelLogsTab isAddOpen={isAddFuelLogOpen} setIsAddOpen={setIsAddFuelLogOpen} />
+          </TabsContent>
+
+          <TabsContent value="documents">
+            <DocumentsTab isAddOpen={isAddDocumentOpen} setIsAddOpen={setIsAddDocumentOpen} />
           </TabsContent>
         </Tabs>
         </div>
