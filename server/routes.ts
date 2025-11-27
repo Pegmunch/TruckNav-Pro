@@ -5002,6 +5002,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Vehicle Documents API endpoints
+  app.post("/api/fleet/documents/upload", multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }).single('file'), async (req: Request, res: Response) => {
+    try {
+      performance.mark('api-document-upload-start');
+      console.log('[PERF-API] 📤 Document upload start');
+      
+      if (!req.file || !req.body.vehicleId) {
+        return res.status(400).json({ message: "Missing file or vehicleId" });
+      }
+
+      // Get object storage details
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+      const privateDir = process.env.PRIVATE_OBJECT_DIR || '.private';
+      
+      if (!bucketId) {
+        return res.status(500).json({ message: "Object storage not configured" });
+      }
+
+      // Create object path
+      const objectPath = `${privateDir}/fleet-documents/${req.body.vehicleId}/${Date.now()}-${req.file.originalname}`;
+
+      // Create attachment record
+      const attachment = await storage.createVehicleAttachment({
+        vehicleId: req.body.vehicleId,
+        fileName: req.file.originalname,
+        fileType: req.body.fileType || 'other',
+        objectPath,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        uploadedBy: req.user?.id,
+        description: req.body.description,
+      });
+
+      performance.mark('api-document-upload-end');
+      performance.measure('api-document-upload', 'api-document-upload-start', 'api-document-upload-end');
+      console.log('[PERF-API] ✅ Document uploaded in', performance.getEntriesByName('api-document-upload')[0].duration.toFixed(0), 'ms');
+
+      res.json(attachment);
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  app.get("/api/fleet/documents/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      performance.mark('api-documents-fetch-start');
+      console.log('[PERF-API] 📄 Fetching documents for vehicle:', req.params.vehicleId);
+      
+      const attachments = await storage.getVehicleAttachments(req.params.vehicleId);
+      
+      performance.mark('api-documents-fetch-end');
+      performance.measure('api-documents-fetch', 'api-documents-fetch-start', 'api-documents-fetch-end');
+      console.log('[PERF-API] ✅ Documents fetched in', performance.getEntriesByName('api-documents-fetch')[0].duration.toFixed(0), 'ms');
+      
+      res.json(attachments);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  app.get("/api/fleet/documents/download/:id", async (req: Request, res: Response) => {
+    try {
+      performance.mark('api-document-download-start');
+      console.log('[PERF-API] 📥 Downloading document:', req.params.id);
+      
+      const attachment = await storage.getVehicleAttachment(req.params.id);
+      if (!attachment) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // TODO: Implement actual file download from object storage
+      // For now, return document metadata
+      performance.mark('api-document-download-end');
+      performance.measure('api-document-download', 'api-document-download-start', 'api-document-download-end');
+      console.log('[PERF-API] ✅ Document prepared in', performance.getEntriesByName('api-document-download')[0].duration.toFixed(0), 'ms');
+      
+      res.json(attachment);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      res.status(500).json({ message: "Failed to download document" });
+    }
+  });
+
+  app.delete("/api/fleet/documents/:id", async (req: Request, res: Response) => {
+    try {
+      performance.mark('api-document-delete-start');
+      console.log('[PERF-API] 🗑️ Deleting document:', req.params.id);
+      
+      const attachment = await storage.getVehicleAttachment(req.params.id);
+      if (!attachment) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Delete from storage
+      await storage.deleteVehicleAttachment(req.params.id);
+
+      performance.mark('api-document-delete-end');
+      performance.measure('api-document-delete', 'api-document-delete-start', 'api-document-delete-end');
+      console.log('[PERF-API] ✅ Document deleted in', performance.getEntriesByName('api-document-delete')[0].duration.toFixed(0), 'ms');
+      
+      res.json({ message: "Document deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      res.status(500).json({ message: "Failed to delete document" });
+    }
+  });
+
   // =============================================================================
   // END SOCIAL NETWORK API ROUTES
   // =============================================================================
