@@ -2321,31 +2321,31 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       {/* GPS Status Indicator */}
       {(gpsStatus === 'acquiring' || gpsStatus === 'unavailable' || gpsStatus === 'error') && (
         <div 
-          className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          className="absolute top-36 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
           data-testid="gps-status-indicator"
         >
           <div className={cn(
-            "px-4 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-2",
+            "px-2 py-1 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5",
             gpsStatus === 'acquiring' && "bg-transparent text-foreground border border-orange-500",
             gpsStatus === 'unavailable' && "bg-red-500/90 text-white",
             gpsStatus === 'error' && "bg-red-600/90 text-white"
           )}>
             {gpsStatus === 'acquiring' && (
               <>
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                <span className="text-sm font-medium">Acquiring GPS...</span>
+                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                <span className="text-xs font-medium">Acquiring GPS</span>
               </>
             )}
             {gpsStatus === 'unavailable' && (
               <>
-                <Crosshair className="w-4 h-4" />
-                <span className="text-sm font-medium">GPS unavailable</span>
+                <Crosshair className="w-3 h-3" />
+                <span className="text-xs font-medium">GPS unavailable</span>
               </>
             )}
             {gpsStatus === 'error' && (
               <>
-                <Crosshair className="w-4 h-4" />
-                <span className="text-sm font-medium">GPS error</span>
+                <Crosshair className="w-3 h-3" />
+                <span className="text-xs font-medium">GPS error</span>
               </>
             )}
           </div>
