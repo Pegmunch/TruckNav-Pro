@@ -24,13 +24,20 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Address Autocomplete & POI Search**: Uses TomTom Search API for worldwide address autocomplete and truck-specific POI search with fuzzy matching. Features bulletproof geocoding system with priority-based lookups (direct coordinates, cached, postcodes.io, TomTom Search API).
 - **Mobile Menu**: Full-screen UI with a tabbed interface for route planning, recent destinations, vehicle selection, theme settings, and tools. Route planning includes live autocomplete with TomTom-powered dropdowns.
 - **Mobile Compatibility & PWA**: Progressive Web App with offline support, iOS enhancements, automatic update detection, and offline features for cached routes, restrictions, and facilities.
-- **Fleet Management System (Desktop-Only)**: Comprehensive fleet management system for office/back-end use, accessible only on desktop devices. Features include:
+- **Fleet Management System (Desktop-Only)**: Enterprise-grade comprehensive fleet management system for office/back-end use, accessible only on desktop devices. Features 9 integrated tabs with advanced analytics and compliance tracking:
   - **Vehicle Registry**: Track vehicles with registration numbers, trailer numbers, make/model, year, VIN, vehicle type, fuel type, tank capacity, mileage, and status (active/maintenance/decommissioned).
   - **Operator Management**: Manage drivers with personal details, license information (number, type, expiry), Driver CPC expiry, tachograph card details, employee ID, and status.
   - **Service Records**: Comprehensive maintenance tracking including service type (routine, MOT, repair, inspection, tachograph calibration), service dates, next due dates, mileage at service, costs, service providers, parts replaced, and automatic monitoring for upcoming services.
   - **Fuel Consumption**: Log fuel fill-ups with odometer readings, liters added, costs, location, fuel type, MPG calculations, and automatic fuel efficiency tracking per vehicle.
   - **Vehicle Assignments**: Track which operators are assigned to which vehicles with active/inactive status and assignment history.
-  - **Automatic Monitoring**: System monitors upcoming service dates and provides alerts for services due within configurable timeframes.
+  - **Document Management**: Store and manage official vehicle documents (registration, MOT, insurance, maintenance) with cloud storage integration.
+  - **Cost Analytics Dashboard**: Professional financial analysis with pie charts (cost breakdown by type), bar charts (costs per vehicle), and monthly trend lines. Includes total cost tracking, average cost per vehicle, and category analysis.
+  - **Incident Logging**: Track accidents, damage, violations, breakdowns, and near-misses with severity levels (critical/high/medium/low), root cause analysis, preventative measures, and insurance claim tracking.
+  - **Trip Tracking & Profitability Analysis**: Monitor trips with planned vs. actual metrics (distance, duration, cost, revenue), profit margin calculations, route efficiency tracking, and fleet-wide trip analytics dashboard.
+  - **Compliance & Regulatory Tracking**: Track regulatory compliance (DVLA checks, emission standards, hazmat certifications, tachograph inspections, working hours) with non-compliant record alerts.
+  - **Predictive Maintenance**: AI-powered maintenance predictions based on mileage and usage patterns with risk level scoring (low/medium/high/critical).
+  - **Role-Based Access Control (RBAC)**: 6 role types (admin, manager, dispatcher, driver, accountant, viewer) with granular permission management.
+  - **Automatic Monitoring**: System monitors upcoming service dates, license/certification expirations, and non-compliance issues with configurable alert thresholds.
   - **Desktop Navigation**: Clean desktop-only header navigation for switching between Navigation and Fleet Management interfaces.
 
 # External Dependencies

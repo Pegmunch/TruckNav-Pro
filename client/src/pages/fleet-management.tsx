@@ -10,12 +10,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
 import { DesktopHeader } from '@/components/navigation/desktop-header';
 import { NotificationsBanner } from '@/components/fleet/notifications-banner';
+import { CostAnalyticsDashboard } from '@/components/fleet-analytics-dashboard';
+import { IncidentsTab } from '@/components/fleet-incidents-tab';
+import { TripsTab } from '@/components/fleet-trips-tab';
+import { ComplianceTab } from '@/components/fleet-compliance-tab';
 
 export default function FleetManagement() {
   const { toast } = useToast();
@@ -42,26 +46,51 @@ export default function FleetManagement() {
           <NotificationsBanner />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="vehicles" className="flex items-center gap-2" data-testid="tab-vehicles">
+          <TabsList className="grid w-full grid-cols-8 mb-6 overflow-x-auto">
+            <TabsTrigger value="vehicles" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-vehicles">
               <Truck className="w-4 h-4" />
-              Vehicles
+              <span className="hidden sm:inline">Vehicles</span>
+              <span className="sm:hidden">V</span>
             </TabsTrigger>
-            <TabsTrigger value="operators" className="flex items-center gap-2" data-testid="tab-operators">
+            <TabsTrigger value="operators" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-operators">
               <Users className="w-4 h-4" />
-              Operators
+              <span className="hidden sm:inline">Operators</span>
+              <span className="sm:hidden">O</span>
             </TabsTrigger>
-            <TabsTrigger value="service" className="flex items-center gap-2" data-testid="tab-service">
+            <TabsTrigger value="service" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-service">
               <Wrench className="w-4 h-4" />
-              Service Records
+              <span className="hidden sm:inline">Service</span>
+              <span className="sm:hidden">S</span>
             </TabsTrigger>
-            <TabsTrigger value="fuel" className="flex items-center gap-2" data-testid="tab-fuel">
+            <TabsTrigger value="fuel" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-fuel">
               <Fuel className="w-4 h-4" />
-              Fuel Logs
+              <span className="hidden sm:inline">Fuel</span>
+              <span className="sm:hidden">F</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2" data-testid="tab-documents">
+            <TabsTrigger value="documents" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-documents">
               <FileText className="w-4 h-4" />
-              Documents
+              <span className="hidden sm:inline">Docs</span>
+              <span className="sm:hidden">D</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-analytics">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">A</span>
+            </TabsTrigger>
+            <TabsTrigger value="incidents" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-incidents">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="hidden sm:inline">Incidents</span>
+              <span className="sm:hidden">I</span>
+            </TabsTrigger>
+            <TabsTrigger value="trips" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-trips">
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">Trips</span>
+              <span className="sm:hidden">T</span>
+            </TabsTrigger>
+            <TabsTrigger value="compliance" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-compliance">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Compliance</span>
+              <span className="sm:hidden">C</span>
             </TabsTrigger>
           </TabsList>
 
@@ -83,6 +112,22 @@ export default function FleetManagement() {
 
           <TabsContent value="documents">
             <DocumentsTab isAddOpen={isAddDocumentOpen} setIsAddOpen={setIsAddDocumentOpen} />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <CostAnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="incidents">
+            <IncidentsTab />
+          </TabsContent>
+
+          <TabsContent value="trips">
+            <TripsTab />
+          </TabsContent>
+
+          <TabsContent value="compliance">
+            <ComplianceTab />
           </TabsContent>
         </Tabs>
         </div>
