@@ -1245,13 +1245,21 @@ function NavigationPageContent() {
         navState,
         shouldShowHUD
       });
+      
+      // CRITICAL FIX: Sync local UI state with server state when active journey detected
+      // This ensures navigation UI shows even after page refresh or PWA restart
+      if (currentJourney.status === 'active' && shouldShowHUD && !isLocalNavActive) {
+        console.log('[JOURNEY-LOAD] ✅ Syncing local nav UI state with active journey');
+        setIsLocalNavActive(true);
+        localStorage.setItem('navigation_ui_active', 'true');
+      }
     } else {
       // No journey - clear route data
       console.log('[JOURNEY-LOAD] No journey - clearing route data');
       setCurrentRoute(null);
       // NOTE: Navigation state is automatically derived by useNavigationSession
     }
-  }, [currentJourney, navState, shouldShowHUD]);
+  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive]);
 
   // Handle page refresh - restore journey if it exists
   // NOTE: Navigation state is automatically derived by useNavigationSession hook
