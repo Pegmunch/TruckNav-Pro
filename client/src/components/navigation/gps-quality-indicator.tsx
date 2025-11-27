@@ -138,7 +138,7 @@ export function GPSQualityIndicator({
     return (
       <Badge
         className={cn(
-          'flex items-center gap-1.5 px-2 py-1 transition-all',
+          'flex items-center gap-0.5 px-2 py-1 transition-all text-xs',
           getColorClasses(),
           isFlashing && 'animate-pulse',
           className
@@ -147,19 +147,14 @@ export function GPSQualityIndicator({
         data-testid="gps-quality-indicator"
       >
         {getIcon()}
-        <span className="text-xs font-medium">{getStatusText()}</span>
-        {timeSinceLastUpdate && timeSinceLastUpdate > 10 && (
-          <span className="text-xs opacity-75">
-            ({timeSinceLastUpdate}s ago)
-          </span>
-        )}
+        <span className="text-xs font-medium whitespace-nowrap">{getStatusText()}</span>
       </Badge>
     );
   }
 
   // Expanded variant (for settings panel or detailed view)
   return (
-    <Card className={cn('p-4', className)} data-testid="gps-quality-indicator-expanded">
+    <Card className={cn('p-4 bg-white shadow-lg', className)} data-testid="gps-quality-indicator-expanded">
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center justify-between">
