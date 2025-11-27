@@ -451,7 +451,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
       {currentInstruction && (
         <div className="px-4 py-6">
           <div className="max-w-4xl mx-auto">
-            <Card className="bg-gray-900/90 border-gray-700/50 backdrop-blur-sm">
+            <Card className="bg-white shadow-lg border border-gray-200">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-6">
                   {/* Direction Icon */}

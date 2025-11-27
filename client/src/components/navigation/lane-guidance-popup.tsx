@@ -318,7 +318,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
       }}
       data-testid="popup-lane-indicators"
     >
-      <Card className="shadow-xl border-2 border-primary/30 backdrop-blur-sm bg-background/95">
+      <Card className="shadow-xl border-2 border-gray-200 bg-white">
         <CardContent className="p-3">
           <div className="space-y-2">
             {/* Header with Drag Handle and Close Button */}

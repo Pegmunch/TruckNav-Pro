@@ -98,8 +98,8 @@ export default function WeatherWidget({
   if (!isOpen) return null;
 
   return (
-    <div className={cn("fixed inset-0 bg-background z-50 flex items-center justify-center p-4", className)}>
-      <Card className="w-full max-w-md bg-background shadow-xl">
+    <div className={cn("fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4", className)}>
+      <Card className="w-full max-w-md bg-white shadow-xl">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center">
             <WeatherIcon className="w-5 h-5 mr-2 text-primary" />
