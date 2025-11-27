@@ -1462,8 +1462,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     
     // Skip if map not ready, navigating, or no violations
     if (!map.current?.isStyleLoaded() || navigating || !violations) {
-      console.log('[RESTRICTION-MARKERS] Skipping render - styleLoaded:', map.current?.isStyleLoaded(), 
-                  'navigating:', navigating, 'hasViolations:', !!violations);
       // Clean up markers if navigating or no violations
       if (navigating || !violations) {
         restrictionMarkersRef.current.forEach(marker => marker.remove());
@@ -1480,15 +1478,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
     // Count restrictions with and without coordinates
     const withCoordinates = violations.filter(v => v.restriction.coordinates);
-    const withoutCoordinates = violations.length - withCoordinates.length;
-
-    console.log('[RESTRICTION-MARKERS] Rendering', withCoordinates.length, 'restriction markers (preview mode)', 
-      withoutCoordinates > 0 ? `(${withoutCoordinates} without coordinates)` : '');
 
     // Create markers for each restriction violation
     violations.forEach((violation) => {
       if (!violation.restriction.coordinates) {
-        console.warn('[RESTRICTION-MARKERS] Skipping restriction without coordinates:', violation.restriction.id, violation.restriction.location);
         return;
       }
 
@@ -1870,14 +1863,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           `;
           mapContainer.current.appendChild(arrowheadEl);
           screenArrowheadRef.current = arrowheadEl;
-          console.log('[ARROWHEAD] ✅ Screen-fixed arrowhead created above speedometer');
         }
       } else if (screenArrowheadRef.current) {
         screenArrowheadRef.current.remove();
         screenArrowheadRef.current = null;
       }
-      
-      console.log('[GPS-MARKER] ✅ Navigation positioning complete');
     }
 
     // Cleanup
@@ -1893,20 +1883,13 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   // Continuously applies GPS heading to map bearing during navigation
   // Makes route line appear vertical (south→north) beneath speedometer
   useEffect(() => {
-    console.log('[GPS-HEADING] Effect triggered - isLoaded:', isLoaded, 'isNavigating:', isNavigating, 'hasMap:', !!map.current);
-    
     if (!map.current || !isLoaded) {
-      console.log('[GPS-HEADING] Waiting for map to load...');
       return;
     }
     
     if (!isNavigating) {
-      console.log('[GPS-HEADING] Not navigating - standing by');
       return;
     }
-    
-    console.log('[GPS-HEADING] ✅ ACTIVATING GPS HEADING ROTATION');
-    console.log('[GPS-HEADING] GPS status:', gpsStatus, 'Has route:', !!currentRoute);
     
     const mapInstance = map.current;
     let animationFrame: number | null = null;
@@ -1986,7 +1969,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       const now = Date.now();
       const deltaTime = now - lastUpdateTime;
       
-      // Update at 30 FPS (every ~33ms) for smooth rotation
+      // Update at 30 FPS (every ~33ms) for smooth rotation with bearing delta check
       if (deltaTime > 33) {
         let bearing = 0;
         let latitude: number | null = null;
@@ -2001,12 +1984,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           bearing = gpsPosition.smoothedHeading ?? gpsPosition.heading ?? lastBearing;
           shouldUpdate = true;
           
+          // Skip update if bearing change is minimal (< 0.5 degrees)
+          if (Math.abs(bearing - lastBearing) < 0.5) {
+            shouldUpdate = false;
+          }
+          
           // Track route progress for fallback
           if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
             routeProgressIndex = findNearestSegment(latitude, longitude, currentRoute.routePath);
           }
-          
-          console.log(`[GPS-HEADING] Using GPS heading: ${bearing.toFixed(1)}° at (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`);
         }
         // PRIORITY 2: Fallback to route segment bearing when GPS unavailable
         else if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {

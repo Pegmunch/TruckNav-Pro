@@ -708,7 +708,6 @@ function NavigationPageContent() {
               // REMOVED TOAST: No popups per user request
             }
             
-            console.log(`[AUTO-ZOOM] ✅ SUCCESS - Centered at ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
           },
           onError: (error, usedFallback) => {
             // Clear loading state
@@ -769,9 +768,7 @@ function NavigationPageContent() {
   // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
   // Only enforces navigate mode when navigation is active, no other automatic transitions
   useEffect(() => {
-    if (isMobile && isNavigating && mobileNavMode !== 'navigate') {
-      console.log('[NAV-MODE-GUARD] Enforcing navigate mode for active navigation');
-    }
+    // Silently enforce navigate mode without logging
   }, [isMobile, isNavigating, mobileNavMode]);
   
   // Forcefully close sidebar/drawer when navigation starts - CRITICAL for UI consistency
