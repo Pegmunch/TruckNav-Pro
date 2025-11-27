@@ -684,6 +684,7 @@ function NavigationPageContent() {
           zoom: 14.5,              // Wider view for better route context
           pitch: 45,               // 3D tilt for better spatial awareness
           duration: 2000,          // Smooth 2-second animation
+          fallbackCoordinates: { lat: 51.5074, lng: -0.1278 }, // UK center as fallback
           onSuccess: (location) => {
             // SUCCESS - mark as completed
             autoZoomState.current.succeeded = true;
@@ -762,7 +763,7 @@ function NavigationPageContent() {
     // Execute auto-zoom
     performAutoZoom();
     
-  }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
+  }, [mapRef, isNavigating, currentRoute]); // Trigger when map is available, not just GPS
   
   // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
   // Only enforces navigate mode when navigation is active, no other automatic transitions
@@ -2714,6 +2715,19 @@ function NavigationPageContent() {
               <div className="fixed bottom-4 right-4 z-50 pointer-events-auto px-3 py-2">
                 <MapLegalOwnership compact={true} className="sm:hidden" />
               </div>
+
+              {/* Input Page Toggle Button - Always visible during plan/preview */}
+              {!isNavigating && (
+                <Button
+                  onClick={() => setShowInputPage(!showInputPage)}
+                  size="icon"
+                  className="fixed bottom-6 right-6 h-12 w-12 bg-blue-500 hover:bg-blue-600 text-white shadow-lg backdrop-blur-sm border border-blue-400 z-50"
+                  data-testid="nav-control-hamburger-fab"
+                  aria-label="Open route planning"
+                >
+                  <Menu className="w-6 h-6" />
+                </Button>
+              )}
             </>
           )}
 
