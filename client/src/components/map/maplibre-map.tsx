@@ -2326,7 +2326,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         >
           <div className={cn(
             "px-4 py-2 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-2",
-            gpsStatus === 'acquiring' && "bg-orange-500/90 text-white",
+            gpsStatus === 'acquiring' && "bg-transparent text-foreground border border-orange-500",
             gpsStatus === 'unavailable' && "bg-red-500/90 text-white",
             gpsStatus === 'error' && "bg-red-600/90 text-white"
           )}>

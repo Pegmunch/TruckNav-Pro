@@ -466,7 +466,7 @@ export function AddressAutocomplete({
           <ToggleGroupItem 
             value="7311" 
             aria-label="Gas stations"
-            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-transparent data-[state=on]:text-foreground data-[state=on]:border-2 data-[state=on]:border-orange-500 hover:scale-105"
+            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-orange-600 data-[state=on]:to-orange-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-orange-500/50 hover:scale-105"
             data-testid="poi-category-gas-stations"
           >
             <Fuel className="h-4 w-4 mr-2" />
