@@ -600,9 +600,10 @@ function NavigationPageContent() {
       return;
     }
     
-    // 4. CHECK GPS AVAILABILITY - need GPS position to zoom
-    if (!gpsData?.position) {
-      return; // Wait for GPS lock
+    // 4. CHECK GPS AVAILABILITY - need GPS position to zoom (or attempt without it)
+    // Allow attempt even without GPS - use fallback coordinates
+    if (!gpsData?.position && !mapRef.current) {
+      return; // Wait for at least map to be ready
     }
     
     // 5. CHECK MAP REFERENCE - map component must be mounted
