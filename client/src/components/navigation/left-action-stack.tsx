@@ -29,10 +29,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button clicked');
           onNavigate?.();
         }}
-        className="h-12 w-12 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        className="h-11 w-11 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="button-nav-left"
       >
-        <Navigation className="h-6 w-6" />
+        <Navigation className="h-5 w-5" />
       </Button>
 
       {/* Incident report button - orange */}
@@ -43,10 +43,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button clicked - Opening dialog');
           onReportIncident?.();
         }}
-        className="h-12 w-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+        className="h-11 w-11 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
         data-testid="button-report-incident"
       >
-        <AlertCircle className="h-6 w-6" />
+        <AlertCircle className="h-5 w-5" />
       </Button>
 
       {/* Cancel navigation button - red X */}
@@ -57,10 +57,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button clicked - Stopping navigation');
           onCancel?.();
         }}
-        className="h-12 w-12 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        className="h-11 w-11 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="button-cancel-nav"
       >
-        <X className="h-6 w-6" />
+        <X className="h-5 w-5" />
       </Button>
 
       {/* Menu button - purple square at bottom */}
@@ -71,11 +71,11 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-4-MENU] ✅ Menu button clicked - Opening comprehensive menu');
           onOpenMenu?.();
         }}
-        className="h-12 w-12 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-lg mt-8"
+        className="h-11 w-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-lg mt-8"
         data-testid="button-menu"
       >
         <svg
-          className="h-6 w-6"
+          className="h-5 w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

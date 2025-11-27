@@ -2321,7 +2321,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       {/* GPS Status Indicator */}
       {(gpsStatus === 'acquiring' || gpsStatus === 'unavailable' || gpsStatus === 'error') && (
         <div 
-          className="absolute top-28 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
           data-testid="gps-status-indicator"
         >
           <div className={cn(
