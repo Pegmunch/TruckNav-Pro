@@ -2175,23 +2175,17 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const toggle3DMode = () => {
     if (!map.current) return;
     
-    // During navigation, 3D mode is auto-controlled by GPS heading
-    // Still allow toggle, but inform user via state change
-    if (isNavigating) {
-      console.log('[3D-TOGGLE] 3D mode is auto-managed during navigation (67° pitch, heading-up rotation)');
-      // Toggle state for visual feedback, but navigation will override camera
-      setIs3DMode(!is3DMode);
-      return;
-    }
-    
     const newMode = !is3DMode;
     setIs3DMode(newMode);
     
     // Smoothly transition between 2D (pitch 0) and 3D (pitch 60)
+    // Works during navigation AND normal mode
     map.current.easeTo({
       pitch: newMode ? 60 : 0,
       duration: 800
     });
+    
+    console.log('[3D-TOGGLE] ✅ Toggling 3D mode:', newMode ? 'ON (60° tilt)' : 'OFF (0° tilt)');
   };
   
   // AUTO-ENABLE 3D MODE when navigation starts
