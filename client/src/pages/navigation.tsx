@@ -2940,18 +2940,12 @@ function NavigationPageContent() {
                     
                     {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}
                     {nextTurn && (
-                      <div 
-                        className="fixed left-0 right-0 z-[190]"
-                        style={{ top: 'calc(112px + var(--safe-area-top, 0px))' }}
-                      >
-                        <TurnIndicator
-                          direction={nextTurn.direction}
-                          distance={nextTurn.distance}
-                          unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                          roadName={nextTurn.roadName}
-                          className="!relative !left-1/2 !-translate-x-1/2"
-                        />
-                      </div>
+                      <TurnIndicator
+                        direction={nextTurn.direction}
+                        distance={nextTurn.distance}
+                        unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                        roadName={nextTurn.roadName}
+                      />
                     )}
 
                     {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
