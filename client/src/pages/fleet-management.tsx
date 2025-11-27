@@ -86,13 +86,31 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
   const { toast } = useToast();
   const { data: vehicles = [], isLoading } = useQuery<FleetVehicle[]>({
     queryKey: ['/api/fleet/vehicles'],
+    queryFn: async () => {
+      performance.mark('fleet-vehicles-fetch-start');
+      console.log('[PERF-FLEET] 🚗 Fetching fleet vehicles...');
+      const response = await fetch('/api/fleet/vehicles');
+      const data = await response.json();
+      performance.mark('fleet-vehicles-fetch-end');
+      performance.measure('fleet-vehicles-fetch', 'fleet-vehicles-fetch-start', 'fleet-vehicles-fetch-end');
+      const measure = performance.getEntriesByName('fleet-vehicles-fetch')[0];
+      console.log(`[PERF-FLEET] ✅ Fleet vehicles loaded: ${data.length} vehicles in ${measure.duration.toFixed(0)}ms`);
+      return data;
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      performance.mark('fleet-vehicle-delete-start');
+      console.log('[PERF-FLEET] 🗑️ Deleting vehicle:', id);
       const response = await fetch(`/api/fleet/vehicles/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete vehicle');
-      return response.json();
+      const result = await response.json();
+      performance.mark('fleet-vehicle-delete-end');
+      performance.measure('fleet-vehicle-delete', 'fleet-vehicle-delete-start', 'fleet-vehicle-delete-end');
+      const measure = performance.getEntriesByName('fleet-vehicle-delete')[0];
+      console.log(`[PERF-FLEET] ✅ Vehicle deleted in ${measure.duration.toFixed(0)}ms`);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/fleet/vehicles'] });
