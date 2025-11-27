@@ -2705,8 +2705,8 @@ function NavigationPageContent() {
                 />
               )}
 
-              {/* Legal Ownership - Bottom of screen - Repositioned above speedometer */}
-              <div className="fixed bottom-40 left-0 right-0 w-full z-[5] pointer-events-auto flex justify-center">
+              {/* Legal Ownership - Bottom right corner */}
+              <div className="fixed bottom-0 right-0 z-[5] pointer-events-auto px-3 py-2">
                 <MapLegalOwnership compact={true} className="sm:hidden" />
               </div>
             </>
