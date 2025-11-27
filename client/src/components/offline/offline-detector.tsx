@@ -111,7 +111,7 @@ export function OfflineDetector({
 
       {/* Persistent Connection Indicator - HIDDEN IN PWA MODE */}
       {showPersistentIndicator && !isStandalone && (
-        <div className="fixed top-12 md:top-8 left-1/2 transform -translate-x-1/2 z-40" data-testid="connection-indicator">
+        <div className="fixed top-40 md:top-36 left-1/2 transform -translate-x-1/2 z-40" data-testid="connection-indicator">
           <Badge 
             variant={isOnline ? "secondary" : "destructive"}
             className="flex items-center gap-1 px-2 py-1 text-xs"
