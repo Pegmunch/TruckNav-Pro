@@ -929,6 +929,138 @@ export const savedRoutes = pgTable("saved_routes", {
   uniqueSavedRoute: index("unique_user_saved_route").on(table.userId, table.sharedRouteId),
 }));
 
+// Incident Logs - Driver incidents and accident tracking
+export const incidentLogs = pgTable("incident_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  operatorId: varchar("operator_id"), // References operators
+  incidentType: text("incident_type").notNull(), // 'accident', 'damage', 'violation', 'breakdown', 'near_miss', 'injury'
+  severity: text("severity").notNull(), // 'critical', 'high', 'medium', 'low'
+  description: text("description").notNull(),
+  location: text("location"),
+  coordinates: jsonb("coordinates").$type<{lat: number; lng: number}>(), // GPS coordinates if available
+  reportedAt: timestamp("reported_at").notNull().defaultNow(),
+  reportedBy: varchar("reported_by"), // User ID who reported
+  insuranceClaimNumber: varchar("insurance_claim_number"),
+  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 2 }),
+  rootCause: text("root_cause"), // Analysis of what caused the incident
+  preventativeMeasures: text("preventative_measures"), // Recommended measures
+  status: text("status").notNull().default('open'), // 'open', 'closed', 'investigating'
+  resolvedAt: timestamp("resolved_at"),
+  attachmentIds: jsonb("attachment_ids").$type<string[]>(), // Photo/document IDs
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  vehicleIdIndex: index("incident_vehicle_idx").on(table.vehicleId),
+  operatorIdIndex: index("incident_operator_idx").on(table.operatorId),
+  reportedAtIndex: index("incident_reported_at_idx").on(table.reportedAt),
+}));
+
+// Cost Analytics - Track all costs per vehicle
+export const costAnalytics = pgTable("cost_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  costType: text("cost_type").notNull(), // 'fuel', 'maintenance', 'insurance', 'toll', 'tax', 'repair', 'other'
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  category: text("category"), // 'fixed', 'variable', 'one_time'
+  occurrenceDate: timestamp("occurrence_date").notNull(),
+  relatedRecord: varchar("related_record"), // ID of related service record, fuel log, etc.
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  vehicleIdIndex: index("cost_vehicle_idx").on(table.vehicleId),
+  costTypeIndex: index("cost_type_idx").on(table.costType),
+  dateIndex: index("cost_date_idx").on(table.occurrenceDate),
+}));
+
+// Trip Tracking - Monitor vehicle trips and profitability
+export const tripTracking = pgTable("trip_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  operatorId: varchar("operator_id"), // References operators
+  startLocation: text("start_location").notNull(),
+  endLocation: text("end_location").notNull(),
+  startCoordinates: jsonb("start_coordinates").$type<{lat: number; lng: number}>(),
+  endCoordinates: jsonb("end_coordinates").$type<{lat: number; lng: number}>(),
+  plannedStartTime: timestamp("planned_start_time"),
+  actualStartTime: timestamp("actual_start_time").notNull().defaultNow(),
+  plannedEndTime: timestamp("planned_end_time"),
+  actualEndTime: timestamp("actual_end_time"),
+  plannedDistance: real("planned_distance"), // Miles
+  actualDistance: real("actual_distance"), // Miles
+  plannedDuration: integer("planned_duration"), // Minutes
+  actualDuration: integer("actual_duration"), // Minutes
+  fuelUsed: real("fuel_used"), // Liters
+  costEstimate: decimal("cost_estimate", { precision: 10, scale: 2 }),
+  actualCost: decimal("actual_cost", { precision: 10, scale: 2 }),
+  revenue: decimal("revenue", { precision: 10, scale: 2 }), // Income from this trip
+  profitMargin: real("profit_margin"), // Percentage
+  jobNumber: varchar("job_number"), // Link to customer job/order
+  customerId: varchar("customer_id"), // Customer reference
+  routeEfficiency: real("route_efficiency"), // Percentage (planned vs actual distance)
+  fuelEfficiency: real("fuel_efficiency"), // MPG on this trip
+  status: text("status").notNull().default('in_progress'), // 'planned', 'in_progress', 'completed', 'cancelled'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  vehicleIdIndex: index("trip_vehicle_idx").on(table.vehicleId),
+  operatorIdIndex: index("trip_operator_idx").on(table.operatorId),
+  dateIndex: index("trip_date_idx").on(table.actualStartTime),
+}));
+
+// User Roles - RBAC system for fleet management
+export const userRoles = pgTable("user_roles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text("role").notNull(), // 'admin', 'manager', 'dispatcher', 'driver', 'accountant', 'viewer'
+  fleetId: varchar("fleet_id"), // Which fleet (for multi-fleet support)
+  permissions: jsonb("permissions").$type<string[]>(), // Array of permission strings
+  assignedAt: timestamp("assigned_at").defaultNow(),
+  assignedBy: varchar("assigned_by"), // User ID who assigned
+  expiresAt: timestamp("expires_at"), // Temporary role expiry
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdIndex: index("user_role_user_idx").on(table.userId),
+  roleIndex: index("user_role_role_idx").on(table.role),
+}));
+
+// Maintenance Prediction - Predictive maintenance alerts
+export const maintenancePrediction = pgTable("maintenance_prediction", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  predictedServiceType: text("predicted_service_type").notNull(), // 'routine', 'brake_service', 'oil_change', 'tire_replacement'
+  predictedDate: timestamp("predicted_date").notNull(),
+  predictedMileage: real("predicted_mileage"), // Miles at which service is predicted
+  confidence: real("confidence"), // 0-1 confidence score
+  riskLevel: text("risk_level").notNull(), // 'low', 'medium', 'high', 'critical'
+  reason: text("reason"), // Why this maintenance is predicted
+  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 2 }),
+  actionTaken: text("action_taken"), // What action was taken (scheduled, ignored, completed)
+  serviceRecordId: varchar("service_record_id"), // Link to actual service if completed
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  vehicleIdIndex: index("pred_vehicle_idx").on(table.vehicleId),
+  dateIndex: index("pred_date_idx").on(table.predictedDate),
+}));
+
+// Compliance Records - Track regulatory compliance
+export const complianceRecords = pgTable("compliance_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  recordType: text("record_type").notNull(), // 'dvla_check', 'emission_standard', 'hazmat_cert', 'tachograph_check', 'working_hours'
+  vehicleId: varchar("vehicle_id"), // References fleet_vehicles (nullable for operator-level records)
+  operatorId: varchar("operator_id"), // References operators (nullable for vehicle-level records)
+  status: text("status").notNull(), // 'compliant', 'non_compliant', 'warning', 'expired'
+  lastCheckedAt: timestamp("last_checked_at"),
+  nextCheckDue: timestamp("next_check_due"),
+  details: jsonb("details").$type<Record<string, any>>(), // Additional compliance details
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  vehicleIdIndex: index("compliance_vehicle_idx").on(table.vehicleId),
+  operatorIdIndex: index("compliance_operator_idx").on(table.operatorId),
+}));
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
@@ -938,6 +1070,12 @@ export const insertVehicleAssignmentSchema = createInsertSchema(vehicleAssignmen
 export const insertAmprTollRegistrationSchema = createInsertSchema(amprTollRegistrations).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFleetNotificationSchema = createInsertSchema(fleetNotifications).omit({ id: true, createdAt: true });
 export const insertVehicleAttachmentSchema = createInsertSchema(vehicleAttachments).omit({ id: true, uploadedAt: true });
+export const insertIncidentLogSchema = createInsertSchema(incidentLogs).omit({ id: true, createdAt: true });
+export const insertCostAnalyticsSchema = createInsertSchema(costAnalytics).omit({ id: true, createdAt: true });
+export const insertTripTrackingSchema = createInsertSchema(tripTracking).omit({ id: true, createdAt: true });
+export const insertUserRoleSchema = createInsertSchema(userRoles).omit({ id: true, createdAt: true });
+export const insertMaintenancePredictionSchema = createInsertSchema(maintenancePrediction).omit({ id: true, createdAt: true });
+export const insertComplianceRecordSchema = createInsertSchema(complianceRecords).omit({ id: true, createdAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -970,6 +1108,24 @@ export type InsertFleetNotification = z.infer<typeof insertFleetNotificationSche
 
 export type VehicleAttachment = typeof vehicleAttachments.$inferSelect;
 export type InsertVehicleAttachment = z.infer<typeof insertVehicleAttachmentSchema>;
+
+export type IncidentLog = typeof incidentLogs.$inferSelect;
+export type InsertIncidentLog = z.infer<typeof insertIncidentLogSchema>;
+
+export type CostAnalytics = typeof costAnalytics.$inferSelect;
+export type InsertCostAnalytics = z.infer<typeof insertCostAnalyticsSchema>;
+
+export type TripTracking = typeof tripTracking.$inferSelect;
+export type InsertTripTracking = z.infer<typeof insertTripTrackingSchema>;
+
+export type UserRole = typeof userRoles.$inferSelect;
+export type InsertUserRole = z.infer<typeof insertUserRoleSchema>;
+
+export type MaintenancePrediction = typeof maintenancePrediction.$inferSelect;
+export type InsertMaintenancePrediction = z.infer<typeof insertMaintenancePredictionSchema>;
+
+export type ComplianceRecord = typeof complianceRecords.$inferSelect;
+export type InsertComplianceRecord = z.infer<typeof insertComplianceRecordSchema>;
 
 // Type exports for social network
 export type DriverConnection = typeof driverConnections.$inferSelect;
