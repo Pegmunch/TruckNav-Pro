@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
@@ -222,6 +222,45 @@ export interface IStorage {
   getVehicleAttachments(vehicleId: string): Promise<any[]>;
   getVehicleAttachment(attachmentId: string): Promise<any | undefined>;
   deleteVehicleAttachment(attachmentId: string): Promise<boolean>;
+
+  // Fleet Management - Incidents
+  createIncident(incident: InsertIncidentLog): Promise<IncidentLog>;
+  getIncidentsByVehicle(vehicleId: string): Promise<IncidentLog[]>;
+  getIncidentsByOperator(operatorId: string): Promise<IncidentLog[]>;
+  getIncident(id: string): Promise<IncidentLog | undefined>;
+  updateIncident(id: string, updates: Partial<IncidentLog>): Promise<IncidentLog | undefined>;
+  deleteIncident(id: string): Promise<boolean>;
+
+  // Fleet Management - Cost Analytics
+  createCostRecord(cost: InsertCostAnalytics): Promise<CostAnalytics>;
+  getCostsByVehicle(vehicleId: string, startDate?: Date, endDate?: Date): Promise<CostAnalytics[]>;
+  getVehicleTotalCosts(vehicleId: string): Promise<{ total: number; byType: Record<string, number> }>;
+  deleteCostRecord(id: string): Promise<boolean>;
+
+  // Fleet Management - Trip Tracking
+  createTrip(trip: InsertTripTracking): Promise<TripTracking>;
+  getTripsByVehicle(vehicleId: string): Promise<TripTracking[]>;
+  getCompletedTrips(vehicleId: string): Promise<TripTracking[]>;
+  getTrip(id: string): Promise<TripTracking | undefined>;
+  updateTrip(id: string, updates: Partial<TripTracking>): Promise<TripTracking | undefined>;
+  getFleetTripAnalytics(): Promise<{ totalTrips: number; totalDistance: number; avgProfitMargin: number; totalRevenue: number }>;
+
+  // Fleet Management - User Roles (RBAC)
+  getUserRole(userId: string): Promise<UserRole | undefined>;
+  setUserRole(userId: string, role: InsertUserRole): Promise<UserRole>;
+  hasPermission(userId: string, permission: string): Promise<boolean>;
+  getAllUserRoles(): Promise<UserRole[]>;
+
+  // Fleet Management - Maintenance Prediction
+  createPrediction(prediction: InsertMaintenancePrediction): Promise<MaintenancePrediction>;
+  getPredictionsByVehicle(vehicleId: string): Promise<MaintenancePrediction[]>;
+  getHighRiskPredictions(): Promise<MaintenancePrediction[]>;
+
+  // Fleet Management - Compliance
+  createComplianceRecord(record: InsertComplianceRecord): Promise<ComplianceRecord>;
+  getComplianceByVehicle(vehicleId: string): Promise<ComplianceRecord[]>;
+  getComplianceByOperator(operatorId: string): Promise<ComplianceRecord[]>;
+  getNonCompliantRecords(): Promise<ComplianceRecord[]>;
 
   // Social Network - Driver Profiles
   updateUserProfile(userId: string, updates: Partial<User>): Promise<User | undefined>;
@@ -4154,6 +4193,150 @@ export class DatabaseStorage implements IStorage {
     await db.delete(vehicleAttachments)
       .where(eq(vehicleAttachments.id, attachmentId));
     return true;
+  }
+
+  // Incidents
+  async createIncident(incident: InsertIncidentLog): Promise<IncidentLog> {
+    const result = await db.insert(incidentLogs).values(incident).returning();
+    return result[0];
+  }
+
+  async getIncidentsByVehicle(vehicleId: string): Promise<IncidentLog[]> {
+    return await db.select().from(incidentLogs).where(eq(incidentLogs.vehicleId, vehicleId)).orderBy(desc(incidentLogs.reportedAt));
+  }
+
+  async getIncidentsByOperator(operatorId: string): Promise<IncidentLog[]> {
+    return await db.select().from(incidentLogs).where(eq(incidentLogs.operatorId, operatorId)).orderBy(desc(incidentLogs.reportedAt));
+  }
+
+  async getIncident(id: string): Promise<IncidentLog | undefined> {
+    const result = await db.select().from(incidentLogs).where(eq(incidentLogs.id, id)).limit(1);
+    return result[0];
+  }
+
+  async updateIncident(id: string, updates: Partial<IncidentLog>): Promise<IncidentLog | undefined> {
+    const result = await db.update(incidentLogs).set(updates).where(eq(incidentLogs.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteIncident(id: string): Promise<boolean> {
+    await db.delete(incidentLogs).where(eq(incidentLogs.id, id));
+    return true;
+  }
+
+  // Cost Analytics
+  async createCostRecord(cost: InsertCostAnalytics): Promise<CostAnalytics> {
+    const result = await db.insert(costAnalytics).values(cost).returning();
+    return result[0];
+  }
+
+  async getCostsByVehicle(vehicleId: string, startDate?: Date, endDate?: Date): Promise<CostAnalytics[]> {
+    let query = db.select().from(costAnalytics).where(eq(costAnalytics.vehicleId, vehicleId));
+    if (startDate && endDate) {
+      query = query.where(and(gte(costAnalytics.occurrenceDate, startDate), lte(costAnalytics.occurrenceDate, endDate)));
+    }
+    return await query.orderBy(desc(costAnalytics.occurrenceDate));
+  }
+
+  async getVehicleTotalCosts(vehicleId: string): Promise<{ total: number; byType: Record<string, number> }> {
+    const costs = await this.getCostsByVehicle(vehicleId);
+    const total = costs.reduce((sum, c) => sum + parseFloat(c.amount.toString()), 0);
+    const byType: Record<string, number> = {};
+    costs.forEach(c => {
+      byType[c.costType] = (byType[c.costType] || 0) + parseFloat(c.amount.toString());
+    });
+    return { total, byType };
+  }
+
+  async deleteCostRecord(id: string): Promise<boolean> {
+    await db.delete(costAnalytics).where(eq(costAnalytics.id, id));
+    return true;
+  }
+
+  // Trip Tracking
+  async createTrip(trip: InsertTripTracking): Promise<TripTracking> {
+    const result = await db.insert(tripTracking).values(trip).returning();
+    return result[0];
+  }
+
+  async getTripsByVehicle(vehicleId: string): Promise<TripTracking[]> {
+    return await db.select().from(tripTracking).where(eq(tripTracking.vehicleId, vehicleId)).orderBy(desc(tripTracking.actualStartTime));
+  }
+
+  async getCompletedTrips(vehicleId: string): Promise<TripTracking[]> {
+    return await db.select().from(tripTracking).where(and(eq(tripTracking.vehicleId, vehicleId), eq(tripTracking.status, 'completed'))).orderBy(desc(tripTracking.actualStartTime));
+  }
+
+  async getTrip(id: string): Promise<TripTracking | undefined> {
+    const result = await db.select().from(tripTracking).where(eq(tripTracking.id, id)).limit(1);
+    return result[0];
+  }
+
+  async updateTrip(id: string, updates: Partial<TripTracking>): Promise<TripTracking | undefined> {
+    const result = await db.update(tripTracking).set(updates).where(eq(tripTracking.id, id)).returning();
+    return result[0];
+  }
+
+  async getFleetTripAnalytics(): Promise<{ totalTrips: number; totalDistance: number; avgProfitMargin: number; totalRevenue: number }> {
+    const trips = await db.select().from(tripTracking).where(eq(tripTracking.status, 'completed'));
+    const totalTrips = trips.length;
+    const totalDistance = trips.reduce((sum, t) => sum + (t.actualDistance || 0), 0);
+    const totalRevenue = trips.reduce((sum, t) => sum + parseFloat(t.revenue?.toString() || '0'), 0);
+    const avgProfitMargin = trips.length > 0 ? trips.reduce((sum, t) => sum + (t.profitMargin || 0), 0) / trips.length : 0;
+    return { totalTrips, totalDistance, avgProfitMargin, totalRevenue };
+  }
+
+  // User Roles
+  async getUserRole(userId: string): Promise<UserRole | undefined> {
+    const result = await db.select().from(userRoles).where(eq(userRoles.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async setUserRole(userId: string, role: InsertUserRole): Promise<UserRole> {
+    await db.delete(userRoles).where(eq(userRoles.userId, userId));
+    const result = await db.insert(userRoles).values({ ...role, userId }).returning();
+    return result[0];
+  }
+
+  async hasPermission(userId: string, permission: string): Promise<boolean> {
+    const userRole = await this.getUserRole(userId);
+    return userRole?.permissions?.includes(permission) || false;
+  }
+
+  async getAllUserRoles(): Promise<UserRole[]> {
+    return await db.select().from(userRoles).orderBy(asc(userRoles.role));
+  }
+
+  // Maintenance Prediction
+  async createPrediction(prediction: InsertMaintenancePrediction): Promise<MaintenancePrediction> {
+    const result = await db.insert(maintenancePrediction).values(prediction).returning();
+    return result[0];
+  }
+
+  async getPredictionsByVehicle(vehicleId: string): Promise<MaintenancePrediction[]> {
+    return await db.select().from(maintenancePrediction).where(eq(maintenancePrediction.vehicleId, vehicleId)).orderBy(asc(maintenancePrediction.predictedDate));
+  }
+
+  async getHighRiskPredictions(): Promise<MaintenancePrediction[]> {
+    return await db.select().from(maintenancePrediction).where(or(eq(maintenancePrediction.riskLevel, 'high'), eq(maintenancePrediction.riskLevel, 'critical'))).orderBy(asc(maintenancePrediction.predictedDate));
+  }
+
+  // Compliance
+  async createComplianceRecord(record: InsertComplianceRecord): Promise<ComplianceRecord> {
+    const result = await db.insert(complianceRecords).values(record).returning();
+    return result[0];
+  }
+
+  async getComplianceByVehicle(vehicleId: string): Promise<ComplianceRecord[]> {
+    return await db.select().from(complianceRecords).where(eq(complianceRecords.vehicleId, vehicleId)).orderBy(asc(complianceRecords.recordType));
+  }
+
+  async getComplianceByOperator(operatorId: string): Promise<ComplianceRecord[]> {
+    return await db.select().from(complianceRecords).where(eq(complianceRecords.operatorId, operatorId)).orderBy(asc(complianceRecords.recordType));
+  }
+
+  async getNonCompliantRecords(): Promise<ComplianceRecord[]> {
+    return await db.select().from(complianceRecords).where(or(eq(complianceRecords.status, 'non_compliant'), eq(complianceRecords.status, 'expired'))).orderBy(asc(complianceRecords.nextCheckDue));
   }
 
 }

@@ -5111,6 +5111,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Incidents API
+  app.post("/api/fleet/incidents", async (req: Request, res: Response) => {
+    try {
+      const incident = await storage.createIncident(req.body);
+      res.json(incident);
+    } catch (error) {
+      console.error('Error creating incident:', error);
+      res.status(500).json({ message: "Failed to create incident" });
+    }
+  });
+
+  app.get("/api/fleet/incidents/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const incidents = await storage.getIncidentsByVehicle(req.params.vehicleId);
+      res.json(incidents);
+    } catch (error) {
+      console.error('Error fetching incidents:', error);
+      res.status(500).json({ message: "Failed to fetch incidents" });
+    }
+  });
+
+  // Cost Analytics API
+  app.post("/api/fleet/costs", async (req: Request, res: Response) => {
+    try {
+      const cost = await storage.createCostRecord(req.body);
+      res.json(cost);
+    } catch (error) {
+      console.error('Error creating cost record:', error);
+      res.status(500).json({ message: "Failed to create cost record" });
+    }
+  });
+
+  app.get("/api/fleet/costs/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const costs = await storage.getCostsByVehicle(req.params.vehicleId);
+      res.json(costs);
+    } catch (error) {
+      console.error('Error fetching costs:', error);
+      res.status(500).json({ message: "Failed to fetch costs" });
+    }
+  });
+
+  app.get("/api/fleet/analytics/total-costs/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const totals = await storage.getVehicleTotalCosts(req.params.vehicleId);
+      res.json(totals);
+    } catch (error) {
+      console.error('Error fetching total costs:', error);
+      res.status(500).json({ message: "Failed to fetch total costs" });
+    }
+  });
+
+  // Trip Tracking API
+  app.post("/api/fleet/trips", async (req: Request, res: Response) => {
+    try {
+      const trip = await storage.createTrip(req.body);
+      res.json(trip);
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      res.status(500).json({ message: "Failed to create trip" });
+    }
+  });
+
+  app.get("/api/fleet/trips/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const trips = await storage.getTripsByVehicle(req.params.vehicleId);
+      res.json(trips);
+    } catch (error) {
+      console.error('Error fetching trips:', error);
+      res.status(500).json({ message: "Failed to fetch trips" });
+    }
+  });
+
+  app.get("/api/fleet/analytics/trips", async (req: Request, res: Response) => {
+    try {
+      const analytics = await storage.getFleetTripAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching trip analytics:', error);
+      res.status(500).json({ message: "Failed to fetch trip analytics" });
+    }
+  });
+
+  app.patch("/api/fleet/trips/:id", async (req: Request, res: Response) => {
+    try {
+      const trip = await storage.updateTrip(req.params.id, req.body);
+      if (!trip) return res.status(404).json({ message: "Trip not found" });
+      res.json(trip);
+    } catch (error) {
+      console.error('Error updating trip:', error);
+      res.status(500).json({ message: "Failed to update trip" });
+    }
+  });
+
+  // Maintenance Predictions API
+  app.get("/api/fleet/predictions/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const predictions = await storage.getPredictionsByVehicle(req.params.vehicleId);
+      res.json(predictions);
+    } catch (error) {
+      console.error('Error fetching predictions:', error);
+      res.status(500).json({ message: "Failed to fetch predictions" });
+    }
+  });
+
+  app.get("/api/fleet/predictions/high-risk", async (req: Request, res: Response) => {
+    try {
+      const predictions = await storage.getHighRiskPredictions();
+      res.json(predictions);
+    } catch (error) {
+      console.error('Error fetching high-risk predictions:', error);
+      res.status(500).json({ message: "Failed to fetch predictions" });
+    }
+  });
+
+  // Compliance API
+  app.get("/api/fleet/compliance/vehicle/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const records = await storage.getComplianceByVehicle(req.params.vehicleId);
+      res.json(records);
+    } catch (error) {
+      console.error('Error fetching compliance records:', error);
+      res.status(500).json({ message: "Failed to fetch compliance records" });
+    }
+  });
+
+  app.get("/api/fleet/compliance/non-compliant", async (req: Request, res: Response) => {
+    try {
+      const records = await storage.getNonCompliantRecords();
+      res.json(records);
+    } catch (error) {
+      console.error('Error fetching non-compliant records:', error);
+      res.status(500).json({ message: "Failed to fetch non-compliant records" });
+    }
+  });
+
   // =============================================================================
   // END SOCIAL NETWORK API ROUTES
   // =============================================================================
