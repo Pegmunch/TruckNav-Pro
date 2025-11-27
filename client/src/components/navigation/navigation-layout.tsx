@@ -60,7 +60,7 @@ export function NavigationLayout({
 
       {/* Bottom instrumentation bar - Centered at bottom */}
       {shouldShowUI && bottomBar && (
-        <div className="absolute bottom-12 left-0 right-0 w-full z-[1500] safe-bottom flex items-center justify-center">
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[1500] safe-bottom flex items-center justify-center">
           {bottomBar}
         </div>
       )}
