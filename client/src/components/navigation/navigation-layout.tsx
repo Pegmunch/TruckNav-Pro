@@ -64,12 +64,12 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Bottom instrumentation bar - Speedometer - Centered horizontally, lower position */}
+      {/* Bottom instrumentation bar - Speedometer - Slightly left of center, lower position */}
       {shouldShowUI && bottomBar && (
         <div 
           className="fixed z-[1500] pointer-events-auto"
           style={{
-            left: '50%',
+            left: '45%',
             transform: 'translateX(-50%)',
             bottom: 'calc(50px + env(safe-area-inset-bottom, 0px))'
           }}
