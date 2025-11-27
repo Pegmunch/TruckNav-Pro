@@ -600,16 +600,14 @@ function NavigationPageContent() {
       return;
     }
     
-    // 4. CHECK GPS AVAILABILITY - need GPS position to zoom (or attempt without it)
-    // Allow attempt even without GPS - use fallback coordinates
-    if (!gpsData?.position && !mapRef.current) {
-      return; // Wait for at least map to be ready
-    }
-    
-    // 5. CHECK MAP REFERENCE - map component must be mounted
+    // 4. CHECK MAP REFERENCE - map component must be mounted FIRST
     if (!mapRef.current) {
+      console.log('[AUTO-ZOOM] Waiting for map to mount...');
       return; // Wait for map to mount
     }
+    
+    // 5. ATTEMPT ZOOM - even without GPS, we have fallback coordinates
+    console.log('[AUTO-ZOOM] Map ready, attempting auto-zoom with fallback...')
     
     // 6. SKIP IF NAVIGATING - navigation has its own zoom logic
     if (isNavigating) {
@@ -763,7 +761,7 @@ function NavigationPageContent() {
     // Execute auto-zoom
     performAutoZoom();
     
-  }, [mapRef, isNavigating, currentRoute]); // Trigger when map is available, not just GPS
+  }, [isNavigating, currentRoute]); // Re-run when route or nav state changes
   
   // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
   // Only enforces navigate mode when navigation is active, no other automatic transitions
