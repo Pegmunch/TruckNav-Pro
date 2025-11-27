@@ -82,7 +82,7 @@ These settings are LOCKED and must remain unchanged to preserve the user experie
 ## Navigation UI Components
 - **Left Action Stack Buttons**: ALWAYS h-11 w-11 (44px) with h-5 w-5 icons - professional touch targets
 - **GPS Fallback Chip**: ALWAYS thin/transparent (bg-orange-500/80, px-2.5 py-1, text-xs) - NOT thick orange oval
-- **SpeedometerHUD Position**: ALWAYS centered at bottom (left-1/2 -translate-x-1/2, bottom: 85px + safe-area)
+- **SpeedometerHUD Position**: ALWAYS on LEFT side (left: 16px + safe-area, bottom: 100px + safe-area) - NOT centered
 - **Turn Indicator Position**: ALWAYS below ETA header (top: 108px + safe-area-top) - top edge at bottom of CompactTripStrip
 - **CompactTripStrip (ETA Header)**: ALWAYS visible during navigation at top: 56px + safe-area-top
 - **Navigation Controls Stack**: 8 scrollable buttons on RIGHT side during navigation mode only

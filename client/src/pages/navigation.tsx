@@ -2953,11 +2953,12 @@ function NavigationPageContent() {
                       />
                     )}
 
-                    {/* Professional Oval Speedometer HUD - Fixed position above Safari toolbar */}
+                    {/* Professional Oval Speedometer HUD - Left side, lower position */}
                     <div 
-                      className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                      className="fixed z-[180] pointer-events-auto"
                       style={{
-                        bottom: 'calc(85px + var(--safe-area-bottom, 0px))'
+                        left: 'calc(16px + var(--safe-area-left, 0px))',
+                        bottom: 'calc(100px + var(--safe-area-bottom, 0px))'
                       }}
                       data-testid="speedometer-hud-navigate"
                     >
