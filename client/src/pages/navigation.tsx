@@ -2724,49 +2724,39 @@ function NavigationPageContent() {
             </>
           )}
 
-          {/* Input Page Overlay - Toggle via hamburger button */}
+          {/* Input Page Overlay - Hamburger Button Toggle */}
           {showInputPage && (
-            <>
-              {/* Backdrop - tap to close */}
-              <div 
-                className="fixed inset-0 z-40 bg-black/20"
-                onClick={() => setShowInputPage(false)}
-                data-testid="input-page-backdrop"
-              />
-              
-              {/* Input Page Panel */}
-              <div className="fixed inset-0 z-50 bg-white flex flex-col">
-                {/* Header with close button */}
-                <div className="flex items-center justify-between p-4 border-b" style={{ paddingTop: 'calc(16px + var(--safe-area-top))' }}>
-                  <h2 className="text-xl font-semibold">Plan Route</h2>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowInputPage(false)}
-                    className="h-10 w-10"
-                    data-testid="button-close-input-page"
-                  >
-                    <X className="w-6 h-6" />
-                  </Button>
-                </div>
-                
-                {/* Input content */}
-                <div className="flex-1 overflow-y-auto p-6">
-                  <SimplifiedRouteDrawer
-                    fromLocation={fromLocation}
-                    toLocation={toLocation}
-                    fromCoordinates={fromCoordinates}
-                    toCoordinates={toCoordinates}
-                    onFromLocationChange={setFromLocation}
-                    onToLocationChange={setToLocation}
-                    onRouteChange={handlePlanRoute}
-                    selectedProfile={selectedProfile}
-                    onProfileSelect={setSelectedProfile}
-                    isCalculating={calculateRouteMutation.isPending}
-                  />
-                </div>
+            <div className="fixed inset-0 z-50 bg-white flex flex-col" style={{ paddingTop: 'var(--safe-area-top)' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <h2 className="text-lg font-semibold">Plan Route</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowInputPage(false)}
+                  className="h-10 w-10"
+                  data-testid="button-close-input-page"
+                >
+                  <X className="w-6 h-6" />
+                </Button>
               </div>
-            </>
+              
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <SimplifiedRouteDrawer
+                  fromLocation={fromLocation}
+                  toLocation={toLocation}
+                  fromCoordinates={fromCoordinates}
+                  toCoordinates={toCoordinates}
+                  onFromLocationChange={setFromLocation}
+                  onToLocationChange={setToLocation}
+                  onRouteChange={handlePlanRoute}
+                  selectedProfile={selectedProfile}
+                  onProfileSelect={setSelectedProfile}
+                  isCalculating={calculateRouteMutation.isPending}
+                />
+              </div>
+            </div>
           )}
 
           {/* Full-Screen Route Planning Panel - Mobile Only - NEVER show during active navigation */}
