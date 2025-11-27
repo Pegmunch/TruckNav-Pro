@@ -131,7 +131,6 @@ export function useLiveNotifications({
     if (isMobile && mobileNotificationSystem) {
       const mobileNotification = convertToMobileNotification(notification);
       mobileNotificationSystem.queueNotification(mobileNotification);
-      console.log(`[LiveNotifications] Queued mobile notification: ${notification.title}`);
       return;
     }
 
@@ -167,8 +166,6 @@ export function useLiveNotifications({
     setTimeout(() => {
       toastInstance.dismiss();
     }, 5000);
-
-    console.log(`[LiveNotifications] Shown desktop toast: ${notification.title} - ${notification.description}`);
   }, [toast, isMobile, mobileNotificationSystem]);
 
   // Start live notification interval
@@ -188,8 +185,6 @@ export function useLiveNotifications({
         }
       }
     }, 20000); // Check every 20 seconds, but throttled to max one notification per 15 seconds
-
-    console.log('[LiveNotifications] Started live notification system');
   }, [enabled, isNavigating, currentRoute, generateLiveNotification, showLiveNotification]);
 
   // Stop live notification interval
@@ -197,7 +192,6 @@ export function useLiveNotifications({
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-      console.log('[LiveNotifications] Stopped live notification system');
     }
   }, []);
 

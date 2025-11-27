@@ -931,7 +931,6 @@ function NavigationPageContent() {
         // Priority 1: Use GPS heading if available
         if (gpsData?.position?.smoothedHeading !== null && gpsData?.position?.smoothedHeading !== undefined) {
           targetBearing = gpsData.position.smoothedHeading;
-          console.log('[NAV-BEARING] Using GPS heading:', targetBearing);
         }
         // Priority 2: Calculate bearing from route direction (works without GPS!)
         else if (currentRoute && currentRoute.routePath && currentRoute.routePath.length >= 2) {
@@ -951,7 +950,6 @@ function NavigationPageContent() {
           const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
           
           targetBearing = bearing;
-          console.log('[NAV-BEARING] Using route bearing (no GPS):', targetBearing);
         }
 
         if (targetBearing !== null) {
