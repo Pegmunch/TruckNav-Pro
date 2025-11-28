@@ -49,7 +49,8 @@ import {
   Loader2,
   Store,
   ShoppingCart,
-  Users
+  Users,
+  Crosshair
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -165,6 +166,116 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   // POI search state
   const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
   const [poiSearchEnabled, setPoiSearchEnabled] = useState(false);
+  
+  // GPS location fill state
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  
+  // Handler to get current GPS location and fill the "From" field via TomTom reverse geocode
+  const handleFillCurrentLocation = useCallback(async () => {
+    if (isGettingLocation) return;
+    
+    setIsGettingLocation(true);
+    
+    try {
+      // Get current GPS position with proper error handling
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('GPS not available on this device'));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          resolve, 
+          (error: GeolocationPositionError) => {
+            // Convert GeolocationPositionError to Error with meaningful message
+            let message = 'Could not get location';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                message = 'Location permission denied. Please enable location access.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                message = 'Location unavailable. Please try again.';
+                break;
+              case error.TIMEOUT:
+                message = 'Location request timed out. Please try again.';
+                break;
+            }
+            reject(new Error(message));
+          }, 
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 30000
+          }
+        );
+      });
+      
+      const { latitude, longitude } = position.coords;
+      
+      // Use TomTom reverse geocode API
+      const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
+      if (!apiKey) {
+        throw new Error('Location service not configured');
+      }
+      
+      // Safely encode coordinates for URL
+      const lat = encodeURIComponent(latitude.toFixed(6));
+      const lon = encodeURIComponent(longitude.toFixed(6));
+      
+      const response = await fetch(
+        `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${encodeURIComponent(apiKey)}&radius=100`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to find address for location');
+      }
+      
+      const data = await response.json();
+      
+      if (data.addresses && data.addresses.length > 0) {
+        const address = data.addresses[0].address;
+        // Prefer postcode + municipality for UK addresses, or freeformAddress
+        let displayAddress = '';
+        
+        if (address.postalCode) {
+          displayAddress = address.postalCode;
+          if (address.municipality) {
+            displayAddress += `, ${address.municipality}`;
+          }
+        } else if (address.freeformAddress) {
+          displayAddress = address.freeformAddress;
+        } else if (address.municipality) {
+          displayAddress = address.municipality;
+        }
+        
+        if (displayAddress) {
+          // Update local input state
+          setFromInput(displayAddress);
+          // Notify parent component (same as autocomplete flow)
+          onFromLocationChange(displayAddress);
+          // Store coordinates for POI search (same as autocomplete flow)
+          setFromCoordinates({ lat: latitude, lng: longitude });
+          
+          toast({
+            title: "Location Set",
+            description: displayAddress,
+          });
+        } else {
+          throw new Error('Could not determine address');
+        }
+      } else {
+        throw new Error('No address found for this location');
+      }
+    } catch (error) {
+      console.error('GPS location error:', error);
+      toast({
+        title: "Location Error",
+        description: error instanceof Error ? error.message : "Could not get current location",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGettingLocation(false);
+    }
+  }, [isGettingLocation, onFromLocationChange, toast]);
   
   // Debounced search for autocomplete
   useEffect(() => {
@@ -483,9 +594,26 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
               <TabsContent value="plan" className="p-4 space-y-4 mt-0">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Navigation className="h-4 w-4 text-blue-500" />
-                      Plan Your Route
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Navigation className="h-4 w-4 text-blue-500" />
+                        Plan Your Route
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleFillCurrentLocation}
+                        disabled={isGettingLocation}
+                        className="h-8 w-8 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
+                        data-testid="button-gps-fill-location"
+                        title="Use current location"
+                      >
+                        {isGettingLocation ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Crosshair className="h-4 w-4" />
+                        )}
+                      </Button>
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Enter your start and destination
