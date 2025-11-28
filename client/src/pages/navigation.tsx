@@ -590,7 +590,13 @@ function NavigationPageContent() {
         return; // Not ready or already attempted
       }
       
-      console.log('[AUTO-ZOOM-POLL] Detected mapRef - triggering auto-zoom...');
+      // Check if map is fully loaded by trying to get the map instance
+      const mapInstance = mapRef.current.getMap?.();
+      if (!mapInstance || !mapInstance.isStyleLoaded?.()) {
+        return; // Map style not loaded yet
+      }
+      
+      console.log('[AUTO-ZOOM-POLL] Map fully ready - triggering auto-zoom...');
       clearInterval(pollInterval);
       
       // Mark as attempted immediately to prevent duplicate attempts
@@ -620,27 +626,63 @@ function NavigationPageContent() {
       autoZoomState.current.attempts = 1;
       autoZoomState.current.lastAttemptTime = Date.now();
     
-      // Execute zoom immediately - zoomToUserLocation handles async map readiness
+      // Execute zoom - prefer GPS if available, fallback to UK center
       try {
-        console.log('[AUTO-ZOOM] Executing zoom to user location...');
+        console.log('[AUTO-ZOOM] Attempting GPS-aware zoom...');
+        
+        // Try zoomToUserLocation first (handles GPS)
         mapRef.current?.zoomToUserLocation({
           forceStreetMode: false,
           zoom: 14.5,
           pitch: 45,
           duration: 2000,
-          fallbackCoordinates: { lat: 51.5074, lng: -0.1278 },
+          fallbackCoordinates: { lat: 51.5074, lng: -0.1278 }, // UK fallback
           onSuccess: (location) => {
             autoZoomState.current.succeeded = true;
-            console.log('[AUTO-ZOOM] ✅ Successfully zoomed to location');
+            console.log('[AUTO-ZOOM] ✅ Successfully zoomed to GPS location:', location);
           },
           onError: (error, usedFallback) => {
-            console.warn('[AUTO-ZOOM] Error:', error, 'Used fallback:', usedFallback);
+            console.log('[AUTO-ZOOM] GPS failed, using fallback. Error:', error?.message || error);
+            
+            // If zoomToUserLocation failed but didn't use fallback, manually fly to UK
+            if (!usedFallback && mapInstance) {
+              try {
+                mapInstance.flyTo({
+                  center: [-0.1278, 51.5074], // London, UK (lng, lat for MapLibre)
+                  zoom: 14.5,
+                  pitch: 45,
+                  duration: 2000,
+                  essential: true
+                });
+                autoZoomState.current.succeeded = true;
+                console.log('[AUTO-ZOOM] ✅ Manually flew to UK center as fallback');
+              } catch (flyError) {
+                console.error('[AUTO-ZOOM] Failed to fly to fallback:', flyError);
+              }
+            } else if (usedFallback) {
+              autoZoomState.current.succeeded = true;
+              console.log('[AUTO-ZOOM] ✅ zoomToUserLocation used its fallback');
+            }
           }
         });
       } catch (error) {
         console.error('[AUTO-ZOOM] Exception:', error);
+        // Last resort - direct flyTo
+        try {
+          mapInstance.flyTo({
+            center: [-0.1278, 51.5074],
+            zoom: 14.5,
+            pitch: 45,
+            duration: 2000,
+            essential: true
+          });
+          autoZoomState.current.succeeded = true;
+          console.log('[AUTO-ZOOM] ✅ Emergency fallback to UK center');
+        } catch (e) {
+          console.error('[AUTO-ZOOM] All zoom attempts failed:', e);
+        }
       }
-    }, 100); // Poll every 100ms for map availability
+    }, 200); // Poll every 200ms for map availability
     
     return () => clearInterval(pollInterval);
   }, []); // Run once on mount
@@ -2637,10 +2679,10 @@ function NavigationPageContent() {
                   toCoordinates={toCoordinates}
                   onFromLocationChange={setFromLocation}
                   onToLocationChange={setToLocation}
-                  onRouteChange={handlePlanRoute}
-                  selectedProfile={selectedProfile}
-                  onProfileSelect={setSelectedProfile}
-                  isCalculating={calculateRouteMutation.isPending}
+                  routePreference={routePreference}
+                  onRoutePreferenceChange={setRoutePreference}
+                  onPlanRoute={() => handlePlanRoute()}
+                  activeProfileId={activeProfileId}
                 />
               </div>
             </div>
