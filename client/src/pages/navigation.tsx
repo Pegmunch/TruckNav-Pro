@@ -2505,13 +2505,13 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* GPS Fallback - Discreet Transparent Chip - Visible in preview and PWA navigate modes */}
-              {(mobileNavMode === 'preview' || (isStandalone && mobileNavMode === 'navigate')) && 
+              {/* GPS Fallback - Discreet Transparent Chip */}
+              {mobileNavMode === 'preview' && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
                !gpsData.manualLocation && (
                 <div 
-                  className="absolute top-20 left-1/2 -translate-x-1/2 z-[300] pointer-events-auto cursor-pointer"
+                  className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
                   onClick={() => setShowManualLocationDialog(true)}
                   data-testid="gps-fallback-chip"
                 >
@@ -2522,10 +2522,10 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* Manual Location Active - Compact Chip - Visible in preview and PWA navigate modes */}
-              {(mobileNavMode === 'preview' || (isStandalone && mobileNavMode === 'navigate')) && 
+              {/* Manual Location Active - Compact Chip */}
+              {mobileNavMode === 'preview' && 
                gpsData?.manualLocation && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[300] pointer-events-auto" data-testid="manual-location-indicator">
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto" data-testid="manual-location-indicator">
                   <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-full shadow-lg">
                     <MapPin className="h-4 w-4" />
                     <span className="text-sm font-medium truncate max-w-[180px]">
@@ -2591,22 +2591,20 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) - Also available in PWA navigate mode */}
-                  {(mobileNavMode === 'preview' || (isStandalone && mobileNavMode === 'navigate')) && (
-                    <Button
-                      onClick={() => setShowComprehensiveMenu(true)}
-                      size="lg"
-                      className="fixed z-[300] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
-                      style={{
-                        bottom: 'calc(24px + var(--safe-area-bottom))',
-                        right: 'calc(24px + var(--safe-area-right))'
-                      }}
-                      data-testid="button-open-input-preview"
-                      aria-label="Open route planning"
-                    >
-                      <Menu className="w-6 h-6" />
-                    </Button>
-                  )}
+                  {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) */}
+                  <Button
+                    onClick={() => setShowComprehensiveMenu(true)}
+                    size="lg"
+                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    style={{
+                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      right: 'calc(24px + var(--safe-area-right))'
+                    }}
+                    data-testid="button-open-input-preview"
+                    aria-label="Open route planning"
+                  >
+                    <Menu className="w-6 h-6" />
+                  </Button>
                 </>
               )}
 
