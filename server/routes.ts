@@ -6,7 +6,7 @@ import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth } from "./subscriptionMiddleware";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, type VehicleProfile, type Restriction } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest } from "./middleware/security";
@@ -5249,6 +5249,579 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =============================================================================
   // END SOCIAL NETWORK API ROUTES
+  // =============================================================================
+
+  // =============================================================================
+  // ENTERPRISE FEATURES API ROUTES
+  // =============================================================================
+
+  // ========================================
+  // GPS TRACKING ROUTES (/api/enterprise/gps)
+  // ========================================
+
+  app.post("/api/enterprise/gps/tracking", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const validatedData = insertGpsTrackingSchema.safeParse(req.body);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid GPS tracking data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const trackingPoint = await storage.createGpsTrackingPoint(validatedData.data);
+      res.status(201).json(trackingPoint);
+    } catch (error) {
+      console.error('Error recording GPS tracking point:', error);
+      res.status(500).json({ message: "Failed to record GPS tracking point" });
+    }
+  });
+
+  app.get("/api/enterprise/gps/vehicle/:vehicleId/history", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { vehicleId } = req.params;
+      const { startTime, endTime, limit } = req.query;
+
+      const startDate = startTime ? new Date(startTime as string) : undefined;
+      const endDate = endTime ? new Date(endTime as string) : undefined;
+      const limitNum = limit ? parseInt(limit as string, 10) : undefined;
+
+      const history = await storage.getVehicleTrackingHistory(
+        vehicleId, 
+        startDate, 
+        endDate, 
+        limitNum
+      );
+      res.json(history);
+    } catch (error) {
+      console.error('Error fetching vehicle tracking history:', error);
+      res.status(500).json({ message: "Failed to fetch vehicle tracking history" });
+    }
+  });
+
+  app.get("/api/enterprise/gps/vehicle/:vehicleId/latest", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { vehicleId } = req.params;
+      const position = await storage.getLatestVehiclePosition(vehicleId);
+      
+      if (!position) {
+        return res.status(404).json({ message: "No position data found for vehicle" });
+      }
+      
+      res.json(position);
+    } catch (error) {
+      console.error('Error fetching latest vehicle position:', error);
+      res.status(500).json({ message: "Failed to fetch latest vehicle position" });
+    }
+  });
+
+  app.get("/api/enterprise/gps/fleet", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const fleetPositions = await storage.getFleetPositions();
+      res.json(fleetPositions);
+    } catch (error) {
+      console.error('Error fetching fleet positions:', error);
+      res.status(500).json({ message: "Failed to fetch fleet positions" });
+    }
+  });
+
+  // ========================================
+  // GEOFENCING ROUTES (/api/enterprise/geofences)
+  // ========================================
+
+  app.post("/api/enterprise/geofences", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const dataWithUserId = { ...req.body, userId };
+      const validatedData = insertGeofenceSchema.safeParse(dataWithUserId);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid geofence data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const geofence = await storage.createGeofence(validatedData.data);
+      res.status(201).json(geofence);
+    } catch (error) {
+      console.error('Error creating geofence:', error);
+      res.status(500).json({ message: "Failed to create geofence" });
+    }
+  });
+
+  app.get("/api/enterprise/geofences", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const geofences = await storage.getUserGeofences(userId);
+      res.json(geofences);
+    } catch (error) {
+      console.error('Error fetching geofences:', error);
+      res.status(500).json({ message: "Failed to fetch geofences" });
+    }
+  });
+
+  app.get("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const geofence = await storage.getGeofence(req.params.id);
+      
+      if (!geofence) {
+        return res.status(404).json({ message: "Geofence not found" });
+      }
+      
+      if (geofence.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(geofence);
+    } catch (error) {
+      console.error('Error fetching geofence:', error);
+      res.status(500).json({ message: "Failed to fetch geofence" });
+    }
+  });
+
+  app.put("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const existingGeofence = await storage.getGeofence(req.params.id);
+      
+      if (!existingGeofence) {
+        return res.status(404).json({ message: "Geofence not found" });
+      }
+      
+      if (existingGeofence.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const geofence = await storage.updateGeofence(req.params.id, req.body);
+      res.json(geofence);
+    } catch (error) {
+      console.error('Error updating geofence:', error);
+      res.status(500).json({ message: "Failed to update geofence" });
+    }
+  });
+
+  app.delete("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const existingGeofence = await storage.getGeofence(req.params.id);
+      
+      if (!existingGeofence) {
+        return res.status(404).json({ message: "Geofence not found" });
+      }
+      
+      if (existingGeofence.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteGeofence(req.params.id);
+      res.json({ message: "Geofence deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting geofence:', error);
+      res.status(500).json({ message: "Failed to delete geofence" });
+    }
+  });
+
+  app.post("/api/enterprise/geofences/:id/events", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const eventData = { ...req.body, geofenceId: req.params.id };
+      const validatedData = insertGeofenceEventSchema.safeParse(eventData);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid geofence event data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const event = await storage.createGeofenceEvent(validatedData.data);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error('Error recording geofence event:', error);
+      res.status(500).json({ message: "Failed to record geofence event" });
+    }
+  });
+
+  app.get("/api/enterprise/geofences/:id/events", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { startTime, endTime } = req.query;
+      const startDate = startTime ? new Date(startTime as string) : undefined;
+      const endDate = endTime ? new Date(endTime as string) : undefined;
+
+      const events = await storage.getGeofenceEvents(req.params.id, startDate, endDate);
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching geofence events:', error);
+      res.status(500).json({ message: "Failed to fetch geofence events" });
+    }
+  });
+
+  // ========================================
+  // DRIVER BEHAVIOR ROUTES (/api/enterprise/driver-behavior)
+  // ========================================
+
+  app.post("/api/enterprise/driver-behavior", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const validatedData = insertDriverBehaviorSchema.safeParse(req.body);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid driver behavior data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const record = await storage.createDriverBehaviorRecord(validatedData.data);
+      res.status(201).json(record);
+    } catch (error) {
+      console.error('Error recording driver behavior:', error);
+      res.status(500).json({ message: "Failed to record driver behavior" });
+    }
+  });
+
+  app.get("/api/enterprise/driver-behavior/operator/:operatorId", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { operatorId } = req.params;
+      const { startDate, endDate } = req.query;
+
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+
+      const records = await storage.getDriverBehaviorRecords(operatorId, start, end);
+      res.json(records);
+    } catch (error) {
+      console.error('Error fetching driver behavior records:', error);
+      res.status(500).json({ message: "Failed to fetch driver behavior records" });
+    }
+  });
+
+  app.get("/api/enterprise/driver-behavior/operator/:operatorId/score", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { operatorId } = req.params;
+      const score = await storage.getDriverSafetyScore(operatorId);
+      res.json(score);
+    } catch (error) {
+      console.error('Error fetching driver safety score:', error);
+      res.status(500).json({ message: "Failed to fetch driver safety score" });
+    }
+  });
+
+  app.get("/api/enterprise/driver-behavior/fleet", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const analytics = await storage.getFleetBehaviorAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching fleet behavior analytics:', error);
+      res.status(500).json({ message: "Failed to fetch fleet behavior analytics" });
+    }
+  });
+
+  // ========================================
+  // HOURS OF SERVICE ROUTES (/api/enterprise/hos)
+  // ========================================
+
+  app.post("/api/enterprise/hos", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const validatedData = insertHoursOfServiceSchema.safeParse(req.body);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid Hours of Service data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const record = await storage.createHoursOfServiceRecord(validatedData.data);
+      res.status(201).json(record);
+    } catch (error) {
+      console.error('Error recording Hours of Service:', error);
+      res.status(500).json({ message: "Failed to record Hours of Service" });
+    }
+  });
+
+  app.get("/api/enterprise/hos/operator/:operatorId", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { operatorId } = req.params;
+      const { startDate, endDate } = req.query;
+
+      const start = startDate ? new Date(startDate as string) : undefined;
+      const end = endDate ? new Date(endDate as string) : undefined;
+
+      const records = await storage.getOperatorHoursOfService(operatorId, start, end);
+      res.json(records);
+    } catch (error) {
+      console.error('Error fetching Hours of Service records:', error);
+      res.status(500).json({ message: "Failed to fetch Hours of Service records" });
+    }
+  });
+
+  app.get("/api/enterprise/hos/operator/:operatorId/latest", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { operatorId } = req.params;
+      const latestRecord = await storage.getLatestHoursOfService(operatorId);
+      
+      if (!latestRecord) {
+        return res.status(404).json({ message: "No Hours of Service record found for operator" });
+      }
+      
+      res.json(latestRecord);
+    } catch (error) {
+      console.error('Error fetching latest Hours of Service:', error);
+      res.status(500).json({ message: "Failed to fetch latest Hours of Service" });
+    }
+  });
+
+  app.get("/api/enterprise/hos/violations", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const violations = await storage.getHoSViolations();
+      res.json(violations);
+    } catch (error) {
+      console.error('Error fetching HoS violations:', error);
+      res.status(500).json({ message: "Failed to fetch HoS violations" });
+    }
+  });
+
+  app.put("/api/enterprise/hos/:id", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const record = await storage.updateHoursOfService(req.params.id, req.body);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Hours of Service record not found" });
+      }
+      
+      res.json(record);
+    } catch (error) {
+      console.error('Error updating Hours of Service:', error);
+      res.status(500).json({ message: "Failed to update Hours of Service" });
+    }
+  });
+
+  // ========================================
+  // CUSTOMER BILLING ROUTES (/api/enterprise/billing)
+  // ========================================
+
+  app.post("/api/enterprise/billing/customers", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const dataWithUserId = { ...req.body, userId };
+      const validatedData = insertCustomerBillingSchema.safeParse(dataWithUserId);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid customer data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const customer = await storage.createCustomer(validatedData.data);
+      res.status(201).json(customer);
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      res.status(500).json({ message: "Failed to create customer" });
+    }
+  });
+
+  app.get("/api/enterprise/billing/customers", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const customers = await storage.getUserCustomers(userId);
+      res.json(customers);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      res.status(500).json({ message: "Failed to fetch customers" });
+    }
+  });
+
+  app.get("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const customer = await storage.getCustomer(req.params.customerId);
+      
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      if (customer.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      res.json(customer);
+    } catch (error) {
+      console.error('Error fetching customer:', error);
+      res.status(500).json({ message: "Failed to fetch customer" });
+    }
+  });
+
+  app.put("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const existingCustomer = await storage.getCustomer(req.params.customerId);
+      
+      if (!existingCustomer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      if (existingCustomer.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const customer = await storage.updateCustomer(req.params.customerId, req.body);
+      res.json(customer);
+    } catch (error) {
+      console.error('Error updating customer:', error);
+      res.status(500).json({ message: "Failed to update customer" });
+    }
+  });
+
+  app.delete("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const existingCustomer = await storage.getCustomer(req.params.customerId);
+      
+      if (!existingCustomer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      if (existingCustomer.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteCustomer(req.params.customerId);
+      res.json({ message: "Customer deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      res.status(500).json({ message: "Failed to delete customer" });
+    }
+  });
+
+  app.get("/api/enterprise/billing/analytics", async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const analytics = await storage.getCustomerAnalytics(userId);
+      res.json(analytics);
+    } catch (error) {
+      console.error('Error fetching billing analytics:', error);
+      res.status(500).json({ message: "Failed to fetch billing analytics" });
+    }
+  });
+
+  // =============================================================================
+  // END ENTERPRISE FEATURES API ROUTES
   // =============================================================================
 
   const httpServer = createServer(app);
