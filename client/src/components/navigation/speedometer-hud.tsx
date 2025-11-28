@@ -106,15 +106,164 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
     return 'text-gray-900 dark:text-gray-900'; // Dark text on white background normally
   };
   
-  // Road type badge color (UK motorway standards)
+  // Country-authentic road badge styling
+  // Returns object with background, text color, border, and special styling
+  // IMPORTANT: Check region FIRST, then road type, to avoid misclassifying European A-roads as UK
+  const getRoadBadgeStyle = (ref: string): { 
+    bg: string; 
+    text: string; 
+    border: string; 
+    shape: 'rectangle' | 'shield' | 'oval';
+    specialStyle?: string;
+  } => {
+    // ===== UK REGION =====
+    if (region === 'uk') {
+      // UK Motorways (M1, M25, etc.) - Blue background, white text
+      if (ref.match(/^M\d/)) {
+        return { 
+          bg: 'bg-[#0063B0]', // BS 381C Middle Blue
+          text: 'text-white font-black',
+          border: 'border-2 border-white',
+          shape: 'rectangle'
+        };
+      }
+      // UK Primary A-roads (A1, A404, etc.) - Green background, YELLOW route number
+      if (ref.match(/^A\d/)) {
+        return { 
+          bg: 'bg-[#00703C]', // BS 381C Middle Brunswick Green
+          text: 'text-yellow-300 font-black',
+          border: 'border-2 border-white',
+          shape: 'rectangle'
+        };
+      }
+      // UK B-roads - White background, black text
+      if (ref.match(/^B\d/)) {
+        return { 
+          bg: 'bg-white',
+          text: 'text-black font-bold',
+          border: 'border-2 border-black',
+          shape: 'rectangle'
+        };
+      }
+    }
+    
+    // ===== USA REGION =====
+    if (region === 'usa') {
+      // USA Interstate (I-95, I-405, etc.) - Red/Blue shield
+      if (ref.match(/^I-?\d/)) {
+        return { 
+          bg: 'bg-[#003F87]', // Interstate blue
+          text: 'text-white font-black',
+          border: 'border-2 border-white',
+          shape: 'shield',
+          specialStyle: 'interstate'
+        };
+      }
+      // USA US Routes (US-1, US-66, etc.) - Black and white shield
+      if (ref.match(/^US-?\d/)) {
+        return { 
+          bg: 'bg-white',
+          text: 'text-black font-bold',
+          border: 'border-2 border-black',
+          shape: 'shield'
+        };
+      }
+      // USA State Routes - White shield with black
+      if (ref.match(/^SR-?\d|^State\s/i)) {
+        return { 
+          bg: 'bg-white',
+          text: 'text-black font-bold',
+          border: 'border-2 border-black',
+          shape: 'rectangle'
+        };
+      }
+    }
+    
+    // ===== EUROPE REGION =====
+    if (region === 'europe') {
+      // European E-roads (E15, E40, etc.) - Green background, white text
+      if (ref.match(/^E\d/)) {
+        return { 
+          bg: 'bg-[#006B3F]', // European green
+          text: 'text-white font-black',
+          border: 'border-2 border-white',
+          shape: 'rectangle'
+        };
+      }
+      // German/European Autobahn (A1, A9, etc.) - Blue background
+      if (ref.match(/^A\d/)) {
+        return { 
+          bg: 'bg-[#003399]', // German Autobahn blue
+          text: 'text-white font-black',
+          border: 'border-2 border-white',
+          shape: 'rectangle'
+        };
+      }
+      // German Bundesstraße (B roads) - Yellow background
+      if (ref.match(/^B\d/)) {
+        return { 
+          bg: 'bg-yellow-400',
+          text: 'text-black font-bold',
+          border: 'border-2 border-black',
+          shape: 'rectangle'
+        };
+      }
+    }
+    
+    // ===== FALLBACK FOR UNKNOWN REGION =====
+    // Use pattern-based detection when region not set
+    
+    // Motorways (M roads) - Blue (assume UK style)
+    if (ref.match(/^M\d/)) {
+      return { 
+        bg: 'bg-[#0063B0]',
+        text: 'text-white font-black',
+        border: 'border-2 border-white',
+        shape: 'rectangle'
+      };
+    }
+    // Interstate (I roads) - USA style
+    if (ref.match(/^I-?\d/)) {
+      return { 
+        bg: 'bg-[#003F87]',
+        text: 'text-white font-black',
+        border: 'border-2 border-white',
+        shape: 'shield',
+        specialStyle: 'interstate'
+      };
+    }
+    // E-roads - European green
+    if (ref.match(/^E\d/)) {
+      return { 
+        bg: 'bg-[#006B3F]',
+        text: 'text-white font-black',
+        border: 'border-2 border-white',
+        shape: 'rectangle'
+      };
+    }
+    // A-roads (default to UK green/yellow when region unknown)
+    if (ref.match(/^A\d/)) {
+      return { 
+        bg: 'bg-[#00703C]',
+        text: 'text-yellow-300 font-black',
+        border: 'border-2 border-white',
+        shape: 'rectangle'
+      };
+    }
+    
+    // Default - Gray
+    return { 
+      bg: 'bg-slate-600',
+      text: 'text-white font-medium',
+      border: 'border border-slate-500',
+      shape: 'rectangle'
+    };
+  };
+  
+  // Legacy function for backwards compatibility
   const getRoadBadgeColor = (ref: string) => {
-    if (ref.match(/^M\d/)) return 'bg-blue-600 text-white'; // UK Motorways
-    if (ref.match(/^A\d/)) return 'bg-green-600 text-white'; // UK A-roads
-    if (ref.match(/^B\d/)) return 'bg-amber-600 text-white'; // UK B-roads
-    if (ref.match(/^I-/)) return 'bg-blue-700 text-white'; // US Interstate
-    if (ref.match(/^US-/)) return 'bg-green-700 text-white'; // US Highway
-    if (ref.match(/^E\d/)) return 'bg-blue-800 text-white'; // European routes
-    return 'bg-slate-600 text-white'; // Other roads
+    const style = getRoadBadgeStyle(ref);
+    return `${style.bg} ${style.text}`;
   };
   
   // Handle unit toggle
@@ -324,28 +473,51 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             )}
             
             {roadInfo.roadRef ? (
-              <button
-                onClick={handleMotorwayClick}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5',
-                  'rounded-lg',
-                  'font-bold text-sm',
-                  getRoadBadgeColor(roadInfo.roadRef),
-                  'shadow-md',
-                  'hover:scale-105 active:scale-100',
-                  'transition-transform duration-200',
-                  'cursor-pointer'
-                )}
-                data-testid="road-ref-badge"
-              >
-                <span className="font-black">{roadInfo.roadRef}</span>
-                {roadInfo.junction?.ref && (
-                  <>
-                    <ChevronRight className="w-3 h-3" />
-                    <span className="text-xs">J{roadInfo.junction.ref}</span>
-                  </>
-                )}
-              </button>
+              (() => {
+                const badgeStyle = getRoadBadgeStyle(roadInfo.roadRef);
+                const isInterstate = badgeStyle.specialStyle === 'interstate';
+                
+                return (
+                  <button
+                    onClick={handleMotorwayClick}
+                    className={cn(
+                      'flex items-center justify-center gap-1',
+                      'text-sm',
+                      badgeStyle.bg,
+                      badgeStyle.text,
+                      badgeStyle.border,
+                      'shadow-lg',
+                      'hover:scale-105 active:scale-100',
+                      'transition-transform duration-200',
+                      'cursor-pointer',
+                      // Shape-specific styling
+                      badgeStyle.shape === 'shield' 
+                        ? 'px-2 py-1 rounded-t-full rounded-b-lg min-w-[48px]' // Shield shape
+                        : 'px-3 py-1.5 rounded-md min-w-[44px]', // Rectangle
+                      // Interstate special red top bar
+                      isInterstate && 'relative overflow-hidden'
+                    )}
+                    data-testid="road-ref-badge"
+                  >
+                    {/* Interstate red banner at top */}
+                    {isInterstate && (
+                      <div className="absolute top-0 left-0 right-0 h-[6px] bg-[#BF0A30]" />
+                    )}
+                    <span className={cn(
+                      "font-black tracking-tight",
+                      isInterstate && "mt-1" // Push text down for interstate red bar
+                    )}>
+                      {roadInfo.roadRef}
+                    </span>
+                    {roadInfo.junction?.ref && (
+                      <>
+                        <ChevronRight className="w-3 h-3" />
+                        <span className="text-xs font-bold">J{roadInfo.junction.ref}</span>
+                      </>
+                    )}
+                  </button>
+                );
+              })()
             ) : isNavigating ? (
               <div className={cn(
                 "px-3 py-1.5 rounded-lg",
