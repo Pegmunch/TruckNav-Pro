@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
@@ -24,6 +24,7 @@ import { FleetTrackingTab } from '@/components/fleet/fleet-tracking-tab';
 import { DriverBehaviorTab } from '@/components/fleet/driver-behavior-tab';
 import { HoursOfServiceTab } from '@/components/fleet/hos-tab';
 import { CustomerBillingTab } from '@/components/fleet/customer-billing-tab';
+import { GeofencingTab } from '@/components/fleet/geofencing-tab';
 
 export default function FleetManagement() {
   const { toast } = useToast();
@@ -116,6 +117,11 @@ export default function FleetManagement() {
               <span className="hidden sm:inline">Billing</span>
               <span className="sm:hidden">$</span>
             </TabsTrigger>
+            <TabsTrigger value="geofencing" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-geofencing">
+              <MapPinned className="w-4 h-4" />
+              <span className="hidden sm:inline">Geofencing</span>
+              <span className="sm:hidden">G</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="vehicles">
@@ -168,6 +174,10 @@ export default function FleetManagement() {
 
           <TabsContent value="billing">
             <CustomerBillingTab />
+          </TabsContent>
+
+          <TabsContent value="geofencing">
+            <GeofencingTab />
           </TabsContent>
         </Tabs>
         </div>
