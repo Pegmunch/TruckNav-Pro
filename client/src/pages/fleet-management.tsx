@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
@@ -20,6 +20,10 @@ import { CostAnalyticsDashboard } from '@/components/fleet-analytics-dashboard';
 import { IncidentsTab } from '@/components/fleet-incidents-tab';
 import { TripsTab } from '@/components/fleet-trips-tab';
 import { ComplianceTab } from '@/components/fleet-compliance-tab';
+import { FleetTrackingTab } from '@/components/fleet/fleet-tracking-tab';
+import { DriverBehaviorTab } from '@/components/fleet/driver-behavior-tab';
+import { HoursOfServiceTab } from '@/components/fleet/hos-tab';
+import { CustomerBillingTab } from '@/components/fleet/customer-billing-tab';
 
 export default function FleetManagement() {
   const { toast } = useToast();
@@ -46,7 +50,7 @@ export default function FleetManagement() {
           <NotificationsBanner />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-8 mb-6 overflow-x-auto">
+          <TabsList className="flex flex-wrap w-full mb-6 h-auto gap-1 p-1">
             <TabsTrigger value="vehicles" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-vehicles">
               <Truck className="w-4 h-4" />
               <span className="hidden sm:inline">Vehicles</span>
@@ -92,6 +96,26 @@ export default function FleetManagement() {
               <span className="hidden sm:inline">Compliance</span>
               <span className="sm:hidden">C</span>
             </TabsTrigger>
+            <TabsTrigger value="tracking" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-tracking">
+              <Radio className="w-4 h-4" />
+              <span className="hidden sm:inline">Tracking</span>
+              <span className="sm:hidden">TR</span>
+            </TabsTrigger>
+            <TabsTrigger value="behavior" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-behavior">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Behavior</span>
+              <span className="sm:hidden">B</span>
+            </TabsTrigger>
+            <TabsTrigger value="hos" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-hos">
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">HoS</span>
+              <span className="sm:hidden">H</span>
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-billing">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden sm:inline">Billing</span>
+              <span className="sm:hidden">$</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="vehicles">
@@ -128,6 +152,22 @@ export default function FleetManagement() {
 
           <TabsContent value="compliance">
             <ComplianceTab />
+          </TabsContent>
+
+          <TabsContent value="tracking">
+            <FleetTrackingTab />
+          </TabsContent>
+
+          <TabsContent value="behavior">
+            <DriverBehaviorTab />
+          </TabsContent>
+
+          <TabsContent value="hos">
+            <HoursOfServiceTab />
+          </TabsContent>
+
+          <TabsContent value="billing">
+            <CustomerBillingTab />
           </TabsContent>
         </Tabs>
         </div>
