@@ -2,7 +2,7 @@
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
 // Force cache update by incrementing version (fixes PWA multi-version issue)
-const CACHE_VERSION = '3.4.4';
+const CACHE_VERSION = '3.5.0';
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;
@@ -376,16 +376,34 @@ self.addEventListener('install', (event) => {
   
   event.waitUntil(
     Promise.all([
-      // Cache essential files
-      caches.open(STATIC_CACHE).then((cache) => {
-        return cache.addAll(ESSENTIAL_FILES);
+      // Cache essential files with cache-busting to bypass old service worker
+      caches.open(STATIC_CACHE).then(async (cache) => {
+        // Use cache: 'reload' to bypass the old service worker and fetch fresh from network
+        const cacheBustingRequests = ESSENTIAL_FILES.map(url => 
+          new Request(url, { cache: 'reload' })
+        );
+        
+        // Fetch each file individually with cache-busting
+        const fetchPromises = cacheBustingRequests.map(async (request) => {
+          try {
+            const response = await fetch(request);
+            if (response.ok) {
+              await cache.put(request.url, response);
+              console.log('[SW] Cached fresh:', request.url);
+            }
+          } catch (error) {
+            console.warn('[SW] Failed to cache:', request.url, error);
+          }
+        });
+        
+        return Promise.all(fetchPromises);
       }),
       // Initialize IndexedDB
       initDB(),
       // Force immediate activation to fix multi-version issue
       self.skipWaiting()
     ]).then(() => {
-      console.log('[SW] Installation complete - Essential files cached and DB initialized');
+      console.log('[SW] Installation complete - Essential files cached fresh and DB initialized');
     }).catch((error) => {
       console.error('[SW] Installation failed:', error);
     })
