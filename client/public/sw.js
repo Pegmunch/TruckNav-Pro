@@ -1,37 +1,25 @@
-// TruckNav Pro Service Worker - Minimal Version
-// Disabled aggressive caching to prevent stale content
-
-const CACHE_VERSION = 'v1-disabled-cache';
-
-// Only cache essential offline page, not the app
+// TruckNav Pro Service Worker - Fixed Version
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.matchAll().then(clients => {
+  event.waitUntil((async () => {
+    // Clear ALL old caches immediately
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map(name => caches.delete(name)));
+    
+    // Force all clients to reload
+    const clients = await self.clients.matchAll();
     clients.forEach(client => client.navigate(client.url));
-  }));
+    
+    return self.clients.claim();
+  })());
 });
 
-// Network-first strategy: Always try network, fall back to offline.html
+// Always fetch from network first, never use cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // For HTML pages, always use network-first
-  if (event.request.destination === '' || event.request.destination === 'document') {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => new Response('Offline - please check your connection', { status: 503 }))
-    );
-    return;
-  }
-
-  // For everything else, use network
   event.respondWith(fetch(event.request).catch(() => {
-    return new Response('Offline', { status: 503 });
+    return new Response('Offline');
   }));
 });
