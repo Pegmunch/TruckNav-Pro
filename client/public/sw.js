@@ -2,7 +2,7 @@
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
 // Force cache update by incrementing version (fixes PWA multi-version issue)
-const CACHE_VERSION = '3.5.1';
+const CACHE_VERSION = '3.5.2';
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;

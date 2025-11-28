@@ -102,6 +102,9 @@ body {
   inset: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
 
 /* Apply safe area padding ONLY in standalone PWA mode - reduced padding for mobile */
@@ -110,33 +113,50 @@ body {
     padding-top: calc(var(--safe-area-top) + 24px); /* Reduced from 48px to 24px */
     padding-bottom: var(--safe-area-bottom);
   }
-  
-  /* CRITICAL PWA FIX: Ensure map container fills entire viewport in standalone mode */
-  /* The map must use fixed positioning to break out of parent padding */
-  .mobile-layout > div:first-child:has(.map-shell) {
-    position: fixed !important;
-    inset: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  
-  /* Ensure MapLibre canvas fills entire viewport and handles touch events */
-  .maplibregl-canvas-container,
-  .maplibregl-canvas {
-    position: absolute !important;
-    width: 100% !important;
-    height: 100% !important;
-    touch-action: pan-x pan-y pinch-zoom !important;
-  }
-  
-  /* Ensure map-shell fills viewport */
+}
+
+/* CRITICAL: Ensure map-shell receives all touch events */
+.map-shell {
+  /* Ensure touch gestures are not blocked - most permissive settings */
+  touch-action: pan-x pan-y pinch-zoom !important;
+  pointer-events: auto !important;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: hidden !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  z-index: 10 !important;
+}
+
+/* Standalone PWA: Map must fill viewport and respond to touch */
+@media (display-mode: standalone) {
   .map-shell {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    z-index: 10 !important;
   }
+}
+
+/* MapLibre canvas container - ALL touch to map */
+.maplibregl-canvas-container {
+  touch-action: pan-x pan-y pinch-zoom !important;
+  pointer-events: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* MapLibre canvas - accept all touch gestures */
+.maplibregl-canvas {
+  touch-action: pan-x pan-y pinch-zoom !important;
+  pointer-events: auto !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Automotive-optimized touch scrolling */
