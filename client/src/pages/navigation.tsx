@@ -2705,8 +2705,8 @@ function NavigationPageContent() {
                 />
               )}
 
-              {/* Legal Ownership - Bottom right corner */}
-              <div className="fixed bottom-4 right-4 z-50 pointer-events-auto px-3 py-2">
+              {/* Legal Ownership - Bottom of screen */}
+              <div className="fixed bottom-0 left-0 right-0 w-full z-[5] pointer-events-auto">
                 <MapLegalOwnership compact={true} className="sm:hidden" />
               </div>
             </>

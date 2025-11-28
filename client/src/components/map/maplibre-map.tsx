@@ -2175,17 +2175,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const toggle3DMode = () => {
     if (!map.current) return;
     
+    // During navigation, 3D mode is auto-controlled by GPS heading
+    // Still allow toggle, but inform user via state change
+    if (isNavigating) {
+      console.log('[3D-TOGGLE] 3D mode is auto-managed during navigation (67° pitch, heading-up rotation)');
+      // Toggle state for visual feedback, but navigation will override camera
+      setIs3DMode(!is3DMode);
+      return;
+    }
+    
     const newMode = !is3DMode;
     setIs3DMode(newMode);
     
     // Smoothly transition between 2D (pitch 0) and 3D (pitch 60)
-    // Works during navigation AND normal mode
     map.current.easeTo({
       pitch: newMode ? 60 : 0,
       duration: 800
     });
-    
-    console.log('[3D-TOGGLE] ✅ Toggling 3D mode:', newMode ? 'ON (60° tilt)' : 'OFF (0° tilt)');
   };
   
   // AUTO-ENABLE 3D MODE when navigation starts
@@ -2230,49 +2236,49 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={toggleMapView}
-              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-toggle-view"
               aria-label="Toggle map view"
             >
-              <Layers className="h-4 w-4" />
+              <Layers className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={handleRecenter}
-              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-recenter"
               aria-label="Recenter map"
             >
-              <Crosshair className="h-4 w-4" />
+              <Crosshair className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={handleZoomIn}
-              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-in"
               aria-label="Zoom in"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5" />
             </Button>
             <Button
               size="icon"
               onClick={handleZoomOut}
-              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
+              className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-zoom-out"
               aria-label="Zoom out"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-5 w-5" />
             </Button>
             {!hideCompass && (
               <Button
                 size="icon"
                 onClick={handleCompassClick}
-                className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
+                className="h-11 w-11 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 transition-all duration-200 backdrop-blur-sm active:scale-95"
                 data-testid="button-compass-reset"
                 aria-label="Reset bearing to North"
               >
                 <Compass 
-                  className="h-4 w-4 transition-transform duration-300" 
+                  className="h-5 w-5 transition-transform duration-300" 
                   style={{ transform: `rotate(${bearing}deg)` }}
                 />
               </Button>
@@ -2281,7 +2287,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               size="icon"
               onClick={toggle3DMode}
               className={cn(
-                "h-9 w-9 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
+                "h-11 w-11 shadow-xl transition-all duration-200 border-2 backdrop-blur-sm active:scale-95",
                 is3DMode 
                   ? "bg-blue-500 text-white hover:bg-blue-600 border-blue-600" 
                   : "bg-white/95 hover:bg-white text-gray-800 border-slate-300"
@@ -2289,7 +2295,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               data-testid="button-toggle-3d"
               aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
             >
-              <Box className="h-4 w-4" />
+              <Box className="h-5 w-5" />
             </Button>
           </div>
 
@@ -2315,7 +2321,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       {/* GPS Status Indicator */}
       {(gpsStatus === 'acquiring' || gpsStatus === 'unavailable' || gpsStatus === 'error') && (
         <div 
-          className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          className="absolute top-28 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
           data-testid="gps-status-indicator"
         >
           <div className={cn(

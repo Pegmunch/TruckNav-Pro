@@ -143,7 +143,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   return (
     <div
       className={cn(
-        'relative flex justify-center w-full',
+        'relative',
         className
       )}
       data-testid="speedometer-hud"
@@ -151,8 +151,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
       <div
         className={cn(
-          // Shorter dimensions for compact oval shape - responsive for mobile
-          'relative w-[220px] h-[65px] sm:w-[240px] sm:h-[70px] md:w-[280px] md:h-[80px]',
+          // Shorter dimensions for compact oval shape
+          'relative w-[240px] h-[70px] sm:w-[260px] sm:h-[75px] md:w-[280px] md:h-[80px]',
           // White background normally, red when speeding
           isSpeeding 
             ? 'bg-red-500 dark:bg-red-500' 
