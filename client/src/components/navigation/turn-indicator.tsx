@@ -78,6 +78,9 @@ const TurnIndicator = memo(function TurnIndicator({
         "flex flex-col items-center gap-1",
         className
       )}
+      style={{
+        top: 'calc(56px + var(--safe-area-top, 0px))'
+      }}
       data-testid="turn-indicator"
     >
       {/* Main Turn Bubble */}

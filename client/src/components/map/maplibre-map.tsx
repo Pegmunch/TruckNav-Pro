@@ -1129,23 +1129,28 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       }
     }
 
-    // Add destination flag marker at the end of the route
-    if (isNavigating && routeCoordinates.length > 0) {
+    // Add destination flag marker at the end of the route (ONLY in preview mode, hide during navigation)
+    // During active navigation, the flag clutters the view - driver knows destination
+    if (!isNavigating && routeCoordinates.length > 0) {
       const lastCoord = routeCoordinates[routeCoordinates.length - 1];
-      if (destinationMarkerRef.current) {
-        destinationMarkerRef.current.remove();
+      // Validate coordinates are not at origin (0,0) which indicates invalid data
+      if (lastCoord && lastCoord[0] !== 0 && lastCoord[1] !== 0) {
+        if (destinationMarkerRef.current) {
+          destinationMarkerRef.current.remove();
+        }
+        const flagEl = document.createElement('div');
+        flagEl.innerHTML = `
+          <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+            <rect x="6" y="2" width="20" height="14" fill="#ef4444" stroke="white" stroke-width="1.5" rx="2"/>
+            <path d="M16 16 L16 38 M14 38 L18 38" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        `;
+        destinationMarkerRef.current = new maplibregl.Marker({ element: flagEl, anchor: 'bottom' })
+          .setLngLat(lastCoord as [number, number])
+          .addTo(map.current);
       }
-      const flagEl = document.createElement('div');
-      flagEl.innerHTML = `
-        <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
-          <rect x="6" y="2" width="20" height="14" fill="#ef4444" stroke="white" stroke-width="1.5" rx="2"/>
-          <path d="M16 16 L16 38 M14 38 L18 38" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
-      `;
-      destinationMarkerRef.current = new maplibregl.Marker({ element: flagEl, anchor: 'bottom' })
-        .setLngLat(lastCoord as [number, number])
-        .addTo(map.current);
     } else if (destinationMarkerRef.current) {
+      // Always remove flag during navigation or when no route
       destinationMarkerRef.current.remove();
       destinationMarkerRef.current = null;
     }
