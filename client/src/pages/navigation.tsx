@@ -761,7 +761,7 @@ function NavigationPageContent() {
     // Execute auto-zoom
     performAutoZoom();
     
-  }, [isNavigating, currentRoute]); // Re-run when route or nav state changes
+  }, []); // Run on component mount and when map becomes available
   
   // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
   // Only enforces navigate mode when navigation is active, no other automatic transitions
@@ -2714,8 +2714,8 @@ function NavigationPageContent() {
                 <MapLegalOwnership compact={true} className="sm:hidden" />
               </div>
 
-              {/* Input Page Toggle Button - Always visible during plan/preview */}
-              {!isNavigating && (
+              {/* Input Page Toggle Button - Always visible during plan/preview modes */}
+              {(mobileNavMode === 'plan' || mobileNavMode === 'preview') && (
                 <Button
                   onClick={() => setShowInputPage(!showInputPage)}
                   size="icon"
