@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
@@ -285,6 +285,43 @@ export interface IStorage {
   getSavedRoutes(userId: string): Promise<any[]>; // Returns SavedRoute[]
   commentOnRoute(sharedRouteId: string, userId: string, comment: string, rating?: number): Promise<any>; // Returns RouteComment
   getRouteComments(sharedRouteId: string): Promise<any[]>; // Returns RouteComment[]
+
+  // Enterprise Features - GPS Tracking
+  createGpsTrackingPoint(point: InsertGpsTracking): Promise<GpsTracking>;
+  getVehicleTrackingHistory(vehicleId: string, startTime?: Date, endTime?: Date, limit?: number): Promise<GpsTracking[]>;
+  getLatestVehiclePosition(vehicleId: string): Promise<GpsTracking | undefined>;
+  getFleetPositions(): Promise<GpsTracking[]>;
+
+  // Enterprise Features - Geofences
+  createGeofence(geofence: InsertGeofence): Promise<Geofence>;
+  getGeofence(id: string): Promise<Geofence | undefined>;
+  getUserGeofences(userId: string): Promise<Geofence[]>;
+  updateGeofence(id: string, updates: Partial<Geofence>): Promise<Geofence | undefined>;
+  deleteGeofence(id: string): Promise<boolean>;
+  createGeofenceEvent(event: InsertGeofenceEvent): Promise<GeofenceEvent>;
+  getGeofenceEvents(geofenceId: string, startTime?: Date, endTime?: Date): Promise<GeofenceEvent[]>;
+  getVehicleGeofenceEvents(vehicleId: string, limit?: number): Promise<GeofenceEvent[]>;
+
+  // Enterprise Features - Driver Behavior
+  createDriverBehaviorRecord(record: InsertDriverBehavior): Promise<DriverBehavior>;
+  getDriverBehaviorRecords(operatorId: string, startDate?: Date, endDate?: Date): Promise<DriverBehavior[]>;
+  getDriverSafetyScore(operatorId: string): Promise<{ safetyScore: number; efficiencyScore: number; overallScore: number }>;
+  getFleetBehaviorAnalytics(): Promise<{ averageSafetyScore: number; totalSpeedingEvents: number; totalHarshBrakingEvents: number; topPerformers: { operatorId: string; score: number }[] }>;
+
+  // Enterprise Features - Hours of Service
+  createHoursOfServiceRecord(record: InsertHoursOfService): Promise<HoursOfService>;
+  getOperatorHoursOfService(operatorId: string, startDate?: Date, endDate?: Date): Promise<HoursOfService[]>;
+  getLatestHoursOfService(operatorId: string): Promise<HoursOfService | undefined>;
+  getHoSViolations(): Promise<HoursOfService[]>;
+  updateHoursOfService(id: string, updates: Partial<HoursOfService>): Promise<HoursOfService | undefined>;
+
+  // Enterprise Features - Customer Billing
+  createCustomer(customer: InsertCustomerBilling): Promise<CustomerBilling>;
+  getCustomer(id: string): Promise<CustomerBilling | undefined>;
+  getUserCustomers(userId: string): Promise<CustomerBilling[]>;
+  updateCustomer(id: string, updates: Partial<CustomerBilling>): Promise<CustomerBilling | undefined>;
+  deleteCustomer(id: string): Promise<boolean>;
+  getCustomerAnalytics(userId: string): Promise<{ totalCustomers: number; totalRevenue: number; totalOutstanding: number; averageProfitMargin: number }>;
 
 }
 
@@ -4337,6 +4374,343 @@ export class DatabaseStorage implements IStorage {
 
   async getNonCompliantRecords(): Promise<ComplianceRecord[]> {
     return await db.select().from(complianceRecords).where(or(eq(complianceRecords.status, 'non_compliant'), eq(complianceRecords.status, 'expired'))).orderBy(asc(complianceRecords.nextCheckDue));
+  }
+
+  // ========================================
+  // ENTERPRISE FEATURES - GPS TRACKING
+  // ========================================
+
+  async createGpsTrackingPoint(point: InsertGpsTracking): Promise<GpsTracking> {
+    const result = await db.insert(gpsTracking).values(point).returning();
+    return result[0];
+  }
+
+  async getVehicleTrackingHistory(vehicleId: string, startTime?: Date, endTime?: Date, limit: number = 100): Promise<GpsTracking[]> {
+    let conditions = [eq(gpsTracking.vehicleId, vehicleId)];
+    
+    if (startTime) {
+      conditions.push(gte(gpsTracking.timestamp, startTime));
+    }
+    if (endTime) {
+      conditions.push(lte(gpsTracking.timestamp, endTime));
+    }
+
+    return await db.select()
+      .from(gpsTracking)
+      .where(and(...conditions))
+      .orderBy(desc(gpsTracking.timestamp))
+      .limit(limit);
+  }
+
+  async getLatestVehiclePosition(vehicleId: string): Promise<GpsTracking | undefined> {
+    const result = await db.select()
+      .from(gpsTracking)
+      .where(eq(gpsTracking.vehicleId, vehicleId))
+      .orderBy(desc(gpsTracking.timestamp))
+      .limit(1);
+    return result[0];
+  }
+
+  async getFleetPositions(): Promise<GpsTracking[]> {
+    const subquery = db.select({
+      vehicleId: gpsTracking.vehicleId,
+      maxTimestamp: sql<Date>`MAX(${gpsTracking.timestamp})`.as('max_timestamp')
+    })
+      .from(gpsTracking)
+      .groupBy(gpsTracking.vehicleId)
+      .as('latest');
+
+    const result = await db.select()
+      .from(gpsTracking)
+      .innerJoin(
+        subquery,
+        and(
+          eq(gpsTracking.vehicleId, subquery.vehicleId),
+          eq(gpsTracking.timestamp, subquery.maxTimestamp)
+        )
+      );
+
+    return result.map(r => r.gps_tracking);
+  }
+
+  // ========================================
+  // ENTERPRISE FEATURES - GEOFENCES
+  // ========================================
+
+  async createGeofence(geofence: InsertGeofence): Promise<Geofence> {
+    const result = await db.insert(geofences).values(geofence).returning();
+    return result[0];
+  }
+
+  async getGeofence(id: string): Promise<Geofence | undefined> {
+    const result = await db.select()
+      .from(geofences)
+      .where(eq(geofences.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getUserGeofences(userId: string): Promise<Geofence[]> {
+    return await db.select()
+      .from(geofences)
+      .where(eq(geofences.userId, userId))
+      .orderBy(desc(geofences.createdAt));
+  }
+
+  async updateGeofence(id: string, updates: Partial<Geofence>): Promise<Geofence | undefined> {
+    const result = await db.update(geofences)
+      .set(updates)
+      .where(eq(geofences.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteGeofence(id: string): Promise<boolean> {
+    await db.delete(geofences).where(eq(geofences.id, id));
+    return true;
+  }
+
+  async createGeofenceEvent(event: InsertGeofenceEvent): Promise<GeofenceEvent> {
+    const result = await db.insert(geofenceEvents).values(event).returning();
+    return result[0];
+  }
+
+  async getGeofenceEvents(geofenceId: string, startTime?: Date, endTime?: Date): Promise<GeofenceEvent[]> {
+    let conditions = [eq(geofenceEvents.geofenceId, geofenceId)];
+    
+    if (startTime) {
+      conditions.push(gte(geofenceEvents.timestamp, startTime));
+    }
+    if (endTime) {
+      conditions.push(lte(geofenceEvents.timestamp, endTime));
+    }
+
+    return await db.select()
+      .from(geofenceEvents)
+      .where(and(...conditions))
+      .orderBy(desc(geofenceEvents.timestamp));
+  }
+
+  async getVehicleGeofenceEvents(vehicleId: string, limit: number = 50): Promise<GeofenceEvent[]> {
+    return await db.select()
+      .from(geofenceEvents)
+      .where(eq(geofenceEvents.vehicleId, vehicleId))
+      .orderBy(desc(geofenceEvents.timestamp))
+      .limit(limit);
+  }
+
+  // ========================================
+  // ENTERPRISE FEATURES - DRIVER BEHAVIOR
+  // ========================================
+
+  async createDriverBehaviorRecord(record: InsertDriverBehavior): Promise<DriverBehavior> {
+    const result = await db.insert(driverBehavior).values(record).returning();
+    return result[0];
+  }
+
+  async getDriverBehaviorRecords(operatorId: string, startDate?: Date, endDate?: Date): Promise<DriverBehavior[]> {
+    let conditions = [eq(driverBehavior.operatorId, operatorId)];
+    
+    if (startDate) {
+      conditions.push(gte(driverBehavior.behaviorDate, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(driverBehavior.behaviorDate, endDate));
+    }
+
+    return await db.select()
+      .from(driverBehavior)
+      .where(and(...conditions))
+      .orderBy(desc(driverBehavior.behaviorDate));
+  }
+
+  async getDriverSafetyScore(operatorId: string): Promise<{ safetyScore: number; efficiencyScore: number; overallScore: number }> {
+    const records = await db.select()
+      .from(driverBehavior)
+      .where(eq(driverBehavior.operatorId, operatorId))
+      .orderBy(desc(driverBehavior.behaviorDate))
+      .limit(30);
+
+    if (records.length === 0) {
+      return { safetyScore: 0, efficiencyScore: 0, overallScore: 0 };
+    }
+
+    const avgSafetyScore = records.reduce((sum, r) => sum + (r.safetyScore || 0), 0) / records.length;
+    const avgEfficiencyScore = records.reduce((sum, r) => sum + (r.efficiencyScore || 0), 0) / records.length;
+    const avgOverallScore = records.reduce((sum, r) => sum + (r.overallScore || 0), 0) / records.length;
+
+    return {
+      safetyScore: Math.round(avgSafetyScore * 100) / 100,
+      efficiencyScore: Math.round(avgEfficiencyScore * 100) / 100,
+      overallScore: Math.round(avgOverallScore * 100) / 100
+    };
+  }
+
+  async getFleetBehaviorAnalytics(): Promise<{ averageSafetyScore: number; totalSpeedingEvents: number; totalHarshBrakingEvents: number; topPerformers: { operatorId: string; score: number }[] }> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const records = await db.select()
+      .from(driverBehavior)
+      .where(gte(driverBehavior.behaviorDate, thirtyDaysAgo));
+
+    if (records.length === 0) {
+      return {
+        averageSafetyScore: 0,
+        totalSpeedingEvents: 0,
+        totalHarshBrakingEvents: 0,
+        topPerformers: []
+      };
+    }
+
+    const totalSpeedingEvents = records.reduce((sum, r) => sum + (r.speedingEvents || 0), 0);
+    const totalHarshBrakingEvents = records.reduce((sum, r) => sum + (r.harshBrakingEvents || 0), 0);
+    const averageSafetyScore = records.reduce((sum, r) => sum + (r.safetyScore || 0), 0) / records.length;
+
+    const operatorScores = new Map<string, { total: number; count: number }>();
+    for (const record of records) {
+      const existing = operatorScores.get(record.operatorId) || { total: 0, count: 0 };
+      existing.total += record.overallScore || 0;
+      existing.count += 1;
+      operatorScores.set(record.operatorId, existing);
+    }
+
+    const topPerformers = Array.from(operatorScores.entries())
+      .map(([operatorId, data]) => ({
+        operatorId,
+        score: Math.round((data.total / data.count) * 100) / 100
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    return {
+      averageSafetyScore: Math.round(averageSafetyScore * 100) / 100,
+      totalSpeedingEvents,
+      totalHarshBrakingEvents,
+      topPerformers
+    };
+  }
+
+  // ========================================
+  // ENTERPRISE FEATURES - HOURS OF SERVICE
+  // ========================================
+
+  async createHoursOfServiceRecord(record: InsertHoursOfService): Promise<HoursOfService> {
+    const result = await db.insert(hoursOfService).values(record).returning();
+    return result[0];
+  }
+
+  async getOperatorHoursOfService(operatorId: string, startDate?: Date, endDate?: Date): Promise<HoursOfService[]> {
+    let conditions = [eq(hoursOfService.operatorId, operatorId)];
+    
+    if (startDate) {
+      conditions.push(gte(hoursOfService.logDate, startDate));
+    }
+    if (endDate) {
+      conditions.push(lte(hoursOfService.logDate, endDate));
+    }
+
+    return await db.select()
+      .from(hoursOfService)
+      .where(and(...conditions))
+      .orderBy(desc(hoursOfService.logDate));
+  }
+
+  async getLatestHoursOfService(operatorId: string): Promise<HoursOfService | undefined> {
+    const result = await db.select()
+      .from(hoursOfService)
+      .where(eq(hoursOfService.operatorId, operatorId))
+      .orderBy(desc(hoursOfService.logDate))
+      .limit(1);
+    return result[0];
+  }
+
+  async getHoSViolations(): Promise<HoursOfService[]> {
+    return await db.select()
+      .from(hoursOfService)
+      .where(
+        or(
+          eq(hoursOfService.dailyDrivingViolation, true),
+          eq(hoursOfService.dailyRestViolation, true),
+          eq(hoursOfService.weeklyDrivingViolation, true),
+          eq(hoursOfService.breakViolation, true)
+        )
+      )
+      .orderBy(desc(hoursOfService.logDate));
+  }
+
+  async updateHoursOfService(id: string, updates: Partial<HoursOfService>): Promise<HoursOfService | undefined> {
+    const result = await db.update(hoursOfService)
+      .set(updates)
+      .where(eq(hoursOfService.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // ========================================
+  // ENTERPRISE FEATURES - CUSTOMER BILLING
+  // ========================================
+
+  async createCustomer(customer: InsertCustomerBilling): Promise<CustomerBilling> {
+    const result = await db.insert(customerBilling).values(customer).returning();
+    return result[0];
+  }
+
+  async getCustomer(id: string): Promise<CustomerBilling | undefined> {
+    const result = await db.select()
+      .from(customerBilling)
+      .where(eq(customerBilling.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getUserCustomers(userId: string): Promise<CustomerBilling[]> {
+    return await db.select()
+      .from(customerBilling)
+      .where(eq(customerBilling.userId, userId))
+      .orderBy(desc(customerBilling.createdAt));
+  }
+
+  async updateCustomer(id: string, updates: Partial<CustomerBilling>): Promise<CustomerBilling | undefined> {
+    const result = await db.update(customerBilling)
+      .set(updates)
+      .where(eq(customerBilling.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    await db.delete(customerBilling).where(eq(customerBilling.id, id));
+    return true;
+  }
+
+  async getCustomerAnalytics(userId: string): Promise<{ totalCustomers: number; totalRevenue: number; totalOutstanding: number; averageProfitMargin: number }> {
+    const customers = await db.select()
+      .from(customerBilling)
+      .where(and(
+        eq(customerBilling.userId, userId),
+        eq(customerBilling.status, 'active')
+      ));
+
+    if (customers.length === 0) {
+      return {
+        totalCustomers: 0,
+        totalRevenue: 0,
+        totalOutstanding: 0,
+        averageProfitMargin: 0
+      };
+    }
+
+    const totalRevenue = customers.reduce((sum, c) => sum + parseFloat(c.totalRevenue?.toString() || '0'), 0);
+    const totalOutstanding = customers.reduce((sum, c) => sum + parseFloat(c.outstandingBalance?.toString() || '0'), 0);
+    const avgProfitMargin = customers.reduce((sum, c) => sum + (c.profitMargin || 0), 0) / customers.length;
+
+    return {
+      totalCustomers: customers.length,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      totalOutstanding: Math.round(totalOutstanding * 100) / 100,
+      averageProfitMargin: Math.round(avgProfitMargin * 100) / 100
+    };
   }
 
 }
