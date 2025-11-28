@@ -134,10 +134,15 @@ function NavigationPageContent() {
   const navSession = useNavigationSession();
   const { state: navState, journeyId, shouldShowHUD, canStart } = navSession;
   
-  // SIMPLIFIED: isNavigating derived directly from navSession state
-  // This eliminates localStorage sync issues that caused UI elements to disappear
-  // NavigationState values: 'idle' | 'starting' | 'active' | 'completing'
-  const isNavigating = navState === 'active' || navState === 'starting' || shouldShowHUD;
+  // LOCAL NAVIGATION UI STATE - Independent of server session state
+  // This fixes PWA session issues where UI disappears when session changes
+  const [isLocalNavActive, setIsLocalNavActive] = useState(() => {
+    // Initialize from localStorage to survive page reloads
+    return localStorage.getItem('navigation_ui_active') === 'true';
+  });
+  
+  // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
+  const isNavigating = isLocalNavActive;
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
@@ -180,9 +185,6 @@ function NavigationPageContent() {
   // Comprehensive mobile menu state
   const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
   
-  // Input page toggle state - for route planning overlay
-  const [showInputPage, setShowInputPage] = useState(false);
-
   // Current road name from GPS position (for speedometer display)
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
   
@@ -235,15 +237,15 @@ function NavigationPageContent() {
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   
-  // SIMPLIFIED: Derive mobileNavMode from server navigation state
-  // Show 'navigate' when actively navigating, 'preview' when route exists
-  const mobileNavMode: MobileNavMode = isNavigating
+  // CRITICAL: Derive mobileNavMode from LOCAL navigation state
+  // This prevents UI from disappearing when server session changes in PWA mode
+  const mobileNavMode: MobileNavMode = isLocalNavActive
     ? 'navigate' 
-    : (currentRoute ? 'preview' : 'plan');
+    : 'preview';
   
-  // SIMPLIFIED: Navigation UI visibility - show when navigating OR when route exists
-  // This ensures ETA header, right buttons, speedometer are always visible during navigation
-  const isNavUIActive = isNavigating || currentRoute !== null;
+  // CRITICAL FIX: Derive navigation UI state from LOCAL state (not server)
+  // This makes UI persist even when server session changes in PWA mode
+  const isNavUIActive = isLocalNavActive;
   
   // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
   // Use useMemo to stabilize calculation and prevent initial render issues
@@ -579,113 +581,189 @@ function NavigationPageContent() {
     }
   }, [isNavigating, currentRoute, gpsData?.position]);
   
-  // Poll for map availability and trigger auto-zoom when ready
+  // Enhanced auto-zoom to GPS location with user preferences, map readiness polling, and retry logic
   useEffect(() => {
-    // If map already attempted, skip
-    if (autoZoomState.current.attempted) return;
+    // 1. CHECK USER PREFERENCE - respect user's auto-zoom setting
+    const autoZoomEnabled = localStorage.getItem('trucknav_auto_zoom_enabled');
+    if (autoZoomEnabled === 'false') {
+      console.log('[AUTO-ZOOM] Disabled by user preference (trucknav_auto_zoom_enabled=false)');
+      return;
+    }
     
-    // Polling interval to detect when map becomes available
-    const pollInterval = setInterval(async () => {
-      if (!mapRef.current || autoZoomState.current.attempted) {
-        return; // Not ready or already attempted
-      }
-      
-      // Check if map is fully loaded by trying to get the map instance
-      const mapInstance = mapRef.current.getMap?.();
-      if (!mapInstance || !mapInstance.isStyleLoaded?.()) {
-        return; // Map style not loaded yet
-      }
-      
-      console.log('[AUTO-ZOOM-POLL] Map fully ready - triggering auto-zoom...');
-      clearInterval(pollInterval);
-      
-      // Mark as attempted immediately to prevent duplicate attempts
-      autoZoomState.current.attempted = true;
-
-      // 1. CHECK USER PREFERENCE - respect user's auto-zoom setting
-      const autoZoomEnabled = localStorage.getItem('trucknav_auto_zoom_enabled');
-      if (autoZoomEnabled === 'false') {
-        console.log('[AUTO-ZOOM] Disabled by user preference');
+    // 2. CHECK IF ALREADY SUCCEEDED - prevent duplicate zoom operations
+    if (autoZoomState.current.succeeded) {
+      return;
+    }
+    
+    // 3. CHECK MAX ATTEMPTS - prevent infinite retries (max 2 attempts)
+    const MAX_ATTEMPTS = 2;
+    if (autoZoomState.current.attempts >= MAX_ATTEMPTS) {
+      console.warn(`[AUTO-ZOOM] Max attempts (${MAX_ATTEMPTS}) reached, giving up`);
+      return;
+    }
+    
+    // 4. CHECK GPS AVAILABILITY - need GPS position to zoom
+    if (!gpsData?.position) {
+      return; // Wait for GPS lock
+    }
+    
+    // 5. CHECK MAP REFERENCE - map component must be mounted
+    if (!mapRef.current) {
+      return; // Wait for map to mount
+    }
+    
+    // 6. SKIP IF NAVIGATING - navigation has its own zoom logic
+    if (isNavigating) {
+      return;
+    }
+    
+    // 7. SKIP IF ROUTE PLANNED - don't interfere with route planning
+    if (currentRoute) {
+      return;
+    }
+    
+    // 8. THROTTLE RETRY ATTEMPTS - prevent rapid retry loops
+    const now = Date.now();
+    if (autoZoomState.current.lastAttemptTime) {
+      const timeSinceLastAttempt = now - autoZoomState.current.lastAttemptTime;
+      const MIN_RETRY_INTERVAL = 2000; // 2 seconds between attempts
+      if (timeSinceLastAttempt < MIN_RETRY_INTERVAL) {
         return;
       }
-      
-      // 2. CHECK IF ALREADY SUCCEEDED
-      if (autoZoomState.current.succeeded) {
-        return;
-      }
-      
-      // 3. MAP IS READY - perform zoom NOW
-      console.log('[AUTO-ZOOM] Map ready, starting auto-zoom with fallback...')
+    }
     
-      // Skip if navigating or route exists
-      if (isNavigating || currentRoute) {
-        return;
-      }
-      
-      // Increment attempts
-      autoZoomState.current.attempts = 1;
-      autoZoomState.current.lastAttemptTime = Date.now();
+    // All pre-flight checks passed - attempt auto-zoom
+    const attemptNumber = autoZoomState.current.attempts + 1;
+    console.log(`[AUTO-ZOOM] Starting attempt ${attemptNumber}/${MAX_ATTEMPTS}`);
     
-      // Execute zoom - prefer GPS if available, fallback to UK center
-      try {
-        console.log('[AUTO-ZOOM] Attempting GPS-aware zoom...');
+    // Update attempt tracking
+    autoZoomState.current.attempted = true;
+    autoZoomState.current.attempts = attemptNumber;
+    autoZoomState.current.lastAttemptTime = now;
+    
+    // 9. MAP READINESS POLLING - wait for map to be fully loaded
+    const waitForMapReady = async (maxAttempts = 10, interval = 200): Promise<boolean> => {
+      for (let i = 0; i < maxAttempts; i++) {
+        // Check if map instance exists and style is loaded
+        const mapInstance = mapRef.current?.getMap();
+        if (mapInstance && mapInstance.isStyleLoaded()) {
+          console.log(`[AUTO-ZOOM] Map ready after ${i + 1} polls (${(i + 1) * interval}ms)`);
+          return true;
+        }
         
-        // Try zoomToUserLocation first (handles GPS)
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, interval));
+      }
+      
+      console.warn(`[AUTO-ZOOM] Map readiness timeout after ${maxAttempts * interval}ms`);
+      return false;
+    };
+    
+    // 10. PERFORM AUTO-ZOOM WITH RETRY SUPPORT
+    const performAutoZoom = async () => {
+      try {
+        // Wait for map to be ready
+        const isMapReady = await waitForMapReady(10, 200); // 10 attempts x 200ms = 2 seconds max
+        
+        if (!isMapReady) {
+          console.warn('[AUTO-ZOOM] Map not ready, will retry on next GPS update');
+          return;
+        }
+        
+        // Map is ready - perform zoom
+        console.log('[AUTO-ZOOM] GPS lock detected, zooming to user location...');
+        
+        // Show loading indicator
+        setGpsLoadingState({
+          isLoading: true,
+          attempt: 1,
+          maxAttempts: 4
+        });
+        
         mapRef.current?.zoomToUserLocation({
-          forceStreetMode: false,
-          zoom: 14.5,
-          pitch: 45,
-          duration: 2000,
-          fallbackCoordinates: { lat: 51.5074, lng: -0.1278 }, // UK fallback
+          forceStreetMode: false,  // Respect user's map view preference
+          zoom: 14.5,              // Wider view for better route context
+          pitch: 45,               // 3D tilt for better spatial awareness
+          duration: 2000,          // Smooth 2-second animation
           onSuccess: (location) => {
+            // SUCCESS - mark as completed
             autoZoomState.current.succeeded = true;
-            console.log('[AUTO-ZOOM] ✅ Successfully zoomed to GPS location:', location);
+            
+            // Clear loading state
+            setGpsLoadingState(null);
+            
+            // Check if this is a cached position (no accuracy or old timestamp)
+            const isCachedPosition = !location.accuracy || (location.timestamp && (Date.now() - location.timestamp) > 60000);
+            
+            if (isCachedPosition && !cacheWarningShown) {
+              // REMOVED TOAST: No popups per user request
+              setCacheWarningShown(true);
+            } else if (!isCachedPosition) {
+              setCacheWarningShown(false); // Reset when live GPS works
+              
+              const accuracyText = location.accuracyLevel === 'excellent' ? '📍 Excellent accuracy' :
+                                  location.accuracyLevel === 'good' ? '📍 Good accuracy' :
+                                  '📍 Position locked';
+              
+              // REMOVED TOAST: No popups per user request
+            }
+            
           },
           onError: (error, usedFallback) => {
-            console.log('[AUTO-ZOOM] GPS failed, using fallback. Error:', error?.message || error);
+            // Clear loading state
+            setGpsLoadingState(null);
             
-            // If zoomToUserLocation failed but didn't use fallback, manually fly to UK
-            if (!usedFallback && mapInstance) {
-              try {
-                mapInstance.flyTo({
-                  center: [-0.1278, 51.5074], // London, UK (lng, lat for MapLibre)
-                  zoom: 14.5,
-                  pitch: 45,
-                  duration: 2000,
-                  essential: true
-                });
-                autoZoomState.current.succeeded = true;
-                console.log('[AUTO-ZOOM] ✅ Manually flew to UK center as fallback');
-              } catch (flyError) {
-                console.error('[AUTO-ZOOM] Failed to fly to fallback:', flyError);
+            // ERROR - handle different error types with user-friendly messages
+            if ('code' in error) {
+              const gpsError = error as GeolocationPositionError;
+              if (gpsError.code === GeolocationPositionError.PERMISSION_DENIED) {
+                console.warn('[AUTO-ZOOM] ❌ GPS permission denied - auto-zoom disabled');
+                // Permanent failure - stop retrying
+                autoZoomState.current.attempts = MAX_ATTEMPTS;
+                
+                // REMOVED TOAST: No popups per user request
+              } else if (gpsError.code === GeolocationPositionError.TIMEOUT) {
+                console.warn(`[AUTO-ZOOM] ⚠️ GPS timeout (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+                
+                if (usedFallback) {
+                  // REMOVED TOAST: No popups per user request
+                }
+              } else {
+                console.warn(`[AUTO-ZOOM] ⚠️ GPS error code ${gpsError.code} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
+                
+                if (usedFallback) {
+                  // REMOVED TOAST: No popups per user request
+                }
               }
-            } else if (usedFallback) {
-              autoZoomState.current.succeeded = true;
-              console.log('[AUTO-ZOOM] ✅ zoomToUserLocation used its fallback');
+            } else {
+              console.warn(`[AUTO-ZOOM] ⚠️ Error: ${error.message} (attempt ${attemptNumber}/${MAX_ATTEMPTS})`);
             }
+            
+            // If this was the last attempt, show optional user feedback
+            if (attemptNumber >= MAX_ATTEMPTS && !usedFallback) {
+              console.error('[AUTO-ZOOM] ❌ Failed after all retry attempts');
+            }
+          },
+          onRetry: (currentAttempt, maxAttempts) => {
+            // Update loading state with retry info
+            setGpsLoadingState({
+              isLoading: true,
+              attempt: currentAttempt,
+              maxAttempts: maxAttempts
+            });
+            
+            console.log(`[AUTO-ZOOM] 🔄 Retry ${currentAttempt}/${maxAttempts}`);
           }
         });
       } catch (error) {
-        console.error('[AUTO-ZOOM] Exception:', error);
-        // Last resort - direct flyTo
-        try {
-          mapInstance.flyTo({
-            center: [-0.1278, 51.5074],
-            zoom: 14.5,
-            pitch: 45,
-            duration: 2000,
-            essential: true
-          });
-          autoZoomState.current.succeeded = true;
-          console.log('[AUTO-ZOOM] ✅ Emergency fallback to UK center');
-        } catch (e) {
-          console.error('[AUTO-ZOOM] All zoom attempts failed:', e);
-        }
+        console.error('[AUTO-ZOOM] Unexpected error during auto-zoom:', error);
       }
-    }, 200); // Poll every 200ms for map availability
+    };
     
-    return () => clearInterval(pollInterval);
-  }, []); // Run once on mount
+    // Execute auto-zoom
+    performAutoZoom();
+    
+  }, [gpsData?.position, isNavigating, currentRoute]); // Re-run when GPS becomes available or state changes
   
   // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
   // Only enforces navigate mode when navigation is active, no other automatic transitions
@@ -1167,9 +1245,6 @@ function NavigationPageContent() {
         navState,
         shouldShowHUD
       });
-      
-      // Navigation UI visibility is now automatically derived from navSession state
-      // No localStorage sync needed - eliminates race conditions
     } else {
       // No journey - clear route data
       console.log('[JOURNEY-LOAD] No journey - clearing route data');
@@ -1824,11 +1899,14 @@ function NavigationPageContent() {
     isCancellingRouteRef.current = true;
     console.log('[ROUTE-CANCEL] 🛡️ Route cancellation guard activated');
     
-    // Clear the menu and localStorage
+    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
+    // This ensures the hamburger button reappears immediately
+    setIsLocalNavActive(false);
     setShowComprehensiveMenu(false);
+    localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
     localStorage.removeItem('navigation_timestamp');
-    console.log('[ROUTE-CANCEL] ✅ Clearing route and navigation state');
+    console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to preview mode');
     
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
@@ -2122,8 +2200,11 @@ function NavigationPageContent() {
       localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
       console.log('[NAV-ACTIVATION] ✅ Journey ID stored in localStorage');
       
-      // Navigation UI visibility is now automatically derived from navSession state
-      console.log('[NAV-ACTIVATION] ✅ Navigation activated - UI derived from navSession');
+      // CRITICAL FIX: Set local navigation UI state to persist across session changes
+      // This ensures UI stays visible even if server session changes in PWA mode
+      setIsLocalNavActive(true);
+      localStorage.setItem('navigation_ui_active', 'true');
+      console.log('[NAV-ACTIVATION] ✅ Local navigation UI state activated - UI will persist');
       
       performance.mark('nav-activation-end');
       performance.measure('nav-activation-total', 'nav-activation-start', 'nav-activation-end');
@@ -2183,13 +2264,16 @@ function NavigationPageContent() {
     isCancellingRouteRef.current = true;
     console.log('[NAV-STOP] 🛡️ Route cancellation guard activated');
     
-    // Clear the menu and localStorage
+    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
+    // This ensures the hamburger button reappears immediately
+    setIsLocalNavActive(false);
     setShowComprehensiveMenu(false);
+    localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
     localStorage.removeItem('navigation_timestamp');
     localStorage.removeItem('activeRouteId');
     localStorage.removeItem('activeJourneyId');
-    console.log('[NAV-STOP] ✅ Navigation stopped - UI derived from navSession');
+    console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
@@ -2388,8 +2472,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={true}
-                    hideCompass={true}
+                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2421,19 +2505,19 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* GPS Fallback - DEFAULT: Thin transparent pill (not thick orange oval) */}
+              {/* GPS Fallback - Compact Chip (Minimal UI) */}
               {mobileNavMode === 'preview' && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
                !gpsData.manualLocation && (
                 <div 
-                  className="absolute top-16 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
+                  className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
                   onClick={() => setShowManualLocationDialog(true)}
                   data-testid="gps-fallback-chip"
                 >
-                  <div className="flex items-center gap-1.5 bg-orange-500/80 hover:bg-orange-500/90 text-white px-2.5 py-1 rounded-full shadow-md backdrop-blur-sm transition-colors border border-orange-400/30">
-                    <AlertCircle className="h-3 w-3" />
-                    <span className="text-xs font-medium">GPS Unavailable - Tap to set</span>
+                  <div className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-full shadow-lg transition-colors">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">GPS Unavailable - Tap to set location</span>
                   </div>
                 </div>
               )}
@@ -2458,19 +2542,7 @@ function NavigationPageContent() {
                   </div>
                 </div>
               )}
-
-              {/* PLAN MODE - Hamburger FAB to open menu (when no route exists) */}
-              {mobileNavMode === 'plan' && (
-                <Button
-                  onClick={() => setShowComprehensiveMenu(true)}
-                  size="lg"
-                  className="fixed z-50 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 text-white backdrop-blur-sm pointer-events-auto bottom-6 right-6"
-                  data-testid="button-open-menu-plan"
-                  aria-label="Open menu"
-                >
-                  <Menu className="w-6 h-6" />
-                </Button>
-              )}
+              
 
               {/* PREVIEW MODE OVERLAYS (z-10+) - Visible only in preview mode */}
               {mobileNavMode === 'preview' && (
@@ -2523,7 +2595,11 @@ function NavigationPageContent() {
                   <Button
                     onClick={() => setShowComprehensiveMenu(true)}
                     size="lg"
-                    className="fixed z-50 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 text-white backdrop-blur-sm pointer-events-auto bottom-6 right-6"
+                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    style={{
+                      bottom: 'calc(24px + var(--safe-area-bottom))',
+                      right: 'calc(24px + var(--safe-area-right))'
+                    }}
                     data-testid="button-open-input-preview"
                     aria-label="Open route planning"
                   >
@@ -2617,10 +2693,6 @@ function NavigationPageContent() {
                         console.log('[BTN-8-INCIDENTS] ✅ View Incidents button clicked - Opening incident feed');
                         setShowIncidentFeed(true);
                       }}
-                      onToggleInputPage={() => {
-                        console.log('[BTN-9-HAMBURGER] ✅ Hamburger menu clicked - Toggle input page');
-                        setShowInputPage(!showInputPage);
-                      }}
                     />
                   }
                   bottomBar={
@@ -2637,55 +2709,7 @@ function NavigationPageContent() {
               <div className="fixed bottom-4 right-4 z-50 pointer-events-auto px-3 py-2">
                 <MapLegalOwnership compact={true} className="sm:hidden" />
               </div>
-
-              {/* Input Page Toggle Button - Always visible during plan/preview modes */}
-              {(mobileNavMode === 'plan' || mobileNavMode === 'preview') && (
-                <Button
-                  onClick={() => setShowInputPage(!showInputPage)}
-                  size="icon"
-                  className="fixed bottom-6 right-6 h-12 w-12 bg-blue-500 hover:bg-blue-600 text-white shadow-lg backdrop-blur-sm border border-blue-400 z-50"
-                  data-testid="nav-control-hamburger-fab"
-                  aria-label="Open route planning"
-                >
-                  <Menu className="w-6 h-6" />
-                </Button>
-              )}
             </>
-          )}
-
-          {/* Input Page Overlay - Hamburger Button Toggle */}
-          {showInputPage && (
-            <div className="fixed inset-0 z-50 bg-white flex flex-col" style={{ paddingTop: 'var(--safe-area-top)' }}>
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b">
-                <h2 className="text-lg font-semibold">Plan Route</h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowInputPage(false)}
-                  className="h-10 w-10"
-                  data-testid="button-close-input-page"
-                >
-                  <X className="w-6 h-6" />
-                </Button>
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <SimplifiedRouteDrawer
-                  fromLocation={fromLocation}
-                  toLocation={toLocation}
-                  fromCoordinates={fromCoordinates}
-                  toCoordinates={toCoordinates}
-                  onFromLocationChange={setFromLocation}
-                  onToLocationChange={setToLocation}
-                  routePreference={routePreference}
-                  onRoutePreferenceChange={setRoutePreference}
-                  onPlanRoute={() => handlePlanRoute()}
-                  activeProfileId={activeProfileId}
-                />
-              </div>
-            </div>
           )}
 
           {/* Full-Screen Route Planning Panel - Mobile Only - NEVER show during active navigation */}
@@ -2752,12 +2776,7 @@ function NavigationPageContent() {
               variant="default"
               size="icon"
               onClick={() => setSidebarState('open')}
-              className={cn(
-              "fixed z-50 hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg h-14 w-14",
-              (mobileNavMode === 'plan' || mobileNavMode === 'preview') 
-                ? "bottom-6 right-6 block" 
-                : "hidden"
-            )}
+              className="fixed top-4 left-4 z-50 hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
               data-testid="button-menu-desktop"
             >
               <Menu className="w-5 h-5" />
@@ -2852,8 +2871,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={true}
-                    hideCompass={true}
+                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2921,14 +2940,35 @@ function NavigationPageContent() {
                     
                     {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}
                     {nextTurn && (
-                      <TurnIndicator
-                        direction={nextTurn.direction}
-                        distance={nextTurn.distance}
-                        unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                        roadName={nextTurn.roadName}
-                      />
+                      <div 
+                        className="fixed left-0 right-0 z-[190]"
+                        style={{ top: 'calc(112px + var(--safe-area-top, 0px))' }}
+                      >
+                        <TurnIndicator
+                          direction={nextTurn.direction}
+                          distance={nextTurn.distance}
+                          unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                          roadName={nextTurn.roadName}
+                          className="!relative !left-1/2 !-translate-x-1/2"
+                        />
+                      </div>
                     )}
 
+                    {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
+                    <div 
+                      className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                      style={{
+                        bottom: 'calc(12px + var(--safe-area-bottom, 0px))'
+                      }}
+                      data-testid="speedometer-hud-navigate"
+                    >
+                      <SpeedometerHUD 
+                        className="shadow-2xl" 
+                        speedLimit={currentSpeedLimit || undefined}
+                        roadInfo={roadInfo}
+                        isNavigating={true}
+                      />
+                    </div>
 
                     {/* Cancel Route Button - Square X button at bottom-left */}
                     <Button

@@ -158,8 +158,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
       <div
         className={cn(
-          // Fixed dimensions - LOCKED for consistency across all platforms (PWA and browser)
-          'relative w-[220px] h-[65px]',
+          // Shorter dimensions for compact oval shape - responsive for mobile
+          'relative w-[220px] h-[65px] sm:w-[240px] sm:h-[70px] md:w-[280px] md:h-[80px]',
           // White background normally, red when speeding
           isSpeeding 
             ? 'bg-red-500 dark:bg-red-500' 

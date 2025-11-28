@@ -76,30 +76,11 @@ const defaultPreferences: MapPreferences = {
   // NO DEFAULT CENTER - wait for GPS instead
 };
 
-// UK default center (London) - used when GPS unavailable
-const UK_DEFAULT_CENTER: [number, number] = [-0.1278, 51.5074];
-const UK_DEFAULT_ZOOM = 14.5;
-
 const loadMapPreferences = (): MapPreferences => {
   try {
     const stored = localStorage.getItem('trucknav_maplibre_preferences');
     if (stored) {
-      const parsed = JSON.parse(stored);
-      
-      // CRITICAL FIX: Clean up invalid [0,0] center (Gulf of Guinea bug)
-      // This happens when preferences were saved before GPS was available
-      if (parsed.center) {
-        const [lng, lat] = parsed.center;
-        // Check if center is at or near [0,0] (invalid default)
-        if (Math.abs(lng) < 0.5 && Math.abs(lat) < 0.5) {
-          console.log('[MAP-PREFS] Clearing invalid [0,0] center from stored preferences');
-          delete parsed.center;
-          // Save cleaned preferences back
-          localStorage.setItem('trucknav_maplibre_preferences', JSON.stringify(parsed));
-        }
-      }
-      
-      return { ...defaultPreferences, ...parsed };
+      return { ...defaultPreferences, ...JSON.parse(stored) };
     }
   } catch (error) {
     console.warn('Failed to load MapLibre preferences:', error);
@@ -163,7 +144,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const [is3DMode, setIs3DMode] = useState(false);
-  const is3DModeRef = useRef(false); // Ref to track actual 3D state for imperative handle
   const [isTrafficLayerReady, setIsTrafficLayerReady] = useState(false);
   const [bearing, setBearing] = useState(0);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -384,18 +364,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     getMapValidity: () => isMapLibreValid,
     toggle3DMode: () => {
       if (!map.current) return;
-      // Use ref to get current state - prevents stale closure issues
-      const currentMode = is3DModeRef.current;
-      const newMode = !currentMode;
-      console.log('[3D-TOGGLE] Toggle pressed - current:', currentMode, '→ new:', newMode);
-      is3DModeRef.current = newMode; // Update ref immediately
+      const newMode = !is3DMode;
       setIs3DMode(newMode);
       map.current.easeTo({
         pitch: newMode ? 60 : 0,
         duration: 800
       });
     },
-    is3DMode: () => is3DModeRef.current,
+    is3DMode: () => is3DMode,
     zoomIn: () => {
       if (map.current) {
         map.current.zoomIn({ duration: 300 });
@@ -561,11 +537,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   useEffect(() => {
     currentZoomRef.current = currentZoom;
   }, [currentZoom]);
-  
-  // Keep 3D mode ref in sync with state - critical for toggle function
-  useEffect(() => {
-    is3DModeRef.current = is3DMode;
-  }, [is3DMode]);
 
   // Enhanced 3D Navigation Mode: Auto-activate when navigation starts, smooth exit when it ends
   useEffect(() => {
@@ -579,7 +550,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       console.log('[NAV-3D] Navigation started - activating enhanced 3D mode (67° pitch)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
-      is3DModeRef.current = true;
       setIs3DMode(true);
     }
     
@@ -597,7 +567,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       // Reset 3D mode state to match previous pitch
       const was3D = previousPitchRef.current > 30;
-      is3DModeRef.current = was3D;
       setIs3DMode(was3D);
     }
 
@@ -812,8 +781,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             }
           ]
         } as any,
-        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : UK_DEFAULT_CENTER,
-        zoom: gpsPosition ? preferences.zoomLevel : UK_DEFAULT_ZOOM,
+        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [0, 0],
+        zoom: gpsPosition ? preferences.zoomLevel : 2,
         pitch: 0,
         bearing: 0,
         minZoom: 3,
@@ -922,33 +891,6 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       map.current.once('load', () => {
         const mapInstance = map.current;
         if (!mapInstance) return;
-
-        // CRITICAL FIX: Apply fallback center when GPS unavailable
-        // This runs AFTER style is fully loaded so MapLibre accepts the jump
-        if (!gpsPosition) {
-          const currentCenter = mapInstance.getCenter();
-          const isAtInvalidCenter = Math.abs(currentCenter.lng) < 1 && Math.abs(currentCenter.lat) < 1;
-          
-          if (isAtInvalidCenter || mapInstance.getZoom() < 5) {
-            console.log('[MAP-INIT] No GPS position - jumping to UK default center');
-            mapInstance.jumpTo({
-              center: UK_DEFAULT_CENTER,
-              zoom: UK_DEFAULT_ZOOM,
-              pitch: 0,
-              bearing: 0
-            });
-            
-            // Save the correct center to preferences to prevent future [0,0] issues
-            const newPrefs: MapPreferences = {
-              ...preferencesRef.current,
-              center: UK_DEFAULT_CENTER,
-              zoomLevel: UK_DEFAULT_ZOOM
-            };
-            saveMapPreferences(newPrefs);
-            setPreferences(newPrefs);
-            console.log('[MAP-INIT] ✅ Saved UK center to preferences');
-          }
-        }
 
         // Add satellite sources for map view toggle
         if (!mapInstance.getSource('satellite-2d')) {
@@ -1209,36 +1151,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     }
 
     // Only auto-fit bounds when not navigating (during planning)
-    // HEAD-UP DISPLAY: In preview mode, rotate map so route appears vertical (bottom to top)
     if (!isNavigating) {
       const bounds = new maplibregl.LngLatBounds();
       routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-      
-      // Calculate bearing from start to end for head-up orientation
-      if (routeCoordinates.length >= 2) {
-        const startCoord = routeCoordinates[0];
-        const endCoord = routeCoordinates[routeCoordinates.length - 1];
-        
-        // Calculate bearing from start to destination
-        const dLon = (endCoord[0] - startCoord[0]) * Math.PI / 180;
-        const lat1 = startCoord[1] * Math.PI / 180;
-        const lat2 = endCoord[1] * Math.PI / 180;
-        const y = Math.sin(dLon) * Math.cos(lat2);
-        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-        const routeBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-        
-        // Fit bounds first, then rotate to make route vertical
-        map.current.fitBounds(bounds, { 
-          padding: { top: 120, bottom: 180, left: 60, right: 60 }, // Extra bottom for speedometer
-          duration: 800,
-          bearing: routeBearing, // HEAD-UP: Route goes from bottom to top
-          pitch: 45 // Slight 3D perspective for better visualization
-        });
-        
-        console.log('[ROUTE-PREVIEW] Head-up display - route bearing:', routeBearing.toFixed(1), '°');
-      } else {
-        map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
-      }
+      map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
     }
   }, [currentRoute, isNavigating, gpsPosition]);
 
@@ -2135,10 +2051,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               pitch: 67, // 3D perspective for better spatial awareness
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
-                // CRITICAL: Camera offset positions vehicle marker below speedometer
-                // Route line begins at top edge of speedometer as default position
+                // CRITICAL: Camera offset positions vehicle marker in lower third
+                // This centers the blue route line beneath the speedometer
                 top: 300, // More space at top for HUD and maneuver instructions
-                bottom: 1360, // Doubled zoom again to align route line with speedometer top edge
+                bottom: 100, // Less space at bottom - vehicle marker near bottom third
                 left: 0, 
                 right: 0 
               },
@@ -2259,12 +2175,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const toggle3DMode = () => {
     if (!map.current) return;
     
-    // Use ref for current state to avoid stale closure
-    const currentMode = is3DModeRef.current;
-    const newMode = !currentMode;
-    console.log('[3D-TOGGLE] ✅ Toggle pressed - current:', currentMode, '→ new:', newMode);
-    
-    is3DModeRef.current = newMode; // Update ref immediately
+    const newMode = !is3DMode;
     setIs3DMode(newMode);
     
     // Smoothly transition between 2D (pitch 0) and 3D (pitch 60)
@@ -2273,19 +2184,21 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       pitch: newMode ? 60 : 0,
       duration: 800
     });
+    
+    console.log('[3D-TOGGLE] ✅ Toggling 3D mode:', newMode ? 'ON (60° tilt)' : 'OFF (0° tilt)');
   };
   
   // AUTO-ENABLE 3D MODE when navigation starts
   useEffect(() => {
-    if (isNavigating && !is3DModeRef.current) {
+    if (isNavigating && !is3DMode) {
       console.log('[3D-AUTO] Automatically enabling 3D mode for navigation');
-      is3DModeRef.current = true;
       setIs3DMode(true);
-    } else if (!isNavigating && previousNavigationStateRef.current && is3DModeRef.current) {
+    } else if (!isNavigating && previousNavigationStateRef.current && is3DMode) {
       console.log('[3D-AUTO] Navigation ended, keeping 3D mode state');
       // Keep 3D mode even after navigation ends - user can manually toggle
     }
-  }, [isNavigating]);
+    previousNavigationStateRef.current = isNavigating;
+  }, [isNavigating, is3DMode]);
 
   const handleCompassClick = () => {
     if (!map.current) return;
@@ -2326,7 +2239,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             <Button
               size="icon"
               onClick={handleRecenter}
-              className="h-9 w-9 shadow-lg bg-transparent hover:bg-white/20 text-white border border-white/30 backdrop-blur-sm active:scale-95"
+              className="h-9 w-9 shadow-xl bg-white/95 hover:bg-white text-gray-800 border-2 border-slate-300 backdrop-blur-sm active:scale-95"
               data-testid="button-recenter"
               aria-label="Recenter map"
             >

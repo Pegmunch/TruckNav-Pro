@@ -74,27 +74,3 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 
 ## State Management
 - **TanStack React Query**: Server state management.
-
-# Critical UI Defaults (DO NOT CHANGE)
-
-These settings are LOCKED and must remain unchanged to preserve the user experience:
-
-## Navigation UI Components
-- **Left Action Stack Buttons**: ALWAYS h-11 w-11 (44px) with h-5 w-5 icons - professional touch targets
-- **GPS Fallback Chip**: ALWAYS thin/transparent (bg-orange-500/80, px-2.5 py-1, text-xs) - NOT thick orange oval
-- **SpeedometerHUD Position**: ALWAYS centered (left: 50%, transform: translateX(-50%), bottom: 50px + safe-area) - centered between left and right buttons
-- **Turn Indicator Position**: ALWAYS below ETA header (top: 108px + safe-area-top) - top edge at bottom of CompactTripStrip
-- **CompactTripStrip (ETA Header)**: ALWAYS visible during navigation at top: 56px + safe-area-top
-- **Navigation Controls Stack**: 8 scrollable buttons on RIGHT side during navigation mode only
-
-## Head-Up Navigation Display (CRITICAL FEATURE)
-- **Preview Mode**: Route bearing calculated from start→destination, map rotated so route appears vertical (bottom-to-top)
-- **Navigation Mode**: Map continuously rotates based on GPS heading to keep route vertical
-- **Route Line**: ALWAYS begins at top edge of speedometer, goes upward to destination - map rotates beneath it
-- **GPS Heading Rotation**: Runs at 30 FPS for smooth rotation during navigation
-- **Map Padding During Navigation**: LOCKED - bottom: 1360px (aligns route start with speedometer top edge), top: 300px - DO NOT CHANGE
-
-## Mode-Specific Behavior
-- **Plan Mode**: Hamburger FAB in bottom-right corner (h-14 w-14, blue) for menu access
-- **Preview Mode**: White header with "TruckNav Pro" title + green settings button, route oriented vertically
-- **Navigate Mode**: Full navigation HUD with CompactTripStrip, TurnIndicator, SpeedometerHUD, and control stacks

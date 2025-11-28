@@ -22,61 +22,48 @@ export function NavigationLayout({
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
   
   return (
-    <>
-      {/* Map content overlays - rendered in normal flow */}
-      {mapContent}
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Map content - full screen */}
+      <div className="absolute inset-0 z-0">
+        {mapContent}
+      </div>
 
-      {/* Top navigation strip - ETA Header - FIXED positioning for mobile/PWA */}
+      {/* Top navigation strip */}
       {shouldShowUI && topStrip && (
-        <div 
-          className="fixed left-0 right-0 z-[1700]"
-          style={{ top: '0px' }}
-        >
+        <div className="absolute top-0 left-0 right-0 z-[1700]">
           {topStrip}
         </div>
       )}
 
-      {/* Left action stack - FIXED positioning */}
+      {/* Left action stack */}
       {shouldShowUI && leftStack && (
-        <div 
-          className="fixed z-[1600] flex flex-col gap-3"
-          style={{
-            left: 'calc(16px + var(--safe-area-left, 0px))',
-            top: '50%',
-            transform: 'translateY(-50%)'
-          }}
-        >
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4">
           {leftStack}
         </div>
       )}
 
-      {/* Right navigation controls stack - 8 buttons - FIXED positioning */}
+      {/* Right navigation controls stack - 8 buttons on right side below ETA header */}
+      {/* Positioned just below the CompactTripStrip (ETA header) */}
       {shouldShowUI && rightStack && (
         <div 
-          className="fixed z-[1800] flex flex-col gap-2 overflow-y-auto pointer-events-auto"
+          className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto"
           style={{
-            top: 'calc(48px + env(safe-area-inset-top, 0px))',
-            right: 'calc(12px + env(safe-area-inset-right, 0px))',
-            maxHeight: 'calc(100vh - 160px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
+            top: 'calc(90px + var(--safe-area-top, 0px))',
+            right: 'calc(12px + var(--safe-area-right, 0px))',
+            bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+            maxHeight: 'calc(100vh - 190px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
           }}
         >
           {rightStack}
         </div>
       )}
 
-      {/* Bottom instrumentation bar - Speedometer - Shifted left by half width, lower position */}
+      {/* Bottom instrumentation bar - Centered at bottom */}
       {shouldShowUI && bottomBar && (
-        <div 
-          className="fixed z-[1500] pointer-events-auto"
-          style={{
-            left: 'calc(45% - 165px)',
-            transform: 'translateX(-50%)',
-            bottom: 'calc(50px + env(safe-area-inset-bottom, 0px))'
-          }}
-        >
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-[1500] safe-bottom flex items-center justify-center">
           {bottomBar}
         </div>
       )}
-    </>
+    </div>
   );
 }

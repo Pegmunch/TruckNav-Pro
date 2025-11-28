@@ -8,8 +8,7 @@ import {
   Layers,
   Map,
   AlertCircle,
-  Layers3,
-  Menu
+  Layers3
 } from "lucide-react";
 import type { MapLibreMapRef } from "@/components/map/maplibre-map";
 
@@ -23,7 +22,6 @@ interface NavigationControlsStackProps {
   mapViewMode: 'roads' | 'satellite';
   onToggleMapView: () => void;
   onViewIncidents: () => void;
-  onToggleInputPage?: () => void;
 }
 
 export function NavigationControlsStack({
@@ -35,8 +33,7 @@ export function NavigationControlsStack({
   onToggleTraffic,
   mapViewMode,
   onToggleMapView,
-  onViewIncidents,
-  onToggleInputPage
+  onViewIncidents
 }: NavigationControlsStackProps) {
   const handleCompassClick = () => {
     mapRef.current?.resetBearing();
@@ -181,20 +178,6 @@ export function NavigationControlsStack({
       >
         <Map className="w-6 h-6" />
       </Button>
-
-      {/* 9. Hamburger Menu - Blue - Input Page Toggle */}
-      {onToggleInputPage && (
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={onToggleInputPage}
-          className="h-12 w-12 bg-blue-500 hover:bg-blue-600 text-white shadow-lg backdrop-blur-sm border border-blue-400"
-          data-testid="nav-control-hamburger"
-          aria-label="Open route planning menu"
-        >
-          <Menu className="w-6 h-6" />
-        </Button>
-      )}
     </>
   );
 }

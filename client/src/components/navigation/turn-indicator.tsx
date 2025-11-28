@@ -78,11 +78,6 @@ const TurnIndicator = memo(function TurnIndicator({
         "flex flex-col items-center gap-1",
         className
       )}
-      style={{
-        // DEFAULT POSITION: Below ETA header (CompactTripStrip at 56px + ~44px height)
-        // TurnIndicator top edge should be at bottom of ETA panel
-        top: 'calc(108px + env(safe-area-inset-top, 0px))'
-      }}
       data-testid="turn-indicator"
     >
       {/* Main Turn Bubble */}
