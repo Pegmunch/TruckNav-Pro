@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, AlertTriangle, CheckCircle, Coffee, Truck, Moon, User } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, Coffee, Truck, Moon, User, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface HoSViolation {
   id: string;
@@ -39,28 +40,35 @@ interface HoSData {
 }
 
 export function HoursOfServiceTab() {
-  const { data: hosData, isLoading } = useQuery<HoSData>({
+  const { toast } = useToast();
+  
+  const { data: hosData, isLoading, isError: isHosError } = useQuery<HoSData>({
     queryKey: ['/api/enterprise/hos/violations'],
     queryFn: async () => {
       const response = await fetch('/api/enterprise/hos/violations');
       if (!response.ok) {
-        return {
-          violations: [
-            { id: 'v1', operatorId: 'op3', operatorName: 'Bob Wilson', violationType: 'Daily Driving Exceeded', description: 'Exceeded 9-hour daily driving limit by 0.5 hours', occurredAt: new Date().toISOString(), severity: 'violation' as const },
-            { id: 'v2', operatorId: 'op2', operatorName: 'Jane Doe', violationType: 'Break Not Taken', description: 'Failed to take mandatory 45-minute break after 4.5 hours', occurredAt: new Date(Date.now() - 3600000).toISOString(), severity: 'warning' as const },
-          ],
-          drivers: [
-            { operatorId: 'op1', operatorName: 'John Smith', currentStatus: 'driving' as const, dailyDrivingHours: 6.5, dailyDrivingLimit: 9, weeklyDrivingHours: 42, weeklyDrivingLimit: 56, remainingDailyHours: 2.5, remainingWeeklyHours: 14, lastStatusChange: new Date(Date.now() - 1800000).toISOString(), isCompliant: true },
-            { operatorId: 'op2', operatorName: 'Jane Doe', currentStatus: 'on_duty' as const, dailyDrivingHours: 4.5, dailyDrivingLimit: 9, weeklyDrivingHours: 38, weeklyDrivingLimit: 56, remainingDailyHours: 4.5, remainingWeeklyHours: 18, lastStatusChange: new Date(Date.now() - 900000).toISOString(), isCompliant: false },
-            { operatorId: 'op3', operatorName: 'Bob Wilson', currentStatus: 'off_duty' as const, dailyDrivingHours: 9.5, dailyDrivingLimit: 9, weeklyDrivingHours: 54, weeklyDrivingLimit: 56, remainingDailyHours: 0, remainingWeeklyHours: 2, lastStatusChange: new Date(Date.now() - 7200000).toISOString(), isCompliant: false },
-            { operatorId: 'op4', operatorName: 'Alice Brown', currentStatus: 'sleeper' as const, dailyDrivingHours: 8, dailyDrivingLimit: 9, weeklyDrivingHours: 35, weeklyDrivingLimit: 56, remainingDailyHours: 1, remainingWeeklyHours: 21, lastStatusChange: new Date(Date.now() - 28800000).toISOString(), isCompliant: true },
-            { operatorId: 'op5', operatorName: 'Charlie Davis', currentStatus: 'driving' as const, dailyDrivingHours: 3, dailyDrivingLimit: 9, weeklyDrivingHours: 28, weeklyDrivingLimit: 56, remainingDailyHours: 6, remainingWeeklyHours: 28, lastStatusChange: new Date(Date.now() - 600000).toISOString(), isCompliant: true },
-          ],
-          totalDrivers: 5,
-          compliantCount: 3,
-          nonCompliantCount: 2,
-          violationsToday: 2,
-        };
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Hours of Service API unavailable, using demo data');
+          return {
+            violations: [
+              { id: 'v1', operatorId: 'op3', operatorName: 'Bob Wilson', violationType: 'Daily Driving Exceeded', description: 'Exceeded 9-hour daily driving limit by 0.5 hours', occurredAt: new Date().toISOString(), severity: 'violation' as const },
+              { id: 'v2', operatorId: 'op2', operatorName: 'Jane Doe', violationType: 'Break Not Taken', description: 'Failed to take mandatory 45-minute break after 4.5 hours', occurredAt: new Date(Date.now() - 3600000).toISOString(), severity: 'warning' as const },
+            ],
+            drivers: [
+              { operatorId: 'op1', operatorName: 'John Smith', currentStatus: 'driving' as const, dailyDrivingHours: 6.5, dailyDrivingLimit: 9, weeklyDrivingHours: 42, weeklyDrivingLimit: 56, remainingDailyHours: 2.5, remainingWeeklyHours: 14, lastStatusChange: new Date(Date.now() - 1800000).toISOString(), isCompliant: true },
+              { operatorId: 'op2', operatorName: 'Jane Doe', currentStatus: 'on_duty' as const, dailyDrivingHours: 4.5, dailyDrivingLimit: 9, weeklyDrivingHours: 38, weeklyDrivingLimit: 56, remainingDailyHours: 4.5, remainingWeeklyHours: 18, lastStatusChange: new Date(Date.now() - 900000).toISOString(), isCompliant: false },
+              { operatorId: 'op3', operatorName: 'Bob Wilson', currentStatus: 'off_duty' as const, dailyDrivingHours: 9.5, dailyDrivingLimit: 9, weeklyDrivingHours: 54, weeklyDrivingLimit: 56, remainingDailyHours: 0, remainingWeeklyHours: 2, lastStatusChange: new Date(Date.now() - 7200000).toISOString(), isCompliant: false },
+              { operatorId: 'op4', operatorName: 'Alice Brown', currentStatus: 'sleeper' as const, dailyDrivingHours: 8, dailyDrivingLimit: 9, weeklyDrivingHours: 35, weeklyDrivingLimit: 56, remainingDailyHours: 1, remainingWeeklyHours: 21, lastStatusChange: new Date(Date.now() - 28800000).toISOString(), isCompliant: true },
+              { operatorId: 'op5', operatorName: 'Charlie Davis', currentStatus: 'driving' as const, dailyDrivingHours: 3, dailyDrivingLimit: 9, weeklyDrivingHours: 28, weeklyDrivingLimit: 56, remainingDailyHours: 6, remainingWeeklyHours: 28, lastStatusChange: new Date(Date.now() - 600000).toISOString(), isCompliant: true },
+            ],
+            totalDrivers: 5,
+            compliantCount: 3,
+            nonCompliantCount: 2,
+            violationsToday: 2,
+          };
+        }
+        toast({ title: 'Failed to load HoS data', description: 'Unable to fetch hours of service compliance data', variant: 'destructive' });
+        throw new Error('Failed to load HoS data');
       }
       return response.json();
     },
@@ -228,6 +236,12 @@ export function HoursOfServiceTab() {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading HoS data...</div>
+          ) : isHosError && !import.meta.env.DEV ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Unable to load hours of service data</p>
+              <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+            </div>
           ) : !hosData?.drivers?.length ? (
             <div className="text-center py-8 text-muted-foreground">No driver data available</div>
           ) : (

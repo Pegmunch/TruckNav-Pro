@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radio, RefreshCw, MapPin, Truck } from 'lucide-react';
+import { Radio, RefreshCw, MapPin, Truck, AlertCircle } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -32,29 +33,35 @@ interface FleetGpsData {
 }
 
 export function FleetTrackingTab() {
+  const { toast } = useToast();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
 
-  const { data: fleetData, isLoading, refetch, isFetching } = useQuery<FleetGpsData>({
+  const { data: fleetData, isLoading, refetch, isFetching, isError: isFleetError } = useQuery<FleetGpsData>({
     queryKey: ['/api/enterprise/gps/fleet'],
     queryFn: async () => {
       const response = await fetch('/api/enterprise/gps/fleet');
       if (!response.ok) {
-        return {
-          vehicles: [
-            { id: '1', vehicleId: 'v1', registration: 'AB12 CDE', latitude: 51.5074, longitude: -0.1278, speed: 45, heading: 90, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'A1 Motorway, London', operatorName: 'John Smith' },
-            { id: '2', vehicleId: 'v2', registration: 'FG34 HIJ', latitude: 52.4862, longitude: -1.8904, speed: 0, heading: 0, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 600000).toISOString(), address: 'Birmingham Services', operatorName: 'Jane Doe' },
-            { id: '3', vehicleId: 'v3', registration: 'KL56 MNO', latitude: 53.4808, longitude: -2.2426, speed: 0, heading: 0, status: 'offline' as const, lastUpdate: new Date(Date.now() - 3600000).toISOString(), address: 'Manchester Depot', operatorName: 'Bob Wilson' },
-            { id: '4', vehicleId: 'v4', registration: 'PQ78 RST', latitude: 51.4545, longitude: -2.5879, speed: 62, heading: 180, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'M5 Motorway, Bristol', operatorName: 'Alice Brown' },
-            { id: '5', vehicleId: 'v5', registration: 'UV90 WXY', latitude: 55.9533, longitude: -3.1883, speed: 0, heading: 45, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 300000).toISOString(), address: 'Edinburgh Hub', operatorName: 'Charlie Davis' },
-          ],
-          totalVehicles: 5,
-          movingCount: 2,
-          stoppedCount: 2,
-          offlineCount: 1,
-        };
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Fleet GPS API unavailable, using demo data');
+          return {
+            vehicles: [
+              { id: '1', vehicleId: 'v1', registration: 'AB12 CDE', latitude: 51.5074, longitude: -0.1278, speed: 45, heading: 90, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'A1 Motorway, London', operatorName: 'John Smith' },
+              { id: '2', vehicleId: 'v2', registration: 'FG34 HIJ', latitude: 52.4862, longitude: -1.8904, speed: 0, heading: 0, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 600000).toISOString(), address: 'Birmingham Services', operatorName: 'Jane Doe' },
+              { id: '3', vehicleId: 'v3', registration: 'KL56 MNO', latitude: 53.4808, longitude: -2.2426, speed: 0, heading: 0, status: 'offline' as const, lastUpdate: new Date(Date.now() - 3600000).toISOString(), address: 'Manchester Depot', operatorName: 'Bob Wilson' },
+              { id: '4', vehicleId: 'v4', registration: 'PQ78 RST', latitude: 51.4545, longitude: -2.5879, speed: 62, heading: 180, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'M5 Motorway, Bristol', operatorName: 'Alice Brown' },
+              { id: '5', vehicleId: 'v5', registration: 'UV90 WXY', latitude: 55.9533, longitude: -3.1883, speed: 0, heading: 45, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 300000).toISOString(), address: 'Edinburgh Hub', operatorName: 'Charlie Davis' },
+            ],
+            totalVehicles: 5,
+            movingCount: 2,
+            stoppedCount: 2,
+            offlineCount: 1,
+          };
+        }
+        toast({ title: 'Failed to load fleet data', description: 'Unable to fetch GPS tracking data', variant: 'destructive' });
+        throw new Error('Failed to load fleet data');
       }
       return response.json();
     },
@@ -242,6 +249,12 @@ export function FleetTrackingTab() {
             <ScrollArea className="h-[400px]">
               {isLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading vehicles...</div>
+              ) : isFleetError && !import.meta.env.DEV ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Unable to load vehicle data</p>
+                  <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+                </div>
               ) : !fleetData?.vehicles?.length ? (
                 <div className="text-center py-8 text-muted-foreground">No vehicles found</div>
               ) : (

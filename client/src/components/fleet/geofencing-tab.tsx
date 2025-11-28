@@ -72,42 +72,51 @@ export function GeofencingTab() {
   const [editingGeofence, setEditingGeofence] = useState<Geofence | null>(null);
   const [pendingLocation, setPendingLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  const { data: geofencesData, isLoading, refetch, isFetching } = useQuery<GeofencesData>({
+  const { data: geofencesData, isLoading, refetch, isFetching, isError: isGeofencesError } = useQuery<GeofencesData>({
     queryKey: ['/api/enterprise/geofences'],
     queryFn: async () => {
       const response = await fetch('/api/enterprise/geofences');
       if (!response.ok) {
-        return {
-          geofences: [
-            { id: '1', userId: 'demo', name: 'London Depot', latitude: 51.5074, longitude: -0.1278, radiusMeters: 500, type: 'warehouse', alertOnEntry: true, alertOnExit: true, isActive: true, color: '#3B82F6', createdAt: new Date() },
-            { id: '2', userId: 'demo', name: 'Manchester Hub', latitude: 53.4808, longitude: -2.2426, radiusMeters: 750, type: 'warehouse', alertOnEntry: true, alertOnExit: false, isActive: true, color: '#3B82F6', createdAt: new Date() },
-            { id: '3', userId: 'demo', name: 'Customer - Tesco Distribution', latitude: 52.4862, longitude: -1.8904, radiusMeters: 300, type: 'customer', alertOnEntry: true, alertOnExit: true, isActive: true, color: '#22C55E', createdAt: new Date() },
-            { id: '4', userId: 'demo', name: 'Low Bridge Zone', latitude: 51.4545, longitude: -2.5879, radiusMeters: 200, type: 'restricted', alertOnEntry: true, alertOnExit: false, isActive: true, color: '#EF4444', createdAt: new Date() },
-            { id: '5', userId: 'demo', name: 'Weigh Station', latitude: 52.9548, longitude: -1.1581, radiusMeters: 150, type: 'checkpoint', alertOnEntry: true, alertOnExit: true, isActive: false, color: '#F97316', createdAt: new Date() },
-          ] as Geofence[],
-          totalCount: 5,
-          activeAlertsToday: 12,
-          mostActiveZone: { name: 'London Depot', eventCount: 8 },
-        };
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Geofences API unavailable, using demo data');
+          return {
+            geofences: [
+              { id: '1', userId: 'demo', name: 'London Depot', latitude: 51.5074, longitude: -0.1278, radiusMeters: 500, type: 'warehouse', alertOnEntry: true, alertOnExit: true, isActive: true, color: '#3B82F6', createdAt: new Date() },
+              { id: '2', userId: 'demo', name: 'Manchester Hub', latitude: 53.4808, longitude: -2.2426, radiusMeters: 750, type: 'warehouse', alertOnEntry: true, alertOnExit: false, isActive: true, color: '#3B82F6', createdAt: new Date() },
+              { id: '3', userId: 'demo', name: 'Customer - Tesco Distribution', latitude: 52.4862, longitude: -1.8904, radiusMeters: 300, type: 'customer', alertOnEntry: true, alertOnExit: true, isActive: true, color: '#22C55E', createdAt: new Date() },
+              { id: '4', userId: 'demo', name: 'Low Bridge Zone', latitude: 51.4545, longitude: -2.5879, radiusMeters: 200, type: 'restricted', alertOnEntry: true, alertOnExit: false, isActive: true, color: '#EF4444', createdAt: new Date() },
+              { id: '5', userId: 'demo', name: 'Weigh Station', latitude: 52.9548, longitude: -1.1581, radiusMeters: 150, type: 'checkpoint', alertOnEntry: true, alertOnExit: true, isActive: false, color: '#F97316', createdAt: new Date() },
+            ] as Geofence[],
+            totalCount: 5,
+            activeAlertsToday: 12,
+            mostActiveZone: { name: 'London Depot', eventCount: 8 },
+          };
+        }
+        toast({ title: 'Failed to load geofences', description: 'Unable to fetch geofence data', variant: 'destructive' });
+        throw new Error('Failed to load geofences');
       }
       return response.json();
     },
     refetchInterval: 60000,
   });
 
-  const { data: eventsData, isLoading: isLoadingEvents } = useQuery<GeofenceEventsData>({
+  const { data: eventsData, isLoading: isLoadingEvents, isError: isEventsError } = useQuery<GeofenceEventsData>({
     queryKey: ['/api/enterprise/geofences', selectedGeofence?.id, 'events'],
     queryFn: async () => {
       if (!selectedGeofence) return { events: [] };
       const response = await fetch(`/api/enterprise/geofences/${selectedGeofence.id}/events`);
       if (!response.ok) {
-        return {
-          events: [
-            { id: 'e1', geofenceId: selectedGeofence.id, vehicleId: 'AB12 CDE', eventType: 'entry', timestamp: new Date(Date.now() - 3600000), latitude: selectedGeofence.latitude, longitude: selectedGeofence.longitude, createdAt: new Date() },
-            { id: 'e2', geofenceId: selectedGeofence.id, vehicleId: 'AB12 CDE', eventType: 'exit', timestamp: new Date(Date.now() - 1800000), latitude: selectedGeofence.latitude, longitude: selectedGeofence.longitude, createdAt: new Date() },
-            { id: 'e3', geofenceId: selectedGeofence.id, vehicleId: 'FG34 HIJ', eventType: 'entry', timestamp: new Date(Date.now() - 900000), latitude: selectedGeofence.latitude, longitude: selectedGeofence.longitude, createdAt: new Date() },
-          ] as GeofenceEvent[],
-        };
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Geofence events API unavailable, using demo data');
+          return {
+            events: [
+              { id: 'e1', geofenceId: selectedGeofence.id, vehicleId: 'AB12 CDE', eventType: 'entry', timestamp: new Date(Date.now() - 3600000), latitude: selectedGeofence.latitude, longitude: selectedGeofence.longitude, createdAt: new Date() },
+              { id: 'e2', geofenceId: selectedGeofence.id, vehicleId: 'AB12 CDE', eventType: 'exit', timestamp: new Date(Date.now() - 1800000), latitude: selectedGeofence.latitude, longitude: selectedGeofence.longitude, createdAt: new Date() },
+              { id: 'e3', geofenceId: selectedGeofence.id, vehicleId: 'FG34 HIJ', eventType: 'entry', timestamp: new Date(Date.now() - 900000), latitude: selectedGeofence.latitude, longitude: selectedGeofence.longitude, createdAt: new Date() },
+            ] as GeofenceEvent[],
+          };
+        }
+        throw new Error('Failed to load events');
       }
       return response.json();
     },
@@ -470,6 +479,12 @@ export function GeofencingTab() {
             <ScrollArea className="h-[400px]">
               {isLoading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading geofences...</div>
+              ) : isGeofencesError && !import.meta.env.DEV ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Unable to load geofence data</p>
+                  <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+                </div>
               ) : !geofencesData?.geofences?.length ? (
                 <div className="text-center py-8 text-muted-foreground">No geofences found</div>
               ) : (

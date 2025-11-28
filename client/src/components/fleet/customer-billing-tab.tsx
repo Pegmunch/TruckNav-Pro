@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CreditCard, Plus, Search, TrendingUp, DollarSign, Users, BarChart3 } from 'lucide-react';
-import { queryClient } from '@/lib/queryClient';
+import { CreditCard, Plus, Search, TrendingUp, DollarSign, Users, BarChart3, AlertCircle } from 'lucide-react';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface Customer {
@@ -46,48 +46,61 @@ export function CustomerBillingTab() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery<Customer[]>({
+  const { data: customers = [], isLoading: isLoadingCustomers, isError: isCustomersError } = useQuery<Customer[]>({
     queryKey: ['/api/enterprise/billing/customers'],
     queryFn: async () => {
       const response = await fetch('/api/enterprise/billing/customers');
       if (!response.ok) {
-        return [
-          { id: 'c1', name: 'ABC Logistics Ltd', email: 'billing@abclogistics.com', phone: '+44 20 1234 5678', contractType: 'per_mile' as const, ratePerMile: 2.50, totalTrips: 145, totalRevenue: 28500, profitMargin: 22.5, outstandingBalance: 2400, status: 'active' as const, createdAt: '2024-01-15T00:00:00Z' },
-          { id: 'c2', name: 'FastFreight Co', email: 'accounts@fastfreight.co.uk', phone: '+44 121 987 6543', contractType: 'per_hour' as const, ratePerHour: 45, totalTrips: 89, totalRevenue: 18200, profitMargin: 18.3, outstandingBalance: 0, status: 'active' as const, createdAt: '2024-02-20T00:00:00Z' },
-          { id: 'c3', name: 'Regional Haulage', email: 'finance@regionalhaulage.com', contractType: 'fixed' as const, fixedRate: 5000, totalTrips: 62, totalRevenue: 15000, profitMargin: 25.0, outstandingBalance: 5000, status: 'active' as const, createdAt: '2024-03-10T00:00:00Z' },
-          { id: 'c4', name: 'Metro Distribution', email: 'billing@metrodist.com', contractType: 'hybrid' as const, ratePerMile: 1.80, ratePerHour: 35, totalTrips: 234, totalRevenue: 42800, profitMargin: 20.1, outstandingBalance: 1250, status: 'active' as const, createdAt: '2023-11-05T00:00:00Z' },
-          { id: 'c5', name: 'Sunset Shipping', email: 'accounts@sunsetship.com', contractType: 'per_mile' as const, ratePerMile: 2.20, totalTrips: 28, totalRevenue: 5600, profitMargin: 15.5, outstandingBalance: 800, status: 'pending' as const, createdAt: '2024-06-01T00:00:00Z' },
-        ];
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Customer billing API unavailable, using demo data');
+          return [
+            { id: 'c1', name: 'ABC Logistics Ltd', email: 'billing@abclogistics.com', phone: '+44 20 1234 5678', contractType: 'per_mile' as const, ratePerMile: 2.50, totalTrips: 145, totalRevenue: 28500, profitMargin: 22.5, outstandingBalance: 2400, status: 'active' as const, createdAt: '2024-01-15T00:00:00Z' },
+            { id: 'c2', name: 'FastFreight Co', email: 'accounts@fastfreight.co.uk', phone: '+44 121 987 6543', contractType: 'per_hour' as const, ratePerHour: 45, totalTrips: 89, totalRevenue: 18200, profitMargin: 18.3, outstandingBalance: 0, status: 'active' as const, createdAt: '2024-02-20T00:00:00Z' },
+            { id: 'c3', name: 'Regional Haulage', email: 'finance@regionalhaulage.com', contractType: 'fixed' as const, fixedRate: 5000, totalTrips: 62, totalRevenue: 15000, profitMargin: 25.0, outstandingBalance: 5000, status: 'active' as const, createdAt: '2024-03-10T00:00:00Z' },
+            { id: 'c4', name: 'Metro Distribution', email: 'billing@metrodist.com', contractType: 'hybrid' as const, ratePerMile: 1.80, ratePerHour: 35, totalTrips: 234, totalRevenue: 42800, profitMargin: 20.1, outstandingBalance: 1250, status: 'active' as const, createdAt: '2023-11-05T00:00:00Z' },
+            { id: 'c5', name: 'Sunset Shipping', email: 'accounts@sunsetship.com', contractType: 'per_mile' as const, ratePerMile: 2.20, totalTrips: 28, totalRevenue: 5600, profitMargin: 15.5, outstandingBalance: 800, status: 'pending' as const, createdAt: '2024-06-01T00:00:00Z' },
+          ];
+        }
+        throw new Error('Failed to load customers');
       }
       return response.json();
     },
+    meta: {
+      onError: () => {
+        toast({ title: 'Failed to load customers', description: 'Unable to fetch customer billing data', variant: 'destructive' });
+      }
+    }
   });
 
-  const { data: analytics, isLoading: isLoadingAnalytics } = useQuery<BillingAnalytics>({
+  const { data: analytics, isLoading: isLoadingAnalytics, isError: isAnalyticsError } = useQuery<BillingAnalytics>({
     queryKey: ['/api/enterprise/billing/analytics'],
     queryFn: async () => {
       const response = await fetch('/api/enterprise/billing/analytics');
       if (!response.ok) {
-        return {
-          totalRevenue: 110100,
-          outstandingBalance: 9450,
-          averageProfitMargin: 20.3,
-          topCustomers: [
-            { name: 'Metro Distribution', revenue: 42800 },
-            { name: 'ABC Logistics Ltd', revenue: 28500 },
-            { name: 'FastFreight Co', revenue: 18200 },
-          ],
-          revenueByMonth: [
-            { month: 'Jan', revenue: 15200 },
-            { month: 'Feb', revenue: 18500 },
-            { month: 'Mar', revenue: 16800 },
-            { month: 'Apr', revenue: 19200 },
-            { month: 'May', revenue: 21400 },
-            { month: 'Jun', revenue: 19000 },
-          ],
-          customerCount: 5,
-          activeContracts: 4,
-        };
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Billing analytics API unavailable, using demo data');
+          return {
+            totalRevenue: 110100,
+            outstandingBalance: 9450,
+            averageProfitMargin: 20.3,
+            topCustomers: [
+              { name: 'Metro Distribution', revenue: 42800 },
+              { name: 'ABC Logistics Ltd', revenue: 28500 },
+              { name: 'FastFreight Co', revenue: 18200 },
+            ],
+            revenueByMonth: [
+              { month: 'Jan', revenue: 15200 },
+              { month: 'Feb', revenue: 18500 },
+              { month: 'Mar', revenue: 16800 },
+              { month: 'Apr', revenue: 19200 },
+              { month: 'May', revenue: 21400 },
+              { month: 'Jun', revenue: 19000 },
+            ],
+            customerCount: 5,
+            activeContracts: 4,
+          };
+        }
+        throw new Error('Failed to load analytics');
       }
       return response.json();
     },
@@ -279,6 +292,12 @@ export function CustomerBillingTab() {
 
           {isLoadingCustomers ? (
             <div className="text-center py-8 text-muted-foreground">Loading customers...</div>
+          ) : isCustomersError && !import.meta.env.DEV ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Unable to load customer data</p>
+              <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+            </div>
           ) : filteredCustomers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">No customers found</div>
           ) : (
@@ -403,17 +422,12 @@ function AddCustomerDialog({ onClose }: { onClose: () => void }) {
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/enterprise/billing/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          ratePerMile: data.ratePerMile ? parseFloat(data.ratePerMile) : undefined,
-          ratePerHour: data.ratePerHour ? parseFloat(data.ratePerHour) : undefined,
-          fixedRate: data.fixedRate ? parseFloat(data.fixedRate) : undefined,
-        }),
+      const response = await apiRequest('POST', '/api/enterprise/billing/customers', {
+        ...data,
+        ratePerMile: data.ratePerMile ? parseFloat(data.ratePerMile) : undefined,
+        ratePerHour: data.ratePerHour ? parseFloat(data.ratePerHour) : undefined,
+        fixedRate: data.fixedRate ? parseFloat(data.fixedRate) : undefined,
       });
-      if (!response.ok) throw new Error('Failed to create customer');
       return response.json();
     },
     onSuccess: () => {

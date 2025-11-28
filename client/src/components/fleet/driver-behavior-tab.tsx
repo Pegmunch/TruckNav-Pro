@@ -5,8 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Activity, AlertTriangle, Award, TrendingUp, Calendar } from 'lucide-react';
+import { Activity, AlertTriangle, Award, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
 
 interface DriverBehavior {
   operatorId: string;
@@ -37,33 +38,39 @@ interface FleetBehaviorData {
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
 export function DriverBehaviorTab() {
+  const { toast } = useToast();
   const [dateRange, setDateRange] = useState('7d');
   const [selectedOperator, setSelectedOperator] = useState('all');
 
-  const { data: behaviorData, isLoading } = useQuery<FleetBehaviorData>({
+  const { data: behaviorData, isLoading, isError: isBehaviorError } = useQuery<FleetBehaviorData>({
     queryKey: ['/api/enterprise/driver-behavior/fleet', dateRange, selectedOperator],
     queryFn: async () => {
       const params = new URLSearchParams({ dateRange, operator: selectedOperator });
       const response = await fetch(`/api/enterprise/driver-behavior/fleet?${params}`);
       if (!response.ok) {
-        return {
-          drivers: [
-            { operatorId: 'op1', operatorName: 'John Smith', safetyScore: 95, speedingEvents: 2, harshBrakingEvents: 1, harshAccelerationEvents: 0, sharpCorneringEvents: 1, totalEvents: 4, milesDrivern: 1250, riskLevel: 'low' as const },
-            { operatorId: 'op2', operatorName: 'Jane Doe', safetyScore: 88, speedingEvents: 5, harshBrakingEvents: 3, harshAccelerationEvents: 2, sharpCorneringEvents: 4, totalEvents: 14, milesDrivern: 980, riskLevel: 'medium' as const },
-            { operatorId: 'op3', operatorName: 'Bob Wilson', safetyScore: 72, speedingEvents: 12, harshBrakingEvents: 8, harshAccelerationEvents: 5, sharpCorneringEvents: 6, totalEvents: 31, milesDrivern: 1100, riskLevel: 'high' as const },
-            { operatorId: 'op4', operatorName: 'Alice Brown', safetyScore: 92, speedingEvents: 3, harshBrakingEvents: 2, harshAccelerationEvents: 1, sharpCorneringEvents: 2, totalEvents: 8, milesDrivern: 890, riskLevel: 'low' as const },
-            { operatorId: 'op5', operatorName: 'Charlie Davis', safetyScore: 85, speedingEvents: 6, harshBrakingEvents: 4, harshAccelerationEvents: 3, sharpCorneringEvents: 3, totalEvents: 16, milesDrivern: 1050, riskLevel: 'medium' as const },
-          ],
-          fleetAverageSafetyScore: 86.4,
-          highRiskDriverCount: 1,
-          totalEventsToday: 12,
-          behaviorBreakdown: {
-            speeding: 28,
-            harshBraking: 18,
-            harshAcceleration: 11,
-            sharpCornering: 16,
-          },
-        };
+        if (import.meta.env.DEV) {
+          console.warn('[DEV] Driver behavior API unavailable, using demo data');
+          return {
+            drivers: [
+              { operatorId: 'op1', operatorName: 'John Smith', safetyScore: 95, speedingEvents: 2, harshBrakingEvents: 1, harshAccelerationEvents: 0, sharpCorneringEvents: 1, totalEvents: 4, milesDrivern: 1250, riskLevel: 'low' as const },
+              { operatorId: 'op2', operatorName: 'Jane Doe', safetyScore: 88, speedingEvents: 5, harshBrakingEvents: 3, harshAccelerationEvents: 2, sharpCorneringEvents: 4, totalEvents: 14, milesDrivern: 980, riskLevel: 'medium' as const },
+              { operatorId: 'op3', operatorName: 'Bob Wilson', safetyScore: 72, speedingEvents: 12, harshBrakingEvents: 8, harshAccelerationEvents: 5, sharpCorneringEvents: 6, totalEvents: 31, milesDrivern: 1100, riskLevel: 'high' as const },
+              { operatorId: 'op4', operatorName: 'Alice Brown', safetyScore: 92, speedingEvents: 3, harshBrakingEvents: 2, harshAccelerationEvents: 1, sharpCorneringEvents: 2, totalEvents: 8, milesDrivern: 890, riskLevel: 'low' as const },
+              { operatorId: 'op5', operatorName: 'Charlie Davis', safetyScore: 85, speedingEvents: 6, harshBrakingEvents: 4, harshAccelerationEvents: 3, sharpCorneringEvents: 3, totalEvents: 16, milesDrivern: 1050, riskLevel: 'medium' as const },
+            ],
+            fleetAverageSafetyScore: 86.4,
+            highRiskDriverCount: 1,
+            totalEventsToday: 12,
+            behaviorBreakdown: {
+              speeding: 28,
+              harshBraking: 18,
+              harshAcceleration: 11,
+              sharpCornering: 16,
+            },
+          };
+        }
+        toast({ title: 'Failed to load driver behavior data', description: 'Unable to fetch analytics', variant: 'destructive' });
+        throw new Error('Failed to load driver behavior data');
       }
       return response.json();
     },
@@ -191,6 +198,11 @@ export function DriverBehaviorTab() {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : isBehaviorError && !import.meta.env.DEV ? (
+              <div className="text-center py-8">
+                <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Unable to load leaderboard data</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {topPerformers.map((driver, index) => (
@@ -271,6 +283,12 @@ export function DriverBehaviorTab() {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Loading drivers...</div>
+          ) : isBehaviorError && !import.meta.env.DEV ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Unable to load driver behavior data</p>
+              <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+            </div>
           ) : !behaviorData?.drivers?.length ? (
             <div className="text-center py-8 text-muted-foreground">No driver data available</div>
           ) : (
