@@ -579,8 +579,22 @@ function NavigationPageContent() {
     }
   }, [isNavigating, currentRoute, gpsData?.position]);
   
+  // Trigger auto-zoom when map becomes available
+  useEffect(() => {
+    if (mapRef.current && !autoZoomState.current.attempted) {
+      console.log('[AUTO-ZOOM-TRIGGER] Map is ready, initiating auto-zoom sequence');
+      // Trigger the main auto-zoom effect by marking it as not attempted
+      autoZoomState.current.attempted = false;
+    }
+  }, []); // Empty to run once on mount to set up observer
+
   // Enhanced auto-zoom to GPS location with user preferences, map readiness polling, and retry logic
   useEffect(() => {
+    // Quick poll to check if map became ready
+    if (!mapRef.current) {
+      return; // Map not ready yet
+    }
+
     // 1. CHECK USER PREFERENCE - respect user's auto-zoom setting
     const autoZoomEnabled = localStorage.getItem('trucknav_auto_zoom_enabled');
     if (autoZoomEnabled === 'false') {
@@ -600,13 +614,7 @@ function NavigationPageContent() {
       return;
     }
     
-    // 4. CHECK MAP REFERENCE - map component must be mounted FIRST
-    if (!mapRef.current) {
-      console.log('[AUTO-ZOOM] Waiting for map to mount...');
-      return; // Wait for map to mount
-    }
-    
-    // 5. ATTEMPT ZOOM - even without GPS, we have fallback coordinates
+    // 4. ATTEMPT ZOOM - map is ready, we can proceed
     console.log('[AUTO-ZOOM] Map ready, attempting auto-zoom with fallback...')
     
     // 6. SKIP IF NAVIGATING - navigation has its own zoom logic
@@ -761,7 +769,7 @@ function NavigationPageContent() {
     // Execute auto-zoom
     performAutoZoom();
     
-  }, []); // Run on component mount and when map becomes available
+  }, []); // Run when map becomes available (mapRef is set)
   
   // SIMPLIFIED: Guard to ensure navigate mode is active during navigation
   // Only enforces navigate mode when navigation is active, no other automatic transitions
