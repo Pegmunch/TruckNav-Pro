@@ -76,11 +76,30 @@ const defaultPreferences: MapPreferences = {
   // NO DEFAULT CENTER - wait for GPS instead
 };
 
+// UK default center (London) - used when GPS unavailable
+const UK_DEFAULT_CENTER: [number, number] = [-0.1278, 51.5074];
+const UK_DEFAULT_ZOOM = 14.5;
+
 const loadMapPreferences = (): MapPreferences => {
   try {
     const stored = localStorage.getItem('trucknav_maplibre_preferences');
     if (stored) {
-      return { ...defaultPreferences, ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored);
+      
+      // CRITICAL FIX: Clean up invalid [0,0] center (Gulf of Guinea bug)
+      // This happens when preferences were saved before GPS was available
+      if (parsed.center) {
+        const [lng, lat] = parsed.center;
+        // Check if center is at or near [0,0] (invalid default)
+        if (Math.abs(lng) < 0.5 && Math.abs(lat) < 0.5) {
+          console.log('[MAP-PREFS] Clearing invalid [0,0] center from stored preferences');
+          delete parsed.center;
+          // Save cleaned preferences back
+          localStorage.setItem('trucknav_maplibre_preferences', JSON.stringify(parsed));
+        }
+      }
+      
+      return { ...defaultPreferences, ...parsed };
     }
   } catch (error) {
     console.warn('Failed to load MapLibre preferences:', error);
@@ -793,8 +812,8 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
             }
           ]
         } as any,
-        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [0, 0],
-        zoom: gpsPosition ? preferences.zoomLevel : 2,
+        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : UK_DEFAULT_CENTER,
+        zoom: gpsPosition ? preferences.zoomLevel : UK_DEFAULT_ZOOM,
         pitch: 0,
         bearing: 0,
         minZoom: 3,
@@ -903,6 +922,33 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       map.current.once('load', () => {
         const mapInstance = map.current;
         if (!mapInstance) return;
+
+        // CRITICAL FIX: Apply fallback center when GPS unavailable
+        // This runs AFTER style is fully loaded so MapLibre accepts the jump
+        if (!gpsPosition) {
+          const currentCenter = mapInstance.getCenter();
+          const isAtInvalidCenter = Math.abs(currentCenter.lng) < 1 && Math.abs(currentCenter.lat) < 1;
+          
+          if (isAtInvalidCenter || mapInstance.getZoom() < 5) {
+            console.log('[MAP-INIT] No GPS position - jumping to UK default center');
+            mapInstance.jumpTo({
+              center: UK_DEFAULT_CENTER,
+              zoom: UK_DEFAULT_ZOOM,
+              pitch: 0,
+              bearing: 0
+            });
+            
+            // Save the correct center to preferences to prevent future [0,0] issues
+            const newPrefs: MapPreferences = {
+              ...preferencesRef.current,
+              center: UK_DEFAULT_CENTER,
+              zoomLevel: UK_DEFAULT_ZOOM
+            };
+            saveMapPreferences(newPrefs);
+            setPreferences(newPrefs);
+            console.log('[MAP-INIT] ✅ Saved UK center to preferences');
+          }
+        }
 
         // Add satellite sources for map view toggle
         if (!mapInstance.getSource('satellite-2d')) {
