@@ -2505,7 +2505,7 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* GPS Fallback - Compact Chip (Minimal UI) */}
+              {/* GPS Fallback - Discreet Transparent Chip */}
               {mobileNavMode === 'preview' && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
@@ -2515,9 +2515,9 @@ function NavigationPageContent() {
                   onClick={() => setShowManualLocationDialog(true)}
                   data-testid="gps-fallback-chip"
                 >
-                  <div className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-full shadow-lg transition-colors">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">GPS Unavailable - Tap to set location</span>
+                  <div className="flex items-center gap-2 border border-amber-500/60 bg-white/70 hover:bg-white/80 text-amber-700 px-2.5 py-1.5 rounded-full backdrop-blur-md transition-all hover:border-amber-600">
+                    <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="text-xs font-medium whitespace-nowrap">Set location</span>
                   </div>
                 </div>
               )}
