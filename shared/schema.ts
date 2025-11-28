@@ -1061,6 +1061,172 @@ export const complianceRecords = pgTable("compliance_records", {
   operatorIdIndex: index("compliance_operator_idx").on(table.operatorId),
 }));
 
+// ========================================
+// ENTERPRISE FLEET MANAGEMENT FEATURES
+// ========================================
+
+// Real-Time GPS Tracking - Track vehicle positions for live fleet view
+export const gpsTracking = pgTable("gps_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  speed: real("speed"), // km/h
+  heading: real("heading"), // degrees (0-360)
+  accuracy: real("accuracy"), // meters
+  altitude: real("altitude"), // meters
+  engineStatus: text("engine_status"), // 'running', 'idle', 'off'
+  fuelLevel: real("fuel_level"), // percentage 0-100
+  timestamp: timestamp("timestamp").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  vehicleIdx: index("gps_tracking_vehicle_idx").on(table.vehicleId),
+  timestampIdx: index("gps_tracking_timestamp_idx").on(table.timestamp),
+}));
+
+// Geofences - Define zones for alerts and monitoring
+export const geofences = pgTable("geofences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  radiusMeters: real("radius_meters").notNull(),
+  type: text("type").notNull(), // 'depot', 'customer', 'restricted_zone', 'fuel_station', 'rest_area'
+  alertOnEntry: boolean("alert_on_entry").default(true),
+  alertOnExit: boolean("alert_on_exit").default(true),
+  isActive: boolean("is_active").default(true),
+  color: text("color").default('#3B82F6'), // Hex color for map display
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("geofence_user_idx").on(table.userId),
+}));
+
+// Geofence Events - Track when vehicles enter/exit geofences
+export const geofenceEvents = pgTable("geofence_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  geofenceId: varchar("geofence_id").notNull(),
+  vehicleId: varchar("vehicle_id").notNull(),
+  eventType: text("event_type").notNull(), // 'entry', 'exit'
+  timestamp: timestamp("timestamp").defaultNow(),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  geofenceIdx: index("geofence_event_geofence_idx").on(table.geofenceId),
+  vehicleIdx: index("geofence_event_vehicle_idx").on(table.vehicleId),
+}));
+
+// Driver Behavior Analytics - Track safety metrics per driver
+export const driverBehavior = pgTable("driver_behavior", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  operatorId: varchar("operator_id").notNull(), // References operators
+  vehicleId: varchar("vehicle_id"), // References fleet_vehicles
+  tripId: varchar("trip_id"), // References trip_tracking
+  
+  // Behavior metrics
+  speedingEvents: integer("speeding_events").default(0),
+  harshBrakingEvents: integer("harsh_braking_events").default(0),
+  harshAccelerationEvents: integer("harsh_acceleration_events").default(0),
+  sharpCorneringEvents: integer("sharp_cornering_events").default(0),
+  phoneUsageEvents: integer("phone_usage_events").default(0),
+  seatbeltViolations: integer("seatbelt_violations").default(0),
+  
+  // Time metrics
+  totalDrivingTime: integer("total_driving_time"), // minutes
+  idleTime: integer("idle_time"), // minutes
+  nightDrivingTime: integer("night_driving_time"), // minutes
+  
+  // Distance metrics
+  totalDistance: real("total_distance"), // miles
+  
+  // Scores (0-100)
+  safetyScore: real("safety_score"),
+  efficiencyScore: real("efficiency_score"),
+  overallScore: real("overall_score"),
+  
+  periodType: text("period_type").default('daily'), // 'daily', 'weekly', 'monthly'
+  behaviorDate: timestamp("behavior_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  operatorIdx: index("driver_behavior_operator_idx").on(table.operatorId),
+  dateIdx: index("driver_behavior_date_idx").on(table.behaviorDate),
+}));
+
+// Hours of Service (HoS) Compliance - Track driving hours per regulations
+export const hoursOfService = pgTable("hours_of_service", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  operatorId: varchar("operator_id").notNull(), // References operators
+  vehicleId: varchar("vehicle_id"), // References fleet_vehicles
+  
+  // Daily limits (UK/EU regulations)
+  dailyDrivingHours: real("daily_driving_hours").default(0), // Max 9h (can extend to 10h twice per week)
+  dailyWorkingHours: real("daily_working_hours").default(0), // Max 13h
+  dailyRestHours: real("daily_rest_hours").default(0), // Min 11h (can reduce to 9h three times per week)
+  
+  // Weekly limits
+  weeklyDrivingHours: real("weekly_driving_hours").default(0), // Max 56h per week
+  biweeklyDrivingHours: real("biweekly_driving_hours").default(0), // Max 90h per fortnight
+  
+  // Break tracking
+  continuousDrivingTime: real("continuous_driving_time").default(0), // Max 4.5h before break
+  breaksTaken: integer("breaks_taken").default(0),
+  totalBreakTime: integer("total_break_time").default(0), // minutes
+  
+  // Violation flags
+  dailyDrivingViolation: boolean("daily_driving_violation").default(false),
+  dailyRestViolation: boolean("daily_rest_violation").default(false),
+  weeklyDrivingViolation: boolean("weekly_driving_violation").default(false),
+  breakViolation: boolean("break_violation").default(false),
+  
+  // Status
+  currentStatus: text("current_status").default('off_duty'), // 'driving', 'working', 'break', 'rest', 'off_duty'
+  lastStatusChange: timestamp("last_status_change"),
+  
+  logDate: timestamp("log_date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  operatorIdx: index("hos_operator_idx").on(table.operatorId),
+  dateIdx: index("hos_date_idx").on(table.logDate),
+}));
+
+// Customer Billing - Track revenue and profitability per customer
+export const customerBilling = pgTable("customer_billing", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  customerId: varchar("customer_id").notNull(), // External customer reference
+  customerName: text("customer_name").notNull(),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  address: text("address"),
+  
+  // Contract details
+  contractType: text("contract_type"), // 'fixed', 'per_trip', 'per_mile', 'hourly'
+  contractValue: decimal("contract_value", { precision: 12, scale: 2 }),
+  ratePerMile: decimal("rate_per_mile", { precision: 6, scale: 2 }),
+  ratePerHour: decimal("rate_per_hour", { precision: 6, scale: 2 }),
+  
+  // Financial summary
+  totalTrips: integer("total_trips").default(0),
+  totalMiles: real("total_miles").default(0),
+  totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).default("0"),
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).default("0"),
+  profitMargin: real("profit_margin"), // percentage
+  
+  // Billing
+  billingCycle: text("billing_cycle").default('monthly'), // 'weekly', 'monthly', 'quarterly'
+  paymentTerms: integer("payment_terms").default(30), // days
+  lastInvoiceDate: timestamp("last_invoice_date"),
+  lastPaymentDate: timestamp("last_payment_date"),
+  outstandingBalance: decimal("outstanding_balance", { precision: 12, scale: 2 }).default("0"),
+  
+  status: text("status").default('active'), // 'active', 'inactive', 'suspended'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("customer_billing_user_idx").on(table.userId),
+  customerIdx: index("customer_billing_customer_idx").on(table.customerId),
+}));
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1076,6 +1242,14 @@ export const insertTripTrackingSchema = createInsertSchema(tripTracking).omit({ 
 export const insertUserRoleSchema = createInsertSchema(userRoles).omit({ id: true, createdAt: true });
 export const insertMaintenancePredictionSchema = createInsertSchema(maintenancePrediction).omit({ id: true, createdAt: true });
 export const insertComplianceRecordSchema = createInsertSchema(complianceRecords).omit({ id: true, createdAt: true });
+
+// Zod schemas for enterprise features
+export const insertGpsTrackingSchema = createInsertSchema(gpsTracking).omit({ id: true, createdAt: true, timestamp: true });
+export const insertGeofenceSchema = createInsertSchema(geofences).omit({ id: true, createdAt: true });
+export const insertGeofenceEventSchema = createInsertSchema(geofenceEvents).omit({ id: true, createdAt: true, timestamp: true });
+export const insertDriverBehaviorSchema = createInsertSchema(driverBehavior).omit({ id: true, createdAt: true });
+export const insertHoursOfServiceSchema = createInsertSchema(hoursOfService).omit({ id: true, createdAt: true });
+export const insertCustomerBillingSchema = createInsertSchema(customerBilling).omit({ id: true, createdAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -1142,4 +1316,23 @@ export type InsertRouteComment = z.infer<typeof insertRouteCommentSchema>;
 
 export type SavedRoute = typeof savedRoutes.$inferSelect;
 export type InsertSavedRoute = z.infer<typeof insertSavedRouteSchema>;
+
+// Type exports for enterprise features
+export type GpsTracking = typeof gpsTracking.$inferSelect;
+export type InsertGpsTracking = z.infer<typeof insertGpsTrackingSchema>;
+
+export type Geofence = typeof geofences.$inferSelect;
+export type InsertGeofence = z.infer<typeof insertGeofenceSchema>;
+
+export type GeofenceEvent = typeof geofenceEvents.$inferSelect;
+export type InsertGeofenceEvent = z.infer<typeof insertGeofenceEventSchema>;
+
+export type DriverBehavior = typeof driverBehavior.$inferSelect;
+export type InsertDriverBehavior = z.infer<typeof insertDriverBehaviorSchema>;
+
+export type HoursOfService = typeof hoursOfService.$inferSelect;
+export type InsertHoursOfService = z.infer<typeof insertHoursOfServiceSchema>;
+
+export type CustomerBilling = typeof customerBilling.$inferSelect;
+export type InsertCustomerBilling = z.infer<typeof insertCustomerBillingSchema>;
 
