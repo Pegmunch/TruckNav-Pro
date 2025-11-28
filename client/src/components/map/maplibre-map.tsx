@@ -2202,17 +2202,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
 
   const handleCompassClick = () => {
     if (!map.current) return;
-    // Reset bearing to north, and conditionally reset pitch based on 3D mode
-    // When 3D mode is active, keep the tilt; otherwise reset to flat view
-    const easeOptions: { bearing: number; pitch?: number; duration: number } = { 
-      bearing: 0, 
-      duration: 500 
-    };
-    // Only add pitch: 0 to flatten when 3D mode is disabled
-    if (!is3DMode) {
-      easeOptions.pitch = 0;
-    }
-    map.current.easeTo(easeOptions);
+    map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
   };
 
   return (

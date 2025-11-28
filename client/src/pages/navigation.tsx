@@ -2699,7 +2699,7 @@ function NavigationPageContent() {
                     <SpeedometerHUD
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
                       speedLimit={currentSpeedLimit || undefined}
-                      isNavigating={isNavigating}
+                      isNavigating={isNavUIActive}
                     />
                   }
                 />
