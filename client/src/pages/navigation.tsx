@@ -620,15 +620,7 @@ function NavigationPageContent() {
       autoZoomState.current.attempts = 1;
       autoZoomState.current.lastAttemptTime = Date.now();
     
-      // Wait for map style to load
-      const mapInstance = mapRef.current?.getMap();
-      if (!mapInstance?.isStyleLoaded()) {
-        console.log('[AUTO-ZOOM] Waiting for map style to load...');
-        setTimeout(() => {}, 500); // Wait a bit more
-        return;
-      }
-      
-      // Map is ready - perform zoom
+      // Execute zoom immediately - zoomToUserLocation handles async map readiness
       try {
         console.log('[AUTO-ZOOM] Executing zoom to user location...');
         mapRef.current?.zoomToUserLocation({
@@ -2718,7 +2710,12 @@ function NavigationPageContent() {
               variant="default"
               size="icon"
               onClick={() => setSidebarState('open')}
-              className="fixed top-4 left-4 z-50 hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
+              className={cn(
+              "fixed z-50 hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg h-14 w-14",
+              (mobileNavMode === 'plan' || mobileNavMode === 'preview') 
+                ? "bottom-6 right-6 block" 
+                : "hidden"
+            )}
               data-testid="button-menu-desktop"
             >
               <Menu className="w-5 h-5" />
