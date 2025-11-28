@@ -1329,8 +1329,8 @@ Calculating route...
 
       {/* Theme Selector Modal */}
       {showThemeSelector && (
-        <div className="fixed inset-0 bg-transparent z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-sm max-h-[80vh] bg-background shadow-xl flex flex-col">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-sm max-h-[80vh] bg-white dark:bg-gray-900 shadow-xl flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between pb-2 flex-shrink-0">
               <CardTitle className="text-lg flex items-center">
                 <Palette className="w-5 h-5 mr-2 text-primary" />
