@@ -36,8 +36,12 @@ export function FleetTrackingTab() {
   const { toast } = useToast();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<Map<string, L.Marker>>(new Map<string, L.Marker>());
+  const markersRef = useRef<Map<string, L.Marker>>(null as any);
   const tileLayersRef = useRef<{ street: L.TileLayer; satellite: L.TileLayer } | null>(null);
+  
+  if (!markersRef.current) {
+    markersRef.current = new Map<string, L.Marker>();
+  }
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
   const [clickCoordinates, setClickCoordinates] = useState<{ lat: number; lng: number; screenX: number; screenY: number } | null>(null);
@@ -115,7 +119,7 @@ export function FleetTrackingTab() {
   useEffect(() => {
     if (!mapInstanceRef.current || !fleetData?.vehicles) return;
 
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach((marker: L.Marker) => marker.remove());
     markersRef.current.clear();
 
     fleetData.vehicles.forEach(vehicle => {
