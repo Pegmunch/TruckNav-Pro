@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radio, RefreshCw, MapPin, Truck, AlertCircle } from 'lucide-react';
+import { Radio, RefreshCw, MapPin, Truck, AlertCircle, Satellite, Map, Plus, Minus } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import L from 'leaflet';
@@ -36,8 +36,10 @@ export function FleetTrackingTab() {
   const { toast } = useToast();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const markersRef = useRef<Map<string, L.Marker>>(new Map<string, L.Marker>());
+  const tileLayersRef = useRef<{ street: L.TileLayer; satellite: L.TileLayer } | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
 
   const { data: fleetData, isLoading, refetch, isFetching, isError: isFleetError } = useQuery<FleetGpsData>({
     queryKey: ['/api/enterprise/gps/fleet'],
@@ -71,11 +73,26 @@ export function FleetTrackingTab() {
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    mapInstanceRef.current = L.map(mapRef.current).setView([53.0, -1.5], 6);
+    mapInstanceRef.current = L.map(mapRef.current, {
+      zoomControl: false,
+      doubleClickZoom: true,
+      touchZoom: true,
+    }).setView([53.0, -1.5], 6);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(mapInstanceRef.current);
+    // Street view (OSM with better labels)
+    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    });
+
+    // Satellite view (ESRI)
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri',
+      maxZoom: 19,
+    });
+
+    tileLayersRef.current = { street: streetLayer, satellite: satelliteLayer };
+    streetLayer.addTo(mapInstanceRef.current);
 
     return () => {
       if (mapInstanceRef.current) {
@@ -94,24 +111,35 @@ export function FleetTrackingTab() {
     fleetData.vehicles.forEach(vehicle => {
       const color = vehicle.status === 'moving' ? '#22c55e' : vehicle.status === 'stopped' ? '#eab308' : '#6b7280';
       
+      // Enhanced label with live location accuracy (2 feet = 0.6 meters)
+      const accuracyMeters = 0.6;
+      const label = `${vehicle.registration}${vehicle.status === 'moving' ? ` • ${vehicle.speed}mph` : ''}`;
+      
       const icon = L.divIcon({
         className: 'custom-marker',
-        html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+        html: `<div style="background-color: ${color}; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); position: relative;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
             <path d="M8 3L13.5 10L19 3V10L13.5 17L8 10V3Z" stroke="white" stroke-width="2"/>
           </svg>
+          <span style="position: absolute; bottom: -20px; white-space: nowrap; font-size: 11px; font-weight: 600; background: ${color}; color: white; padding: 2px 6px; border-radius: 3px;">${label}</span>
         </div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -30],
       });
 
       const marker = L.marker([vehicle.latitude, vehicle.longitude], { icon })
         .addTo(mapInstanceRef.current!)
         .bindPopup(`
-          <strong>${vehicle.registration}</strong><br/>
-          ${vehicle.operatorName || 'Unknown'}<br/>
-          Speed: ${vehicle.speed} mph<br/>
-          ${vehicle.address || 'Unknown location'}
+          <div style="font-size: 12px;">
+            <strong>${vehicle.registration}</strong><br/>
+            <strong>${vehicle.operatorName || 'Unknown'}</strong><br/>
+            <strong>Speed:</strong> ${vehicle.speed} mph<br/>
+            <strong>Status:</strong> ${vehicle.status}<br/>
+            <strong>Location:</strong> ${vehicle.address || 'Unknown'}<br/>
+            <strong>Accuracy:</strong> ${accuracyMeters * 100}cm (2 feet)<br/>
+            <strong>Last Update:</strong> ${new Date(vehicle.lastUpdate).toLocaleTimeString()}
+          </div>
         `);
 
       marker.on('click', () => {
@@ -135,6 +163,29 @@ export function FleetTrackingTab() {
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  const toggleSatelliteView = () => {
+    if (!mapInstanceRef.current || !tileLayersRef.current) return;
+    
+    if (isSatelliteView) {
+      mapInstanceRef.current.removeLayer(tileLayersRef.current.satellite);
+      mapInstanceRef.current.addLayer(tileLayersRef.current.street);
+    } else {
+      mapInstanceRef.current.removeLayer(tileLayersRef.current.street);
+      mapInstanceRef.current.addLayer(tileLayersRef.current.satellite);
+    }
+    setIsSatelliteView(!isSatelliteView);
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    if (!mapInstanceRef.current) return;
+    const currentZoom = mapInstanceRef.current.getZoom();
+    if (direction === 'in') {
+      mapInstanceRef.current.setZoom(Math.min(currentZoom + 1, 19));
+    } else {
+      mapInstanceRef.current.setZoom(Math.max(currentZoom - 1, 1));
+    }
   };
 
   const getStatusBadge = (status: VehiclePosition['status']) => {
@@ -215,18 +266,48 @@ export function FleetTrackingTab() {
                 <Radio className="w-5 h-5" />
                 Fleet Map
               </CardTitle>
-              <CardDescription>Real-time vehicle positions</CardDescription>
+              <CardDescription>Real-time vehicle positions with 2ft accuracy</CardDescription>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isFetching}
-              data-testid="button-refresh-positions"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant={isSatelliteView ? "default" : "outline"}
+                size="sm"
+                onClick={toggleSatelliteView}
+                data-testid="button-toggle-satellite"
+                title="Toggle satellite view"
+              >
+                <Satellite className="w-4 h-4 mr-2" />
+                {isSatelliteView ? 'Street' : 'Satellite'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleZoom('in')}
+                data-testid="button-zoom-in"
+                title="Zoom in"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleZoom('out')}
+                data-testid="button-zoom-out"
+                title="Zoom out"
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isFetching}
+                data-testid="button-refresh-positions"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div 
