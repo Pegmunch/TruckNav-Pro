@@ -40,6 +40,7 @@ export function FleetTrackingTab() {
   const tileLayersRef = useRef<{ street: L.TileLayer; satellite: L.TileLayer } | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
+  const [clickCoordinates, setClickCoordinates] = useState<{ lat: number; lng: number; screenX: number; screenY: number } | null>(null);
 
   const { data: fleetData, isLoading, refetch, isFetching, isError: isFleetError } = useQuery<FleetGpsData>({
     queryKey: ['/api/enterprise/gps/fleet'],
@@ -93,6 +94,15 @@ export function FleetTrackingTab() {
 
     tileLayersRef.current = { street: streetLayer, satellite: satelliteLayer };
     streetLayer.addTo(mapInstanceRef.current);
+
+    // Add click listener to detect coordinates
+    mapInstanceRef.current.on('click', (e: L.LeafletMouseEvent) => {
+      const screenX = e.originalEvent.clientX;
+      const screenY = e.originalEvent.clientY;
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      setClickCoordinates({ lat, lng, screenX, screenY });
+    });
 
     return () => {
       if (mapInstanceRef.current) {
@@ -407,6 +417,45 @@ export function FleetTrackingTab() {
                 <div className="font-medium" data-testid="text-selected-lastupdate">
                   {formatLastUpdate(selectedVehicle.lastUpdate)}
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {clickCoordinates && (
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center justify-between">
+              <span>Click Coordinates Detected</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setClickCoordinates(null)}
+                className="h-6 w-6 p-0"
+                data-testid="button-close-coordinates"
+              >
+                ✕
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-sm">
+              <div>
+                <div className="text-xs text-muted-foreground">Latitude</div>
+                <div className="font-bold" data-testid="text-click-latitude">{clickCoordinates.lat.toFixed(6)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Longitude</div>
+                <div className="font-bold" data-testid="text-click-longitude">{clickCoordinates.lng.toFixed(6)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Screen X</div>
+                <div className="font-bold" data-testid="text-click-screenx">{clickCoordinates.screenX}px</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Screen Y</div>
+                <div className="font-bold" data-testid="text-click-screeny">{clickCoordinates.screenY}px</div>
               </div>
             </div>
           </CardContent>
