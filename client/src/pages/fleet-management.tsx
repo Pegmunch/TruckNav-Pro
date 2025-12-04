@@ -567,7 +567,7 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
                       <TableRow key={attachment.id} data-testid={`row-document-${attachment.id}`}>
                         <TableCell className="font-medium">{attachment.fileName}</TableCell>
                         <TableCell className="capitalize">{attachment.fileType}</TableCell>
-                        <TableCell>{format(new Date(attachment.uploadedAt), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{attachment.uploadedAt ? format(new Date(attachment.uploadedAt), 'dd/MM/yyyy') : '—'}</TableCell>
                         <TableCell>{attachment.fileSize ? `${(attachment.fileSize / 1024 / 1024).toFixed(2)} MB` : '—'}</TableCell>
                         <TableCell className="space-x-2">
                           <Button
@@ -966,6 +966,193 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
         <DialogFooter>
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-operator">
             {createMutation.isPending ? 'Adding...' : 'Add Operator'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
+  const { toast } = useToast();
+  const { data: records = [], isLoading } = useQuery<ServiceRecord[]>({
+    queryKey: ['/api/fleet/service-records'],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/fleet/service-records/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete service record');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/service-records'] });
+      toast({ title: 'Service record deleted successfully' });
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Service Records</CardTitle>
+          <CardDescription>Track maintenance and service history</CardDescription>
+        </div>
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-service">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Service Record
+            </Button>
+          </DialogTrigger>
+          <AddServiceDialog onClose={() => setIsAddOpen(false)} />
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading service records...</div>
+        ) : records.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No service records found.</div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">Service records loaded: {records.length}</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AddServiceDialog({ onClose }: { onClose: () => void }) {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    vehicleId: '',
+    serviceType: 'routine' as const,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/fleet/service-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) throw new Error('Failed to add service record');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/service-records'] });
+      toast({ title: 'Service record added successfully' });
+      onClose();
+    },
+  });
+
+  return (
+    <DialogContent data-testid="dialog-add-service">
+      <DialogHeader>
+        <DialogTitle>Add Service Record</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="serviceType">Service Type</Label>
+          <Select value={formData.serviceType} onValueChange={(value: any) => setFormData({ ...formData, serviceType: value })}>
+            <SelectTrigger data-testid="select-service-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="routine">Routine</SelectItem>
+              <SelectItem value="mot">MOT</SelectItem>
+              <SelectItem value="repair">Repair</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service">
+            Add Record
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAddOpen: (open: boolean) => void }) {
+  const { toast } = useToast();
+  const { data: logs = [], isLoading } = useQuery<FuelLog[]>({
+    queryKey: ['/api/fleet/fuel-logs'],
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Fuel Logs</CardTitle>
+          <CardDescription>Track fuel consumption and efficiency</CardDescription>
+        </div>
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-add-fuel">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Fuel Log
+            </Button>
+          </DialogTrigger>
+          <AddFuelDialog onClose={() => setIsAddOpen(false)} />
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading fuel logs...</div>
+        ) : logs.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No fuel logs found.</div>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">Fuel logs loaded: {logs.length}</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AddFuelDialog({ onClose }: { onClose: () => void }) {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    vehicleId: '',
+    liters: '',
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/fleet/fuel-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) throw new Error('Failed to add fuel log');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/fuel-logs'] });
+      toast({ title: 'Fuel log added successfully' });
+      onClose();
+    },
+  });
+
+  return (
+    <DialogContent data-testid="dialog-add-fuel">
+      <DialogHeader>
+        <DialogTitle>Add Fuel Log</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="liters">Liters</Label>
+          <Input
+            id="liters"
+            type="number"
+            value={formData.liters}
+            onChange={(e) => setFormData({ ...formData, liters: e.target.value })}
+            data-testid="input-liters"
+          />
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel">
+            Add Log
           </Button>
         </DialogFooter>
       </form>
