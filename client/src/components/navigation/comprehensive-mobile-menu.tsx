@@ -248,17 +248,15 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
         }
         
         if (displayAddress) {
-          // Update local input state
+          // Update local input state (this will trigger debounce -> setFromSearch)
           setFromInput(displayAddress);
           // Notify parent component (same as autocomplete flow)
           onFromLocationChange(displayAddress);
           // Store coordinates for POI search (same as autocomplete flow)
           setFromCoordinates({ lat: latitude, lng: longitude });
           
-          // Open dropdown to show address suggestions
+          // Open dropdown immediately to show it's active
           setFromOpen(true);
-          // Trigger search with display address to show suggestions
-          setFromSearch(displayAddress);
           
           toast({
             title: "Location Set",
