@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { 
   X,
@@ -171,6 +171,9 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   
   // GPS location fill state
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  
+  // Dropdown positioning is handled by Radix Popover which automatically
+  // handles scroll/resize and portal rendering
   
   // Handler to get current GPS location and fill the "From" field via TomTom reverse geocode
   const handleFillCurrentLocation = useCallback(async () => {
@@ -635,50 +638,48 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* From Location with Autocomplete */}
-                    <div className="space-y-2 relative">
+                    {/* From Location with Autocomplete using Radix Popover */}
+                    <div className="space-y-2">
                       <Label htmlFor="from-input" className="text-sm font-medium">
                         From
                       </Label>
-                      <Input
-                        id="from-input"
-                        placeholder="Enter starting location..."
-                        value={fromInput}
-                        onChange={(e) => {
-                          setFromInput(e.target.value);
-                          onFromLocationChange(e.target.value);
-                          // Clear stored coordinates when manually editing the field
-                          setFromCoordinates(null);
-                          // Clear any active POI search
-                          setActivePOICategory(null);
-                          setPoiSearchEnabled(false);
-                          if (e.target.value.length >= 2) {
-                            setFromOpen(true);
-                          } else {
-                            setFromOpen(false);
-                          }
-                        }}
-                        onFocus={() => {
-                          if (fromInput.length >= 2) {
-                            setFromOpen(true);
-                          }
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => setFromOpen(false), 200);
-                        }}
-                        data-testid="input-from-location"
-                        className="h-11"
-                      />
-                      {fromOpen && (
-                        <div 
-                          className="fixed z-[9999] bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto"
-                          style={{
-                            left: '16px',
-                            right: '16px',
-                            top: 'calc(var(--dropdown-from-top, 200px))',
-                            maxWidth: 'calc(100% - 32px)',
-                            maxHeight: '280px'
-                          }}
+                      <Popover open={fromOpen} onOpenChange={setFromOpen} modal={false}>
+                        <PopoverAnchor asChild>
+                          <Input
+                            id="from-input"
+                            placeholder="Enter starting location..."
+                            value={fromInput}
+                            onChange={(e) => {
+                              setFromInput(e.target.value);
+                              onFromLocationChange(e.target.value);
+                              setFromCoordinates(null);
+                              setActivePOICategory(null);
+                              setPoiSearchEnabled(false);
+                              if (e.target.value.length >= 2) {
+                                setFromOpen(true);
+                              } else {
+                                setFromOpen(false);
+                              }
+                            }}
+                            onFocus={() => {
+                              if (fromInput.length >= 2) {
+                                setFromOpen(true);
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setFromOpen(false), 200);
+                            }}
+                            data-testid="input-from-location"
+                            className="h-11"
+                            autoComplete="off"
+                          />
+                        </PopoverAnchor>
+                        <PopoverContent 
+                          className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
+                          align="start"
+                          side="bottom"
+                          sideOffset={4}
+                          onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
                             <CommandList className="max-h-[280px]">
@@ -700,7 +701,6 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                                         const coords = extractTomTomCoordinates(result);
                                         setFromInput(display);
                                         onFromLocationChange(display);
-                                        // Store coordinates for POI search
                                         if (coords) {
                                           setFromCoordinates(coords);
                                         }
@@ -716,49 +716,49 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                               )}
                             </CommandList>
                           </Command>
-                        </div>
-                      )}
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
-                    {/* To Location with Autocomplete */}
-                    <div className="space-y-2 relative">
+                    {/* To Location with Autocomplete using Radix Popover */}
+                    <div className="space-y-2">
                       <Label htmlFor="to-input" className="text-sm font-medium">
                         To
                       </Label>
-                      <Input
-                        id="to-input"
-                        placeholder="Enter destination..."
-                        value={toInput}
-                        onChange={(e) => {
-                          setToInput(e.target.value);
-                          onToLocationChange(e.target.value);
-                          if (e.target.value.length >= 2) {
-                            setToOpen(true);
-                          } else {
-                            setToOpen(false);
-                          }
-                        }}
-                        onFocus={() => {
-                          if (toInput.length >= 2) {
-                            setToOpen(true);
-                          }
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => setToOpen(false), 200);
-                        }}
-                        data-testid="input-to-location"
-                        className="h-11"
-                      />
-                      {toOpen && (
-                        <div 
-                          className="fixed z-[9999] bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto"
-                          style={{
-                            left: '16px',
-                            right: '16px',
-                            top: 'calc(var(--dropdown-to-top, 320px))',
-                            maxWidth: 'calc(100% - 32px)',
-                            maxHeight: '280px'
-                          }}
+                      <Popover open={toOpen} onOpenChange={setToOpen} modal={false}>
+                        <PopoverAnchor asChild>
+                          <Input
+                            id="to-input"
+                            placeholder="Enter destination..."
+                            value={toInput}
+                            onChange={(e) => {
+                              setToInput(e.target.value);
+                              onToLocationChange(e.target.value);
+                              if (e.target.value.length >= 2) {
+                                setToOpen(true);
+                              } else {
+                                setToOpen(false);
+                              }
+                            }}
+                            onFocus={() => {
+                              if (toInput.length >= 2) {
+                                setToOpen(true);
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => setToOpen(false), 200);
+                            }}
+                            data-testid="input-to-location"
+                            className="h-11"
+                            autoComplete="off"
+                          />
+                        </PopoverAnchor>
+                        <PopoverContent 
+                          className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
+                          align="start"
+                          side="bottom"
+                          sideOffset={4}
+                          onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
                             <CommandList className="max-h-[280px]">
@@ -791,8 +791,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                               )}
                             </CommandList>
                           </Command>
-                        </div>
-                      )}
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Quick POI Search - Integrated into Plan Tab */}

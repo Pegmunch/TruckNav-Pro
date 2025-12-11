@@ -237,15 +237,17 @@ function NavigationPageContent() {
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   
-  // CRITICAL: Derive mobileNavMode from LOCAL navigation state
-  // This prevents UI from disappearing when server session changes in PWA mode
+  // CRITICAL: Derive mobileNavMode correctly from all relevant state
+  // plan = no route, preview = route exists but not navigating, navigate = active navigation
   const mobileNavMode: MobileNavMode = isLocalNavActive
     ? 'navigate' 
-    : 'preview';
+    : currentRoute !== null
+      ? 'preview'
+      : 'plan';
   
-  // CRITICAL FIX: Derive navigation UI state from LOCAL state (not server)
-  // This makes UI persist even when server session changes in PWA mode
-  const isNavUIActive = isLocalNavActive;
+  // CRITICAL FIX: Navigation UI should show in preview AND navigate modes (not plan)
+  // This ensures buttons and ETA header render whenever a route is calculated
+  const isNavUIActive = shouldShowHUD || mobileNavMode !== 'plan';
   
   // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
   // Use useMemo to stabilize calculation and prevent initial render issues
