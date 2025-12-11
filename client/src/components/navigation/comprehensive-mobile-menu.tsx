@@ -50,7 +50,8 @@ import {
   Store,
   ShoppingCart,
   Users,
-  Crosshair
+  Crosshair,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -79,6 +80,7 @@ import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel
 import SettingsModal from "@/components/settings/settings-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -543,7 +545,7 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
 
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-            <TabsList className="w-full grid grid-cols-6 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
+            <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
               <TabsTrigger 
                 value="plan" 
                 className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
@@ -591,6 +593,14 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
               >
                 <Settings className="h-4 w-4" />
                 <span className="text-xs">Tools</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="offline" 
+                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                data-testid="tab-offline"
+              >
+                <Download className="h-4 w-4" />
+                <span className="text-xs">Offline</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1416,6 +1426,24 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         Phase 1: Launching Soon
                       </Badge>
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* OFFLINE TAB - Offline Map Downloads */}
+              <TabsContent value="offline" className="p-4 space-y-4 mt-0">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Download className="h-4 w-4 text-green-500" />
+                      Offline Maps
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Download map regions for offline navigation
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <OfflineDownloadsPanel onClose={() => onOpenChange(false)} />
                   </CardContent>
                 </Card>
               </TabsContent>

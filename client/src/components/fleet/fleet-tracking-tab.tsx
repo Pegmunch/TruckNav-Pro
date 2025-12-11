@@ -36,12 +36,8 @@ export function FleetTrackingTab() {
   const { toast } = useToast();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<Map<string, L.Marker>>(null as any);
+  const markersRef = useRef<globalThis.Map<string, L.Marker>>(new globalThis.Map());
   const tileLayersRef = useRef<{ street: L.TileLayer; satellite: L.TileLayer } | null>(null);
-  
-  if (!markersRef.current) {
-    markersRef.current = new Map<string, L.Marker>();
-  }
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
   const [clickCoordinates, setClickCoordinates] = useState<{ lat: number; lng: number; screenX: number; screenY: number } | null>(null);
