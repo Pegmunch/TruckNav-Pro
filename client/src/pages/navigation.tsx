@@ -239,7 +239,8 @@ function NavigationPageContent() {
   
   // CRITICAL: Derive mobileNavMode correctly from all relevant state
   // plan = no route, preview = route exists but not navigating, navigate = active navigation
-  const mobileNavMode: MobileNavMode = isLocalNavActive
+  // FIXED: isLocalNavActive alone is not enough - must also have a valid route to be in navigate mode
+  const mobileNavMode: MobileNavMode = isLocalNavActive && currentRoute !== null
     ? 'navigate' 
     : currentRoute !== null
       ? 'preview'
@@ -249,22 +250,43 @@ function NavigationPageContent() {
   // This ensures buttons and ETA header render whenever a route is calculated
   const isNavUIActive = shouldShowHUD || mobileNavMode !== 'plan';
   
-  // CRITICAL FIX: Hide GPS truck marker in PWA standalone navigation mode
-  // Use useMemo to stabilize calculation and prevent initial render issues
+  // CRITICAL FIX: Only show GPS truck marker during ACTIVE navigation
+  // Hide in plan and preview modes across all platforms for consistency
   const showUserMarker = useMemo(() => {
-    // Default to showing marker (true) unless ALL conditions are met:
-    // 1. Running as PWA standalone app
-    // 2. Navigation is active
-    // 3. Mobile nav mode is 'navigate'
-    const isPWANavigating = isStandalone && isNavigating && mobileNavMode === 'navigate';
-    return !isPWANavigating;
-  }, [isStandalone, isNavigating, mobileNavMode]);
+    // Only show the marker when actively navigating (navigate mode)
+    // This ensures consistency between mobile browser and PWA modes
+    return mobileNavMode === 'navigate';
+  }, [mobileNavMode]);
   
   // Debug logging whenever mode changes
   useEffect(() => {
     console.log('[NAV-MODE-STATE] mobileNavMode changed to:', mobileNavMode);
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
+  
+  // CRITICAL FIX: Auto-reset isLocalNavActive when no route exists
+  // This ensures stale localStorage doesn't keep the app in navigate mode
+  // DELAYED: Wait for route data to settle before resetting to avoid clearing on initial mount
+  const [routeDataSettled, setRouteDataSettled] = useState(false);
+  
+  useEffect(() => {
+    // Give the route data time to load from server/localStorage before checking
+    const timer = setTimeout(() => {
+      setRouteDataSettled(true);
+    }, 2000); // 2 second delay to allow route data to rehydrate
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    // Only reset if route data has settled AND there's no route AND local nav is active
+    if (routeDataSettled && currentRoute === null && isLocalNavActive) {
+      console.log('[NAV-STATE] Auto-resetting isLocalNavActive - no route exists after data settled');
+      setIsLocalNavActive(false);
+      localStorage.removeItem('navigation_ui_active');
+      localStorage.removeItem('navigation_mode');
+    }
+  }, [currentRoute, isLocalNavActive, routeDataSettled]);
   
   // Mode transition debouncing to prevent race conditions
   // REMOVED: Debounced setter was causing race conditions

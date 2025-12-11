@@ -2562,6 +2562,42 @@ body.navigation-active [data-testid*="button-"] {
   /* z-index handled by component-level styles - DO NOT override here */
 }
 
+/* CRITICAL: Preserve right-side navigation controls CONTAINER during navigation */
+body.navigation-active [data-testid="navigation-controls-container"],
+body.navigation-active .navigation-controls-container,
+html.overlay-safe-mode [data-testid="navigation-controls-container"],
+html.overlay-safe-mode .navigation-controls-container {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 2100 !important;
+  display: flex !important;
+}
+
+/* CRITICAL: Preserve right-side navigation controls buttons during navigation */
+body.navigation-active [data-testid="nav-control-incidents"],
+body.navigation-active [data-testid="nav-control-compass"],
+body.navigation-active [data-testid="nav-control-center-gps"],
+body.navigation-active [data-testid="nav-control-zoom-in"],
+body.navigation-active [data-testid="nav-control-zoom-out"],
+body.navigation-active [data-testid="nav-control-3d"],
+body.navigation-active [data-testid="nav-control-traffic"],
+body.navigation-active [data-testid="nav-control-satellite"],
+html.overlay-safe-mode [data-testid="nav-control-incidents"],
+html.overlay-safe-mode [data-testid="nav-control-compass"],
+html.overlay-safe-mode [data-testid="nav-control-center-gps"],
+html.overlay-safe-mode [data-testid="nav-control-zoom-in"],
+html.overlay-safe-mode [data-testid="nav-control-zoom-out"],
+html.overlay-safe-mode [data-testid="nav-control-3d"],
+html.overlay-safe-mode [data-testid="nav-control-traffic"],
+html.overlay-safe-mode [data-testid="nav-control-satellite"] {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 2100 !important;
+  display: inline-flex !important;
+}
+
 /* ============================================
    ENHANCED GLOVE CURSOR FEATURE FOR MAP DRAGGING
    ============================================ */
@@ -2730,5 +2766,62 @@ body.navigation-active [data-testid*="button-"] {
 @media (pointer: coarse) {
   .leaflet-container {
     touch-action: pan-x pan-y !important;
+  }
+}
+
+/* ============================================
+   CRITICAL: NAVIGATION CONTROLS STACK VISIBILITY
+   Ensure right-side navigation buttons are ALWAYS visible
+   across mobile browser and PWA standalone modes
+   ============================================ */
+
+/* 
+ * ALWAYS visible rules - apply regardless of body classes
+ * These override any accidental hiding from overlay CSS
+ */
+[data-testid="navigation-controls-container"],
+.navigation-controls-container {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+}
+
+[data-testid="nav-control-incidents"],
+[data-testid="nav-control-compass"],
+[data-testid="nav-control-center-gps"],
+[data-testid="nav-control-zoom-in"],
+[data-testid="nav-control-zoom-out"],
+[data-testid="nav-control-3d"],
+[data-testid="nav-control-traffic"],
+[data-testid="nav-control-satellite"] {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-flex !important;
+}
+
+/* PWA standalone mode - ensure navigation controls are visible */
+@media (display-mode: standalone) {
+  [data-testid="navigation-controls-container"],
+  .navigation-controls-container {
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+  }
+  
+  [data-testid="nav-control-incidents"],
+  [data-testid="nav-control-compass"],
+  [data-testid="nav-control-center-gps"],
+  [data-testid="nav-control-zoom-in"],
+  [data-testid="nav-control-zoom-out"],
+  [data-testid="nav-control-3d"],
+  [data-testid="nav-control-traffic"],
+  [data-testid="nav-control-satellite"],
+  [data-testid="button-gps-fill-location"] {
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }

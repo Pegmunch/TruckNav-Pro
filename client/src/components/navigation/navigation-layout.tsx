@@ -52,7 +52,8 @@ export function NavigationLayout({
       {/* Positioned just below the CompactTripStrip (ETA header) - responsive for mobile */}
       {shouldShowUI && rightStack && (
         <div 
-          className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto pointer-events-auto"
+          className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto pointer-events-auto navigation-controls-container"
+          data-testid="navigation-controls-container"
           style={{
             top: 'max(85px, calc(max(70px, 5vh) + var(--safe-area-top, 0px)))',
             right: '8px',
