@@ -670,9 +670,18 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         className="h-11"
                       />
                       {fromOpen && (
-                        <div className="fixed z-[9999] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto">
+                        <div 
+                          className="fixed z-[9999] bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto"
+                          style={{
+                            left: '16px',
+                            right: '16px',
+                            top: 'calc(var(--dropdown-from-top, 200px))',
+                            maxWidth: 'calc(100% - 32px)',
+                            maxHeight: '280px'
+                          }}
+                        >
                           <Command>
-                            <CommandList className="max-h-[200px]">
+                            <CommandList className="max-h-[280px]">
                               {fromLoading && (
                                 <div className="flex items-center justify-center py-6">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -741,9 +750,18 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                         className="h-11"
                       />
                       {toOpen && (
-                        <div className="fixed z-[9999] w-full mt-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto">
+                        <div 
+                          className="fixed z-[9999] bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md shadow-2xl pointer-events-auto"
+                          style={{
+                            left: '16px',
+                            right: '16px',
+                            top: 'calc(var(--dropdown-to-top, 320px))',
+                            maxWidth: 'calc(100% - 32px)',
+                            maxHeight: '280px'
+                          }}
+                        >
                           <Command>
-                            <CommandList className="max-h-[200px]">
+                            <CommandList className="max-h-[280px]">
                               {toLoading && (
                                 <div className="flex items-center justify-center py-6">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

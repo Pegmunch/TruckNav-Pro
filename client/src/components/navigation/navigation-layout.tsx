@@ -49,16 +49,18 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - 8 buttons on right side below ETA header */}
-      {/* Positioned just below the CompactTripStrip (ETA header) */}
+      {/* Positioned just below the CompactTripStrip (ETA header) - responsive for mobile */}
       {shouldShowUI && rightStack && (
         <div 
           className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto pointer-events-auto"
           style={{
-            top: 'max(90px, calc(max(70px, 5vh) + var(--safe-area-top, 0px)))',
-            right: 'max(12px, var(--safe-area-right, 0px))',
-            bottom: 'max(100px, calc(max(80px, 10vh) + var(--safe-area-bottom, 0px)))',
-            maxHeight: 'calc(100vh - max(180px, 22vh) - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))',
-            width: '56px'
+            top: 'max(85px, calc(max(70px, 5vh) + var(--safe-area-top, 0px)))',
+            right: '8px',
+            bottom: '120px',
+            width: '56px',
+            maxHeight: 'calc(100% - 200px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
           }}
         >
           {rightStack}
