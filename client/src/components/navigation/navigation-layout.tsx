@@ -28,9 +28,15 @@ export function NavigationLayout({
         {mapContent}
       </div>
 
-      {/* Top navigation strip */}
+      {/* Top navigation strip - ETA header (CompactTripStrip) */}
       {shouldShowUI && topStrip && (
-        <div className="absolute top-0 left-0 right-0 z-[1700]">
+        <div 
+          className="absolute left-0 right-0 z-[1700] w-full"
+          style={{
+            top: 'var(--safe-area-top, 0px)',
+            maxHeight: '90px'
+          }}
+        >
           {topStrip}
         </div>
       )}
@@ -46,12 +52,13 @@ export function NavigationLayout({
       {/* Positioned just below the CompactTripStrip (ETA header) */}
       {shouldShowUI && rightStack && (
         <div 
-          className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto"
+          className="absolute z-[2100] flex flex-col gap-2 overflow-y-auto pointer-events-auto"
           style={{
-            top: 'calc(90px + var(--safe-area-top, 0px))',
-            right: 'calc(12px + var(--safe-area-right, 0px))',
-            bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-            maxHeight: 'calc(100vh - 190px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))'
+            top: 'max(90px, calc(max(70px, 5vh) + var(--safe-area-top, 0px)))',
+            right: 'max(12px, var(--safe-area-right, 0px))',
+            bottom: 'max(100px, calc(max(80px, 10vh) + var(--safe-area-bottom, 0px)))',
+            maxHeight: 'calc(100vh - max(180px, 22vh) - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))',
+            width: '56px'
           }}
         >
           {rightStack}
