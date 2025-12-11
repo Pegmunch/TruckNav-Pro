@@ -2160,6 +2160,7 @@ function NavigationPageContent() {
       console.log('[NAV-ACTIVATION] Step 3: Close overlays and prepare UI');
       // Close all known overlay components using proper state management
       setIsAlternativeRoutesOpen(false);
+      setShowComprehensiveMenu(false); // CRITICAL: Close menu to allow NavigationLayout to render
       
       // Prepare navigation interface - collapse sidebar for maximum map visibility during navigation
       setSidebarState('collapsed');
@@ -2205,6 +2206,10 @@ function NavigationPageContent() {
       setIsLocalNavActive(true);
       localStorage.setItem('navigation_ui_active', 'true');
       console.log('[NAV-ACTIVATION] ✅ Local navigation UI state activated - UI will persist');
+      
+      // SAFETY GUARD: Force re-render after a microtask to ensure state updates propagate
+      await new Promise(resolve => setTimeout(resolve, 0));
+      console.log('[NAV-ACTIVATION] State update flushed to ensure UI renders');
       
       performance.mark('nav-activation-end');
       performance.measure('nav-activation-total', 'nav-activation-start', 'nav-activation-end');
