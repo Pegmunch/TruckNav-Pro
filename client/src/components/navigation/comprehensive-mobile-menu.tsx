@@ -255,6 +255,11 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
           // Store coordinates for POI search (same as autocomplete flow)
           setFromCoordinates({ lat: latitude, lng: longitude });
           
+          // Open dropdown to show address suggestions
+          setFromOpen(true);
+          // Trigger search with display address to show suggestions
+          setFromSearch(displayAddress);
+          
           toast({
             title: "Location Set",
             description: displayAddress,
