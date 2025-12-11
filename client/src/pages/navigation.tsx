@@ -2449,7 +2449,7 @@ function NavigationPageContent() {
       <DesktopHeader />
 
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
-      {isMobile ? (
+      {(isMobile || isStandalone) ? (
         <>
         <div className="mobile-layout">
           
@@ -2650,14 +2650,12 @@ function NavigationPageContent() {
                     </>
                   }
                   topStrip={
-                    currentRoute && (
-                      <CompactTripStrip
-                        eta={currentRoute.duration || 0}
-                        distanceRemaining={currentRoute.distance || 0}
-                        nextManeuver={nextTurn?.roadName || 'Continue'}
-                        nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
-                      />
-                    )
+                    <CompactTripStrip
+                      eta={currentRoute?.duration || 0}
+                      distanceRemaining={currentRoute?.distance || 0}
+                      nextManeuver={nextTurn?.roadName || 'Continue'}
+                      nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                    />
                   }
                   leftStack={
                     <LeftActionStack
