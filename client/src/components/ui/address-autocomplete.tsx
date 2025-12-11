@@ -228,13 +228,9 @@ export function AddressAutocomplete({
     setSearchTerm(newValue);
     onChange(newValue);
     
-    // Only auto-open dropdown on desktop - prevents flicker loop on mobile/PWA
-    if (!checkIsMobileOrPWA()) {
-      if (newValue.length >= 2) {
-        setOpen(true);
-      } else {
-        setOpen(false);
-      }
+    // Always open dropdown if there's content (on all platforms)
+    if (newValue.length >= 2) {
+      setOpen(true);
     }
   }, [onChange]);
 
@@ -252,44 +248,27 @@ export function AddressAutocomplete({
     onChange(displayLabel);
     onCoordinatesChange?.(coordinates);
     
-    // Force close popup immediately and prevent reopening
+    // Close and blur immediately
     setOpen(false);
+    const input = document.getElementById(id) as HTMLInputElement;
+    if (input) input.blur();
     
-    // Blur the input to prevent popup from reopening
-    setTimeout(() => {
-      const input = document.getElementById(id) as HTMLInputElement;
-      if (input) {
-        input.blur();
-      }
-    }, 0);
-    
-    // Create location entry for this TomTom result
-    const locationData = {
+    // Create location entry
+    createLocationMutation.mutate({
       label: displayLabel,
       coordinates,
       isFavorite: false,
-    };
-    
-    createLocationMutation.mutate(locationData);
-    
-    // Toast notification removed per user request
-  }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
+    });
+  }, [onChange, onCoordinatesChange, createLocationMutation, id]);
 
   const handleSelectSavedLocation = useCallback((location: SavedLocation) => {
     setSearchTerm(location.label);
     onChange(location.label);
     onCoordinatesChange?.(location.coordinates);
     
-    // Force close popup immediately and prevent reopening
     setOpen(false);
-    
-    // Blur the input to prevent popup from reopening
-    setTimeout(() => {
-      const input = document.getElementById(id) as HTMLInputElement;
-      if (input) {
-        input.blur();
-      }
-    }, 0);
+    const input = document.getElementById(id) as HTMLInputElement;
+    if (input) input.blur();
   }, [onChange, onCoordinatesChange, id]);
 
   const handleSelectUKPostcode = useCallback((result: PostcodeGeocodeResult) => {
@@ -299,43 +278,23 @@ export function AddressAutocomplete({
     onChange(displayLabel);
     onCoordinatesChange?.(result.coordinates);
     
-    // Force close popup immediately and prevent reopening
     setOpen(false);
+    const input = document.getElementById(id) as HTMLInputElement;
+    if (input) input.blur();
     
-    // Blur the input to prevent popup from reopening
-    setTimeout(() => {
-      const input = document.getElementById(id) as HTMLInputElement;
-      if (input) {
-        input.blur();
-      }
-    }, 0);
-    
-    // Create location entry for this UK postcode result
-    const locationData = {
+    createLocationMutation.mutate({
       label: displayLabel,
       coordinates: result.coordinates,
       isFavorite: false,
-    };
-    
-    createLocationMutation.mutate(locationData);
-    
-    // Toast notification removed per user request
-  }, [onChange, onCoordinatesChange, createLocationMutation, toast, id]);
+    });
+  }, [onChange, onCoordinatesChange, createLocationMutation, id]);
 
   const handleInputFocus = useCallback(() => {
-    // Don't open dropdown in mobile/PWA mode - prevents flicker loop
-    if (checkIsMobileOrPWA()) {
-      return;
-    }
-    
-    // Open dropdown on desktop only
     setOpen(true);
   }, []);
 
   const handleInputBlur = useCallback(() => {
-    setTimeout(() => {
-      setOpen(false);
-    }, 200);
+    setTimeout(() => setOpen(false), 150);
   }, []);
 
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
