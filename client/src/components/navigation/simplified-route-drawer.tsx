@@ -92,8 +92,8 @@ export function SimplifiedRouteDrawer({
 
   // Handle POI selection
   const handleSelectPOI = (poi: Facility) => {
-    const displayLabel = `${poi.name}${poi.address ? `, ${poi.address}` : ''}${poi.city ? `, ${poi.city}` : ''}`;
-    const coordinates = { lat: poi.latitude, lng: poi.longitude };
+    const displayLabel = `${poi.name}${poi.address ? `, ${poi.address}` : ''}`;
+    const coordinates = { lat: poi.coordinates.lat, lng: poi.coordinates.lng };
     
     onToLocationChange(displayLabel);
     onToCoordinatesChange?.(coordinates);
@@ -285,9 +285,9 @@ export function SimplifiedRouteDrawer({
                       <p className="text-sm font-medium truncate">
                         {poi.name}
                       </p>
-                      {(poi.address || poi.city) && (
+                      {poi.address && (
                         <p className="text-xs text-muted-foreground truncate">
-                          {poi.address ? `${poi.address}${poi.city ? `, ${poi.city}` : ''}` : poi.city}
+                          {poi.address}
                         </p>
                       )}
                     </div>
