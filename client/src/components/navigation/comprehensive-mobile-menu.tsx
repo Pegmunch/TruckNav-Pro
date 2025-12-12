@@ -81,6 +81,8 @@ import SettingsModal from "@/components/settings/settings-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
+import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
+import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -397,6 +399,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   const [showWeather, setShowWeather] = useState(false);
   const [showEntertainment, setShowEntertainment] = useState(false);
   const [showVoiceNav, setShowVoiceNav] = useState(false);
+  const [showFuelPrices, setShowFuelPrices] = useState(false);
+  const [showFatigueMonitor, setShowFatigueMonitor] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   // Format duration helper
@@ -1377,6 +1381,35 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       <Mic className="h-4 w-4 mr-2" />
                       Voice Navigation
                     </Button>
+                    
+                    {/* Fuel Price Comparison */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-green-500 text-green-600 hover:bg-green-50"
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowFuelPrices(true);
+                      }}
+                      data-testid="button-tool-fuel-prices"
+                    >
+                      <Fuel className="h-4 w-4 mr-2" />
+                      Fuel Price Comparison
+                    </Button>
+                    
+                    {/* Driver Fatigue Monitor */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-amber-500 text-amber-600 hover:bg-amber-50"
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowFatigueMonitor(true);
+                      }}
+                      data-testid="button-tool-fatigue-monitor"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Driver Fatigue Monitor
+                    </Button>
+                    
                     <Button
                       variant="outline"
                       className="w-full justify-start"
@@ -1501,6 +1534,55 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
           onOpenChange={setShowSettings}
         />
       )}
+
+      {/* Fuel Price Comparison Dialog */}
+      <Dialog open={showFuelPrices} onOpenChange={setShowFuelPrices}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Fuel className="h-5 w-5 text-green-600" />
+              Fuel Price Comparison
+            </DialogTitle>
+            <DialogDescription>
+              Find the cheapest fuel near your location
+            </DialogDescription>
+          </DialogHeader>
+          <FuelPriceComparison 
+            onNavigateToStation={(station) => {
+              setShowFuelPrices(false);
+              toast({
+                title: "Navigation Started",
+                description: `Navigating to ${station.brand} - ${station.postcode}`,
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Driver Fatigue Monitor Dialog */}
+      <Dialog open={showFatigueMonitor} onOpenChange={setShowFatigueMonitor}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-600" />
+              Driver Fatigue Monitor
+            </DialogTitle>
+            <DialogDescription>
+              Track your driving time for EU/UK compliance
+            </DialogDescription>
+          </DialogHeader>
+          <DriverFatigueAlert 
+            isNavigating={isNavigating}
+            onRequestBreak={() => {
+              setShowFatigueMonitor(false);
+              toast({
+                title: "Break Requested",
+                description: "Find a safe place to rest. We'll show nearby truck stops.",
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 });
