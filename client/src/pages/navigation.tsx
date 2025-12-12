@@ -2571,7 +2571,23 @@ function NavigationPageContent() {
                   </div>
                 </div>
               )}
-              
+
+              {/* Blue Hamburger FAB - PLAN MODE - Opens menu (Bottom Right) */}
+              {mobileNavMode === 'plan' && (
+                <Button
+                  onClick={() => setShowComprehensiveMenu(true)}
+                  size="lg"
+                  className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                  style={{
+                    bottom: 'calc(24px + var(--safe-area-bottom))',
+                    right: 'calc(24px + var(--safe-area-right))'
+                  }}
+                  data-testid="button-open-menu-plan"
+                  aria-label="Open menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </Button>
+              )}
 
               {/* PREVIEW MODE OVERLAYS (z-10+) - Visible only in preview mode */}
               {mobileNavMode === 'preview' && (
