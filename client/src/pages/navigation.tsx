@@ -3001,7 +3001,7 @@ function NavigationPageContent() {
                     <div 
                       className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                       style={{
-                        bottom: 'calc(12px + var(--safe-area-bottom, 0px))'
+                        bottom: 'calc(72px + var(--safe-area-bottom, 0px))'
                       }}
                       data-testid="speedometer-hud-navigate"
                     >
