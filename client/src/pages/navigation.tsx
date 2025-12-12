@@ -3001,15 +3001,25 @@ function NavigationPageContent() {
                       </div>
                     )}
 
-                    {/* Route Mask - Hides route line behind speedometer area */}
+                    {/* Route Mask - Solid white mask covering bottom area behind speedometer */}
                     <div 
-                      className="fixed left-0 right-0 z-[50] pointer-events-none"
+                      className="fixed left-0 right-0 z-[160] pointer-events-none"
                       style={{
                         bottom: '0px',
-                        height: 'calc(90px + var(--safe-area-bottom, 0px))',
-                        background: 'linear-gradient(to top, white 0%, white 50%, rgba(255,255,255,0.9) 70%, rgba(255,255,255,0) 100%)'
+                        height: 'calc(70px + var(--safe-area-bottom, 0px))',
+                        background: 'white'
                       }}
                       data-testid="route-mask-bottom"
+                    />
+                    {/* Gradient fade above the solid mask for smoother transition */}
+                    <div 
+                      className="fixed left-0 right-0 z-[159] pointer-events-none"
+                      style={{
+                        bottom: 'calc(70px + var(--safe-area-bottom, 0px))',
+                        height: '40px',
+                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)'
+                      }}
+                      data-testid="route-mask-gradient"
                     />
 
                     {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}

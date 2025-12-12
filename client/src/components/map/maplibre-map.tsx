@@ -2060,9 +2060,10 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
                 // CRITICAL: Camera offset positions vehicle marker so route is centered vertically
-                // The speedometer HUD is at bottom, ETA header at top - route should be in middle
-                top: 180, // Space for ETA header and turn indicator
-                bottom: 180, // Space above speedometer - centers route vertically
+                // The speedometer HUD is at bottom (70px + safe area), ETA header at top
+                // Route should appear centered in the visible map area above the speedometer
+                top: 200, // Space for ETA header, turn indicator, and trip strip
+                bottom: 280, // Larger padding pushes route higher - fully clears speedometer zone
                 left: 0, 
                 right: 0 
               },

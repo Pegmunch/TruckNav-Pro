@@ -300,14 +300,14 @@ export function AddressAutocomplete({
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-  // GPS Quick-Set Handler
+  // GPS Quick-Set Handler - Works in PWA mode by requesting fresh GPS
   const handleUseGPSLocation = useCallback(async () => {
-    if (gps?.status === 'ready' && gps?.position) {
-      setIsGettingLocation(true);
-      
+    setIsGettingLocation(true);
+    console.log('[GPS-LOCATION] Button clicked - status:', gps?.status, 'position:', gps?.position ? 'available' : 'none');
+    
+    // Helper function to reverse geocode and set location
+    const setLocationFromCoords = async (latitude: number, longitude: number): Promise<boolean> => {
       try {
-        const { latitude, longitude } = gps.position;
-        
         // Try reverse geocoding to get address
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -336,45 +336,99 @@ export function AddressAutocomplete({
             setSearchTerm(address);
             onChange(address);
             onCoordinatesChange?.({ lat: latitude, lng: longitude });
-            
-            // Toast removed per user request - transparent pop-up issue in PWA mode
+            console.log('[GPS-LOCATION] Location set from reverse geocode:', address);
+            return true;
           }
-        } else {
-          // Fallback to coordinates
-          const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-          setSearchTerm(coordAddress);
-          onChange(coordAddress);
-          onCoordinatesChange?.({ lat: latitude, lng: longitude });
-          
-          // Toast removed per user request - transparent pop-up issue in PWA mode
         }
-      } catch (error) {
-        // Fallback to coordinates on error
-        const { latitude, longitude } = gps.position;
+        // Fallback to coordinates
         const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
         setSearchTerm(coordAddress);
         onChange(coordAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
-        
-        // Toast removed per user request - transparent pop-up issue in PWA mode
-      } finally {
-        setIsGettingLocation(false);
+        console.log('[GPS-LOCATION] Location set from coordinates:', coordAddress);
+        return true;
+      } catch (error) {
+        // Fallback to coordinates on error
+        const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        setSearchTerm(coordAddress);
+        onChange(coordAddress);
+        onCoordinatesChange?.({ lat: latitude, lng: longitude });
+        console.log('[GPS-LOCATION] Location set from coordinates (error fallback):', coordAddress);
+        return true;
       }
-    } else if (gps?.manualLocation) {
-      // Use manual location if available
-      setSearchTerm(gps.manualLocation.address || 'Manual Location');
-      onChange(gps.manualLocation.address || 'Manual Location');
-      onCoordinatesChange?.({ 
-        lat: gps.manualLocation.latitude, 
-        lng: gps.manualLocation.longitude 
-      });
+    };
+    
+    try {
+      // First priority: Use existing GPS position if ready
+      if (gps?.status === 'ready' && gps?.position) {
+        const { latitude, longitude } = gps.position;
+        await setLocationFromCoords(latitude, longitude);
+        return;
+      }
       
-      // Toast removed per user request - transparent pop-up issue in PWA mode
-    } else {
-      // Toast removed per user request - transparent pop-up issue in PWA mode
-      console.warn('[GPS-LOCATION] GPS unavailable - location services disabled or not available');
+      // Second priority: Use manual location if available
+      if (gps?.manualLocation) {
+        setSearchTerm(gps.manualLocation.address || 'Manual Location');
+        onChange(gps.manualLocation.address || 'Manual Location');
+        onCoordinatesChange?.({ 
+          lat: gps.manualLocation.latitude, 
+          lng: gps.manualLocation.longitude 
+        });
+        console.log('[GPS-LOCATION] Using manual location');
+        return;
+      }
+      
+      // Third priority: Try cached position first (instant fallback)
+      if (gps?.cachedPosition?.position) {
+        const { latitude, longitude } = gps.cachedPosition.position;
+        console.log('[GPS-LOCATION] Using cached GPS position (age:', gps.cachedPosition.ageDisplay, ')');
+        await setLocationFromCoords(latitude, longitude);
+        return;
+      }
+      
+      // Fourth priority: Request fresh GPS position (for PWA mode)
+      if ('geolocation' in navigator) {
+        console.log('[GPS-LOCATION] Requesting fresh GPS position...');
+        const success = await new Promise<boolean>((resolve) => {
+          const timeoutHandle = setTimeout(() => {
+            console.warn('[GPS-LOCATION] GPS request timed out');
+            resolve(false);
+          }, 20000); // Hard timeout safety net
+          
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              clearTimeout(timeoutHandle);
+              const { latitude, longitude } = position.coords;
+              console.log('[GPS-LOCATION] Fresh GPS acquired:', latitude, longitude);
+              await setLocationFromCoords(latitude, longitude);
+              resolve(true);
+            },
+            (error) => {
+              clearTimeout(timeoutHandle);
+              console.error('[GPS-LOCATION] GPS error:', error.message);
+              resolve(false);
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 60000 // Allow 1-minute old positions
+            }
+          );
+        });
+        
+        if (!success) {
+          console.warn('[GPS-LOCATION] Could not acquire location - check device permissions');
+        }
+      } else {
+        console.warn('[GPS-LOCATION] Geolocation not supported in this browser');
+      }
+    } catch (error) {
+      console.warn('[GPS-LOCATION] Failed to get GPS position:', error);
+    } finally {
+      // CRITICAL: Always reset loading state, guaranteed by finally block
+      setIsGettingLocation(false);
     }
-  }, [gps, onChange, onCoordinatesChange, toast]);
+  }, [gps, onChange, onCoordinatesChange]);
 
   // Dynamic placeholder based on POI category
   const dynamicPlaceholder = useMemo(() => {
@@ -443,35 +497,38 @@ export function AddressAutocomplete({
         </ToggleGroup>
       </div>
 
-      {/* GPS Quick Access Button - Premium Design */}
-      {(gps?.status === 'ready' || gps?.manualLocation) && (
-        <Button
-          onClick={handleUseGPSLocation}
-          disabled={isGettingLocation}
-          variant="outline"
-          className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200 group"
-          data-testid="button-use-gps-location"
-        >
-          {isGettingLocation ? (
-            <>
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              Getting Location...
-            </>
-          ) : (
-            <>
-              <Crosshair className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                Use My Current Location
-              </span>
-              {gps?.position && (
-                <Badge variant="secondary" className="ml-auto bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
-                  GPS Ready
-                </Badge>
-              )}
-            </>
-          )}
-        </Button>
-      )}
+      {/* GPS Quick Access Button - Always visible, works in PWA mode */}
+      <Button
+        onClick={handleUseGPSLocation}
+        disabled={isGettingLocation}
+        variant="outline"
+        className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200 group"
+        data-testid="button-use-gps-location"
+      >
+        {isGettingLocation ? (
+          <>
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Getting Location...
+          </>
+        ) : (
+          <>
+            <Crosshair className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              Use My Current Location
+            </span>
+            {gps?.status === 'ready' && gps?.position && (
+              <Badge variant="secondary" className="ml-auto bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                GPS Ready
+              </Badge>
+            )}
+            {gps?.manualLocation && !gps?.position && (
+              <Badge variant="secondary" className="ml-auto bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                Manual
+              </Badge>
+            )}
+          </>
+        )}
+      </Button>
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
