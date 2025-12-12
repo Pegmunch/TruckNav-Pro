@@ -1,4 +1,4 @@
-import { AlertCircle, Navigation, X } from 'lucide-react';
+import { AlertCircle, Menu, Navigation, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface LeftActionStackProps {
@@ -63,7 +63,7 @@ export function LeftActionStack({
         <X className="h-6 w-6" />
       </Button>
 
-      {/* Menu button - purple square at bottom */}
+      {/* Menu button - blue hamburger at bottom */}
       <Button
         variant="ghost"
         size="lg"
@@ -71,17 +71,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-4-MENU] ✅ Menu button clicked - Opening comprehensive menu');
           onOpenMenu?.();
         }}
-        className="h-12 w-12 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-lg mt-8"
+        className="h-12 w-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg mt-8"
         data-testid="button-menu"
       >
-        <svg
-          className="h-6 w-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <rect x="6" y="6" width="12" height="12" strokeWidth={2} />
-        </svg>
+        <Menu className="h-6 w-6" />
       </Button>
     </>
   );
