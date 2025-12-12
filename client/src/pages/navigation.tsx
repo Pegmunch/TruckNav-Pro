@@ -2576,8 +2576,8 @@ function NavigationPageContent() {
               {mobileNavMode === 'plan' && (
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
-                  size="lg"
-                  className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                  size="sm"
+                  className="fixed z-[200] h-10 w-10 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                   style={{
                     bottom: 'calc(24px + var(--safe-area-bottom))',
                     right: 'calc(24px + var(--safe-area-right))'
@@ -2585,7 +2585,7 @@ function NavigationPageContent() {
                   data-testid="button-open-menu-plan"
                   aria-label="Open menu"
                 >
-                  <Menu className="w-6 h-6" />
+                  <Menu className="w-4 h-4" />
                 </Button>
               )}
 
@@ -2639,8 +2639,8 @@ function NavigationPageContent() {
                   {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) */}
                   <Button
                     onClick={() => setShowComprehensiveMenu(true)}
-                    size="lg"
-                    className="fixed z-[200] h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    size="sm"
+                    className="fixed z-[200] h-10 w-10 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                     style={{
                       bottom: 'calc(24px + var(--safe-area-bottom))',
                       right: 'calc(24px + var(--safe-area-right))'
@@ -2648,7 +2648,7 @@ function NavigationPageContent() {
                     data-testid="button-open-input-preview"
                     aria-label="Open route planning"
                   >
-                    <Menu className="w-6 h-6" />
+                    <Menu className="w-4 h-4" />
                   </Button>
                 </>
               )}
