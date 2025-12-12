@@ -41,18 +41,19 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Left action stack */}
+      {/* Left action stack - Fixed positioning to prevent map overlay */}
       {shouldShowUI && leftStack && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4">
+        <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4 pointer-events-auto" style={{ top: 'calc(50% + var(--safe-area-top, 0px))' }}>
           {leftStack}
         </div>
       )}
 
-      {/* Right navigation controls stack - matches left stack positioning for reliable PWA/Mobile rendering */}
+      {/* Right navigation controls stack - Fixed positioning to prevent map overlay */}
       {shouldShowUI && rightStack && (
         <div 
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4"
+          className="fixed right-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4 pointer-events-auto overflow-y-auto"
           data-testid="navigation-controls-container"
+          style={{ top: 'calc(50% + var(--safe-area-top, 0px))', maxHeight: 'min(70vh, calc(100vh - 180px))' }}
         >
           {rightStack}
         </div>
