@@ -108,15 +108,36 @@ export function SimplifiedRouteDrawer({
           <Label htmlFor="from-location" className="text-sm font-medium">
             From
           </Label>
-          <AddressAutocomplete
-            id="from-location"
-            value={fromLocation}
-            onChange={onFromLocationChange}
-            onCoordinatesChange={onFromCoordinatesChange}
-            placeholder="Search for address, postcode, or POI..."
-            testId="input-from-location"
-            className="flex-1"
-          />
+          <div className="flex gap-2">
+            <AddressAutocomplete
+              id="from-location"
+              value={fromLocation}
+              onChange={onFromLocationChange}
+              onCoordinatesChange={onFromCoordinatesChange}
+              placeholder="Search for address, postcode, or POI..."
+              testId="input-from-location"
+              className="flex-1"
+            />
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                if (isGPSReady && gps?.position) {
+                  // Use current GPS location
+                  const coords = { lat: gps.position.latitude, lng: gps.position.longitude };
+                  onFromCoordinatesChange?.(coords);
+                  onFromLocationChange('Current Location');
+                  onUseCurrentLocation?.();
+                }
+              }}
+              disabled={!isGPSReady}
+              className="h-10 px-3 shrink-0"
+              data-testid="button-use-gps-location"
+              title={isGPSReady ? "Use current location" : "GPS not ready"}
+            >
+              <Crosshair className="w-5 h-5" />
+            </Button>
+          </div>
 
           {/* GPS Status Indicator */}
           {gps && (
