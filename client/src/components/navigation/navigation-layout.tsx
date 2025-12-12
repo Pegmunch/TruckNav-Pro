@@ -51,9 +51,9 @@ export function NavigationLayout({
       {/* Right navigation controls stack - Fixed positioning to prevent map overlay */}
       {shouldShowUI && rightStack && (
         <div 
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4 pointer-events-auto overflow-y-auto"
+          className="fixed right-4 z-[1600] flex flex-col gap-4 pointer-events-auto overflow-y-auto"
           data-testid="navigation-controls-container"
-          style={{ top: 'calc(50% + var(--safe-area-top, 0px))', maxHeight: 'min(70vh, calc(100vh - 180px))' }}
+          style={{ top: 'calc(35% + var(--safe-area-top, 0px))', maxHeight: 'min(60vh, calc(100vh - 200px))' }}
         >
           {rightStack}
         </div>
