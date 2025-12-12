@@ -10,6 +10,7 @@ import SpeedDisplay from "@/components/map/speed-display";
 import { getIncidentIcon } from "@shared/incident-icons";
 import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
 import { useGPS } from "@/contexts/gps-context";
+import { StaticRouteOverlay } from "@/components/map/static-route-overlay";
 
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
@@ -52,6 +53,7 @@ interface MapLibreMapProps {
   hideCompass?: boolean;
   isNavigating?: boolean;
   showUserMarker?: boolean;
+  useStaticRoute?: boolean;
   restrictionViolations?: Array<{
     restriction: {
       id: string;
@@ -136,6 +138,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   hideCompass = false,
   isNavigating = false,
   showUserMarker = true,
+  useStaticRoute = false,
   restrictionViolations
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -2216,6 +2219,39 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
   };
 
+  // Toggle native route layer visibility when using static route overlay
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    const mapInstance = map.current;
+    
+    const setRouteVisibility = () => {
+      if (!mapInstance.isStyleLoaded()) return;
+      
+      const visibility = useStaticRoute ? 'none' : 'visible';
+      
+      try {
+        if (mapInstance.getLayer('route-line-background')) {
+          mapInstance.setLayoutProperty('route-line-background', 'visibility', visibility);
+        }
+        if (mapInstance.getLayer('route-line')) {
+          mapInstance.setLayoutProperty('route-line', 'visibility', visibility);
+        }
+      } catch (err) {
+        console.warn('[ROUTE-VIS] Failed to toggle route visibility:', err);
+      }
+    };
+    
+    setRouteVisibility();
+    mapInstance.on('styledata', setRouteVisibility);
+    
+    return () => {
+      mapInstance.off('styledata', setRouteVisibility);
+    };
+  }, [useStaticRoute, isLoaded]);
+
+  // Prepare route coordinates for static overlay
+  const routeCoordinatesForOverlay = currentRoute?.routePath || [];
+
   return (
     <div className={cn("relative w-full h-full overflow-hidden", className)} data-testid="maplibre-container">
       <div 
@@ -2226,6 +2262,15 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
           border: 'none',
           outline: 'none'
         }}
+      />
+      
+      {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
+      <StaticRouteOverlay
+        map={map.current}
+        routeCoordinates={routeCoordinatesForOverlay}
+        isActive={useStaticRoute && routeCoordinatesForOverlay.length > 0}
+        routeColor="#3b82f6"
+        routeWidth={8}
       />
       
       {!hideControls && (
