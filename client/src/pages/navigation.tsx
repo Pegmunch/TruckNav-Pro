@@ -3004,8 +3004,8 @@ function NavigationPageContent() {
                       className="fixed left-0 right-0 z-[50] pointer-events-none"
                       style={{
                         bottom: '0px',
-                        height: 'calc(70px + var(--safe-area-bottom, 0px))',
-                        background: 'linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 60%, rgba(255,255,255,0) 100%)'
+                        height: 'calc(90px + var(--safe-area-bottom, 0px))',
+                        background: 'linear-gradient(to top, white 0%, white 50%, rgba(255,255,255,0.9) 70%, rgba(255,255,255,0) 100%)'
                       }}
                       data-testid="route-mask-bottom"
                     />
