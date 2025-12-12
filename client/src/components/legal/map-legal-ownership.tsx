@@ -36,8 +36,8 @@ export default function MapLegalOwnership({
   return (
     <div 
       className={cn(
-        // Base positioning - fixed for viewport positioning, centered at bottom
-        "fixed bottom-0 left-1/2 -translate-x-1/2 z-[200] pointer-events-none",
+        // Base positioning - fixed at bottom right corner
+        "fixed bottom-0 right-0 z-[200] pointer-events-none",
         // Padding and spacing - thinner for PWA mode
         compact ? "px-3 py-1" : "px-4 py-3",
         // Solid white background
