@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   Compass,
   MapPin,
@@ -54,129 +53,147 @@ export function NavigationControlsStack({
     mapRef.current?.zoomOut();
   };
 
+  // Using same button styling as LeftActionStack for consistent rendering in PWA/Mobile
   return (
     <>
-      {/* 1. View Incidents - Top Position (Red Alert Button) */}
+      {/* 1. View Incidents - Red Alert Button */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={onViewIncidents}
-        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-1-INCIDENTS] ✅ View Incidents clicked');
+          onViewIncidents();
+        }}
+        className="h-12 w-12 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="nav-control-incidents"
         aria-label="View traffic incidents"
       >
-        <AlertCircle className="w-6 h-6 text-red-600" />
+        <AlertCircle className="h-6 w-6" />
       </Button>
 
-      {/* 2. Compass */}
+      {/* 2. Compass - Blue */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={handleCompassClick}
-        className={cn(
-          "h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm",
-          "border border-gray-200",
-          "transition-all duration-200"
-        )}
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-2-COMPASS] ✅ Compass clicked');
+          handleCompassClick();
+        }}
+        className="h-12 w-12 rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
         data-testid="nav-control-compass"
         aria-label="Reset compass to north"
       >
         <div
-          className="relative w-6 h-6"
+          className="relative h-6 w-6"
           style={{
             transform: `rotate(${-mapBearing}deg)`,
             transition: 'transform 0.3s ease'
           }}
         >
-          <Compass className="w-6 h-6 text-blue-600" />
+          <Compass className="h-6 w-6" />
         </div>
       </Button>
 
-      {/* 3. Center on GPS */}
+      {/* 3. Center on GPS - Green */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={handleCenterOnGPS}
-        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-3-GPS] ✅ Center on GPS clicked');
+          handleCenterOnGPS();
+        }}
+        className="h-12 w-12 rounded-xl bg-green-500 hover:bg-green-600 text-white shadow-lg"
         data-testid="nav-control-center-gps"
         aria-label="Center on current location"
       >
-        <MapPin className="w-6 h-6 text-gray-700" />
+        <MapPin className="h-6 w-6" />
       </Button>
 
-      {/* 4. Zoom In */}
+      {/* 4. Zoom In - Gray */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={handleZoomIn}
-        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-4-ZOOM-IN] ✅ Zoom In clicked');
+          handleZoomIn();
+        }}
+        className="h-12 w-12 rounded-xl bg-gray-600 hover:bg-gray-700 text-white shadow-lg"
         data-testid="nav-control-zoom-in"
         aria-label="Zoom in"
       >
-        <Plus className="w-6 h-6 text-gray-700" />
+        <Plus className="h-6 w-6" />
       </Button>
 
-      {/* 5. Zoom Out */}
+      {/* 5. Zoom Out - Gray */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={handleZoomOut}
-        className="h-12 w-12 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-5-ZOOM-OUT] ✅ Zoom Out clicked');
+          handleZoomOut();
+        }}
+        className="h-12 w-12 rounded-xl bg-gray-600 hover:bg-gray-700 text-white shadow-lg"
         data-testid="nav-control-zoom-out"
         aria-label="Zoom out"
       >
-        <Minus className="w-6 h-6 text-gray-700" />
+        <Minus className="h-6 w-6" />
       </Button>
 
-      {/* 6. 3D Mode Toggle */}
+      {/* 6. 3D Mode Toggle - Cyan when active, Gray when inactive */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={onToggle3D}
-        className={cn(
-          "h-12 w-12 shadow-lg backdrop-blur-sm border",
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-6-3D] ✅ 3D Mode clicked - Current:', map3DMode);
+          onToggle3D();
+        }}
+        className={`h-12 w-12 rounded-xl shadow-lg ${
           map3DMode 
-            ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-400"
-            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
-        )}
+            ? "bg-cyan-500 hover:bg-cyan-600" 
+            : "bg-gray-500 hover:bg-gray-600"
+        } text-white`}
         data-testid="nav-control-3d"
         aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
       >
-        <Layers3 className="w-6 h-6" />
+        <Layers3 className="h-6 w-6" />
       </Button>
 
-      {/* 7. Traffic Layer Toggle */}
+      {/* 7. Traffic Layer Toggle - Orange when active, Gray when inactive */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={onToggleTraffic}
-        className={cn(
-          "h-12 w-12 shadow-lg backdrop-blur-sm border",
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-7-TRAFFIC] ✅ Traffic clicked - Current:', showTrafficLayer);
+          onToggleTraffic();
+        }}
+        className={`h-12 w-12 rounded-xl shadow-lg ${
           showTrafficLayer
-            ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-400"
-            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
-        )}
+            ? "bg-orange-500 hover:bg-orange-600"
+            : "bg-gray-500 hover:bg-gray-600"
+        } text-white`}
         data-testid="nav-control-traffic"
         aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
       >
-        <Layers className="w-6 h-6" />
+        <Layers className="h-6 w-6" />
       </Button>
 
-      {/* 8. Satellite View Toggle */}
+      {/* 8. Satellite View Toggle - Teal when active, Gray when inactive */}
       <Button
-        size="icon"
-        variant="secondary"
-        onClick={onToggleMapView}
-        className={cn(
-          "h-12 w-12 shadow-lg backdrop-blur-sm border",
+        variant="ghost"
+        size="lg"
+        onClick={() => {
+          console.log('[RIGHT-BTN-8-SATELLITE] ✅ Satellite clicked - Current:', mapViewMode);
+          onToggleMapView();
+        }}
+        className={`h-12 w-12 rounded-xl shadow-lg ${
           mapViewMode === 'satellite'
-            ? "bg-green-500 hover:bg-green-600 text-white border-green-400"
-            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
-        )}
+            ? "bg-teal-500 hover:bg-teal-600"
+            : "bg-gray-500 hover:bg-gray-600"
+        } text-white`}
         data-testid="nav-control-satellite"
         aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
       >
-        <Map className="w-6 h-6" />
+        <Map className="h-6 w-6" />
       </Button>
     </>
   );
