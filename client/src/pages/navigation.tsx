@@ -2501,8 +2501,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isStandalone || mobileNavMode === 'preview'}
-                    hideCompass={isStandalone || mobileNavMode === 'preview'}
+                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2917,8 +2917,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isStandalone || mobileNavMode === 'preview'}
-                    hideCompass={isStandalone || mobileNavMode === 'preview'}
+                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
