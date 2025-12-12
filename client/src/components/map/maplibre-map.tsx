@@ -2229,12 +2229,23 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       
       const visibility = useStaticRoute ? 'none' : 'visible';
       
+      // All possible route layer IDs to hide/show
+      const routeLayerIds = [
+        'route-line',
+        'route-line-background',
+        'route-line-casing',
+        'route-line-alt',
+        'route-line-alt-casing',
+        'route-line-alt-background',
+        'route-overlay',
+        'route-traffic-overlay'
+      ];
+      
       try {
-        if (mapInstance.getLayer('route-line-background')) {
-          mapInstance.setLayoutProperty('route-line-background', 'visibility', visibility);
-        }
-        if (mapInstance.getLayer('route-line')) {
-          mapInstance.setLayoutProperty('route-line', 'visibility', visibility);
+        for (const layerId of routeLayerIds) {
+          if (mapInstance.getLayer(layerId)) {
+            mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
+          }
         }
       } catch (err) {
         console.warn('[ROUTE-VIS] Failed to toggle route visibility:', err);
@@ -2243,9 +2254,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
     
     setRouteVisibility();
     mapInstance.on('styledata', setRouteVisibility);
+    mapInstance.on('load', setRouteVisibility);
     
     return () => {
       mapInstance.off('styledata', setRouteVisibility);
+      mapInstance.off('load', setRouteVisibility);
     };
   }, [useStaticRoute, isLoaded]);
 
