@@ -1,12 +1,13 @@
-import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin } from 'lucide-react';
+import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGPS } from '@/contexts/gps-context';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Facility } from '@shared/schema';
 
@@ -44,6 +45,32 @@ export function SimplifiedRouteDrawer({
   const gps = useGPS();
   const [selectedPOICategory, setSelectedPOICategory] = useState<string>('');
   const [poiSearchQuery, setPOISearchQuery] = useState('');
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [recentLocations, setRecentLocations] = useState<Array<{ name: string; lat: number; lng: number; timestamp: number }>>([]);
+
+  // Load recent locations from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('trucknav_recent_locations');
+      if (stored) {
+        setRecentLocations(JSON.parse(stored).slice(0, 5)); // Keep last 5
+      }
+    } catch (error) {
+      console.error('Failed to load recent locations:', error);
+    }
+  }, []);
+
+  // Save a location to recent locations
+  const saveRecentLocation = (name: string, lat: number, lng: number) => {
+    const newLocation = { name, lat, lng, timestamp: Date.now() };
+    const updated = [newLocation, ...recentLocations.filter(l => !(l.lat === lat && l.lng === lng))].slice(0, 5);
+    setRecentLocations(updated);
+    try {
+      localStorage.setItem('trucknav_recent_locations', JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to save recent location:', error);
+    }
+  };
 
   const hasGPSError = gps?.error !== null || gps?.errorType !== null;
   const isGPSReady = gps?.position !== null && !hasGPSError;
@@ -118,25 +145,75 @@ export function SimplifiedRouteDrawer({
               testId="input-from-location"
               className="flex-1"
             />
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => {
-                if (isGPSReady && gps?.position) {
-                  // Use current GPS location
-                  const coords = { lat: gps.position.latitude, lng: gps.position.longitude };
-                  onFromCoordinatesChange?.(coords);
-                  onFromLocationChange('Current Location');
-                  onUseCurrentLocation?.();
-                }
-              }}
-              disabled={!isGPSReady}
-              className="h-10 px-3 shrink-0"
-              data-testid="button-use-gps-location"
-              title={isGPSReady ? "Use current location" : "GPS not ready"}
-            >
-              <Crosshair className="w-5 h-5" />
-            </Button>
+            <Popover open={isLocationDropdownOpen} onOpenChange={setIsLocationDropdownOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  disabled={!isGPSReady}
+                  className="h-10 px-3 shrink-0"
+                  data-testid="button-location-dropdown"
+                  title={isGPSReady ? "Select location" : "GPS not ready"}
+                >
+                  <Crosshair className="w-5 h-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start" data-testid="location-dropdown-menu">
+                <div className="space-y-1">
+                  {/* Current GPS Location - Always at top */}
+                  {isGPSReady && gps?.position && (
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start h-auto py-2"
+                      onClick={() => {
+                        const coords = { lat: gps.position!.latitude, lng: gps.position!.longitude };
+                        const locationName = 'Current Location';
+                        onFromCoordinatesChange?.(coords);
+                        onFromLocationChange(locationName);
+                        saveRecentLocation(locationName, coords.lat, coords.lng);
+                        onUseCurrentLocation?.();
+                        setIsLocationDropdownOpen(false);
+                      }}
+                      data-testid="location-option-current"
+                    >
+                      <Crosshair className="w-4 h-4 mr-2 shrink-0 text-green-600" />
+                      <span className="text-sm font-medium">Current Location</span>
+                    </Button>
+                  )}
+
+                  {/* Divider if there are recent locations */}
+                  {recentLocations.length > 0 && <div className="border-t my-1" />}
+
+                  {/* Recent Locations */}
+                  {recentLocations.map((location, idx) => (
+                    <Button
+                      key={idx}
+                      variant="ghost"
+                      className="w-full justify-start h-auto py-2"
+                      onClick={() => {
+                        const coords = { lat: location.lat, lng: location.lng };
+                        onFromCoordinatesChange?.(coords);
+                        onFromLocationChange(location.name);
+                        saveRecentLocation(location.name, location.lat, location.lng);
+                        onUseCurrentLocation?.();
+                        setIsLocationDropdownOpen(false);
+                      }}
+                      data-testid={`location-option-recent-${idx}`}
+                    >
+                      <Clock className="w-4 h-4 mr-2 shrink-0 text-gray-400" />
+                      <span className="text-sm truncate">{location.name}</span>
+                    </Button>
+                  ))}
+
+                  {/* Empty state */}
+                  {recentLocations.length === 0 && (
+                    <div className="p-2 text-xs text-muted-foreground text-center">
+                      Locations will appear here as you use them
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* GPS Status Indicator */}
