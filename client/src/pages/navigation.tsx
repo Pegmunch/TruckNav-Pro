@@ -2572,15 +2572,15 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* Blue Hamburger FAB - PLAN MODE - Opens menu (Bottom Right) */}
+              {/* Blue Hamburger FAB - PLAN MODE - Opens menu (Bottom Right, aligned with nav controls) */}
               {mobileNavMode === 'plan' && (
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
                   size="sm"
-                  className="fixed z-[200] h-10 w-10 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                  className="fixed z-[200] h-9 w-9 rounded-xl shadow-lg bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                   style={{
-                    bottom: 'calc(24px + var(--safe-area-bottom))',
-                    right: 'calc(24px + var(--safe-area-right))'
+                    bottom: 'calc(16px + var(--safe-area-bottom))',
+                    right: '16px'
                   }}
                   data-testid="button-open-menu-plan"
                   aria-label="Open menu"
@@ -2636,14 +2636,14 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* Blue Hamburger FAB - Opens route planning input (Bottom Right) */}
+                  {/* Blue Hamburger FAB - Opens route planning input (Bottom Right, aligned with nav controls) */}
                   <Button
                     onClick={() => setShowComprehensiveMenu(true)}
                     size="sm"
-                    className="fixed z-[200] h-10 w-10 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                    className="fixed z-[200] h-9 w-9 rounded-xl shadow-lg bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
                     style={{
-                      bottom: 'calc(24px + var(--safe-area-bottom))',
-                      right: 'calc(24px + var(--safe-area-right))'
+                      bottom: 'calc(16px + var(--safe-area-bottom))',
+                      right: '16px'
                     }}
                     data-testid="button-open-input-preview"
                     aria-label="Open route planning"
