@@ -1671,6 +1671,12 @@ select:focus-visible,
   opacity: 1 !important;
 }
 
+/* Lighten MapLibre map tiles to reduce dark road appearance (matches Leaflet styling) */
+.maplibregl-canvas {
+  filter: brightness(1.15) contrast(0.92) saturate(0.95);
+  -webkit-filter: brightness(1.15) contrast(0.92) saturate(0.95);
+}
+
 /* Amazon Fire TV and 10-foot UI Optimizations */
 @media (orientation: landscape) and (min-width: 1280px) and (min-height: 720px) {
   /* Fire TV specific styles for TruckNav Pro */
