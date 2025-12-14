@@ -1835,44 +1835,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         </svg>
       `;
       
-      // SCREEN-FIXED ARROWHEAD: During navigation, position above speedometer (screen center top)
-      // The map rotates around this fixed point, keeping route line vertical
-      if (isNavigating && mapContainer.current) {
-        if (!screenArrowheadRef.current) {
-          const arrowheadEl = document.createElement('div');
-          arrowheadEl.className = 'screen-fixed-arrowhead';
-          arrowheadEl.innerHTML = `
-            <svg width="40" height="50" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));">
-              <polygon points="20,2 38,45 2,45" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-              <line x1="20" y1="8" x2="20" y2="30" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
-              <defs>
-                <linearGradient id="arrowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:0.8" />
-                  <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
-                </linearGradient>
-              </defs>
-              <polygon points="20,2 38,45 2,45" fill="url(#arrowGradient)" opacity="0.9"/>
-            </svg>
-            <style>
-              @keyframes arrow-pulse {
-                0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.6)); }
-                50% { transform: scale(1.08); filter: drop-shadow(0 6px 12px rgba(59, 130, 246, 0.8)); }
-              }
-              .screen-fixed-arrowhead svg { animation: arrow-pulse 2.5s ease-in-out infinite; }
-            </style>
-          `;
-          arrowheadEl.style.cssText = `
-            position: fixed;
-            top: calc(50% - 100px + env(safe-area-inset-top, 0px));
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 2000;
-            pointer-events: none;
-          `;
-          mapContainer.current.appendChild(arrowheadEl);
-          screenArrowheadRef.current = arrowheadEl;
-        }
-      } else if (screenArrowheadRef.current) {
+      // SCREEN-FIXED ARROWHEAD: Removed per user request
+      // Clean up any existing arrowhead
+      if (screenArrowheadRef.current) {
         screenArrowheadRef.current.remove();
         screenArrowheadRef.current = null;
       }

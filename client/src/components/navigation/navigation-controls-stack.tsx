@@ -64,7 +64,7 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-1-INCIDENTS] ✅ View Incidents clicked');
           onViewIncidents();
         }}
-        className="h-9 w-9 rounded-xl bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        className="h-9 w-9 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
         data-testid="nav-control-incidents"
         aria-label="View traffic incidents"
       >
@@ -79,7 +79,7 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-2-COMPASS] ✅ Compass clicked');
           handleCompassClick();
         }}
-        className="h-9 w-9 rounded-xl bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        className="h-9 w-9 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
         data-testid="nav-control-compass"
         aria-label="Reset compass to north"
       >
@@ -102,7 +102,7 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-3-GPS] ✅ Center on GPS clicked');
           handleCenterOnGPS();
         }}
-        className="h-9 w-9 rounded-xl bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        className="h-9 w-9 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
         data-testid="nav-control-center-gps"
         aria-label="Center on current location"
       >
@@ -117,7 +117,7 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-4-ZOOM-IN] ✅ Zoom In clicked');
           handleZoomIn();
         }}
-        className="h-9 w-9 rounded-xl bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        className="h-9 w-9 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
         data-testid="nav-control-zoom-in"
         aria-label="Zoom in"
       >
@@ -132,7 +132,7 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-5-ZOOM-OUT] ✅ Zoom Out clicked');
           handleZoomOut();
         }}
-        className="h-9 w-9 rounded-xl bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm border border-gray-200"
+        className="h-9 w-9 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
         data-testid="nav-control-zoom-out"
         aria-label="Zoom out"
       >
@@ -150,7 +150,7 @@ export function NavigationControlsStack({
         className={`h-9 w-9 rounded-xl shadow-lg backdrop-blur-sm border ${
           map3DMode 
             ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-400" 
-            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
+            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
         }`}
         data-testid="nav-control-3d"
         aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
@@ -169,7 +169,7 @@ export function NavigationControlsStack({
         className={`h-9 w-9 rounded-xl shadow-lg backdrop-blur-sm border ${
           showTrafficLayer
             ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-400"
-            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
+            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
         }`}
         data-testid="nav-control-traffic"
         aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
@@ -188,7 +188,7 @@ export function NavigationControlsStack({
         className={`h-9 w-9 rounded-xl shadow-lg backdrop-blur-sm border ${
           mapViewMode === 'satellite'
             ? "bg-green-500 hover:bg-green-600 text-white border-green-400"
-            : "bg-white/90 hover:bg-white text-gray-700 border-gray-200"
+            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
         }`}
         data-testid="nav-control-satellite"
         aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
