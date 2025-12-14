@@ -299,23 +299,40 @@ export default function ManualSearchPanel({
           const result = await reverseGeocode(latitude, longitude, 5000);
 
           if (result.success) {
-            // Success: Set the reverse geocoded address AND coordinates
-            onFromLocationChange(result.address);
-            onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-            // Toast removed per user request - transparent pop-up issue in PWA mode
+            // Populate the search input field with the reverse geocoded address
+            // This lets the user see what GPS found and click Search to confirm
+            setCurrentLocationSearch(result.address);
+            // Store GPS coordinates for later use
+            gpsData?.setManualLocation({
+              latitude: latitude,
+              longitude: longitude,
+              address: result.address,
+              timestamp: Date.now()
+            });
+            console.log('[GPS-BUTTON] Address populated in search field:', result.address);
           } else {
-            // Error result from reverse geocoding
+            // Error result from reverse geocoding - fallback to coordinates string
             const coordsString = formatCoordinatesAsAddress(latitude, longitude);
-            onFromLocationChange(coordsString);
-            onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-            // Toast removed per user request - transparent pop-up issue in PWA mode
+            setCurrentLocationSearch(coordsString);
+            gpsData?.setManualLocation({
+              latitude: latitude,
+              longitude: longitude,
+              address: coordsString,
+              timestamp: Date.now()
+            });
+            console.log('[GPS-BUTTON] Coordinates populated in search field:', coordsString);
           }
         } catch (error) {
           // Unexpected error: Fallback to coordinates
           const coordsString = formatCoordinatesAsAddress(latitude, longitude);
-          onFromLocationChange(coordsString);
-          onFromCoordinatesChange?.({ lat: latitude, lng: longitude });
-          // Toast removed per user request - transparent pop-up issue in PWA mode
+          setCurrentLocationSearch(coordsString);
+          gpsData?.setManualLocation({
+            latitude: latitude,
+            longitude: longitude,
+            address: coordsString,
+            timestamp: Date.now()
+          });
+          console.log('[GPS-BUTTON] Error during reverse geocoding, using coordinates:', coordsString);
         } finally {
           setIsReverseGeocoding(false);
         }
@@ -352,7 +369,7 @@ export default function ManualSearchPanel({
         maximumAge: 0 // Don't use cached positions - always get fresh
       }
     );
-  }, [onFromLocationChange, onFromCoordinatesChange, toast]);
+  }, [gpsData]);
 
   return (
     <Card className={cn("bg-card", className)}>
