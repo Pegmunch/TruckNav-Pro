@@ -5101,7 +5101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Fleet Notifications API endpoints
   app.get("/api/fleet/notifications", async (req: Request, res: Response) => {
     try {
-      const notifications = await storage.getFleetNotifications?.('active') || [];
+      const notifications = await storage.getFleetNotifications('active');
       res.json(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -5111,7 +5111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/fleet/notifications/:id/dismiss", async (req: Request, res: Response) => {
     try {
-      const success = await storage.dismissFleetNotification?.(req.params.id);
+      const success = await storage.dismissFleetNotification(req.params.id);
       if (!success) {
         return res.status(404).json({ message: "Notification not found" });
       }
@@ -5124,7 +5124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/fleet/notifications/:id/resolve", async (req: Request, res: Response) => {
     try {
-      const success = await storage.resolveFleetNotification?.(req.params.id);
+      const success = await storage.resolveFleetNotification(req.params.id);
       if (!success) {
         return res.status(404).json({ message: "Notification not found" });
       }
