@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 
 interface ManualSearchPanelProps {
   fromLocation: string;
@@ -268,108 +269,6 @@ export default function ManualSearchPanel({
     // });
   }, [gpsData, toast]);
 
-  // Handle use current location - directly request GPS position each time
-  const handleUseCurrentLocation = useCallback(async () => {
-    // Check if geolocation is supported
-    if (!navigator.geolocation) {
-      // toast({
-      //   title: "GPS not supported",
-      //   description: "Your browser doesn't support GPS location",
-      //   variant: "destructive"
-      // });
-      return;
-    }
-
-    setIsReverseGeocoding(true);
-    
-    // Request fresh GPS position directly - don't rely on cached data
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy } = position.coords;
-        
-        console.log('[GPS-BUTTON] Got fresh GPS position:', {
-          lat: latitude,
-          lng: longitude,
-          accuracy: accuracy,
-          timestamp: new Date(position.timestamp).toISOString()
-        });
-        
-        try {
-          // Attempt reverse geocoding with 5 second timeout
-          const result = await reverseGeocode(latitude, longitude, 5000);
-
-          if (result.success) {
-            // Populate the search input field with the reverse geocoded address
-            // This lets the user see what GPS found and click Search to confirm
-            setCurrentLocationSearch(result.address);
-            // Store GPS coordinates for later use
-            gpsData?.setManualLocation({
-              latitude: latitude,
-              longitude: longitude,
-              address: result.address,
-              timestamp: Date.now()
-            });
-            console.log('[GPS-BUTTON] Address populated in search field:', result.address);
-          } else {
-            // Error result from reverse geocoding - fallback to coordinates string
-            const coordsString = formatCoordinatesAsAddress(latitude, longitude);
-            setCurrentLocationSearch(coordsString);
-            gpsData?.setManualLocation({
-              latitude: latitude,
-              longitude: longitude,
-              address: coordsString,
-              timestamp: Date.now()
-            });
-            console.log('[GPS-BUTTON] Coordinates populated in search field:', coordsString);
-          }
-        } catch (error) {
-          // Unexpected error: Fallback to coordinates
-          const coordsString = formatCoordinatesAsAddress(latitude, longitude);
-          setCurrentLocationSearch(coordsString);
-          gpsData?.setManualLocation({
-            latitude: latitude,
-            longitude: longitude,
-            address: coordsString,
-            timestamp: Date.now()
-          });
-          console.log('[GPS-BUTTON] Error during reverse geocoding, using coordinates:', coordsString);
-        } finally {
-          setIsReverseGeocoding(false);
-        }
-      },
-      (error) => {
-        // Handle GPS errors
-        setIsReverseGeocoding(false);
-        
-        let errorMessage = "Unable to get your location";
-        let errorDescription = "Please check your GPS settings";
-        
-        switch(error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = "Location permission denied";
-            errorDescription = "Please allow location access for this website";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = "Location unavailable";
-            errorDescription = "GPS signal not available. Try moving to an open area";
-            break;
-          case error.TIMEOUT:
-            errorMessage = "Location request timeout";
-            errorDescription = "GPS is taking too long. Please try again";
-            break;
-        }
-        
-        // Toast removed per user request - transparent pop-up issue in PWA mode
-        
-        console.error('[GPS-BUTTON] Error getting position:', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000, // 10 seconds timeout
-        maximumAge: 0 // Don't use cached positions - always get fresh
-      }
-    );
-  }, [gpsData]);
 
   return (
     <Card className={cn("bg-card", className)}>
@@ -492,43 +391,27 @@ export default function ManualSearchPanel({
           </Alert>
         )}
         
-        {/* Current Location Search */}
+        {/* Current Location Search with AddressAutocomplete - includes GPS dropdown */}
         <div className="space-y-2">
-          <Label htmlFor="current-location-search" className="text-xs font-medium text-muted-foreground">
-            Current Location Search
+          <Label htmlFor="from-location-autocomplete" className="text-xs font-medium text-muted-foreground">
+            From (Current Location)
           </Label>
-          <div className="flex space-x-2">
-            <div className="flex-1 relative">
-              <Input
-                id="current-location-search"
-                placeholder="Enter your current location..."
-                value={currentLocationSearch}
-                onChange={(e) => setCurrentLocationSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    // If route exists and we can start navigation, do that instead of planning
-                    if (currentRoute && selectedProfile && fromLocation && toLocation && onStartNavigation) {
-                      onStartNavigation();
-                    } else {
-                      handleCurrentLocationSearch();
-                    }
-                  }
-                }}
-                className="automotive-input scalable-control-button"
-                data-testid="input-current-location-search"
-              />
-            </div>
-            <Button
-              onClick={handleCurrentLocationSearch}
-              disabled={!currentLocationSearch.trim()}
-              size="sm"
-              className="automotive-button shrink-0"
-              data-testid="button-search-current-location"
-            >
-              <Search className="w-4 h-4" />
-            </Button>
-          </div>
+          <AddressAutocomplete
+            id="from-location-autocomplete"
+            value={currentLocationSearch}
+            onChange={(value) => {
+              setCurrentLocationSearch(value);
+            }}
+            onCoordinatesChange={(coords) => {
+              if (coords) {
+                onFromCoordinatesChange?.(coords);
+              }
+            }}
+            coordinates={{lat: 0, lng: 0}}
+            placeholder="Enter location or click GPS button"
+            testId="input-from-location"
+            className="w-full"
+          />
           
           {/* Route calculation available after locations are set */}
           {isCalculating && (
@@ -539,27 +422,17 @@ export default function ManualSearchPanel({
               </div>
             </div>
           )}
-
-          {/* Use Current Location Button - Direct GPS Request */}
+          
+          {/* Confirm button for manual search */}
           <Button
-            onClick={handleUseCurrentLocation}
-            variant="outline"
+            onClick={handleCurrentLocationSearch}
+            disabled={!currentLocationSearch.trim()}
             size="sm"
             className="w-full automotive-button"
-            disabled={isReverseGeocoding}
-            data-testid="button-use-current-location"
+            data-testid="button-search-current-location"
           >
-            {isReverseGeocoding ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Getting GPS location...
-              </>
-            ) : (
-              <>
-                <Crosshair className="w-4 h-4 mr-2" />
-                Use GPS Location
-              </>
-            )}
+            <Search className="w-4 h-4 mr-2" />
+            Confirm Location
           </Button>
         </div>
 
