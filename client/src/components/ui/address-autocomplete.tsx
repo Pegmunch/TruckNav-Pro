@@ -566,7 +566,7 @@ export function AddressAutocomplete({
         sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
         collisionPadding={20}
-        avoidCollisions={true}
+        avoidCollisions={false}
         sticky="always"
       >
         <Command>
