@@ -565,11 +565,12 @@ export function AddressAutocomplete({
         className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999] shadow-lg border-2 bg-background max-h-[400px] overflow-y-auto" 
         align="start"
         side="bottom"
-        sideOffset={4}
+        sideOffset={8}
         onOpenAutoFocus={(e) => e.preventDefault()}
-        collisionPadding={20}
+        collisionPadding={0}
         avoidCollisions={false}
         sticky="always"
+        forceMount
       >
         <Command>
           <CommandList>
