@@ -34,6 +34,17 @@ import {
   validatePostcodeGeocoding
 } from "./middleware/validation";
 import * as turf from "@turf/turf";
+// Import to ensure Express.User augmentation is available
+import "./replitAuth";
+
+/**
+ * Safely extracts the authenticated user ID from the request.
+ * Returns the user ID (claims.sub) or undefined if not authenticated.
+ * Uses the augmented Express.User type from replitAuth.ts
+ */
+function getAuthUserId(req: Request): string | undefined {
+  return req.user?.claims?.sub;
+}
 
 // Server-side GraphHopper API integration with proper parameters
 async function callGraphHopperAPI(
@@ -4828,7 +4839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Driver Profile Management
   app.get("/api/social/profile/:userId", requireAuth, async (req: Request, res: Response) => {
     try {
-      const currentUserId = req.user?.id;
+      const currentUserId = getAuthUserId(req);
       const profile = await storage.getUserProfile(req.params.userId, currentUserId);
       if (!profile) {
         return res.status(403).json({ message: "This profile is private" });
@@ -4842,7 +4853,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/social/profile/:userId", requireAuth, validateRequest, async (req: Request, res: Response) => {
     try {
-      if (req.params.userId !== req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (req.params.userId !== userId) {
         return res.status(403).json({ message: "Cannot update another user's profile" });
       }
       
@@ -4870,7 +4882,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const query = req.query.q as string || '';
       const limit = parseInt(req.query.limit as string) || 20;
-      const currentUserId = req.user?.id;
+      const currentUserId = getAuthUserId(req);
       const drivers = await storage.searchDrivers(query, currentUserId, limit);
       res.json(drivers);
     } catch (error) {
@@ -4883,13 +4895,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/social/connections/request", requireAuth, connectionRequestRateLimit, validateRequest, async (req: Request, res: Response) => {
     try {
       const { receiverId } = req.body;
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      if (req.user.id === receiverId) {
+      if (userId === receiverId) {
         return res.status(400).json({ message: "Cannot send connection request to yourself" });
       }
-      const connection = await storage.sendConnectionRequest(req.user.id, receiverId);
+      const connection = await storage.sendConnectionRequest(userId, receiverId);
       res.status(201).json(connection);
     } catch (error: any) {
       console.error('Error sending connection request:', error);
@@ -4931,10 +4944,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/social/connections", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const connections = await storage.getConnections(req.user.id);
+      const connections = await storage.getConnections(userId);
       res.json(connections);
     } catch (error) {
       console.error('Error getting connections:', error);
@@ -4944,10 +4958,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/social/connections/pending", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const requests = await storage.getPendingRequests(req.user.id);
+      const requests = await storage.getPendingRequests(userId);
       res.json(requests);
     } catch (error) {
       console.error('Error getting pending requests:', error);
@@ -4958,11 +4973,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Shared Routes
   app.post("/api/social/routes/share", requireAuth, validateRequest, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
       const { routeId, title, description, isPublic, shareWithConnections, tags } = req.body;
-      const sharedRoute = await storage.shareRoute(req.user.id, routeId, {
+      const sharedRoute = await storage.shareRoute(userId, routeId, {
         title,
         description,
         isPublic,
@@ -4978,10 +4994,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/social/routes/shared", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const routes = await storage.getSharedRoutes(req.user.id);
+      const routes = await storage.getSharedRoutes(userId);
       res.json(routes);
     } catch (error) {
       console.error('Error getting shared routes:', error);
@@ -5002,10 +5019,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/social/routes/connections", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const routes = await storage.getConnectionRoutes(req.user.id);
+      const routes = await storage.getConnectionRoutes(userId);
       res.json(routes);
     } catch (error) {
       console.error('Error getting connection routes:', error);
@@ -5015,10 +5033,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/social/routes/:id/save", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const savedRoute = await storage.saveSharedRoute(req.user.id, req.params.id);
+      const savedRoute = await storage.saveSharedRoute(userId, req.params.id);
       res.status(201).json(savedRoute);
     } catch (error) {
       console.error('Error saving route:', error);
@@ -5028,10 +5047,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/social/routes/:id/unsave", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      await storage.unsaveSharedRoute(req.user.id, req.params.id);
+      await storage.unsaveSharedRoute(userId, req.params.id);
       res.json({ message: "Route unsaved successfully" });
     } catch (error) {
       console.error('Error unsaving route:', error);
@@ -5041,10 +5061,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/social/routes/saved", requireAuth, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const routes = await storage.getSavedRoutes(req.user.id);
+      const routes = await storage.getSavedRoutes(userId);
       res.json(routes);
     } catch (error) {
       console.error('Error getting saved routes:', error);
@@ -5054,11 +5075,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/social/routes/:id/comment", requireAuth, validateRequest, async (req: Request, res: Response) => {
     try {
-      if (!req.user?.id) {
+      const userId = getAuthUserId(req);
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
       const { comment, rating } = req.body;
-      const routeComment = await storage.commentOnRoute(req.params.id, req.user.id, comment, rating);
+      const routeComment = await storage.commentOnRoute(req.params.id, userId, comment, rating);
       res.status(201).json(routeComment);
     } catch (error) {
       console.error('Error commenting on route:', error);
@@ -5142,7 +5164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         objectPath,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
-        uploadedBy: req.user?.id,
+        uploadedBy: getAuthUserId(req),
         description: req.body.description,
       });
 
@@ -5372,7 +5394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/enterprise/gps/tracking", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5395,7 +5417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/gps/vehicle/:vehicleId/history", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5422,7 +5444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/gps/vehicle/:vehicleId/latest", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5443,7 +5465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/gps/fleet", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5462,7 +5484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/enterprise/geofences", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5486,7 +5508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/geofences", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5501,7 +5523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5525,7 +5547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5550,7 +5572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5575,7 +5597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/enterprise/geofences/:id/events", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5599,7 +5621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/geofences/:id/events", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5622,7 +5644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/enterprise/driver-behavior", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5645,7 +5667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/driver-behavior/operator/:operatorId", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5666,7 +5688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/driver-behavior/operator/:operatorId/score", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5682,7 +5704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/driver-behavior/fleet", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5701,7 +5723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/enterprise/hos", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5724,7 +5746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/hos/operator/:operatorId", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5745,7 +5767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/hos/operator/:operatorId/latest", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5766,7 +5788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/hos/violations", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5781,7 +5803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/enterprise/hos/:id", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5805,7 +5827,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/enterprise/billing/customers", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5829,7 +5851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/billing/customers", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5844,7 +5866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5868,7 +5890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5893,7 +5915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -5918,7 +5940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/enterprise/billing/analytics", async (req: Request, res: Response) => {
     try {
-      const userId = req.user?.id;
+      const userId = getAuthUserId(req);
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
