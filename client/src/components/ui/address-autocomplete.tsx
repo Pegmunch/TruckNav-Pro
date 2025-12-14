@@ -336,6 +336,7 @@ export function AddressAutocomplete({
             setSearchTerm(address);
             onChange(address);
             onCoordinatesChange?.({ lat: latitude, lng: longitude });
+            setOpen(true);
             console.log('[GPS-LOCATION] Location set from reverse geocode:', address);
             return true;
           }
@@ -345,6 +346,7 @@ export function AddressAutocomplete({
         setSearchTerm(coordAddress);
         onChange(coordAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
+        setOpen(true);
         console.log('[GPS-LOCATION] Location set from coordinates:', coordAddress);
         return true;
       } catch (error) {
@@ -353,6 +355,7 @@ export function AddressAutocomplete({
         setSearchTerm(coordAddress);
         onChange(coordAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
+        setOpen(true);
         console.log('[GPS-LOCATION] Location set from coordinates (error fallback):', coordAddress);
         return true;
       }
@@ -374,6 +377,7 @@ export function AddressAutocomplete({
           lat: gps.manualLocation.latitude, 
           lng: gps.manualLocation.longitude 
         });
+        setOpen(true);
         console.log('[GPS-LOCATION] Using manual location');
         return;
       }
