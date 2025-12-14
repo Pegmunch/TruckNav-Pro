@@ -2665,13 +2665,19 @@ function NavigationPageContent() {
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
                       
-                      {/* Navigation Guideline Overlay - Fixed vertical route line during navigation */}
+                      {/* Navigation Guideline Overlay - Truck-specific visual route guidance */}
                       {mobileNavMode === 'navigate' && (
                         <NavigationGuidelineOverlay
                           isNavigating={isNavigating}
                           routeDistance={currentRoute?.distance || 0}
                           heading={gpsData?.position?.heading || 0}
                           routeCoordinates={currentRoute?.routePath?.map(p => [p.lng, p.lat] as [number, number]) || []}
+                          nextTurn={nextTurn}
+                          laneGuidance={currentRoute?.laneGuidance?.[0] ? {
+                            lanes: currentRoute.laneGuidance[0].laneOptions?.map(l => l.direction) || [],
+                            recommended: currentRoute.laneGuidance[0].laneOptions?.map((l, i) => l.recommended ? i : -1).filter(i => i >= 0) || [],
+                            maneuverType: currentRoute.laneGuidance[0].maneuverType
+                          } : null}
                         />
                       )}
                       
