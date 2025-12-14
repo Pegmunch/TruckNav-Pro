@@ -683,10 +683,11 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                           align="start"
                           side="bottom"
                           sideOffset={4}
+                          avoidCollisions={false}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
-                            <CommandList className="max-h-[280px]">
+                            <CommandList className="max-h-[200px]">
                               {fromLoading && (
                                 <div className="flex items-center justify-center py-6">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -762,10 +763,11 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                           align="start"
                           side="bottom"
                           sideOffset={4}
+                          avoidCollisions={false}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
-                            <CommandList className="max-h-[280px]">
+                            <CommandList className="max-h-[200px]">
                               {toLoading && (
                                 <div className="flex items-center justify-center py-6">
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
