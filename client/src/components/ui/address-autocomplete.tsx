@@ -501,28 +501,26 @@ export function AddressAutocomplete({
       <Button
         onClick={handleUseGPSLocation}
         disabled={isGettingLocation}
-        variant="outline"
-        className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200 group"
+        variant="default"
+        className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
         data-testid="button-use-gps-location"
       >
         {isGettingLocation ? (
           <>
-            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            Getting Location...
+            <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+            <span>Getting Location...</span>
           </>
         ) : (
           <>
-            <Crosshair className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-              Use My Current Location
-            </span>
+            <Crosshair className="h-6 w-6 mr-2" />
+            <span className="flex-1">Use My Current Location</span>
             {gps?.status === 'ready' && gps?.position && (
-              <Badge variant="secondary" className="ml-auto bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+              <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
                 GPS Ready
               </Badge>
             )}
             {gps?.manualLocation && !gps?.position && (
-              <Badge variant="secondary" className="ml-auto bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+              <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
                 Manual
               </Badge>
             )}
