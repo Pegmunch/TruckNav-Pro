@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- App Identity -->
+    <key>CFBundleDisplayName</key>
+    <string>TruckNav Pro</string>
+    <key>CFBundleName</key>
+    <string>TruckNav Pro</string>
+    <key>CFBundleIdentifier</key>
+    <string>uk.co.bespokemarketingai.trucknavpro</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    
+    <!-- Location Permissions (Required for GPS Navigation) -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>TruckNav Pro needs your location to provide turn-by-turn navigation and show your position on the map.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>TruckNav Pro needs continuous location access to provide navigation guidance even when the app is in the background.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>TruckNav Pro needs background location access to continue navigation while using other apps.</string>
+    
+    <!-- Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>fetch</string>
+        <string>remote-notification</string>
+        <string>audio</string>
+    </array>
+    
+    <!-- Push Notifications -->
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    
+    <!-- Camera (Optional - for future features) -->
+    <key>NSCameraUsageDescription</key>
+    <string>TruckNav Pro may use the camera for document scanning and augmented reality features.</string>
+    
+    <!-- Photo Library (Optional) -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>TruckNav Pro needs photo library access to save and attach vehicle documents.</string>
+    
+    <!-- Capabilities -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    
+    <!-- Device Capabilities -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>location-services</string>
+        <string>gps</string>
+        <string>armv7</string>
+    </array>
+    
+    <!-- Supported Orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    
+    <!-- Status Bar -->
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <true/>
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+</dict>
+</plist>

@@ -1,18 +1,26 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.trucknav.pro',
+  // App Identity - Bespoke Marketing.Ai Ltd
+  appId: 'uk.co.bespokemarketingai.trucknavpro',
   appName: 'TruckNav Pro',
   webDir: 'dist/public',
+  
+  // App Version (update before each App Store submission)
+  // Version format: MAJOR.MINOR.PATCH
+  // Build number: increment for each upload to App Store Connect
+  
   server: {
     androidScheme: 'https',
     iosScheme: 'https',
     url: undefined,
-    cleartext: false
+    cleartext: false,
+    hostname: 'trucknavpro.app'
   },
+  
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
+      launchShowDuration: 2500,
       launchAutoHide: true,
       backgroundColor: '#1E293B',
       androidSplashResourceName: 'splash',
@@ -26,11 +34,13 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'dark',
-      backgroundColor: '#1E293B'
+      backgroundColor: '#1E293B',
+      overlaysWebView: false
     },
     Keyboard: {
       resize: 'body',
-      resizeOnFullScreen: true
+      resizeOnFullScreen: true,
+      style: 'dark'
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']
@@ -41,32 +51,41 @@ const config: CapacitorConfig = {
       sound: 'notification.wav'
     },
     BackgroundRunner: {
-      label: 'com.trucknav.pro.background',
+      label: 'uk.co.bespokemarketingai.trucknavpro.background',
       src: 'background.js',
       event: 'backgroundFetch',
       repeat: true,
       interval: 15
     },
-    CarPlay: {
-      enabled: true,
-      showAlternativeRoutesButton: true,
-      showMuteButton: true,
-      showSpeedLimitButton: true,
-      showTrafficIncidentsButton: true,
-      displayMode: 'navigation'
+    Geolocation: {
+      // iOS location permission descriptions
+    },
+    Network: {
+      // Monitor network connectivity
+    },
+    App: {
+      // App lifecycle events
     }
   },
+  
   ios: {
     contentInset: 'automatic',
     allowsLinkPreview: false,
     backgroundColor: '#1E293B',
-    limitsNavigationsToAppBoundDomains: false
+    limitsNavigationsToAppBoundDomains: false,
+    preferredContentMode: 'mobile',
+    scheme: 'trucknavpro',
+    // Enable background modes for navigation
+    // Note: Configure in Xcode - Signing & Capabilities
   },
+  
   android: {
     backgroundColor: '#1E293B',
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: false
+    webContentsDebuggingEnabled: false,
+    // Flavor for production builds
+    flavor: 'production'
   }
 };
 
