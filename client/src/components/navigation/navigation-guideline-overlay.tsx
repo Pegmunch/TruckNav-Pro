@@ -35,18 +35,28 @@ export function NavigationGuidelineOverlay({
     if (!ctx) return;
     
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const dpr = window.devicePixelRatio || 1;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
     
     ctx.clearRect(0, 0, rect.width, rect.height);
+    
+    // Responsive sizing based on screen dimensions
+    const isSmallScreen = rect.width < 390;
+    const isTinyScreen = rect.width < 360;
+    const isLargeScreen = rect.width > 800;
     
     const centerX = rect.width / 2;
     const startY = rect.height * 0.15;
     const endY = rect.height * 0.68;
     
-    // Draw truck-width route corridor (wider than car navigation)
-    const corridorWidth = 48;
+    // Scale corridor width based on screen size (max 50% of screen width)
+    let corridorWidth = Math.min(48, rect.width * 0.25);
+    if (isSmallScreen) corridorWidth = Math.min(40, rect.width * 0.22);
+    if (isTinyScreen) corridorWidth = Math.min(36, rect.width * 0.20);
+    if (isLargeScreen) corridorWidth = Math.min(56, rect.width * 0.28);
     
     // Outer glow for visibility
     ctx.save();
@@ -87,19 +97,20 @@ export function NavigationGuidelineOverlay({
     
     // Draw direction arrow at bottom of corridor
     if (nextTurn) {
-      drawTruckTurnArrow(ctx, centerX, endY - 60, nextTurn.direction);
+      drawTruckTurnArrow(ctx, centerX, endY - 60, nextTurn.direction, isSmallScreen);
     } else {
-      // Default straight arrow
-      drawTruckTurnArrow(ctx, centerX, endY - 60, 'straight');
+      drawTruckTurnArrow(ctx, centerX, endY - 60, 'straight', isSmallScreen);
     }
     
-    // Draw lane guidance at top if available
-    if (laneGuidance && laneGuidance.lanes.length > 0) {
-      drawTruckLaneGuidance(ctx, centerX, startY + 40, laneGuidance, rect.width);
+    // Draw lane guidance at top if available and screen is wide enough
+    if (laneGuidance && laneGuidance.lanes.length > 0 && !isTinyScreen) {
+      drawTruckLaneGuidance(ctx, centerX, startY + 40, laneGuidance, rect.width, isSmallScreen);
     }
     
-    // Draw distance markers for truck drivers
-    drawDistanceMarkers(ctx, centerX, startY, endY, corridorWidth);
+    // Draw distance markers for truck drivers (hide on tiny screens)
+    if (!isTinyScreen) {
+      drawDistanceMarkers(ctx, centerX, startY, endY, corridorWidth, isSmallScreen);
+    }
     
   }, [isNavigating, routeDistance, heading, routeCoordinates, nextTurn, laneGuidance]);
   
@@ -117,7 +128,8 @@ export function NavigationGuidelineOverlay({
           top: 0,
           left: 0,
           width: '100%',
-          height: '100%'
+          height: '100%',
+          touchAction: 'none'
         }}
       />
     </div>
@@ -128,14 +140,14 @@ function drawTruckTurnArrow(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  direction: string
+  direction: string,
+  isSmallScreen: boolean
 ) {
-  const arrowSize = 36;
+  const arrowSize = isSmallScreen ? 28 : 36;
   
   ctx.save();
   ctx.translate(x, y);
   
-  // Rotate based on direction
   let rotation = 0;
   switch (direction) {
     case 'right':
@@ -171,7 +183,7 @@ function drawTruckTurnArrow(
   ctx.lineWidth = 3;
   ctx.stroke();
   
-  // Draw arrow pointing up (will be rotated)
+  // Draw arrow pointing up
   ctx.beginPath();
   ctx.moveTo(0, -arrowSize + 8);
   ctx.lineTo(-arrowSize / 2 + 4, arrowSize / 3);
@@ -193,12 +205,16 @@ function drawTruckLaneGuidance(
   centerX: number,
   y: number,
   guidance: { lanes: string[]; recommended: number[]; maneuverType?: string },
-  canvasWidth: number
+  canvasWidth: number,
+  isSmallScreen: boolean
 ) {
   const laneCount = guidance.lanes.length;
   if (laneCount === 0) return;
   
-  const laneWidth = Math.min(50, (canvasWidth - 60) / laneCount);
+  // Scale lane width based on screen size
+  let baseLaneWidth = 50;
+  if (isSmallScreen) baseLaneWidth = 40;
+  const laneWidth = Math.min(baseLaneWidth, (canvasWidth - 60) / laneCount);
   const totalWidth = laneWidth * laneCount;
   const startX = centerX - totalWidth / 2;
   
@@ -219,9 +235,10 @@ function drawTruckLaneGuidance(
     ctx.roundRect(laneX - laneWidth / 2 + 4, y - 22, laneWidth - 8, 44, 4);
     ctx.fill();
     
-    // Lane arrow based on type
+    // Lane arrow
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px system-ui';
+    const fontSize = isSmallScreen ? 14 : 18;
+    ctx.font = `bold ${fontSize}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
@@ -235,17 +252,17 @@ function drawTruckLaneGuidance(
     
     // Truck icon for recommended lane
     if (isRecommended) {
-      ctx.font = '10px system-ui';
-      ctx.fillText('🚛', laneX, y + 16);
+      ctx.font = isSmallScreen ? '8px system-ui' : '10px system-ui';
+      ctx.fillText('🚛', laneX, y + 14);
     }
   });
   
   // "TRUCK LANE" label
   if (guidance.recommended.length > 0) {
     ctx.fillStyle = '#22c55e';
-    ctx.font = 'bold 10px system-ui';
+    ctx.font = isSmallScreen ? '8px system-ui' : 'bold 10px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('TRUCK LANE', centerX, y + 40);
+    ctx.fillText('TRUCK LANE', centerX, y + 38);
   }
 }
 
@@ -254,13 +271,16 @@ function drawDistanceMarkers(
   centerX: number,
   startY: number,
   endY: number,
-  corridorWidth: number
+  corridorWidth: number,
+  isSmallScreen: boolean
 ) {
   const markers = [
     { position: 0.25, label: '500m' },
     { position: 0.5, label: '250m' },
     { position: 0.75, label: '100m' }
   ];
+  
+  const fontSize = isSmallScreen ? 9 : 11;
   
   markers.forEach(marker => {
     const markerY = startY + (endY - startY) * marker.position;
@@ -275,7 +295,7 @@ function drawDistanceMarkers(
     
     // Distance label
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = 'bold 11px system-ui';
+    ctx.font = `bold ${fontSize}px system-ui`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(marker.label, centerX - corridorWidth / 2 - 24, markerY);
