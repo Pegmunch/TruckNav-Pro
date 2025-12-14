@@ -69,6 +69,7 @@ import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrum
 import { navigationVoice } from "@/lib/navigation-voice";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
+import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
 
 // Removed duplicate NavigationControlsStack - now imported from component
 
@@ -2663,6 +2664,16 @@ function NavigationPageContent() {
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
+                      
+                      {/* Navigation Guideline Overlay - Fixed vertical route line during navigation */}
+                      {mobileNavMode === 'navigate' && (
+                        <NavigationGuidelineOverlay
+                          isNavigating={isNavigating}
+                          routeDistance={currentRoute?.distance || 0}
+                          heading={gpsData?.position?.heading || 0}
+                          routeCoordinates={currentRoute?.routePath?.map(p => [p.lng, p.lat] as [number, number]) || []}
+                        />
+                      )}
                       
                       {/* Turn Indicator - Large bubble at top center */}
                       {nextTurn && (
