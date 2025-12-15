@@ -88,30 +88,38 @@ class OfflineMapsService {
   async initialize(): Promise<boolean> {
     if (this.db) return true;
     
+    console.log('[OfflineMaps] 🔄 Initializing database...');
+    
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       
       request.onerror = () => {
-        console.error('[OfflineMaps] Failed to open database:', request.error);
+        const error = request.error?.message || 'Unknown error';
+        console.error('[OfflineMaps] ❌ Failed to open database:', error);
+        console.error('[OfflineMaps] ❌ Full error object:', request.error);
         reject(request.error);
       };
       
       request.onsuccess = () => {
         this.db = request.result;
-        console.log('[OfflineMaps] Database initialized successfully');
+        console.log('[OfflineMaps] ✅ Database initialized successfully');
+        console.log('[OfflineMaps] 📊 Available object stores:', Array.from(this.db!.objectStoreNames));
         resolve(true);
       };
       
       request.onupgradeneeded = (event) => {
+        console.log('[OfflineMaps] 🔄 Upgrading database schema...');
         const db = (event.target as IDBOpenDBRequest).result;
         
         if (!db.objectStoreNames.contains(TILES_STORE)) {
+          console.log('[OfflineMaps] 📦 Creating tiles store...');
           const tilesStore = db.createObjectStore(TILES_STORE, { keyPath: 'key' });
           tilesStore.createIndex('regionId', 'regionId');
           tilesStore.createIndex('timestamp', 'timestamp');
         }
         
         if (!db.objectStoreNames.contains(REGIONS_STORE)) {
+          console.log('[OfflineMaps] 📦 Creating regions store...');
           db.createObjectStore(REGIONS_STORE, { keyPath: 'id' });
         }
       };
