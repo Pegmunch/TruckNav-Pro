@@ -150,12 +150,11 @@ export function SimplifiedRouteDrawer({
                 <Button
                   variant="outline"
                   size="lg"
-                  disabled={!isGPSReady}
                   className="h-10 px-3 shrink-0"
                   data-testid="button-location-dropdown"
-                  title={isGPSReady ? "Select location" : "GPS not ready"}
+                  title="Select location or use GPS"
                 >
-                  <Crosshair className="w-5 h-5" />
+                  <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600' : 'text-gray-400'}`} />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-2" align="start" data-testid="location-dropdown-menu">
@@ -179,6 +178,22 @@ export function SimplifiedRouteDrawer({
                       <Crosshair className="w-4 h-4 mr-2 shrink-0 text-green-600" />
                       <span className="text-sm font-medium">Current Location</span>
                     </Button>
+                  )}
+
+                  {/* GPS Initializing state */}
+                  {isGPSInitializing && !isGPSReady && (
+                    <div className="p-3 text-xs text-center text-muted-foreground flex flex-col items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Waiting for GPS...</span>
+                    </div>
+                  )}
+
+                  {/* GPS Error state */}
+                  {hasGPSError && !isGPSReady && (
+                    <div className="p-3 text-xs text-center text-destructive flex flex-col items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{gps?.errorMessage || 'Enable GPS in your browser settings'}</span>
+                    </div>
                   )}
 
                   {/* Divider if there are recent locations */}
@@ -206,7 +221,7 @@ export function SimplifiedRouteDrawer({
                   ))}
 
                   {/* Empty state */}
-                  {recentLocations.length === 0 && (
+                  {recentLocations.length === 0 && !isGPSInitializing && !hasGPSError && (
                     <div className="p-2 text-xs text-muted-foreground text-center">
                       Locations will appear here as you use them
                     </div>
