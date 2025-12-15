@@ -3177,6 +3177,7 @@ function NavigationPageContent() {
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);
+          setActiveProfile(profile);
           queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
         }}
         coordinates={currentGPSLocation}
