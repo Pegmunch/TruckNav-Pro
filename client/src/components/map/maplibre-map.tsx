@@ -137,7 +137,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   hideControls = false,
   hideCompass = false,
   isNavigating = false,
-  showUserMarker = true,
+  showUserMarker = false,
   useStaticRoute = false,
   restrictionViolations
 }, ref) {
