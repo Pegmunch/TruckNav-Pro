@@ -41,10 +41,15 @@ import {
   Shield,
   Info,
   Headphones,
-  Truck
+  Truck,
+  Crosshair,
+  Wifi,
+  WifiOff,
+  MapPinned
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useGPS } from "@/contexts/gps-context";
 
 // Import existing components
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
@@ -162,6 +167,7 @@ const SettingsModal = memo(function SettingsModal({
 }: SettingsModalProps) {
   const { toast } = useToast();
   const { system, convertDistance } = useMeasurement();
+  const gps = useGPS();
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   // Settings state
@@ -243,6 +249,12 @@ const SettingsModal = memo(function SettingsModal({
       label: "Entertainment",
       icon: Music,
       description: "Entertainment system preferences"
+    },
+    {
+      id: "location",
+      label: "Location",
+      icon: Crosshair,
+      description: "GPS and location mode settings"
     }
   ];
 
@@ -556,7 +568,7 @@ const SettingsModal = memo(function SettingsModal({
           className={cn(
             "max-w-2xl w-full h-[75vh] max-h-[600px]",
             "p-0 overflow-hidden flex flex-col",
-            "bg-background border",
+            "bg-white dark:bg-gray-900 border",
             className
           )}
           data-testid="dialog-settings-modal"
@@ -593,7 +605,7 @@ const SettingsModal = memo(function SettingsModal({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               {/* Tab Navigation */}
               <div className="px-6 py-3 border-b bg-muted/30">
-                <TabsList className="grid grid-cols-6 w-full h-auto p-1">
+                <TabsList className="grid grid-cols-7 w-full h-auto p-1">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -713,6 +725,148 @@ const SettingsModal = memo(function SettingsModal({
 
                     <TabsContent value="entertainment" className="mt-0">
                       {renderEntertainmentTab()}
+                    </TabsContent>
+
+                    <TabsContent value="location" className="mt-0">
+                      <div className="space-y-6">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Crosshair className="w-5 h-5" />
+                              Location Mode
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">GPS Status</Label>
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
+                                {gps?.status === 'ready' && (
+                                  <>
+                                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                                    <span className="text-sm font-medium text-green-700 dark:text-green-400">GPS Active</span>
+                                    {gps?.isUsingCached && (
+                                      <Badge variant="outline" className="ml-auto">Using Cached</Badge>
+                                    )}
+                                  </>
+                                )}
+                                {(gps?.status === 'acquiring' || gps?.status === 'initializing') && (
+                                  <>
+                                    <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
+                                    <span className="text-sm font-medium text-orange-700 dark:text-orange-400">
+                                      {gps?.status === 'initializing' ? 'Initializing GPS...' : 'Acquiring GPS...'}
+                                    </span>
+                                  </>
+                                )}
+                                {gps?.status === 'manual' && (
+                                  <>
+                                    <MapPinned className="w-4 h-4 text-blue-500" />
+                                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Manual Location</span>
+                                  </>
+                                )}
+                                {(gps?.status === 'unavailable' || gps?.status === 'error') && (
+                                  <>
+                                    <div className="w-3 h-3 bg-red-500 rounded-full" />
+                                    <span className="text-sm font-medium text-red-700 dark:text-red-400">GPS Unavailable</span>
+                                  </>
+                                )}
+                                {!gps && (
+                                  <>
+                                    <div className="w-3 h-3 bg-gray-400 rounded-full" />
+                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">GPS Not Available</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            {gps ? (
+                              <>
+                                <div className="space-y-3">
+                                  <Label className="text-base font-medium">Location Source</Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    Choose how to determine your location when GPS signal is weak or unavailable.
+                                  </p>
+                                  
+                                  {gps.cachedPosition && (
+                                    <div className="space-y-3">
+                                      <div className="p-3 rounded-lg border bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                                        <div className="flex items-start gap-3">
+                                          <MapPin className="w-5 h-5 text-amber-600 mt-0.5" />
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                              Cached Location Available
+                                            </p>
+                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                              From {gps.cachedPosition.ageDisplay}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex gap-2">
+                                        <Button
+                                          onClick={() => gps.useCachedPosition(true)}
+                                          variant="default"
+                                          className="flex-1"
+                                          data-testid="button-use-cached-settings"
+                                        >
+                                          <WifiOff className="w-4 h-4 mr-2" />
+                                          Use Cached Location
+                                        </Button>
+                                        <Button
+                                          onClick={() => gps.useCachedPosition(false)}
+                                          variant="outline"
+                                          className="flex-1"
+                                          data-testid="button-wait-gps-settings"
+                                        >
+                                          <Wifi className="w-4 h-4 mr-2" />
+                                          Wait for Live GPS
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {!gps.cachedPosition && gps.status !== 'ready' && (
+                                    <Alert>
+                                      <Info className="h-4 w-4" />
+                                      <AlertDescription>
+                                        No cached location available. Please ensure GPS is enabled on your device, 
+                                        or set a manual location below.
+                                      </AlertDescription>
+                                    </Alert>
+                                  )}
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-3">
+                                  <Label className="text-base font-medium">Clear GPS Cache</Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    Clear stored location data and force fresh GPS acquisition.
+                                  </p>
+                                  <Button
+                                    onClick={() => gps.clearGPSCache()}
+                                    variant="outline"
+                                    className="w-full"
+                                    data-testid="button-clear-gps-cache"
+                                  >
+                                    <Crosshair className="w-4 h-4 mr-2" />
+                                    Clear Cache & Refresh GPS
+                                  </Button>
+                                </div>
+                              </>
+                            ) : (
+                              <Alert>
+                                <Info className="h-4 w-4" />
+                                <AlertDescription>
+                                  GPS service is not available. Please reload the app or check your device's location settings.
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
                     </TabsContent>
                   </div>
                 </ScrollArea>

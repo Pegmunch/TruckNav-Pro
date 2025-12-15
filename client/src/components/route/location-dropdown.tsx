@@ -358,13 +358,7 @@ const LocationDropdown = memo(function LocationDropdown({
     // For now, we'll skip saving if we don't have real coordinates
     console.log("Need real coordinates from geocoding to save location");
     return;
-
-    createLocationMutation.mutate({
-      label: saveLabel,
-      coordinates: mockCoordinates,
-      isFavorite: false,
-    });
-  }, [saveLabel, createLocationMutation]);
+  }, [saveLabel]);
 
   const handleToggleFavorite = useCallback((location: Location, event: React.MouseEvent) => {
     event.stopPropagation();

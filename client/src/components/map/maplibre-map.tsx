@@ -2381,47 +2381,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         </div>
       )}
       
-      {/* Cached Position Confirmation */}
-      {gps?.cachedPosition && !gps?.position && gps?.cachedPosition.ageInMinutes <= 5 && (
-        <div 
-          className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50"
-          data-testid="cached-position-prompt"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 max-w-sm">
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-orange-500 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Use last known location?
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  From {gps.cachedPosition.ageDisplay}
-                </p>
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    onClick={() => gps.useCachedPosition(true)}
-                    size="sm"
-                    variant="default"
-                    className="text-xs"
-                    data-testid="button-use-cached"
-                  >
-                    Use cached
-                  </Button>
-                  <Button
-                    onClick={() => gps.useCachedPosition(false)}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    data-testid="button-wait-gps"
-                  >
-                    Wait for GPS
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* GPS/Cache selection moved to Settings modal - Online/Offline tab */}
     </div>
   );
 });

@@ -2979,13 +2979,14 @@ function NavigationPageContent() {
                   />
                 )}
                 
+                {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
+                <NavigationHeader 
+                  onSettingsClick={() => setShowComprehensiveMenu(true)}
+                />
+                
                 {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                 {isNavUIActive && (
                   <>
-                    {/* 1. Navigation Header - White banner with TruckNav Pro + green gear */}
-                    <NavigationHeader 
-                      onSettingsClick={() => setShowComprehensiveMenu(true)}
-                    />
                     
                     {/* 2. Compact Trip Strip - Shows ETA, Distance, Next Maneuver - Below header */}
                     {currentRoute && (
