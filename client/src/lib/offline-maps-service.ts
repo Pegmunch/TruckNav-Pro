@@ -185,6 +185,7 @@ class OfflineMapsService {
         });
         
         if (!response.ok) {
+          console.warn('[OfflineMaps] ⚠️ Tile fetch failed:', z, x, y, 'HTTP', response.status);
           throw new Error(`HTTP ${response.status}`);
         }
         
@@ -204,6 +205,7 @@ class OfflineMapsService {
           continue;
         }
         
+        console.warn('[OfflineMaps] ⚠️ Tile download failed after retries:', z, x, y, (error as Error).message);
         return { success: false, bytes: 0 };
       }
     }
@@ -212,22 +214,38 @@ class OfflineMapsService {
   }
 
   private async storeTile(key: string, data: ArrayBuffer, regionId: string): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) {
+      console.error('[OfflineMaps] ❌ Cannot store tile - database not initialized');
+      throw new Error('Database not initialized');
+    }
     
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(TILES_STORE, 'readwrite');
-      const store = transaction.objectStore(TILES_STORE);
-      
-      const request = store.put({
-        key,
-        data,
-        regionId,
-        timestamp: Date.now(),
-        size: data.byteLength,
-      });
-      
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      try {
+        const transaction = this.db!.transaction(TILES_STORE, 'readwrite');
+        const store = transaction.objectStore(TILES_STORE);
+        
+        const request = store.put({
+          key,
+          data,
+          regionId,
+          timestamp: Date.now(),
+          size: data.byteLength,
+        });
+        
+        request.onsuccess = () => resolve();
+        request.onerror = () => {
+          console.error('[OfflineMaps] ❌ Failed to store tile:', key, request.error?.message);
+          reject(request.error);
+        };
+        
+        transaction.onerror = () => {
+          console.error('[OfflineMaps] ❌ Transaction error storing tile:', key, transaction.error?.message);
+          reject(transaction.error);
+        };
+      } catch (error) {
+        console.error('[OfflineMaps] ❌ Exception storing tile:', key, error);
+        reject(error);
+      }
     });
   }
 
@@ -268,21 +286,33 @@ class OfflineMapsService {
     if (!this.db) await this.initialize();
     
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(TILES_STORE, 'readonly');
-      const store = transaction.objectStore(TILES_STORE);
-      const request = store.openCursor();
-      let totalBytes = 0;
-      
-      request.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-        if (cursor) {
-          totalBytes += cursor.value.size || 0;
-          cursor.continue();
-        } else {
-          resolve(Math.round(totalBytes / (1024 * 1024)));
-        }
-      };
-      request.onerror = () => resolve(0);
+      try {
+        const transaction = this.db!.transaction(TILES_STORE, 'readonly');
+        const store = transaction.objectStore(TILES_STORE);
+        const request = store.openCursor();
+        let totalBytes = 0;
+        let tileCount = 0;
+        
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            totalBytes += cursor.value.size || 0;
+            tileCount++;
+            cursor.continue();
+          } else {
+            const usedMB = Math.round(totalBytes / (1024 * 1024));
+            console.log('[OfflineMaps] 📊 Storage check - Tiles:', tileCount, 'Size:', usedMB, 'MB');
+            resolve(usedMB);
+          }
+        };
+        request.onerror = () => {
+          console.error('[OfflineMaps] ❌ Failed to get storage used:', request.error?.message);
+          resolve(0);
+        };
+      } catch (error) {
+        console.error('[OfflineMaps] ❌ Exception in getActualStorageUsed:', error);
+        resolve(0);
+      }
     });
   }
 
@@ -292,11 +322,25 @@ class OfflineMapsService {
     zoomLevels: number[] = DEFAULT_ZOOM_LEVELS,
     startIndex: number = 0
   ): Promise<boolean> {
-    if (!this.db) await this.initialize();
+    console.log('[OfflineMaps] 🚀 Starting download for region:', region.name, region.id);
+    console.log('[OfflineMaps] 📍 Bounds:', JSON.stringify(region.bounds));
+    console.log('[OfflineMaps] 🔍 Zoom levels:', zoomLevels);
+    
+    try {
+      if (!this.db) {
+        console.log('[OfflineMaps] 🔄 Database not ready, initializing...');
+        await this.initialize();
+      }
+    } catch (initError) {
+      console.error('[OfflineMaps] ❌ Failed to initialize database for download:', initError);
+      return false;
+    }
     
     const actualUsed = await this.getActualStorageUsed();
+    console.log('[OfflineMaps] 💾 Current storage used:', actualUsed, 'MB of', MAX_STORAGE_MB, 'MB');
+    
     if (startIndex === 0 && actualUsed + region.estimatedSizeMB > MAX_STORAGE_MB) {
-      console.warn('[OfflineMaps] Not enough storage space');
+      console.warn('[OfflineMaps] ❌ Not enough storage space. Need:', region.estimatedSizeMB, 'MB, Available:', MAX_STORAGE_MB - actualUsed, 'MB');
       return false;
     }
     
@@ -304,8 +348,11 @@ class OfflineMapsService {
     this.abortControllers.set(region.id, abortController);
 
     const allTiles = this.getAllTilesForRegion(region, zoomLevels);
+    console.log('[OfflineMaps] 📊 Total tiles to download:', allTiles.length);
+    
     const existingRegion = await this.getRegionMetadata(region.id);
     const resumeIndex = startIndex > 0 ? startIndex : (existingRegion?.lastTileIndex || 0);
+    console.log('[OfflineMaps] 📍 Starting from index:', resumeIndex, existingRegion ? '(resuming)' : '(fresh start)');
 
     const progress: DownloadProgress = {
       regionId: region.id,
@@ -326,8 +373,15 @@ class OfflineMapsService {
     let totalBytes = existingRegion ? existingRegion.sizeMB * 1024 * 1024 : 0;
     let lastSaveIndex = resumeIndex;
 
+    console.log('[OfflineMaps] 🔄 Beginning download loop...');
+    
     try {
       for (let i = resumeIndex; i < allTiles.length; i += concurrency) {
+        // Log progress every 50 tiles
+        if (i % 50 === 0 || i === resumeIndex) {
+          console.log('[OfflineMaps] 📥 Downloading tiles:', i, '/', allTiles.length, `(${Math.round((i / allTiles.length) * 100)}%)`);
+        }
+        
         if (abortController.signal.aborted) {
           progress.status = 'paused';
           await this.saveRegionMetadata({
@@ -439,13 +493,19 @@ class OfflineMapsService {
       this.abortControllers.delete(region.id);
       this.progressCallbacks.delete(region.id);
 
-      return progress.status === 'completed';
+      const isComplete = progress.status === 'completed';
+      console.log('[OfflineMaps]', isComplete ? '✅ Download complete!' : '⚠️ Download incomplete');
+      console.log('[OfflineMaps] 📊 Final stats - Downloaded:', progress.downloadedTiles, 'Failed:', progress.failedTiles, 'Total:', progress.totalTiles);
+      
+      return isComplete;
     } catch (error) {
       if ((error as Error).name === 'AbortError') {
+        console.log('[OfflineMaps] ⏸️ Download paused by user');
         progress.status = 'paused';
         return false;
       }
-      console.error('[OfflineMaps] Download failed:', error);
+      console.error('[OfflineMaps] ❌ Download failed with error:', (error as Error).message);
+      console.error('[OfflineMaps] ❌ Full error:', error);
       progress.status = 'failed';
       return false;
     }
@@ -523,19 +583,28 @@ class OfflineMapsService {
     if (!this.db) await this.initialize();
     
     return new Promise((resolve) => {
-      const transaction = this.db!.transaction(REGIONS_STORE, 'readonly');
-      const store = transaction.objectStore(REGIONS_STORE);
-      
-      const request = store.getAll();
-      request.onsuccess = () => {
-        const regions = (request.result || []).map((r: any) => ({
-          ...r,
-          downloadedAt: new Date(r.downloadedAt),
-          expiresAt: new Date(r.expiresAt),
-        }));
-        resolve(regions);
-      };
-      request.onerror = () => resolve([]);
+      try {
+        const transaction = this.db!.transaction(REGIONS_STORE, 'readonly');
+        const store = transaction.objectStore(REGIONS_STORE);
+        
+        const request = store.getAll();
+        request.onsuccess = () => {
+          const regions = (request.result || []).map((r: any) => ({
+            ...r,
+            downloadedAt: new Date(r.downloadedAt),
+            expiresAt: new Date(r.expiresAt),
+          }));
+          console.log('[OfflineMaps] 📋 Downloaded regions:', regions.length, regions.map(r => r.name));
+          resolve(regions);
+        };
+        request.onerror = () => {
+          console.error('[OfflineMaps] ❌ Failed to get downloaded regions:', request.error?.message);
+          resolve([]);
+        };
+      } catch (error) {
+        console.error('[OfflineMaps] ❌ Exception in getDownloadedRegions:', error);
+        resolve([]);
+      }
     });
   }
 
