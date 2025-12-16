@@ -273,22 +273,26 @@ function NavigationPageContent() {
   }, [mobileNavMode, isNavigating]);
   
   // GPS Mode effect - wire up mode changes to GPS context
+  // CRITICAL FIX: Destructure callbacks to prevent render loop
+  // (depending on entire gpsData object causes infinite re-renders)
+  const { startGPSTracking, stopGPSTracking } = gpsData || {};
+  
   useEffect(() => {
-    if (!gpsData) return;
+    if (!startGPSTracking || !stopGPSTracking) return;
     
     if (gpsMode === 'gps') {
       // Start live GPS tracking
       console.log('[GPS-MODE] Switching to GPS mode - starting live tracking');
-      gpsData.startGPSTracking();
+      startGPSTracking();
     } else {
       // Stop live GPS tracking, use cached/manual position
       console.log('[GPS-MODE] Switching to Cache mode - stopping live tracking');
-      gpsData.stopGPSTracking();
+      stopGPSTracking();
     }
     
     // Persist to localStorage
     localStorage.setItem('trucknav_gps_mode', gpsMode);
-  }, [gpsMode, gpsData]);
+  }, [gpsMode, startGPSTracking, stopGPSTracking]);
   
   // GPS Mode toggle handler - no toast notifications per user request
   const handleGpsModeToggle = useCallback((mode: 'gps' | 'cache') => {
