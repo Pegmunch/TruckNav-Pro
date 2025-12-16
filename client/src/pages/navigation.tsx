@@ -2547,6 +2547,11 @@ function NavigationPageContent() {
                 </MapShell>
               </div>
               
+              {/* Navigation Header - White banner with TruckNav Pro + green gear - MOBILE */}
+              <NavigationHeader 
+                onSettingsClick={() => setShowComprehensiveMenu(true)}
+              />
+              
               {/* GPS Permission Button removed - moved to route planning panel */}
               {/* GPS Loading Indicator - HIDDEN IN PWA STANDALONE MODE */}
               {gpsLoadingState?.isLoading && !isStandalone && (

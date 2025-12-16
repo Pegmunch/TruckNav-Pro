@@ -44,8 +44,8 @@ export async function checkAppVersion(): Promise<void> {
         );
       }
       
-      // Clear local storage except for critical user data
-      const preserveKeys = ['trucknav_session', 'trucknav_user_id', 'trucknav_legal_consent', 'trucknav_legal_accepted', 'pwa-install-dismissed'];
+      // Clear local storage except for critical user data AND the version key itself
+      const preserveKeys = ['trucknav_session', 'trucknav_user_id', 'trucknav_legal_consent', 'trucknav_legal_accepted', 'pwa-install-dismissed', STORAGE_KEY];
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
