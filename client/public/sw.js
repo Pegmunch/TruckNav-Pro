@@ -23,9 +23,8 @@ const ERROR_THRESHOLD = 5;
 const ERROR_TIME_WINDOW = 60000; // 1 minute
 
 // Essential files to cache for offline functionality
+// CRITICAL: Removed '/' and '/index.html' - these must ALWAYS be fetched fresh to get latest JS bundles
 const ESSENTIAL_FILES = [
-  '/',
-  '/index.html',
   '/offline.html',
   '/manifest.json',
   '/apple-touch-icon.png',
@@ -431,8 +430,14 @@ self.addEventListener('activate', (event) => {
 function getCachingStrategy(request) {
   const url = new URL(request.url);
   
-  // Static assets - Cache First strategy
-  if (request.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf)$/)) {
+  // CRITICAL FIX: JS and CSS files MUST use network-first to prevent stale UI
+  // This ensures new code is always loaded when available
+  if (request.url.match(/\.(js|css)$/)) {
+    return 'network-first';
+  }
+  
+  // Images/fonts can use cache-first (they rarely change)
+  if (request.url.match(/\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf)$/)) {
     return 'cache-first';
   }
   
@@ -451,8 +456,8 @@ function getCachingStrategy(request) {
     return 'network-first';
   }
   
-  // Default to cache first for other assets
-  return 'cache-first';
+  // Default to network-first for unknown assets (safer for updates)
+  return 'network-first';
 }
 
 // Cache management with TTL and size limits (uses enhanced functions)
