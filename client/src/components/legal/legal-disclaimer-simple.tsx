@@ -20,13 +20,16 @@ export default function LegalDisclaimerSimple() {
 
   // Handle acceptance
   const handleAccept = async () => {
+    console.log('[LEGAL] Accept button clicked!');
     setIsAccepting(true);
     
     try {
+      console.log('[LEGAL] Calling setConsentAccepted...');
       await setConsentAccepted();
+      console.log('[LEGAL] ✓ Consent accepted successfully');
       // Consent hook will update state and component will unmount
     } catch (error) {
-      console.error('[LEGAL] Failed to save consent:', error);
+      console.error('[LEGAL] ✗ Failed to save consent:', error);
       setIsAccepting(false);
     }
   };
