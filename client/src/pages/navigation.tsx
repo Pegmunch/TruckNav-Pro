@@ -242,12 +242,11 @@ function NavigationPageContent() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   
   // CRITICAL: Derive mobileNavMode correctly from all relevant state
-  // plan = no route or not previewing, preview = user explicitly clicked Preview button, navigate = active navigation
+  // plan = no route or not navigating, preview = user explicitly clicked Preview button (OVERLAY ONLY), navigate = active navigation
+  // NOTE: mobileNavMode only changes when isLocalNavActive changes (actual navigation) - preview is just an overlay
   const mobileNavMode: MobileNavMode = isLocalNavActive && currentRoute !== null
     ? 'navigate' 
-    : isShowingPreview && currentRoute !== null
-      ? 'preview'
-      : 'plan';
+    : 'plan';
   
   // CRITICAL FIX: Navigation UI should show in preview AND navigate modes (not plan)
   // This ensures buttons and ETA header render whenever a route is calculated
@@ -2450,8 +2449,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={isShowingPreview || mobileNavMode === 'navigate'}
+                    hideCompass={isShowingPreview || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2485,7 +2484,7 @@ function NavigationPageContent() {
               )}
               
               {/* GPS Fallback - Discreet Transparent Chip */}
-              {mobileNavMode === 'preview' && 
+              {isShowingPreview && 
                gpsData && 
                (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
                !gpsData.manualLocation && (
@@ -2502,7 +2501,7 @@ function NavigationPageContent() {
               )}
               
               {/* Manual Location Active - Compact Chip */}
-              {mobileNavMode === 'preview' && 
+              {isShowingPreview && 
                gpsData?.manualLocation && (
                 <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto" data-testid="manual-location-indicator">
                   <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-full shadow-lg">
@@ -2522,8 +2521,8 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* PLAN MODE BUTTONS - Left side vertical stack */}
-              {mobileNavMode === 'plan' && currentRoute && (
+              {/* PLAN MODE BUTTONS - Left side vertical stack (Always rendered when has route, stable position) */}
+              {currentRoute && !isNavigating && (
                 <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                   style={{
                     top: 'calc(16px + var(--safe-area-top))',
@@ -2551,7 +2550,7 @@ function NavigationPageContent() {
               )}
               
               {/* PLAN MODE MENU ONLY - No route yet (Top Left) */}
-              {mobileNavMode === 'plan' && !currentRoute && (
+              {!currentRoute && !isNavigating && (
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
                   size="sm"
@@ -2567,8 +2566,8 @@ function NavigationPageContent() {
                 </Button>
               )}
 
-              {/* PREVIEW MODE OVERLAYS (z-10+) - Visible only in preview mode */}
-              {mobileNavMode === 'preview' && (
+              {/* PREVIEW MODE OVERLAY (z-10+) - Visible only when showing preview, overlays on top of stable map */}
+              {isShowingPreview && currentRoute && !isNavigating && (
                 <>
                   {/* Clean Header with Title and Settings */}
                   <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm" 
@@ -2921,8 +2920,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={isShowingPreview || mobileNavMode === 'navigate'}
+                    hideCompass={isShowingPreview || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
