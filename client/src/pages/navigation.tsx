@@ -263,6 +263,16 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
+  // CRITICAL FIX: Always start in plan mode on app launch
+  // This ensures PWA doesn't restore stale navigation state
+  useEffect(() => {
+    // Clear navigation state on first mount
+    console.log('[NAV-STATE] App launched - resetting to plan mode');
+    setIsLocalNavActive(false);
+    localStorage.removeItem('navigation_ui_active');
+    localStorage.removeItem('navigation_mode');
+  }, []); // Run only once on mount
+  
   // CRITICAL FIX: Auto-reset isLocalNavActive when no route exists
   // This ensures stale localStorage doesn't keep the app in navigate mode
   // DELAYED: Wait for route data to settle before resetting to avoid clearing on initial mount
