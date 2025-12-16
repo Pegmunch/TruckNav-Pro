@@ -2248,11 +2248,11 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       {!hideControls && (
         <>
           {/* Map Controls - Right Side Stack for Mobile - PERMANENT: Always visible during navigation */}
-          {/* Positioned higher with smaller gap to avoid overlap with bottom controls */}
+          {/* Compact spacing for mobile screens */}
           <div 
-            className="absolute right-3 flex flex-col gap-2 pointer-events-auto safe-area-top"
+            className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
             style={{ 
-              top: 'calc(6rem + var(--safe-area-top))',
+              top: 'calc(7rem + var(--safe-area-top))',
               zIndex: isNavigating ? 500 : 450
             }}
           >
