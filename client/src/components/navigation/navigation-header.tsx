@@ -17,7 +17,7 @@ export function NavigationHeader({ onSettingsClick, className }: NavigationHeade
   return (
     <div 
       className={cn(
-        "fixed top-0 left-0 right-0 z-[2500]",
+        "fixed left-0 right-0 z-[5000]",
         "bg-white border-b border-gray-200",
         "h-14 px-4",
         "flex items-center justify-between",
@@ -26,7 +26,7 @@ export function NavigationHeader({ onSettingsClick, className }: NavigationHeade
         className
       )}
       style={{
-        top: 'var(--safe-area-top, 0px)'
+        top: 'max(env(safe-area-inset-top, 0px), 0px)'
       }}
       data-testid="navigation-header"
     >

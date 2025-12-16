@@ -351,16 +351,20 @@ function NavigationPageContent() {
       console.log(`[NAV-STATE] ✓ Cleared localStorage: ${key}`);
     });
     
-    // Also clear any trucknav prefixed keys we might have missed
-    // PRESERVE: trucknav_app_version (critical for cache-buster), trucknav_legal_*, trucknav_session
-    const protectedKeys = ['trucknav_app_version', 'trucknav_legal', 'trucknav_session', 'trucknav_user'];
-    for (let i = 0; i < localStorage.length; i++) {
+    // Also clear any navigation-specific keys we might have missed
+    // PRESERVE: All trucknav_ prefixed keys (user preferences), only clear navigation/journey/route specific keys
+    const protectedPrefixes = ['trucknav_']; // Protect ALL trucknav_ keys (app version, legal, session, language, settings, etc.)
+    for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
-      if (key && (key.includes('nav') || key.includes('journey') || key.includes('route'))) {
-        // Skip protected keys
-        if (protectedKeys.some(pk => key.includes(pk))) {
-          continue;
-        }
+      if (!key) continue;
+      
+      // Skip ALL trucknav_ prefixed keys - these are user/app settings
+      if (protectedPrefixes.some(prefix => key.startsWith(prefix))) {
+        continue;
+      }
+      
+      // Only clear navigation-specific state keys (not prefixed with trucknav_)
+      if (key.includes('navigation') || key.includes('journey') || key.includes('route') || key.includes('Journey') || key.includes('Route')) {
         localStorage.removeItem(key);
         console.log(`[NAV-STATE] ✓ Cleared localStorage: ${key}`);
       }
@@ -2521,6 +2525,13 @@ function NavigationPageContent() {
       {/* Mobile-First Layout - Clean 3-Mode Workflow */}
       {(isMobile || isStandalone) ? (
         <>
+        {/* Navigation Header - OUTSIDE mobile-layout for proper z-index stacking */}
+        {!isARMode && (
+          <NavigationHeader 
+            onSettingsClick={() => setShowComprehensiveMenu(true)}
+          />
+        )}
+        
         <div className="mobile-layout">
           
           {/* AR Mode (Full Replacement) */}
@@ -2552,11 +2563,6 @@ function NavigationPageContent() {
                   />
                 </MapShell>
               </div>
-              
-              {/* Navigation Header - White banner with TruckNav Pro + green gear - MOBILE */}
-              <NavigationHeader 
-                onSettingsClick={() => setShowComprehensiveMenu(true)}
-              />
               
               {/* GPS Permission Button removed - moved to route planning panel */}
               {/* GPS Loading Indicator - HIDDEN IN PWA STANDALONE MODE */}
