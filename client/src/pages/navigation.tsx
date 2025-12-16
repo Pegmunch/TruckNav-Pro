@@ -268,12 +268,15 @@ function NavigationPageContent() {
   // CRITICAL FIX: Always start in plan mode on app launch
   // This ensures PWA doesn't restore stale navigation state
   useEffect(() => {
-    // Clear navigation state on first mount
+    // Clear navigation state on first mount - must clear activeJourneyId so server doesn't restore previous journey
     console.log('[NAV-STATE] App launched - resetting to plan mode');
     setIsLocalNavActive(false);
     localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
-  }, []); // Run only once on mount
+    localStorage.removeItem('activeJourneyId'); // CRITICAL: Prevent server from restoring previous journey
+    // Invalidate the active journey query so the hook refetches and gets nothing
+    queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
+  }, [queryClient]); // Run only once on mount
   
   // CRITICAL FIX: Auto-reset isLocalNavActive when no route exists
   // This ensures stale localStorage doesn't keep the app in navigate mode
@@ -1691,22 +1694,9 @@ function NavigationPageContent() {
           }
         }, 500); // Small delay to let route render first
         
-        // AUTO-START NAVIGATION: 10-second countdown timer
-        console.log('[AUTO-NAV] ⏲️ Setting 10-second auto-start timer...');
-        setTimeout(() => {
-          performance.mark('preview-mode-end');
-          performance.measure('preview-mode-duration', 'preview-mode-start', 'preview-mode-end');
-          const previewMeasure = performance.getEntriesByName('preview-mode-duration')[0];
-          console.log(`[PERF] ⏱️ Preview mode duration: ${previewMeasure.duration.toFixed(0)}ms`);
-          
-          // Only auto-start if still in preview mode (user hasn't manually started)
-          if (!isNavigating && currentRoute) {
-            console.log('[AUTO-NAV] ⏰ 10 seconds elapsed - auto-starting navigation!');
-            handleStartNavigation();
-          } else {
-            console.log('[AUTO-NAV] ⏸️ Auto-start cancelled - navigation already active or route cleared');
-          }
-        }, 10000); // 10 seconds = 10000ms
+        // DISABLED: Auto-start navigation removed - user must manually start navigation
+        // The preview mode is now indefinite until user clicks "Start Navigation" button
+        console.log('[AUTO-NAV] Preview mode - user must manually start navigation');
       } else {
         console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
       }

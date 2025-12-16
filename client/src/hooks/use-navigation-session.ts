@@ -19,7 +19,11 @@ interface NavigationSession {
 export function useNavigationSession(): NavigationSession {
   const lastKnownStateRef = useRef<NavigationState>('idle');
   
-  // Query for active journey - ALWAYS fetch from server (PWA-compatible)
+  // CRITICAL FIX: Only fetch active journey if explicitly saved in localStorage
+  // This prevents loading old routes on app startup unless user explicitly requested them
+  const hasExplicitJourneyId = !!localStorage.getItem('activeJourneyId');
+  
+  // Query for active journey - ONLY fetch if there's an explicit activeJourneyId
   const { data: currentJourney, isLoading } = useQuery<any>({
     queryKey: ['/api/journeys/active'],
     queryFn: async () => {
@@ -50,6 +54,7 @@ export function useNavigationSession(): NavigationSession {
       
       return journey;
     },
+    enabled: hasExplicitJourneyId, // CRITICAL: Only fetch if explicitly saved - prevents loading old routes on app startup
     placeholderData: (previousData: any) => previousData, // Keep previous data during refetch
     refetchInterval: false, // CRITICAL FIX: Don't auto-refetch - navigation UI controlled by local state
     staleTime: Infinity, // Once loaded, don't mark as stale
