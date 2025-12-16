@@ -26,18 +26,45 @@ app.use(sessionBridge);
 // Re-enable security middleware for reliable navigation functionality
 applySecurityMiddleware(app);
 
-// DEVELOPMENT ONLY: Aggressive no-cache headers to prevent browser caching issues
-// This ensures changes are immediately visible without hard refresh
-if (app.get("env") === "development") {
-  app.use((req, res, next) => {
-    // Set aggressive no-cache headers on all responses
+// Cache control headers - CRITICAL for PWA updates
+// Development mode: aggressive no-cache to see changes immediately
+// Production mode: no-cache for HTML/manifest/SW but long cache for assets
+app.use((req, res, next) => {
+  if (app.get("env") === "development") {
+    // Set aggressive no-cache headers on all responses in dev
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
-    next();
-  });
+  } else {
+    // CRITICAL: PWA shell files must NEVER be cached by browser
+    // This forces iOS/Android to always check server for updates
+    if (
+      req.path === '/' || 
+      req.path === '/index.html' || 
+      req.path === '/manifest.json' ||
+      req.path.endsWith('.js') && (req.path.includes('sw') || req.path.includes('main')) ||
+      req.path.endsWith('app-version.json')
+    ) {
+      // No cache for PWA critical files - forces update check on every load
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    } else if (req.path.match(/\.(js|css|woff2|png|jpg|jpeg|gif|svg)$/i)) {
+      // Versioned assets can be cached forever (hashes change on rebuild)
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      // Default: short cache for other files
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+  next();
+});
+
+if (app.get("env") === "development") {
   log('🚫 Development mode: Aggressive cache prevention enabled');
+} else {
+  log('✅ Production mode: Smart cache headers configured (PWA files: no-cache, Assets: long cache)');
 }
 
 // Handle Stripe webhooks with raw body before JSON parsing
