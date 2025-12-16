@@ -75,3 +75,28 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 
 ## State Management
 - **TanStack React Query**: Server state management.
+
+# Robustness & Reliability (99% Target)
+
+## Performance Monitoring
+- **Server Performance Metrics**: Real-time tracking of request counts, response times (avg/min/max), success rates, requests per second, and endpoint-specific analytics via `/api/metrics/performance`.
+- **Error Tracking System**: Comprehensive error categorization (validation, authentication, authorization, rate_limit, server_error, database, external_api, timeout), error breakdown by status code and endpoint, crash-free rate calculation via `/api/metrics/errors`.
+- **Health Monitoring**: System health reports with recommendations via `/api/metrics/health`, uptime tracking, memory usage monitoring.
+
+## Client-Side Reliability
+- **Crash-Free Monitor**: Client-side error tracking for JavaScript errors, unhandled promise rejections, and component errors with session metrics stored in localStorage.
+- **Data Validation**: Comprehensive Zod schemas for coordinates, vehicle profiles, routes, facilities, and traffic incidents with sanitization utilities.
+
+## Rate Limiting (99% Protection)
+- **Tiered Rate Limits**: General (100/15min), Auth (5/15min), API (60/min), Route Planning (20/min), File Upload (10/5min), External API (30/min).
+- **Enhanced Rate Limiters**: Configurable via `server/middleware/rate-limit-config.ts` with proper error responses and retry-after headers.
+
+## Load Testing
+- **Load Test Script**: `scripts/load-test.ts` for measuring endpoint performance under concurrent load with configurable concurrency and duration.
+
+## Monitoring Endpoints
+- `GET /api/health` - System health check
+- `GET /api/metrics/performance` - Performance analytics
+- `GET /api/metrics/errors` - Error statistics
+- `GET /api/metrics/health` - Health report with recommendations
+- `GET /api/metrics/reliability` - 99% reliability target status

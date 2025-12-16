@@ -36,6 +36,8 @@ import {
 import * as turf from "@turf/turf";
 // Import to ensure Express.User augmentation is available
 import "./replitAuth";
+// Robustness monitoring - performance and error tracking
+import robustnessRouter, { robustnessMiddleware } from "./robustness-endpoints";
 
 /**
  * Safely extracts the authenticated user ID from the request.
@@ -5955,6 +5957,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =============================================================================
   // END ENTERPRISE FEATURES API ROUTES
+  // =============================================================================
+
+  // =============================================================================
+  // ROBUSTNESS MONITORING ROUTES (99% Reliability Target)
+  // =============================================================================
+  robustnessMiddleware.forEach(mw => app.use(mw));
+  app.use(robustnessRouter);
   // =============================================================================
 
   const httpServer = createServer(app);
