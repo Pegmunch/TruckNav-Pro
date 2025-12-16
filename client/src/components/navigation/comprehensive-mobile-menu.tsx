@@ -279,11 +279,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
       }
     } catch (error) {
       console.error('GPS location error:', error);
-      toast({
-        title: "Location Error",
-        description: error instanceof Error ? error.message : "Could not get current location",
-        variant: "destructive"
-      });
+      // Toast removed per user request - GPS errors shown inline instead
+      // Users can see GPS status in the simplified route drawer
     } finally {
       setIsGettingLocation(false);
     }
