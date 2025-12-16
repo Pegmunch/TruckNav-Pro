@@ -800,24 +800,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         dragRotate: !isNavigating
       });
 
-      if (!hideControls && !hideCompass) {
-        navigationControlRef.current = new maplibregl.NavigationControl({
-          visualizePitch: true,
-          showCompass: true,
-          showZoom: false
-        });
-        map.current.addControl(navigationControlRef.current, 'top-right');
-        
-        // Reposition the navigation control container above compass button
-        setTimeout(() => {
-          const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
-          if (navControl) {
-            (navControl as HTMLElement).style.top = 'auto';
-            (navControl as HTMLElement).style.bottom = '320px';
-            (navControl as HTMLElement).style.right = '16px';
-          }
-        }, 100);
-      }
+      // NOTE: NavigationControl is added in the useEffect hook below (lines ~660-710)
+      // to handle dynamic hideControls/hideCompass changes properly.
+      // DO NOT add NavigationControl here to avoid duplicates.
 
       if (onMapClick) {
         map.current.on('click', (e) => {
