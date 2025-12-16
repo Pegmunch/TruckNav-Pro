@@ -141,23 +141,55 @@ export function useLegalConsent(): UseLegalConsentReturn {
 
   /**
    * Load consent data on hook initialization
+   * CRITICAL: Must reliably read consent in PWA standalone mode
    */
   useEffect(() => {
     const storedConsent = parseStoredConsent();
     
-    if (storedConsent) {
+    // Also check the simple flag as a backup
+    const simpleFlag = localStorage.getItem('trucknav_legal_accepted');
+    
+    console.log('[LEGAL-CONSENT] Loading consent on mount:', {
+      hasStoredConsent: !!storedConsent,
+      storedConsentAccepted: storedConsent?.hasAcceptedTerms,
+      simpleFlagExists: !!simpleFlag,
+      simpleFlagValue: simpleFlag
+    });
+    
+    if (storedConsent && storedConsent.hasAcceptedTerms) {
+      console.log('[LEGAL-CONSENT] ✓ Valid consent found in localStorage');
       setConsentData(storedConsent);
+    } else if (simpleFlag === 'true') {
+      // Fallback: If main consent is missing but simple flag exists, reconstruct
+      console.log('[LEGAL-CONSENT] ⚠️ Reconstructing consent from simple flag');
+      const reconstructedConsent: LegalConsentData = {
+        hasAcceptedTerms: true,
+        consentVersion: CURRENT_LEGAL_VERSION,
+        consentTimestamp: new Date().toISOString(),
+        completedCheckboxes: {
+          navigation: true,
+          liability: true,
+          responsibility: true,
+          privacy: true,
+          terms: true,
+        },
+      };
+      setConsentData(reconstructedConsent);
+      // Re-save the full consent data
+      saveConsentData(reconstructedConsent);
     } else {
-      // Initialize with default data
+      // No consent found
+      console.log('[LEGAL-CONSENT] ✗ No valid consent found');
       setConsentData(DEFAULT_CONSENT_DATA);
     }
     
     setIsLoading(false);
-  }, [parseStoredConsent]);
+  }, [parseStoredConsent, saveConsentData]);
 
   /**
    * Mark consent as accepted with optional checkbox states
    * Also records consent server-side for authenticated users
+   * CRITICAL: Must persist reliably in PWA standalone mode
    */
   const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
     const newConsentData: LegalConsentData = {
@@ -173,16 +205,34 @@ export function useLegalConsent(): UseLegalConsentReturn {
       },
     };
 
+    console.log('[LEGAL-CONSENT] Saving consent acceptance...');
+    
+    // Update React state first
     setConsentData(newConsentData);
+    
+    // Save to localStorage with multiple writes to ensure persistence
     saveConsentData(newConsentData);
+    
+    // Double-write the simple flag for extra reliability in PWA mode
+    try {
+      localStorage.setItem('trucknav_legal_accepted', 'true');
+      localStorage.setItem('trucknav_legal_consent', JSON.stringify(newConsentData));
+      console.log('[LEGAL-CONSENT] ✓ Consent saved to localStorage');
+      
+      // Verify the write was successful
+      const verifyRead = localStorage.getItem('trucknav_legal_accepted');
+      console.log('[LEGAL-CONSENT] Verification read:', verifyRead);
+    } catch (error) {
+      console.error('[LEGAL-CONSENT] ✗ Failed to save consent:', error);
+    }
 
     // Also save to backend (works for both authenticated and unauthenticated users)
     try {
       await apiRequest('POST', '/api/users/accept-terms', {});
-      console.log('Consent recorded on server');
+      console.log('[LEGAL-CONSENT] ✓ Consent recorded on server');
     } catch (error) {
       // Network errors are logged but don't block the flow
-      console.error('Failed to record consent on server:', error);
+      console.error('[LEGAL-CONSENT] Failed to record consent on server:', error);
     }
   }, [saveConsentData]);
 

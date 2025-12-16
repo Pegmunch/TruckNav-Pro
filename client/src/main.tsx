@@ -8,6 +8,13 @@ import { initializeGlobalErrorHandler } from "./lib/global-error-handler";
 import "./index.css";
 import "./i18n/config";
 
+// Debug: Log localStorage state immediately on script load (before React mounts)
+console.log('[MAIN] Script loaded - checking localStorage immediately:');
+console.log('[MAIN] trucknav_legal_consent:', localStorage.getItem('trucknav_legal_consent'));
+console.log('[MAIN] trucknav_legal_accepted:', localStorage.getItem('trucknav_legal_accepted'));
+console.log('[MAIN] trucknav_app_version:', localStorage.getItem('trucknav_app_version'));
+console.log('[MAIN] All localStorage keys:', Object.keys(localStorage));
+
 // Initialize CSRF token on app startup with robust error handling
 async function initializeCSRF() {
   try {
@@ -25,53 +32,36 @@ async function initializeCSRF() {
 
 // Register Service Worker for PWA functionality 
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
-// CRITICAL FIX: First UNREGISTER all old service workers and clear all caches
-// Then register fresh SW to ensure users always get latest version
+// SIMPLIFIED: Only register/update SW, don't aggressively clear on every load
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      // STEP 1: Aggressively clear ALL old service workers and caches
-      // This fixes iOS PWA showing old cached versions
-      console.log('[PWA-CLEANUP] Starting aggressive cache cleanup...');
+      // Check if we already have a valid SW registered
+      const existingRegistration = await navigator.serviceWorker.getRegistration('/');
       
-      // Unregister ALL existing service workers (both sw.js and sw-enhanced.js)
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        console.log('[PWA-CLEANUP] Unregistering old SW:', registration.scope);
-        await registration.unregister();
-      }
-      
-      // Delete ALL TruckNav-related caches
-      const cacheNames = await caches.keys();
-      for (const cacheName of cacheNames) {
-        if (cacheName.includes('trucknav') || cacheName.includes('TruckNav')) {
-          console.log('[PWA-CLEANUP] Deleting cache:', cacheName);
-          await caches.delete(cacheName);
+      if (existingRegistration) {
+        // Just update the existing SW
+        console.log('[PWA] Updating existing Service Worker...');
+        await existingRegistration.update();
+        
+        // If there's a waiting worker, activate it
+        if (existingRegistration.waiting) {
+          console.log('[PWA] Activating waiting worker');
+          existingRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
+      } else {
+        // No SW registered yet, register new one
+        console.log('[PWA] Registering new Service Worker...');
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'none'
+        });
+        console.log('[PWA] Service Worker registered successfully');
       }
       
-      console.log('[PWA-CLEANUP] Cleanup complete, registering fresh SW...');
-      
-      // STEP 2: Register new service worker with unique version
-      const SW_VERSION = `${Date.now()}`; // Always unique to force fresh registration
-      const registration = await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
-        scope: '/',
-        updateViaCache: 'none' // Always check server for updates
-      });
-      console.log('[PWA] Fresh Service Worker registered:', SW_VERSION);
-      
-      // Force immediate update check
-      await registration.update();
-      
-      // If there's a waiting worker, activate it immediately
-      if (registration.waiting) {
-        console.log('[PWA] Activating waiting worker immediately');
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-      
-      // Listen for controllerchange to reload page with fresh content
+      // Listen for controllerchange
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[PWA] Controller changed - fresh SW active');
+        console.log('[PWA] Controller changed - new SW active');
       });
       
     } catch (error) {
