@@ -36,15 +36,15 @@ export default function MapLegalOwnership({
   return (
     <div 
       className={cn(
-        // Base positioning - fixed at bottom right corner
-        "fixed bottom-0 right-0 z-[200] pointer-events-none",
+        // Base positioning - fixed at bottom left corner, above map attribution
+        "fixed bottom-6 left-0 z-[200] pointer-events-none",
         // Padding and spacing - thinner for PWA mode
         compact ? "px-3 py-1" : "px-4 py-3",
-        // Solid white background
-        "bg-white",
+        // Solid white background with rounded corners
+        "bg-white/95 backdrop-blur-sm rounded-r-lg",
         // Ensure readable on any map background
         "text-foreground",
-        // Responsive adjustments - max width for bottom right positioning
+        // Responsive adjustments - max width for bottom positioning
         "max-w-xs",
         // Automotive touch targets
         "automotive-legal-overlay",
