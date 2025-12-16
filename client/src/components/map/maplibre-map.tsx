@@ -679,19 +679,9 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         navigationControlRef.current = new maplibregl.NavigationControl({
           visualizePitch: true,
           showCompass: true,
-          showZoom: false
+          showZoom: true
         });
         map.current.addControl(navigationControlRef.current, 'top-right');
-        
-        // Reposition the navigation control container above compass button
-        setTimeout(() => {
-          const navControl = mapContainer.current?.querySelector('.maplibregl-ctrl-top-right');
-          if (navControl) {
-            (navControl as HTMLElement).style.top = 'auto';
-            (navControl as HTMLElement).style.bottom = '320px';
-            (navControl as HTMLElement).style.right = '16px';
-          }
-        }, 100);
       }
     };
     
