@@ -68,6 +68,7 @@ import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
+import { type IncidentType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
@@ -2852,6 +2853,47 @@ function NavigationPageContent() {
                       onReportIncident={() => setShowIncidentReportDialog(true)}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
                       isNavigating={isNavUIActive}
+                      currentLocation={currentGPSLocation}
+                      onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
+                        if (currentGPSLocation) {
+                          const incidentLabels: Record<IncidentType, string> = {
+                            'traffic_jam': 'Traffic Jam',
+                            'accident': 'Accident',
+                            'road_hazard': 'Road Hazard',
+                            'road_closure': 'Road Closure',
+                            'police': 'Police Activity',
+                            'speed_camera': 'Speed Camera',
+                            'construction': 'Construction',
+                            'weather_hazard': 'Weather Hazard',
+                          };
+                          apiRequest('POST', '/api/traffic-incidents', {
+                            type: type,
+                            title: incidentLabels[type] || type,
+                            severity,
+                            coordinates: currentGPSLocation,
+                          }).then(() => {
+                            queryClient.invalidateQueries({ queryKey: ['/api/traffic-incidents'] });
+                            toast({
+                              title: 'Incident Reported',
+                              description: `${incidentLabels[type] || type} reported via voice command.`,
+                            });
+                            console.log('[VOICE-REPORT] ✅ Incident reported via voice:', type, severity);
+                          }).catch(err => {
+                            console.error('[VOICE-REPORT] ❌ Failed to report incident:', err);
+                            toast({
+                              title: 'Report Failed',
+                              description: 'Could not submit the incident report.',
+                              variant: 'destructive',
+                            });
+                          });
+                        } else {
+                          toast({
+                            title: 'Location Required',
+                            description: 'GPS location is needed to report an incident.',
+                            variant: 'destructive',
+                          });
+                        }
+                      }}
                     />
                   }
                   rightStack={
