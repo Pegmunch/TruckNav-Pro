@@ -154,14 +154,20 @@ export default function LegalDisclaimerSimple() {
       </ScrollArea>
 
       {/* Footer - Accept Button */}
-      <div className="border-t bg-white dark:bg-gray-950 px-4 py-4 sm:px-6">
+      <div className="border-t bg-white dark:bg-gray-950 px-4 py-4 sm:px-6 safe-area-inset-bottom">
         <div className="max-w-4xl mx-auto">
           <Button
             size="lg"
-            className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
+            className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold pointer-events-auto touch-manipulation select-none"
             onClick={handleAccept}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              console.log('[LEGAL] Touch event on button');
+              handleAccept();
+            }}
             disabled={isAccepting}
             data-testid="button-accept-legal"
+            style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
           >
             {isAccepting ? (
               <>
