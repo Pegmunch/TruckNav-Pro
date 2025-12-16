@@ -83,6 +83,7 @@ import { Label } from "@/components/ui/label";
 import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
 import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
 import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
+import { LanguageSelector } from "@/components/settings/language-selector";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -1421,6 +1422,21 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
                       <Settings className="h-4 w-4 mr-2" />
                       App Settings
                     </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Language Selection */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      🌐 Language / Idioma / Sprache
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Change app and voice navigation language
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <LanguageSelector />
                   </CardContent>
                 </Card>
 

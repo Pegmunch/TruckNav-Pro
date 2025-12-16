@@ -94,5 +94,59 @@
     "silk_browser": "为Silk浏览器增强",
     "voice_support": "支持语音导航",
     "remote_navigation": "遥控器导航"
+  },
+  "voice": {
+    "directions": {
+      "straight": "直行",
+      "right": "右转",
+      "left": "左转",
+      "slight_right": "稍向右转",
+      "slight_left": "稍向左转",
+      "sharp_right": "急转右",
+      "sharp_left": "急转左",
+      "u_turn": "掉头",
+      "roundabout_right": "环岛右行",
+      "roundabout_left": "环岛左行",
+      "exit_right": "右侧驶出",
+      "exit_left": "左侧驶出"
+    },
+    "distance": {
+      "now": "现在{{direction}}",
+      "in_feet": "{{distance}}英尺后{{direction}}",
+      "in_feet_prefix": "{{distance}}英尺后，{{direction}}",
+      "in_meters": "{{distance}}米后{{direction}}",
+      "in_meters_prefix": "{{distance}}米后，{{direction}}"
+    },
+    "onto_road": "进入{{roadName}}",
+    "reroute": "正在重新规划路线",
+    "reroute_reason": "正在重新规划路线。{{reason}}",
+    "arrival": "您已到达目的地",
+    "incident_ahead": "注意：前方{{type}}",
+    "incident_distance": "注意：{{distance}}英里后有{{type}}",
+    "speed_warning": "超速警告。当前速度{{current}}{{unit}}。限速{{limit}}",
+    "use_lanes": "请使用{{lanes}}",
+    "test_message": "语音导航已准备就绪",
+    "units": {
+      "mph": "英里每小时",
+      "kmh": "公里每小时"
+    }
+  },
+  "settings": {
+    "language": "语言",
+    "select_language": "选择语言",
+    "voice_language": "语音语言",
+    "language_changed": "语言已更改为{{language}}"
+  },
+  "languages": {
+    "en-US": "英语（美国）",
+    "en-GB": "英语（英国）",
+    "es-ES": "西班牙语",
+    "de-DE": "德语",
+    "it-IT": "意大利语",
+    "pt-BR": "葡萄牙语",
+    "pl-PL": "波兰语",
+    "ro-RO": "罗马尼亚语",
+    "zh-CN": "简体中文",
+    "ja-JP": "日语"
   }
 }

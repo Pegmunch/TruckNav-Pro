@@ -94,5 +94,59 @@
     "silk_browser": "Migliorato per Silk Browser",
     "voice_support": "Navigazione Vocale Supportata",
     "remote_navigation": "Navigazione con Telecomando"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continua dritto",
+      "right": "Svolta a destra",
+      "left": "Svolta a sinistra",
+      "slight_right": "Mantieni la destra",
+      "slight_left": "Mantieni la sinistra",
+      "sharp_right": "Svolta bruscamente a destra",
+      "sharp_left": "Svolta bruscamente a sinistra",
+      "u_turn": "Fai inversione",
+      "roundabout_right": "Prendi la rotonda a destra",
+      "roundabout_left": "Prendi la rotonda a sinistra",
+      "exit_right": "Prendi l'uscita a destra",
+      "exit_left": "Prendi l'uscita a sinistra"
+    },
+    "distance": {
+      "now": "{{direction}} adesso",
+      "in_feet": "{{direction}} tra {{distance}} piedi",
+      "in_feet_prefix": "Tra {{distance}} piedi, {{direction}}",
+      "in_meters": "{{direction}} tra {{distance}} metri",
+      "in_meters_prefix": "Tra {{distance}} metri, {{direction}}"
+    },
+    "onto_road": "su {{roadName}}",
+    "reroute": "Ricalcolo percorso",
+    "reroute_reason": "Ricalcolo percorso. {{reason}}",
+    "arrival": "Sei arrivato a destinazione",
+    "incident_ahead": "Attenzione: {{type}} avanti",
+    "incident_distance": "Attenzione: {{type}} avanti tra {{distance}} miglia",
+    "speed_warning": "Avviso velocità. Velocità attuale {{current}} {{unit}}. Limite di velocità {{limit}}",
+    "use_lanes": "Usa {{lanes}}",
+    "test_message": "La guida vocale è pronta per la navigazione",
+    "units": {
+      "mph": "miglia all'ora",
+      "kmh": "chilometri all'ora"
+    }
+  },
+  "settings": {
+    "language": "Lingua",
+    "select_language": "Seleziona Lingua",
+    "voice_language": "Lingua Vocale",
+    "language_changed": "Lingua cambiata in {{language}}"
+  },
+  "languages": {
+    "en-US": "Inglese (US)",
+    "en-GB": "Inglese (UK)",
+    "es-ES": "Spagnolo",
+    "de-DE": "Tedesco",
+    "it-IT": "Italiano",
+    "pt-BR": "Portoghese",
+    "pl-PL": "Polacco",
+    "ro-RO": "Rumeno",
+    "zh-CN": "Cinese",
+    "ja-JP": "Giapponese"
   }
 }

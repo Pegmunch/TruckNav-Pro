@@ -1,0 +1,152 @@
+{
+  "app": {
+    "name": "TruckNav Pro",
+    "tagline": "Navigație Profesională pentru Camioane",
+    "owner": "Bespoke Marketing.Ai Ltd"
+  },
+  "navigation": {
+    "title": "TruckNav Pro",
+    "route_planning": "Planificare Rută",
+    "vehicle_setup": "Configurare Vehicul",
+    "facility_search": "Căutare Facilități",
+    "live_traffic": "Trafic în Direct",
+    "restrictions": "Restricții",
+    "settings": "Setări"
+  },
+  "vehicle": {
+    "profile": "Profil Vehicul",
+    "name": "Nume Vehicul",
+    "height": "Înălțime",
+    "width": "Lățime",
+    "length": "Lungime",
+    "weight": "Greutate",
+    "axles": "Osii",
+    "hazmat": "Materiale Periculoase",
+    "feet": "picioare",
+    "inches": "țoli",
+    "tons": "tone",
+    "save": "Salvare Profil"
+  },
+  "route": {
+    "plan": "Planificare Rută",
+    "from": "De la",
+    "to": "Către",
+    "calculate": "Calculare Rută",
+    "distance": "Distanță",
+    "duration": "Durată",
+    "restrictions": "Restricții Găsite",
+    "alternative": "Rută Alternativă"
+  },
+  "facilities": {
+    "search": "Căutare Facilități",
+    "truck_stop": "Parcare Camioane",
+    "fuel": "Stație de Benzină",
+    "parking": "Parcare",
+    "restaurant": "Restaurant",
+    "hotel": "Hotel",
+    "restrooms": "Toalete",
+    "showers": "Dușuri",
+    "near_me": "În Apropiere"
+  },
+  "legal": {
+    "title": "Acord Legal Necesar - TruckNav Pro",
+    "description": "Trebuie să acceptați acești termeni legali pentru a utiliza TruckNav Pro",
+    "patent_notice": "TruckNav Pro conține tehnologie brevetată deținută de Bespoke Marketing.Ai Ltd",
+    "trademark_notice": "TruckNav Pro și Professional Navigation sunt mărci înregistrate",
+    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Toate drepturile rezervate",
+    "accept": "Accept Acești Termeni",
+    "decline": "Nu Accept",
+    "terms_of_service": "Termeni și Condiții",
+    "privacy_policy": "Politica de Confidențialitate"
+  },
+  "subscription": {
+    "plans": "Planuri de Abonament",
+    "3month": "Plan 3 Luni",
+    "6month": "Plan 6 Luni",
+    "12month": "Plan 12 Luni",
+    "lifetime": "Acces pe Viață",
+    "price_3m": "99,99 RON",
+    "price_6m": "199,99 RON",
+    "price_12m": "399,99 RON",
+    "price_lifetime": "799,99 RON",
+    "features": "Funcționalități Incluse",
+    "subscribe": "Abonează-te Acum"
+  },
+  "common": {
+    "loading": "Se încarcă...",
+    "error": "Eroare",
+    "success": "Succes",
+    "cancel": "Anulare",
+    "continue": "Continuare",
+    "back": "Înapoi",
+    "next": "Următorul",
+    "save": "Salvare",
+    "delete": "Ștergere",
+    "edit": "Editare",
+    "close": "Închidere",
+    "search": "Căutare",
+    "filter": "Filtrare",
+    "language": "Limbă"
+  },
+  "amazon": {
+    "fire_tv": "Optimizat pentru Fire TV",
+    "fire_tablet": "Optimizat pentru Fire Tablet",
+    "silk_browser": "Îmbunătățit pentru Silk Browser",
+    "voice_support": "Navigație Vocală Suportată",
+    "remote_navigation": "Navigație cu Telecomandă"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continuați drept",
+      "right": "Virați la dreapta",
+      "left": "Virați la stânga",
+      "slight_right": "Mențineți dreapta",
+      "slight_left": "Mențineți stânga",
+      "sharp_right": "Virați brusc la dreapta",
+      "sharp_left": "Virați brusc la stânga",
+      "u_turn": "Faceți întoarcere",
+      "roundabout_right": "Luați sensul giratoriu la dreapta",
+      "roundabout_left": "Luați sensul giratoriu la stânga",
+      "exit_right": "Luați ieșirea la dreapta",
+      "exit_left": "Luați ieșirea la stânga"
+    },
+    "distance": {
+      "now": "{{direction}} acum",
+      "in_feet": "{{direction}} în {{distance}} picioare",
+      "in_feet_prefix": "În {{distance}} picioare, {{direction}}",
+      "in_meters": "{{direction}} în {{distance}} metri",
+      "in_meters_prefix": "În {{distance}} metri, {{direction}}"
+    },
+    "onto_road": "pe {{roadName}}",
+    "reroute": "Recalculare rută",
+    "reroute_reason": "Recalculare rută. {{reason}}",
+    "arrival": "Ați ajuns la destinație",
+    "incident_ahead": "Atenție: {{type}} înainte",
+    "incident_distance": "Atenție: {{type}} la {{distance}} mile",
+    "speed_warning": "Avertizare viteză. Viteza curentă {{current}} {{unit}}. Limita de viteză este {{limit}}",
+    "use_lanes": "Folosiți {{lanes}}",
+    "test_message": "Ghidarea vocală este pregătită pentru navigație",
+    "units": {
+      "mph": "mile pe oră",
+      "kmh": "kilometri pe oră"
+    }
+  },
+  "settings": {
+    "language": "Limbă",
+    "select_language": "Selectare Limbă",
+    "voice_language": "Limbă Vocală",
+    "language_changed": "Limba a fost schimbată în {{language}}"
+  },
+  "languages": {
+    "en-US": "Engleză (SUA)",
+    "en-GB": "Engleză (UK)",
+    "es-ES": "Spaniolă",
+    "de-DE": "Germană",
+    "it-IT": "Italiană",
+    "pt-BR": "Portugheză",
+    "pl-PL": "Poloneză",
+    "ro-RO": "Română",
+    "zh-CN": "Chineză",
+    "ja-JP": "Japoneză"
+  }
+}

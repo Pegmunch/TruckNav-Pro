@@ -94,5 +94,59 @@
     "silk_browser": "Enhanced for Silk Browser",
     "voice_support": "Voice Navigation Supported",
     "remote_navigation": "Remote Control Navigation"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continue straight",
+      "right": "Turn right",
+      "left": "Turn left",
+      "slight_right": "Bear right",
+      "slight_left": "Bear left",
+      "sharp_right": "Turn sharp right",
+      "sharp_left": "Turn sharp left",
+      "u_turn": "Make a U-turn",
+      "roundabout_right": "Take the roundabout to the right",
+      "roundabout_left": "Take the roundabout to the left",
+      "exit_right": "Take the exit on the right",
+      "exit_left": "Take the exit on the left"
+    },
+    "distance": {
+      "now": "{{direction}} now",
+      "in_feet": "{{direction}} in {{distance}} feet",
+      "in_feet_prefix": "In {{distance}} feet, {{direction}}",
+      "in_meters": "{{direction}} in {{distance}} meters",
+      "in_meters_prefix": "In {{distance}} meters, {{direction}}"
+    },
+    "onto_road": "onto {{roadName}}",
+    "reroute": "Recalculating route",
+    "reroute_reason": "Recalculating route. {{reason}}",
+    "arrival": "You have arrived at your destination",
+    "incident_ahead": "Warning: {{type}} ahead",
+    "incident_distance": "Warning: {{type}} ahead in {{distance}} miles",
+    "speed_warning": "Speed warning. Current speed {{current}} {{unit}}. Speed limit is {{limit}}",
+    "use_lanes": "Use {{lanes}}",
+    "test_message": "Voice guidance is ready for navigation",
+    "units": {
+      "mph": "miles per hour",
+      "kmh": "kilometers per hour"
+    }
+  },
+  "settings": {
+    "language": "Language",
+    "select_language": "Select Language",
+    "voice_language": "Voice Language",
+    "language_changed": "Language changed to {{language}}"
+  },
+  "languages": {
+    "en-US": "English (US)",
+    "en-GB": "English (UK)",
+    "es-ES": "Spanish",
+    "de-DE": "German",
+    "it-IT": "Italian",
+    "pt-BR": "Portuguese",
+    "pl-PL": "Polish",
+    "ro-RO": "Romanian",
+    "zh-CN": "Chinese",
+    "ja-JP": "Japanese"
   }
 }

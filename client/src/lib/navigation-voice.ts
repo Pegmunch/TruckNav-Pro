@@ -18,6 +18,7 @@ interface VoiceSettings {
   announceRoadNames: boolean;
   announceSpeed: boolean;
   announceLaneGuidance: boolean;
+  language: string; // BCP-47 language code (e.g., 'en-US', 'es-ES')
 }
 
 interface QueuedInstruction {
@@ -57,6 +58,20 @@ export class NavigationVoice {
     critical: 1.3
   };
   
+  // Supported language voice codes mapping
+  private readonly LANGUAGE_VOICE_MAP: { [key: string]: string[] } = {
+    'en-US': ['en-US', 'en_US', 'en'],
+    'en-GB': ['en-GB', 'en_GB', 'en'],
+    'es-ES': ['es-ES', 'es_ES', 'es-MX', 'es'],
+    'de-DE': ['de-DE', 'de_DE', 'de'],
+    'it-IT': ['it-IT', 'it_IT', 'it'],
+    'pt-BR': ['pt-BR', 'pt_BR', 'pt-PT', 'pt'],
+    'pl-PL': ['pl-PL', 'pl_PL', 'pl'],
+    'ro-RO': ['ro-RO', 'ro_RO', 'ro'],
+    'zh-CN': ['zh-CN', 'zh_CN', 'zh-Hans', 'zh'],
+    'ja-JP': ['ja-JP', 'ja_JP', 'ja'],
+  };
+
   // Default settings
   private readonly DEFAULT_SETTINGS: VoiceSettings = {
     enabled: true,
@@ -67,7 +82,8 @@ export class NavigationVoice {
     announceDistances: true,
     announceRoadNames: true,
     announceSpeed: false,
-    announceLaneGuidance: true
+    announceLaneGuidance: true,
+    language: 'en-US'
   };
   
   private constructor() {
@@ -116,7 +132,7 @@ export class NavigationVoice {
   }
   
   /**
-   * Load available voices and select preferred one
+   * Load available voices and select preferred one for current language
    */
   private loadVoices(): void {
     this.voices = this.synthesis.getVoices();
@@ -130,22 +146,64 @@ export class NavigationVoice {
       this.selectedVoice = this.voices.find(v => v.name === this.settings.voice) || null;
     }
     
-    // Fallback to English voice if no preference or not found
+    // If no preferred voice or not found, select based on language
     if (!this.selectedVoice) {
-      // Prefer US/UK English voices for clarity
-      const englishVoices = this.voices.filter(v => 
-        v.lang.startsWith('en-') && 
-        (v.lang.includes('US') || v.lang.includes('GB'))
-      );
-      
-      // Prefer a female voice as they're often clearer in navigation systems
-      this.selectedVoice = englishVoices.find(v => v.name.toLowerCase().includes('female')) ||
-                          englishVoices.find(v => v.name.toLowerCase().includes('samantha')) ||
-                          englishVoices.find(v => v.name.toLowerCase().includes('kate')) ||
-                          englishVoices[0] ||
-                          this.voices.find(v => v.lang.startsWith('en-')) ||
-                          this.voices[0];
+      this.selectVoiceForLanguage(this.settings.language);
     }
+  }
+  
+  /**
+   * Select a voice that matches the given language
+   */
+  private selectVoiceForLanguage(langCode: string): void {
+    if (this.voices.length === 0) {
+      return;
+    }
+    
+    const langPatterns = this.LANGUAGE_VOICE_MAP[langCode] || [langCode, langCode.split('-')[0]];
+    
+    // Find voices matching the language patterns
+    let matchingVoices: SpeechSynthesisVoice[] = [];
+    for (const pattern of langPatterns) {
+      matchingVoices = this.voices.filter(v => 
+        v.lang.toLowerCase().startsWith(pattern.toLowerCase()) ||
+        v.lang.toLowerCase().replace('_', '-').startsWith(pattern.toLowerCase().replace('_', '-'))
+      );
+      if (matchingVoices.length > 0) break;
+    }
+    
+    if (matchingVoices.length > 0) {
+      // Prefer a female voice as they're often clearer in navigation systems
+      this.selectedVoice = matchingVoices.find(v => v.name.toLowerCase().includes('female')) ||
+                          matchingVoices.find(v => v.name.toLowerCase().includes('samantha')) ||
+                          matchingVoices.find(v => v.name.toLowerCase().includes('kate')) ||
+                          matchingVoices.find(v => v.name.toLowerCase().includes('zira')) ||
+                          matchingVoices.find(v => v.name.toLowerCase().includes('google')) ||
+                          matchingVoices[0];
+      console.log(`[NavigationVoice] Selected voice for ${langCode}:`, this.selectedVoice?.name);
+    } else {
+      // Fallback to English if no matching voice found
+      console.warn(`[NavigationVoice] No voice found for ${langCode}, falling back to English`);
+      const englishVoices = this.voices.filter(v => v.lang.startsWith('en'));
+      this.selectedVoice = englishVoices[0] || this.voices[0];
+    }
+  }
+  
+  /**
+   * Set the language for voice guidance
+   */
+  public setLanguage(langCode: string): void {
+    this.settings.language = langCode;
+    this.saveSettings();
+    this.selectVoiceForLanguage(langCode);
+    console.log(`[NavigationVoice] Language set to ${langCode}`);
+  }
+  
+  /**
+   * Get current language
+   */
+  public getLanguage(): string {
+    return this.settings.language;
   }
   
   /**

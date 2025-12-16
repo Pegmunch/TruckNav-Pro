@@ -94,5 +94,59 @@
     "silk_browser": "Ulepszone dla przeglądarki Silk",
     "voice_support": "Obsługa nawigacji głosowej",
     "remote_navigation": "Nawigacja pilotem"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Jedź prosto",
+      "right": "Skręć w prawo",
+      "left": "Skręć w lewo",
+      "slight_right": "Trzymaj się prawej strony",
+      "slight_left": "Trzymaj się lewej strony",
+      "sharp_right": "Skręć ostro w prawo",
+      "sharp_left": "Skręć ostro w lewo",
+      "u_turn": "Zawróć",
+      "roundabout_right": "Weź rondo w prawo",
+      "roundabout_left": "Weź rondo w lewo",
+      "exit_right": "Zjedź zjazdem w prawo",
+      "exit_left": "Zjedź zjazdem w lewo"
+    },
+    "distance": {
+      "now": "{{direction}} teraz",
+      "in_feet": "{{direction}} za {{distance}} stóp",
+      "in_feet_prefix": "Za {{distance}} stóp, {{direction}}",
+      "in_meters": "{{direction}} za {{distance}} metrów",
+      "in_meters_prefix": "Za {{distance}} metrów, {{direction}}"
+    },
+    "onto_road": "na {{roadName}}",
+    "reroute": "Przeliczanie trasy",
+    "reroute_reason": "Przeliczanie trasy. {{reason}}",
+    "arrival": "Dotarłeś do celu",
+    "incident_ahead": "Uwaga: {{type}} przed tobą",
+    "incident_distance": "Uwaga: {{type}} za {{distance}} mil",
+    "speed_warning": "Ostrzeżenie o prędkości. Aktualna prędkość {{current}} {{unit}}. Limit prędkości to {{limit}}",
+    "use_lanes": "Użyj {{lanes}}",
+    "test_message": "Nawigacja głosowa jest gotowa",
+    "units": {
+      "mph": "mil na godzinę",
+      "kmh": "kilometrów na godzinę"
+    }
+  },
+  "settings": {
+    "language": "Język",
+    "select_language": "Wybierz Język",
+    "voice_language": "Język Głosu",
+    "language_changed": "Język zmieniony na {{language}}"
+  },
+  "languages": {
+    "en-US": "Angielski (US)",
+    "en-GB": "Angielski (UK)",
+    "es-ES": "Hiszpański",
+    "de-DE": "Niemiecki",
+    "it-IT": "Włoski",
+    "pt-BR": "Portugalski",
+    "pl-PL": "Polski",
+    "ro-RO": "Rumuński",
+    "zh-CN": "Chiński",
+    "ja-JP": "Japoński"
   }
 }

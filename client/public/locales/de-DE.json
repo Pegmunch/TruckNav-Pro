@@ -94,5 +94,59 @@
     "silk_browser": "Erweitert für Silk Browser",
     "voice_support": "Sprachnavigation unterstützt",
     "remote_navigation": "Fernbedienung Navigation"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Fahren Sie geradeaus",
+      "right": "Biegen Sie rechts ab",
+      "left": "Biegen Sie links ab",
+      "slight_right": "Halten Sie sich rechts",
+      "slight_left": "Halten Sie sich links",
+      "sharp_right": "Biegen Sie scharf rechts ab",
+      "sharp_left": "Biegen Sie scharf links ab",
+      "u_turn": "Wenden Sie",
+      "roundabout_right": "Nehmen Sie den Kreisverkehr rechts",
+      "roundabout_left": "Nehmen Sie den Kreisverkehr links",
+      "exit_right": "Nehmen Sie die Ausfahrt rechts",
+      "exit_left": "Nehmen Sie die Ausfahrt links"
+    },
+    "distance": {
+      "now": "{{direction}} jetzt",
+      "in_feet": "{{direction}} in {{distance}} Fuß",
+      "in_feet_prefix": "In {{distance}} Fuß, {{direction}}",
+      "in_meters": "{{direction}} in {{distance}} Metern",
+      "in_meters_prefix": "In {{distance}} Metern, {{direction}}"
+    },
+    "onto_road": "auf {{roadName}}",
+    "reroute": "Route wird neu berechnet",
+    "reroute_reason": "Route wird neu berechnet. {{reason}}",
+    "arrival": "Sie haben Ihr Ziel erreicht",
+    "incident_ahead": "Achtung: {{type}} voraus",
+    "incident_distance": "Achtung: {{type}} voraus in {{distance}} Meilen",
+    "speed_warning": "Geschwindigkeitswarnung. Aktuelle Geschwindigkeit {{current}} {{unit}}. Tempolimit ist {{limit}}",
+    "use_lanes": "Nutzen Sie {{lanes}}",
+    "test_message": "Sprachführung ist bereit für die Navigation",
+    "units": {
+      "mph": "Meilen pro Stunde",
+      "kmh": "Kilometer pro Stunde"
+    }
+  },
+  "settings": {
+    "language": "Sprache",
+    "select_language": "Sprache auswählen",
+    "voice_language": "Sprachausgabe",
+    "language_changed": "Sprache geändert zu {{language}}"
+  },
+  "languages": {
+    "en-US": "Englisch (US)",
+    "en-GB": "Englisch (UK)",
+    "es-ES": "Spanisch",
+    "de-DE": "Deutsch",
+    "it-IT": "Italienisch",
+    "pt-BR": "Portugiesisch",
+    "pl-PL": "Polnisch",
+    "ro-RO": "Rumänisch",
+    "zh-CN": "Chinesisch",
+    "ja-JP": "Japanisch"
   }
 }

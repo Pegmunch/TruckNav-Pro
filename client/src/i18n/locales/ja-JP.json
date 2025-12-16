@@ -94,5 +94,59 @@
     "silk_browser": "Silk Browser用に強化",
     "voice_support": "音声ナビゲーションサポート",
     "remote_navigation": "リモコンナビゲーション"
+  },
+  "voice": {
+    "directions": {
+      "straight": "直進",
+      "right": "右折",
+      "left": "左折",
+      "slight_right": "斜め右へ",
+      "slight_left": "斜め左へ",
+      "sharp_right": "鋭く右折",
+      "sharp_left": "鋭く左折",
+      "u_turn": "Uターン",
+      "roundabout_right": "ロータリーを右へ",
+      "roundabout_left": "ロータリーを左へ",
+      "exit_right": "右の出口へ",
+      "exit_left": "左の出口へ"
+    },
+    "distance": {
+      "now": "今すぐ{{direction}}",
+      "in_feet": "{{distance}}フィート先で{{direction}}",
+      "in_feet_prefix": "{{distance}}フィート先、{{direction}}",
+      "in_meters": "{{distance}}メートル先で{{direction}}",
+      "in_meters_prefix": "{{distance}}メートル先、{{direction}}"
+    },
+    "onto_road": "{{roadName}}へ",
+    "reroute": "ルートを再計算中",
+    "reroute_reason": "ルートを再計算中。{{reason}}",
+    "arrival": "目的地に到着しました",
+    "incident_ahead": "注意：この先{{type}}",
+    "incident_distance": "注意：{{distance}}マイル先に{{type}}",
+    "speed_warning": "速度警告。現在速度{{current}}{{unit}}。制限速度は{{limit}}",
+    "use_lanes": "{{lanes}}を使用してください",
+    "test_message": "音声ナビゲーションの準備ができました",
+    "units": {
+      "mph": "マイル毎時",
+      "kmh": "キロメートル毎時"
+    }
+  },
+  "settings": {
+    "language": "言語",
+    "select_language": "言語を選択",
+    "voice_language": "音声言語",
+    "language_changed": "言語が{{language}}に変更されました"
+  },
+  "languages": {
+    "en-US": "英語（米国）",
+    "en-GB": "英語（英国）",
+    "es-ES": "スペイン語",
+    "de-DE": "ドイツ語",
+    "it-IT": "イタリア語",
+    "pt-BR": "ポルトガル語",
+    "pl-PL": "ポーランド語",
+    "ro-RO": "ルーマニア語",
+    "zh-CN": "中国語",
+    "ja-JP": "日本語"
   }
 }

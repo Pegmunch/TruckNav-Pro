@@ -94,5 +94,59 @@
     "silk_browser": "Mejorado para Silk Browser",
     "voice_support": "Navegación por Voz Soportada",
     "remote_navigation": "Navegación con Control Remoto"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continúe recto",
+      "right": "Gire a la derecha",
+      "left": "Gire a la izquierda",
+      "slight_right": "Gire ligeramente a la derecha",
+      "slight_left": "Gire ligeramente a la izquierda",
+      "sharp_right": "Gire bruscamente a la derecha",
+      "sharp_left": "Gire bruscamente a la izquierda",
+      "u_turn": "Haga un cambio de sentido",
+      "roundabout_right": "Tome la rotonda a la derecha",
+      "roundabout_left": "Tome la rotonda a la izquierda",
+      "exit_right": "Tome la salida a la derecha",
+      "exit_left": "Tome la salida a la izquierda"
+    },
+    "distance": {
+      "now": "{{direction}} ahora",
+      "in_feet": "{{direction}} en {{distance}} pies",
+      "in_feet_prefix": "En {{distance}} pies, {{direction}}",
+      "in_meters": "{{direction}} en {{distance}} metros",
+      "in_meters_prefix": "En {{distance}} metros, {{direction}}"
+    },
+    "onto_road": "hacia {{roadName}}",
+    "reroute": "Recalculando ruta",
+    "reroute_reason": "Recalculando ruta. {{reason}}",
+    "arrival": "Ha llegado a su destino",
+    "incident_ahead": "Advertencia: {{type}} adelante",
+    "incident_distance": "Advertencia: {{type}} adelante en {{distance}} millas",
+    "speed_warning": "Advertencia de velocidad. Velocidad actual {{current}} {{unit}}. Límite de velocidad es {{limit}}",
+    "use_lanes": "Use {{lanes}}",
+    "test_message": "La guía de voz está lista para la navegación",
+    "units": {
+      "mph": "millas por hora",
+      "kmh": "kilómetros por hora"
+    }
+  },
+  "settings": {
+    "language": "Idioma",
+    "select_language": "Seleccionar Idioma",
+    "voice_language": "Idioma de Voz",
+    "language_changed": "Idioma cambiado a {{language}}"
+  },
+  "languages": {
+    "en-US": "Inglés (EE.UU.)",
+    "en-GB": "Inglés (UK)",
+    "es-ES": "Español",
+    "de-DE": "Alemán",
+    "it-IT": "Italiano",
+    "pt-BR": "Portugués",
+    "pl-PL": "Polaco",
+    "ro-RO": "Rumano",
+    "zh-CN": "Chino",
+    "ja-JP": "Japonés"
   }
 }

@@ -94,5 +94,59 @@
     "silk_browser": "Aprimorado para Silk Browser",
     "voice_support": "Navegação por Voz Suportada",
     "remote_navigation": "Navegação com Controle Remoto"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continue em frente",
+      "right": "Vire à direita",
+      "left": "Vire à esquerda",
+      "slight_right": "Mantenha-se à direita",
+      "slight_left": "Mantenha-se à esquerda",
+      "sharp_right": "Vire fortemente à direita",
+      "sharp_left": "Vire fortemente à esquerda",
+      "u_turn": "Faça retorno",
+      "roundabout_right": "Pegue a rotatória à direita",
+      "roundabout_left": "Pegue a rotatória à esquerda",
+      "exit_right": "Pegue a saída à direita",
+      "exit_left": "Pegue a saída à esquerda"
+    },
+    "distance": {
+      "now": "{{direction}} agora",
+      "in_feet": "{{direction}} em {{distance}} pés",
+      "in_feet_prefix": "Em {{distance}} pés, {{direction}}",
+      "in_meters": "{{direction}} em {{distance}} metros",
+      "in_meters_prefix": "Em {{distance}} metros, {{direction}}"
+    },
+    "onto_road": "para {{roadName}}",
+    "reroute": "Recalculando rota",
+    "reroute_reason": "Recalculando rota. {{reason}}",
+    "arrival": "Você chegou ao seu destino",
+    "incident_ahead": "Atenção: {{type}} à frente",
+    "incident_distance": "Atenção: {{type}} à frente em {{distance}} milhas",
+    "speed_warning": "Alerta de velocidade. Velocidade atual {{current}} {{unit}}. Limite de velocidade é {{limit}}",
+    "use_lanes": "Use {{lanes}}",
+    "test_message": "A orientação por voz está pronta para navegação",
+    "units": {
+      "mph": "milhas por hora",
+      "kmh": "quilômetros por hora"
+    }
+  },
+  "settings": {
+    "language": "Idioma",
+    "select_language": "Selecionar Idioma",
+    "voice_language": "Idioma de Voz",
+    "language_changed": "Idioma alterado para {{language}}"
+  },
+  "languages": {
+    "en-US": "Inglês (EUA)",
+    "en-GB": "Inglês (UK)",
+    "es-ES": "Espanhol",
+    "de-DE": "Alemão",
+    "it-IT": "Italiano",
+    "pt-BR": "Português",
+    "pl-PL": "Polonês",
+    "ro-RO": "Romeno",
+    "zh-CN": "Chinês",
+    "ja-JP": "Japonês"
   }
 }
