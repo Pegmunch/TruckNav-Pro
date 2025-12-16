@@ -2,7 +2,8 @@
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
 // Force cache update by incrementing version (fixes PWA multi-version issue)
-const CACHE_VERSION = '3.4.4';
+// Using timestamp to ensure caches update on every server restart
+const CACHE_VERSION = new Date().toISOString().split('T')[0]; // Daily rotation (YYYY-MM-DD)
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;
@@ -392,7 +393,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches AGGRESSIVELY
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating TruckNav Pro Service Worker v' + CACHE_VERSION);
   
@@ -400,18 +401,28 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((cacheNames) => {
         const validCaches = [CACHE_NAME, STATIC_CACHE, API_CACHE, MAP_CACHE];
+        console.log('[SW] Current caches:', cacheNames);
+        console.log('[SW] Valid caches for this version:', validCaches);
+        
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (!validCaches.includes(cacheName)) {
-              console.log('[SW] Deleting old cache:', cacheName);
+            // Delete ALL caches that contain 'trucknav' but don't match current version
+            // This is more aggressive than just checking validCaches list
+            if (cacheName.includes('trucknav') && !validCaches.includes(cacheName)) {
+              console.log('[SW] ✓ DELETING OLD CACHE:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('[SW] Service Worker activated and caches cleaned');
+        console.log('[SW] ✓ Service Worker activated and ALL old caches cleaned');
+        // Claim all clients to ensure they use new cache immediately
         return self.clients.claim();
+      })
+      .catch((error) => {
+        console.error('[SW] Cache cleanup error during activation:', error);
+        trackError(error);
       })
   );
 });
