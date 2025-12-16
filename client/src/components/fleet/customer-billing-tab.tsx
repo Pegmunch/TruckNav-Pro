@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ interface BillingAnalytics {
 }
 
 export function CustomerBillingTab() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,10 +117,10 @@ export function CustomerBillingTab() {
 
   const getContractBadge = (contractType: Customer['contractType']) => {
     const config = {
-      per_mile: { label: 'Per Mile', class: 'bg-blue-100 text-blue-800' },
-      per_hour: { label: 'Per Hour', class: 'bg-green-100 text-green-800' },
-      fixed: { label: 'Fixed Rate', class: 'bg-purple-100 text-purple-800' },
-      hybrid: { label: 'Hybrid', class: 'bg-orange-100 text-orange-800' },
+      per_mile: { label: t('fleet.billing.perMile'), class: 'bg-blue-100 text-blue-800' },
+      per_hour: { label: t('fleet.billing.perHour'), class: 'bg-green-100 text-green-800' },
+      fixed: { label: t('fleet.billing.fixedRate'), class: 'bg-purple-100 text-purple-800' },
+      hybrid: { label: t('fleet.billing.hybrid'), class: 'bg-orange-100 text-orange-800' },
     };
     const c = config[contractType];
     return <Badge className={c.class}>{c.label}</Badge>;
@@ -126,9 +128,9 @@ export function CustomerBillingTab() {
 
   const getStatusBadge = (status: Customer['status']) => {
     const config = {
-      active: { label: 'Active', variant: 'default' as const },
-      inactive: { label: 'Inactive', variant: 'secondary' as const },
-      pending: { label: 'Pending', variant: 'outline' as const },
+      active: { label: t('fleet.common.active'), variant: 'default' as const },
+      inactive: { label: t('fleet.common.inactive'), variant: 'secondary' as const },
+      pending: { label: t('fleet.common.pending'), variant: 'outline' as const },
     };
     const c = config[status];
     return <Badge variant={c.variant}>{c.label}</Badge>;
@@ -154,56 +156,56 @@ export function CustomerBillingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-600" />
-              Total Revenue
+              {t('fleet.billing.totalRevenue')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600" data-testid="text-total-revenue">
               £{analytics?.totalRevenue?.toLocaleString() || '0'}
             </div>
-            <p className="text-xs text-muted-foreground">This period</p>
+            <p className="text-xs text-muted-foreground">{t('fleet.billing.thisPeriod')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-orange-600" />
-              Outstanding Balance
+              {t('fleet.billing.outstandingBalance')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600" data-testid="text-outstanding-balance">
               £{analytics?.outstandingBalance?.toLocaleString() || '0'}
             </div>
-            <p className="text-xs text-muted-foreground">Pending payments</p>
+            <p className="text-xs text-muted-foreground">{t('fleet.billing.pendingPayments')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-blue-600" />
-              Avg Profit Margin
+              {t('fleet.billing.avgProfitMargin')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600" data-testid="text-avg-profit-margin">
               {analytics?.averageProfitMargin?.toFixed(1) || '0'}%
             </div>
-            <p className="text-xs text-muted-foreground">Across all customers</p>
+            <p className="text-xs text-muted-foreground">{t('fleet.billing.acrossAllCustomers')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Users className="w-4 h-4 text-purple-600" />
-              Active Contracts
+              {t('fleet.billing.activeContracts')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600" data-testid="text-active-contracts">
               {analytics?.activeContracts || 0}
             </div>
-            <p className="text-xs text-muted-foreground">of {analytics?.customerCount || 0} customers</p>
+            <p className="text-xs text-muted-foreground">{t('fleet.billing.ofCustomers', { count: analytics?.customerCount || 0 })}</p>
           </CardContent>
         </Card>
       </div>
@@ -213,9 +215,9 @@ export function CustomerBillingTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
-              Top Customers
+              {t('fleet.billing.topCustomers')}
             </CardTitle>
-            <CardDescription>By revenue generated</CardDescription>
+            <CardDescription>{t('fleet.billing.byRevenue')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -249,15 +251,15 @@ export function CustomerBillingTab() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
-              Customer Billing
+              {t('fleet.billing.customerBilling')}
             </CardTitle>
-            <CardDescription>Manage customer contracts and billing</CardDescription>
+            <CardDescription>{t('fleet.billing.manageContracts')}</CardDescription>
           </div>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button data-testid="button-add-customer">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Customer
+                {t('fleet.billing.addCustomer')}
               </Button>
             </DialogTrigger>
             <AddCustomerDialog onClose={() => setIsAddOpen(false)} />
@@ -269,7 +271,7 @@ export function CustomerBillingTab() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search customers..."
+                  placeholder={t('fleet.billing.searchCustomers')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -279,40 +281,40 @@ export function CustomerBillingTab() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]" data-testid="select-status-filter">
-                <SelectValue placeholder="Filter status" />
+                <SelectValue placeholder={t('fleet.billing.filterStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t('fleet.billing.allStatus')}</SelectItem>
+                <SelectItem value="active">{t('fleet.common.active')}</SelectItem>
+                <SelectItem value="inactive">{t('fleet.common.inactive')}</SelectItem>
+                <SelectItem value="pending">{t('fleet.common.pending')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {isLoadingCustomers ? (
-            <div className="text-center py-8 text-muted-foreground">Loading customers...</div>
+            <div className="text-center py-8 text-muted-foreground">{t('fleet.common.loading')}</div>
           ) : isCustomersError && !import.meta.env.DEV ? (
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Unable to load customer data</p>
-              <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+              <p className="text-muted-foreground">{t('fleet.common.unableToLoad')}</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('fleet.common.tryRefreshing')}</p>
             </div>
           ) : filteredCustomers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">No customers found</div>
+            <div className="text-center py-8 text-muted-foreground">{t('fleet.billing.noCustomersFound')}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Contract Type</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Total Trips</TableHead>
-                    <TableHead>Revenue</TableHead>
-                    <TableHead>Profit Margin</TableHead>
-                    <TableHead>Outstanding</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('fleet.billing.customer')}</TableHead>
+                    <TableHead>{t('fleet.billing.contractType')}</TableHead>
+                    <TableHead>{t('fleet.billing.rate')}</TableHead>
+                    <TableHead>{t('fleet.billing.totalTrips')}</TableHead>
+                    <TableHead>{t('fleet.billing.revenue')}</TableHead>
+                    <TableHead>{t('fleet.billing.profitMargin')}</TableHead>
+                    <TableHead>{t('fleet.billing.outstanding')}</TableHead>
+                    <TableHead>{t('fleet.common.status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -352,45 +354,45 @@ export function CustomerBillingTab() {
       {selectedCustomer && (
         <Card>
           <CardHeader>
-            <CardTitle>Customer Details: {selectedCustomer.name}</CardTitle>
-            <CardDescription>Full billing and contract information</CardDescription>
+            <CardTitle>{t('fleet.billing.customerDetails')}: {selectedCustomer.name}</CardTitle>
+            <CardDescription>{t('fleet.billing.fullBillingInfo')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <div className="text-sm text-muted-foreground">Contact Email</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.contactEmail')}</div>
                 <div className="font-medium" data-testid="text-customer-email">{selectedCustomer.email}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Phone</div>
-                <div className="font-medium" data-testid="text-customer-phone">{selectedCustomer.phone || 'N/A'}</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.phone')}</div>
+                <div className="font-medium" data-testid="text-customer-phone">{selectedCustomer.phone || t('fleet.common.na')}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Contract Type</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.contractType')}</div>
                 <div className="font-medium">{getContractBadge(selectedCustomer.contractType)}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Rate</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.rate')}</div>
                 <div className="font-medium" data-testid="text-customer-rate">{formatRate(selectedCustomer)}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Total Trips</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.totalTrips')}</div>
                 <div className="font-medium" data-testid="text-customer-trips">{selectedCustomer.totalTrips}</div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Total Revenue</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.totalRevenue')}</div>
                 <div className="font-medium text-green-600" data-testid="text-customer-revenue">
                   £{selectedCustomer.totalRevenue.toLocaleString()}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Profit Margin</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.profitMargin')}</div>
                 <div className="font-medium" data-testid="text-customer-margin">
                   {selectedCustomer.profitMargin.toFixed(1)}%
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Outstanding Balance</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.billing.outstandingBalance')}</div>
                 <div className={`font-medium ${selectedCustomer.outstandingBalance > 0 ? 'text-orange-600' : 'text-green-600'}`} data-testid="text-customer-outstanding">
                   £{selectedCustomer.outstandingBalance.toLocaleString()}
                 </div>
@@ -398,7 +400,7 @@ export function CustomerBillingTab() {
             </div>
             <div className="mt-4 flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setSelectedCustomer(null)}>
-                Close
+                {t('fleet.common.close')}
               </Button>
             </div>
           </CardContent>

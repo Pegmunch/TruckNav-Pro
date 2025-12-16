@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -40,6 +41,7 @@ interface HoSData {
 }
 
 export function HoursOfServiceTab() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   
   const { data: hosData, isLoading, isError: isHosError } = useQuery<HoSData>({
@@ -90,10 +92,10 @@ export function HoursOfServiceTab() {
 
   const getStatusBadge = (status: DriverHoSStatus['currentStatus']) => {
     const statusConfig = {
-      driving: { label: 'Driving', class: 'bg-green-100 text-green-800' },
-      on_duty: { label: 'On Duty', class: 'bg-blue-100 text-blue-800' },
-      off_duty: { label: 'Off Duty', class: 'bg-yellow-100 text-yellow-800' },
-      sleeper: { label: 'Sleeper', class: 'bg-purple-100 text-purple-800' },
+      driving: { label: t('fleet.hos.driving'), class: 'bg-green-100 text-green-800' },
+      on_duty: { label: t('fleet.hos.onDuty'), class: 'bg-blue-100 text-blue-800' },
+      off_duty: { label: t('fleet.hos.offDuty'), class: 'bg-yellow-100 text-yellow-800' },
+      sleeper: { label: t('fleet.hos.sleeper'), class: 'bg-purple-100 text-purple-800' },
     };
     const config = statusConfig[status];
     return <Badge className={config.class} data-testid={`badge-status-${status}`}>{config.label}</Badge>;
@@ -129,7 +131,7 @@ export function HoursOfServiceTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Total Drivers
+              {t('fleet.hos.totalDrivers')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -140,7 +142,7 @@ export function HoursOfServiceTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-600" />
-              Compliant
+              {t('fleet.hos.compliant')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -154,7 +156,7 @@ export function HoursOfServiceTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-600" />
-              Non-Compliant
+              {t('fleet.hos.nonCompliant')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -167,7 +169,7 @@ export function HoursOfServiceTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-600" />
-              Violations Today
+              {t('fleet.hos.violationsToday')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -183,10 +185,10 @@ export function HoursOfServiceTab() {
           <CardHeader>
             <CardTitle className="text-red-900 dark:text-red-100 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              Violation Alerts
+              {t('fleet.hos.violationAlerts')}
             </CardTitle>
             <CardDescription className="text-red-800 dark:text-red-200">
-              {hosData.violations.length} active violation(s) requiring attention
+              {t('fleet.hos.activeViolations', { count: hosData.violations.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -229,21 +231,21 @@ export function HoursOfServiceTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            Driver HoS Status
+            {t('fleet.hos.driverHosStatus')}
           </CardTitle>
-          <CardDescription>Real-time hours of service tracking</CardDescription>
+          <CardDescription>{t('fleet.hos.realTimeTracking')}</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading HoS data...</div>
+            <div className="text-center py-8 text-muted-foreground">{t('fleet.common.loading')}</div>
           ) : isHosError && !import.meta.env.DEV ? (
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Unable to load hours of service data</p>
-              <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+              <p className="text-muted-foreground">{t('fleet.common.unableToLoad')}</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('fleet.common.tryRefreshing')}</p>
             </div>
           ) : !hosData?.drivers?.length ? (
-            <div className="text-center py-8 text-muted-foreground">No driver data available</div>
+            <div className="text-center py-8 text-muted-foreground">{t('fleet.hos.noDriverData')}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {hosData.drivers.map((driver) => (
@@ -272,7 +274,7 @@ export function HoursOfServiceTab() {
                   <CardContent className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Daily Driving</span>
+                        <span>{t('fleet.hos.dailyDriving')}</span>
                         <span className="font-medium" data-testid={`text-daily-hours-${driver.operatorId}`}>
                           {formatHours(driver.dailyDrivingHours)} / {formatHours(driver.dailyDrivingLimit)}
                         </span>
@@ -284,7 +286,7 @@ export function HoursOfServiceTab() {
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Weekly Driving</span>
+                        <span>{t('fleet.hos.weeklyDriving')}</span>
                         <span className="font-medium" data-testid={`text-weekly-hours-${driver.operatorId}`}>
                           {formatHours(driver.weeklyDrivingHours)} / {formatHours(driver.weeklyDrivingLimit)}
                         </span>
@@ -296,13 +298,13 @@ export function HoursOfServiceTab() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t">
                       <div className="text-center">
-                        <div className="text-xs text-muted-foreground">Remaining Daily</div>
+                        <div className="text-xs text-muted-foreground">{t('fleet.hos.remainingDaily')}</div>
                         <div className={`font-bold ${driver.remainingDailyHours <= 1 ? 'text-red-600' : 'text-green-600'}`} data-testid={`text-remaining-daily-${driver.operatorId}`}>
                           {formatHours(Math.max(0, driver.remainingDailyHours))}
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-xs text-muted-foreground">Remaining Weekly</div>
+                        <div className="text-xs text-muted-foreground">{t('fleet.hos.remainingWeekly')}</div>
                         <div className={`font-bold ${driver.remainingWeeklyHours <= 5 ? 'text-orange-600' : 'text-green-600'}`} data-testid={`text-remaining-weekly-${driver.operatorId}`}>
                           {formatHours(Math.max(0, driver.remainingWeeklyHours))}
                         </div>

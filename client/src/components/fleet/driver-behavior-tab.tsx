@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ interface FleetBehaviorData {
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
 export function DriverBehaviorTab() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState('7d');
   const [selectedOperator, setSelectedOperator] = useState('all');
@@ -77,20 +79,20 @@ export function DriverBehaviorTab() {
   });
 
   const pieChartData = behaviorData ? [
-    { name: 'Speeding', value: behaviorData.behaviorBreakdown.speeding },
-    { name: 'Harsh Braking', value: behaviorData.behaviorBreakdown.harshBraking },
-    { name: 'Harsh Acceleration', value: behaviorData.behaviorBreakdown.harshAcceleration },
-    { name: 'Sharp Cornering', value: behaviorData.behaviorBreakdown.sharpCornering },
+    { name: t('fleet.behavior.speeding'), value: behaviorData.behaviorBreakdown.speeding },
+    { name: t('fleet.behavior.harshBraking'), value: behaviorData.behaviorBreakdown.harshBraking },
+    { name: t('fleet.behavior.harshAcceleration'), value: behaviorData.behaviorBreakdown.harshAcceleration },
+    { name: t('fleet.behavior.sharpCornering'), value: behaviorData.behaviorBreakdown.sharpCornering },
   ] : [];
 
   const getRiskBadge = (riskLevel: DriverBehavior['riskLevel']) => {
     switch (riskLevel) {
       case 'low':
-        return <Badge className="bg-green-100 text-green-800" data-testid="badge-risk-low">Low Risk</Badge>;
+        return <Badge className="bg-green-100 text-green-800" data-testid="badge-risk-low">{t('fleet.behavior.lowRisk')}</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800" data-testid="badge-risk-medium">Medium Risk</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800" data-testid="badge-risk-medium">{t('fleet.behavior.mediumRisk')}</Badge>;
       case 'high':
-        return <Badge className="bg-red-100 text-red-800" data-testid="badge-risk-high">High Risk</Badge>;
+        return <Badge className="bg-red-100 text-red-800" data-testid="badge-risk-high">{t('fleet.behavior.highRisk')}</Badge>;
     }
   };
 
@@ -110,7 +112,7 @@ export function DriverBehaviorTab() {
       <div className="flex flex-wrap gap-4 items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Activity className="w-5 h-5" />
-          Driver Behavior Analytics
+          {t('fleet.behavior.title')}
         </h2>
         <div className="flex gap-3">
           <Select value={dateRange} onValueChange={setDateRange}>
@@ -119,18 +121,18 @@ export function DriverBehaviorTab() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1d">Today</SelectItem>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
-              <SelectItem value="90d">Last 90 Days</SelectItem>
+              <SelectItem value="1d">{t('fleet.common.today')}</SelectItem>
+              <SelectItem value="7d">{t('fleet.common.last7Days')}</SelectItem>
+              <SelectItem value="30d">{t('fleet.common.last30Days')}</SelectItem>
+              <SelectItem value="90d">{t('fleet.common.last90Days')}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={selectedOperator} onValueChange={setSelectedOperator}>
             <SelectTrigger className="w-[160px]" data-testid="select-operator-filter">
-              <SelectValue placeholder="All Operators" />
+              <SelectValue placeholder={t('fleet.behavior.allOperators')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Operators</SelectItem>
+              <SelectItem value="all">{t('fleet.behavior.allOperators')}</SelectItem>
               {behaviorData?.drivers.map(driver => (
                 <SelectItem key={driver.operatorId} value={driver.operatorId}>
                   {driver.operatorName}
@@ -146,42 +148,42 @@ export function DriverBehaviorTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-600" />
-              Average Safety Score
+              {t('fleet.behavior.avgSafetyScore')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`text-3xl font-bold ${getScoreColor(behaviorData?.fleetAverageSafetyScore || 0)}`} data-testid="text-avg-safety-score">
               {behaviorData?.fleetAverageSafetyScore?.toFixed(1) || '—'}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Fleet-wide average</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('fleet.behavior.fleetWideAverage')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-600" />
-              High Risk Drivers
+              {t('fleet.behavior.highRiskDrivers')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-600" data-testid="text-high-risk-count">
               {behaviorData?.highRiskDriverCount || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Require attention</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('fleet.behavior.requireAttention')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-600" />
-              Total Events Today
+              {t('fleet.behavior.totalEventsToday')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600" data-testid="text-total-events">
               {behaviorData?.totalEventsToday || 0}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Safety events recorded</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('fleet.behavior.safetyEventsRecorded')}</p>
           </CardContent>
         </Card>
       </div>
@@ -191,17 +193,17 @@ export function DriverBehaviorTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="w-5 h-5" />
-              Driver Leaderboard
+              {t('fleet.behavior.driverLeaderboard')}
             </CardTitle>
-            <CardDescription>Top performers by safety score</CardDescription>
+            <CardDescription>{t('fleet.behavior.topPerformers')}</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              <div className="text-center py-8 text-muted-foreground">{t('fleet.common.loading')}</div>
             ) : isBehaviorError && !import.meta.env.DEV ? (
               <div className="text-center py-8">
                 <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Unable to load leaderboard data</p>
+                <p className="text-muted-foreground">{t('fleet.common.unableToLoad')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -240,8 +242,8 @@ export function DriverBehaviorTab() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Behavior Breakdown</CardTitle>
-            <CardDescription>Event types distribution</CardDescription>
+            <CardTitle>{t('fleet.behavior.behaviorBreakdown')}</CardTitle>
+            <CardDescription>{t('fleet.behavior.eventTypesDistribution')}</CardDescription>
           </CardHeader>
           <CardContent>
             {pieChartData.length > 0 ? (
@@ -268,7 +270,7 @@ export function DriverBehaviorTab() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-muted-foreground">
-                No behavior data available
+                {t('fleet.behavior.noDataAvailable')}
               </div>
             )}
           </CardContent>
@@ -277,33 +279,33 @@ export function DriverBehaviorTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Drivers</CardTitle>
-          <CardDescription>Complete driver behavior overview</CardDescription>
+          <CardTitle>{t('fleet.behavior.allDrivers')}</CardTitle>
+          <CardDescription>{t('fleet.behavior.completeOverview')}</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading drivers...</div>
+            <div className="text-center py-8 text-muted-foreground">{t('fleet.common.loading')}</div>
           ) : isBehaviorError && !import.meta.env.DEV ? (
             <div className="text-center py-8">
               <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Unable to load driver behavior data</p>
-              <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+              <p className="text-muted-foreground">{t('fleet.common.unableToLoad')}</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('fleet.common.tryRefreshing')}</p>
             </div>
           ) : !behaviorData?.drivers?.length ? (
-            <div className="text-center py-8 text-muted-foreground">No driver data available</div>
+            <div className="text-center py-8 text-muted-foreground">{t('fleet.behavior.noDataAvailable')}</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Driver</TableHead>
-                    <TableHead>Safety Score</TableHead>
-                    <TableHead>Speeding</TableHead>
-                    <TableHead>Harsh Braking</TableHead>
-                    <TableHead>Harsh Accel.</TableHead>
-                    <TableHead>Sharp Cornering</TableHead>
-                    <TableHead>Total Events</TableHead>
-                    <TableHead>Risk Level</TableHead>
+                    <TableHead>{t('fleet.behavior.driver')}</TableHead>
+                    <TableHead>{t('fleet.behavior.safetyScore')}</TableHead>
+                    <TableHead>{t('fleet.behavior.speeding')}</TableHead>
+                    <TableHead>{t('fleet.behavior.harshBraking')}</TableHead>
+                    <TableHead>{t('fleet.behavior.harshAccel')}</TableHead>
+                    <TableHead>{t('fleet.behavior.sharpCornering')}</TableHead>
+                    <TableHead>{t('fleet.behavior.totalEvents')}</TableHead>
+                    <TableHead>{t('fleet.behavior.riskLevel')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

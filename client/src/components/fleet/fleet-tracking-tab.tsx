@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface FleetGpsData {
 }
 
 export function FleetTrackingTab() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -201,11 +203,11 @@ export function FleetTrackingTab() {
   const getStatusBadge = (status: VehiclePosition['status']) => {
     switch (status) {
       case 'moving':
-        return <Badge className="bg-green-500 text-white" data-testid="badge-status-moving">Moving</Badge>;
+        return <Badge className="bg-green-500 text-white" data-testid="badge-status-moving">{t('fleet.tracking.moving')}</Badge>;
       case 'stopped':
-        return <Badge className="bg-yellow-500 text-white" data-testid="badge-status-stopped">Stopped</Badge>;
+        return <Badge className="bg-yellow-500 text-white" data-testid="badge-status-stopped">{t('fleet.tracking.stopped')}</Badge>;
       case 'offline':
-        return <Badge className="bg-gray-500 text-white" data-testid="badge-status-offline">Offline</Badge>;
+        return <Badge className="bg-gray-500 text-white" data-testid="badge-status-offline">{t('fleet.tracking.offline')}</Badge>;
     }
   };
 
@@ -215,10 +217,10 @@ export function FleetTrackingTab() {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1) return t('fleet.common.justNow');
+    if (diffMins < 60) return t('fleet.common.minutesAgo', { count: diffMins });
     const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) return t('fleet.common.hoursAgo', { count: diffHours });
     return date.toLocaleDateString();
   };
 
@@ -227,7 +229,7 @@ export function FleetTrackingTab() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Vehicles</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('fleet.tracking.totalVehicles')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-total-vehicles">{fleetData?.totalVehicles || 0}</div>
@@ -237,7 +239,7 @@ export function FleetTrackingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-green-500" />
-              Moving
+              {t('fleet.tracking.moving')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -248,7 +250,7 @@ export function FleetTrackingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              Stopped
+              {t('fleet.tracking.stopped')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -259,7 +261,7 @@ export function FleetTrackingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-gray-500" />
-              Offline
+              {t('fleet.tracking.offline')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -274,9 +276,9 @@ export function FleetTrackingTab() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Radio className="w-5 h-5" />
-                Fleet Map
+                {t('fleet.tracking.fleetMap')}
               </CardTitle>
-              <CardDescription>Real-time vehicle positions with 2ft accuracy</CardDescription>
+              <CardDescription>{t('fleet.tracking.realTimePositions')}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
@@ -284,17 +286,17 @@ export function FleetTrackingTab() {
                 size="sm"
                 onClick={toggleSatelliteView}
                 data-testid="button-toggle-satellite"
-                title="Toggle satellite view"
+                title={t('fleet.tracking.toggleSatellite')}
               >
                 <Satellite className="w-4 h-4 mr-2" />
-                {isSatelliteView ? 'Street' : 'Satellite'}
+                {isSatelliteView ? t('fleet.tracking.street') : t('fleet.tracking.satellite')}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleZoom('in')}
                 data-testid="button-zoom-in"
-                title="Zoom in"
+                title={t('fleet.common.zoomIn')}
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -303,7 +305,7 @@ export function FleetTrackingTab() {
                 size="sm"
                 onClick={() => handleZoom('out')}
                 data-testid="button-zoom-out"
-                title="Zoom out"
+                title={t('fleet.common.zoomOut')}
               >
                 <Minus className="w-4 h-4" />
               </Button>
@@ -315,7 +317,7 @@ export function FleetTrackingTab() {
                 data-testid="button-refresh-positions"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                Refresh
+                {t('fleet.common.refresh')}
               </Button>
             </div>
           </CardHeader>
@@ -332,22 +334,22 @@ export function FleetTrackingTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Truck className="w-5 h-5" />
-              Vehicle List
+              {t('fleet.tracking.vehicleList')}
             </CardTitle>
-            <CardDescription>Click to locate on map</CardDescription>
+            <CardDescription>{t('fleet.tracking.clickToLocate')}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[400px]">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading vehicles...</div>
+                <div className="text-center py-8 text-muted-foreground">{t('fleet.common.loading')}</div>
               ) : isFleetError && !import.meta.env.DEV ? (
                 <div className="text-center py-8">
                   <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Unable to load vehicle data</p>
-                  <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+                  <p className="text-muted-foreground">{t('fleet.common.unableToLoad')}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('fleet.common.tryRefreshing')}</p>
                 </div>
               ) : !fleetData?.vehicles?.length ? (
-                <div className="text-center py-8 text-muted-foreground">No vehicles found</div>
+                <div className="text-center py-8 text-muted-foreground">{t('fleet.tracking.noVehiclesFound')}</div>
               ) : (
                 <div className="space-y-1 p-4">
                   {fleetData.vehicles.map((vehicle) => (
@@ -367,15 +369,15 @@ export function FleetTrackingTab() {
                       </div>
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {vehicle.address || 'Unknown location'}
+                        {vehicle.address || t('fleet.tracking.unknownLocation')}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 flex justify-between">
-                        <span>{vehicle.operatorName || 'Unassigned'}</span>
+                        <span>{vehicle.operatorName || t('fleet.tracking.unassigned')}</span>
                         <span>{formatLastUpdate(vehicle.lastUpdate)}</span>
                       </div>
                       {vehicle.status === 'moving' && (
                         <div className="text-xs text-green-600 mt-1">
-                          Speed: {vehicle.speed} mph
+                          {t('fleet.tracking.speed')}: {vehicle.speed} mph
                         </div>
                       )}
                     </div>
@@ -390,30 +392,30 @@ export function FleetTrackingTab() {
       {selectedVehicle && (
         <Card>
           <CardHeader>
-            <CardTitle>Vehicle Details: {selectedVehicle.registration}</CardTitle>
+            <CardTitle>{t('fleet.tracking.vehicleDetails')}: {selectedVehicle.registration}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <div className="text-sm text-muted-foreground">Operator</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.tracking.operator')}</div>
                 <div className="font-medium" data-testid="text-selected-operator">
-                  {selectedVehicle.operatorName || 'Unassigned'}
+                  {selectedVehicle.operatorName || t('fleet.tracking.unassigned')}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Current Speed</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.tracking.currentSpeed')}</div>
                 <div className="font-medium" data-testid="text-selected-speed">
                   {selectedVehicle.speed} mph
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Location</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.tracking.location')}</div>
                 <div className="font-medium" data-testid="text-selected-location">
-                  {selectedVehicle.address || 'Unknown'}
+                  {selectedVehicle.address || t('fleet.common.unknown')}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Last Update</div>
+                <div className="text-sm text-muted-foreground">{t('fleet.tracking.lastUpdate')}</div>
                 <div className="font-medium" data-testid="text-selected-lastupdate">
                   {formatLastUpdate(selectedVehicle.lastUpdate)}
                 </div>
@@ -427,7 +429,7 @@ export function FleetTrackingTab() {
         <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <CardHeader>
             <CardTitle className="text-sm flex items-center justify-between">
-              <span>Click Coordinates Detected</span>
+              <span>{t('fleet.tracking.coordinatesDetected')}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -442,19 +444,19 @@ export function FleetTrackingTab() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-sm">
               <div>
-                <div className="text-xs text-muted-foreground">Latitude</div>
+                <div className="text-xs text-muted-foreground">{t('fleet.tracking.latitude')}</div>
                 <div className="font-bold" data-testid="text-click-latitude">{clickCoordinates.lat.toFixed(6)}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Longitude</div>
+                <div className="text-xs text-muted-foreground">{t('fleet.tracking.longitude')}</div>
                 <div className="font-bold" data-testid="text-click-longitude">{clickCoordinates.lng.toFixed(6)}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Screen X</div>
+                <div className="text-xs text-muted-foreground">{t('fleet.tracking.screenX')}</div>
                 <div className="font-bold" data-testid="text-click-screenx">{clickCoordinates.screenX}px</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Screen Y</div>
+                <div className="text-xs text-muted-foreground">{t('fleet.tracking.screenY')}</div>
                 <div className="font-bold" data-testid="text-click-screeny">{clickCoordinates.screenY}px</div>
               </div>
             </div>

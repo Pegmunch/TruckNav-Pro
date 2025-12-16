@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,15 +54,16 @@ const TYPE_COLORS: Record<string, string> = {
   checkpoint: '#F97316',
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  warehouse: 'Warehouse',
-  customer: 'Customer',
-  restricted: 'Restricted',
-  checkpoint: 'Checkpoint',
-};
-
 export function GeofencingTab() {
+  const { t } = useTranslation();
   const { toast } = useToast();
+  
+  const TYPE_LABELS: Record<string, string> = {
+    warehouse: t('fleet.geofencing.warehouse'),
+    customer: t('fleet.geofencing.customer'),
+    restricted: t('fleet.geofencing.restricted'),
+    checkpoint: t('fleet.geofencing.checkpoint'),
+  };
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const circlesRef = useRef<Map<string, L.Circle>>(new Map());
@@ -92,7 +94,7 @@ export function GeofencingTab() {
             mostActiveZone: { name: 'London Depot', eventCount: 8 },
           };
         }
-        toast({ title: 'Failed to load geofences', description: 'Unable to fetch geofence data', variant: 'destructive' });
+        toast({ title: t('fleet.geofencing.toast.loadFailed'), description: t('fleet.geofencing.toast.loadFailedDesc'), variant: 'destructive' });
         throw new Error('Failed to load geofences');
       }
       return response.json();
@@ -145,7 +147,7 @@ export function GeofencingTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/enterprise/geofences'] });
-      toast({ title: 'Geofence created successfully' });
+      toast({ title: t('fleet.geofencing.toast.createSuccess') });
       setIsDialogOpen(false);
       form.reset();
       setPendingLocation(null);
@@ -155,7 +157,7 @@ export function GeofencingTab() {
       }
     },
     onError: () => {
-      toast({ title: 'Failed to create geofence', variant: 'destructive' });
+      toast({ title: t('fleet.geofencing.toast.createFailed'), variant: 'destructive' });
     },
   });
 
@@ -167,13 +169,13 @@ export function GeofencingTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/enterprise/geofences'] });
-      toast({ title: 'Geofence updated successfully' });
+      toast({ title: t('fleet.geofencing.toast.updateSuccess') });
       setIsDialogOpen(false);
       setEditingGeofence(null);
       form.reset();
     },
     onError: () => {
-      toast({ title: 'Failed to update geofence', variant: 'destructive' });
+      toast({ title: t('fleet.geofencing.toast.updateFailed'), variant: 'destructive' });
     },
   });
 
@@ -184,13 +186,13 @@ export function GeofencingTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/enterprise/geofences'] });
-      toast({ title: 'Geofence deleted successfully' });
+      toast({ title: t('fleet.geofencing.toast.deleteSuccess') });
       if (selectedGeofence?.id === editingGeofence?.id) {
         setSelectedGeofence(null);
       }
     },
     onError: () => {
-      toast({ title: 'Failed to delete geofence', variant: 'destructive' });
+      toast({ title: t('fleet.geofencing.toast.deleteFailed'), variant: 'destructive' });
     },
   });
 
@@ -260,9 +262,9 @@ export function GeofencingTab() {
 
       circle.bindPopup(`
         <strong>${geofence.name}</strong><br/>
-        Type: ${TYPE_LABELS[geofence.type] || geofence.type}<br/>
-        Radius: ${geofence.radiusMeters}m<br/>
-        Status: ${geofence.isActive ? 'Active' : 'Inactive'}
+        ${t('fleet.geofencing.type')}: ${TYPE_LABELS[geofence.type] || geofence.type}<br/>
+        ${t('fleet.geofencing.radius')}: ${geofence.radiusMeters}m<br/>
+        ${t('fleet.common.status')}: ${geofence.isActive ? t('fleet.common.active') : t('fleet.common.inactive')}
       `);
 
       circle.on('click', () => {
@@ -301,7 +303,7 @@ export function GeofencingTab() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this geofence?')) {
+    if (confirm(t('fleet.geofencing.confirmDelete'))) {
       deleteMutation.mutate(id);
     }
   };
@@ -367,7 +369,7 @@ export function GeofencingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Target className="w-4 h-4" />
-              Total Geofences
+              {t('fleet.geofencing.totalGeofences')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -380,7 +382,7 @@ export function GeofencingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Bell className="w-4 h-4" />
-              Active Alerts Today
+              {t('fleet.geofencing.activeAlertsToday')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -393,16 +395,16 @@ export function GeofencingTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
-              Most Active Zone
+              {t('fleet.geofencing.mostActiveZone')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold" data-testid="text-most-active-zone">
-              {geofencesData?.mostActiveZone?.name || 'N/A'}
+              {geofencesData?.mostActiveZone?.name || t('fleet.common.na')}
             </div>
             {geofencesData?.mostActiveZone && (
               <div className="text-sm text-muted-foreground">
-                {geofencesData.mostActiveZone.eventCount} events
+                {t('fleet.geofencing.eventsCount', { count: geofencesData.mostActiveZone.eventCount })}
               </div>
             )}
           </CardContent>
@@ -415,9 +417,9 @@ export function GeofencingTab() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <MapPinned className="w-5 h-5" />
-                Geofence Map
+                {t('fleet.geofencing.geofenceMap')}
               </CardTitle>
-              <CardDescription>Click on the map to add a new geofence</CardDescription>
+              <CardDescription>{t('fleet.geofencing.clickToAddGeofence')}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
@@ -428,7 +430,7 @@ export function GeofencingTab() {
                 data-testid="button-refresh-geofences"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                Refresh
+                {t('fleet.common.refresh')}
               </Button>
               <Button
                 size="sm"
@@ -436,7 +438,7 @@ export function GeofencingTab() {
                 data-testid="button-add-geofence"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Zone
+                {t('fleet.geofencing.addZone')}
               </Button>
             </div>
           </CardHeader>
@@ -449,19 +451,19 @@ export function GeofencingTab() {
             <div className="flex flex-wrap gap-4 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-blue-500" />
-                <span className="text-sm">Warehouse</span>
+                <span className="text-sm">{t('fleet.geofencing.warehouse')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-green-500" />
-                <span className="text-sm">Customer</span>
+                <span className="text-sm">{t('fleet.geofencing.customer')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-red-500" />
-                <span className="text-sm">Restricted</span>
+                <span className="text-sm">{t('fleet.geofencing.restricted')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-orange-500" />
-                <span className="text-sm">Checkpoint</span>
+                <span className="text-sm">{t('fleet.geofencing.checkpoint')}</span>
               </div>
             </div>
           </CardContent>
@@ -471,22 +473,22 @@ export function GeofencingTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5" />
-              Geofence Zones
+              {t('fleet.geofencing.geofenceZones')}
             </CardTitle>
-            <CardDescription>Click to locate on map</CardDescription>
+            <CardDescription>{t('fleet.geofencing.clickToLocate')}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[400px]">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading geofences...</div>
+                <div className="text-center py-8 text-muted-foreground">{t('fleet.common.loading')}</div>
               ) : isGeofencesError && !import.meta.env.DEV ? (
                 <div className="text-center py-8">
                   <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Unable to load geofence data</p>
-                  <p className="text-sm text-muted-foreground mt-2">Please try refreshing the page</p>
+                  <p className="text-muted-foreground">{t('fleet.common.unableToLoad')}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('fleet.common.tryRefreshing')}</p>
                 </div>
               ) : !geofencesData?.geofences?.length ? (
-                <div className="text-center py-8 text-muted-foreground">No geofences found</div>
+                <div className="text-center py-8 text-muted-foreground">{t('fleet.geofencing.noGeofencesFound')}</div>
               ) : (
                 <div className="space-y-1 p-4">
                   {geofencesData.geofences.map((geofence) => (
@@ -505,20 +507,20 @@ export function GeofencingTab() {
                         {getTypeBadge(geofence.type)}
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                        <span>{geofence.radiusMeters}m radius</span>
+                        <span>{t('fleet.geofencing.radiusMeters', { meters: geofence.radiusMeters })}</span>
                         <Badge variant={geofence.isActive ? 'default' : 'secondary'}>
-                          {geofence.isActive ? 'Active' : 'Inactive'}
+                          {geofence.isActive ? t('fleet.common.active') : t('fleet.common.inactive')}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         {geofence.alertOnEntry && (
                           <span className="flex items-center gap-1">
-                            <LogIn className="w-3 h-3" /> Entry Alert
+                            <LogIn className="w-3 h-3" /> {t('fleet.geofencing.entryAlert')}
                           </span>
                         )}
                         {geofence.alertOnExit && (
                           <span className="flex items-center gap-1">
-                            <LogOut className="w-3 h-3" /> Exit Alert
+                            <LogOut className="w-3 h-3" /> {t('fleet.geofencing.exitAlert')}
                           </span>
                         )}
                       </div>
@@ -559,23 +561,23 @@ export function GeofencingTab() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              Recent Events: {selectedGeofence.name}
+              {t('fleet.geofencing.recentEvents')}: {selectedGeofence.name}
             </CardTitle>
-            <CardDescription>Entry and exit events for this geofence</CardDescription>
+            <CardDescription>{t('fleet.geofencing.entryExitEvents')}</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingEvents ? (
-              <div className="text-center py-4 text-muted-foreground">Loading events...</div>
+              <div className="text-center py-4 text-muted-foreground">{t('fleet.common.loading')}</div>
             ) : !eventsData?.events?.length ? (
-              <div className="text-center py-4 text-muted-foreground">No recent events</div>
+              <div className="text-center py-4 text-muted-foreground">{t('fleet.geofencing.noRecentEvents')}</div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Vehicle</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>{t('fleet.geofencing.vehicle')}</TableHead>
+                    <TableHead>{t('fleet.geofencing.event')}</TableHead>
+                    <TableHead>{t('fleet.geofencing.timestamp')}</TableHead>
+                    <TableHead>{t('fleet.tracking.location')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -592,7 +594,7 @@ export function GeofencingTab() {
                             <LogOut className="w-4 h-4 text-red-500" />
                           )}
                           <span className={event.eventType === 'entry' ? 'text-green-600' : 'text-red-600'}>
-                            {event.eventType === 'entry' ? 'Entry' : 'Exit'}
+                            {event.eventType === 'entry' ? t('fleet.geofencing.entry') : t('fleet.geofencing.exit')}
                           </span>
                         </div>
                       </TableCell>
@@ -605,7 +607,7 @@ export function GeofencingTab() {
                             {event.latitude.toFixed(4)}, {event.longitude.toFixed(4)}
                           </span>
                         ) : (
-                          <span className="text-sm text-muted-foreground">N/A</span>
+                          <span className="text-sm text-muted-foreground">{t('fleet.common.na')}</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -621,12 +623,12 @@ export function GeofencingTab() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingGeofence ? 'Edit Geofence' : 'Create Geofence'}
+              {editingGeofence ? t('fleet.geofencing.editGeofence') : t('fleet.geofencing.createGeofence')}
             </DialogTitle>
             <DialogDescription>
               {editingGeofence 
-                ? 'Update the geofence zone details' 
-                : 'Define a new geofence zone for monitoring'}
+                ? t('fleet.geofencing.updateDetails') 
+                : t('fleet.geofencing.defineNewZone')}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -636,10 +638,10 @@ export function GeofencingTab() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t('fleet.common.name')}</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g., London Depot" 
+                        placeholder={t('fleet.geofencing.namePlaceholder')} 
                         {...field} 
                         data-testid="input-geofence-name"
                       />
@@ -655,7 +657,7 @@ export function GeofencingTab() {
                   name="latitude"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Latitude</FormLabel>
+                      <FormLabel>{t('fleet.tracking.latitude')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -674,7 +676,7 @@ export function GeofencingTab() {
                   name="longitude"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Longitude</FormLabel>
+                      <FormLabel>{t('fleet.tracking.longitude')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -695,7 +697,7 @@ export function GeofencingTab() {
                   name="radiusMeters"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Radius (meters)</FormLabel>
+                      <FormLabel>{t('fleet.geofencing.radiusLabel')}</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -715,18 +717,18 @@ export function GeofencingTab() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Type</FormLabel>
+                      <FormLabel>{t('fleet.geofencing.type')}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-geofence-type">
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder={t('fleet.geofencing.selectType')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="warehouse">Warehouse</SelectItem>
-                          <SelectItem value="customer">Customer</SelectItem>
-                          <SelectItem value="restricted">Restricted</SelectItem>
-                          <SelectItem value="checkpoint">Checkpoint</SelectItem>
+                          <SelectItem value="warehouse">{t('fleet.geofencing.warehouse')}</SelectItem>
+                          <SelectItem value="customer">{t('fleet.geofencing.customer')}</SelectItem>
+                          <SelectItem value="restricted">{t('fleet.geofencing.restricted')}</SelectItem>
+                          <SelectItem value="checkpoint">{t('fleet.geofencing.checkpoint')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -740,7 +742,7 @@ export function GeofencingTab() {
                 name="color"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Color</FormLabel>
+                    <FormLabel>{t('fleet.geofencing.color')}</FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
                         <Input 
@@ -769,7 +771,7 @@ export function GeofencingTab() {
                   name="alertOnEntry"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <FormLabel className="text-sm">Entry Alert</FormLabel>
+                      <FormLabel className="text-sm">{t('fleet.geofencing.entryAlert')}</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -786,7 +788,7 @@ export function GeofencingTab() {
                   name="alertOnExit"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <FormLabel className="text-sm">Exit Alert</FormLabel>
+                      <FormLabel className="text-sm">{t('fleet.geofencing.exitAlert')}</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -803,7 +805,7 @@ export function GeofencingTab() {
                   name="isActive"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <FormLabel className="text-sm">Active</FormLabel>
+                      <FormLabel className="text-sm">{t('fleet.common.active')}</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -823,7 +825,7 @@ export function GeofencingTab() {
                   onClick={handleDialogClose}
                   data-testid="button-cancel-geofence"
                 >
-                  Cancel
+                  {t('fleet.common.cancel')}
                 </Button>
                 <Button 
                   type="submit" 
@@ -831,8 +833,8 @@ export function GeofencingTab() {
                   data-testid="button-submit-geofence"
                 >
                   {(createMutation.isPending || updateMutation.isPending) 
-                    ? 'Saving...' 
-                    : editingGeofence ? 'Update' : 'Create'}
+                    ? t('fleet.common.saving') 
+                    : editingGeofence ? t('fleet.common.update') : t('fleet.common.create')}
                 </Button>
               </DialogFooter>
             </form>
