@@ -218,17 +218,35 @@ export function useLegalConsent(): UseLegalConsentReturn {
       // Save to localStorage with multiple writes to ensure persistence
       saveConsentData(newConsentData);
       
-      // Double-write the simple flag for extra reliability in PWA mode
+      // Triple-write the simple flag for extra reliability in PWA mode
       try {
-        localStorage.setItem('trucknav_legal_accepted', 'true');
+        // Write 1: Main consent data
         localStorage.setItem('trucknav_legal_consent', JSON.stringify(newConsentData));
-        console.log('[LEGAL-CONSENT] ✓ Consent saved to localStorage');
         
-        // Verify the write was successful
-        const verifyRead = localStorage.getItem('trucknav_legal_accepted');
-        console.log('[LEGAL-CONSENT] Verification read:', verifyRead);
+        // Write 2: Simple flag
+        localStorage.setItem('trucknav_legal_accepted', 'true');
+        
+        // Write 3: Backup flag
+        localStorage.setItem('trucknav_terms_accepted', 'true');
+        
+        console.log('[LEGAL-CONSENT] ✓ Consent saved to localStorage (3 writes)');
+        
+        // Verify all writes were successful
+        const verify1 = localStorage.getItem('trucknav_legal_accepted');
+        const verify2 = localStorage.getItem('trucknav_legal_consent');
+        const verify3 = localStorage.getItem('trucknav_terms_accepted');
+        console.log('[LEGAL-CONSENT] Verification reads:', {
+          flag1: verify1,
+          flag2: verify3,
+          hasData: !!verify2
+        });
+        
+        if (!verify1 || !verify2 || !verify3) {
+          throw new Error('localStorage writes failed - not all keys were persisted');
+        }
       } catch (error) {
         console.error('[LEGAL-CONSENT] ✗ Failed to save consent:', error);
+        throw error;
       }
 
       // Also save to backend (works for both authenticated and unauthenticated users)
@@ -237,14 +255,21 @@ export function useLegalConsent(): UseLegalConsentReturn {
         console.log('[LEGAL-CONSENT] ✓ Consent recorded on server');
       } catch (error) {
         // Network errors are logged but don't block the flow
-        console.error('[LEGAL-CONSENT] Failed to record consent on server:', error);
+        console.error('[LEGAL-CONSENT] Failed to record consent on server (non-blocking):', error);
       }
-    } finally {
-      // Re-enable cache-buster after consent is saved
+      
+      // CRITICAL: Force page reload to ensure all components re-initialize with new consent
+      // This prevents React state sync issues in PWA mode
+      console.log('[LEGAL-CONSENT] ✓ Reloading page to persist consent...');
       setTimeout(() => {
-        pauseCacheBusterDuringOnboarding(false);
-        console.log('[LEGAL-CONSENT] ✓ Cache-buster re-enabled after consent saved');
-      }, 1000);
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error('[LEGAL-CONSENT] ✗ Fatal error during consent acceptance:', error);
+      // Re-enable cache-buster on error
+      pauseCacheBusterDuringOnboarding(false);
+      throw error;
     }
   }, [saveConsentData]);
 
