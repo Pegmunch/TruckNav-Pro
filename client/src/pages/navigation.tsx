@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map, Speaker, VolumeX } from "lucide-react";
 import { usePWAEnvironment } from "@/contexts/pwa-environment";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDeviceType } from "@/hooks/use-device-type";
@@ -2549,21 +2549,40 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* PLAN MODE MENU ONLY - No route yet (Bottom Right) */}
+              {/* PLAN MODE CONTROLS - Bottom Right Stack */}
               {mobileNavMode === 'plan' && !currentRoute && (
-                <Button
-                  onClick={() => setShowComprehensiveMenu(true)}
-                  size="sm"
-                  className="fixed z-[200] h-11 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium pointer-events-auto"
+                <div className="fixed flex flex-col gap-2 z-[200] pointer-events-auto"
                   style={{
                     bottom: 'calc(16px + var(--safe-area-bottom))',
                     right: '16px'
-                  }}
-                  data-testid="button-open-menu-plan"
-                  aria-label="Open menu"
-                >
-                  Menu
-                </Button>
+                  }}>
+                  {/* Voice Toggle Button */}
+                  <Button
+                    onClick={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                    size="sm"
+                    className="h-11 px-4 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
+                    data-testid="button-toggle-voice"
+                    aria-label={professionalVoiceEnabled ? "Turn off voice" : "Turn on voice"}
+                    title={professionalVoiceEnabled ? "Voice on" : "Voice off"}
+                  >
+                    {professionalVoiceEnabled ? (
+                      <Speaker className="w-5 h-5" />
+                    ) : (
+                      <VolumeX className="w-5 h-5" />
+                    )}
+                  </Button>
+                  
+                  {/* Menu Button */}
+                  <Button
+                    onClick={() => setShowComprehensiveMenu(true)}
+                    size="sm"
+                    className="h-11 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                    data-testid="button-open-menu-plan"
+                    aria-label="Open menu"
+                  >
+                    Menu
+                  </Button>
+                </div>
               )}
 
               {/* PREVIEW MODE OVERLAY (z-10+) - Visible only when showing preview, overlays on top of stable map */}
