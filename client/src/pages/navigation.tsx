@@ -2549,15 +2549,15 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* PLAN MODE MENU ONLY - No route yet (Top Left) */}
+              {/* PLAN MODE MENU ONLY - No route yet (Bottom Right) */}
               {mobileNavMode === 'plan' && !currentRoute && (
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
                   size="sm"
                   className="fixed z-[200] h-11 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium pointer-events-auto"
                   style={{
-                    top: 'calc(16px + var(--safe-area-top))',
-                    left: '16px'
+                    bottom: 'calc(16px + var(--safe-area-bottom))',
+                    right: '16px'
                   }}
                   data-testid="button-open-menu-plan"
                   aria-label="Open menu"
