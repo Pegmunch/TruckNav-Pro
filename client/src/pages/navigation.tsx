@@ -137,10 +137,8 @@ function NavigationPageContent() {
   
   // LOCAL NAVIGATION UI STATE - Independent of server session state
   // This fixes PWA session issues where UI disappears when session changes
-  const [isLocalNavActive, setIsLocalNavActive] = useState(() => {
-    // Initialize from localStorage to survive page reloads
-    return localStorage.getItem('navigation_ui_active') === 'true';
-  });
+  // ALWAYS start in plan mode - navigation is activated after route calculation
+  const [isLocalNavActive, setIsLocalNavActive] = useState(false);
   
   // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
   const isNavigating = isLocalNavActive;
