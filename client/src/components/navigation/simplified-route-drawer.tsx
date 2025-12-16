@@ -150,9 +150,20 @@ export function SimplifiedRouteDrawer({
                 <Button
                   variant="outline"
                   size="lg"
-                  className="h-10 px-3 shrink-0"
+                  className="h-10 px-3 shrink-0 touch-none"
                   data-testid="button-location-dropdown"
                   title="Select location or use GPS"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+                  }}
+                  type="button"
                 >
                   <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600' : 'text-gray-400'}`} />
                 </Button>
