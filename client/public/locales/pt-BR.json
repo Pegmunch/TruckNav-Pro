@@ -110,22 +110,38 @@
       "exit_right": "Pegue a saída à direita",
       "exit_left": "Pegue a saída à esquerda"
     },
-    "distance": {
+    "distances": {
       "now": "{{direction}} agora",
-      "in_feet": "{{direction}} em {{distance}} pés",
-      "in_feet_prefix": "Em {{distance}} pés, {{direction}}",
-      "in_meters": "{{direction}} em {{distance}} metros",
-      "in_meters_prefix": "Em {{distance}} metros, {{direction}}"
+      "in_200_feet": "{{direction}} em 60 metros",
+      "in_500_feet": "Em 150 metros, {{direction}}",
+      "in_800_feet": "Em 250 metros, {{direction}}",
+      "in_50_meters": "{{direction}} em 50 metros",
+      "in_150_meters": "Em 150 metros, {{direction}}",
+      "in_250_meters": "Em 250 metros, {{direction}}"
     },
     "onto_road": "para {{roadName}}",
-    "reroute": "Recalculando rota",
-    "reroute_reason": "Recalculando rota. {{reason}}",
-    "arrival": "Você chegou ao seu destino",
-    "incident_ahead": "Atenção: {{type}} à frente",
-    "incident_distance": "Atenção: {{type}} à frente em {{distance}} milhas",
-    "speed_warning": "Alerta de velocidade. Velocidade atual {{current}} {{unit}}. Limite de velocidade é {{limit}}",
-    "use_lanes": "Use {{lanes}}",
-    "test_message": "A orientação por voz está pronta para navegação",
+    "announcements": {
+      "recalculating": "Recalculando rota",
+      "arrived": "Você chegou ao seu destino",
+      "use_lanes": "Use {{lanes}}",
+      "voice_ready": "A orientação por voz está pronta para navegação"
+    },
+    "warnings": {
+      "incident_ahead": "Atenção: {{type}} à frente",
+      "in_miles": "em {{distance}} milhas",
+      "in_kilometers": "em {{distance}} quilômetros",
+      "speed_warning": "Alerta de velocidade. Velocidade atual {{speed}} {{unit}}. Limite de velocidade é {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "engarrafamento",
+      "accident": "acidente",
+      "road_hazard": "perigo na via",
+      "road_closed": "estrada fechada",
+      "police_ahead": "polícia à frente",
+      "speed_camera": "radar",
+      "construction": "obras",
+      "bad_weather": "mau tempo"
+    },
     "units": {
       "mph": "milhas por hora",
       "kmh": "quilômetros por hora"

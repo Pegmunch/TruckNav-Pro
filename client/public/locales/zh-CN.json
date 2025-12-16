@@ -110,22 +110,38 @@
       "exit_right": "右侧驶出",
       "exit_left": "左侧驶出"
     },
-    "distance": {
+    "distances": {
       "now": "现在{{direction}}",
-      "in_feet": "{{distance}}英尺后{{direction}}",
-      "in_feet_prefix": "{{distance}}英尺后，{{direction}}",
-      "in_meters": "{{distance}}米后{{direction}}",
-      "in_meters_prefix": "{{distance}}米后，{{direction}}"
+      "in_200_feet": "60米后{{direction}}",
+      "in_500_feet": "150米后，{{direction}}",
+      "in_800_feet": "250米后，{{direction}}",
+      "in_50_meters": "50米后{{direction}}",
+      "in_150_meters": "150米后，{{direction}}",
+      "in_250_meters": "250米后，{{direction}}"
     },
     "onto_road": "进入{{roadName}}",
-    "reroute": "正在重新规划路线",
-    "reroute_reason": "正在重新规划路线。{{reason}}",
-    "arrival": "您已到达目的地",
-    "incident_ahead": "注意：前方{{type}}",
-    "incident_distance": "注意：{{distance}}英里后有{{type}}",
-    "speed_warning": "超速警告。当前速度{{current}}{{unit}}。限速{{limit}}",
-    "use_lanes": "请使用{{lanes}}",
-    "test_message": "语音导航已准备就绪",
+    "announcements": {
+      "recalculating": "正在重新规划路线",
+      "arrived": "您已到达目的地",
+      "use_lanes": "请使用{{lanes}}",
+      "voice_ready": "语音导航已准备就绪"
+    },
+    "warnings": {
+      "incident_ahead": "注意：前方{{type}}",
+      "in_miles": "{{distance}}英里后",
+      "in_kilometers": "{{distance}}公里后",
+      "speed_warning": "超速警告。当前速度{{speed}}{{unit}}。限速{{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "交通拥堵",
+      "accident": "事故",
+      "road_hazard": "道路危险",
+      "road_closed": "道路封闭",
+      "police_ahead": "前方有警察",
+      "speed_camera": "测速摄像头",
+      "construction": "施工",
+      "bad_weather": "恶劣天气"
+    },
     "units": {
       "mph": "英里每小时",
       "kmh": "公里每小时"

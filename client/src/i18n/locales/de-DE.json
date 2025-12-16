@@ -110,22 +110,38 @@
       "exit_right": "Nehmen Sie die Ausfahrt rechts",
       "exit_left": "Nehmen Sie die Ausfahrt links"
     },
-    "distance": {
+    "distances": {
       "now": "{{direction}} jetzt",
-      "in_feet": "{{direction}} in {{distance}} Fuß",
-      "in_feet_prefix": "In {{distance}} Fuß, {{direction}}",
-      "in_meters": "{{direction}} in {{distance}} Metern",
-      "in_meters_prefix": "In {{distance}} Metern, {{direction}}"
+      "in_200_feet": "{{direction}} in 60 Metern",
+      "in_500_feet": "In 150 Metern, {{direction}}",
+      "in_800_feet": "In 250 Metern, {{direction}}",
+      "in_50_meters": "{{direction}} in 50 Metern",
+      "in_150_meters": "In 150 Metern, {{direction}}",
+      "in_250_meters": "In 250 Metern, {{direction}}"
     },
     "onto_road": "auf {{roadName}}",
-    "reroute": "Route wird neu berechnet",
-    "reroute_reason": "Route wird neu berechnet. {{reason}}",
-    "arrival": "Sie haben Ihr Ziel erreicht",
-    "incident_ahead": "Achtung: {{type}} voraus",
-    "incident_distance": "Achtung: {{type}} voraus in {{distance}} Meilen",
-    "speed_warning": "Geschwindigkeitswarnung. Aktuelle Geschwindigkeit {{current}} {{unit}}. Tempolimit ist {{limit}}",
-    "use_lanes": "Nutzen Sie {{lanes}}",
-    "test_message": "Sprachführung ist bereit für die Navigation",
+    "announcements": {
+      "recalculating": "Route wird neu berechnet",
+      "arrived": "Sie haben Ihr Ziel erreicht",
+      "use_lanes": "Nutzen Sie {{lanes}}",
+      "voice_ready": "Sprachführung ist bereit für die Navigation"
+    },
+    "warnings": {
+      "incident_ahead": "Achtung: {{type}} voraus",
+      "in_miles": "in {{distance}} Meilen",
+      "in_kilometers": "in {{distance}} Kilometern",
+      "speed_warning": "Geschwindigkeitswarnung. Aktuelle Geschwindigkeit {{speed}} {{unit}}. Tempolimit ist {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "Stau",
+      "accident": "Unfall",
+      "road_hazard": "Straßengefahr",
+      "road_closed": "Straße gesperrt",
+      "police_ahead": "Polizei voraus",
+      "speed_camera": "Blitzer",
+      "construction": "Baustelle",
+      "bad_weather": "Schlechtes Wetter"
+    },
     "units": {
       "mph": "Meilen pro Stunde",
       "kmh": "Kilometer pro Stunde"

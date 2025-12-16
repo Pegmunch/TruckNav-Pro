@@ -110,22 +110,38 @@
       "exit_right": "Luați ieșirea la dreapta",
       "exit_left": "Luați ieșirea la stânga"
     },
-    "distance": {
+    "distances": {
       "now": "{{direction}} acum",
-      "in_feet": "{{direction}} în {{distance}} picioare",
-      "in_feet_prefix": "În {{distance}} picioare, {{direction}}",
-      "in_meters": "{{direction}} în {{distance}} metri",
-      "in_meters_prefix": "În {{distance}} metri, {{direction}}"
+      "in_200_feet": "{{direction}} în 60 metri",
+      "in_500_feet": "În 150 metri, {{direction}}",
+      "in_800_feet": "În 250 metri, {{direction}}",
+      "in_50_meters": "{{direction}} în 50 metri",
+      "in_150_meters": "În 150 metri, {{direction}}",
+      "in_250_meters": "În 250 metri, {{direction}}"
     },
     "onto_road": "pe {{roadName}}",
-    "reroute": "Recalculare rută",
-    "reroute_reason": "Recalculare rută. {{reason}}",
-    "arrival": "Ați ajuns la destinație",
-    "incident_ahead": "Atenție: {{type}} înainte",
-    "incident_distance": "Atenție: {{type}} la {{distance}} mile",
-    "speed_warning": "Avertizare viteză. Viteza curentă {{current}} {{unit}}. Limita de viteză este {{limit}}",
-    "use_lanes": "Folosiți {{lanes}}",
-    "test_message": "Ghidarea vocală este pregătită pentru navigație",
+    "announcements": {
+      "recalculating": "Recalculare rută",
+      "arrived": "Ați ajuns la destinație",
+      "use_lanes": "Folosiți {{lanes}}",
+      "voice_ready": "Ghidarea vocală este pregătită pentru navigație"
+    },
+    "warnings": {
+      "incident_ahead": "Atenție: {{type}} înainte",
+      "in_miles": "în {{distance}} mile",
+      "in_kilometers": "în {{distance}} kilometri",
+      "speed_warning": "Avertizare viteză. Viteza curentă {{speed}} {{unit}}. Limita de viteză este {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "ambuteiaj",
+      "accident": "accident",
+      "road_hazard": "pericol pe drum",
+      "road_closed": "drum închis",
+      "police_ahead": "poliție înainte",
+      "speed_camera": "radar",
+      "construction": "lucrări",
+      "bad_weather": "vreme rea"
+    },
     "units": {
       "mph": "mile pe oră",
       "kmh": "kilometri pe oră"

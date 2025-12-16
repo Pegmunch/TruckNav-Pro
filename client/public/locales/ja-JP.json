@@ -110,22 +110,38 @@
       "exit_right": "右の出口へ",
       "exit_left": "左の出口へ"
     },
-    "distance": {
+    "distances": {
       "now": "今すぐ{{direction}}",
-      "in_feet": "{{distance}}フィート先で{{direction}}",
-      "in_feet_prefix": "{{distance}}フィート先、{{direction}}",
-      "in_meters": "{{distance}}メートル先で{{direction}}",
-      "in_meters_prefix": "{{distance}}メートル先、{{direction}}"
+      "in_200_feet": "60メートル先で{{direction}}",
+      "in_500_feet": "150メートル先、{{direction}}",
+      "in_800_feet": "250メートル先、{{direction}}",
+      "in_50_meters": "50メートル先で{{direction}}",
+      "in_150_meters": "150メートル先、{{direction}}",
+      "in_250_meters": "250メートル先、{{direction}}"
     },
     "onto_road": "{{roadName}}へ",
-    "reroute": "ルートを再計算中",
-    "reroute_reason": "ルートを再計算中。{{reason}}",
-    "arrival": "目的地に到着しました",
-    "incident_ahead": "注意：この先{{type}}",
-    "incident_distance": "注意：{{distance}}マイル先に{{type}}",
-    "speed_warning": "速度警告。現在速度{{current}}{{unit}}。制限速度は{{limit}}",
-    "use_lanes": "{{lanes}}を使用してください",
-    "test_message": "音声ナビゲーションの準備ができました",
+    "announcements": {
+      "recalculating": "ルートを再計算中",
+      "arrived": "目的地に到着しました",
+      "use_lanes": "{{lanes}}を使用してください",
+      "voice_ready": "音声ナビゲーションの準備ができました"
+    },
+    "warnings": {
+      "incident_ahead": "注意：この先{{type}}",
+      "in_miles": "{{distance}}マイル先",
+      "in_kilometers": "{{distance}}キロメートル先",
+      "speed_warning": "速度警告。現在速度{{speed}}{{unit}}。制限速度は{{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "渋滞",
+      "accident": "事故",
+      "road_hazard": "道路危険",
+      "road_closed": "道路閉鎖",
+      "police_ahead": "この先警察",
+      "speed_camera": "速度カメラ",
+      "construction": "工事中",
+      "bad_weather": "悪天候"
+    },
     "units": {
       "mph": "マイル毎時",
       "kmh": "キロメートル毎時"

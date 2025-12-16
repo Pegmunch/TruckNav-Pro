@@ -110,22 +110,38 @@
       "exit_right": "Zjedź zjazdem w prawo",
       "exit_left": "Zjedź zjazdem w lewo"
     },
-    "distance": {
+    "distances": {
       "now": "{{direction}} teraz",
-      "in_feet": "{{direction}} za {{distance}} stóp",
-      "in_feet_prefix": "Za {{distance}} stóp, {{direction}}",
-      "in_meters": "{{direction}} za {{distance}} metrów",
-      "in_meters_prefix": "Za {{distance}} metrów, {{direction}}"
+      "in_200_feet": "{{direction}} za 60 metrów",
+      "in_500_feet": "Za 150 metrów, {{direction}}",
+      "in_800_feet": "Za 250 metrów, {{direction}}",
+      "in_50_meters": "{{direction}} za 50 metrów",
+      "in_150_meters": "Za 150 metrów, {{direction}}",
+      "in_250_meters": "Za 250 metrów, {{direction}}"
     },
     "onto_road": "na {{roadName}}",
-    "reroute": "Przeliczanie trasy",
-    "reroute_reason": "Przeliczanie trasy. {{reason}}",
-    "arrival": "Dotarłeś do celu",
-    "incident_ahead": "Uwaga: {{type}} przed tobą",
-    "incident_distance": "Uwaga: {{type}} za {{distance}} mil",
-    "speed_warning": "Ostrzeżenie o prędkości. Aktualna prędkość {{current}} {{unit}}. Limit prędkości to {{limit}}",
-    "use_lanes": "Użyj {{lanes}}",
-    "test_message": "Nawigacja głosowa jest gotowa",
+    "announcements": {
+      "recalculating": "Przeliczanie trasy",
+      "arrived": "Dotarłeś do celu",
+      "use_lanes": "Użyj {{lanes}}",
+      "voice_ready": "Nawigacja głosowa jest gotowa"
+    },
+    "warnings": {
+      "incident_ahead": "Uwaga: {{type}} przed tobą",
+      "in_miles": "za {{distance}} mil",
+      "in_kilometers": "za {{distance}} kilometrów",
+      "speed_warning": "Ostrzeżenie o prędkości. Aktualna prędkość {{speed}} {{unit}}. Limit prędkości to {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "korek",
+      "accident": "wypadek",
+      "road_hazard": "zagrożenie na drodze",
+      "road_closed": "droga zamknięta",
+      "police_ahead": "policja przed tobą",
+      "speed_camera": "fotoradar",
+      "construction": "prace budowlane",
+      "bad_weather": "zła pogoda"
+    },
     "units": {
       "mph": "mil na godzinę",
       "kmh": "kilometrów na godzinę"

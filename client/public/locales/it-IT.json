@@ -110,22 +110,38 @@
       "exit_right": "Prendi l'uscita a destra",
       "exit_left": "Prendi l'uscita a sinistra"
     },
-    "distance": {
+    "distances": {
       "now": "{{direction}} adesso",
-      "in_feet": "{{direction}} tra {{distance}} piedi",
-      "in_feet_prefix": "Tra {{distance}} piedi, {{direction}}",
-      "in_meters": "{{direction}} tra {{distance}} metri",
-      "in_meters_prefix": "Tra {{distance}} metri, {{direction}}"
+      "in_200_feet": "{{direction}} tra 60 metri",
+      "in_500_feet": "Tra 150 metri, {{direction}}",
+      "in_800_feet": "Tra 250 metri, {{direction}}",
+      "in_50_meters": "{{direction}} tra 50 metri",
+      "in_150_meters": "Tra 150 metri, {{direction}}",
+      "in_250_meters": "Tra 250 metri, {{direction}}"
     },
     "onto_road": "su {{roadName}}",
-    "reroute": "Ricalcolo percorso",
-    "reroute_reason": "Ricalcolo percorso. {{reason}}",
-    "arrival": "Sei arrivato a destinazione",
-    "incident_ahead": "Attenzione: {{type}} avanti",
-    "incident_distance": "Attenzione: {{type}} avanti tra {{distance}} miglia",
-    "speed_warning": "Avviso velocità. Velocità attuale {{current}} {{unit}}. Limite di velocità {{limit}}",
-    "use_lanes": "Usa {{lanes}}",
-    "test_message": "La guida vocale è pronta per la navigazione",
+    "announcements": {
+      "recalculating": "Ricalcolo percorso",
+      "arrived": "Sei arrivato a destinazione",
+      "use_lanes": "Usa {{lanes}}",
+      "voice_ready": "La guida vocale è pronta per la navigazione"
+    },
+    "warnings": {
+      "incident_ahead": "Attenzione: {{type}} avanti",
+      "in_miles": "tra {{distance}} miglia",
+      "in_kilometers": "tra {{distance}} chilometri",
+      "speed_warning": "Avviso velocità. Velocità attuale {{speed}} {{unit}}. Limite di velocità {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "ingorgo",
+      "accident": "incidente",
+      "road_hazard": "pericolo stradale",
+      "road_closed": "strada chiusa",
+      "police_ahead": "polizia avanti",
+      "speed_camera": "autovelox",
+      "construction": "lavori in corso",
+      "bad_weather": "maltempo"
+    },
     "units": {
       "mph": "miglia all'ora",
       "kmh": "chilometri all'ora"

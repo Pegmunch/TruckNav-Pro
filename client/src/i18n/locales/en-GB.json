@@ -94,5 +94,75 @@
     "silk_browser": "Enhanced for Silk Browser",
     "voice_support": "Voice Navigation Supported",
     "remote_navigation": "Remote Control Navigation"
+  },
+  "voice": {
+    "directions": {
+      "straight": "Continue straight",
+      "right": "Turn right",
+      "left": "Turn left",
+      "slight_right": "Bear right",
+      "slight_left": "Bear left",
+      "sharp_right": "Turn sharp right",
+      "sharp_left": "Turn sharp left",
+      "u_turn": "Make a U-turn",
+      "roundabout_right": "Take the roundabout to the right",
+      "roundabout_left": "Take the roundabout to the left",
+      "exit_right": "Take the exit on the right",
+      "exit_left": "Take the exit on the left"
+    },
+    "distances": {
+      "now": "{{direction}} now",
+      "in_200_feet": "{{direction}} in 60 metres",
+      "in_500_feet": "In 150 metres, {{direction}}",
+      "in_800_feet": "In 250 metres, {{direction}}",
+      "in_50_meters": "{{direction}} in 50 metres",
+      "in_150_meters": "In 150 metres, {{direction}}",
+      "in_250_meters": "In 250 metres, {{direction}}"
+    },
+    "onto_road": "onto {{roadName}}",
+    "announcements": {
+      "recalculating": "Recalculating route",
+      "arrived": "You have arrived at your destination",
+      "use_lanes": "Use {{lanes}}",
+      "voice_ready": "Voice guidance is ready for navigation"
+    },
+    "warnings": {
+      "incident_ahead": "Warning: {{type}} ahead",
+      "in_miles": "in {{distance}} miles",
+      "in_kilometers": "in {{distance}} kilometres",
+      "speed_warning": "Speed warning. Current speed {{speed}} {{unit}}. Speed limit is {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "traffic jam",
+      "accident": "accident",
+      "road_hazard": "road hazard",
+      "road_closed": "road closed",
+      "police_ahead": "police ahead",
+      "speed_camera": "speed camera",
+      "construction": "roadworks",
+      "bad_weather": "bad weather"
+    },
+    "units": {
+      "mph": "miles per hour",
+      "kmh": "kilometres per hour"
+    }
+  },
+  "settings": {
+    "language": "Language",
+    "select_language": "Select Language",
+    "voice_language": "Voice Language",
+    "language_changed": "Language changed to {{language}}"
+  },
+  "languages": {
+    "en-US": "English (US)",
+    "en-GB": "English (UK)",
+    "es-ES": "Spanish",
+    "de-DE": "German",
+    "it-IT": "Italian",
+    "pt-BR": "Portuguese",
+    "pl-PL": "Polish",
+    "ro-RO": "Romanian",
+    "zh-CN": "Chinese",
+    "ja-JP": "Japanese"
   }
 }

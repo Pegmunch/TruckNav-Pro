@@ -110,22 +110,38 @@
       "exit_right": "Take the exit on the right",
       "exit_left": "Take the exit on the left"
     },
-    "distance": {
+    "distances": {
       "now": "{{direction}} now",
-      "in_feet": "{{direction}} in {{distance}} feet",
-      "in_feet_prefix": "In {{distance}} feet, {{direction}}",
-      "in_meters": "{{direction}} in {{distance}} meters",
-      "in_meters_prefix": "In {{distance}} meters, {{direction}}"
+      "in_200_feet": "{{direction}} in 200 feet",
+      "in_500_feet": "In 500 feet, {{direction}}",
+      "in_800_feet": "In 800 feet, {{direction}}",
+      "in_50_meters": "{{direction}} in 50 meters",
+      "in_150_meters": "In 150 meters, {{direction}}",
+      "in_250_meters": "In 250 meters, {{direction}}"
     },
     "onto_road": "onto {{roadName}}",
-    "reroute": "Recalculating route",
-    "reroute_reason": "Recalculating route. {{reason}}",
-    "arrival": "You have arrived at your destination",
-    "incident_ahead": "Warning: {{type}} ahead",
-    "incident_distance": "Warning: {{type}} ahead in {{distance}} miles",
-    "speed_warning": "Speed warning. Current speed {{current}} {{unit}}. Speed limit is {{limit}}",
-    "use_lanes": "Use {{lanes}}",
-    "test_message": "Voice guidance is ready for navigation",
+    "announcements": {
+      "recalculating": "Recalculating route",
+      "arrived": "You have arrived at your destination",
+      "use_lanes": "Use {{lanes}}",
+      "voice_ready": "Voice guidance is ready for navigation"
+    },
+    "warnings": {
+      "incident_ahead": "Warning: {{type}} ahead",
+      "in_miles": "in {{distance}} miles",
+      "in_kilometers": "in {{distance}} kilometers",
+      "speed_warning": "Speed warning. Current speed {{speed}} {{unit}}. Speed limit is {{limit}}"
+    },
+    "incidents": {
+      "traffic_jam": "traffic jam",
+      "accident": "accident",
+      "road_hazard": "road hazard",
+      "road_closed": "road closed",
+      "police_ahead": "police ahead",
+      "speed_camera": "speed camera",
+      "construction": "construction",
+      "bad_weather": "bad weather"
+    },
     "units": {
       "mph": "miles per hour",
       "kmh": "kilometers per hour"

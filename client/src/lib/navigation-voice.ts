@@ -3,7 +3,10 @@
  * 
  * Uses Web Speech API to provide turn-by-turn voice navigation for truck drivers.
  * Handles upcoming maneuvers, urgent instructions, and interruptions.
+ * Supports multiple languages via i18next integration.
  */
+
+import i18n from '@/i18n/config';
 
 export type VoiceGuidanceLevel = 'normal' | 'urgent' | 'critical';
 export type DistanceThreshold = 500 | 200 | 50; // Distance in feet for announcements
@@ -407,42 +410,38 @@ export class NavigationVoice {
     // Check if we should announce based on distance thresholds
     if (unit === 'mi') {
       if (distanceInFeet <= this.DISTANCE_THRESHOLDS.IMMEDIATE) {
-        announcement = `${formattedDirection} now`;
+        announcement = this.t('voice.distances.now', { direction: formattedDirection });
         level = 'critical';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.NEAR) {
-        announcement = `${formattedDirection} in 200 feet`;
+        announcement = this.t('voice.distances.in_200_feet', { direction: formattedDirection });
         level = 'urgent';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.MEDIUM) {
-        announcement = `In 500 feet, ${formattedDirection}`;
+        announcement = this.t('voice.distances.in_500_feet', { direction: formattedDirection });
         level = 'normal';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.FAR) {
-        announcement = `In 800 feet, ${formattedDirection}`;
+        announcement = this.t('voice.distances.in_800_feet', { direction: formattedDirection });
         level = 'normal';
       }
     } else {
       // Metric system
       if (distanceInMeters <= 15) {
-        announcement = `${formattedDirection} now`;
+        announcement = this.t('voice.distances.now', { direction: formattedDirection });
         level = 'critical';
       } else if (distanceInMeters <= 60) {
-        announcement = `${formattedDirection} in 50 meters`;
+        announcement = this.t('voice.distances.in_50_meters', { direction: formattedDirection });
         level = 'urgent';
       } else if (distanceInMeters <= 150) {
-        announcement = `In 150 meters, ${formattedDirection}`;
+        announcement = this.t('voice.distances.in_150_meters', { direction: formattedDirection });
         level = 'normal';
       } else if (distanceInMeters <= 250) {
-        announcement = `In 250 meters, ${formattedDirection}`;
+        announcement = this.t('voice.distances.in_250_meters', { direction: formattedDirection });
         level = 'normal';
       }
     }
     
     // Add road name if available and enabled
     if (announcement && roadName && this.settings.announceRoadNames) {
-      if (level === 'critical') {
-        announcement += ` onto ${roadName}`;
-      } else {
-        announcement += ` onto ${roadName}`;
-      }
+      announcement += ' ' + this.t('voice.onto_road', { roadName });
     }
     
     // Prevent duplicate announcements for the same turn at similar distances
@@ -454,25 +453,20 @@ export class NavigationVoice {
   }
   
   /**
-   * Format direction for natural speech
+   * Get translated string using i18next
+   */
+  private t(key: string, options?: Record<string, unknown>): string {
+    return i18n.t(key, options) as string;
+  }
+  
+  /**
+   * Format direction for natural speech using translations
    */
   private formatDirection(direction: string): string {
-    const directionMap: { [key: string]: string } = {
-      'straight': 'Continue straight',
-      'right': 'Turn right',
-      'left': 'Turn left',
-      'slight_right': 'Bear right',
-      'slight_left': 'Bear left',
-      'sharp_right': 'Turn sharp right',
-      'sharp_left': 'Turn sharp left',
-      'u_turn': 'Make a U-turn',
-      'roundabout_right': 'Take the roundabout to the right',
-      'roundabout_left': 'Take the roundabout to the left',
-      'exit_right': 'Take the exit on the right',
-      'exit_left': 'Take the exit on the left'
-    };
-    
-    return directionMap[direction] || direction;
+    const directionKey = `voice.directions.${direction}`;
+    const translated = this.t(directionKey);
+    // Fallback to direction string if translation key not found
+    return translated !== directionKey ? translated : direction;
   }
   
   /**
@@ -483,7 +477,7 @@ export class NavigationVoice {
       return;
     }
     
-    let message = 'Recalculating route';
+    let message = this.t('voice.announcements.recalculating');
     if (reason) {
       message += `. ${reason}`;
     }
@@ -499,21 +493,43 @@ export class NavigationVoice {
       return;
     }
     
-    this.speak('You have arrived at your destination', 'normal', true);
+    this.speak(this.t('voice.announcements.arrived'), 'normal', true);
+  }
+  
+  /**
+   * Check if current language should use metric system
+   */
+  private shouldUseMetric(): boolean {
+    // US and UK use imperial (miles), most other countries use metric (kilometers)
+    const imperialLanguages = ['en-US', 'en-GB'];
+    return !imperialLanguages.includes(this.settings.language);
   }
   
   /**
    * Announce traffic incident
    */
-  public announceIncident(type: string, distance?: number): void {
+  public announceIncident(type: string, distance?: number, useMetric?: boolean): void {
     if (!this.isEnabled()) {
       return;
     }
     
-    let message = `Warning: ${type} ahead`;
+    // Auto-detect metric if not specified
+    const isMetric = useMetric ?? this.shouldUseMetric();
+    
+    // Try to get translated incident type
+    const incidentTypeKey = `voice.incidents.${type.toLowerCase().replace(/\s+/g, '_')}`;
+    const translatedType = this.t(incidentTypeKey);
+    const displayType = translatedType !== incidentTypeKey ? translatedType : type;
+    
+    let message = this.t('voice.warnings.incident_ahead', { type: displayType });
     if (distance && distance < 5000) { // Less than 5km
-      const miles = (distance / 1609.34).toFixed(1);
-      message += ` in ${miles} miles`;
+      if (isMetric) {
+        const km = (distance / 1000).toFixed(1);
+        message += ' ' + this.t('voice.warnings.in_kilometers', { distance: km });
+      } else {
+        const miles = (distance / 1609.34).toFixed(1);
+        message += ' ' + this.t('voice.warnings.in_miles', { distance: miles });
+      }
     }
     
     this.speak(message, 'urgent', false);
@@ -527,8 +543,13 @@ export class NavigationVoice {
       return;
     }
     
-    const unitText = unit === 'mph' ? 'miles per hour' : 'kilometers per hour';
-    const message = `Speed warning. Current speed ${Math.round(currentSpeed)} ${unitText}. Speed limit is ${limit}`;
+    const unitKey = unit === 'mph' ? 'voice.units.mph' : 'voice.units.kmh';
+    const unitText = this.t(unitKey);
+    const message = this.t('voice.warnings.speed_warning', { 
+      speed: Math.round(currentSpeed), 
+      unit: unitText, 
+      limit 
+    });
     
     this.speak(message, 'urgent', false);
   }
@@ -541,7 +562,7 @@ export class NavigationVoice {
       return;
     }
     
-    const message = `Use ${lanes}`;
+    const message = this.t('voice.announcements.use_lanes', { lanes });
     this.speak(message, 'normal', false);
   }
   
@@ -549,7 +570,7 @@ export class NavigationVoice {
    * Test voice with sample message
    */
   public testVoice(): void {
-    this.speak('Voice guidance is ready for navigation', 'normal', true);
+    this.speak(this.t('voice.announcements.voice_ready'), 'normal', true);
   }
   
   /**
