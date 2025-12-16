@@ -1,13 +1,12 @@
-import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin, Clock } from 'lucide-react';
+import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGPS } from '@/contexts/gps-context';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Facility } from '@shared/schema';
 
@@ -135,7 +134,7 @@ export function SimplifiedRouteDrawer({
           <Label htmlFor="from-location" className="text-sm font-medium">
             From
           </Label>
-          <div className="flex gap-2">
+          <div className="flex gap-2 relative">
             <AddressAutocomplete
               id="from-location"
               value={fromLocation}
@@ -145,30 +144,24 @@ export function SimplifiedRouteDrawer({
               testId="input-from-location"
               className="flex-1"
             />
-            <Popover open={isLocationDropdownOpen} onOpenChange={setIsLocationDropdownOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-10 px-3 shrink-0 touch-none"
-                  data-testid="button-location-dropdown"
-                  title="Select location or use GPS"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsLocationDropdownOpen(!isLocationDropdownOpen);
-                  }}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsLocationDropdownOpen(!isLocationDropdownOpen);
-                  }}
-                  type="button"
-                >
-                  <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600' : 'text-gray-400'}`} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="start" data-testid="location-dropdown-menu">
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-10 px-3 shrink-0 touch-none cursor-pointer active:bg-gray-100"
+              data-testid="button-location-dropdown"
+              title="Select location or use GPS"
+              onClick={() => {
+                console.log('[GPS-BUTTON] Clicked - current state:', isLocationDropdownOpen);
+                setIsLocationDropdownOpen(!isLocationDropdownOpen);
+              }}
+              type="button"
+            >
+              <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600' : 'text-gray-400'}`} />
+            </Button>
+
+            {/* Manual Dropdown Menu */}
+            {isLocationDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 p-2" data-testid="location-dropdown-menu">
                 <div className="space-y-1">
                   {/* Current GPS Location - Always at top */}
                   {isGPSReady && gps?.position && (
@@ -238,8 +231,17 @@ export function SimplifiedRouteDrawer({
                     </div>
                   )}
                 </div>
-              </PopoverContent>
-            </Popover>
+              </div>
+            )}
+
+            {/* Close dropdown when clicking outside */}
+            {isLocationDropdownOpen && (
+              <div 
+                className="fixed inset-0 z-40"
+                onClick={() => setIsLocationDropdownOpen(false)}
+                onTouchStart={() => setIsLocationDropdownOpen(false)}
+              />
+            )}
           </div>
 
           {/* GPS Status Indicator */}
