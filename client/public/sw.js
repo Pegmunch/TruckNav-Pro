@@ -392,6 +392,14 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Handle SKIP_WAITING message from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] SKIP_WAITING message received, skipping wait');
+    self.skipWaiting();
+  }
+});
+
 // Activate event - clean up old caches AGGRESSIVELY
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activating TruckNav Pro Service Worker v' + CACHE_VERSION);

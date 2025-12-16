@@ -25,18 +25,20 @@ async function initializeCSRF() {
 
 // Register Service Worker for PWA functionality 
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
-// CRITICAL: Use versioned URL to force iOS PWA to download new service worker
+// CRITICAL: Use dynamic versioned URL to force iOS PWA to download new service worker
 // iOS caches sw.js URL and won't refetch unless URL changes
-const SW_VERSION = '3.4.7'; // Must match app-version.json - increment on each deploy
+// Dynamic timestamp ensures every session checks for updates
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
+      // Use timestamp to ensure updates are checked on every page load
+      const SW_VERSION = `${Math.floor(Date.now() / 60000)}`; // Changes every minute
       // Register with version query to force iOS to treat as new script
       const registration = await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
         scope: '/',
         updateViaCache: 'none' // Always check server for updates
       });
-      console.log('[PWA] Service Worker registered with version:', SW_VERSION);
+      console.log('[PWA] Service Worker registered with dynamic version:', SW_VERSION);
       
       // Force immediate update check
       await registration.update();

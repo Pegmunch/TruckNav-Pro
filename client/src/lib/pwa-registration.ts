@@ -32,9 +32,10 @@ export async function registerServiceWorker(
   }
 
   try {
-    // CRITICAL: Use versioned URL to force iOS PWA to download new service worker
+    // CRITICAL: Use dynamic versioned URL to force iOS PWA to download new service worker
     // iOS caches sw.js URL and won't refetch unless URL changes
-    const SW_VERSION = '3.4.7'; // Must match app-version.json - increment on each deploy
+    // Use timestamp to ensure every reload checks for updates
+    const SW_VERSION = `${Math.floor(Date.now() / 60000)}`; // Changes every minute
     
     // Register the service worker with version query string
     const registration = await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
