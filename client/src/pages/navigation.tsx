@@ -2613,10 +2613,11 @@ function NavigationPageContent() {
               )}
               
               {/* PLAN MODE CONTROLS - Bottom Right Stack */}
+              {/* Positioned higher to avoid overlap with map controls */}
               {mobileNavMode === 'plan' && !currentRoute && (
                 <div className="fixed flex flex-col gap-2 z-[200] pointer-events-auto"
                   style={{
-                    bottom: 'calc(16px + var(--safe-area-bottom))',
+                    bottom: 'calc(80px + var(--safe-area-bottom))',
                     right: '16px'
                   }}>
                   {/* GPS Mode / Cache Mode Toggle Buttons */}
