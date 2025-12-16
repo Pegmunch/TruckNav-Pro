@@ -65,8 +65,8 @@ export function FleetTrackingTab() {
             offlineCount: 1,
           };
         }
-        toast({ title: 'Failed to load fleet data', description: 'Unable to fetch GPS tracking data', variant: 'destructive' });
-        throw new Error('Failed to load fleet data');
+        toast({ title: t('fleet.tracking.toast.loadFailed'), description: t('fleet.tracking.toast.loadFailedDesc'), variant: 'destructive' });
+        throw new Error(t('fleet.tracking.toast.loadFailed'));
       }
       return response.json();
     },

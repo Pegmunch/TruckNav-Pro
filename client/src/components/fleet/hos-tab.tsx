@@ -69,8 +69,8 @@ export function HoursOfServiceTab() {
             violationsToday: 2,
           };
         }
-        toast({ title: 'Failed to load HoS data', description: 'Unable to fetch hours of service compliance data', variant: 'destructive' });
-        throw new Error('Failed to load HoS data');
+        toast({ title: t('fleet.hos.toast.loadFailed'), description: t('fleet.hos.toast.loadFailedDesc'), variant: 'destructive' });
+        throw new Error(t('fleet.hos.toast.loadFailed'));
       }
       return response.json();
     },

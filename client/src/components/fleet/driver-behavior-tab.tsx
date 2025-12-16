@@ -71,8 +71,8 @@ export function DriverBehaviorTab() {
             },
           };
         }
-        toast({ title: 'Failed to load driver behavior data', description: 'Unable to fetch analytics', variant: 'destructive' });
-        throw new Error('Failed to load driver behavior data');
+        toast({ title: t('fleet.behavior.toast.loadFailed'), description: t('fleet.behavior.toast.loadFailedDesc'), variant: 'destructive' });
+        throw new Error(t('fleet.behavior.toast.loadFailed'));
       }
       return response.json();
     },

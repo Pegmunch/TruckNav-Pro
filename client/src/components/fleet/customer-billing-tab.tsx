@@ -63,13 +63,13 @@ export function CustomerBillingTab() {
             { id: 'c5', name: 'Sunset Shipping', email: 'accounts@sunsetship.com', contractType: 'per_mile' as const, ratePerMile: 2.20, totalTrips: 28, totalRevenue: 5600, profitMargin: 15.5, outstandingBalance: 800, status: 'pending' as const, createdAt: '2024-06-01T00:00:00Z' },
           ];
         }
-        throw new Error('Failed to load customers');
+        throw new Error(t('fleet.billing.toast.loadFailed'));
       }
       return response.json();
     },
     meta: {
       onError: () => {
-        toast({ title: 'Failed to load customers', description: 'Unable to fetch customer billing data', variant: 'destructive' });
+        toast({ title: t('fleet.billing.toast.loadFailed'), description: t('fleet.billing.toast.loadFailedDesc'), variant: 'destructive' });
       }
     }
   });
@@ -102,7 +102,7 @@ export function CustomerBillingTab() {
             activeContracts: 4,
           };
         }
-        throw new Error('Failed to load analytics');
+        throw new Error(t('fleet.billing.toast.loadFailedAnalytics'));
       }
       return response.json();
     },

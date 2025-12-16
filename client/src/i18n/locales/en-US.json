@@ -349,7 +349,11 @@
       "latitude": "Latitude",
       "longitude": "Longitude",
       "screenX": "Screen X",
-      "screenY": "Screen Y"
+      "screenY": "Screen Y",
+      "toast": {
+        "loadFailed": "Failed to load fleet data",
+        "loadFailedDesc": "Unable to fetch GPS tracking data"
+      }
     },
     "geofencing": {
       "title": "Geofencing",
@@ -460,7 +464,11 @@
       "noDataAvailable": "No behavior data available",
       "driver": "Driver",
       "totalEvents": "Total Events",
-      "riskLevel": "Risk Level"
+      "riskLevel": "Risk Level",
+      "toast": {
+        "loadFailed": "Failed to load driver behavior data",
+        "loadFailedDesc": "Unable to fetch analytics"
+      }
     },
     "hos": {
       "title": "Hours of Service",
@@ -498,7 +506,11 @@
       "compliant": "Compliant",
       "nonCompliant": "Non-Compliant",
       "violationsToday": "Violations Today",
-      "noDriverData": "No driver data available"
+      "noDriverData": "No driver data available",
+      "toast": {
+        "loadFailed": "Failed to load HoS data",
+        "loadFailedDesc": "Unable to fetch hours of service compliance data"
+      }
     },
     "billing": {
       "title": "Customer Billing",
@@ -555,7 +567,12 @@
       "pendingPayments": "Pending payments",
       "acrossAllCustomers": "Across all customers",
       "activeContracts": "Active Contracts",
-      "ofCustomers": "of {{count}} customers"
+      "ofCustomers": "of {{count}} customers",
+      "toast": {
+        "loadFailed": "Failed to load customers",
+        "loadFailedDesc": "Unable to fetch customer billing data",
+        "loadFailedAnalytics": "Failed to load analytics"
+      }
     },
     "notifications": {
       "expires": "Expires",
