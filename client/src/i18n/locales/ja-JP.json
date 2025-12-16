@@ -325,7 +325,11 @@
       },
       "speed": "速度",
       "heading": "方向",
-      "address": "現在地"
+      "address": "現在地",
+      "toast": {
+        "loadFailed": "車両追跡データの読み込みに失敗しました",
+        "loadFailedDesc": "GPS追跡データを取得できません"
+      }
     },
     "geofencing": {
       "title": "ジオフェンス",
@@ -366,6 +370,10 @@
         "low": "低リスク",
         "medium": "中リスク",
         "high": "高リスク"
+      },
+      "toast": {
+        "loadFailed": "運転行動データの読み込みに失敗しました",
+        "loadFailedDesc": "分析データを取得できません"
       }
     },
     "hos": {
@@ -387,6 +395,10 @@
         "weekly_exceeded": "週次超過",
         "break_not_taken": "休憩未取得",
         "rest_period": "休息時間違反"
+      },
+      "toast": {
+        "loadFailed": "運転時間管理データの読み込みに失敗しました",
+        "loadFailedDesc": "運転時間コンプライアンスデータを取得できません"
       }
     },
     "billing": {
@@ -413,6 +425,11 @@
         "active": "取引中",
         "inactive": "休止",
         "pending": "保留"
+      },
+      "toast": {
+        "loadFailed": "顧客の読み込みに失敗しました",
+        "loadFailedDesc": "顧客請求データを取得できません",
+        "loadFailedAnalytics": "分析の読み込みに失敗しました"
       }
     },
     "notifications": {

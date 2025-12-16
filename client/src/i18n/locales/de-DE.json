@@ -325,7 +325,11 @@
       },
       "speed": "Geschwindigkeit",
       "heading": "Richtung",
-      "address": "Aktueller Standort"
+      "address": "Aktueller Standort",
+      "toast": {
+        "loadFailed": "Flottendaten konnte nicht geladen werden",
+        "loadFailedDesc": "GPS-Verfolgungsdaten konnten nicht abgerufen werden"
+      }
     },
     "geofencing": {
       "title": "Geofencing",
@@ -366,6 +370,10 @@
         "low": "Niedriges Risiko",
         "medium": "Mittleres Risiko",
         "high": "Hohes Risiko"
+      },
+      "toast": {
+        "loadFailed": "Fahrerverhaltensdaten konnte nicht geladen werden",
+        "loadFailedDesc": "Analysedaten konnten nicht abgerufen werden"
       }
     },
     "hos": {
@@ -387,6 +395,10 @@
         "weekly_exceeded": "Wöchentliche Lenkzeit überschritten",
         "break_not_taken": "Pause nicht eingehalten",
         "rest_period": "Ruhezeit-Verstoß"
+      },
+      "toast": {
+        "loadFailed": "HoS-Daten konnte nicht geladen werden",
+        "loadFailedDesc": "Lenk- und Ruhezeiten-Konformitätsdaten konnten nicht abgerufen werden"
       }
     },
     "billing": {
@@ -413,6 +425,11 @@
         "active": "Aktiv",
         "inactive": "Inaktiv",
         "pending": "Ausstehend"
+      },
+      "toast": {
+        "loadFailed": "Kunden konnten nicht geladen werden",
+        "loadFailedDesc": "Kundenabrechnung-Daten konnten nicht abgerufen werden",
+        "loadFailedAnalytics": "Analysedaten konnte nicht geladen werden"
       }
     },
     "notifications": {

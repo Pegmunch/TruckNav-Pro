@@ -325,7 +325,11 @@
       },
       "speed": "速度",
       "heading": "方向",
-      "address": "当前位置"
+      "address": "当前位置",
+      "toast": {
+        "loadFailed": "车队数据加载失败",
+        "loadFailedDesc": "无法获取GPS追踪数据"
+      }
     },
     "geofencing": {
       "title": "电子围栏",
@@ -366,6 +370,10 @@
         "low": "低风险",
         "medium": "中风险",
         "high": "高风险"
+      },
+      "toast": {
+        "loadFailed": "驾驶行为数据加载失败",
+        "loadFailedDesc": "无法获取分析数据"
       }
     },
     "hos": {
@@ -387,6 +395,10 @@
         "weekly_exceeded": "超周限",
         "break_not_taken": "未休息",
         "rest_period": "休息时间违规"
+      },
+      "toast": {
+        "loadFailed": "工作时间数据加载失败",
+        "loadFailedDesc": "无法获取工作时间合规数据"
       }
     },
     "billing": {
@@ -413,6 +425,11 @@
         "active": "活跃",
         "inactive": "停用",
         "pending": "待定"
+      },
+      "toast": {
+        "loadFailed": "客户加载失败",
+        "loadFailedDesc": "无法获取客户计费数据",
+        "loadFailedAnalytics": "分析加载失败"
       }
     },
     "notifications": {

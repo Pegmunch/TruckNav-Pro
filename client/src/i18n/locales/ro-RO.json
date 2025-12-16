@@ -325,7 +325,11 @@
       },
       "speed": "Viteză",
       "heading": "Direcție",
-      "address": "Locație Curentă"
+      "address": "Locație Curentă",
+      "toast": {
+        "loadFailed": "Eroare la încărcarea datelor flotei",
+        "loadFailedDesc": "Nu s-au putut prelua datele de urmărire GPS"
+      }
     },
     "geofencing": {
       "title": "Geocercuri",
@@ -366,6 +370,10 @@
         "low": "Risc Scăzut",
         "medium": "Risc Mediu",
         "high": "Risc Mare"
+      },
+      "toast": {
+        "loadFailed": "Eroare la încărcarea datelor comportamentului",
+        "loadFailedDesc": "Nu s-au putut prelua analizele"
       }
     },
     "hos": {
@@ -387,6 +395,10 @@
         "weekly_exceeded": "Limita Săptămânală Depășită",
         "break_not_taken": "Pauză Neluată",
         "rest_period": "Încălcare Pauză"
+      },
+      "toast": {
+        "loadFailed": "Eroare la încărcarea datelor HoS",
+        "loadFailedDesc": "Nu s-au putut prelua datele de conformitate a orelor de serviciu"
       }
     },
     "billing": {
@@ -413,6 +425,11 @@
         "active": "Activ",
         "inactive": "Inactiv",
         "pending": "În Așteptare"
+      },
+      "toast": {
+        "loadFailed": "Eroare la încărcarea clienților",
+        "loadFailedDesc": "Nu s-au putut prelua datele de facturare a clienților",
+        "loadFailedAnalytics": "Eroare la încărcarea analizelor"
       }
     },
     "notifications": {

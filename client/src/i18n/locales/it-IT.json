@@ -325,7 +325,11 @@
       },
       "speed": "Velocità",
       "heading": "Direzione",
-      "address": "Posizione Attuale"
+      "address": "Posizione Attuale",
+      "toast": {
+        "loadFailed": "Errore caricamento dati flotta",
+        "loadFailedDesc": "Impossibile recuperare i dati di tracciamento GPS"
+      }
     },
     "geofencing": {
       "title": "Geofencing",
@@ -366,6 +370,10 @@
         "low": "Rischio Basso",
         "medium": "Rischio Medio",
         "high": "Rischio Alto"
+      },
+      "toast": {
+        "loadFailed": "Errore caricamento comportamento autisti",
+        "loadFailedDesc": "Impossibile recuperare i dati analitici"
       }
     },
     "hos": {
@@ -387,6 +395,10 @@
         "weekly_exceeded": "Guida Settimanale Superata",
         "break_not_taken": "Pausa Non Presa",
         "rest_period": "Violazione Periodo Riposo"
+      },
+      "toast": {
+        "loadFailed": "Errore caricamento dati HoS",
+        "loadFailedDesc": "Impossibile recuperare i dati di conformità ore di servizio"
       }
     },
     "billing": {
@@ -413,6 +425,11 @@
         "active": "Attivo",
         "inactive": "Inattivo",
         "pending": "In Attesa"
+      },
+      "toast": {
+        "loadFailed": "Errore caricamento clienti",
+        "loadFailedDesc": "Impossibile recuperare i dati di fatturazione cliente",
+        "loadFailedAnalytics": "Errore caricamento analisi"
       }
     },
     "notifications": {

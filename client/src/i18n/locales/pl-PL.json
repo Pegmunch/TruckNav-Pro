@@ -325,7 +325,11 @@
       },
       "speed": "Prędkość",
       "heading": "Kierunek",
-      "address": "Aktualna Lokalizacja"
+      "address": "Aktualna Lokalizacja",
+      "toast": {
+        "loadFailed": "Błąd ładowania danych floty",
+        "loadFailedDesc": "Nie udało się pobrać danych śledzenia GPS"
+      }
     },
     "geofencing": {
       "title": "Geofencing",
@@ -366,6 +370,10 @@
         "low": "Niskie Ryzyko",
         "medium": "Średnie Ryzyko",
         "high": "Wysokie Ryzyko"
+      },
+      "toast": {
+        "loadFailed": "Błąd ładowania danych zachowania kierowców",
+        "loadFailedDesc": "Nie udało się pobrać analiz"
       }
     },
     "hos": {
@@ -387,6 +395,10 @@
         "weekly_exceeded": "Przekroczony Tygodniowy Limit",
         "break_not_taken": "Brak Przerwy",
         "rest_period": "Naruszenie Odpoczynku"
+      },
+      "toast": {
+        "loadFailed": "Błąd ładowania danych HoS",
+        "loadFailedDesc": "Nie udało się pobrać danych zgodności czasu pracy"
       }
     },
     "billing": {
@@ -413,6 +425,11 @@
         "active": "Aktywny",
         "inactive": "Nieaktywny",
         "pending": "Oczekujący"
+      },
+      "toast": {
+        "loadFailed": "Błąd ładowania klientów",
+        "loadFailedDesc": "Nie udało się pobrać danych rozliczeń klientów",
+        "loadFailedAnalytics": "Błąd ładowania analiz"
       }
     },
     "notifications": {
