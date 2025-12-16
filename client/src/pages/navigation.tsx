@@ -1539,6 +1539,29 @@ function NavigationPageContent() {
         setToLocation(route.endLocation);
       }
       
+      // Save destination to recent locations for quick access
+      if (route && route.endLocation && route.routePath && route.routePath.length > 0) {
+        try {
+          const endPoint = route.routePath[route.routePath.length - 1];
+          const newDestination = {
+            name: route.endLocation,
+            lat: endPoint.lat,
+            lng: endPoint.lng,
+            timestamp: Date.now()
+          };
+          const stored = localStorage.getItem('trucknav_recent_locations');
+          const existing = stored ? JSON.parse(stored) : [];
+          // Add to front, remove duplicates, keep last 5
+          const updated = [newDestination, ...existing.filter((l: any) => 
+            !(Math.abs(l.lat - endPoint.lat) < 0.001 && Math.abs(l.lng - endPoint.lng) < 0.001)
+          )].slice(0, 5);
+          localStorage.setItem('trucknav_recent_locations', JSON.stringify(updated));
+          console.log('[RECENT-LOCATIONS] Saved destination:', route.endLocation);
+        } catch (error) {
+          console.error('[RECENT-LOCATIONS] Failed to save destination:', error);
+        }
+      }
+      
       // If route calculation includes a plannedJourney (from route calculation), update sync
       // NOTE: We don't persist to localStorage here - only persist when user actually starts navigation
       // This prevents preview routes from reappearing on app reload
