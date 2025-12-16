@@ -1,12 +1,24 @@
 // Cache Buster - Forces PWA update when version changes
 const STORAGE_KEY = 'trucknav_app_version';
-const VERSION_CHECK_INTERVAL = 30000; // Check every 30 seconds for faster updates
+const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes (slower to avoid disruption)
+let isOnboarding = false; // Flag to disable cache-buster during legal acceptance
+
+/**
+ * Temporarily disable cache-buster during critical onboarding
+ */
+export function pauseCacheBusterDuringOnboarding(isPaused: boolean): void {
+  isOnboarding = isPaused;
+  console.log(`[CACHE-BUSTER] Onboarding mode: ${isPaused}`);
+}
 
 export async function checkAppVersion(): Promise<void> {
+  // CRITICAL: Skip version checks during legal onboarding to prevent localStorage wipes
+  if (isOnboarding) {
+    console.log('[CACHE-BUSTER] Skipping version check during onboarding');
+    return;
+  }
+
   try {
-    // CRITICAL: Always check version regardless of legal terms to ensure fresh code is served
-    // This prevents stale PWA cache from being served on first load
-    
     // Fetch the current version from server with aggressive no-cache headers
     const response = await fetch('/app-version.json?t=' + Date.now(), {
       cache: 'no-store',
@@ -29,7 +41,15 @@ export async function checkAppVersion(): Promise<void> {
       forceRefresh: versionData.forceRefresh
     });
     
-    // Only clear cache if versions actually mismatch (not on every forceRefresh flag)
+    // FIX: On first load (storedVersion is null), DON'T clear - just store the version
+    // Only clear if there's an actual version mismatch
+    if (storedVersion === null) {
+      console.log('[CACHE-BUSTER] First app load - initializing version:', versionData.version);
+      localStorage.setItem(STORAGE_KEY, versionData.version);
+      return;
+    }
+    
+    // Only clear cache if versions actually mismatch
     if (storedVersion !== versionData.version) {
       console.log('[CACHE-BUSTER] Version mismatch detected - Old:', storedVersion, 'New:', versionData.version, 'clearing cache...');
       
@@ -83,15 +103,15 @@ export async function checkAppVersion(): Promise<void> {
 
 // Start periodic version checks
 export function startVersionMonitoring(): void {
-  // Check immediately
+  // Check immediately (but don't clear on first load - fixed above)
   checkAppVersion();
   
-  // Check periodically
+  // Check periodically (5 minutes instead of 30 seconds)
   setInterval(checkAppVersion, VERSION_CHECK_INTERVAL);
   
   // Also check on visibility change (when app comes to foreground)
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
+    if (!document.hidden && !isOnboarding) {
       checkAppVersion();
     }
   });

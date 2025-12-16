@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
+import { pauseCacheBusterDuringOnboarding } from '@/lib/cache-buster';
 
 /**
  * Interface for legal consent data structure
@@ -192,47 +193,58 @@ export function useLegalConsent(): UseLegalConsentReturn {
    * CRITICAL: Must persist reliably in PWA standalone mode
    */
   const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
-    const newConsentData: LegalConsentData = {
-      hasAcceptedTerms: true,
-      consentVersion: CURRENT_LEGAL_VERSION,
-      consentTimestamp: new Date().toISOString(),
-      completedCheckboxes: checkboxStates || {
-        navigation: true,
-        liability: true,
-        responsibility: true,
-        privacy: true,
-        terms: true,
-      },
-    };
-
-    console.log('[LEGAL-CONSENT] Saving consent acceptance...');
+    // CRITICAL: Pause cache-buster during acceptance to prevent localStorage wipe
+    pauseCacheBusterDuringOnboarding(true);
     
-    // Update React state first
-    setConsentData(newConsentData);
-    
-    // Save to localStorage with multiple writes to ensure persistence
-    saveConsentData(newConsentData);
-    
-    // Double-write the simple flag for extra reliability in PWA mode
     try {
-      localStorage.setItem('trucknav_legal_accepted', 'true');
-      localStorage.setItem('trucknav_legal_consent', JSON.stringify(newConsentData));
-      console.log('[LEGAL-CONSENT] ✓ Consent saved to localStorage');
+      const newConsentData: LegalConsentData = {
+        hasAcceptedTerms: true,
+        consentVersion: CURRENT_LEGAL_VERSION,
+        consentTimestamp: new Date().toISOString(),
+        completedCheckboxes: checkboxStates || {
+          navigation: true,
+          liability: true,
+          responsibility: true,
+          privacy: true,
+          terms: true,
+        },
+      };
+
+      console.log('[LEGAL-CONSENT] Saving consent acceptance...');
       
-      // Verify the write was successful
-      const verifyRead = localStorage.getItem('trucknav_legal_accepted');
-      console.log('[LEGAL-CONSENT] Verification read:', verifyRead);
-    } catch (error) {
-      console.error('[LEGAL-CONSENT] ✗ Failed to save consent:', error);
-    }
+      // Update React state first
+      setConsentData(newConsentData);
+      
+      // Save to localStorage with multiple writes to ensure persistence
+      saveConsentData(newConsentData);
+      
+      // Double-write the simple flag for extra reliability in PWA mode
+      try {
+        localStorage.setItem('trucknav_legal_accepted', 'true');
+        localStorage.setItem('trucknav_legal_consent', JSON.stringify(newConsentData));
+        console.log('[LEGAL-CONSENT] ✓ Consent saved to localStorage');
+        
+        // Verify the write was successful
+        const verifyRead = localStorage.getItem('trucknav_legal_accepted');
+        console.log('[LEGAL-CONSENT] Verification read:', verifyRead);
+      } catch (error) {
+        console.error('[LEGAL-CONSENT] ✗ Failed to save consent:', error);
+      }
 
-    // Also save to backend (works for both authenticated and unauthenticated users)
-    try {
-      await apiRequest('POST', '/api/users/accept-terms', {});
-      console.log('[LEGAL-CONSENT] ✓ Consent recorded on server');
-    } catch (error) {
-      // Network errors are logged but don't block the flow
-      console.error('[LEGAL-CONSENT] Failed to record consent on server:', error);
+      // Also save to backend (works for both authenticated and unauthenticated users)
+      try {
+        await apiRequest('POST', '/api/users/accept-terms', {});
+        console.log('[LEGAL-CONSENT] ✓ Consent recorded on server');
+      } catch (error) {
+        // Network errors are logged but don't block the flow
+        console.error('[LEGAL-CONSENT] Failed to record consent on server:', error);
+      }
+    } finally {
+      // Re-enable cache-buster after consent is saved
+      setTimeout(() => {
+        pauseCacheBusterDuringOnboarding(false);
+        console.log('[LEGAL-CONSENT] ✓ Cache-buster re-enabled after consent saved');
+      }, 1000);
     }
   }, [saveConsentData]);
 
