@@ -215,6 +215,12 @@ function NavigationPageContent() {
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(null);
   
+  // GPS Mode vs Cache Mode toggle state with localStorage persistence
+  const [gpsMode, setGpsMode] = useState<'gps' | 'cache'>(() => {
+    const stored = localStorage.getItem('trucknav_gps_mode');
+    return stored === 'cache' ? 'cache' : 'gps';
+  });
+  
   // Destination reached state
   const [showDestinationReached, setShowDestinationReached] = useState(false);
   const hasShownDestinationDialogRef = useRef(false);
@@ -265,6 +271,30 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] mobileNavMode changed to:', mobileNavMode);
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
+  
+  // GPS Mode effect - wire up mode changes to GPS context
+  useEffect(() => {
+    if (!gpsData) return;
+    
+    if (gpsMode === 'gps') {
+      // Start live GPS tracking
+      console.log('[GPS-MODE] Switching to GPS mode - starting live tracking');
+      gpsData.startGPSTracking();
+    } else {
+      // Stop live GPS tracking, use cached/manual position
+      console.log('[GPS-MODE] Switching to Cache mode - stopping live tracking');
+      gpsData.stopGPSTracking();
+    }
+    
+    // Persist to localStorage
+    localStorage.setItem('trucknav_gps_mode', gpsMode);
+  }, [gpsMode, gpsData]);
+  
+  // GPS Mode toggle handler - no toast notifications per user request
+  const handleGpsModeToggle = useCallback((mode: 'gps' | 'cache') => {
+    console.log('[GPS-MODE] User toggled mode to:', mode);
+    setGpsMode(mode);
+  }, []);
   
   // CRITICAL FIX: Always start in plan mode on app launch
   // This ensures PWA doesn't restore stale navigation state
@@ -2052,8 +2082,10 @@ function NavigationPageContent() {
 
   // Mode validation guard to prevent invalid navigation transitions
   const canStartNavigation = useCallback(() => {
-    if (isMobile && mobileNavMode !== 'preview' && mobileNavMode !== 'navigate') {
-      console.warn('[NAV-MODE] Cannot start navigation - invalid mode:', mobileNavMode);
+    // Allow navigation from plan mode (after route calculation) or navigate mode
+    // The isShowingPreview state indicates preview mode, not mobileNavMode
+    if (isMobile && mobileNavMode === 'plan' && !isShowingPreview && !currentRoute) {
+      console.warn('[NAV-MODE] Cannot start navigation - still in plan mode without route:', mobileNavMode);
       return false;
     }
     if (!currentRoute && (!fromLocation || !toLocation)) {
@@ -2583,6 +2615,40 @@ function NavigationPageContent() {
                     bottom: 'calc(16px + var(--safe-area-bottom))',
                     right: '16px'
                   }}>
+                  {/* GPS Mode / Cache Mode Toggle Buttons */}
+                  <div className="flex gap-1">
+                    <Button
+                      onClick={() => handleGpsModeToggle('gps')}
+                      size="sm"
+                      className={`h-11 px-4 rounded-full shadow-lg font-medium ${
+                        gpsMode === 'gps'
+                          ? 'bg-green-500 hover:bg-green-600 text-white'
+                          : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
+                      }`}
+                      data-testid="button-gps-mode"
+                      aria-label="GPS Mode - Live tracking"
+                      aria-pressed={gpsMode === 'gps'}
+                      title="GPS Mode: Live GPS tracking with auto-follow"
+                    >
+                      <Navigation2 className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      onClick={() => handleGpsModeToggle('cache')}
+                      size="sm"
+                      className={`h-11 px-4 rounded-full shadow-lg font-medium ${
+                        gpsMode === 'cache'
+                          ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                          : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
+                      }`}
+                      data-testid="button-cache-mode"
+                      aria-label="Cache Mode - Manual position"
+                      aria-pressed={gpsMode === 'cache'}
+                      title="Cache Mode: Manual/cached position without live GPS"
+                    >
+                      <MapPin className="w-5 h-5" />
+                    </Button>
+                  </div>
+                  
                   {/* Voice Toggle Button */}
                   <Button
                     onClick={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}

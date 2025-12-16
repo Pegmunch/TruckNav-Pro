@@ -2218,6 +2218,24 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
         }}
       />
       
+      {/* Loading Overlay - prevents map flashing during initialization */}
+      <div 
+        className={cn(
+          "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-500",
+          isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+        )}
+        data-testid="map-loading-overlay"
+        aria-hidden={isLoaded}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
+            <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" />
+          </div>
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading map...</span>
+        </div>
+      </div>
+      
       {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
       <StaticRouteOverlay
         map={map.current}

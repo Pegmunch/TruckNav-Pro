@@ -87,6 +87,9 @@ export interface GPSContextValue {
   setManualLocation: (location: ManualLocationData | null) => void;
   isUsingManualLocation: boolean;
   clearManualLocation: () => void;
+  // GPS tracking control
+  startGPSTracking: () => void;
+  stopGPSTracking: () => void;
 }
 
 interface GPSProviderProps {
@@ -1294,7 +1297,10 @@ export function GPSProvider({
     manualLocation,
     setManualLocation,
     isUsingManualLocation,
-    clearManualLocation
+    clearManualLocation,
+    // GPS tracking control
+    startGPSTracking,
+    stopGPSTracking
   };
 
   return (
