@@ -4,12 +4,8 @@ const VERSION_CHECK_INTERVAL = 30000; // Check every 30 seconds for faster updat
 
 export async function checkAppVersion(): Promise<void> {
   try {
-    // Don't refresh if user hasn't accepted legal terms yet
-    const legalAccepted = localStorage.getItem('trucknav_legal_accepted');
-    if (!legalAccepted) {
-      console.log('[CACHE-BUSTER] Skipping - legal terms not yet accepted');
-      return;
-    }
+    // CRITICAL: Always check version regardless of legal terms to ensure fresh code is served
+    // This prevents stale PWA cache from being served on first load
     
     // Fetch the current version from server with aggressive no-cache headers
     const response = await fetch('/app-version.json?t=' + Date.now(), {
