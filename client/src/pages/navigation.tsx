@@ -352,9 +352,15 @@ function NavigationPageContent() {
     });
     
     // Also clear any trucknav prefixed keys we might have missed
+    // PRESERVE: trucknav_app_version (critical for cache-buster), trucknav_legal_*, trucknav_session
+    const protectedKeys = ['trucknav_app_version', 'trucknav_legal', 'trucknav_session', 'trucknav_user'];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && (key.includes('nav') || key.includes('journey') || key.includes('route'))) {
+        // Skip protected keys
+        if (protectedKeys.some(pk => key.includes(pk))) {
+          continue;
+        }
         localStorage.removeItem(key);
         console.log(`[NAV-STATE] ✓ Cleared localStorage: ${key}`);
       }
