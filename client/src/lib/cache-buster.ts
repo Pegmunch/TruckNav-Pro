@@ -29,9 +29,9 @@ export async function checkAppVersion(): Promise<void> {
       forceRefresh: versionData.forceRefresh
     });
     
-    // If versions don't match or force refresh is set
-    if (storedVersion !== versionData.version || versionData.forceRefresh) {
-      console.log('[CACHE-BUSTER] Version mismatch detected, clearing cache...');
+    // Only clear cache if versions actually mismatch (not on every forceRefresh flag)
+    if (storedVersion !== versionData.version) {
+      console.log('[CACHE-BUSTER] Version mismatch detected - Old:', storedVersion, 'New:', versionData.version, 'clearing cache...');
       
       // Clear all caches
       if ('caches' in window) {

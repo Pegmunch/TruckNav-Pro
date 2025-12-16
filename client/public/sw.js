@@ -603,6 +603,33 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
+  // CRITICAL FIX: NEVER cache index.html or root - always fetch fresh from network
+  // This ensures users get the latest JS bundles on every PWA load
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200 && response.type === 'basic') {
+            return response;
+          }
+          return response;
+        })
+        .catch(async () => {
+          // If network fails, serve cached version as last resort
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const offlinePage = await caches.match('/offline.html');
+          if (offlinePage) return offlinePage;
+          // Last resort - inline minimal offline page
+          return new Response(
+            '<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>You are offline</h1></body></html>',
+            { status: 503, headers: { 'Content-Type': 'text/html' } }
+          );
+        })
+    );
+    return;
+  }
+  
   // Handle non-GET requests
   if (request.method !== 'GET') {
     // Try to make the request first
