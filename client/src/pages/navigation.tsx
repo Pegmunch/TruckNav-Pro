@@ -299,7 +299,30 @@ function NavigationPageContent() {
     console.log('[GPS-MODE] User toggled mode to:', mode);
     setGpsMode(mode);
   }, []);
-  
+
+  // AUTOMATIC GPS MODE SWITCHING - Switch based on GPS signal availability
+  // When GPS signal is lost or unavailable, automatically switch to Cache mode
+  // When GPS signal returns, automatically switch back to GPS mode
+  useEffect(() => {
+    if (!gpsData) return;
+
+    // Determine if GPS signal is available
+    const isGpsSignalAvailable = gpsData.status === 'ready' && gpsData.position !== null;
+    const isGpsSignalLost = gpsData.status === 'unavailable' || gpsData.status === 'error';
+
+    // Auto-switch to Cache mode when GPS signal is lost
+    if (isGpsSignalLost && gpsMode === 'gps') {
+      console.log('[GPS-MODE-AUTO] 🚨 GPS signal lost - auto-switching to Cache mode');
+      setGpsMode('cache');
+    }
+
+    // Auto-switch back to GPS mode when signal returns
+    if (isGpsSignalAvailable && gpsMode === 'cache') {
+      console.log('[GPS-MODE-AUTO] ✅ GPS signal recovered - auto-switching to GPS mode');
+      setGpsMode('gps');
+    }
+  }, [gpsData?.status, gpsData?.position, gpsMode]);
+
   // CRITICAL FIX: Always start in plan mode on app launch
   // This ensures PWA doesn't restore stale navigation state
   useEffect(() => {
