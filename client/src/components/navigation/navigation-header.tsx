@@ -17,11 +17,12 @@ export function NavigationHeader({ onSettingsClick, className }: NavigationHeade
   return (
     <div 
       className={cn(
-        "fixed top-0 left-0 right-0 z-[2000]",
+        "fixed top-0 left-0 right-0 z-[2500]",
         "bg-white border-b border-gray-200",
         "h-14 px-4",
         "flex items-center justify-between",
         "shadow-sm",
+        "pointer-events-auto",
         className
       )}
       style={{
