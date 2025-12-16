@@ -25,29 +25,55 @@ async function initializeCSRF() {
 
 // Register Service Worker for PWA functionality 
 // TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
-// CRITICAL: Use dynamic versioned URL to force iOS PWA to download new service worker
-// iOS caches sw.js URL and won't refetch unless URL changes
-// Dynamic timestamp ensures every session checks for updates
+// CRITICAL FIX: First UNREGISTER all old service workers and clear all caches
+// Then register fresh SW to ensure users always get latest version
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      // Use timestamp to ensure updates are checked on every page load
-      const SW_VERSION = `${Math.floor(Date.now() / 60000)}`; // Changes every minute
-      // Register with version query to force iOS to treat as new script
+      // STEP 1: Aggressively clear ALL old service workers and caches
+      // This fixes iOS PWA showing old cached versions
+      console.log('[PWA-CLEANUP] Starting aggressive cache cleanup...');
+      
+      // Unregister ALL existing service workers (both sw.js and sw-enhanced.js)
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        console.log('[PWA-CLEANUP] Unregistering old SW:', registration.scope);
+        await registration.unregister();
+      }
+      
+      // Delete ALL TruckNav-related caches
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        if (cacheName.includes('trucknav') || cacheName.includes('TruckNav')) {
+          console.log('[PWA-CLEANUP] Deleting cache:', cacheName);
+          await caches.delete(cacheName);
+        }
+      }
+      
+      console.log('[PWA-CLEANUP] Cleanup complete, registering fresh SW...');
+      
+      // STEP 2: Register new service worker with unique version
+      const SW_VERSION = `${Date.now()}`; // Always unique to force fresh registration
       const registration = await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
         scope: '/',
         updateViaCache: 'none' // Always check server for updates
       });
-      console.log('[PWA] Service Worker registered with dynamic version:', SW_VERSION);
+      console.log('[PWA] Fresh Service Worker registered:', SW_VERSION);
       
       // Force immediate update check
       await registration.update();
       
       // If there's a waiting worker, activate it immediately
       if (registration.waiting) {
-        console.log('[PWA] Found waiting worker, activating immediately');
+        console.log('[PWA] Activating waiting worker immediately');
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
+      
+      // Listen for controllerchange to reload page with fresh content
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[PWA] Controller changed - fresh SW active');
+      });
+      
     } catch (error) {
       console.error('TruckNav Pro SW registration failed:', error);
     }
