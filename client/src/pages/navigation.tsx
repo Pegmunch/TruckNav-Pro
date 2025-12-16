@@ -2521,8 +2521,8 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* PLAN MODE BUTTONS - Left side vertical stack (Always rendered when has route, stable position) */}
-              {currentRoute && !isNavigating && (
+              {/* PLAN MODE BUTTONS - Left side vertical stack */}
+              {mobileNavMode === 'plan' && currentRoute && (
                 <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                   style={{
                     top: 'calc(16px + var(--safe-area-top))',
@@ -2550,7 +2550,7 @@ function NavigationPageContent() {
               )}
               
               {/* PLAN MODE MENU ONLY - No route yet (Top Left) */}
-              {!currentRoute && !isNavigating && (
+              {mobileNavMode === 'plan' && !currentRoute && (
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
                   size="sm"
