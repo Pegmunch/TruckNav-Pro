@@ -272,9 +272,36 @@ function NavigationPageContent() {
     // Clear navigation state on first mount - must clear activeJourneyId so server doesn't restore previous journey
     console.log('[NAV-STATE] App launched - resetting to plan mode');
     setIsLocalNavActive(false);
-    localStorage.removeItem('navigation_ui_active');
-    localStorage.removeItem('navigation_mode');
-    localStorage.removeItem('activeJourneyId'); // CRITICAL: Prevent server from restoring previous journey
+    
+    // AGGRESSIVE storage cleanup - clear ALL trucknav navigation state
+    const keysToRemove = [
+      'navigation_ui_active',
+      'navigation_mode',
+      'activeJourneyId',
+      'navigation_timestamp',
+      'activeRouteId',
+      'navigationSidebarState',
+      'shouldShowHUD',
+      'mobileNavMode',
+      'isLocalNavActive',
+      'last_navigation_state'
+    ];
+    
+    // Remove all known navigation keys
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+      console.log(`[NAV-STATE] ✓ Cleared localStorage: ${key}`);
+    });
+    
+    // Also clear any trucknav prefixed keys we might have missed
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('nav') || key.includes('journey') || key.includes('route'))) {
+        localStorage.removeItem(key);
+        console.log(`[NAV-STATE] ✓ Cleared localStorage: ${key}`);
+      }
+    }
+    
     // Invalidate the active journey query so the hook refetches and gets nothing
     queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
   }, [queryClient]); // Run only once on mount
