@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map } from "lucide-react";
 import { usePWAEnvironment } from "@/contexts/pwa-environment";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDeviceType } from "@/hooks/use-device-type";
 import { useTranslation } from 'react-i18next';
 import InteractiveMap from "@/components/map/interactive-map";
 import MapLibreMap, { type MapLibreMapRef } from "@/components/map/maplibre-map";
@@ -101,6 +102,7 @@ function NavigationPageContent() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const deviceType = useDeviceType();
   const { isStandalone } = usePWAEnvironment();
   const { mapEngine, toggleMapEngine, isMapLibre } = useMapEngine();
   
@@ -2533,8 +2535,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -2965,8 +2967,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
-                    hideCompass={isStandalone || mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideControls={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
+                    hideCompass={mobileNavMode === 'preview' || mobileNavMode === 'navigate'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
