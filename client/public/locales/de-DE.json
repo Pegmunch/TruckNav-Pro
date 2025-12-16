@@ -164,5 +164,279 @@
     "ro-RO": "Rumänisch",
     "zh-CN": "Chinesisch",
     "ja-JP": "Japanisch"
+  },
+  "fleet": {
+    "title": "Flottenmanagement",
+    "navigation": "Navigation",
+    "dashboard": "Dashboard",
+    "vehicles": {
+      "title": "Fahrzeuge",
+      "registry": "Fahrzeugregister",
+      "add": "Fahrzeug hinzufügen",
+      "edit": "Fahrzeug bearbeiten",
+      "registration": "Kennzeichen",
+      "trailer": "Anhängernummer",
+      "make": "Hersteller",
+      "model": "Modell",
+      "year": "Baujahr",
+      "vin": "FIN",
+      "type": "Fahrzeugtyp",
+      "fuel_type": "Kraftstoffart",
+      "tank_capacity": "Tankkapazität",
+      "mileage": "Kilometerstand",
+      "status": {
+        "title": "Status",
+        "active": "Aktiv",
+        "maintenance": "Wartung",
+        "decommissioned": "Stillgelegt"
+      }
+    },
+    "operators": {
+      "title": "Fahrer",
+      "add": "Fahrer hinzufügen",
+      "edit": "Fahrer bearbeiten",
+      "name": "Name",
+      "license_number": "Führerscheinnummer",
+      "license_type": "Führerscheinklasse",
+      "license_expiry": "Führerschein Ablauf",
+      "cpc_expiry": "Berufskraftfahrer Ablauf",
+      "tacho_card": "Fahrerkarte",
+      "employee_id": "Mitarbeiter-ID",
+      "status": {
+        "title": "Status",
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "suspended": "Suspendiert"
+      }
+    },
+    "service": {
+      "title": "Serviceaufzeichnungen",
+      "add": "Service hinzufügen",
+      "type": {
+        "title": "Serviceart",
+        "routine": "Routine",
+        "mot": "HU/AU",
+        "repair": "Reparatur",
+        "inspection": "Inspektion",
+        "tacho_calibration": "Tachographenkalibrierung"
+      },
+      "date": "Servicedatum",
+      "next_due": "Nächster Termin",
+      "mileage": "Kilometerstand bei Service",
+      "cost": "Kosten",
+      "provider": "Serviceanbieter",
+      "parts": "Ersetzte Teile"
+    },
+    "fuel": {
+      "title": "Tankprotokolle",
+      "add": "Tankvorgang hinzufügen",
+      "odometer": "Kilometerstand",
+      "liters": "Getankte Liter",
+      "cost": "Kosten",
+      "location": "Ort",
+      "type": "Kraftstoffart",
+      "mpg": "L/100km",
+      "efficiency": "Kraftstoffeffizienz"
+    },
+    "documents": {
+      "title": "Dokumente",
+      "upload": "Dokument hochladen",
+      "type": {
+        "registration": "Zulassung",
+        "mot": "HU-Bescheinigung",
+        "insurance": "Versicherung",
+        "maintenance": "Wartungsprotokoll"
+      },
+      "expiry": "Ablaufdatum"
+    },
+    "costs": {
+      "title": "Kostenanalyse",
+      "total": "Gesamtkosten",
+      "average": "Durchschnitt pro Fahrzeug",
+      "breakdown": "Kostenaufschlüsselung",
+      "per_vehicle": "Kosten pro Fahrzeug",
+      "monthly_trends": "Monatliche Trends",
+      "categories": {
+        "fuel": "Kraftstoff",
+        "maintenance": "Wartung",
+        "insurance": "Versicherung",
+        "tolls": "Maut",
+        "other": "Sonstiges"
+      }
+    },
+    "incidents": {
+      "title": "Vorfälle",
+      "add": "Vorfall melden",
+      "type": {
+        "accident": "Unfall",
+        "damage": "Schaden",
+        "violation": "Verstoß",
+        "breakdown": "Panne",
+        "near_miss": "Beinaheunfall"
+      },
+      "severity": {
+        "critical": "Kritisch",
+        "high": "Hoch",
+        "medium": "Mittel",
+        "low": "Niedrig"
+      },
+      "root_cause": "Ursache",
+      "preventative": "Vorbeugende Maßnahmen",
+      "insurance_claim": "Versicherungsanspruch"
+    },
+    "trips": {
+      "title": "Fahrten",
+      "add": "Fahrt hinzufügen",
+      "planned": "Geplant",
+      "actual": "Tatsächlich",
+      "distance": "Entfernung",
+      "duration": "Dauer",
+      "cost": "Kosten",
+      "revenue": "Umsatz",
+      "profit": "Gewinn",
+      "margin": "Marge",
+      "efficiency": "Routeneffizienz"
+    },
+    "compliance": {
+      "title": "Compliance",
+      "status": {
+        "compliant": "Konform",
+        "non_compliant": "Nicht konform",
+        "pending": "Überprüfung ausstehend"
+      },
+      "types": {
+        "dvla": "KBA-Prüfung",
+        "emissions": "Emissionsnormen",
+        "hazmat": "Gefahrgutzertifizierung",
+        "tacho": "Tachographenprüfung",
+        "working_hours": "Arbeitszeiten"
+      }
+    },
+    "tracking": {
+      "title": "Flottenortung",
+      "live_map": "Live-Karte",
+      "vehicle_list": "Fahrzeugliste",
+      "refresh": "Aktualisieren",
+      "last_update": "Letzte Aktualisierung",
+      "status": {
+        "moving": "In Bewegung",
+        "stopped": "Angehalten",
+        "offline": "Offline"
+      },
+      "speed": "Geschwindigkeit",
+      "heading": "Richtung",
+      "address": "Aktueller Standort"
+    },
+    "geofencing": {
+      "title": "Geofencing",
+      "zones": "Geofence-Zonen",
+      "add": "Zone hinzufügen",
+      "edit": "Zone bearbeiten",
+      "name": "Zonenname",
+      "radius": "Radius",
+      "type": {
+        "warehouse": "Lager",
+        "customer": "Kunde",
+        "restricted": "Gesperrt",
+        "checkpoint": "Kontrollpunkt"
+      },
+      "alerts": {
+        "entry": "Einfahrtsalarm",
+        "exit": "Ausfahrtsalarm",
+        "today": "Alarme heute"
+      },
+      "events": "Ereignisverlauf"
+    },
+    "behavior": {
+      "title": "Fahrerverhalten",
+      "analytics": "Verhaltensanalyse",
+      "safety_score": "Sicherheitsbewertung",
+      "fleet_average": "Flottendurchschnitt",
+      "high_risk": "Hochrisikofahrer",
+      "events_today": "Ereignisse heute",
+      "leaderboard": "Fahrer-Rangliste",
+      "breakdown": "Verhaltensaufschlüsselung",
+      "types": {
+        "speeding": "Geschwindigkeitsüberschreitung",
+        "harsh_braking": "Hartes Bremsen",
+        "harsh_acceleration": "Starkes Beschleunigen",
+        "sharp_cornering": "Scharfes Kurvenfahren"
+      },
+      "risk": {
+        "low": "Niedriges Risiko",
+        "medium": "Mittleres Risiko",
+        "high": "Hohes Risiko"
+      }
+    },
+    "hos": {
+      "title": "Lenk- und Ruhezeiten",
+      "driver_status": "Fahrer HoS-Status",
+      "violations": "Verstöße",
+      "daily_driving": "Tägliche Lenkzeit",
+      "weekly_driving": "Wöchentliche Lenkzeit",
+      "remaining_daily": "Verbleibend heute",
+      "remaining_weekly": "Verbleibend wöchentlich",
+      "status": {
+        "driving": "Fahren",
+        "on_duty": "Bereitschaft",
+        "off_duty": "Ruhezeit",
+        "sleeper": "Schlafkabine"
+      },
+      "violation_types": {
+        "daily_exceeded": "Tägliche Lenkzeit überschritten",
+        "weekly_exceeded": "Wöchentliche Lenkzeit überschritten",
+        "break_not_taken": "Pause nicht eingehalten",
+        "rest_period": "Ruhezeit-Verstoß"
+      }
+    },
+    "billing": {
+      "title": "Kundenabrechnung",
+      "customers": "Kunden",
+      "add": "Kunde hinzufügen",
+      "edit": "Kunde bearbeiten",
+      "top_customers": "Top-Kunden",
+      "contract_type": {
+        "title": "Vertragsart",
+        "per_mile": "Pro Kilometer",
+        "per_hour": "Pro Stunde",
+        "fixed": "Festpreis",
+        "hybrid": "Hybrid"
+      },
+      "rate_per_mile": "Preis pro km",
+      "rate_per_hour": "Preis pro Stunde",
+      "fixed_rate": "Festpreis",
+      "total_trips": "Gesamtfahrten",
+      "total_revenue": "Gesamtumsatz",
+      "profit_margin": "Gewinnmarge",
+      "outstanding": "Offener Saldo",
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "pending": "Ausstehend"
+      }
+    },
+    "notifications": {
+      "expires": "Läuft ab",
+      "days": "Tage",
+      "done": "Erledigt",
+      "dismiss": "Verwerfen"
+    },
+    "common": {
+      "no_data": "Keine Daten verfügbar",
+      "loading": "Laden...",
+      "error": "Fehler beim Laden",
+      "retry": "Erneut versuchen",
+      "actions": "Aktionen",
+      "view": "Anzeigen",
+      "details": "Details",
+      "date_range": "Zeitraum",
+      "all": "Alle",
+      "today": "Heute",
+      "week": "Diese Woche",
+      "month": "Dieser Monat",
+      "hours": "Stunden",
+      "miles": "Meilen",
+      "km": "km"
+    }
   }
 }

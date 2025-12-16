@@ -164,5 +164,279 @@
     "ro-RO": "Rumeno",
     "zh-CN": "Cinese",
     "ja-JP": "Giapponese"
+  },
+  "fleet": {
+    "title": "Gestione Flotta",
+    "navigation": "Navigazione",
+    "dashboard": "Dashboard",
+    "vehicles": {
+      "title": "Veicoli",
+      "registry": "Registro Veicoli",
+      "add": "Aggiungi Veicolo",
+      "edit": "Modifica Veicolo",
+      "registration": "Targa",
+      "trailer": "Numero Rimorchio",
+      "make": "Marca",
+      "model": "Modello",
+      "year": "Anno",
+      "vin": "VIN",
+      "type": "Tipo Veicolo",
+      "fuel_type": "Tipo Carburante",
+      "tank_capacity": "Capacità Serbatoio",
+      "mileage": "Chilometraggio",
+      "status": {
+        "title": "Stato",
+        "active": "Attivo",
+        "maintenance": "Manutenzione",
+        "decommissioned": "Dismesso"
+      }
+    },
+    "operators": {
+      "title": "Operatori",
+      "add": "Aggiungi Operatore",
+      "edit": "Modifica Operatore",
+      "name": "Nome",
+      "license_number": "Numero Patente",
+      "license_type": "Tipo Patente",
+      "license_expiry": "Scadenza Patente",
+      "cpc_expiry": "Scadenza CQC",
+      "tacho_card": "Carta Tachigrafica",
+      "employee_id": "ID Dipendente",
+      "status": {
+        "title": "Stato",
+        "active": "Attivo",
+        "inactive": "Inattivo",
+        "suspended": "Sospeso"
+      }
+    },
+    "service": {
+      "title": "Registri Manutenzione",
+      "add": "Aggiungi Manutenzione",
+      "type": {
+        "title": "Tipo Servizio",
+        "routine": "Routine",
+        "mot": "Revisione",
+        "repair": "Riparazione",
+        "inspection": "Ispezione",
+        "tacho_calibration": "Calibrazione Tachigrafo"
+      },
+      "date": "Data Servizio",
+      "next_due": "Prossima Scadenza",
+      "mileage": "Km al Servizio",
+      "cost": "Costo",
+      "provider": "Fornitore",
+      "parts": "Parti Sostituite"
+    },
+    "fuel": {
+      "title": "Registri Carburante",
+      "add": "Aggiungi Rifornimento",
+      "odometer": "Lettura Contachilometri",
+      "liters": "Litri Aggiunti",
+      "cost": "Costo",
+      "location": "Luogo",
+      "type": "Tipo Carburante",
+      "mpg": "L/100km",
+      "efficiency": "Efficienza Carburante"
+    },
+    "documents": {
+      "title": "Documenti",
+      "upload": "Carica Documento",
+      "type": {
+        "registration": "Libretto",
+        "mot": "Certificato Revisione",
+        "insurance": "Assicurazione",
+        "maintenance": "Registro Manutenzione"
+      },
+      "expiry": "Data Scadenza"
+    },
+    "costs": {
+      "title": "Analisi Costi",
+      "total": "Costi Totali",
+      "average": "Media per Veicolo",
+      "breakdown": "Ripartizione Costi",
+      "per_vehicle": "Costi per Veicolo",
+      "monthly_trends": "Trend Mensili",
+      "categories": {
+        "fuel": "Carburante",
+        "maintenance": "Manutenzione",
+        "insurance": "Assicurazione",
+        "tolls": "Pedaggi",
+        "other": "Altro"
+      }
+    },
+    "incidents": {
+      "title": "Incidenti",
+      "add": "Registra Incidente",
+      "type": {
+        "accident": "Incidente",
+        "damage": "Danno",
+        "violation": "Violazione",
+        "breakdown": "Guasto",
+        "near_miss": "Quasi Incidente"
+      },
+      "severity": {
+        "critical": "Critico",
+        "high": "Alto",
+        "medium": "Medio",
+        "low": "Basso"
+      },
+      "root_cause": "Causa Radice",
+      "preventative": "Misure Preventive",
+      "insurance_claim": "Reclamo Assicurazione"
+    },
+    "trips": {
+      "title": "Viaggi",
+      "add": "Aggiungi Viaggio",
+      "planned": "Pianificato",
+      "actual": "Effettivo",
+      "distance": "Distanza",
+      "duration": "Durata",
+      "cost": "Costo",
+      "revenue": "Ricavi",
+      "profit": "Profitto",
+      "margin": "Margine",
+      "efficiency": "Efficienza Percorso"
+    },
+    "compliance": {
+      "title": "Conformità",
+      "status": {
+        "compliant": "Conforme",
+        "non_compliant": "Non Conforme",
+        "pending": "In Revisione"
+      },
+      "types": {
+        "dvla": "Controllo Motorizzazione",
+        "emissions": "Standard Emissioni",
+        "hazmat": "Certificazione ADR",
+        "tacho": "Ispezione Tachigrafo",
+        "working_hours": "Orari di Lavoro"
+      }
+    },
+    "tracking": {
+      "title": "Tracciamento Flotta",
+      "live_map": "Mappa Live",
+      "vehicle_list": "Lista Veicoli",
+      "refresh": "Aggiorna",
+      "last_update": "Ultimo Aggiornamento",
+      "status": {
+        "moving": "In Movimento",
+        "stopped": "Fermo",
+        "offline": "Offline"
+      },
+      "speed": "Velocità",
+      "heading": "Direzione",
+      "address": "Posizione Attuale"
+    },
+    "geofencing": {
+      "title": "Geofencing",
+      "zones": "Zone Geofence",
+      "add": "Aggiungi Zona",
+      "edit": "Modifica Zona",
+      "name": "Nome Zona",
+      "radius": "Raggio",
+      "type": {
+        "warehouse": "Magazzino",
+        "customer": "Cliente",
+        "restricted": "Limitato",
+        "checkpoint": "Checkpoint"
+      },
+      "alerts": {
+        "entry": "Allarme Ingresso",
+        "exit": "Allarme Uscita",
+        "today": "Allarmi Oggi"
+      },
+      "events": "Storico Eventi"
+    },
+    "behavior": {
+      "title": "Comportamento Autista",
+      "analytics": "Analisi Comportamento",
+      "safety_score": "Punteggio Sicurezza",
+      "fleet_average": "Media Flotta",
+      "high_risk": "Autisti Alto Rischio",
+      "events_today": "Eventi Oggi",
+      "leaderboard": "Classifica Autisti",
+      "breakdown": "Analisi Comportamento",
+      "types": {
+        "speeding": "Eccesso Velocità",
+        "harsh_braking": "Frenata Brusca",
+        "harsh_acceleration": "Accelerazione Brusca",
+        "sharp_cornering": "Curva Stretta"
+      },
+      "risk": {
+        "low": "Rischio Basso",
+        "medium": "Rischio Medio",
+        "high": "Rischio Alto"
+      }
+    },
+    "hos": {
+      "title": "Ore di Servizio",
+      "driver_status": "Stato HoS Autista",
+      "violations": "Avvisi Violazioni",
+      "daily_driving": "Guida Giornaliera",
+      "weekly_driving": "Guida Settimanale",
+      "remaining_daily": "Restante Giornaliero",
+      "remaining_weekly": "Restante Settimanale",
+      "status": {
+        "driving": "Guida",
+        "on_duty": "In Servizio",
+        "off_duty": "Fuori Servizio",
+        "sleeper": "Riposo"
+      },
+      "violation_types": {
+        "daily_exceeded": "Guida Giornaliera Superata",
+        "weekly_exceeded": "Guida Settimanale Superata",
+        "break_not_taken": "Pausa Non Presa",
+        "rest_period": "Violazione Periodo Riposo"
+      }
+    },
+    "billing": {
+      "title": "Fatturazione Clienti",
+      "customers": "Clienti",
+      "add": "Aggiungi Cliente",
+      "edit": "Modifica Cliente",
+      "top_customers": "Migliori Clienti",
+      "contract_type": {
+        "title": "Tipo Contratto",
+        "per_mile": "Per Chilometro",
+        "per_hour": "Per Ora",
+        "fixed": "Tariffa Fissa",
+        "hybrid": "Ibrido"
+      },
+      "rate_per_mile": "Tariffa per Km",
+      "rate_per_hour": "Tariffa per Ora",
+      "fixed_rate": "Tariffa Fissa",
+      "total_trips": "Viaggi Totali",
+      "total_revenue": "Ricavi Totali",
+      "profit_margin": "Margine Profitto",
+      "outstanding": "Saldo in Sospeso",
+      "status": {
+        "active": "Attivo",
+        "inactive": "Inattivo",
+        "pending": "In Attesa"
+      }
+    },
+    "notifications": {
+      "expires": "Scade",
+      "days": "giorni",
+      "done": "Fatto",
+      "dismiss": "Ignora"
+    },
+    "common": {
+      "no_data": "Nessun dato disponibile",
+      "loading": "Caricamento...",
+      "error": "Errore nel caricamento",
+      "retry": "Riprova",
+      "actions": "Azioni",
+      "view": "Visualizza",
+      "details": "Dettagli",
+      "date_range": "Intervallo Date",
+      "all": "Tutti",
+      "today": "Oggi",
+      "week": "Questa Settimana",
+      "month": "Questo Mese",
+      "hours": "ore",
+      "miles": "miglia",
+      "km": "km"
+    }
   }
 }

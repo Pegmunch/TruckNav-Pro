@@ -164,5 +164,279 @@
     "ro-RO": "Rumano",
     "zh-CN": "Chino",
     "ja-JP": "Japonés"
+  },
+  "fleet": {
+    "title": "Gestión de Flota",
+    "navigation": "Navegación",
+    "dashboard": "Panel de Control",
+    "vehicles": {
+      "title": "Vehículos",
+      "registry": "Registro de Vehículos",
+      "add": "Añadir Vehículo",
+      "edit": "Editar Vehículo",
+      "registration": "Matrícula",
+      "trailer": "Número de Remolque",
+      "make": "Marca",
+      "model": "Modelo",
+      "year": "Año",
+      "vin": "VIN",
+      "type": "Tipo de Vehículo",
+      "fuel_type": "Tipo de Combustible",
+      "tank_capacity": "Capacidad del Tanque",
+      "mileage": "Kilometraje",
+      "status": {
+        "title": "Estado",
+        "active": "Activo",
+        "maintenance": "Mantenimiento",
+        "decommissioned": "Dado de Baja"
+      }
+    },
+    "operators": {
+      "title": "Operadores",
+      "add": "Añadir Operador",
+      "edit": "Editar Operador",
+      "name": "Nombre",
+      "license_number": "Número de Licencia",
+      "license_type": "Tipo de Licencia",
+      "license_expiry": "Vencimiento de Licencia",
+      "cpc_expiry": "Vencimiento CPC",
+      "tacho_card": "Tarjeta Tacógrafo",
+      "employee_id": "ID de Empleado",
+      "status": {
+        "title": "Estado",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "suspended": "Suspendido"
+      }
+    },
+    "service": {
+      "title": "Registros de Servicio",
+      "add": "Añadir Registro de Servicio",
+      "type": {
+        "title": "Tipo de Servicio",
+        "routine": "Rutinario",
+        "mot": "ITV",
+        "repair": "Reparación",
+        "inspection": "Inspección",
+        "tacho_calibration": "Calibración Tacógrafo"
+      },
+      "date": "Fecha de Servicio",
+      "next_due": "Próximo Servicio",
+      "mileage": "Kilometraje en Servicio",
+      "cost": "Coste",
+      "provider": "Proveedor",
+      "parts": "Piezas Reemplazadas"
+    },
+    "fuel": {
+      "title": "Registros de Combustible",
+      "add": "Añadir Registro de Combustible",
+      "odometer": "Lectura Odómetro",
+      "liters": "Litros Añadidos",
+      "cost": "Coste",
+      "location": "Ubicación",
+      "type": "Tipo de Combustible",
+      "mpg": "L/100km",
+      "efficiency": "Eficiencia de Combustible"
+    },
+    "documents": {
+      "title": "Documentos",
+      "upload": "Subir Documento",
+      "type": {
+        "registration": "Matriculación",
+        "mot": "Certificado ITV",
+        "insurance": "Seguro",
+        "maintenance": "Registro de Mantenimiento"
+      },
+      "expiry": "Fecha de Vencimiento"
+    },
+    "costs": {
+      "title": "Análisis de Costes",
+      "total": "Costes Totales",
+      "average": "Promedio por Vehículo",
+      "breakdown": "Desglose de Costes",
+      "per_vehicle": "Costes por Vehículo",
+      "monthly_trends": "Tendencias Mensuales",
+      "categories": {
+        "fuel": "Combustible",
+        "maintenance": "Mantenimiento",
+        "insurance": "Seguro",
+        "tolls": "Peajes",
+        "other": "Otros"
+      }
+    },
+    "incidents": {
+      "title": "Incidentes",
+      "add": "Registrar Incidente",
+      "type": {
+        "accident": "Accidente",
+        "damage": "Daño",
+        "violation": "Infracción",
+        "breakdown": "Avería",
+        "near_miss": "Casi Accidente"
+      },
+      "severity": {
+        "critical": "Crítico",
+        "high": "Alto",
+        "medium": "Medio",
+        "low": "Bajo"
+      },
+      "root_cause": "Causa Raíz",
+      "preventative": "Medidas Preventivas",
+      "insurance_claim": "Reclamación de Seguro"
+    },
+    "trips": {
+      "title": "Viajes",
+      "add": "Añadir Viaje",
+      "planned": "Planificado",
+      "actual": "Real",
+      "distance": "Distancia",
+      "duration": "Duración",
+      "cost": "Coste",
+      "revenue": "Ingresos",
+      "profit": "Beneficio",
+      "margin": "Margen",
+      "efficiency": "Eficiencia de Ruta"
+    },
+    "compliance": {
+      "title": "Cumplimiento",
+      "status": {
+        "compliant": "Conforme",
+        "non_compliant": "No Conforme",
+        "pending": "Pendiente de Revisión"
+      },
+      "types": {
+        "dvla": "Verificación DGT",
+        "emissions": "Normas de Emisiones",
+        "hazmat": "Certificación Hazmat",
+        "tacho": "Inspección Tacógrafo",
+        "working_hours": "Horas de Trabajo"
+      }
+    },
+    "tracking": {
+      "title": "Rastreo de Flota",
+      "live_map": "Mapa en Vivo",
+      "vehicle_list": "Lista de Vehículos",
+      "refresh": "Actualizar",
+      "last_update": "Última Actualización",
+      "status": {
+        "moving": "En Movimiento",
+        "stopped": "Detenido",
+        "offline": "Sin Conexión"
+      },
+      "speed": "Velocidad",
+      "heading": "Dirección",
+      "address": "Ubicación Actual"
+    },
+    "geofencing": {
+      "title": "Geocercas",
+      "zones": "Zonas de Geocerca",
+      "add": "Añadir Zona",
+      "edit": "Editar Zona",
+      "name": "Nombre de Zona",
+      "radius": "Radio",
+      "type": {
+        "warehouse": "Almacén",
+        "customer": "Cliente",
+        "restricted": "Restringido",
+        "checkpoint": "Punto de Control"
+      },
+      "alerts": {
+        "entry": "Alerta de Entrada",
+        "exit": "Alerta de Salida",
+        "today": "Alertas Hoy"
+      },
+      "events": "Historial de Eventos"
+    },
+    "behavior": {
+      "title": "Comportamiento del Conductor",
+      "analytics": "Análisis de Comportamiento",
+      "safety_score": "Puntuación de Seguridad",
+      "fleet_average": "Promedio de Flota",
+      "high_risk": "Conductores de Alto Riesgo",
+      "events_today": "Eventos Hoy",
+      "leaderboard": "Clasificación de Conductores",
+      "breakdown": "Desglose de Comportamiento",
+      "types": {
+        "speeding": "Exceso de Velocidad",
+        "harsh_braking": "Frenado Brusco",
+        "harsh_acceleration": "Aceleración Brusca",
+        "sharp_cornering": "Giro Brusco"
+      },
+      "risk": {
+        "low": "Riesgo Bajo",
+        "medium": "Riesgo Medio",
+        "high": "Riesgo Alto"
+      }
+    },
+    "hos": {
+      "title": "Horas de Servicio",
+      "driver_status": "Estado HoS del Conductor",
+      "violations": "Alertas de Violación",
+      "daily_driving": "Conducción Diaria",
+      "weekly_driving": "Conducción Semanal",
+      "remaining_daily": "Restante Diario",
+      "remaining_weekly": "Restante Semanal",
+      "status": {
+        "driving": "Conduciendo",
+        "on_duty": "En Servicio",
+        "off_duty": "Fuera de Servicio",
+        "sleeper": "Descanso"
+      },
+      "violation_types": {
+        "daily_exceeded": "Conducción Diaria Excedida",
+        "weekly_exceeded": "Conducción Semanal Excedida",
+        "break_not_taken": "Descanso No Tomado",
+        "rest_period": "Violación Período de Descanso"
+      }
+    },
+    "billing": {
+      "title": "Facturación de Clientes",
+      "customers": "Clientes",
+      "add": "Añadir Cliente",
+      "edit": "Editar Cliente",
+      "top_customers": "Mejores Clientes",
+      "contract_type": {
+        "title": "Tipo de Contrato",
+        "per_mile": "Por Kilómetro",
+        "per_hour": "Por Hora",
+        "fixed": "Tarifa Fija",
+        "hybrid": "Híbrido"
+      },
+      "rate_per_mile": "Tarifa por Km",
+      "rate_per_hour": "Tarifa por Hora",
+      "fixed_rate": "Tarifa Fija",
+      "total_trips": "Total de Viajes",
+      "total_revenue": "Ingresos Totales",
+      "profit_margin": "Margen de Beneficio",
+      "outstanding": "Saldo Pendiente",
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "pending": "Pendiente"
+      }
+    },
+    "notifications": {
+      "expires": "Vence",
+      "days": "días",
+      "done": "Hecho",
+      "dismiss": "Descartar"
+    },
+    "common": {
+      "no_data": "No hay datos disponibles",
+      "loading": "Cargando...",
+      "error": "Error al cargar datos",
+      "retry": "Reintentar",
+      "actions": "Acciones",
+      "view": "Ver",
+      "details": "Detalles",
+      "date_range": "Rango de Fechas",
+      "all": "Todos",
+      "today": "Hoy",
+      "week": "Esta Semana",
+      "month": "Este Mes",
+      "hours": "horas",
+      "miles": "millas",
+      "km": "km"
+    }
   }
 }

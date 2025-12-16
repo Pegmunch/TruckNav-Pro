@@ -164,5 +164,279 @@
     "ro-RO": "Romanian",
     "zh-CN": "Chinese",
     "ja-JP": "Japanese"
+  },
+  "fleet": {
+    "title": "Fleet Management",
+    "navigation": "Navigation",
+    "dashboard": "Dashboard",
+    "vehicles": {
+      "title": "Vehicles",
+      "registry": "Vehicle Registry",
+      "add": "Add Vehicle",
+      "edit": "Edit Vehicle",
+      "registration": "Registration",
+      "trailer": "Trailer Number",
+      "make": "Make",
+      "model": "Model",
+      "year": "Year",
+      "vin": "VIN",
+      "type": "Vehicle Type",
+      "fuel_type": "Fuel Type",
+      "tank_capacity": "Tank Capacity",
+      "mileage": "Mileage",
+      "status": {
+        "title": "Status",
+        "active": "Active",
+        "maintenance": "Maintenance",
+        "decommissioned": "Decommissioned"
+      }
+    },
+    "operators": {
+      "title": "Operators",
+      "add": "Add Operator",
+      "edit": "Edit Operator",
+      "name": "Name",
+      "license_number": "Licence Number",
+      "license_type": "Licence Type",
+      "license_expiry": "Licence Expiry",
+      "cpc_expiry": "Driver CPC Expiry",
+      "tacho_card": "Tachograph Card",
+      "employee_id": "Employee ID",
+      "status": {
+        "title": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "suspended": "Suspended"
+      }
+    },
+    "service": {
+      "title": "Service Records",
+      "add": "Add Service Record",
+      "type": {
+        "title": "Service Type",
+        "routine": "Routine",
+        "mot": "MOT",
+        "repair": "Repair",
+        "inspection": "Inspection",
+        "tacho_calibration": "Tachograph Calibration"
+      },
+      "date": "Service Date",
+      "next_due": "Next Due",
+      "mileage": "Mileage at Service",
+      "cost": "Cost",
+      "provider": "Service Provider",
+      "parts": "Parts Replaced"
+    },
+    "fuel": {
+      "title": "Fuel Logs",
+      "add": "Add Fuel Entry",
+      "odometer": "Odometer Reading",
+      "liters": "Litres Added",
+      "cost": "Cost",
+      "location": "Location",
+      "type": "Fuel Type",
+      "mpg": "MPG",
+      "efficiency": "Fuel Efficiency"
+    },
+    "documents": {
+      "title": "Documents",
+      "upload": "Upload Document",
+      "type": {
+        "registration": "Registration",
+        "mot": "MOT Certificate",
+        "insurance": "Insurance",
+        "maintenance": "Maintenance Record"
+      },
+      "expiry": "Expiry Date"
+    },
+    "costs": {
+      "title": "Cost Analytics",
+      "total": "Total Costs",
+      "average": "Average per Vehicle",
+      "breakdown": "Cost Breakdown",
+      "per_vehicle": "Costs per Vehicle",
+      "monthly_trends": "Monthly Trends",
+      "categories": {
+        "fuel": "Fuel",
+        "maintenance": "Maintenance",
+        "insurance": "Insurance",
+        "tolls": "Tolls",
+        "other": "Other"
+      }
+    },
+    "incidents": {
+      "title": "Incidents",
+      "add": "Log Incident",
+      "type": {
+        "accident": "Accident",
+        "damage": "Damage",
+        "violation": "Violation",
+        "breakdown": "Breakdown",
+        "near_miss": "Near Miss"
+      },
+      "severity": {
+        "critical": "Critical",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "root_cause": "Root Cause",
+      "preventative": "Preventative Measures",
+      "insurance_claim": "Insurance Claim"
+    },
+    "trips": {
+      "title": "Trips",
+      "add": "Add Trip",
+      "planned": "Planned",
+      "actual": "Actual",
+      "distance": "Distance",
+      "duration": "Duration",
+      "cost": "Cost",
+      "revenue": "Revenue",
+      "profit": "Profit",
+      "margin": "Margin",
+      "efficiency": "Route Efficiency"
+    },
+    "compliance": {
+      "title": "Compliance",
+      "status": {
+        "compliant": "Compliant",
+        "non_compliant": "Non-Compliant",
+        "pending": "Pending Review"
+      },
+      "types": {
+        "dvla": "DVLA Check",
+        "emissions": "Emission Standards",
+        "hazmat": "Hazmat Certification",
+        "tacho": "Tachograph Inspection",
+        "working_hours": "Working Hours"
+      }
+    },
+    "tracking": {
+      "title": "Fleet Tracking",
+      "live_map": "Live Map",
+      "vehicle_list": "Vehicle List",
+      "refresh": "Refresh",
+      "last_update": "Last Update",
+      "status": {
+        "moving": "Moving",
+        "stopped": "Stopped",
+        "offline": "Offline"
+      },
+      "speed": "Speed",
+      "heading": "Heading",
+      "address": "Current Location"
+    },
+    "geofencing": {
+      "title": "Geofencing",
+      "zones": "Geofence Zones",
+      "add": "Add Zone",
+      "edit": "Edit Zone",
+      "name": "Zone Name",
+      "radius": "Radius",
+      "type": {
+        "warehouse": "Warehouse",
+        "customer": "Customer",
+        "restricted": "Restricted",
+        "checkpoint": "Checkpoint"
+      },
+      "alerts": {
+        "entry": "Entry Alert",
+        "exit": "Exit Alert",
+        "today": "Alerts Today"
+      },
+      "events": "Event History"
+    },
+    "behavior": {
+      "title": "Driver Behaviour",
+      "analytics": "Driver Behaviour Analytics",
+      "safety_score": "Safety Score",
+      "fleet_average": "Fleet Average",
+      "high_risk": "High Risk Drivers",
+      "events_today": "Events Today",
+      "leaderboard": "Driver Leaderboard",
+      "breakdown": "Behaviour Breakdown",
+      "types": {
+        "speeding": "Speeding",
+        "harsh_braking": "Harsh Braking",
+        "harsh_acceleration": "Harsh Acceleration",
+        "sharp_cornering": "Sharp Cornering"
+      },
+      "risk": {
+        "low": "Low Risk",
+        "medium": "Medium Risk",
+        "high": "High Risk"
+      }
+    },
+    "hos": {
+      "title": "Hours of Service",
+      "driver_status": "Driver HoS Status",
+      "violations": "Violation Alerts",
+      "daily_driving": "Daily Driving",
+      "weekly_driving": "Weekly Driving",
+      "remaining_daily": "Remaining Daily",
+      "remaining_weekly": "Remaining Weekly",
+      "status": {
+        "driving": "Driving",
+        "on_duty": "On Duty",
+        "off_duty": "Off Duty",
+        "sleeper": "Sleeper Berth"
+      },
+      "violation_types": {
+        "daily_exceeded": "Daily Driving Exceeded",
+        "weekly_exceeded": "Weekly Driving Exceeded",
+        "break_not_taken": "Break Not Taken",
+        "rest_period": "Rest Period Violation"
+      }
+    },
+    "billing": {
+      "title": "Customer Billing",
+      "customers": "Customers",
+      "add": "Add Customer",
+      "edit": "Edit Customer",
+      "top_customers": "Top Customers",
+      "contract_type": {
+        "title": "Contract Type",
+        "per_mile": "Per Mile",
+        "per_hour": "Per Hour",
+        "fixed": "Fixed Rate",
+        "hybrid": "Hybrid"
+      },
+      "rate_per_mile": "Rate per Mile",
+      "rate_per_hour": "Rate per Hour",
+      "fixed_rate": "Fixed Rate",
+      "total_trips": "Total Trips",
+      "total_revenue": "Total Revenue",
+      "profit_margin": "Profit Margin",
+      "outstanding": "Outstanding Balance",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "pending": "Pending"
+      }
+    },
+    "notifications": {
+      "expires": "Expires",
+      "days": "days",
+      "done": "Done",
+      "dismiss": "Dismiss"
+    },
+    "common": {
+      "no_data": "No data available",
+      "loading": "Loading...",
+      "error": "Error loading data",
+      "retry": "Retry",
+      "actions": "Actions",
+      "view": "View",
+      "details": "Details",
+      "date_range": "Date Range",
+      "all": "All",
+      "today": "Today",
+      "week": "This Week",
+      "month": "This Month",
+      "hours": "hours",
+      "miles": "miles",
+      "km": "km"
+    }
   }
 }
