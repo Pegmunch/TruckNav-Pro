@@ -142,6 +142,9 @@ function NavigationPageContent() {
   // ALWAYS start in plan mode - navigation is activated after route calculation
   const [isLocalNavActive, setIsLocalNavActive] = useState(false);
   
+  // Preview mode state - user explicitly clicks "Preview Route" button to see full route
+  const [isShowingPreview, setIsShowingPreview] = useState(false);
+  
   // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
   const isNavigating = isLocalNavActive;
   
@@ -239,11 +242,10 @@ function NavigationPageContent() {
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
   
   // CRITICAL: Derive mobileNavMode correctly from all relevant state
-  // plan = no route, preview = route exists but not navigating, navigate = active navigation
-  // FIXED: isLocalNavActive alone is not enough - must also have a valid route to be in navigate mode
+  // plan = no route or not previewing, preview = user explicitly clicked Preview button, navigate = active navigation
   const mobileNavMode: MobileNavMode = isLocalNavActive && currentRoute !== null
     ? 'navigate' 
-    : currentRoute !== null
+    : isShowingPreview && currentRoute !== null
       ? 'preview'
       : 'plan';
   
@@ -1586,119 +1588,13 @@ function NavigationPageContent() {
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
-      // Skip route preview - directly expand map for better route visibility
-      const handleMapExpansion = () => {
-        performance.mark('map-expansion-start');
-        
-        if (isMapWindowOpen()) {
-          // Focus the map window and let it handle auto-expansion
-          focusMapWindow();
-          if (import.meta.env.DEV) {
-            console.log('Route calculated: focusing map window for auto-expansion');
-          }
-        } else {
-          if (isMobile) {
-            // On mobile, only collapse sidebar if it's currently open to make room for map
-            // But respect if user explicitly wants it open
-            if (sidebarState === 'open') {
-              setSidebarState('collapsed');
-              localStorage.setItem('navigationSidebarState', 'collapsed');
-            }
-          } else {
-            // Auto-expand map for better route visibility
-            setIsMapExpanded(true);
-          }
-        }
-        
-        performance.mark('map-expansion-end');
-        performance.measure('map-expansion', 'map-expansion-start', 'map-expansion-end');
-        const mapMeasure = performance.getEntriesByName('map-expansion')[0];
-        console.log(`[PERF] 📍 Map expansion completed: ${mapMeasure.duration.toFixed(0)}ms`);
-      };
-
-      // Small delay to allow route state to update
-      setTimeout(handleMapExpansion, 200);
+      // Route calculated - stay in plan mode, show "Preview Route" button
+      console.log('[ROUTE-CALC] Route calculated - waiting for user to click Preview or Start Navigation');
       
-      // DISABLED: Toast notifications removed per user request
-      // Toast pop-ups were interfering with input fields on mobile
-
-      // AUTO-TRANSITION: 10-second preview, then auto-start navigation
-      // Show preview mode for 10 seconds, then automatically transition to navigation view
-      performance.mark('preview-mode-start');
-      console.log('[PERF] 📺 Preview mode START');
-      console.log('[AUTO-NAV] Route calculated - showing 10-second preview before auto-start');
-      console.log('[AUTO-NAV] isMobile:', isMobile);
-      console.log('[AUTO-NAV] route exists:', !!route);
-      console.log('[AUTO-NAV] routePath length:', route?.routePath?.length || 0);
-      
-      if (isMobile && route && route.routePath && route.routePath.length > 0 && !isNavigating) {
-        console.log('[AUTO-NAV] Starting 10-second preview countdown...');
-        
-        // Close route planning panel if open
+      // Collapse sidebar to show the route on the map
+      if (isMobile && sidebarState === 'open') {
         setSidebarState('collapsed');
-        
-        // Auto-zoom to show the calculated route with current location
-        setTimeout(() => {
-          // Priority: GPS position → Manual location → Route bounds
-          if (gpsData?.position) {
-            console.log('[ROUTE-PREVIEW] ✅ Zooming to current GPS position');
-            const previewPosition = {
-              lat: gpsData.position.latitude,
-              lng: gpsData.position.longitude,
-              zoom: 14,  // Medium zoom to show route context
-              pitch: 0,  // Top-down view for route overview
-              bearing: 0
-            };
-            
-            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-              detail: { 
-                position: previewPosition,
-                mapStyle: 'roads'
-              }
-            });
-            window.dispatchEvent(autoZoomEvent);
-          } else if (gpsData?.manualLocation) {
-            console.log('[ROUTE-PREVIEW] 📍 Zooming to manual location');
-            const previewPosition = {
-              lat: gpsData.manualLocation.latitude,
-              lng: gpsData.manualLocation.longitude,
-              zoom: 14,
-              pitch: 0,
-              bearing: 0
-            };
-            
-            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-              detail: { 
-                position: previewPosition,
-                mapStyle: 'roads'
-              }
-            });
-            window.dispatchEvent(autoZoomEvent);
-          } else if (route.startCoordinates) {
-            console.log('[ROUTE-PREVIEW] 🗺️ Zooming to route start');
-            const previewPosition = {
-              lat: route.startCoordinates.lat,
-              lng: route.startCoordinates.lng,
-              zoom: 14,
-              pitch: 0,
-              bearing: 0
-            };
-            
-            const autoZoomEvent = new CustomEvent('auto_zoom_gps', {
-              detail: { 
-                position: previewPosition,
-                mapStyle: 'roads'
-              }
-            });
-            window.dispatchEvent(autoZoomEvent);
-          }
-        }, 500); // Small delay to let route render first
-        
-        // DISABLED: Auto-start navigation removed - user must manually start navigation
-        // The preview mode is now indefinite until user clicks "Start Navigation" button
-        console.log('[AUTO-NAV] Preview mode - user must manually start navigation');
-      } else {
-        console.log('[AUTO-NAV] Conditions NOT met - staying in plan mode');
+        localStorage.setItem('navigationSidebarState', 'collapsed');
       }
     },
     onError: (error) => {
@@ -1792,7 +1688,7 @@ function NavigationPageContent() {
   };
 
   // Alternative routes preview handlers
-  const handlePreviewRoute = (route: AlternativeRoute) => {
+  const handlePreviewAlternativeRoute = (route: AlternativeRoute) => {
     setPreviewRoute(route);
     // REMOVED TOAST: No popups per user request
   };
@@ -1951,10 +1847,11 @@ function NavigationPageContent() {
     // This ensures the hamburger button reappears immediately
     setIsLocalNavActive(false);
     setShowComprehensiveMenu(false);
+    setIsShowingPreview(false); // Also reset preview mode
     localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
     localStorage.removeItem('navigation_timestamp');
-    console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to preview mode');
+    console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to plan mode');
     
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
@@ -1986,7 +1883,35 @@ function NavigationPageContent() {
       console.log('[ROUTE-CANCEL] ℹ️ No journey to complete - guard reset immediately');
     }
     
-    console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to preview mode');
+    console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to plan mode');
+  };
+
+  // Handle preview route - zoom to full route bounds
+  const handlePreviewRoute = () => {
+    if (!currentRoute || !currentRoute.routePath || currentRoute.routePath.length < 2) {
+      console.warn('[PREVIEW] Cannot preview - invalid route');
+      return;
+    }
+    
+    console.log('[PREVIEW] Showing full route preview - zooming to bounds');
+    setIsShowingPreview(true);
+    
+    // Calculate route bounds from all waypoints
+    const lats = currentRoute.routePath.map((p: any) => p.lat);
+    const lngs = currentRoute.routePath.map((p: any) => p.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    
+    // Dispatch zoom-to-bounds event
+    const zoomEvent = new CustomEvent('zoom_to_bounds', {
+      detail: {
+        bounds: { north: maxLat, south: minLat, east: maxLng, west: minLng },
+        padding: 50
+      }
+    });
+    window.dispatchEvent(zoomEvent);
   };
 
   // Handle use current location with reverse geocoding
@@ -2597,20 +2522,48 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* Blue Hamburger FAB - PLAN MODE - Opens menu (Bottom Right, aligned with nav controls) */}
-              {mobileNavMode === 'plan' && (
+              {/* PLAN MODE BUTTONS - Left side vertical stack */}
+              {mobileNavMode === 'plan' && currentRoute && (
+                <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
+                  style={{
+                    top: 'calc(16px + var(--safe-area-top))',
+                    left: '16px'
+                  }}>
+                  {/* Preview Route Button */}
+                  <Button
+                    onClick={handlePreviewRoute}
+                    size="sm"
+                    className="h-11 px-4 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
+                    data-testid="button-preview-route"
+                  >
+                    Preview
+                  </Button>
+                  {/* Start Navigation Button */}
+                  <Button
+                    onClick={handleStartNavigation}
+                    size="sm"
+                    className="h-11 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium"
+                    data-testid="button-start-navigation-plan"
+                  >
+                    Start
+                  </Button>
+                </div>
+              )}
+              
+              {/* PLAN MODE MENU ONLY - No route yet (Top Left) */}
+              {mobileNavMode === 'plan' && !currentRoute && (
                 <Button
                   onClick={() => setShowComprehensiveMenu(true)}
                   size="sm"
-                  className="fixed z-[200] h-9 w-9 rounded-xl shadow-lg bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                  className="fixed z-[200] h-11 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium pointer-events-auto"
                   style={{
-                    bottom: 'calc(16px + var(--safe-area-bottom))',
-                    right: '16px'
+                    top: 'calc(16px + var(--safe-area-top))',
+                    left: '16px'
                   }}
                   data-testid="button-open-menu-plan"
                   aria-label="Open menu"
                 >
-                  <Menu className="w-4 h-4" />
+                  Menu
                 </Button>
               )}
 
@@ -2661,20 +2614,31 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* Blue Hamburger FAB - Opens route planning input (Bottom Right, aligned with nav controls) */}
-                  <Button
-                    onClick={() => setShowComprehensiveMenu(true)}
-                    size="sm"
-                    className="fixed z-[200] h-9 w-9 rounded-xl shadow-lg bg-blue-600 hover:bg-blue-700 backdrop-blur-sm pointer-events-auto"
+                  {/* PREVIEW MODE BUTTONS - Left side vertical stack */}
+                  <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                     style={{
-                      bottom: 'calc(16px + var(--safe-area-bottom))',
-                      right: '16px'
-                    }}
-                    data-testid="button-open-input-preview"
-                    aria-label="Open route planning"
-                  >
-                    <Menu className="w-4 h-4" />
-                  </Button>
+                      top: 'calc(16px + var(--safe-area-top))',
+                      left: '16px'
+                    }}>
+                    {/* Back to Plan Button */}
+                    <Button
+                      onClick={() => setIsShowingPreview(false)}
+                      size="sm"
+                      className="h-11 px-4 rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white font-medium"
+                      data-testid="button-back-to-plan"
+                    >
+                      Back
+                    </Button>
+                    {/* Start Navigation Button */}
+                    <Button
+                      onClick={handleStartNavigation}
+                      size="sm"
+                      className="h-11 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium"
+                      data-testid="button-start-navigation-preview"
+                    >
+                      Start
+                    </Button>
+                  </div>
                 </>
               )}
 
@@ -3144,7 +3108,7 @@ function NavigationPageContent() {
         vehicleProfile={selectedProfile}
         onClose={handleCloseAlternatives}
         onSelectRoute={handleSelectRoute}
-        onPreviewRoute={handlePreviewRoute}
+        onPreviewRoute={handlePreviewAlternativeRoute}
         isApplying={isApplyingRoute}
         selectedRouteId={selectedAlternativeRouteId || undefined}
       />
