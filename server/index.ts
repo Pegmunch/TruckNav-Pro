@@ -37,24 +37,35 @@ app.use((req, res, next) => {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
   } else {
-    // CRITICAL: PWA shell files must NEVER be cached by browser
-    // This forces iOS/Android to always check server for updates
-    if (
+    // Check if this is a browser navigation request (HTML page request)
+    const acceptHeader = req.headers.accept || '';
+    const isHtmlNavigation = acceptHeader.includes('text/html');
+    const isApiRequest = req.path.startsWith('/api');
+    
+    // CRITICAL: PWA shell files and ALL HTML navigations must NEVER be cached
+    // This forces iOS/Android to always check server for updates on every launch
+    const isPwaCriticalFile = 
       req.path === '/' || 
       req.path === '/index.html' || 
       req.path === '/manifest.json' ||
-      req.path.endsWith('.js') && (req.path.includes('sw') || req.path.includes('main')) ||
-      req.path.endsWith('app-version.json')
-    ) {
-      // No cache for PWA critical files - forces update check on every load
+      req.path.endsWith('app-version.json') ||
+      (req.path.endsWith('.js') && (req.path.includes('sw') || req.path.includes('main')));
+    
+    // SPA client routes (like /navigation, /fleet, etc.) also serve index.html
+    // and must NOT be cached or PWA will show stale content
+    const isSpaRoute = isHtmlNavigation && !isApiRequest && !req.path.match(/\.(js|css|woff2|png|jpg|jpeg|gif|svg|ico|json)$/i);
+    
+    if (isPwaCriticalFile || isSpaRoute) {
+      // No cache for PWA critical files AND client routes - forces update check on every load
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
-    } else if (req.path.match(/\.(js|css|woff2|png|jpg|jpeg|gif|svg)$/i)) {
+    } else if (req.path.match(/\.(js|css|woff2|png|jpg|jpeg|gif|svg)$/i) && !req.path.includes('sw')) {
       // Versioned assets can be cached forever (hashes change on rebuild)
+      // Exclude service worker from long caching
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    } else {
-      // Default: short cache for other files
+    } else if (!isApiRequest) {
+      // Default: short cache for other static files
       res.setHeader('Cache-Control', 'public, max-age=3600');
     }
   }
@@ -64,7 +75,7 @@ app.use((req, res, next) => {
 if (app.get("env") === "development") {
   log('🚫 Development mode: Aggressive cache prevention enabled');
 } else {
-  log('✅ Production mode: Smart cache headers configured (PWA files: no-cache, Assets: long cache)');
+  log('✅ Production mode: Smart cache headers configured (PWA files + SPA routes: no-cache, Assets: long cache)');
 }
 
 // Handle Stripe webhooks with raw body before JSON parsing
