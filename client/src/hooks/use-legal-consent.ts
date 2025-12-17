@@ -194,6 +194,8 @@ export function useLegalConsent(): UseLegalConsentReturn {
    * SIMPLE WORKING VERSION - no forced reload, no cache-buster manipulation
    */
   const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
+    console.log('[LEGAL-CONSENT] setConsentAccepted called');
+    
     const newConsentData: LegalConsentData = {
       hasAcceptedTerms: true,
       consentVersion: CURRENT_LEGAL_VERSION,
@@ -207,20 +209,33 @@ export function useLegalConsent(): UseLegalConsentReturn {
       },
     };
 
-    // Update React state
-    setConsentData(newConsentData);
-    
-    // Save to localStorage
+    // Save to localStorage FIRST (synchronous operation)
+    console.log('[LEGAL-CONSENT] Saving to localStorage...');
     saveConsentData(newConsentData);
+    
+    // Verify the save worked immediately
+    const verifySimpleFlag = localStorage.getItem('trucknav_legal_accepted');
+    const verifyFullData = localStorage.getItem(CONSENT_STORAGE_KEY);
+    console.log('[LEGAL-CONSENT] Verification after save:', {
+      simpleFlag: verifySimpleFlag,
+      fullDataExists: !!verifyFullData,
+      fullDataParsed: verifyFullData ? JSON.parse(verifyFullData).hasAcceptedTerms : null
+    });
+    
+    if (verifySimpleFlag !== 'true') {
+      console.error('[LEGAL-CONSENT] ⚠️ CRITICAL: localStorage save failed!');
+    }
+
+    // Update React state AFTER localStorage is confirmed saved
+    console.log('[LEGAL-CONSENT] Updating React state...');
+    setConsentData(newConsentData);
+    console.log('[LEGAL-CONSENT] ✓ React state updated');
 
     // Also save to backend (works for both authenticated and unauthenticated users)
-    try {
-      await apiRequest('POST', '/api/users/accept-terms', {});
-      console.log('Consent recorded on server');
-    } catch (error) {
-      // Network errors are logged but don't block the flow
-      console.error('Failed to record consent on server:', error);
-    }
+    // This is fire-and-forget, don't await it
+    apiRequest('POST', '/api/users/accept-terms', {})
+      .then(() => console.log('[LEGAL-CONSENT] Consent recorded on server'))
+      .catch((error) => console.error('[LEGAL-CONSENT] Failed to record consent on server:', error));
   }, [saveConsentData]);
 
   /**
