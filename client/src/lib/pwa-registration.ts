@@ -93,9 +93,11 @@ export async function registerServiceWorker(
     });
 
     // Handle controller change (new service worker activated)
+    // NOTE: Do NOT auto-reload on controllerchange - this causes issues during onboarding
+    // where the reload races with localStorage writes (legal consent acceptance)
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('[PWA] New service worker activated, reloading page');
-      window.location.reload();
+      console.log('[PWA] New service worker activated - update will take effect on next load');
+      // Don't force reload - this prevents race conditions with localStorage writes
     });
 
     // Check for updates periodically (every 30 seconds)

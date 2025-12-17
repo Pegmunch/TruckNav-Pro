@@ -25,10 +25,13 @@ export function ServiceWorkerUpdates({ className = "" }: ServiceWorkerUpdateProp
     if (!('serviceWorker' in navigator)) return;
 
     // Handle service worker registration updates
+    // NOTE: Do NOT auto-reload on controllerchange - this causes issues during onboarding
+    // where the reload races with localStorage writes (legal consent acceptance)
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      // Service worker has been updated and is controlling the page
       console.log('[SW Updates] New service worker is controlling the page');
-      window.location.reload();
+      // Let the user know an update was applied, but don't force reload
+      // The new SW will take effect on next natural page load
+      setShowOfflineReady(true);
     });
 
     // Monitor service worker registration
