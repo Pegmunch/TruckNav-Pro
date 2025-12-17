@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { AlertTriangle, Navigation, Shield, Eye, Truck, CheckCircle2, Loader2 } from "lucide-react";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 
@@ -23,6 +24,7 @@ export default function LegalDisclaimerSimple() {
     
     try {
       await setConsentAccepted();
+      // Consent hook will update state and component will unmount
     } catch (error) {
       console.error('[LEGAL] Failed to save consent:', error);
       setIsAccepting(false);

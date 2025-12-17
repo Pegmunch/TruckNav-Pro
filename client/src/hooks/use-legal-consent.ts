@@ -71,11 +71,6 @@ const CURRENT_LEGAL_VERSION = '1.0';
 const MAX_CONSENT_AGE_DAYS = 365;
 
 /**
- * Custom event for cross-component synchronization
- */
-const CONSENT_UPDATE_EVENT = 'trucknav:legal-consent-updated';
-
-/**
  * Centralized hook for managing legal consent state
  * 
  * Provides reactive state management for legal agreement completion,
@@ -146,7 +141,6 @@ export function useLegalConsent(): UseLegalConsentReturn {
 
   /**
    * Load consent data on hook initialization
-   * Also listens for consent updates from other components
    */
   useEffect(() => {
     const storedConsent = parseStoredConsent();
@@ -154,23 +148,11 @@ export function useLegalConsent(): UseLegalConsentReturn {
     if (storedConsent) {
       setConsentData(storedConsent);
     } else {
+      // Initialize with default data
       setConsentData(DEFAULT_CONSENT_DATA);
     }
     
     setIsLoading(false);
-
-    // Listen for consent updates from other hook instances
-    const handleConsentUpdate = (event: CustomEvent<LegalConsentData>) => {
-      if (event.detail && event.detail.hasAcceptedTerms) {
-        setConsentData(event.detail);
-      }
-    };
-
-    window.addEventListener(CONSENT_UPDATE_EVENT, handleConsentUpdate as EventListener);
-    
-    return () => {
-      window.removeEventListener(CONSENT_UPDATE_EVENT, handleConsentUpdate as EventListener);
-    };
   }, [parseStoredConsent]);
 
   /**
@@ -191,19 +173,17 @@ export function useLegalConsent(): UseLegalConsentReturn {
       },
     };
 
-    // Save to localStorage first
-    saveConsentData(newConsentData);
-    
-    // Update local state
     setConsentData(newConsentData);
-    
-    // Broadcast to all other hook instances
-    window.dispatchEvent(new CustomEvent(CONSENT_UPDATE_EVENT, { detail: newConsentData }));
+    saveConsentData(newConsentData);
 
-    // Also save to backend (fire-and-forget)
-    apiRequest('POST', '/api/users/accept-terms', {})
-      .then(() => console.log('Consent recorded on server'))
-      .catch((error) => console.error('Failed to record consent on server:', error));
+    // Also save to backend (works for both authenticated and unauthenticated users)
+    try {
+      await apiRequest('POST', '/api/users/accept-terms', {});
+      console.log('Consent recorded on server');
+    } catch (error) {
+      // Network errors are logged but don't block the flow
+      console.error('Failed to record consent on server:', error);
+    }
   }, [saveConsentData]);
 
   /**
