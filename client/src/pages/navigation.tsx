@@ -2655,7 +2655,8 @@ function NavigationPageContent() {
               
               {/* PLAN MODE CONTROLS - Bottom Left Stack */}
               {/* Moved to LEFT side to avoid collision with right-side map controls */}
-              {mobileNavMode === 'plan' && !currentRoute && (
+              {/* Also hide when navigation UI is active to prevent duplicate buttons */}
+              {mobileNavMode === 'plan' && !currentRoute && !isNavUIActive && (
                 <div className="fixed flex flex-col gap-2 z-[200] pointer-events-auto"
                   style={{
                     bottom: 'calc(56px + var(--safe-area-bottom))',

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
-import { pauseCacheBusterDuringOnboarding } from '@/lib/cache-buster';
 
 /**
  * Interface for legal consent data structure
@@ -80,9 +79,6 @@ const MAX_CONSENT_AGE_DAYS = 365;
  * 
  * @returns {UseLegalConsentReturn} Hook interface with state and methods
  */
-// Module-level guard to prevent double-call race condition
-let isConsentSaveInProgress = false;
-
 export function useLegalConsent(): UseLegalConsentReturn {
   const [consentData, setConsentData] = useState<LegalConsentData>(DEFAULT_CONSENT_DATA);
   const [isLoading, setIsLoading] = useState(true);
@@ -195,97 +191,35 @@ export function useLegalConsent(): UseLegalConsentReturn {
   /**
    * Mark consent as accepted with optional checkbox states
    * Also records consent server-side for authenticated users
-   * CRITICAL: Must persist reliably in PWA standalone mode
+   * SIMPLE WORKING VERSION - no forced reload, no cache-buster manipulation
    */
   const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
-    // CRITICAL: Prevent double-call race condition on iOS (touch events fire both onTouchEnd and onClick)
-    if (isConsentSaveInProgress) {
-      console.log('[LEGAL-CONSENT] ⚠️ Save already in progress - ignoring duplicate call');
-      return;
-    }
-    isConsentSaveInProgress = true;
-    console.log('[LEGAL-CONSENT] 🔒 Starting consent save (blocking duplicate calls)');
+    const newConsentData: LegalConsentData = {
+      hasAcceptedTerms: true,
+      consentVersion: CURRENT_LEGAL_VERSION,
+      consentTimestamp: new Date().toISOString(),
+      completedCheckboxes: checkboxStates || {
+        navigation: true,
+        liability: true,
+        responsibility: true,
+        privacy: true,
+        terms: true,
+      },
+    };
+
+    // Update React state
+    setConsentData(newConsentData);
     
-    // CRITICAL: Pause cache-buster during acceptance to prevent localStorage wipe
-    // NOTE: We intentionally do NOT resume onboarding pause - it stays true until reload completes
-    pauseCacheBusterDuringOnboarding(true);
-    
+    // Save to localStorage
+    saveConsentData(newConsentData);
+
+    // Also save to backend (works for both authenticated and unauthenticated users)
     try {
-      const newConsentData: LegalConsentData = {
-        hasAcceptedTerms: true,
-        consentVersion: CURRENT_LEGAL_VERSION,
-        consentTimestamp: new Date().toISOString(),
-        completedCheckboxes: checkboxStates || {
-          navigation: true,
-          liability: true,
-          responsibility: true,
-          privacy: true,
-          terms: true,
-        },
-      };
-
-      console.log('[LEGAL-CONSENT] Saving consent acceptance...');
-      
-      // Update React state first
-      setConsentData(newConsentData);
-      
-      // Save to localStorage with multiple writes to ensure persistence
-      saveConsentData(newConsentData);
-      
-      // Triple-write the simple flag for extra reliability in PWA mode
-      try {
-        // Write 1: Main consent data
-        localStorage.setItem('trucknav_legal_consent', JSON.stringify(newConsentData));
-        
-        // Write 2: Simple flag
-        localStorage.setItem('trucknav_legal_accepted', 'true');
-        
-        // Write 3: Backup flag
-        localStorage.setItem('trucknav_terms_accepted', 'true');
-        
-        console.log('[LEGAL-CONSENT] ✓ Consent saved to localStorage (3 writes)');
-        
-        // Verify all writes were successful
-        const verify1 = localStorage.getItem('trucknav_legal_accepted');
-        const verify2 = localStorage.getItem('trucknav_legal_consent');
-        const verify3 = localStorage.getItem('trucknav_terms_accepted');
-        console.log('[LEGAL-CONSENT] Verification reads:', {
-          flag1: verify1,
-          flag2: verify3,
-          hasData: !!verify2
-        });
-        
-        if (!verify1 || !verify2 || !verify3) {
-          throw new Error('localStorage writes failed - not all keys were persisted');
-        }
-      } catch (error) {
-        console.error('[LEGAL-CONSENT] ✗ Failed to save consent:', error);
-        throw error;
-      }
-
-      // Also save to backend (works for both authenticated and unauthenticated users)
-      try {
-        await apiRequest('POST', '/api/users/accept-terms', {});
-        console.log('[LEGAL-CONSENT] ✓ Consent recorded on server');
-      } catch (error) {
-        // Network errors are logged but don't block the flow
-        console.error('[LEGAL-CONSENT] Failed to record consent on server (non-blocking):', error);
-      }
-      
-      // CRITICAL: Force page reload to ensure all components re-initialize with new consent
-      // This prevents React state sync issues in PWA mode
-      console.log('[LEGAL-CONSENT] ✓ Reloading page to persist consent...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-      
+      await apiRequest('POST', '/api/users/accept-terms', {});
+      console.log('Consent recorded on server');
     } catch (error) {
-      console.error('[LEGAL-CONSENT] ✗ Fatal error during consent acceptance:', error);
-      // Reset the in-progress flag so user can retry
-      isConsentSaveInProgress = false;
-      // Re-enable cache-buster on error so normal operation can resume
-      pauseCacheBusterDuringOnboarding(false);
-      throw error;
+      // Network errors are logged but don't block the flow
+      console.error('Failed to record consent on server:', error);
     }
   }, [saveConsentData]);
 
