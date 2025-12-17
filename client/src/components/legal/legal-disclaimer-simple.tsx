@@ -153,34 +153,59 @@ export default function LegalDisclaimerSimple() {
         </div>
       </ScrollArea>
 
-      {/* Footer - Accept Button */}
-      <div className="border-t bg-white dark:bg-gray-950 px-4 py-4 sm:px-6 safe-area-inset-bottom">
+      {/* Footer - Accept Button - iOS safe area aware with extra padding */}
+      <div 
+        className="border-t bg-white dark:bg-gray-950 px-4 py-6 sm:px-6 relative z-[10000]"
+        style={{ 
+          paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom) + 16px))',
+          position: 'relative',
+          zIndex: 10000
+        }}
+      >
         <div className="max-w-4xl mx-auto">
-          <Button
-            size="lg"
-            className="w-full h-14 sm:h-16 text-base sm:text-lg font-semibold pointer-events-auto touch-manipulation select-none"
-            onClick={handleAccept}
+          {/* Native button for maximum iOS compatibility */}
+          <button
+            type="button"
+            className="w-full h-16 sm:h-18 text-base sm:text-lg font-semibold bg-primary text-primary-foreground rounded-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-50"
+            onClick={() => {
+              console.log('[LEGAL] Accept button clicked!');
+              handleAccept();
+            }}
+            onTouchStart={() => {
+              console.log('[LEGAL] Touch START on button');
+            }}
             onTouchEnd={(e) => {
               e.preventDefault();
-              console.log('[LEGAL] Touch event on button');
+              e.stopPropagation();
+              console.log('[LEGAL] Touch END on button');
               handleAccept();
+            }}
+            onPointerDown={() => {
+              console.log('[LEGAL] Pointer DOWN on button');
             }}
             disabled={isAccepting}
             data-testid="button-accept-legal"
-            style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+            style={{ 
+              WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
+              touchAction: 'manipulation',
+              WebkitUserSelect: 'none',
+              userSelect: 'none',
+              cursor: 'pointer',
+              minHeight: '64px'
+            }}
           >
             {isAccepting ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Accepting...
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Accepting...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                Accept &amp; Continue
+                <CheckCircle2 className="w-5 h-5" />
+                <span>Accept &amp; Continue</span>
               </>
             )}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
