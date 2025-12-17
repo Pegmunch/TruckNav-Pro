@@ -176,14 +176,10 @@ export function useLegalConsent(): UseLegalConsentReturn {
     setConsentData(newConsentData);
     saveConsentData(newConsentData);
 
-    // Also save to backend (works for both authenticated and unauthenticated users)
-    try {
-      await apiRequest('POST', '/api/users/accept-terms', {});
-      console.log('Consent recorded on server');
-    } catch (error) {
-      // Network errors are logged but don't block the flow
-      console.error('Failed to record consent on server:', error);
-    }
+    // Fire-and-forget server sync - don't block consent on API response
+    apiRequest('POST', '/api/users/accept-terms', {})
+      .then(() => console.log('Consent recorded on server'))
+      .catch((error) => console.error('Failed to record consent on server:', error));
   }, [saveConsentData]);
 
   /**
