@@ -80,6 +80,9 @@ const MAX_CONSENT_AGE_DAYS = 365;
  * 
  * @returns {UseLegalConsentReturn} Hook interface with state and methods
  */
+// Module-level guard to prevent double-call race condition
+let isConsentSaveInProgress = false;
+
 export function useLegalConsent(): UseLegalConsentReturn {
   const [consentData, setConsentData] = useState<LegalConsentData>(DEFAULT_CONSENT_DATA);
   const [isLoading, setIsLoading] = useState(true);
@@ -195,7 +198,16 @@ export function useLegalConsent(): UseLegalConsentReturn {
    * CRITICAL: Must persist reliably in PWA standalone mode
    */
   const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
+    // CRITICAL: Prevent double-call race condition on iOS (touch events fire both onTouchEnd and onClick)
+    if (isConsentSaveInProgress) {
+      console.log('[LEGAL-CONSENT] ⚠️ Save already in progress - ignoring duplicate call');
+      return;
+    }
+    isConsentSaveInProgress = true;
+    console.log('[LEGAL-CONSENT] 🔒 Starting consent save (blocking duplicate calls)');
+    
     // CRITICAL: Pause cache-buster during acceptance to prevent localStorage wipe
+    // NOTE: We intentionally do NOT resume onboarding pause - it stays true until reload completes
     pauseCacheBusterDuringOnboarding(true);
     
     try {
@@ -269,7 +281,9 @@ export function useLegalConsent(): UseLegalConsentReturn {
       
     } catch (error) {
       console.error('[LEGAL-CONSENT] ✗ Fatal error during consent acceptance:', error);
-      // Re-enable cache-buster on error
+      // Reset the in-progress flag so user can retry
+      isConsentSaveInProgress = false;
+      // Re-enable cache-buster on error so normal operation can resume
       pauseCacheBusterDuringOnboarding(false);
       throw error;
     }

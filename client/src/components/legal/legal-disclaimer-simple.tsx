@@ -163,25 +163,14 @@ export default function LegalDisclaimerSimple() {
         }}
       >
         <div className="max-w-4xl mx-auto">
-          {/* Native button for maximum iOS compatibility */}
+          {/* Native button - SINGLE onClick handler only to prevent double-call on iOS */}
           <button
             type="button"
             className="w-full h-16 sm:h-18 text-base sm:text-lg font-semibold bg-primary text-primary-foreground rounded-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-50"
-            onClick={() => {
-              console.log('[LEGAL] Accept button clicked!');
-              handleAccept();
-            }}
-            onTouchStart={() => {
-              console.log('[LEGAL] Touch START on button');
-            }}
-            onTouchEnd={(e) => {
+            onClick={(e) => {
               e.preventDefault();
-              e.stopPropagation();
-              console.log('[LEGAL] Touch END on button');
+              console.log('[LEGAL] Accept button clicked - calling handleAccept ONCE');
               handleAccept();
-            }}
-            onPointerDown={() => {
-              console.log('[LEGAL] Pointer DOWN on button');
             }}
             disabled={isAccepting}
             data-testid="button-accept-legal"
