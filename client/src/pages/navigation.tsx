@@ -177,8 +177,7 @@ function NavigationPageContent() {
   // Window sync for cross-window communication
   const windowSync = useWindowSync();
   
-  // Legal consent state - for automatic popup display
-  const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
+  // NOTE: Legal consent is checked in parent NavigationPage wrapper BEFORE GPS starts
   
   // AR Navigation state
   const [isARMode, setIsARMode] = useState(false);
@@ -2503,19 +2502,7 @@ function NavigationPageContent() {
   };
 
   // Don't block the entire interface for profile loading - show interface with loading states instead
-
-  // Block app access until legal terms are accepted - MANDATORY LEGAL DISCLAIMER
-  if (isConsentLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!hasAcceptedTerms) {
-    return <LegalDisclaimerSimple />;
-  }
+  // NOTE: Legal consent is now checked in the parent NavigationPage wrapper BEFORE GPS starts
 
   return (
     <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
@@ -3471,8 +3458,25 @@ function NavigationPageContent() {
   );
 }
 
-// Main NavigationPage wrapper with GPS Provider
+// Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
+  const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
+
+  // Show loading while checking consent
+  if (isConsentLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
+  if (!hasAcceptedTerms) {
+    return <LegalDisclaimerSimple />;
+  }
+
+  // Only start GPS AFTER consent is accepted
   return (
     <GPSProvider
       enableHighAccuracy={true}
