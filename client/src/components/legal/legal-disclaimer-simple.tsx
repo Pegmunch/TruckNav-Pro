@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { AlertTriangle, Navigation, Shield, Eye, Truck, CheckCircle2, Loader2 } from "lucide-react";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 
@@ -20,16 +19,12 @@ export default function LegalDisclaimerSimple() {
 
   // Handle acceptance
   const handleAccept = async () => {
-    console.log('[LEGAL] Accept button clicked!');
     setIsAccepting(true);
     
     try {
-      console.log('[LEGAL] Calling setConsentAccepted...');
       await setConsentAccepted();
-      console.log('[LEGAL] ✓ Consent accepted successfully');
-      // Consent hook will update state and component will unmount
     } catch (error) {
-      console.error('[LEGAL] ✗ Failed to save consent:', error);
+      console.error('[LEGAL] Failed to save consent:', error);
       setIsAccepting(false);
     }
   };
@@ -153,48 +148,28 @@ export default function LegalDisclaimerSimple() {
         </div>
       </ScrollArea>
 
-      {/* Footer - Accept Button - iOS safe area aware with extra padding */}
-      <div 
-        className="border-t bg-white dark:bg-gray-950 px-4 py-6 sm:px-6 relative z-[10000]"
-        style={{ 
-          paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom) + 16px))',
-          position: 'relative',
-          zIndex: 10000
-        }}
-      >
+      {/* Footer - Accept Button */}
+      <div className="border-t bg-white dark:bg-gray-950 px-4 py-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Native button - SINGLE onClick handler only to prevent double-call on iOS */}
-          <button
-            type="button"
-            className="w-full h-16 sm:h-18 text-base sm:text-lg font-semibold bg-primary text-primary-foreground rounded-md flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-50"
-            onClick={(e) => {
-              e.preventDefault();
-              console.log('[LEGAL] Accept button clicked - calling handleAccept ONCE');
-              handleAccept();
-            }}
+          <Button
+            size="lg"
+            className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
+            onClick={handleAccept}
             disabled={isAccepting}
             data-testid="button-accept-legal"
-            style={{ 
-              WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
-              touchAction: 'manipulation',
-              WebkitUserSelect: 'none',
-              userSelect: 'none',
-              cursor: 'pointer',
-              minHeight: '64px'
-            }}
           >
             {isAccepting ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Accepting...</span>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Accepting...
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-5 h-5" />
-                <span>Accept &amp; Continue</span>
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                Accept &amp; Continue
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

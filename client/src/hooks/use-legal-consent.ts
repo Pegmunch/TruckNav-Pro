@@ -71,7 +71,7 @@ const CURRENT_LEGAL_VERSION = '1.0';
 const MAX_CONSENT_AGE_DAYS = 365;
 
 /**
- * Custom event name for cross-component consent synchronization
+ * Custom event for cross-component synchronization
  */
 const CONSENT_UPDATE_EVENT = 'trucknav:legal-consent-updated';
 
@@ -134,69 +134,35 @@ export function useLegalConsent(): UseLegalConsentReturn {
    */
   const saveConsentData = useCallback((data: LegalConsentData): void => {
     try {
-      console.log('[LEGAL-CONSENT] saveConsentData called with:', data.hasAcceptedTerms);
       localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(data));
       // Also set the flag that cache buster checks
       if (data.hasAcceptedTerms) {
         localStorage.setItem('trucknav_legal_accepted', 'true');
       }
-      console.log('[LEGAL-CONSENT] saveConsentData completed');
     } catch (error) {
-      console.error('[LEGAL-CONSENT] Failed to save consent data to localStorage:', error);
+      console.error('Failed to save consent data to localStorage:', error);
     }
   }, []);
 
   /**
    * Load consent data on hook initialization
-   * CRITICAL: Must reliably read consent in PWA standalone mode
+   * Also listens for consent updates from other components
    */
   useEffect(() => {
-    const loadConsent = () => {
-      const storedConsent = parseStoredConsent();
-      const simpleFlag = localStorage.getItem('trucknav_legal_accepted');
-      
-      console.log('[LEGAL-CONSENT] Loading consent:', {
-        hasStoredConsent: !!storedConsent,
-        storedConsentAccepted: storedConsent?.hasAcceptedTerms,
-        simpleFlagValue: simpleFlag
-      });
-      
-      if (storedConsent && storedConsent.hasAcceptedTerms) {
-        console.log('[LEGAL-CONSENT] ✓ Valid consent found');
-        setConsentData(storedConsent);
-      } else if (simpleFlag === 'true') {
-        console.log('[LEGAL-CONSENT] ⚠️ Reconstructing from simple flag');
-        const reconstructedConsent: LegalConsentData = {
-          hasAcceptedTerms: true,
-          consentVersion: CURRENT_LEGAL_VERSION,
-          consentTimestamp: new Date().toISOString(),
-          completedCheckboxes: {
-            navigation: true,
-            liability: true,
-            responsibility: true,
-            privacy: true,
-            terms: true,
-          },
-        };
-        setConsentData(reconstructedConsent);
-        saveConsentData(reconstructedConsent);
-      } else {
-        console.log('[LEGAL-CONSENT] ✗ No valid consent found');
-        setConsentData(DEFAULT_CONSENT_DATA);
-      }
-      
-      setIsLoading(false);
-    };
+    const storedConsent = parseStoredConsent();
+    
+    if (storedConsent) {
+      setConsentData(storedConsent);
+    } else {
+      setConsentData(DEFAULT_CONSENT_DATA);
+    }
+    
+    setIsLoading(false);
 
-    // Initial load
-    loadConsent();
-
-    // Listen for consent updates from other components
+    // Listen for consent updates from other hook instances
     const handleConsentUpdate = (event: CustomEvent<LegalConsentData>) => {
-      console.log('[LEGAL-CONSENT] 📡 Received consent update event');
       if (event.detail && event.detail.hasAcceptedTerms) {
         setConsentData(event.detail);
-        setIsLoading(false);
       }
     };
 
@@ -205,16 +171,13 @@ export function useLegalConsent(): UseLegalConsentReturn {
     return () => {
       window.removeEventListener(CONSENT_UPDATE_EVENT, handleConsentUpdate as EventListener);
     };
-  }, [parseStoredConsent, saveConsentData]);
+  }, [parseStoredConsent]);
 
   /**
    * Mark consent as accepted with optional checkbox states
    * Also records consent server-side for authenticated users
-   * SIMPLE WORKING VERSION - no forced reload, no cache-buster manipulation
    */
   const setConsentAccepted = useCallback(async (checkboxStates?: LegalConsentData['completedCheckboxes']): Promise<void> => {
-    console.log('[LEGAL-CONSENT] setConsentAccepted called');
-    
     const newConsentData: LegalConsentData = {
       hasAcceptedTerms: true,
       consentVersion: CURRENT_LEGAL_VERSION,
@@ -228,36 +191,19 @@ export function useLegalConsent(): UseLegalConsentReturn {
       },
     };
 
-    // Save to localStorage FIRST (synchronous operation)
-    console.log('[LEGAL-CONSENT] Saving to localStorage...');
+    // Save to localStorage first
     saveConsentData(newConsentData);
     
-    // Verify the save worked immediately
-    const verifySimpleFlag = localStorage.getItem('trucknav_legal_accepted');
-    const verifyFullData = localStorage.getItem(CONSENT_STORAGE_KEY);
-    console.log('[LEGAL-CONSENT] Verification after save:', {
-      simpleFlag: verifySimpleFlag,
-      fullDataExists: !!verifyFullData,
-      fullDataParsed: verifyFullData ? JSON.parse(verifyFullData).hasAcceptedTerms : null
-    });
-    
-    if (verifySimpleFlag !== 'true') {
-      console.error('[LEGAL-CONSENT] ⚠️ CRITICAL: localStorage save failed!');
-    }
-
-    // Update React state AFTER localStorage is confirmed saved
-    console.log('[LEGAL-CONSENT] Updating React state...');
+    // Update local state
     setConsentData(newConsentData);
     
-    // Broadcast to all other hook instances so they update their state too
-    console.log('[LEGAL-CONSENT] 📡 Broadcasting consent update event');
+    // Broadcast to all other hook instances
     window.dispatchEvent(new CustomEvent(CONSENT_UPDATE_EVENT, { detail: newConsentData }));
-    console.log('[LEGAL-CONSENT] ✓ Consent accepted and broadcast complete');
 
     // Also save to backend (fire-and-forget)
     apiRequest('POST', '/api/users/accept-terms', {})
-      .then(() => console.log('[LEGAL-CONSENT] Consent recorded on server'))
-      .catch((error) => console.error('[LEGAL-CONSENT] Failed to record consent on server:', error));
+      .then(() => console.log('Consent recorded on server'))
+      .catch((error) => console.error('Failed to record consent on server:', error));
   }, [saveConsentData]);
 
   /**
