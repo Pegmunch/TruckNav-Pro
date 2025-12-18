@@ -3458,8 +3458,9 @@ function NavigationPageContent() {
   );
 }
 
-// Global consent cache - once accepted, never show disclaimer again in this session
-const consentCache = { accepted: false };
+// Global ref to track if we've ever shown NavigationPageContent
+// Once shown, NEVER show disclaimer again (prevent menu button flickering)
+const navPageShown = { current: false };
 
 // Helper: Check localStorage directly for consent (no React state involved)
 function hasConsentInLocalStorage(): boolean {
@@ -3480,17 +3481,15 @@ export default function NavigationPage() {
   // Handle acceptance
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
-    // Update cache immediately so menu interactions don't show disclaimer
-    consentCache.accepted = true;
+    navPageShown.current = true;
   }, [setConsentAccepted]);
 
   // Check localStorage directly on every render
-  // ALSO check cache so menu interactions don't revert to disclaimer
-  const consentAccepted = consentCache.accepted || hasConsentInLocalStorage();
+  const consentAccepted = navPageShown.current || hasConsentInLocalStorage();
   
-  // Update cache if we detect consent
-  if (consentAccepted && !consentCache.accepted) {
-    consentCache.accepted = true;
+  // Mark as shown if we're about to render it
+  if (consentAccepted) {
+    navPageShown.current = true;
   }
 
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
