@@ -3460,56 +3460,14 @@ function NavigationPageContent() {
 
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
-  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
+  const { hasAcceptedTerms, setConsentAccepted } = useLegalConsent();
 
-  // Check localStorage directly - single source of truth, no state needed
-  // This prevents disclaimer from reappearing during re-renders or menu interactions
-  const checkConsent = useCallback(() => {
-    try {
-      const stored = localStorage.getItem('trucknav_legal_consent');
-      if (!stored) return false;
-      const data = JSON.parse(stored);
-      return data?.hasAcceptedTerms === true;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  // Handle acceptance
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
   }, [setConsentAccepted]);
 
-  // Show loading while checking consent
-  if (isConsentLoading) {
-    // If localStorage already has consent, show map (don't show loading spinner)
-    if (checkConsent() || hasAcceptedTerms) {
-      return (
-        <GPSProvider
-          enableHighAccuracy={true}
-          timeout={5000}
-          maximumAge={0}
-          headingSmoothingAlpha={0.25}
-          enableHeadingSmoothing={true}
-        >
-          <NavigationPageContent />
-        </GPSProvider>
-      );
-    }
-    
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Always check localStorage directly on each render - not React state
-  // This prevents disclaimer from reappearing when menu button or other interactions trigger re-renders
-  const isConsentValid = checkConsent() || hasAcceptedTerms;
-
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
-  if (!isConsentValid) {
+  if (!hasAcceptedTerms) {
     return <LegalDisclaimerSimple onAccept={handleAccept} />;
   }
 
