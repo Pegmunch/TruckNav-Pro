@@ -177,6 +177,17 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
   const isGPSReady = gpsStatus === 'ready' && !gps?.isUsingCached;
   const isManualLocation = gpsStatus === 'manual' || gps?.isUsingManualLocation;
   
+  // Fallback timeout to hide loading spinner after 10 seconds (for PWA)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!isLoaded) {
+        console.warn('[MAP] Loading overlay timeout - forcing completion after 10s');
+        setIsLoaded(true);
+      }
+    }, 10000);
+    return () => clearTimeout(timeout);
+  }, [isLoaded]);
+  
   // Circuit Breaker Pattern for GPS reliability
   const circuitBreakerRef = useRef({
     failures: 0,
