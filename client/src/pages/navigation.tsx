@@ -3460,9 +3460,11 @@ function NavigationPageContent() {
 
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
-  // Check localStorage directly as the authoritative source of truth
-  // This prevents disclaimer from reappearing during menu interactions or re-renders
-  const getStoredConsent = useCallback(() => {
+  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
+
+  // Check localStorage directly - single source of truth, no state needed
+  // This prevents disclaimer from reappearing during re-renders or menu interactions
+  const checkConsent = useCallback(() => {
     try {
       const stored = localStorage.getItem('trucknav_legal_consent');
       if (!stored) return false;
@@ -3473,32 +3475,15 @@ export default function NavigationPage() {
     }
   }, []);
 
-  const [hasConsentStored, setHasConsentStored] = useState(() => getStoredConsent());
-  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
-
-  // Handle acceptance - update both localStorage and state
+  // Handle acceptance
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
-    // Immediately update local state to prevent disclaimer from reappearing
-    setHasConsentStored(true);
   }, [setConsentAccepted]);
-
-  // Storage listener to detect changes from other tabs
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'trucknav_legal_consent') {
-        setHasConsentStored(getStoredConsent());
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [getStoredConsent]);
 
   // Show loading while checking consent
   if (isConsentLoading) {
     // If localStorage already has consent, show map (don't show loading spinner)
-    if (hasConsentStored || hasAcceptedTerms) {
+    if (checkConsent() || hasAcceptedTerms) {
       return (
         <GPSProvider
           enableHighAccuracy={true}
@@ -3519,9 +3504,9 @@ export default function NavigationPage() {
     );
   }
 
-  // ALWAYS check localStorage as the authoritative source, not hook state
-  // This prevents disclaimer from reappearing when component re-renders
-  const isConsentValid = hasConsentStored || hasAcceptedTerms;
+  // Always check localStorage directly on each render - not React state
+  // This prevents disclaimer from reappearing when menu button or other interactions trigger re-renders
+  const isConsentValid = checkConsent() || hasAcceptedTerms;
 
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
   if (!isConsentValid) {
