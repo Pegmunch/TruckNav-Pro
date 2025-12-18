@@ -71,17 +71,76 @@ const CURRENT_LEGAL_VERSION = '1.0';
 const MAX_CONSENT_AGE_DAYS = 365;
 
 /**
+ * Synchronously parse consent data from localStorage
+ * Called during initial render to prevent loading flash in PWA mode
+ */
+function getInitialConsentData(): { data: LegalConsentData; loaded: boolean } {
+  try {
+    const storedData = localStorage.getItem(CONSENT_STORAGE_KEY);
+    if (!storedData) {
+      return { data: DEFAULT_CONSENT_DATA, loaded: true };
+    }
+
+    const parsed = JSON.parse(storedData);
+    
+    // Validate required fields
+    if (typeof parsed !== 'object' || parsed === null) {
+      console.warn('[LEGAL-CONSENT] Invalid consent data structure in localStorage');
+      return { data: DEFAULT_CONSENT_DATA, loaded: true };
+    }
+
+    // Ensure we have all required fields with proper types
+    const validatedData: LegalConsentData = {
+      hasAcceptedTerms: Boolean(parsed.hasAcceptedTerms),
+      consentVersion: typeof parsed.consentVersion === 'string' ? parsed.consentVersion : CURRENT_LEGAL_VERSION,
+      consentTimestamp: typeof parsed.consentTimestamp === 'string' ? parsed.consentTimestamp : '',
+      completedCheckboxes: {
+        navigation: Boolean(parsed.completedCheckboxes?.navigation),
+        liability: Boolean(parsed.completedCheckboxes?.liability),
+        responsibility: Boolean(parsed.completedCheckboxes?.responsibility),
+        privacy: Boolean(parsed.completedCheckboxes?.privacy),
+        terms: Boolean(parsed.completedCheckboxes?.terms),
+      },
+    };
+
+    return { data: validatedData, loaded: true };
+  } catch (error) {
+    console.error('[LEGAL-CONSENT] Failed to parse consent data from localStorage:', error);
+    // Clear corrupted data
+    try {
+      localStorage.removeItem(CONSENT_STORAGE_KEY);
+    } catch (e) {
+      // Ignore storage errors
+    }
+    return { data: DEFAULT_CONSENT_DATA, loaded: true };
+  }
+}
+
+/**
  * Centralized hook for managing legal consent state
  * 
  * Provides reactive state management for legal agreement completion,
  * persists consent state to localStorage with version tracking,
  * and includes error handling for corrupted data.
  * 
+ * CRITICAL FIX: Synchronously initialize from localStorage to prevent
+ * the Legal Disclaimer from flashing on button clicks in PWA mode.
+ * Previous implementation used useEffect which caused a brief isLoading=true
+ * state on every component mount, leading to incorrect disclaimer re-shows.
+ * 
  * @returns {UseLegalConsentReturn} Hook interface with state and methods
  */
 export function useLegalConsent(): UseLegalConsentReturn {
-  const [consentData, setConsentData] = useState<LegalConsentData>(DEFAULT_CONSENT_DATA);
-  const [isLoading, setIsLoading] = useState(true);
+  // CRITICAL: Synchronously initialize from localStorage to prevent flashing
+  // This ensures hasAcceptedTerms is correct from the FIRST render
+  const [consentData, setConsentData] = useState<LegalConsentData>(() => {
+    const initial = getInitialConsentData();
+    return initial.data;
+  });
+  
+  // isLoading is now always false because we load synchronously
+  // Kept for backward compatibility with components that check it
+  const [isLoading] = useState(false);
 
   /**
    * Safely parse consent data from localStorage with error handling
@@ -97,7 +156,7 @@ export function useLegalConsent(): UseLegalConsentReturn {
       
       // Validate required fields
       if (typeof parsed !== 'object' || parsed === null) {
-        console.warn('Invalid consent data structure in localStorage');
+        console.warn('[LEGAL-CONSENT] Invalid consent data structure in localStorage');
         return null;
       }
 
@@ -117,7 +176,7 @@ export function useLegalConsent(): UseLegalConsentReturn {
 
       return validatedData;
     } catch (error) {
-      console.error('Failed to parse consent data from localStorage:', error);
+      console.error('[LEGAL-CONSENT] Failed to parse consent data from localStorage:', error);
       // Clear corrupted data
       localStorage.removeItem(CONSENT_STORAGE_KEY);
       return null;
@@ -135,25 +194,12 @@ export function useLegalConsent(): UseLegalConsentReturn {
         localStorage.setItem('trucknav_legal_accepted', 'true');
       }
     } catch (error) {
-      console.error('Failed to save consent data to localStorage:', error);
+      console.error('[LEGAL-CONSENT] Failed to save consent data to localStorage:', error);
     }
   }, []);
 
-  /**
-   * Load consent data on hook initialization
-   */
-  useEffect(() => {
-    const storedConsent = parseStoredConsent();
-    
-    if (storedConsent) {
-      setConsentData(storedConsent);
-    } else {
-      // Initialize with default data
-      setConsentData(DEFAULT_CONSENT_DATA);
-    }
-    
-    setIsLoading(false);
-  }, [parseStoredConsent]);
+  // Note: No useEffect needed for initial load - we load synchronously now
+  // This prevents the brief isLoading=true state that caused PWA issues
 
   /**
    * Mark consent as accepted with optional checkbox states
