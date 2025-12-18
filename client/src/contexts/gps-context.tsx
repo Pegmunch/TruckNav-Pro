@@ -80,7 +80,7 @@ export interface GPSContextValue {
   // New fields for validation
   validationWarnings: GPSValidationWarning[];
   lastGoodPosition: GPSPosition | null;
-  timeSinceLastUpdate: number | null; // seconds
+  getTimeSinceLastUpdate: () => number | null; // returns seconds on demand (no re-renders)
   shouldPreventAutoCenter: boolean;
   // Manual location fallback
   manualLocation: ManualLocationData | null;
@@ -531,7 +531,6 @@ export function GPSProvider({
   // New validation state
   const [validationWarnings, setValidationWarnings] = useState<GPSValidationWarning[]>([]);
   const [lastGoodPosition, setLastGoodPosition] = useState<GPSPosition | null>(null);
-  const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<number | null>(null);
   const [shouldPreventAutoCenter, setShouldPreventAutoCenter] = useState(false);
   
   // Manual location state
@@ -1220,15 +1219,18 @@ export function GPSProvider({
     setStatus('acquiring');
   }, []);
 
-  // Timer to track time since last GPS update
+  // Getter for time since last update (computed on demand - no re-renders)
+  const getTimeSinceLastUpdate = useCallback((): number | null => {
+    if (!lastUpdateTimeRef.current) return null;
+    return Math.floor((Date.now() - lastUpdateTimeRef.current) / 1000);
+  }, []);
+
+  // Timer to check for GPS signal lost (only triggers state change when needed)
   useEffect(() => {
-    const updateTimer = setInterval(() => {
-      const now = Date.now();
-      const timeSince = lastUpdateTimeRef.current ? 
-        Math.floor((now - lastUpdateTimeRef.current) / 1000) : null;
-      setTimeSinceLastUpdate(timeSince);
+    const signalCheckTimer = setInterval(() => {
+      const timeSince = getTimeSinceLastUpdate();
       
-      // Check for GPS signal lost (no updates for 30 seconds)
+      // Only check for GPS signal lost (no updates for 30 seconds)
       if (timeSince && timeSince > 30 && status === 'ready') {
         console.warn('[GPS-PROVIDER] GPS signal lost - no updates for', timeSince, 'seconds');
         setStatus('unavailable');
@@ -1244,16 +1246,16 @@ export function GPSProvider({
           return prev;
         });
       }
-    }, 1000);
+    }, 5000); // Check every 5 seconds instead of 1 second (sufficient for 30s timeout detection)
     
-    updateIntervalRef.current = updateTimer;
+    updateIntervalRef.current = signalCheckTimer;
     
     return () => {
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
     };
-  }, [status]);
+  }, [status, getTimeSinceLastUpdate]);
 
   useEffect(() => {
     // Load cached position for info (but don't use it automatically)
@@ -1291,7 +1293,7 @@ export function GPSProvider({
     // New validation fields
     validationWarnings,
     lastGoodPosition,
-    timeSinceLastUpdate,
+    getTimeSinceLastUpdate,
     shouldPreventAutoCenter,
     // Manual location fallback
     manualLocation,

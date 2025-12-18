@@ -96,12 +96,13 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
 
   // Handle opening feature windows
   const handleOpenWindow = (featureType: FeatureWindowType) => {
-    if (getOpenWindowCount() >= 10) {
+    const currentCount = getOpenWindowCount();
+    if (currentCount >= 10) {
       return;
     }
     openFeatureWindow(featureType);
-    // Update count after opening
-    setOpenWindowCount(getOpenWindowCount() + 1);
+    // Update count to reflect new window (getOpenWindowCount returns updated value after openFeatureWindow)
+    setTimeout(() => setOpenWindowCount(getOpenWindowCount()), 100);
   };
 
   return (

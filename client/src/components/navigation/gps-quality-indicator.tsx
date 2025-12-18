@@ -26,6 +26,28 @@ export function GPSQualityIndicator({
 }) {
   const gps = useGPS();
   const [isFlashing, setIsFlashing] = useState(false);
+  const [, setRefreshTick] = useState(0);
+
+  // Component-local refresh for freshness display (5s cadence, only when visible)
+  useEffect(() => {
+    if (!showDetails) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+    };
+    
+    const refreshInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setRefreshTick(t => t + 1);
+      }
+    }, 5000);
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [showDetails]);
 
   // Trigger flash animation when signal is poor
   useEffect(() => {
@@ -42,7 +64,7 @@ export function GPSQualityIndicator({
     status,
     position,
     validationWarnings,
-    timeSinceLastUpdate,
+    getTimeSinceLastUpdate,
     shouldPreventAutoCenter,
     error,
     canRetry,
@@ -51,6 +73,7 @@ export function GPSQualityIndicator({
 
   // Determine display state
   const getDisplayState = () => {
+    const timeSinceLastUpdate = getTimeSinceLastUpdate();
     if (status === 'error' || error) return 'error';
     if (status === 'initializing') return 'initializing';
     if (status === 'acquiring') return 'acquiring';
@@ -197,7 +220,7 @@ export function GPSQualityIndicator({
             <div>
               <span className="text-muted-foreground">Last Update:</span>
               <span className="ml-1 font-medium">
-                {timeSinceLastUpdate ? `${timeSinceLastUpdate}s ago` : 'Just now'}
+                {getTimeSinceLastUpdate() ? `${getTimeSinceLastUpdate()}s ago` : 'Just now'}
               </span>
             </div>
             {position.isStuck && (
@@ -256,10 +279,23 @@ export function GPSQualityIndicator({
 // Minimal GPS status bar for mobile
 export function GPSStatusBar({ className }: { className?: string }) {
   const gps = useGPS();
+  const [, setRefreshTick] = useState(0);
+  
+  // Component-local refresh for time display (5s cadence, only when visible)
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setRefreshTick(t => t + 1);
+      }
+    }, 5000);
+    
+    return () => clearInterval(refreshInterval);
+  }, []);
   
   if (!gps || !gps.position) return null;
   
-  const { position, timeSinceLastUpdate, shouldPreventAutoCenter } = gps;
+  const { position, getTimeSinceLastUpdate, shouldPreventAutoCenter } = gps;
+  const timeSinceUpdate = getTimeSinceLastUpdate();
   const showWarning = position.confidenceLevel === 'low' || 
                      position.confidenceLevel === 'very-low' ||
                      shouldPreventAutoCenter;
@@ -281,8 +317,8 @@ export function GPSStatusBar({ className }: { className?: string }) {
       <span className="font-medium">
         Poor GPS Signal ({Math.round(position.accuracy)}m accuracy)
       </span>
-      {timeSinceLastUpdate && timeSinceLastUpdate > 10 && (
-        <span className="opacity-90">• {timeSinceLastUpdate}s since update</span>
+      {timeSinceUpdate && timeSinceUpdate > 10 && (
+        <span className="opacity-90">• {timeSinceUpdate}s since update</span>
       )}
     </div>
   );
