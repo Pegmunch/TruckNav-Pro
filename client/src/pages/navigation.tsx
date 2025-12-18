@@ -3017,10 +3017,10 @@ function NavigationPageContent() {
               variant="default"
               size="icon"
               onClick={() => setSidebarState('open')}
-              className="fixed top-4 left-4 z-50 hamburger-menu-button automotive-touch-target bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 shadow-lg"
+              className="fixed top-4 left-4 z-50 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 p-1.5"
               data-testid="button-menu-desktop"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-3.5 h-3.5" />
             </Button>
           )}
           
@@ -3359,6 +3359,7 @@ function NavigationPageContent() {
           queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
         }}
         coordinates={currentGPSLocation}
+        hideTabsInInputMode={showComprehensiveMenu}
       />
 
       {/* Destination Reached Dialog */}

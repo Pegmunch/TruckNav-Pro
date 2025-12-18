@@ -103,6 +103,8 @@ interface ComprehensiveMobileMenuProps {
   // POI search
   coordinates?: { lat: number; lng: number };
   onSelectFacility?: (facility: any) => void;
+  // Route input mode - hides tabs when entering route
+  hideTabsInInputMode?: boolean;
 }
 
 const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
@@ -119,7 +121,8 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
   selectedProfile,
   onProfileSelect,
   coordinates,
-  onSelectFacility
+  onSelectFacility,
+  hideTabsInInputMode = false
 }: ComprehensiveMobileMenuProps) {
   const { toast } = useToast();
   const { formatDistance } = useMeasurement();
@@ -550,64 +553,66 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
 
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-            <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
-              <TabsTrigger 
-                value="plan" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-plan"
-              >
-                <MapPinned className="h-4 w-4" />
-                <span className="text-xs">Plan</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="destinations" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-destinations"
-              >
-                <History className="h-4 w-4" />
-                <span className="text-xs">Recent</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="vehicle" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-vehicle"
-              >
-                <Truck className="h-4 w-4" />
-                <span className="text-xs">Vehicle</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="social" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-social"
-              >
-                <Users className="h-4 w-4" />
-                <span className="text-xs">Social</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="theme" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-theme"
-              >
-                <Palette className="h-4 w-4" />
-                <span className="text-xs">Theme</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="tools" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-tools"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="text-xs">Tools</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="offline" 
-                className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
-                data-testid="tab-offline"
-              >
-                <Download className="h-4 w-4" />
-                <span className="text-xs">Offline</span>
-              </TabsTrigger>
-            </TabsList>
+            {!hideTabsInInputMode && (
+              <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
+                <TabsTrigger 
+                  value="plan" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-plan"
+                >
+                  <MapPinned className="h-4 w-4" />
+                  <span className="text-xs">Plan</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="destinations" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-destinations"
+                >
+                  <History className="h-4 w-4" />
+                  <span className="text-xs">Recent</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="vehicle" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-vehicle"
+                >
+                  <Truck className="h-4 w-4" />
+                  <span className="text-xs">Vehicle</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="social" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-social"
+                >
+                  <Users className="h-4 w-4" />
+                  <span className="text-xs">Social</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="theme" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-theme"
+                >
+                  <Palette className="h-4 w-4" />
+                  <span className="text-xs">Theme</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="tools" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-tools"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="text-xs">Tools</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="offline" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-offline"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="text-xs">Offline</span>
+                </TabsTrigger>
+              </TabsList>
+            )}
 
             <ScrollArea className="flex-1">
               {/* PLAN TAB - Route Planning */}
