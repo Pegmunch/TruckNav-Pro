@@ -127,6 +127,11 @@ function NavigationPageContent() {
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
+  
+  // CRITICAL: Memoize violations to prevent re-renders from new array references
+  // Using useMemo ensures same empty array reference when there are no violations
+  const restrictionViolations = useMemo(() => currentRoute?.violations || [], [currentRoute?.violations]);
+  
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
   const [fromCoordinates, setFromCoordinates] = useState<{lat: number, lng: number} | null>(null);
@@ -2546,7 +2551,7 @@ function NavigationPageContent() {
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating}
-                    restrictionViolations={currentRoute?.violations || []}
+                    restrictionViolations={restrictionViolations}
                   />
                 </MapShell>
               </div>
@@ -3113,7 +3118,7 @@ function NavigationPageContent() {
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating}
-                    restrictionViolations={currentRoute?.violations || []}
+                    restrictionViolations={restrictionViolations}
                   />
                 </MapShell>
                 

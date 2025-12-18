@@ -169,8 +169,10 @@ export function useMapShell() {
 
     checkMapShell();
     
-    const interval = setInterval(checkMapShell, 1000);
-    return () => clearInterval(interval);
+    // Only check dimensions on resize events, not every second (prevents re-renders)
+    const handleResize = () => checkMapShell();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const invalidateMap = useCallback(() => {

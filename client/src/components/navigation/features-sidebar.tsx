@@ -89,32 +89,19 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
     },
   ];
 
-  // Update window count periodically
+  // Update window count on mount and when windows change
   useEffect(() => {
-    const updateCount = () => {
-      setOpenWindowCount(getOpenWindowCount());
-    };
-    
-    updateCount();
-    const interval = setInterval(updateCount, 1000);
-    return () => clearInterval(interval);
+    setOpenWindowCount(getOpenWindowCount());
   }, []);
 
   // Handle opening feature windows
   const handleOpenWindow = (featureType: FeatureWindowType) => {
     if (getOpenWindowCount() >= 10) {
-      // toast({
-      //   title: "Window Limit Reached",
-      //   description: "Maximum of 10 windows can be open at once. Please close some windows first.",
-      //   variant: "destructive",
-      // });
       return;
     }
     openFeatureWindow(featureType);
-    // toast({
-    //   title: "Window Opened",
-    //   description: `${featureType.charAt(0).toUpperCase() + featureType.slice(1)} window opened successfully.`,
-    // });
+    // Update count after opening
+    setOpenWindowCount(getOpenWindowCount() + 1);
   };
 
   return (

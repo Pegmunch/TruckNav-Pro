@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback, memo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from "@tanstack/react-query";
@@ -127,7 +127,7 @@ const getSeverityColor = (severity: string): string => {
   }
 };
 
-const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLibreMap({
+const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLibreMap({
   currentRoute,
   selectedProfile,
   onMapClick,
@@ -2392,7 +2392,7 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       {/* GPS/Cache selection moved to Settings modal - Online/Offline tab */}
     </div>
   );
-});
+}));
 
 export { MapLibreMap };
 export default MapLibreMap;
