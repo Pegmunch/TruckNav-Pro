@@ -3460,10 +3460,45 @@ function NavigationPageContent() {
 
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
+  const [sessionAccepted, setSessionAccepted] = useState(false);
   const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
+
+  // Check localStorage directly to prevent flicker when app resumes in PWA mode
+  const localStorageAccepted = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('trucknav_legal_consent');
+      if (!stored) return false;
+      const data = JSON.parse(stored);
+      return data?.hasAcceptedTerms === true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Handle acceptance - locks in the accepted state for this session
+  const handleAccept = useCallback(async () => {
+    await setConsentAccepted();
+    setSessionAccepted(true);
+  }, [setConsentAccepted]);
 
   // Show loading while checking consent
   if (isConsentLoading) {
+    // If localStorage already has consent, don't show the loading spinner
+    // This prevents flicker in PWA mode when app resumes from background
+    if (localStorageAccepted || sessionAccepted) {
+      return (
+        <GPSProvider
+          enableHighAccuracy={true}
+          timeout={5000}
+          maximumAge={0}
+          headingSmoothingAlpha={0.25}
+          enableHeadingSmoothing={true}
+        >
+          <NavigationPageContent />
+        </GPSProvider>
+      );
+    }
+    
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -3471,10 +3506,13 @@ export default function NavigationPage() {
     );
   }
 
+  // Once accepted (either from storage or this session), never show disclaimer again
+  // This prevents flickering when menu button or other interactions trigger re-renders
+  const shouldShowGPS = sessionAccepted || hasAcceptedTerms || localStorageAccepted;
+
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
-  // Pass onAccept to update THIS component's consent state, not a separate hook instance
-  if (!hasAcceptedTerms) {
-    return <LegalDisclaimerSimple onAccept={setConsentAccepted} />;
+  if (!shouldShowGPS) {
+    return <LegalDisclaimerSimple onAccept={handleAccept} />;
   }
 
   // Only start GPS AFTER consent is accepted
