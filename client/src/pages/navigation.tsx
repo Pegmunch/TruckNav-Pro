@@ -3460,11 +3460,9 @@ function NavigationPageContent() {
 
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
-  const [sessionAccepted, setSessionAccepted] = useState(false);
-  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
-
-  // Check localStorage directly to prevent flicker when app resumes in PWA mode
-  const localStorageAccepted = useMemo(() => {
+  // Check localStorage directly as the authoritative source of truth
+  // This prevents disclaimer from reappearing during menu interactions or re-renders
+  const getStoredConsent = useCallback(() => {
     try {
       const stored = localStorage.getItem('trucknav_legal_consent');
       if (!stored) return false;
@@ -3475,17 +3473,32 @@ export default function NavigationPage() {
     }
   }, []);
 
-  // Handle acceptance - locks in the accepted state for this session
+  const [hasConsentStored, setHasConsentStored] = useState(() => getStoredConsent());
+  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
+
+  // Handle acceptance - update both localStorage and state
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
-    setSessionAccepted(true);
+    // Immediately update local state to prevent disclaimer from reappearing
+    setHasConsentStored(true);
   }, [setConsentAccepted]);
+
+  // Storage listener to detect changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'trucknav_legal_consent') {
+        setHasConsentStored(getStoredConsent());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [getStoredConsent]);
 
   // Show loading while checking consent
   if (isConsentLoading) {
-    // If localStorage already has consent, don't show the loading spinner
-    // This prevents flicker in PWA mode when app resumes from background
-    if (localStorageAccepted || sessionAccepted) {
+    // If localStorage already has consent, show map (don't show loading spinner)
+    if (hasConsentStored || hasAcceptedTerms) {
       return (
         <GPSProvider
           enableHighAccuracy={true}
@@ -3506,12 +3519,12 @@ export default function NavigationPage() {
     );
   }
 
-  // Once accepted (either from storage or this session), never show disclaimer again
-  // This prevents flickering when menu button or other interactions trigger re-renders
-  const shouldShowGPS = sessionAccepted || hasAcceptedTerms || localStorageAccepted;
+  // ALWAYS check localStorage as the authoritative source, not hook state
+  // This prevents disclaimer from reappearing when component re-renders
+  const isConsentValid = hasConsentStored || hasAcceptedTerms;
 
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
-  if (!shouldShowGPS) {
+  if (!isConsentValid) {
     return <LegalDisclaimerSimple onAccept={handleAccept} />;
   }
 
