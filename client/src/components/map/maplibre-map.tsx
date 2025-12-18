@@ -2221,11 +2221,14 @@ const MapLibreMap = forwardRef<MapLibreMapRef, MapLibreMapProps>(function MapLib
       {/* Loading Overlay - prevents map flashing during initialization */}
       <div 
         className={cn(
-          "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-500",
+          "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-300",
           isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
         )}
         data-testid="map-loading-overlay"
         aria-hidden={isLoaded}
+        style={{
+          transitionDelay: isLoaded ? '0ms' : 'undefined'
+        }}
       >
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
