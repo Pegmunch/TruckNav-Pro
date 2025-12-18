@@ -3465,11 +3465,21 @@ function NavigationPageContent() {
 
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
-  const { hasAcceptedTerms, setConsentAccepted } = useLegalConsent();
+  const { hasAcceptedTerms, setConsentAccepted, isLoading } = useLegalConsent();
 
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
   }, [setConsentAccepted]);
+
+  // Wait for consent state to load before deciding what to show
+  // This prevents flashing Legal Disclaimer in PWA mode when consent is already stored
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
   if (!hasAcceptedTerms) {
