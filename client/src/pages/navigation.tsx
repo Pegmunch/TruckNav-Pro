@@ -3458,6 +3458,9 @@ function NavigationPageContent() {
   );
 }
 
+// Global consent cache - once accepted, never show disclaimer again in this session
+const consentCache = { accepted: false };
+
 // Helper: Check localStorage directly for consent (no React state involved)
 function hasConsentInLocalStorage(): boolean {
   try {
@@ -3477,12 +3480,18 @@ export default function NavigationPage() {
   // Handle acceptance
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
+    // Update cache immediately so menu interactions don't show disclaimer
+    consentCache.accepted = true;
   }, [setConsentAccepted]);
 
-  // Check localStorage directly on every render - synchronized with storage updates
-  // No React state, no hook state - just pure storage check
-  // This survives PWA re-mounts and menu interactions without flickering
-  const consentAccepted = hasConsentInLocalStorage();
+  // Check localStorage directly on every render
+  // ALSO check cache so menu interactions don't revert to disclaimer
+  const consentAccepted = consentCache.accepted || hasConsentInLocalStorage();
+  
+  // Update cache if we detect consent
+  if (consentAccepted && !consentCache.accepted) {
+    consentCache.accepted = true;
+  }
 
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
   if (!consentAccepted) {
