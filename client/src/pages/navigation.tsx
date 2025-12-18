@@ -3460,7 +3460,7 @@ function NavigationPageContent() {
 
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
-  const { hasAcceptedTerms, isLoading: isConsentLoading } = useLegalConsent();
+  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
 
   // Show loading while checking consent
   if (isConsentLoading) {
@@ -3472,8 +3472,9 @@ export default function NavigationPage() {
   }
 
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
+  // Pass onAccept to update THIS component's consent state, not a separate hook instance
   if (!hasAcceptedTerms) {
-    return <LegalDisclaimerSimple />;
+    return <LegalDisclaimerSimple onAccept={setConsentAccepted} />;
   }
 
   // Only start GPS AFTER consent is accepted

@@ -5,11 +5,15 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, Navigation, Shield, Eye, Truck, CheckCircle2, Loader2 } from "lucide-react";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 
+interface LegalDisclaimerSimpleProps {
+  onAccept?: () => Promise<void>;
+}
+
 /**
  * Simple Legal Disclaimer - Single Version
  * Shows ONLY at app startup, NEVER again after acceptance
  */
-export default function LegalDisclaimerSimple() {
+export default function LegalDisclaimerSimple({ onAccept }: LegalDisclaimerSimpleProps) {
   const [isAccepting, setIsAccepting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -17,13 +21,16 @@ export default function LegalDisclaimerSimple() {
     setConsentAccepted,
     isLoading
   } = useLegalConsent();
+  
+  // Use parent's accept function if provided, otherwise use local hook
+  const acceptFn = onAccept || setConsentAccepted;
 
   // Handle acceptance
   const handleAccept = async () => {
     setIsAccepting(true);
     
     try {
-      await setConsentAccepted();
+      await acceptFn();
       // Consent hook will update state and component will unmount
     } catch (error) {
       console.error('[LEGAL] Failed to save consent:', error);
