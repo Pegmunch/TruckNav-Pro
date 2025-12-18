@@ -3458,42 +3458,58 @@ function NavigationPageContent() {
   );
 }
 
-// Global ref to track if we've ever shown NavigationPageContent
-// Once shown, NEVER show disclaimer again (prevent menu button flickering)
-const navPageShown = { current: false };
-
-// Helper: Check localStorage directly for consent (no React state involved)
-function hasConsentInLocalStorage(): boolean {
-  try {
-    const stored = localStorage.getItem('trucknav_legal_consent');
-    if (!stored) return false;
-    const data = JSON.parse(stored);
-    return data?.hasAcceptedTerms === true;
-  } catch {
-    return false;
-  }
-}
-
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
-  const { setConsentAccepted } = useLegalConsent();
+  const { hasAcceptedTerms, isLoading: isConsentLoading, setConsentAccepted } = useLegalConsent();
+
+  // Check localStorage directly - single source of truth, no state needed
+  // This prevents disclaimer from reappearing during re-renders or menu interactions
+  const checkConsent = useCallback(() => {
+    try {
+      const stored = localStorage.getItem('trucknav_legal_consent');
+      if (!stored) return false;
+      const data = JSON.parse(stored);
+      return data?.hasAcceptedTerms === true;
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Handle acceptance
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
-    navPageShown.current = true;
   }, [setConsentAccepted]);
 
-  // Check localStorage directly on every render
-  const consentAccepted = navPageShown.current || hasConsentInLocalStorage();
-  
-  // Mark as shown if we're about to render it
-  if (consentAccepted) {
-    navPageShown.current = true;
+  // Show loading while checking consent
+  if (isConsentLoading) {
+    // If localStorage already has consent, show map (don't show loading spinner)
+    if (checkConsent() || hasAcceptedTerms) {
+      return (
+        <GPSProvider
+          enableHighAccuracy={true}
+          timeout={5000}
+          maximumAge={0}
+          headingSmoothingAlpha={0.25}
+          enableHeadingSmoothing={true}
+        >
+          <NavigationPageContent />
+        </GPSProvider>
+      );
+    }
+    
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
+  // Always check localStorage directly on each render - not React state
+  // This prevents disclaimer from reappearing when menu button or other interactions trigger re-renders
+  const isConsentValid = checkConsent() || hasAcceptedTerms;
+
   // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
-  if (!consentAccepted) {
+  if (!isConsentValid) {
     return <LegalDisclaimerSimple onAccept={handleAccept} />;
   }
 
