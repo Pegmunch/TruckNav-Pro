@@ -24,32 +24,43 @@ export function ServiceWorkerUpdates({ className = "" }: ServiceWorkerUpdateProp
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    let updateCheckInterval: ReturnType<typeof setInterval> | null = null;
+    let syncCheckInterval: ReturnType<typeof setInterval> | null = null;
+    let isMounted = true;
+
     // Handle service worker registration updates
     // NOTE: Do NOT auto-reload on controllerchange - this causes issues during onboarding
     // where the reload races with localStorage writes (legal consent acceptance)
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const handleControllerChange = () => {
+      if (!isMounted) return;
       console.log('[SW Updates] New service worker is controlling the page');
       // Let the user know an update was applied, but don't force reload
       // The new SW will take effect on next natural page load
       setShowOfflineReady(true);
-    });
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
 
     // Monitor service worker registration
     navigator.serviceWorker.ready.then(registration => {
+      if (!isMounted) return;
+
       // Check for updates every 30 seconds
-      const updateCheck = setInterval(() => {
+      updateCheckInterval = setInterval(() => {
         registration.update();
       }, 30000);
 
       // Handle update found
-      registration.addEventListener('updatefound', () => {
+      const handleUpdateFound = () => {
+        if (!isMounted) return;
         const newWorker = registration.installing;
         if (!newWorker) return;
 
         console.log('[SW Updates] New service worker installing');
         setShowUpdateAvailable(true);
 
-        newWorker.addEventListener('statechange', () => {
+        const handleStateChange = () => {
+          if (!isMounted) return;
           switch (newWorker.state) {
             case 'installed':
               if (navigator.serviceWorker.controller) {
@@ -68,23 +79,32 @@ export function ServiceWorkerUpdates({ className = "" }: ServiceWorkerUpdateProp
               console.log('[SW Updates] Service worker became redundant');
               break;
           }
-        });
-      });
+        };
 
-      return () => clearInterval(updateCheck);
+        newWorker.addEventListener('statechange', handleStateChange);
+      };
+
+      registration.addEventListener('updatefound', handleUpdateFound);
     });
 
     // Monitor background sync status (mock implementation)
     const checkBackgroundSync = () => {
+      if (!isMounted) return;
       // In a real implementation, this would check for pending requests
       const hasPendingRequests = localStorage.getItem('offline-requests');
       setBackgroundSyncActive(!!hasPendingRequests);
     };
 
-    const syncCheckInterval = setInterval(checkBackgroundSync, 5000);
+    syncCheckInterval = setInterval(checkBackgroundSync, 5000);
     checkBackgroundSync();
 
-    return () => clearInterval(syncCheckInterval);
+    // Cleanup function - MUST be at top level of useEffect, not inside promises
+    return () => {
+      isMounted = false;
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      if (updateCheckInterval) clearInterval(updateCheckInterval);
+      if (syncCheckInterval) clearInterval(syncCheckInterval);
+    };
   }, []);
 
   const handleUpdateClick = () => {
