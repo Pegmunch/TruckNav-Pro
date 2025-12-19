@@ -107,7 +107,7 @@ interface ComprehensiveMobileMenuProps {
   hideTabsInInputMode?: boolean;
 }
 
-const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
+function ComprehensiveMobileMenu({
   open,
   onOpenChange,
   onFromLocationChange,
@@ -1605,6 +1605,6 @@ const ComprehensiveMobileMenu = memo(function ComprehensiveMobileMenu({
       </Dialog>
     </>
   );
-});
+}
 
 export default ComprehensiveMobileMenu;
