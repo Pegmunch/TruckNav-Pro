@@ -8,6 +8,31 @@
 
 import { useEffect, useState } from 'react';
 
+/**
+ * Toggle service worker caching for development
+ * Call this in browser console: toggleSWDevMode(true) or toggleSWDevMode(false)
+ */
+export function toggleSWDevMode(enabled: boolean) {
+  if (!navigator.serviceWorker.controller) {
+    console.log('[PWA] No service worker active yet');
+    return;
+  }
+  
+  navigator.serviceWorker.controller.postMessage({
+    type: 'DEV_MODE',
+    enabled
+  });
+  
+  console.log(`[PWA] Service worker caching ${enabled ? 'DISABLED (dev mode)' : 'ENABLED (production mode)'}`);
+  console.log('[PWA] TIP: Run toggleSWDevMode(true) to disable caching during development');
+  console.log('[PWA] TIP: Run toggleSWDevMode(false) to re-enable caching');
+}
+
+// Make it available globally for console access
+if (typeof window !== 'undefined') {
+  (window as any).toggleSWDevMode = toggleSWDevMode;
+}
+
 export interface ServiceWorkerUpdate {
   type: 'update-available' | 'update-ready' | 'offline-ready' | 'error';
   message: string;

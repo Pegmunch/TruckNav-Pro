@@ -1,6 +1,20 @@
 // TruckNav Pro Service Worker
 // Patent-protected technology by Bespoke Marketing.Ai Ltd
 
+// DEVELOPMENT MODE: Service worker caching can be disabled via message from client
+// Usage: navigator.serviceWorker.controller?.postMessage({type: 'DEV_MODE', enabled: true})
+// This disables all caching immediately - useful during development
+let DEV_MODE_NO_CACHE = false;
+
+// Message handler for development mode toggle
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'DEV_MODE') {
+    DEV_MODE_NO_CACHE = event.data.enabled;
+    console.log('[SW] Development mode caching:', DEV_MODE_NO_CACHE ? 'DISABLED' : 'ENABLED');
+    event.ports[0]?.postMessage({success: true, devMode: DEV_MODE_NO_CACHE});
+  }
+});
+
 // Force cache update by incrementing version (fixes PWA multi-version issue)
 // Using timestamp to ensure caches update on every server restart
 const CACHE_VERSION = new Date().toISOString().split('T')[0]; // Daily rotation (YYYY-MM-DD)
@@ -674,7 +688,8 @@ self.addEventListener('fetch', (event) => {
   }
   
   // Determine caching strategy
-  const strategy = getCachingStrategy(request);
+  // In dev mode, always use network-first (bypass cache)
+  let strategy = DEV_MODE_NO_CACHE ? 'network-first' : getCachingStrategy(request);
   let cacheName = CACHE_NAME;
   
   // Use specific cache for different content types
@@ -690,7 +705,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     (async () => {
       try {
-        if (strategy === 'cache-first' || strategy === 'cache-first-maps') {
+        if (!DEV_MODE_NO_CACHE && (strategy === 'cache-first' || strategy === 'cache-first-maps')) {
           return await cacheFirstStrategy(request, cacheName);
         } else {
           return await networkFirstStrategy(request, cacheName);
