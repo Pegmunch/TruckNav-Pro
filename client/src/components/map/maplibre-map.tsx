@@ -2264,7 +2264,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       />
       
       {/* Map Controls - Right Side Stack for Mobile - ALWAYS VISIBLE */}
-      {/* Matching left-side button style: h-8 w-8 solid colors */}
+      {/* White background with colored outline borders */}
       <div 
         className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
         style={{ 
@@ -2272,63 +2272,63 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           zIndex: isNavigating ? 500 : 450
         }}
       >
-        {/* 1. Incidents - Red */}
+        {/* 1. Incidents */}
         {onViewIncidents && (
           <button
             onClick={onViewIncidents}
-            className="h-8 w-8 rounded-xl shadow-lg bg-red-500 hover:bg-red-600 text-white active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 active:scale-95 flex items-center justify-center"
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
             <AlertCircle className="h-4 w-4" />
           </button>
         )}
-        {/* 2. Toggle Map View - Green/Gray */}
+        {/* 2. Toggle Map View */}
         <button
           onClick={toggleMapView}
           className={cn(
-            "h-8 w-8 rounded-xl shadow-lg active:scale-95 flex items-center justify-center",
+            "h-8 w-8 rounded-xl shadow-lg bg-white border-2 active:scale-95 flex items-center justify-center",
             preferences.mapViewMode === 'satellite'
-              ? "bg-green-500 hover:bg-green-600 text-white"
-              : "bg-gray-500 hover:bg-gray-600 text-white"
+              ? "border-green-500 text-green-500 hover:bg-green-50"
+              : "border-gray-500 text-gray-500 hover:bg-gray-50"
           )}
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
           <Map className="h-4 w-4" />
         </button>
-        {/* 3. Recenter - Gray */}
+        {/* 3. Recenter */}
         <button
           onClick={handleRecenter}
-          className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 text-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
           <Crosshair className="h-4 w-4" />
         </button>
-        {/* 4. Zoom In - Gray */}
+        {/* 4. Zoom In */}
         <button
           onClick={handleZoomIn}
-          className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 text-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
           <Plus className="h-4 w-4" />
         </button>
-        {/* 5. Zoom Out - Gray */}
+        {/* 5. Zoom Out */}
         <button
           onClick={handleZoomOut}
-          className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 text-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
           <Minus className="h-4 w-4" />
         </button>
-        {/* 6. Compass - Blue */}
+        {/* 6. Compass */}
         {!hideCompass && (
           <button
             onClick={handleCompassClick}
-            className="h-8 w-8 rounded-xl shadow-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-blue-500 text-blue-500 hover:bg-blue-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
@@ -2338,29 +2338,29 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             />
           </button>
         )}
-        {/* 7. 3D Toggle - Blue/Gray */}
+        {/* 7. 3D Toggle */}
         <button
           onClick={toggle3DMode}
           className={cn(
-            "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex items-center justify-center",
+            "h-8 w-8 rounded-xl shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center",
             is3DMode 
-              ? "bg-blue-500 text-white hover:bg-blue-600" 
-              : "bg-gray-500 hover:bg-gray-600 text-white"
+              ? "border-blue-500 text-blue-500 hover:bg-blue-50" 
+              : "border-gray-500 text-gray-500 hover:bg-gray-50"
           )}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
           <Box className="h-4 w-4" />
         </button>
-        {/* 8. Traffic Toggle - Orange/Gray */}
+        {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
           <button
             onClick={onToggleTraffic}
             className={cn(
-              "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex items-center justify-center",
+              "h-8 w-8 rounded-xl shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center",
               showTraffic
-                ? "bg-orange-500 hover:bg-orange-600 text-white"
-                : "bg-gray-500 hover:bg-gray-600 text-white"
+                ? "border-orange-500 text-orange-500 hover:bg-orange-50"
+                : "border-gray-500 text-gray-500 hover:bg-gray-50"
             )}
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
