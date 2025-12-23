@@ -2605,6 +2605,35 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
 }
 
 /* ============================================
+   CRITICAL: FORCE LUCIDE ICON VISIBILITY IN CUSTOM MAP CONTROLS
+   Ensures SVG icons are visible by explicitly setting color inheritance
+   ============================================ */
+[data-testid="button-view-incidents"],
+[data-testid="button-toggle-view"],
+[data-testid="button-recenter"],
+[data-testid="button-zoom-in"],
+[data-testid="button-zoom-out"],
+[data-testid="button-compass-reset"],
+[data-testid="button-toggle-3d"],
+[data-testid="button-toggle-traffic"] {
+  color: inherit !important;
+}
+
+[data-testid="button-view-incidents"] svg,
+[data-testid="button-toggle-view"] svg,
+[data-testid="button-recenter"] svg,
+[data-testid="button-zoom-in"] svg,
+[data-testid="button-zoom-out"] svg,
+[data-testid="button-compass-reset"] svg,
+[data-testid="button-toggle-3d"] svg,
+[data-testid="button-toggle-traffic"] svg {
+  color: inherit !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* ============================================
    ENHANCED GLOVE CURSOR FEATURE FOR MAP DRAGGING
    ============================================ */
 
