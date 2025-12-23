@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus, Crosshair, Layers, Box, Compass, MapPin, AlertTriangle } from "lucide-react";
+import { Plus, Minus, Crosshair, Layers, Box, Compass, MapPin, AlertTriangle, AlertCircle, Map } from "lucide-react";
 import { type Route, type VehicleProfile, type TrafficIncident } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import SpeedDisplay from "@/components/map/speed-display";
@@ -54,6 +54,8 @@ interface MapLibreMapProps {
   isNavigating?: boolean;
   showUserMarker?: boolean;
   useStaticRoute?: boolean;
+  onToggleTraffic?: () => void;
+  onViewIncidents?: () => void;
   restrictionViolations?: Array<{
     restriction: {
       id: string;
@@ -139,6 +141,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   isNavigating = false,
   showUserMarker = false,
   useStaticRoute = false,
+  onToggleTraffic,
+  onViewIncidents,
   restrictionViolations
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -2270,15 +2274,34 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               zIndex: isNavigating ? 500 : 450
             }}
           >
+            {/* 1. Incidents - Red */}
+            {onViewIncidents && (
+              <Button
+                size="icon"
+                onClick={onViewIncidents}
+                className="h-8 w-8 rounded-xl shadow-lg bg-red-500 hover:bg-red-600 text-white active:scale-95"
+                data-testid="button-view-incidents"
+                aria-label="View incidents"
+              >
+                <AlertCircle className="h-4 w-4" />
+              </Button>
+            )}
+            {/* 2. Toggle Map View - Green */}
             <Button
               size="icon"
               onClick={toggleMapView}
-              className="h-8 w-8 rounded-xl shadow-lg bg-green-500 hover:bg-green-600 text-white active:scale-95"
+              className={cn(
+                "h-8 w-8 rounded-xl shadow-lg active:scale-95",
+                preferences.mapViewMode === 'satellite'
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-gray-500 hover:bg-gray-600 text-white"
+              )}
               data-testid="button-toggle-view"
               aria-label="Toggle map view"
             >
-              <Layers className="h-4 w-4" />
+              <Map className="h-4 w-4" />
             </Button>
+            {/* 3. Recenter - Gray */}
             <Button
               size="icon"
               onClick={handleRecenter}
@@ -2288,6 +2311,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             >
               <Crosshair className="h-4 w-4" />
             </Button>
+            {/* 4. Zoom In - Gray */}
             <Button
               size="icon"
               onClick={handleZoomIn}
@@ -2297,6 +2321,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             >
               <Plus className="h-4 w-4" />
             </Button>
+            {/* 5. Zoom Out - Gray */}
             <Button
               size="icon"
               onClick={handleZoomOut}
@@ -2306,6 +2331,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             >
               <Minus className="h-4 w-4" />
             </Button>
+            {/* 6. Compass - Blue */}
             {!hideCompass && (
               <Button
                 size="icon"
@@ -2320,6 +2346,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 />
               </Button>
             )}
+            {/* 7. 3D Toggle - Blue/Gray */}
             <Button
               size="icon"
               onClick={toggle3DMode}
@@ -2334,6 +2361,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             >
               <Box className="h-4 w-4" />
             </Button>
+            {/* 8. Traffic Toggle - Orange/Gray */}
+            {onToggleTraffic && (
+              <Button
+                size="icon"
+                onClick={onToggleTraffic}
+                className={cn(
+                  "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95",
+                  showTraffic
+                    ? "bg-orange-500 hover:bg-orange-600 text-white"
+                    : "bg-gray-500 hover:bg-gray-600 text-white"
+                )}
+                data-testid="button-toggle-traffic"
+                aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
+              >
+                <Layers className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Debug info - only show in development mode */}
