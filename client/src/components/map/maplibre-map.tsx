@@ -2263,140 +2263,128 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         routeWidth={8}
       />
       
-      {!hideControls && (
-        <>
-          {/* Map Controls - Right Side Stack for Mobile - PERMANENT: Always visible during navigation */}
-          {/* Matching left-side button style: h-8 w-8 solid colors */}
-          <div 
-            className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
-            style={{ 
-              top: 'calc(7rem + var(--safe-area-top))',
-              zIndex: isNavigating ? 500 : 450
-            }}
+      {/* Map Controls - Right Side Stack for Mobile - ALWAYS VISIBLE */}
+      {/* Matching left-side button style: h-8 w-8 solid colors */}
+      <div 
+        className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
+        style={{ 
+          top: 'calc(7rem + var(--safe-area-top))',
+          zIndex: isNavigating ? 500 : 450
+        }}
+      >
+        {/* 1. Incidents - Red */}
+        {onViewIncidents && (
+          <button
+            onClick={onViewIncidents}
+            className="h-8 w-8 rounded-xl shadow-lg bg-red-500 hover:bg-red-600 text-white active:scale-95 flex items-center justify-center"
+            data-testid="button-view-incidents"
+            aria-label="View incidents"
           >
-            {/* 1. Incidents - Red */}
-            {onViewIncidents && (
-              <Button
-                size="icon"
-                onClick={onViewIncidents}
-                className="h-8 w-8 rounded-xl shadow-lg bg-red-500 hover:bg-red-600 text-white active:scale-95"
-                data-testid="button-view-incidents"
-                aria-label="View incidents"
-              >
-                <AlertCircle className="h-4 w-4" />
-              </Button>
-            )}
-            {/* 2. Toggle Map View - Green */}
-            <Button
-              size="icon"
-              onClick={toggleMapView}
-              className={cn(
-                "h-8 w-8 rounded-xl shadow-lg active:scale-95",
-                preferences.mapViewMode === 'satellite'
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-gray-500 hover:bg-gray-600 text-white"
-              )}
-              data-testid="button-toggle-view"
-              aria-label="Toggle map view"
-            >
-              <Map className="h-4 w-4" />
-            </Button>
-            {/* 3. Recenter - Gray */}
-            <Button
-              size="icon"
-              onClick={handleRecenter}
-              className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95"
-              data-testid="button-recenter"
-              aria-label="Recenter map"
-            >
-              <Crosshair className="h-4 w-4" />
-            </Button>
-            {/* 4. Zoom In - Gray */}
-            <Button
-              size="icon"
-              onClick={handleZoomIn}
-              className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95"
-              data-testid="button-zoom-in"
-              aria-label="Zoom in"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            {/* 5. Zoom Out - Gray */}
-            <Button
-              size="icon"
-              onClick={handleZoomOut}
-              className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95"
-              data-testid="button-zoom-out"
-              aria-label="Zoom out"
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            {/* 6. Compass - Blue */}
-            {!hideCompass && (
-              <Button
-                size="icon"
-                onClick={handleCompassClick}
-                className="h-8 w-8 rounded-xl shadow-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 active:scale-95"
-                data-testid="button-compass-reset"
-                aria-label="Reset bearing to North"
-              >
-                <Compass 
-                  className="h-4 w-4 transition-transform duration-300" 
-                  style={{ transform: `rotate(${bearing}deg)` }}
-                />
-              </Button>
-            )}
-            {/* 7. 3D Toggle - Blue/Gray */}
-            <Button
-              size="icon"
-              onClick={toggle3DMode}
-              className={cn(
-                "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95",
-                is3DMode 
-                  ? "bg-blue-500 text-white hover:bg-blue-600" 
-                  : "bg-gray-500 hover:bg-gray-600 text-white"
-              )}
-              data-testid="button-toggle-3d"
-              aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
-            >
-              <Box className="h-4 w-4" />
-            </Button>
-            {/* 8. Traffic Toggle - Orange/Gray */}
-            {onToggleTraffic && (
-              <Button
-                size="icon"
-                onClick={onToggleTraffic}
-                className={cn(
-                  "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95",
-                  showTraffic
-                    ? "bg-orange-500 hover:bg-orange-600 text-white"
-                    : "bg-gray-500 hover:bg-gray-600 text-white"
-                )}
-                data-testid="button-toggle-traffic"
-                aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
-              >
-                <Layers className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Debug info - only show in development mode */}
-          {import.meta.env.DEV && (
-            <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
-              <span className="text-muted-foreground">MapLibre GL</span>
-              <span className="text-muted-foreground mx-1">•</span>
-              <span>{preferences.mapViewMode}</span>
-              <span className="text-muted-foreground mx-1">•</span>
-              <span className="text-muted-foreground">z{currentZoom}</span>
-              {is3DMode && (
-                <>
-                  <span className="text-muted-foreground mx-1">•</span>
-                  <span className="text-blue-600 font-semibold">3D</span>
-                </>
-              )}
-            </div>
+            <AlertCircle className="h-4 w-4" />
+          </button>
+        )}
+        {/* 2. Toggle Map View - Green/Gray */}
+        <button
+          onClick={toggleMapView}
+          className={cn(
+            "h-8 w-8 rounded-xl shadow-lg active:scale-95 flex items-center justify-center",
+            preferences.mapViewMode === 'satellite'
+              ? "bg-green-500 hover:bg-green-600 text-white"
+              : "bg-gray-500 hover:bg-gray-600 text-white"
           )}
-        </>
+          data-testid="button-toggle-view"
+          aria-label="Toggle map view"
+        >
+          <Map className="h-4 w-4" />
+        </button>
+        {/* 3. Recenter - Gray */}
+        <button
+          onClick={handleRecenter}
+          className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95 flex items-center justify-center"
+          data-testid="button-recenter"
+          aria-label="Recenter map"
+        >
+          <Crosshair className="h-4 w-4" />
+        </button>
+        {/* 4. Zoom In - Gray */}
+        <button
+          onClick={handleZoomIn}
+          className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95 flex items-center justify-center"
+          data-testid="button-zoom-in"
+          aria-label="Zoom in"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        {/* 5. Zoom Out - Gray */}
+        <button
+          onClick={handleZoomOut}
+          className="h-8 w-8 rounded-xl shadow-lg bg-gray-500 hover:bg-gray-600 text-white active:scale-95 flex items-center justify-center"
+          data-testid="button-zoom-out"
+          aria-label="Zoom out"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        {/* 6. Compass - Blue */}
+        {!hideCompass && (
+          <button
+            onClick={handleCompassClick}
+            className="h-8 w-8 rounded-xl shadow-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 active:scale-95 flex items-center justify-center"
+            data-testid="button-compass-reset"
+            aria-label="Reset bearing to North"
+          >
+            <Compass 
+              className="h-4 w-4 transition-transform duration-300" 
+              style={{ transform: `rotate(${bearing}deg)` }}
+            />
+          </button>
+        )}
+        {/* 7. 3D Toggle - Blue/Gray */}
+        <button
+          onClick={toggle3DMode}
+          className={cn(
+            "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex items-center justify-center",
+            is3DMode 
+              ? "bg-blue-500 text-white hover:bg-blue-600" 
+              : "bg-gray-500 hover:bg-gray-600 text-white"
+          )}
+          data-testid="button-toggle-3d"
+          aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
+        >
+          <Box className="h-4 w-4" />
+        </button>
+        {/* 8. Traffic Toggle - Orange/Gray */}
+        {onToggleTraffic && (
+          <button
+            onClick={onToggleTraffic}
+            className={cn(
+              "h-8 w-8 rounded-xl shadow-lg transition-all duration-200 active:scale-95 flex items-center justify-center",
+              showTraffic
+                ? "bg-orange-500 hover:bg-orange-600 text-white"
+                : "bg-gray-500 hover:bg-gray-600 text-white"
+            )}
+            data-testid="button-toggle-traffic"
+            aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
+          >
+            <Layers className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Debug info - only show in development mode */}
+      {import.meta.env.DEV && (
+        <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded-md text-xs font-medium shadow-lg z-10">
+          <span className="text-muted-foreground">MapLibre GL</span>
+          <span className="text-muted-foreground mx-1">•</span>
+          <span>{preferences.mapViewMode}</span>
+          <span className="text-muted-foreground mx-1">•</span>
+          <span className="text-muted-foreground">z{currentZoom}</span>
+          {is3DMode && (
+            <>
+              <span className="text-muted-foreground mx-1">•</span>
+              <span className="text-blue-600 font-semibold">3D</span>
+            </>
+          )}
+        </div>
       )}
       
       {/* GPS Status Indicator */}

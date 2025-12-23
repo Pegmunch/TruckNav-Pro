@@ -2545,13 +2545,15 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isShowingPreview || mobileNavMode === 'navigate'}
-                    hideCompass={isShowingPreview || mobileNavMode === 'navigate'}
+                    hideControls={false}
+                    hideCompass={false}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating}
                     restrictionViolations={restrictionViolations}
+                    onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                    onViewIncidents={() => setShowIncidentFeed(true)}
                   />
                 </MapShell>
               </div>
@@ -3112,13 +3114,15 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={isShowingPreview || mobileNavMode === 'navigate'}
-                    hideCompass={isShowingPreview || mobileNavMode === 'navigate'}
+                    hideControls={false}
+                    hideCompass={false}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating}
                     restrictionViolations={restrictionViolations}
+                    onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                    onViewIncidents={() => setShowIncidentFeed(true)}
                   />
                 </MapShell>
                 
