@@ -2545,8 +2545,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={false}
-                    hideCompass={false}
+                    hideControls={mobileNavMode === 'plan'}
+                    hideCompass={mobileNavMode === 'plan'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
@@ -3114,8 +3114,8 @@ function NavigationPageContent() {
                     selectedProfile={selectedProfile || activeProfile}
                     showTraffic={showTrafficLayer}
                     showIncidents={showIncidents}
-                    hideControls={false}
-                    hideCompass={false}
+                    hideControls={mobileNavMode === 'plan'}
+                    hideCompass={mobileNavMode === 'plan'}
                     onMapClick={handleMapClick}
                     isNavigating={isNavigating}
                     showUserMarker={showUserMarker}
