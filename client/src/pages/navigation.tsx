@@ -2669,7 +2669,7 @@ function NavigationPageContent() {
                       aria-pressed={gpsMode === 'gps'}
                       title="GPS Mode: Live GPS tracking with auto-follow"
                     >
-                      <Navigation2 className="w-5 h-5" />
+                      <Navigation2 className="w-6 h-6" />
                     </Button>
                     <Button
                       onClick={() => handleGpsModeToggle('cache')}
@@ -2684,7 +2684,7 @@ function NavigationPageContent() {
                       aria-pressed={gpsMode === 'cache'}
                       title="Cache Mode: Manual/cached position without live GPS"
                     >
-                      <MapPin className="w-5 h-5" />
+                      <MapPin className="w-6 h-6" />
                     </Button>
                   </div>
                   
@@ -2698,9 +2698,9 @@ function NavigationPageContent() {
                     title={professionalVoiceEnabled ? "Voice on" : "Voice off"}
                   >
                     {professionalVoiceEnabled ? (
-                      <Speaker className="w-5 h-5" />
+                      <Speaker className="w-6 h-6" />
                     ) : (
-                      <VolumeX className="w-5 h-5" />
+                      <VolumeX className="w-6 h-6" />
                     )}
                   </Button>
                   
@@ -2712,7 +2712,7 @@ function NavigationPageContent() {
                     data-testid="button-open-menu-plan"
                     aria-label="Open menu"
                   >
-                    <Menu className="w-5 h-5" />
+                    <Menu className="w-6 h-6" />
                   </Button>
                 </div>
               )}
