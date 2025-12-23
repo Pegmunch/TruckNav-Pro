@@ -2649,17 +2649,17 @@ function NavigationPageContent() {
               {/* Moved to LEFT side to avoid collision with right-side map controls */}
               {/* Also hide when navigation UI is active to prevent duplicate buttons */}
               {mobileNavMode === 'plan' && !currentRoute && !isNavUIActive && (
-                <div className="fixed flex flex-col gap-2 z-[200] pointer-events-auto"
+                <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                   style={{
                     bottom: 'calc(56px + var(--safe-area-bottom))',
                     left: '16px'
                   }}>
                   {/* GPS Mode / Cache Mode Toggle Buttons */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <Button
                       onClick={() => handleGpsModeToggle('gps')}
-                      size="sm"
-                      className={`h-6 px-3 rounded-full shadow-lg font-medium text-sm ${
+                      size="icon"
+                      className={`h-10 w-10 rounded-full shadow-lg font-medium ${
                         gpsMode === 'gps'
                           ? 'bg-green-500 hover:bg-green-600 text-white'
                           : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
@@ -2669,12 +2669,12 @@ function NavigationPageContent() {
                       aria-pressed={gpsMode === 'gps'}
                       title="GPS Mode: Live GPS tracking with auto-follow"
                     >
-                      <Navigation2 className="w-3 h-3" />
+                      <Navigation2 className="w-5 h-5" />
                     </Button>
                     <Button
                       onClick={() => handleGpsModeToggle('cache')}
-                      size="sm"
-                      className={`h-6 px-3 rounded-full shadow-lg font-medium text-sm ${
+                      size="icon"
+                      className={`h-10 w-10 rounded-full shadow-lg font-medium ${
                         gpsMode === 'cache'
                           ? 'bg-amber-500 hover:bg-amber-600 text-white'
                           : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
@@ -2684,35 +2684,35 @@ function NavigationPageContent() {
                       aria-pressed={gpsMode === 'cache'}
                       title="Cache Mode: Manual/cached position without live GPS"
                     >
-                      <MapPin className="w-3 h-3" />
+                      <MapPin className="w-5 h-5" />
                     </Button>
                   </div>
                   
                   {/* Voice Toggle Button */}
                   <Button
                     onClick={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                    size="sm"
-                    className="h-6 px-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
+                    size="icon"
+                    className="h-10 w-10 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
                     data-testid="button-toggle-voice"
                     aria-label={professionalVoiceEnabled ? "Turn off voice" : "Turn on voice"}
                     title={professionalVoiceEnabled ? "Voice on" : "Voice off"}
                   >
                     {professionalVoiceEnabled ? (
-                      <Speaker className="w-3 h-3" />
+                      <Speaker className="w-5 h-5" />
                     ) : (
-                      <VolumeX className="w-3 h-3" />
+                      <VolumeX className="w-5 h-5" />
                     )}
                   </Button>
                   
                   {/* Menu Button */}
                   <Button
                     onClick={() => setShowComprehensiveMenu(true)}
-                    size="sm"
-                    className="h-6 px-3 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm"
+                    size="icon"
+                    className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
                     data-testid="button-open-menu-plan"
                     aria-label="Open menu"
                   >
-                    Menu
+                    <Menu className="w-5 h-5" />
                   </Button>
                 </div>
               )}
