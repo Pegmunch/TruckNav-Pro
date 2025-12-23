@@ -686,7 +686,7 @@ function ComprehensiveMobileMenu({
                           align="start"
                           side="bottom"
                           sideOffset={4}
-                          avoidCollisions={false}
+                          avoidCollisions={true}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
@@ -766,7 +766,7 @@ function ComprehensiveMobileMenu({
                           align="start"
                           side="bottom"
                           sideOffset={4}
-                          avoidCollisions={false}
+                          avoidCollisions={true}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>

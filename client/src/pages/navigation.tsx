@@ -3240,7 +3240,7 @@ function NavigationPageContent() {
                       size="icon"
                       variant="destructive"
                       className={cn(
-                        "fixed z-[170] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
+                        "fixed z-[170] h-5 w-5 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
                         completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
                       )}
                       style={{
@@ -3251,9 +3251,9 @@ function NavigationPageContent() {
                       aria-label="Cancel route and return to start"
                     >
                       {completeJourneyMutation.isPending ? (
-                        <Loader2 className="w-7 h-7 animate-spin" />
+                        <Loader2 className="w-2 h-2 animate-spin" />
                       ) : (
-                        <X className="w-7 h-7" />
+                        <X className="w-2 h-2" />
                       )}
                     </Button>
 
