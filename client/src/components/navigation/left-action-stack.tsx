@@ -79,27 +79,28 @@ export function LeftActionStack({
         <Navigation className="h-8 w-8" />
       </Button>
 
-      {/* Voice command button - microphone */}
-      {isVoiceSupported && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleVoiceListening}
-          className={`h-14 w-14 rounded-xl shadow-lg transition-all ${
-            isVoiceListening 
+      {/* Voice command button - microphone - Always reserve space to prevent layout shift */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleVoiceListening}
+        disabled={!isVoiceSupported}
+        className={`h-14 w-14 rounded-xl shadow-lg transition-all ${
+          isVoiceSupported
+            ? isVoiceListening 
               ? 'bg-green-500 hover:bg-green-600 animate-pulse' 
               : 'bg-purple-500 hover:bg-purple-600'
-          } text-white`}
-          data-testid="button-voice-command"
-          title={isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
-        >
-          {isVoiceListening ? (
-            <Mic className="h-8 w-8" />
-          ) : (
-            <MicOff className="h-8 w-8" />
-          )}
-        </Button>
-      )}
+            : 'bg-gray-300 cursor-not-allowed opacity-50'
+        } text-white`}
+        data-testid="button-voice-command"
+        title={!isVoiceSupported ? 'Voice not supported' : isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
+      >
+        {isVoiceListening ? (
+          <Mic className="h-8 w-8" />
+        ) : (
+          <MicOff className="h-8 w-8" />
+        )}
+      </Button>
 
       {/* Incident report button - orange */}
       <Button
