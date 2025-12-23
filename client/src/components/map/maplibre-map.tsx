@@ -2280,7 +2280,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <AlertCircle className="h-5 w-5 text-red-500" strokeWidth={2} />
+            <AlertCircle style={{ width: 20, height: 20, color: '#ef4444', stroke: '#ef4444' }} strokeWidth={2} />
           </button>
         )}
         {/* 2. Toggle Map View */}
@@ -2295,7 +2295,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Map className={cn("h-5 w-5", preferences.mapViewMode === 'satellite' ? "text-green-500" : "text-gray-500")} strokeWidth={2} />
+          <Map style={{ width: 20, height: 20, color: preferences.mapViewMode === 'satellite' ? '#22c55e' : '#6b7280', stroke: preferences.mapViewMode === 'satellite' ? '#22c55e' : '#6b7280' }} strokeWidth={2} />
         </button>
         {/* 3. Recenter */}
         <button
@@ -2304,7 +2304,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair className="h-5 w-5 text-gray-500" strokeWidth={2} />
+          <Crosshair style={{ width: 20, height: 20, color: '#6b7280', stroke: '#6b7280' }} strokeWidth={2} />
         </button>
         {/* 4. Zoom In */}
         <button
@@ -2313,7 +2313,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus className="h-5 w-5 text-gray-500" strokeWidth={2} />
+          <Plus style={{ width: 20, height: 20, color: '#6b7280', stroke: '#6b7280' }} strokeWidth={2} />
         </button>
         {/* 5. Zoom Out */}
         <button
@@ -2322,7 +2322,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus className="h-5 w-5 text-gray-500" strokeWidth={2} />
+          <Minus style={{ width: 20, height: 20, color: '#6b7280', stroke: '#6b7280' }} strokeWidth={2} />
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
@@ -2333,9 +2333,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             aria-label="Reset bearing to North"
           >
             <Compass 
-              className="h-5 w-5 text-blue-500 transition-transform duration-300" 
+              style={{ width: 20, height: 20, color: '#3b82f6', stroke: '#3b82f6', transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} 
               strokeWidth={2}
-              style={{ transform: `rotate(${bearing}deg)` }}
             />
           </button>
         )}
@@ -2351,7 +2350,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box className={cn("h-5 w-5", is3DMode ? "text-blue-500" : "text-gray-500")} strokeWidth={2} />
+          <Box style={{ width: 20, height: 20, color: is3DMode ? '#3b82f6' : '#6b7280', stroke: is3DMode ? '#3b82f6' : '#6b7280' }} strokeWidth={2} />
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
@@ -2366,7 +2365,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <Layers className={cn("h-5 w-5", showTraffic ? "text-orange-500" : "text-gray-500")} strokeWidth={2} />
+            <Layers style={{ width: 20, height: 20, color: showTraffic ? '#f97316' : '#6b7280', stroke: showTraffic ? '#f97316' : '#6b7280' }} strokeWidth={2} />
           </button>
         )}
       </div>
