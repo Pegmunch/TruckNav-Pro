@@ -2628,7 +2628,7 @@ function NavigationPageContent() {
                   <Button
                     onClick={handlePreviewRoute}
                     size="sm"
-                    className="h-11 px-4 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
+                    className="h-6 px-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
                     data-testid="button-preview-route"
                   >
                     Preview
@@ -2637,7 +2637,7 @@ function NavigationPageContent() {
                   <Button
                     onClick={handleStartNavigation}
                     size="sm"
-                    className="h-11 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium"
+                    className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
                     data-testid="button-start-navigation-plan"
                   >
                     Start
@@ -2659,7 +2659,7 @@ function NavigationPageContent() {
                     <Button
                       onClick={() => handleGpsModeToggle('gps')}
                       size="sm"
-                      className={`h-11 px-4 rounded-full shadow-lg font-medium ${
+                      className={`h-6 px-3 rounded-full shadow-lg font-medium text-sm ${
                         gpsMode === 'gps'
                           ? 'bg-green-500 hover:bg-green-600 text-white'
                           : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
@@ -2669,12 +2669,12 @@ function NavigationPageContent() {
                       aria-pressed={gpsMode === 'gps'}
                       title="GPS Mode: Live GPS tracking with auto-follow"
                     >
-                      <Navigation2 className="w-5 h-5" />
+                      <Navigation2 className="w-3 h-3" />
                     </Button>
                     <Button
                       onClick={() => handleGpsModeToggle('cache')}
                       size="sm"
-                      className={`h-11 px-4 rounded-full shadow-lg font-medium ${
+                      className={`h-6 px-3 rounded-full shadow-lg font-medium text-sm ${
                         gpsMode === 'cache'
                           ? 'bg-amber-500 hover:bg-amber-600 text-white'
                           : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
@@ -2684,7 +2684,7 @@ function NavigationPageContent() {
                       aria-pressed={gpsMode === 'cache'}
                       title="Cache Mode: Manual/cached position without live GPS"
                     >
-                      <MapPin className="w-5 h-5" />
+                      <MapPin className="w-3 h-3" />
                     </Button>
                   </div>
                   
@@ -2692,15 +2692,15 @@ function NavigationPageContent() {
                   <Button
                     onClick={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                     size="sm"
-                    className="h-11 px-4 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
+                    className="h-6 px-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
                     data-testid="button-toggle-voice"
                     aria-label={professionalVoiceEnabled ? "Turn off voice" : "Turn on voice"}
                     title={professionalVoiceEnabled ? "Voice on" : "Voice off"}
                   >
                     {professionalVoiceEnabled ? (
-                      <Speaker className="w-5 h-5" />
+                      <Speaker className="w-3 h-3" />
                     ) : (
-                      <VolumeX className="w-5 h-5" />
+                      <VolumeX className="w-3 h-3" />
                     )}
                   </Button>
                   
@@ -2708,7 +2708,7 @@ function NavigationPageContent() {
                   <Button
                     onClick={() => setShowComprehensiveMenu(true)}
                     size="sm"
-                    className="h-11 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                    className="h-6 px-3 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm"
                     data-testid="button-open-menu-plan"
                     aria-label="Open menu"
                   >
@@ -2730,10 +2730,10 @@ function NavigationPageContent() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-11 w-11 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md"
+                      className="h-6 w-6 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md"
                       data-testid="button-settings-preview"
                     >
-                      <Settings className="w-5 h-5" />
+                      <Settings className="w-3 h-3" />
                     </Button>
                   </div>
 
