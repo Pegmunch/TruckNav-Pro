@@ -2276,11 +2276,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {onViewIncidents && (
           <button
             onClick={onViewIncidents}
-            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-red-500 hover:bg-red-50 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-red-500 hover:bg-red-50 active:scale-95 flex items-center justify-center text-red-500"
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <AlertCircle style={{ width: 20, height: 20, color: '#ef4444', stroke: '#ef4444' }} strokeWidth={2} />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
           </button>
         )}
         {/* 2. Toggle Map View */}
@@ -2289,53 +2293,78 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           className={cn(
             "h-8 w-8 rounded-xl shadow-lg bg-white border-2 active:scale-95 flex items-center justify-center",
             preferences.mapViewMode === 'satellite'
-              ? "border-green-500 hover:bg-green-50"
-              : "border-gray-500 hover:bg-gray-50"
+              ? "border-green-500 hover:bg-green-50 text-green-500"
+              : "border-gray-500 hover:bg-gray-50 text-gray-500"
           )}
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Map style={{ width: 20, height: 20, color: preferences.mapViewMode === 'satellite' ? '#22c55e' : '#6b7280', stroke: preferences.mapViewMode === 'satellite' ? '#22c55e' : '#6b7280' }} strokeWidth={2} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
         </button>
         {/* 3. Recenter */}
         <button
           onClick={handleRecenter}
-          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center text-gray-500"
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair style={{ width: 20, height: 20, color: '#6b7280', stroke: '#6b7280' }} strokeWidth={2} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="22" y1="12" x2="18" y2="12"/>
+            <line x1="6" y1="12" x2="2" y2="12"/>
+            <line x1="12" y1="6" x2="12" y2="2"/>
+            <line x1="12" y1="22" x2="12" y2="18"/>
+          </svg>
         </button>
         {/* 4. Zoom In */}
         <button
           onClick={handleZoomIn}
-          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center text-gray-500"
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus style={{ width: 20, height: 20, color: '#6b7280', stroke: '#6b7280' }} strokeWidth={2} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
         </button>
         {/* 5. Zoom Out */}
         <button
           onClick={handleZoomOut}
-          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center text-gray-500"
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus style={{ width: 20, height: 20, color: '#6b7280', stroke: '#6b7280' }} strokeWidth={2} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
           <button
             onClick={handleCompassClick}
-            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-blue-500 hover:bg-blue-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-blue-500 hover:bg-blue-50 transition-all duration-200 active:scale-95 flex items-center justify-center text-blue-500"
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
-            <Compass 
-              style={{ width: 20, height: 20, color: '#3b82f6', stroke: '#3b82f6', transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} 
-              strokeWidth={2}
-            />
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }}
+            >
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
           </button>
         )}
         {/* 7. 3D Toggle */}
@@ -2344,13 +2373,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           className={cn(
             "h-8 w-8 rounded-xl shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center",
             is3DMode 
-              ? "border-blue-500 hover:bg-blue-50" 
-              : "border-gray-500 hover:bg-gray-50"
+              ? "border-blue-500 hover:bg-blue-50 text-blue-500" 
+              : "border-gray-500 hover:bg-gray-50 text-gray-500"
           )}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box style={{ width: 20, height: 20, color: is3DMode ? '#3b82f6' : '#6b7280', stroke: is3DMode ? '#3b82f6' : '#6b7280' }} strokeWidth={2} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
@@ -2359,13 +2392,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             className={cn(
               "h-8 w-8 rounded-xl shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center",
               showTraffic
-                ? "border-orange-500 hover:bg-orange-50"
-                : "border-gray-500 hover:bg-gray-50"
+                ? "border-orange-500 hover:bg-orange-50 text-orange-500"
+                : "border-gray-500 hover:bg-gray-50 text-gray-500"
             )}
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <Layers style={{ width: 20, height: 20, color: showTraffic ? '#f97316' : '#6b7280', stroke: showTraffic ? '#f97316' : '#6b7280' }} strokeWidth={2} />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
           </button>
         )}
       </div>
