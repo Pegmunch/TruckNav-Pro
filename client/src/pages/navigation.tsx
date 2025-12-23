@@ -2774,7 +2774,7 @@ function NavigationPageContent() {
                     <Button
                       onClick={() => setIsShowingPreview(false)}
                       size="sm"
-                      className="h-11 px-4 rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white font-medium"
+                      className="h-6 px-3 rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm"
                       data-testid="button-back-to-plan"
                     >
                       Back
@@ -2783,7 +2783,7 @@ function NavigationPageContent() {
                     <Button
                       onClick={handleStartNavigation}
                       size="sm"
-                      className="h-11 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium"
+                      className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
                       data-testid="button-start-navigation-preview"
                     >
                       Start

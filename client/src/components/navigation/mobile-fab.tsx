@@ -177,7 +177,7 @@ export function MobileFAB({
                 setIsExpanded(false);
               }}
               className={cn(
-                'h-11 w-11 rounded-xl',
+                'h-8 w-8 rounded-xl',
                 'bg-white/95 text-gray-800 hover:bg-white backdrop-blur-md',
                 'border border-white/50',
                 'shadow-2xl hover:scale-105 active:scale-95',
@@ -185,7 +185,7 @@ export function MobileFAB({
               )}
               data-testid={`fab-option-${option.id}`}
             >
-              {option.customIcon ? option.customIcon : Icon && <Icon className="w-4.5 h-4.5" />}
+              {option.customIcon ? option.customIcon : Icon && <Icon className="w-3 h-3" />}
               <span className="sr-only">{option.label}</span>
             </Button>
           );
@@ -198,7 +198,7 @@ export function MobileFAB({
         size="icon"
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          'h-16 w-16 rounded-2xl',
+          'h-10 w-10 rounded-2xl',
           'shadow-2xl',
           'backdrop-blur-md',
           'transition-all duration-200 hover:scale-105 active:scale-95',
@@ -210,11 +210,11 @@ export function MobileFAB({
         data-testid="fab-main"
       >
         {currentIcon === 'x' ? (
-          <X className="w-7 h-7" />
+          <X className="w-5 h-5" />
         ) : currentIcon === 'navigation' ? (
-          <Navigation className="w-7 h-7" />
+          <Navigation className="w-5 h-5" />
         ) : (
-          <Menu className="w-7 h-7" />
+          <Menu className="w-5 h-5" />
         )}
       </Button>
     </div>
