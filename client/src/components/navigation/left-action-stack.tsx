@@ -73,10 +73,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button clicked');
           onNavigate?.();
         }}
-        className="h-3 w-3 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        className="h-6 w-6 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="button-nav-left"
       >
-        <Navigation className="h-2 w-2" />
+        <Navigation className="h-3 w-3" />
       </Button>
 
       {/* Voice command button - microphone */}
@@ -85,7 +85,7 @@ export function LeftActionStack({
           variant="ghost"
           size="sm"
           onClick={toggleVoiceListening}
-          className={`h-3 w-3 rounded-xl shadow-lg transition-all ${
+          className={`h-6 w-6 rounded-xl shadow-lg transition-all ${
             isVoiceListening 
               ? 'bg-green-500 hover:bg-green-600 animate-pulse' 
               : 'bg-purple-500 hover:bg-purple-600'
@@ -94,9 +94,9 @@ export function LeftActionStack({
           title={isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
         >
           {isVoiceListening ? (
-            <Mic className="h-2 w-2" />
+            <Mic className="h-3 w-3" />
           ) : (
-            <MicOff className="h-2 w-2" />
+            <MicOff className="h-3 w-3" />
           )}
         </Button>
       )}
@@ -109,10 +109,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button clicked - Opening dialog');
           onReportIncident?.();
         }}
-        className="h-3 w-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+        className="h-6 w-6 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
         data-testid="button-report-incident"
       >
-        <AlertCircle className="h-2 w-2" />
+        <AlertCircle className="h-3 w-3" />
       </Button>
 
       {/* Cancel navigation button - red X */}
@@ -123,10 +123,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button clicked - Stopping navigation');
           onCancel?.();
         }}
-        className="h-3 w-3 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        className="h-6 w-6 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="button-cancel-nav"
       >
-        <X className="h-2 w-2" />
+        <X className="h-3 w-3" />
       </Button>
 
       {/* Menu button - blue hamburger at bottom */}
@@ -137,10 +137,10 @@ export function LeftActionStack({
           console.log('[LEFT-BTN-4-MENU] ✅ Menu button clicked - Opening comprehensive menu');
           onOpenMenu?.();
         }}
-        className="h-3 w-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg mt-8"
+        className="h-6 w-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg mt-8"
         data-testid="button-menu"
       >
-        <Menu className="h-2 w-2" />
+        <Menu className="h-3 w-3" />
       </Button>
     </>
   );
