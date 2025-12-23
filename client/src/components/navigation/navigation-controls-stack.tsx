@@ -56,7 +56,7 @@ export function NavigationControlsStack({
   // Using same rendering approach as LeftActionStack but with ORIGINAL colors
   return (
     <>
-      {/* 1. View Incidents - White with red icon */}
+      {/* 1. View Incidents - Red */}
       <Button
         variant="ghost"
         size="icon"
@@ -64,14 +64,14 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-1-INCIDENTS] ✅ View Incidents clicked');
           onViewIncidents();
         }}
-        className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
+        className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
         data-testid="nav-control-incidents"
         aria-label="View traffic incidents"
       >
-        <AlertCircle className="h-4 w-4 text-red-600" />
+        <AlertCircle className="h-4 w-4" />
       </Button>
 
-      {/* 2. Compass - White with blue icon */}
+      {/* 2. Compass - Blue */}
       <Button
         variant="ghost"
         size="icon"
@@ -79,7 +79,7 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-2-COMPASS] ✅ Compass clicked');
           handleCompassClick();
         }}
-        className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
+        className="h-8 w-8 rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
         data-testid="nav-control-compass"
         aria-label="Reset compass to north"
       >
@@ -90,11 +90,11 @@ export function NavigationControlsStack({
             transition: 'transform 0.3s ease'
           }}
         >
-          <Compass className="h-4 w-4 text-blue-600" />
+          <Compass className="h-4 w-4" />
         </div>
       </Button>
 
-      {/* 3. Center on GPS - White with gray icon */}
+      {/* 3. Center on GPS - Gray */}
       <Button
         variant="ghost"
         size="icon"
@@ -102,14 +102,14 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-3-GPS] ✅ Center on GPS clicked');
           handleCenterOnGPS();
         }}
-        className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
+        className="h-8 w-8 rounded-xl bg-gray-500 hover:bg-gray-600 text-white shadow-lg"
         data-testid="nav-control-center-gps"
         aria-label="Center on current location"
       >
-        <MapPin className="h-4 w-4 text-gray-700" />
+        <MapPin className="h-4 w-4" />
       </Button>
 
-      {/* 4. Zoom In - White with gray icon */}
+      {/* 4. Zoom In - Gray */}
       <Button
         variant="ghost"
         size="icon"
@@ -117,14 +117,14 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-4-ZOOM-IN] ✅ Zoom In clicked');
           handleZoomIn();
         }}
-        className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
+        className="h-8 w-8 rounded-xl bg-gray-500 hover:bg-gray-600 text-white shadow-lg"
         data-testid="nav-control-zoom-in"
         aria-label="Zoom in"
       >
-        <Plus className="h-4 w-4 text-gray-700" />
+        <Plus className="h-4 w-4" />
       </Button>
 
-      {/* 5. Zoom Out - White with gray icon */}
+      {/* 5. Zoom Out - Gray */}
       <Button
         variant="ghost"
         size="icon"
@@ -132,14 +132,14 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-5-ZOOM-OUT] ✅ Zoom Out clicked');
           handleZoomOut();
         }}
-        className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 shadow-lg border border-gray-200"
+        className="h-8 w-8 rounded-xl bg-gray-500 hover:bg-gray-600 text-white shadow-lg"
         data-testid="nav-control-zoom-out"
         aria-label="Zoom out"
       >
-        <Minus className="h-4 w-4 text-gray-700" />
+        <Minus className="h-4 w-4" />
       </Button>
 
-      {/* 6. 3D Mode Toggle - Blue when active, white when inactive */}
+      {/* 6. 3D Mode Toggle - Blue when active, gray when inactive */}
       <Button
         variant="ghost"
         size="icon"
@@ -147,18 +147,18 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-6-3D] ✅ 3D Mode clicked - Current:', map3DMode);
           onToggle3D();
         }}
-        className={`h-8 w-8 rounded-xl shadow-lg backdrop-blur-sm border ${
+        className={`h-8 w-8 rounded-xl shadow-lg ${
           map3DMode 
-            ? "bg-blue-500 hover:bg-blue-600 text-white border-blue-400" 
-            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
-        }`}
+            ? "bg-blue-500 hover:bg-blue-600" 
+            : "bg-gray-500 hover:bg-gray-600"
+        } text-white`}
         data-testid="nav-control-3d"
         aria-label={map3DMode ? "Switch to 2D view" : "Switch to 3D view"}
       >
         <Layers3 className="h-4 w-4" />
       </Button>
 
-      {/* 7. Traffic Layer Toggle - Orange when active, white when inactive */}
+      {/* 7. Traffic Layer Toggle - Orange when active, gray when inactive */}
       <Button
         variant="ghost"
         size="icon"
@@ -166,18 +166,18 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-7-TRAFFIC] ✅ Traffic clicked - Current:', showTrafficLayer);
           onToggleTraffic();
         }}
-        className={`h-8 w-8 rounded-xl shadow-lg backdrop-blur-sm border ${
+        className={`h-8 w-8 rounded-xl shadow-lg ${
           showTrafficLayer
-            ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-400"
-            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
-        }`}
+            ? "bg-orange-500 hover:bg-orange-600"
+            : "bg-gray-500 hover:bg-gray-600"
+        } text-white`}
         data-testid="nav-control-traffic"
         aria-label={showTrafficLayer ? "Hide traffic layer" : "Show traffic layer"}
       >
         <Layers className="h-4 w-4" />
       </Button>
 
-      {/* 8. Satellite View Toggle - Green when active, white when inactive */}
+      {/* 8. Satellite View Toggle - Green when active, gray when inactive */}
       <Button
         variant="ghost"
         size="icon"
@@ -185,11 +185,11 @@ export function NavigationControlsStack({
           console.log('[RIGHT-BTN-8-SATELLITE] ✅ Satellite clicked - Current:', mapViewMode);
           onToggleMapView();
         }}
-        className={`h-8 w-8 rounded-xl shadow-lg backdrop-blur-sm border ${
+        className={`h-8 w-8 rounded-xl shadow-lg ${
           mapViewMode === 'satellite'
-            ? "bg-green-500 hover:bg-green-600 text-white border-green-400"
-            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
-        }`}
+            ? "bg-green-500 hover:bg-green-600"
+            : "bg-gray-500 hover:bg-gray-600"
+        } text-white`}
         data-testid="nav-control-satellite"
         aria-label={mapViewMode === 'satellite' ? "Switch to roads view" : "Switch to satellite view"}
       >
