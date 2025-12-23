@@ -2276,11 +2276,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {onViewIncidents && (
           <button
             onClick={onViewIncidents}
-            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-red-500 hover:bg-red-50 active:scale-95 flex items-center justify-center"
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-5 w-5 text-red-500" strokeWidth={2} />
           </button>
         )}
         {/* 2. Toggle Map View */}
@@ -2289,51 +2289,52 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           className={cn(
             "h-8 w-8 rounded-xl shadow-lg bg-white border-2 active:scale-95 flex items-center justify-center",
             preferences.mapViewMode === 'satellite'
-              ? "border-green-500 text-green-500 hover:bg-green-50"
-              : "border-gray-500 text-gray-500 hover:bg-gray-50"
+              ? "border-green-500 hover:bg-green-50"
+              : "border-gray-500 hover:bg-gray-50"
           )}
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Map className="h-4 w-4" />
+          <Map className={cn("h-5 w-5", preferences.mapViewMode === 'satellite' ? "text-green-500" : "text-gray-500")} strokeWidth={2} />
         </button>
         {/* 3. Recenter */}
         <button
           onClick={handleRecenter}
-          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 text-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair className="h-4 w-4" />
+          <Crosshair className="h-5 w-5 text-gray-500" strokeWidth={2} />
         </button>
         {/* 4. Zoom In */}
         <button
           onClick={handleZoomIn}
-          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 text-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5 text-gray-500" strokeWidth={2} />
         </button>
         {/* 5. Zoom Out */}
         <button
           onClick={handleZoomOut}
-          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 text-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+          className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus className="h-4 w-4" />
+          <Minus className="h-5 w-5 text-gray-500" strokeWidth={2} />
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
           <button
             onClick={handleCompassClick}
-            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-blue-500 text-blue-500 hover:bg-blue-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-xl shadow-lg bg-white border-2 border-blue-500 hover:bg-blue-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
             <Compass 
-              className="h-4 w-4 transition-transform duration-300" 
+              className="h-5 w-5 text-blue-500 transition-transform duration-300" 
+              strokeWidth={2}
               style={{ transform: `rotate(${bearing}deg)` }}
             />
           </button>
@@ -2344,13 +2345,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           className={cn(
             "h-8 w-8 rounded-xl shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center",
             is3DMode 
-              ? "border-blue-500 text-blue-500 hover:bg-blue-50" 
-              : "border-gray-500 text-gray-500 hover:bg-gray-50"
+              ? "border-blue-500 hover:bg-blue-50" 
+              : "border-gray-500 hover:bg-gray-50"
           )}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box className="h-4 w-4" />
+          <Box className={cn("h-5 w-5", is3DMode ? "text-blue-500" : "text-gray-500")} strokeWidth={2} />
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
@@ -2359,13 +2360,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             className={cn(
               "h-8 w-8 rounded-xl shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center",
               showTraffic
-                ? "border-orange-500 text-orange-500 hover:bg-orange-50"
-                : "border-gray-500 text-gray-500 hover:bg-gray-50"
+                ? "border-orange-500 hover:bg-orange-50"
+                : "border-gray-500 hover:bg-gray-50"
             )}
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <Layers className="h-4 w-4" />
+            <Layers className={cn("h-5 w-5", showTraffic ? "text-orange-500" : "text-gray-500")} strokeWidth={2} />
           </button>
         )}
       </div>
