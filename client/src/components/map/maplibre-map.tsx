@@ -2275,7 +2275,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <AlertCircle size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+            <AlertCircle size={18} strokeWidth={2.5} color="#1f2937" />
           </button>
         )}
         {/* 2. Toggle Map View */}
@@ -2290,7 +2290,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Map size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+          <Map size={18} strokeWidth={2.5} color="#1f2937" />
         </button>
         {/* 3. Recenter */}
         <button
@@ -2299,7 +2299,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+          <Crosshair size={18} strokeWidth={2.5} color="#1f2937" />
         </button>
         {/* 4. Zoom In */}
         <button
@@ -2308,7 +2308,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+          <Plus size={18} strokeWidth={2.5} color="#1f2937" />
         </button>
         {/* 5. Zoom Out */}
         <button
@@ -2317,7 +2317,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+          <Minus size={18} strokeWidth={2.5} color="#1f2937" />
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
@@ -2327,7 +2327,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
-            <Compass size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000', transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
+            <Compass size={18} strokeWidth={2.5} color="#1f2937" style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
           </button>
         )}
         {/* 7. 3D Toggle */}
@@ -2342,7 +2342,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+          <Box size={18} strokeWidth={2.5} color="#1f2937" />
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
@@ -2357,7 +2357,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <Layers size={18} strokeWidth={2.5} style={{ color: '#000000', stroke: '#000000' }} />
+            <Layers size={18} strokeWidth={2.5} color="#1f2937" />
           </button>
         )}
       </div>
