@@ -689,15 +689,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         navigationControlRef.current = null;
       }
       
-      // Add control if not hidden
-      if (!hideControls && !hideCompass) {
-        navigationControlRef.current = new maplibregl.NavigationControl({
-          visualizePitch: true,
-          showCompass: true,
-          showZoom: true
-        });
-        map.current.addControl(navigationControlRef.current, 'top-right');
-      }
+      // DO NOT ADD MapLibre NavigationControl - using custom white buttons with colored borders instead
+      // This prevents duplicate button sets from appearing on the map
     };
     
     if (map.current.isStyleLoaded()) {
