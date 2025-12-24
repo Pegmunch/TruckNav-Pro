@@ -2279,11 +2279,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
+            <AlertCircle size={18} color="#1f2937" strokeWidth={2.5} />
           </button>
         )}
         {/* 2. Toggle Map View */}
@@ -2298,11 +2294,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-            <line x1="8" y1="2" x2="8" y2="18"/>
-            <line x1="16" y1="6" x2="16" y2="22"/>
-          </svg>
+          <Map size={18} color="#1f2937" strokeWidth={2.5} />
         </button>
         {/* 3. Recenter */}
         <button
@@ -2311,13 +2303,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="22" y1="12" x2="18" y2="12"/>
-            <line x1="6" y1="12" x2="2" y2="12"/>
-            <line x1="12" y1="6" x2="12" y2="2"/>
-            <line x1="12" y1="22" x2="12" y2="18"/>
-          </svg>
+          <Crosshair size={18} color="#1f2937" strokeWidth={2.5} />
         </button>
         {/* 4. Zoom In */}
         <button
@@ -2326,10 +2312,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+          <Plus size={18} color="#1f2937" strokeWidth={2.5} />
         </button>
         {/* 5. Zoom Out */}
         <button
@@ -2338,9 +2321,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+          <Minus size={18} color="#1f2937" strokeWidth={2.5} />
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
@@ -2350,10 +2331,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }}>
-              <circle cx="12" cy="12" r="10"/>
-              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="#1f2937"/>
-            </svg>
+            <Compass size={18} color="#1f2937" strokeWidth={2.5} style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
           </button>
         )}
         {/* 7. 3D Toggle */}
@@ -2368,11 +2346,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-            <line x1="12" y1="22.08" x2="12" y2="12"/>
-          </svg>
+          <Box size={18} color="#1f2937" strokeWidth={2.5} />
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
@@ -2387,11 +2361,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-              <polyline points="2 17 12 22 22 17"/>
-              <polyline points="2 12 12 17 22 12"/>
-            </svg>
+            <Layers size={18} color="#1f2937" strokeWidth={2.5} />
           </button>
         )}
       </div>
