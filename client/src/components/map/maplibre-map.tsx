@@ -2275,93 +2275,101 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {onViewIncidents && (
           <button
             onClick={onViewIncidents}
-            className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-red-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-red-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+            style={{ color: '#1f2937' }}
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <AlertCircle size={18} />
+            <AlertCircle size={18} stroke="#1f2937" />
           </button>
         )}
         {/* 2. Toggle Map View */}
         <button
           onClick={toggleMapView}
           className={cn(
-            "h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 active:scale-95 flex items-center justify-center hover:bg-gray-50 transition-colors",
+            "h-8 w-8 rounded-lg shadow-lg bg-white border-2 active:scale-95 flex items-center justify-center hover:bg-gray-50 transition-colors",
             preferences.mapViewMode === 'satellite'
               ? "border-green-500"
               : "border-gray-500"
           )}
+          style={{ color: '#1f2937' }}
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Map size={18} />
+          <Map size={18} stroke="#1f2937" />
         </button>
         {/* 3. Recenter */}
         <button
           onClick={handleRecenter}
-          className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          style={{ color: '#1f2937' }}
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair size={18} />
+          <Crosshair size={18} stroke="#1f2937" />
         </button>
         {/* 4. Zoom In */}
         <button
           onClick={handleZoomIn}
-          className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          style={{ color: '#1f2937' }}
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus size={18} />
+          <Plus size={18} stroke="#1f2937" />
         </button>
         {/* 5. Zoom Out */}
         <button
           onClick={handleZoomOut}
-          className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          style={{ color: '#1f2937' }}
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus size={18} />
+          <Minus size={18} stroke="#1f2937" />
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
           <button
             onClick={handleCompassClick}
-            className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-blue-500 hover:bg-gray-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-blue-500 hover:bg-gray-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
+            style={{ color: '#1f2937' }}
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
-            <Compass size={18} style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
+            <Compass size={18} stroke="#1f2937" style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
           </button>
         )}
         {/* 7. 3D Toggle */}
         <button
           onClick={toggle3DMode}
           className={cn(
-            "h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
+            "h-8 w-8 rounded-lg shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
             is3DMode 
               ? "border-blue-500" 
               : "border-gray-500"
           )}
+          style={{ color: '#1f2937' }}
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box size={18} />
+          <Box size={18} stroke="#1f2937" />
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
           <button
             onClick={onToggleTraffic}
             className={cn(
-              "h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
+              "h-8 w-8 rounded-lg shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
               showTraffic
                 ? "border-orange-500"
                 : "border-gray-500"
             )}
+            style={{ color: '#1f2937' }}
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <Layers size={18} />
+            <Layers size={18} stroke="#1f2937" />
           </button>
         )}
       </div>
