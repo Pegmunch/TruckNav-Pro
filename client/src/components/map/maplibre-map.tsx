@@ -193,6 +193,33 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     return () => clearTimeout(timeout);
   }, [isLoaded]);
   
+  // CRITICAL: Inject CSS override for map control icons AFTER MapLibre's CSS
+  // This ensures our override always wins regardless of CSS load order
+  useEffect(() => {
+    const styleId = 'tnp-maplibre-control-override';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        /* Override MapLibre's transparent button color - injected dynamically to ensure last in cascade */
+        button.tnp-control,
+        .maplibregl-map button.tnp-control {
+          color: #1f2937 !important;
+        }
+        button.tnp-control svg,
+        button.tnp-control svg *,
+        .maplibregl-map button.tnp-control svg,
+        .maplibregl-map button.tnp-control svg * {
+          color: #1f2937 !important;
+          stroke: #1f2937 !important;
+          fill: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+      console.log('[MAP] Injected control icon CSS override');
+    }
+  }, []);
+  
   // Circuit Breaker Pattern for GPS reliability
   const circuitBreakerRef = useRef({
     failures: 0,
