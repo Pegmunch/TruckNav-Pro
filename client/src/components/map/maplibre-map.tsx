@@ -2275,9 +2275,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {onViewIncidents && (
           <button
             onClick={onViewIncidents}
-            className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-red-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-red-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center"
             data-testid="button-view-incidents"
-            data-tnp-control="true"
             aria-label="View incidents"
           >
             <AlertCircle size={18} />
@@ -2287,13 +2286,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         <button
           onClick={toggleMapView}
           className={cn(
-            "h-8 w-8 rounded-lg shadow-lg bg-white border-2 active:scale-95 flex items-center justify-center hover:bg-gray-50 transition-colors",
+            "h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 active:scale-95 flex items-center justify-center hover:bg-gray-50 transition-colors",
             preferences.mapViewMode === 'satellite'
               ? "border-green-500"
               : "border-gray-500"
           )}
           data-testid="button-toggle-view"
-          data-tnp-control="true"
           aria-label="Toggle map view"
         >
           <Map size={18} />
@@ -2301,9 +2299,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {/* 3. Recenter */}
         <button
           onClick={handleRecenter}
-          className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
           data-testid="button-recenter"
-          data-tnp-control="true"
           aria-label="Recenter map"
         >
           <Crosshair size={18} />
@@ -2311,9 +2308,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {/* 4. Zoom In */}
         <button
           onClick={handleZoomIn}
-          className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
           data-testid="button-zoom-in"
-          data-tnp-control="true"
           aria-label="Zoom in"
         >
           <Plus size={18} />
@@ -2321,9 +2317,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {/* 5. Zoom Out */}
         <button
           onClick={handleZoomOut}
-          className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
+          className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-gray-500 hover:bg-gray-50 active:scale-95 flex items-center justify-center transition-colors"
           data-testid="button-zoom-out"
-          data-tnp-control="true"
           aria-label="Zoom out"
         >
           <Minus size={18} />
@@ -2332,9 +2327,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {!hideCompass && (
           <button
             onClick={handleCompassClick}
-            className="h-8 w-8 rounded-lg shadow-lg bg-white border-2 border-blue-500 hover:bg-gray-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
+            className="h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 border-blue-500 hover:bg-gray-50 transition-all duration-200 active:scale-95 flex items-center justify-center"
             data-testid="button-compass-reset"
-            data-tnp-control="true"
             aria-label="Reset bearing to North"
           >
             <Compass size={18} style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
@@ -2344,13 +2338,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         <button
           onClick={toggle3DMode}
           className={cn(
-            "h-8 w-8 rounded-lg shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
+            "h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
             is3DMode 
               ? "border-blue-500" 
               : "border-gray-500"
           )}
           data-testid="button-toggle-3d"
-          data-tnp-control="true"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
           <Box size={18} />
@@ -2360,13 +2353,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           <button
             onClick={onToggleTraffic}
             className={cn(
-              "h-8 w-8 rounded-lg shadow-lg bg-white border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
+              "h-8 w-8 rounded-lg shadow-lg bg-white text-gray-800 border-2 transition-all duration-200 active:scale-95 flex items-center justify-center hover:bg-gray-50",
               showTraffic
                 ? "border-orange-500"
                 : "border-gray-500"
             )}
             data-testid="button-toggle-traffic"
-            data-tnp-control="true"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
             <Layers size={18} />

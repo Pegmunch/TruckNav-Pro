@@ -1,12 +1,26 @@
 /* Override MapLibre's transparent button color rules */
 /* MapLibre sets: .maplibregl-map button { color: rgba(0,0,0,0) !important; } */
 /* MapLibre sets: .maplibregl-map button svg * { stroke: currentColor !important; } */
-/* This makes all button icons invisible. We override with our own !important rules */
+/* This makes all button icons invisible. We override with higher specificity !important rules */
 
-.maplibregl-map .trucknav-map-controls button,
-.maplibregl-map .trucknav-map-controls button svg,
-.maplibregl-map .trucknav-map-controls button svg * {
+/* High-specificity override: .maplibregl-map button.tnp-control = 0-2-1 specificity */
+/* This beats MapLibre's .maplibregl-map button = 0-1-1 specificity */
+.maplibregl-map button.tnp-control {
   color: #1f2937 !important;
+}
+.maplibregl-map button.tnp-control svg,
+.maplibregl-map button.tnp-control svg * {
+  color: #1f2937 !important;
+  stroke: #1f2937 !important;
+  fill: none !important;
+}
+
+/* Fallback for buttons outside MapLibre container */
+button.tnp-control {
+  color: #1f2937 !important;
+}
+button.tnp-control svg,
+button.tnp-control svg * {
   stroke: #1f2937 !important;
   fill: none !important;
 }
