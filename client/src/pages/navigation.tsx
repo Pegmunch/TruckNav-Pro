@@ -66,6 +66,7 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { NavigationControlsStack } from "@/components/navigation/navigation-controls-stack";
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
+import { RightActionStack } from "@/components/navigation/right-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { type IncidentType } from "@/lib/voice-commands";
@@ -208,6 +209,13 @@ function NavigationPageContent() {
   // Traffic and Incidents toggle state for mobile
   const [showTrafficLayer, setShowTrafficLayer] = useState(true);
   const [showIncidents, setShowIncidents] = useState(true);
+  
+  // Map control state for RightActionStack (rendered outside map container)
+  const [mapControlState, setMapControlState] = useState({
+    is3DMode: false,
+    isSatelliteView: false,
+    bearing: 0
+  });
   
   // Incident reporting dialog state
   const [showIncidentReportDialog, setShowIncidentReportDialog] = useState(false);
@@ -2908,7 +2916,31 @@ function NavigationPageContent() {
                       }}
                     />
                   }
-                  rightStack={null}
+                  rightStack={
+                    <RightActionStack
+                      onZoomIn={() => mapRef.current?.zoomIn()}
+                      onZoomOut={() => mapRef.current?.zoomOut()}
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleMapView={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ 
+                          ...prev, 
+                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                        }));
+                      }}
+                      onViewIncidents={() => setShowIncidentFeed(true)}
+                      onCompassClick={() => mapRef.current?.resetBearing()}
+                      is3DMode={mapControlState.is3DMode}
+                      showTraffic={showTrafficLayer}
+                      isSatelliteView={mapControlState.isSatelliteView}
+                      bearing={mapControlState.bearing}
+                    />
+                  }
                   bottomBar={
                     <SpeedometerHUD
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
