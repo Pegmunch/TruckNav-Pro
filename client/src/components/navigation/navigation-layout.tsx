@@ -59,9 +59,12 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Bottom instrumentation bar */}
+      {/* Bottom instrumentation bar - positioned near base of map */}
       {shouldShowUI && bottomBar && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[1500] safe-bottom">
+        <div 
+          className="absolute left-1/2 -translate-x-1/2 z-[1500]"
+          style={{ bottom: 'calc(24px + var(--safe-area-bottom, 0px))' }}
+        >
           {bottomBar}
         </div>
       )}
