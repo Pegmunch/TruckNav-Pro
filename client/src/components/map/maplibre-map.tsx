@@ -2217,56 +2217,60 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   return (
     <div className={cn("relative w-full h-full overflow-hidden", className)} data-testid="maplibre-container">
-      <div 
-        ref={mapContainer} 
-        className="absolute inset-0" 
-        style={{ 
-          background: 'transparent',
-          border: 'none',
-          outline: 'none'
-        }}
-      />
-      
-      {/* Loading Overlay - prevents map flashing during initialization */}
-      <div 
-        className={cn(
-          "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-300",
-          isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
-        )}
-        data-testid="map-loading-overlay"
-        aria-hidden={isLoaded}
-        style={{
-          transitionDelay: isLoaded ? '0ms' : 'undefined'
-        }}
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
-            <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" />
-          </div>
-          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading map...</span>
-        </div>
+      {/* ISOLATED: MapLibre container - wrapped in its own div to prevent CSS leakage */}
+      <div className="absolute inset-0">
+        <div 
+          ref={mapContainer} 
+          className="absolute inset-0" 
+          style={{ 
+            background: 'transparent',
+            border: 'none',
+            outline: 'none'
+          }}
+        />
       </div>
       
-      {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
-      <StaticRouteOverlay
-        map={map.current}
-        routeCoordinates={routeCoordinatesForOverlay}
-        isActive={useStaticRoute && routeCoordinatesForOverlay.length > 0}
-        routeColor="#3b82f6"
-        routeWidth={8}
-      />
-      
-      {/* Map Controls - Right Side Stack for Mobile - ALWAYS VISIBLE */}
-      {/* White background with colored outline borders */}
-      {/* trucknav-map-controls class enables CSS override for MapLibre's transparent icons */}
-      <div 
-        className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top trucknav-map-controls"
-        style={{ 
-          top: 'calc(7rem + var(--safe-area-top))',
-          zIndex: isNavigating ? 500 : 450
-        }}
-      >
+      {/* ISOLATED: All overlays outside MapLibre's DOM tree to avoid CSS conflicts */}
+      <div className="absolute inset-0 pointer-events-none" data-testid="map-overlays">
+        {/* Loading Overlay - prevents map flashing during initialization */}
+        <div 
+          className={cn(
+            "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-300",
+            isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+          )}
+          data-testid="map-loading-overlay"
+          aria-hidden={isLoaded}
+          style={{
+            transitionDelay: isLoaded ? '0ms' : 'undefined'
+          }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
+              <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" />
+            </div>
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading map...</span>
+          </div>
+        </div>
+        
+        {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
+        <StaticRouteOverlay
+          map={map.current}
+          routeCoordinates={routeCoordinatesForOverlay}
+          isActive={useStaticRoute && routeCoordinatesForOverlay.length > 0}
+          routeColor="#3b82f6"
+          routeWidth={8}
+        />
+        
+        {/* Map Controls - Right Side Stack for Mobile - ALWAYS VISIBLE */}
+        {/* Now outside MapLibre's DOM tree so icons are visible */}
+        <div 
+          className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
+          style={{ 
+            top: 'calc(7rem + var(--safe-area-top))',
+            zIndex: isNavigating ? 500 : 450
+          }}
+        >
         {/* 1. Incidents */}
         {onViewIncidents && (
           <button
@@ -2444,6 +2448,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       )}
       
       {/* GPS/Cache selection moved to Settings modal - Online/Offline tab */}
+      </div>
     </div>
   );
 }));
