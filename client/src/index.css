@@ -42,6 +42,18 @@
   }
 }
 
+/* CRITICAL FIX: Override MapLibre's transparent button color rule */
+/* MapLibre sets .maplibregl-map button { color: rgba(0,0,0,0) !important; } */
+/* This makes lucide-react icons invisible since they use currentColor */
+/* We override with higher specificity to restore black icon color */
+.maplibregl-map .tnp-map-controls button {
+  color: #000000 !important;
+}
+.maplibregl-map .tnp-map-controls button svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
 /* Fallback for browsers that don't support dvh */
 @supports not (height: 100dvh) {
   [data-testid="legal-disclaimer-popup"] {

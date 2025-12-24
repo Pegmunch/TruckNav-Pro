@@ -2258,11 +2258,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       {/* Map Controls - Right Side Stack for Mobile - ALWAYS VISIBLE */}
       {/* White background with colored outline borders */}
+      {/* CRITICAL: tnp-map-controls class overrides MapLibre's transparent button color */}
       <div 
-        className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
+        className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top tnp-map-controls"
         style={{ 
           top: 'calc(7rem + var(--safe-area-top))',
-          zIndex: isNavigating ? 500 : 450
+          zIndex: isNavigating ? 500 : 450,
+          color: '#000000'
         }}
       >
         {/* 1. Incidents */}
