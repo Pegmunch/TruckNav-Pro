@@ -193,15 +193,51 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     return () => clearTimeout(timeout);
   }, [isLoaded]);
   
-  // CRITICAL: Inject CSS override for map control icons AFTER MapLibre's CSS
-  // This ensures our override always wins regardless of CSS load order
+  // CRITICAL: Delete MapLibre's transparent button color rule from its stylesheet
+  // This is the ONLY reliable fix - MapLibre's CSS keeps re-inserting after overrides
   useEffect(() => {
+    const removeMapLibreButtonRule = () => {
+      try {
+        for (let i = 0; i < document.styleSheets.length; i++) {
+          const sheet = document.styleSheets[i];
+          try {
+            const rules = sheet.cssRules || sheet.rules;
+            if (!rules) continue;
+            
+            for (let j = rules.length - 1; j >= 0; j--) {
+              const rule = rules[j];
+              if (rule instanceof CSSStyleRule) {
+                const text = rule.cssText;
+                // Find and delete the MapLibre button color rule that makes icons invisible
+                if (text.includes('.maplibregl-map button') && 
+                    text.includes('color') && 
+                    text.includes('rgba(0')) {
+                  sheet.deleteRule(j);
+                  console.log('[MAP] ✅ Deleted MapLibre transparent button rule');
+                }
+              }
+            }
+          } catch (e) {
+            // Cross-origin stylesheets will throw - ignore
+          }
+        }
+      } catch (e) {
+        console.warn('[MAP] Could not modify stylesheets:', e);
+      }
+    };
+
+    // Run immediately
+    removeMapLibreButtonRule();
+    
+    // Also run after a short delay to catch late-loading stylesheets
+    const timeout = setTimeout(removeMapLibreButtonRule, 500);
+    
+    // Inject our override as backup
     const styleId = 'tnp-maplibre-control-override';
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
-        /* Override MapLibre's transparent button color - injected dynamically to ensure last in cascade */
         button.tnp-control,
         .maplibregl-map button.tnp-control {
           color: #1f2937 !important;
@@ -216,8 +252,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       `;
       document.head.appendChild(style);
-      console.log('[MAP] Injected control icon CSS override');
     }
+    
+    return () => clearTimeout(timeout);
   }, []);
   
   // Circuit Breaker Pattern for GPS reliability
@@ -2306,7 +2343,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-view-incidents"
             aria-label="View incidents"
           >
-            <AlertCircle size={18} />
+            <AlertCircle size={18} style={{ stroke: '#1f2937' }} />
           </button>
         )}
         {/* 2. Toggle Map View */}
@@ -2321,7 +2358,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-view"
           aria-label="Toggle map view"
         >
-          <Map size={18} />
+          <Map size={18} style={{ stroke: '#1f2937' }} />
         </button>
         {/* 3. Recenter */}
         <button
@@ -2330,7 +2367,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-recenter"
           aria-label="Recenter map"
         >
-          <Crosshair size={18} />
+          <Crosshair size={18} style={{ stroke: '#1f2937' }} />
         </button>
         {/* 4. Zoom In */}
         <button
@@ -2339,7 +2376,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-in"
           aria-label="Zoom in"
         >
-          <Plus size={18} />
+          <Plus size={18} style={{ stroke: '#1f2937' }} />
         </button>
         {/* 5. Zoom Out */}
         <button
@@ -2348,7 +2385,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-zoom-out"
           aria-label="Zoom out"
         >
-          <Minus size={18} />
+          <Minus size={18} style={{ stroke: '#1f2937' }} />
         </button>
         {/* 6. Compass */}
         {!hideCompass && (
@@ -2358,7 +2395,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-compass-reset"
             aria-label="Reset bearing to North"
           >
-            <Compass size={18} style={{ transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
+            <Compass size={18} style={{ stroke: '#1f2937', transform: `rotate(${bearing}deg)`, transition: 'transform 300ms' }} />
           </button>
         )}
         {/* 7. 3D Toggle */}
@@ -2373,7 +2410,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           data-testid="button-toggle-3d"
           aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
-          <Box size={18} />
+          <Box size={18} style={{ stroke: '#1f2937' }} />
         </button>
         {/* 8. Traffic Toggle */}
         {onToggleTraffic && (
@@ -2388,7 +2425,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             data-testid="button-toggle-traffic"
             aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
           >
-            <Layers size={18} />
+            <Layers size={18} style={{ stroke: '#1f2937' }} />
           </button>
         )}
       </div>
