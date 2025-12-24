@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback, memo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './maplibre-overrides.css';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Plus, Minus, Crosshair, Layers, Box, Compass, MapPin, AlertTriangle, AlertCircle, Map } from "lucide-react";
@@ -2258,9 +2259,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       {/* Map Controls - Right Side Stack for Mobile - ALWAYS VISIBLE */}
       {/* White background with colored outline borders */}
-      {/* Using raw SVG with explicit stroke to bypass MapLibre CSS conflicts */}
+      {/* trucknav-map-controls class enables CSS override for MapLibre's transparent icons */}
       <div 
-        className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top"
+        className="absolute right-3 flex flex-col gap-1.5 pointer-events-auto safe-area-top trucknav-map-controls"
         style={{ 
           top: 'calc(7rem + var(--safe-area-top))',
           zIndex: isNavigating ? 500 : 450

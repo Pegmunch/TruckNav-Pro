@@ -1,0 +1,12 @@
+/* Override MapLibre's transparent button color rules */
+/* MapLibre sets: .maplibregl-map button { color: rgba(0,0,0,0) !important; } */
+/* MapLibre sets: .maplibregl-map button svg * { stroke: currentColor !important; } */
+/* This makes all button icons invisible. We override with our own !important rules */
+
+.maplibregl-map .trucknav-map-controls button,
+.maplibregl-map .trucknav-map-controls button svg,
+.maplibregl-map .trucknav-map-controls button svg * {
+  color: #1f2937 !important;
+  stroke: #1f2937 !important;
+  fill: none !important;
+}
