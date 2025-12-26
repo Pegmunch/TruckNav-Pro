@@ -68,20 +68,15 @@ export function AddressAutocomplete({
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
   
   // Update dropdown position when open changes or on scroll/resize
-  // Account for iOS PWA visual viewport offsets (keyboard shifts the visual viewport)
+  // Use fixed positioning with direct viewport coordinates from getBoundingClientRect
   const updateDropdownPosition = useCallback(() => {
     if (inputRef.current && open) {
       const rect = inputRef.current.getBoundingClientRect();
-      // On iOS PWA, getBoundingClientRect returns visual viewport coordinates
-      // but fixed positioning uses layout viewport coordinates
-      // Use pageTop/pageLeft to get the layout viewport displacement
-      const visualViewport = window.visualViewport;
-      const viewportTop = visualViewport?.pageTop ?? window.scrollY;
-      const viewportLeft = visualViewport?.pageLeft ?? window.scrollX;
-      
+      // getBoundingClientRect returns viewport-relative coordinates
+      // position:fixed uses viewport-relative coordinates, so no offset needed
       setDropdownPosition({
-        top: rect.bottom + viewportTop,
-        left: rect.left + viewportLeft,
+        top: rect.bottom,
+        left: rect.left,
         width: rect.width
       });
     }
@@ -612,12 +607,12 @@ export function AddressAutocomplete({
       {/* Portal-based Dropdown - Renders outside transformed containers to fix mobile positioning */}
       {open && dropdownPosition && createPortal(
         <div 
-          className="absolute z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
+          className="z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
           style={{ 
+            position: 'fixed',
             top: dropdownPosition.top,
             left: dropdownPosition.left,
-            width: dropdownPosition.width,
-            position: 'absolute'
+            width: dropdownPosition.width
           }}
           onMouseDown={(e) => e.preventDefault()}
         >
