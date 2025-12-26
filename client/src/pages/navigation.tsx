@@ -242,8 +242,7 @@ function NavigationPageContent() {
   // Double-tap detection for map controls toggle (when not navigating)
   const lastMapTapTimeRef = useRef<number>(0);
   const DOUBLE_TAP_THRESHOLD = 300; // ms
-
-  // Handle map click for double-tap detection
+  // Handle map click to close overlays AND toggle nav controls via tap gestures
   const handleMapClick = useCallback(() => {
     const now = Date.now();
     const timeSinceLastTap = now - lastMapTapTimeRef.current;
@@ -256,7 +255,14 @@ function NavigationPageContent() {
     } else {
       lastMapTapTimeRef.current = now;
     }
-  }, []);// Turn-by-turn navigation state
+
+    // Close incident feed if user has interacted with it
+    if (hasInteractedWithIncidentFeed && showIncidentFeed) {
+      setShowIncidentFeed(false);
+    }
+  }, [hasInteractedWithIncidentFeed, showIncidentFeed]);
+
+  // Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{
     direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left';
     distance: number; // in meters
@@ -1949,38 +1955,7 @@ function NavigationPageContent() {
 
 
 
-  // Handle map click to close overlays AND toggle nav controls via tap gestures
-  const handleMapClick = () => {
-    // Close incident feed if user has interacted with it
-    if (hasInteractedWithIncidentFeed && showIncidentFeed) {
-      setShowIncidentFeed(false);
-    }
-    
-    // Double-tap / single-tap detection for nav controls (only when NOT navigating)
-    if (!isNavigating) {
-      const now = Date.now();
-      const timeSinceLastTap = now - lastMapTapTimeRef.current;
-      
-      if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD) {
-        // Double-tap detected - show nav controls
-        setShowNavControls(true);
-        console.log('[MAP-TAP] Double-tap detected - showing nav controls');
-      } else {
-        // Single tap - hide nav controls (with a slight delay to avoid hiding on double-tap)
-        setTimeout(() => {
-          const currentTime = Date.now();
-          const timeSinceTap = currentTime - lastMapTapTimeRef.current;
-          // Only hide if no second tap came within threshold
-          if (timeSinceTap >= DOUBLE_TAP_THRESHOLD) {
-            setShowNavControls(false);
-            console.log('[MAP-TAP] Single-tap detected - hiding nav controls');
-          }
-        }, DOUBLE_TAP_THRESHOLD);
-      }
-      
-      lastMapTapTimeRef.current = now;
-    }
-  };
+
 
   // Handle cancel route - stop navigation
   const handleCancelRoute = () => {
