@@ -42,10 +42,13 @@ export function RightActionStack({
   return (
     <div 
       className={cn(
-        "flex flex-col gap-2 transition-all duration-300",
-        isVisible ? "translate-x-0 opacity-100 visible" : "translate-x-20 opacity-0 invisible pointer-events-none"
+        "flex flex-col gap-2 transition-all duration-300 transform-gpu",
+        isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
       )} 
       data-testid="right-action-stack"
+      style={{
+        visibility: isVisible ? 'visible' : 'hidden'
+      }}
     >
       {/* 1. Incidents - Red border */}
       {onViewIncidents && (

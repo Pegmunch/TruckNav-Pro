@@ -50,15 +50,13 @@ export function NavigationLayout({
 
       {/* Right navigation controls stack - Fixed positioning */}
       <div 
-        className="fixed right-4 z-[99999] pointer-events-none"
+        className="fixed right-4 z-[99999] pointer-events-auto"
         style={{ 
           top: '100px',
           isolation: 'isolate'
         }}
       >
-        <div className="pointer-events-auto">
-          {rightStack}
-        </div>
+        {rightStack}
       </div>
 
       {/* Bottom instrumentation bar - positioned near base of map */}
