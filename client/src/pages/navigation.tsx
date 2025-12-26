@@ -260,8 +260,12 @@ function NavigationPageContent() {
 
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
       console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Showing controls');
+      // Clear any pending single-tap timeout
+      if ((window as any)._mapSingleTapTimeout) {
+        clearTimeout((window as any)._mapSingleTapTimeout);
+        (window as any)._mapSingleTapTimeout = null;
+      }
       setShowNavControls(true);
-      // Reset tap time to prevent a single tap from triggering immediately after
       lastMapTapTimeRef.current = 0;
       return;
     }
@@ -270,12 +274,17 @@ function NavigationPageContent() {
 
     // Single tap detection logic
     // We wait for the threshold to pass to see if it remains a single tap
-    setTimeout(() => {
+    if ((window as any)._mapSingleTapTimeout) {
+      clearTimeout((window as any)._mapSingleTapTimeout);
+    }
+
+    (window as any)._mapSingleTapTimeout = setTimeout(() => {
       // If lastMapTapTimeRef is still the same 'now', no second tap happened
       if (lastMapTapTimeRef.current === now) {
         console.log('[MAP-CLICK] SINGLE-TAP - Hiding controls');
         setShowNavControls(false);
       }
+      (window as any)._mapSingleTapTimeout = null;
     }, DOUBLE_TAP_THRESHOLD + 50);
 
     // Close incident feed if user has interacted with it
