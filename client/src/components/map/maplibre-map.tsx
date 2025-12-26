@@ -869,9 +869,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
       if (onMapClick) {
         map.current.on('click', (e) => {
+          console.log('[MAPLIBRE-CLICK] Map clicked at:', e.lngLat.lat, e.lngLat.lng);
           onMapClick(e.lngLat.lat, e.lngLat.lng);
         });
       }
+
+      // Prevent default double-click zoom to allow custom double-tap toggle
+      map.current.on('dblclick', (e) => {
+        console.log('[MAPLIBRE-DBLCLICK] Double-click detected - preventing default zoom');
+        e.preventDefault();
+      });
 
       // Two-finger double-tap to zoom out gesture detection
       let lastTwoFingerTap = 0;
