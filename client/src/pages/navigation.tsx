@@ -259,13 +259,22 @@ function NavigationPageContent() {
     });
 
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
-      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Toggling controls');
-      setShowNavControls(prev => !prev);
+      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Showing controls');
+      setShowNavControls(true);
       lastMapTapTimeRef.current = 0;
       return;
     }
     
     lastMapTapTimeRef.current = now;
+
+    // Single tap detection
+    setTimeout(() => {
+      // If no second tap happened within the threshold, it's a single tap
+      if (Date.now() - lastMapTapTimeRef.current >= DOUBLE_TAP_THRESHOLD) {
+        console.log('[MAP-CLICK] SINGLE-TAP - Hiding controls');
+        setShowNavControls(false);
+      }
+    }, DOUBLE_TAP_THRESHOLD);
 
     // Close incident feed if user has interacted with it
     if (hasInteractedWithIncidentFeed && showIncidentFeed) {
@@ -2837,10 +2846,10 @@ function NavigationPageContent() {
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
-              {(!isNavUIActive || isNavUIActive) && !showComprehensiveMenu && (
+              {showNavControls && !showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
-                  isNavUIActive={true}
+                  isNavUIActive={showNavControls}
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
