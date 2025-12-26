@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -62,50 +61,6 @@ export function AddressAutocomplete({
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const { toast } = useToast();
   const gps = useGPS();
-  
-  // Ref for input element and portal dropdown positioning
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
-  
-  // Update dropdown position when open changes or on scroll/resize
-  // Use fixed positioning with direct viewport coordinates from getBoundingClientRect
-  const updateDropdownPosition = useCallback(() => {
-    if (inputRef.current && open) {
-      const rect = inputRef.current.getBoundingClientRect();
-      // getBoundingClientRect returns viewport-relative coordinates
-      // position:fixed uses viewport-relative coordinates, so no offset needed
-      setDropdownPosition({
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width
-      });
-    }
-  }, [open]);
-  
-  useEffect(() => {
-    if (open) {
-      updateDropdownPosition();
-      // Update position on scroll and resize
-      window.addEventListener('scroll', updateDropdownPosition, true);
-      window.addEventListener('resize', updateDropdownPosition);
-      
-      // Subscribe to visual viewport events for iOS PWA keyboard handling
-      const visualViewport = window.visualViewport;
-      if (visualViewport) {
-        visualViewport.addEventListener('resize', updateDropdownPosition);
-        visualViewport.addEventListener('scroll', updateDropdownPosition);
-      }
-      
-      return () => {
-        window.removeEventListener('scroll', updateDropdownPosition, true);
-        window.removeEventListener('resize', updateDropdownPosition);
-        if (visualViewport) {
-          visualViewport.removeEventListener('resize', updateDropdownPosition);
-          visualViewport.removeEventListener('scroll', updateDropdownPosition);
-        }
-      };
-    }
-  }, [open, updateDropdownPosition]);
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
 
   // Detect country from GPS coordinates
@@ -577,146 +532,192 @@ export function AddressAutocomplete({
         )}
       </Button>
 
-      <div className="relative" style={{ position: 'relative', width: '100%' }}>
-        <Input
-          ref={inputRef}
-          id={id}
-          value={searchTerm}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          placeholder={dynamicPlaceholder}
-          className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-background", className)}
-          data-testid={testId}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck="false"
-          data-form-type="other"
-          data-lpignore="true"
-        />
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
-          {isLoading && (
-            <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
-          )}
-          <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-        </div>
-      </div>
-
-      {/* Portal-based Dropdown - Renders outside transformed containers to fix mobile positioning */}
-      {open && dropdownPosition && createPortal(
-        <div 
-          className="z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
-          style={{ 
-            position: 'fixed',
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
-            width: dropdownPosition.width
-          }}
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <Command className="bg-transparent">
-            <CommandList className="max-h-none">
-              {favoriteLocations.length === 0 && 
-               recentLocations.length === 0 && 
-               tomtomResults.length === 0 && 
-               !ukPostcodeResult && (
-                <CommandEmpty className="py-6 text-center text-muted-foreground">
-                  {debouncedSearch.length < 3 
-                    ? "Type at least 3 characters to search..." 
-                    : "No locations found."}
-                </CommandEmpty>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity blur-sm"></div>
+            <Input
+              id={id}
+              value={searchTerm}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              placeholder={dynamicPlaceholder}
+              className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all", className)}
+              data-testid={testId}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              data-form-type="other"
+              data-lpignore="true"
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {isLoading && (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
               )}
+              <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            </div>
+          </div>
+        </PopoverTrigger>
+      <PopoverContent 
+        className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999] shadow-lg border-2 bg-background max-h-[400px] overflow-y-auto" 
+        align="start"
+        side="bottom"
+        sideOffset={0}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        collisionPadding={0}
+        avoidCollisions={false}
+        sticky="always"
+        forceMount
+      >
+        <Command>
+          <CommandList>
+            {favoriteLocations.length === 0 && 
+             recentLocations.length === 0 && 
+             tomtomResults.length === 0 && 
+             !ukPostcodeResult && (
+              <CommandEmpty>
+                {debouncedSearch.length < 3 
+                  ? `Type at least 3 characters to search ${poiCategory ? 'for POIs' : 'for addresses'}`
+                  : isLoadingUKPostcode
+                    ? 'Checking UK postcode...'
+                    : poiCategory
+                      ? 'No POIs found in this area. Try searching a different location or category.'
+                      : 'No addresses found'
+                }
+              </CommandEmpty>
+            )}
 
-              {/* Saved/Favorite Locations */}
-              {(favoriteLocations.length > 0 || recentLocations.length > 0) && (
-                <CommandGroup heading="Saved Locations">
-                  {favoriteLocations.map(loc => (
-                    <CommandItem
-                      key={`fav-${loc.id}`}
-                      onSelect={() => handleSelectSavedLocation(loc)}
-                      className="flex items-center p-3 cursor-pointer hover:bg-accent"
-                    >
-                      <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{loc.label}</span>
-                        <span className="text-xs text-muted-foreground">Favorite Location</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                  {recentLocations.map(loc => (
-                    <CommandItem
-                      key={`recent-${loc.id}`}
-                      onSelect={() => handleSelectSavedLocation(loc)}
-                      className="flex items-center p-3 cursor-pointer hover:bg-accent"
-                    >
-                      <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{loc.label}</span>
-                        <span className="text-xs text-muted-foreground">Recent Location</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
+            {/* UK Postcode Result (postcodes.io fallback) */}
+            {ukPostcodeResult && (
+              <CommandGroup heading="UK Postcode">
+                <CommandItem
+                  key="uk-postcode-result"
+                  value={ukPostcodeResult.formatted}
+                  onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
+                  className="cursor-pointer bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500"
+                  data-testid="uk-postcode-result"
+                >
+                  <MapPin className="mr-2 h-4 w-4 text-blue-500 shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">
+                      {ukPostcodeResult.formatted}
+                    </span>
+                    {ukPostcodeResult.city && (
+                      <span className="text-sm text-muted-foreground">
+                        {ukPostcodeResult.city}{ukPostcodeResult.region && `, ${ukPostcodeResult.region}`}
+                      </span>
+                    )}
+                    <span className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Coordinates: {ukPostcodeResult.coordinates.lat.toFixed(5)}, {ukPostcodeResult.coordinates.lng.toFixed(5)}
+                    </span>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+            )}
 
-              {/* UK Postcode Result (Fallback) */}
-              {ukPostcodeResult && (
-                <CommandGroup heading="Postcode Result">
-                  <CommandItem
-                    onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
-                    className="flex items-center p-3 cursor-pointer hover:bg-accent"
-                  >
-                    <MapPin className="mr-3 h-5 w-5 text-blue-500" />
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{ukPostcodeResult.address || ukPostcodeResult.formatted}</span>
-                      <span className="text-xs text-muted-foreground">UK Postcode Geocode</span>
-                    </div>
-                  </CommandItem>
-                </CommandGroup>
-              )}
-
-              {/* TomTom Search Results */}
-              {tomtomResults.length > 0 && (
-                <CommandGroup heading={poiCategory ? "Nearby Places" : "Search Results"}>
-                  {tomtomResults.map((result, index) => {
-                    const isPoi = isTomTomPOI(result);
+            {/* TomTom Results (Worldwide Addresses & POIs) */}
+            {tomtomResults.length > 0 && (
+              <>
+                {ukPostcodeResult && <CommandSeparator />}
+                <CommandGroup heading="Address Results">
+                  {tomtomResults.map((result: TomTomResult, index: number) => {
+                    // Create a stable unique ID for this result
+                    const uniqueId = result.id || `${result.position.lat}_${result.position.lon}_${index}`;
+                    const displayText = formatTomTomDisplay(result);
+                    const isPOI = isTomTomPOI(result);
+                    
+                    // Capture result in closure to prevent selection bugs
+                    const handleSelect = () => {
+                      console.log('[AUTOCOMPLETE] Selected TomTom result:', {
+                        index,
+                        displayText,
+                        coordinates: result.position,
+                        address: result.address,
+                        isPOI
+                      });
+                      handleSelectTomTom(result);
+                    };
+                    
                     return (
                       <CommandItem
-                        key={result.id || `tomtom-${index}`}
-                        onSelect={() => handleSelectTomTom(result)}
-                        className="flex items-center p-3 cursor-pointer hover:bg-accent border-b border-border/50 last:border-0"
+                        key={uniqueId}
+                        value={uniqueId} // Use unique ID instead of display text
+                        onSelect={handleSelect}
+                        className="cursor-pointer"
+                        data-testid={`tomtom-result-${index}`}
                       >
-                        {isPoi ? (
-                          <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
+                        {isPOI ? (
+                          <Store className="mr-2 h-4 w-4 text-blue-500 shrink-0" />
                         ) : (
-                          <Globe className="mr-3 h-5 w-5 text-blue-500 shrink-0" />
+                          <Globe className="mr-2 h-4 w-4 text-green-500 shrink-0" />
                         )}
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="font-semibold truncate">
-                            {result.poi?.name || result.address.freeformAddress}
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {result.poi?.name || result.address.freeformAddress || result.address.streetName || 'Unknown'}
                           </span>
-                          <span className="text-xs text-muted-foreground truncate">
-                            {result.address.municipality && `${result.address.municipality}, `}
-                            {result.address.countryCode || result.address.country}
-                          </span>
-                          {result.dist && (
-                            <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-4 px-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                              {(result.dist / 1609.34).toFixed(1)} miles away
-                            </Badge>
+                          {(result.address.municipality || result.address.country) && (
+                            <span className="text-sm text-muted-foreground">
+                              {result.address.municipality && `${result.address.municipality}, `}
+                              {result.address.countrySubdivision && `${result.address.countrySubdivision}, `}
+                              {result.address.country}
+                            </span>
                           )}
                         </div>
                       </CommandItem>
                     );
                   })}
                 </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </div>,
-        document.body
-      )}
+              </>
+            )}
+
+            {/* Favorite Locations */}
+            {favoriteLocations.length > 0 && (
+              <>
+                {tomtomResults.length > 0 && <CommandSeparator />}
+                <CommandGroup heading="Favorites">
+                  {favoriteLocations.map((location) => (
+                    <CommandItem
+                      key={`favorite-${location.id}`}
+                      value={location.label}
+                      onSelect={() => handleSelectSavedLocation(location)}
+                      className="cursor-pointer"
+                      data-testid={`favorite-location-${location.id}`}
+                    >
+                      <Star className="mr-2 h-4 w-4 text-yellow-500 fill-yellow-500 shrink-0" />
+                      <span className="font-medium">{location.label}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            )}
+
+            {/* Recent Locations */}
+            {recentLocations.length > 0 && (
+              <>
+                {(favoriteLocations.length > 0 || tomtomResults.length > 0) && <CommandSeparator />}
+                <CommandGroup heading="Recent">
+                  {recentLocations.map((location) => (
+                    <CommandItem
+                      key={`recent-${location.id}`}
+                      value={location.label}
+                      onSelect={() => handleSelectSavedLocation(location)}
+                      className="cursor-pointer"
+                      data-testid={`recent-location-${location.id}`}
+                    >
+                      <Clock className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="font-medium">{location.label}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
     
     {/* Error Display */}
     {tomtomError && debouncedSearch.length >= 3 && (

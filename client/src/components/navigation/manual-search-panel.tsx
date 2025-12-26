@@ -471,26 +471,41 @@ export default function ManualSearchPanel({
 
         {/* Destination Search */}
         <div className="space-y-2">
-          <Label htmlFor="destination-autocomplete" className="text-xs font-medium text-muted-foreground">
+          <Label htmlFor="destination-search" className="text-xs font-medium text-muted-foreground">
             Destination Search
           </Label>
-          <AddressAutocomplete
-            id="destination-autocomplete"
-            value={destinationSearch}
-            onChange={(value) => {
-              setDestinationSearch(value);
-              onToLocationChange(value);
-            }}
-            onCoordinatesChange={(coords) => {
-              if (coords) {
-                onToCoordinatesChange?.(coords);
-              }
-            }}
-            coordinates={{lat: 0, lng: 0}}
-            placeholder="Enter destination..."
-            testId="input-destination-search"
-            className="w-full"
-          />
+          <div className="flex space-x-2">
+            <div className="flex-1 relative">
+              <Input
+                id="destination-search"
+                placeholder="Enter your destination..."
+                value={destinationSearch}
+                onChange={(e) => setDestinationSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    // If route exists and we can start navigation, do that instead of planning
+                    if (currentRoute && selectedProfile && fromLocation && toLocation && onStartNavigation) {
+                      onStartNavigation();
+                    } else {
+                      handleDestinationSearch();
+                    }
+                  }
+                }}
+                className="automotive-input scalable-control-button"
+                data-testid="input-destination-search"
+              />
+            </div>
+            <Button
+              onClick={handleDestinationSearch}
+              disabled={!destinationSearch.trim()}
+              size="sm"
+              className="automotive-button shrink-0"
+              data-testid="button-search-destination"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <Separator />
