@@ -256,9 +256,7 @@ function NavigationPageContent() {
     } else {
       lastMapTapTimeRef.current = now;
     }
-  }, []);
-  
-  // Turn-by-turn navigation state
+  }, []);// Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{
     direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left';
     distance: number; // in meters
