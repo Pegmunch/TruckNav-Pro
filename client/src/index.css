@@ -2618,96 +2618,32 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
 }
 
 /* ============================================
-   CRITICAL: FORCE LUCIDE ICON VISIBILITY IN CUSTOM MAP CONTROLS
-   Each icon color MUST match its button border color
-   Using !important to override any conflicting styles
+   CRITICAL: FORCE WHITE LUCIDE ICONS IN RIGHT-SIDE NAV BUTTONS
+   All buttons have colored backgrounds (bg-gray-500, bg-blue-500, etc.)
+   so icons MUST be white to be visible!
+   Using !important to override any conflicting MapLibre styles
    ============================================ */
 
-/* Incidents button - RED */
-[data-testid="button-view-incidents"] svg {
-  stroke: #ef4444 !important;
-  color: #ef4444 !important;
-}
-[data-testid="button-view-incidents"] svg * {
-  stroke: #ef4444 !important;
-}
-
-/* Toggle view button - dynamic green/gray */
-[data-testid="button-toggle-view"] svg {
-  stroke: #6b7280 !important;
-  color: #6b7280 !important;
-}
-[data-testid="button-toggle-view"] svg * {
-  stroke: #6b7280 !important;
-}
-[data-testid="button-toggle-view"].border-green-500 svg,
-[data-testid="button-toggle-view"].border-green-500 svg * {
-  stroke: #22c55e !important;
-  color: #22c55e !important;
-}
-
-/* Recenter button - GRAY */
-[data-testid="button-recenter"] svg {
-  stroke: #6b7280 !important;
-  color: #6b7280 !important;
-}
-[data-testid="button-recenter"] svg * {
-  stroke: #6b7280 !important;
-}
-
-/* Zoom In button - GRAY */
-[data-testid="button-zoom-in"] svg {
-  stroke: #6b7280 !important;
-  color: #6b7280 !important;
-}
-[data-testid="button-zoom-in"] svg * {
-  stroke: #6b7280 !important;
-}
-
-/* Zoom Out button - GRAY */
-[data-testid="button-zoom-out"] svg {
-  stroke: #6b7280 !important;
-  color: #6b7280 !important;
-}
-[data-testid="button-zoom-out"] svg * {
-  stroke: #6b7280 !important;
-}
-
-/* Compass button - BLUE */
-[data-testid="button-compass-reset"] svg {
-  stroke: #3b82f6 !important;
-  color: #3b82f6 !important;
-}
-[data-testid="button-compass-reset"] svg * {
-  stroke: #3b82f6 !important;
-}
-
-/* 3D Toggle button - dynamic blue/gray */
-[data-testid="button-toggle-3d"] svg {
-  stroke: #6b7280 !important;
-  color: #6b7280 !important;
-}
-[data-testid="button-toggle-3d"] svg * {
-  stroke: #6b7280 !important;
-}
-[data-testid="button-toggle-3d"].border-blue-500 svg,
-[data-testid="button-toggle-3d"].border-blue-500 svg * {
-  stroke: #3b82f6 !important;
-  color: #3b82f6 !important;
-}
-
-/* Traffic Toggle button - dynamic orange/gray */
-[data-testid="button-toggle-traffic"] svg {
-  stroke: #6b7280 !important;
-  color: #6b7280 !important;
-}
+/* All right-side navigation buttons - WHITE icons */
+[data-testid="button-view-incidents"] svg,
+[data-testid="button-view-incidents"] svg *,
+[data-testid="button-toggle-view"] svg,
+[data-testid="button-toggle-view"] svg *,
+[data-testid="button-recenter"] svg,
+[data-testid="button-recenter"] svg *,
+[data-testid="button-zoom-in"] svg,
+[data-testid="button-zoom-in"] svg *,
+[data-testid="button-zoom-out"] svg,
+[data-testid="button-zoom-out"] svg *,
+[data-testid="button-compass-reset"] svg,
+[data-testid="button-compass-reset"] svg *,
+[data-testid="button-toggle-3d"] svg,
+[data-testid="button-toggle-3d"] svg *,
+[data-testid="button-toggle-traffic"] svg,
 [data-testid="button-toggle-traffic"] svg * {
-  stroke: #6b7280 !important;
-}
-[data-testid="button-toggle-traffic"].border-orange-500 svg,
-[data-testid="button-toggle-traffic"].border-orange-500 svg * {
-  stroke: #f97316 !important;
-  color: #f97316 !important;
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+  fill: none !important;
 }
 
 /* ============================================
