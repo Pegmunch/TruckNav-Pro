@@ -776,22 +776,29 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     const is3D = zoom >= 17;
     
+    // Helper to safely set layer visibility only if layer exists
+    const safeSetVisibility = (layerId: string, visibility: 'visible' | 'none') => {
+      if (mapInstance.getLayer(layerId)) {
+        mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
+      }
+    };
+    
     try {
       if (viewMode === 'roads') {
-        mapInstance.setLayoutProperty('roads-2d-layer', 'visibility', is3D ? 'none' : 'visible');
-        mapInstance.setLayoutProperty('roads-3d-layer', 'visibility', is3D ? 'visible' : 'none');
-        mapInstance.setLayoutProperty('satellite-2d-layer', 'visibility', 'none');
-        mapInstance.setLayoutProperty('satellite-3d-layer', 'visibility', 'none');
+        safeSetVisibility('roads-2d-layer', is3D ? 'none' : 'visible');
+        safeSetVisibility('roads-3d-layer', is3D ? 'visible' : 'none');
+        safeSetVisibility('satellite-2d-layer', 'none');
+        safeSetVisibility('satellite-3d-layer', 'none');
         // Show traffic layer in roads mode if it exists and traffic is enabled
         if (mapInstance.getLayer('traffic-flow-layer') && showTraffic) {
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'visible');
         }
       } else {
         // Satellite mode - hide ALL overlays including traffic
-        mapInstance.setLayoutProperty('roads-2d-layer', 'visibility', 'none');
-        mapInstance.setLayoutProperty('roads-3d-layer', 'visibility', 'none');
-        mapInstance.setLayoutProperty('satellite-2d-layer', 'visibility', is3D ? 'none' : 'visible');
-        mapInstance.setLayoutProperty('satellite-3d-layer', 'visibility', is3D ? 'visible' : 'none');
+        safeSetVisibility('roads-2d-layer', 'none');
+        safeSetVisibility('roads-3d-layer', 'none');
+        safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
+        safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
         // CRITICAL: Hide traffic layer in satellite mode - fixes black lines issue
         if (mapInstance.getLayer('traffic-flow-layer')) {
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
