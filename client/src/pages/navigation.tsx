@@ -249,10 +249,11 @@ function NavigationPageContent() {
     
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD) {
       console.log('[MAP-CLICK] Double-tap detected - toggling navigation controls');
+      // Force immediate state update and log it
       setShowNavControls(prev => !prev);
       // Reset tap time to prevent triple-tap from firing twice
       lastMapTapTimeRef.current = 0;
-      return; // Exit early to prevent single-tap logic from interfering
+      return; 
     }
     
     lastMapTapTimeRef.current = now;
@@ -2949,29 +2950,34 @@ function NavigationPageContent() {
                     />
                   }
                   rightStack={
-                    <RightActionStack
-                      onZoomIn={() => mapRef.current?.zoomIn()}
-                      onZoomOut={() => mapRef.current?.zoomOut()}
-                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
-                      onToggle3D={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                      }}
-                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                      onToggleMapView={() => {
-                        mapRef.current?.toggleMapView();
-                        setMapControlState(prev => ({ 
-                          ...prev, 
-                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                        }));
-                      }}
-                      onViewIncidents={() => setShowIncidentFeed(true)}
-                      onCompassClick={() => mapRef.current?.resetBearing()}
-                      is3DMode={mapControlState.is3DMode}
-                      showTraffic={showTrafficLayer}
-                      isSatelliteView={mapControlState.isSatelliteView}
-                      bearing={mapControlState.bearing}
-                    />
+                    <div className={cn(
+                      "transition-opacity duration-300",
+                      showNavControls || isNavUIActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                    )}>
+                      <RightActionStack
+                        onZoomIn={() => mapRef.current?.zoomIn()}
+                        onZoomOut={() => mapRef.current?.zoomOut()}
+                        onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                        onToggle3D={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                        }}
+                        onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                        onToggleMapView={() => {
+                          mapRef.current?.toggleMapView();
+                          setMapControlState(prev => ({ 
+                            ...prev, 
+                            isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                          }));
+                        }}
+                        onViewIncidents={() => setShowIncidentFeed(true)}
+                        onCompassClick={() => mapRef.current?.resetBearing()}
+                        is3DMode={mapControlState.is3DMode}
+                        showTraffic={showTrafficLayer}
+                        isSatelliteView={mapControlState.isSatelliteView}
+                        bearing={mapControlState.bearing}
+                      />
+                    </div>
                   }
                   bottomBar={
                     <SpeedometerHUD
@@ -3196,49 +3202,14 @@ function NavigationPageContent() {
                   />
                 )}
                 
-                {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
-                {/* Green gear opens the comprehensive settings menu */}
-                <NavigationHeader 
-                  onSettingsClick={() => setShowComprehensiveMenu(true)}
-                />
-                
-                {/* Toggleable Navigation Controls - Double-tap map to show, single-tap to hide */}
-                {showNavControls && !isNavUIActive && (
-                  <div 
-                    className="fixed z-[1600] pointer-events-auto flex flex-col gap-2"
-                    style={{
-                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-                      right: 'calc(12px + var(--safe-area-right, 0px))'
-                    }}
-                  >
-                    <RightActionStack
-                      onZoomIn={() => mapRef.current?.zoomIn()}
-                      onZoomOut={() => mapRef.current?.zoomOut()}
-                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
-                      onToggle3D={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                      }}
-                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                      onToggleMapView={() => {
-                        mapRef.current?.toggleMapView();
-                        setMapControlState(prev => ({ 
-                          ...prev, 
-                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                        }));
-                      }}
-                      onViewIncidents={() => setShowIncidentFeed(true)}
-                      onCompassClick={() => mapRef.current?.resetBearing()}
-                      is3DMode={mapControlState.is3DMode}
-                      showTraffic={showTrafficLayer}
-                      isSatelliteView={mapControlState.isSatelliteView}
-                      bearing={mapControlState.bearing}
-                    />
-                  </div>
-                )}
-                
-                {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
-                {isNavUIActive && (
+                      {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
+                      {/* Green gear opens the comprehensive settings menu */}
+                      <NavigationHeader 
+                        onSettingsClick={() => setShowComprehensiveMenu(true)}
+                      />
+                      
+                      {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
+                      {isNavUIActive && (
                   <>
                     
                     {/* 2. Compact Trip Strip - Shows ETA, Distance, Next Maneuver - Below header */}
