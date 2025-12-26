@@ -2947,7 +2947,7 @@ function NavigationPageContent() {
                   rightStack={
                     <div className={cn(
                       "transition-opacity duration-300",
-                      showNavControls || isNavUIActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                      showNavControls ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                     )}>
                       <RightActionStack
                         onZoomIn={() => mapRef.current?.zoomIn()}
