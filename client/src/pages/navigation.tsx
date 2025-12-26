@@ -212,6 +212,9 @@ function NavigationPageContent() {
     bearing: 0
   });
   
+  // Toggle visibility of navigation controls stack (right-side 8 buttons)
+  const [showNavControls, setShowNavControls] = useState(false);
+  
   // Incident reporting dialog state
   const [showIncidentReportDialog, setShowIncidentReportDialog] = useState(false);
   
@@ -3161,9 +3164,45 @@ function NavigationPageContent() {
                 )}
                 
                 {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
+                {/* Green gear toggles the 8 navigation control buttons on the right side */}
                 <NavigationHeader 
-                  onSettingsClick={() => setShowComprehensiveMenu(true)}
+                  onSettingsClick={() => setShowNavControls(prev => !prev)}
                 />
+                
+                {/* Toggleable Navigation Controls - Shown when green gear is clicked (plan/preview modes) */}
+                {showNavControls && !isNavUIActive && (
+                  <div 
+                    className="fixed z-[1600] pointer-events-auto"
+                    style={{
+                      top: 'calc(70px + var(--safe-area-top, 0px))',
+                      right: 'calc(12px + var(--safe-area-right, 0px))'
+                    }}
+                  >
+                    <RightActionStack
+                      onZoomIn={() => mapRef.current?.zoomIn()}
+                      onZoomOut={() => mapRef.current?.zoomOut()}
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleMapView={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ 
+                          ...prev, 
+                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                        }));
+                      }}
+                      onViewIncidents={() => setShowIncidentFeed(true)}
+                      onCompassClick={() => mapRef.current?.resetBearing()}
+                      is3DMode={mapControlState.is3DMode}
+                      showTraffic={showTrafficLayer}
+                      isSatelliteView={mapControlState.isSatelliteView}
+                      bearing={mapControlState.bearing}
+                    />
+                  </div>
+                )}
                 
                 {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                 {isNavUIActive && (
