@@ -630,7 +630,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Navigation started - activate 3D mode and save previous state
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - activating enhanced 3D mode (67° pitch)');
+      console.log('[NAV-3D] Navigation started - activating enhanced 3D mode (60° pitch)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
       setIs3DMode(true);
@@ -2068,15 +2068,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           if (Math.abs(bearingDelta) > 0.05 || centerDelta > 0.0000001) {
             mapInstance.easeTo({
               center: [longitude, latitude],
-              zoom: 18.5, // Street-level navigation zoom
-              pitch: 67, // 3D perspective for better spatial awareness
+              zoom: 17, // Navigation zoom showing road ahead (like TomTom GO)
+              pitch: 60, // Steep 3D tilt for professional navigation perspective
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
                 // CRITICAL: Camera offset positions vehicle marker so route is centered vertically
                 // The speedometer HUD is at bottom (70px + safe area), ETA header at top
                 // Route should appear centered in the visible map area above the speedometer
-                top: 200, // Space for ETA header, turn indicator, and trip strip
-                bottom: 280, // Larger padding pushes route higher - fully clears speedometer zone
+                top: 180, // Space for ETA header, turn indicator, and trip strip
+                bottom: 250, // Padding pushes route higher - clears speedometer zone
                 left: 0, 
                 right: 0 
               },
@@ -2200,7 +2200,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // During navigation, 3D mode is auto-controlled by GPS heading
     // Still allow toggle, but inform user via state change
     if (isNavigating) {
-      console.log('[3D-TOGGLE] 3D mode is auto-managed during navigation (67° pitch, heading-up rotation)');
+      console.log('[3D-TOGGLE] 3D mode is auto-managed during navigation (60° pitch, heading-up rotation)');
       // Toggle state for visual feedback, but navigation will override camera
       setIs3DMode(!is3DMode);
       return;

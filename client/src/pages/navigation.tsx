@@ -982,12 +982,12 @@ function NavigationPageContent() {
         // Start directly in 3D navigation mode with heading-up orientation
         mapInstance.flyTo({
           center: [targetLng, targetLat],
-          zoom: 17,    // Close zoom for navigation
-          pitch: 67,   // Professional 3D perspective
+          zoom: 17,    // Navigation zoom showing road ahead (like TomTom GO)
+          pitch: 60,   // Steep 3D tilt for professional navigation perspective
           bearing: initialBearing, // Route pointing upward (heading-up)
           padding: { 
-            top: 280,    // Space for HUD
-            bottom: 120, // Space for speedometer
+            top: 180,    // Space for HUD
+            bottom: 250, // Space for speedometer
             left: 0, 
             right: 0 
           },
@@ -1010,9 +1010,9 @@ function NavigationPageContent() {
               retryMap.flyTo({
                 center: [targetLng, targetLat],
                 zoom: 17,
-                pitch: 67,
+                pitch: 60,
                 bearing: initialBearing,
-                padding: { top: 280, bottom: 120, left: 0, right: 0 },
+                padding: { top: 180, bottom: 250, left: 0, right: 0 },
                 duration: 1500,
                 essential: true
               });
@@ -2217,9 +2217,10 @@ function NavigationPageContent() {
         if (zoomTarget) {
           console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
           // Use zoomToUserLocation with fallback coordinates for consistent API
+          // Navigation view: steep tilt (60°), close zoom (17) to show road ahead
           mapRef.current.zoomToUserLocation({
-            zoom: 14.5, // Wider view for better route overview
-            pitch: isMapLibre ? 45 : 0, // Tilt for 3D effect if MapLibre
+            zoom: 17, // Navigation-level zoom showing road ahead (like TomTom GO)
+            pitch: isMapLibre ? 60 : 0, // Steep tilt for 3D navigation perspective
             bearing: 0,
             duration: 1500,
             fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },
