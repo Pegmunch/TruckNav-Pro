@@ -252,9 +252,19 @@ function NavigationPageContent() {
       setShowNavControls(prev => !prev);
       // Reset tap time to prevent triple-tap from firing twice
       lastMapTapTimeRef.current = 0;
-    } else {
-      lastMapTapTimeRef.current = now;
+      return; // Exit early to prevent single-tap logic from interfering
     }
+    
+    lastMapTapTimeRef.current = now;
+
+    // Optional: Add single-tap logic to hide after delay if no second tap
+    setTimeout(() => {
+      const timeSinceLastTap = Date.now() - lastMapTapTimeRef.current;
+      if (timeSinceLastTap >= DOUBLE_TAP_THRESHOLD && lastMapTapTimeRef.current !== 0) {
+        // This was a true single tap
+        console.log('[MAP-CLICK] Single tap detected');
+      }
+    }, DOUBLE_TAP_THRESHOLD);
 
     // Close incident feed if user has interacted with it
     if (hasInteractedWithIncidentFeed && showIncidentFeed) {
