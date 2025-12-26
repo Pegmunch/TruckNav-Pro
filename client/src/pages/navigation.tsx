@@ -2837,10 +2837,10 @@ function NavigationPageContent() {
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
-              {isNavUIActive && !showComprehensiveMenu && (
+              {(!isNavUIActive || isNavUIActive) && !showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
-                  isNavUIActive={isNavUIActive}
+                  isNavUIActive={true}
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}

@@ -50,10 +50,11 @@ export function NavigationLayout({
 
       {/* Right navigation controls stack - Fixed positioning */}
       <div 
-        className="fixed right-4 z-[99999] pointer-events-auto"
+        className="fixed right-4 z-[99999]"
         style={{ 
           top: '100px',
-          isolation: 'isolate'
+          display: 'block',
+          pointerEvents: 'auto'
         }}
       >
         {rightStack}

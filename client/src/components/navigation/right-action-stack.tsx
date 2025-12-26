@@ -41,13 +41,19 @@ export function RightActionStack({
 }: RightActionStackProps) {
   return (
     <div 
-      className={cn(
-        "flex flex-col gap-2 transition-all duration-300 transform-gpu",
-        isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
-      )} 
+      className="flex flex-col gap-2"
       data-testid="right-action-stack"
       style={{
-        visibility: isVisible ? 'visible' : 'hidden'
+        opacity: 1,
+        visibility: 'visible',
+        transform: 'none',
+        pointerEvents: 'auto',
+        position: 'relative',
+        zIndex: 99999,
+        background: 'rgba(255, 255, 255, 0.01)',
+        minWidth: '40px',
+        minHeight: '40px',
+        padding: '4px'
       }}
     >
       {/* 1. Incidents - Red border */}
