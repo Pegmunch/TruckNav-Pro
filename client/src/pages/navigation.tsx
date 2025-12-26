@@ -276,21 +276,27 @@ function NavigationPageContent() {
     lastMapTapTimeRef.current = now;
 
     // Set a timer for single tap to hide controls
-    // Use a longer delay to ensure it's not a double-tap
+    // Using a slightly longer delay and ensuring we check showNavControls BEFORE starting
     singleTapTimerRef.current = setTimeout(() => {
-      console.log('[MAP-CLICK] SINGLE-TAP EXECUTING');
-      // Force hide on single tap using functional update to ensure latest state
-      setShowNavControls(() => {
-        console.log('[MAP-CLICK] State setter executing');
-        return false;
-      });
+      // Re-verify that this is indeed a single tap (no newer tap happened)
+      if (lastMapTapTimeRef.current === now) {
+        console.log('[MAP-CLICK] SINGLE-TAP TRIGGERED - Hiding controls if they were visible');
+        // Close incident feed if user has interacted with it
+        if (hasInteractedWithIncidentFeed && showIncidentFeed) {
+          setShowIncidentFeed(false);
+        }
+        setShowNavControls(prev => {
+          if (prev === true) {
+            console.log('[MAP-CLICK] Successfully hiding controls');
+            return false;
+          }
+          return prev;
+        });
+      }
       singleTapTimerRef.current = null;
-    }, DOUBLE_TAP_THRESHOLD + 50);
+    }, DOUBLE_TAP_THRESHOLD + 100);
 
-    // Close incident feed if user has interacted with it
-    if (hasInteractedWithIncidentFeed && showIncidentFeed) {
-      setShowIncidentFeed(false);
-    }
+    // Initial check moved inside timer for consistency
   }, [hasInteractedWithIncidentFeed, showIncidentFeed, showNavControls]);
 
   // Turn-by-turn navigation state
