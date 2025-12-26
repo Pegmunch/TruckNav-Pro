@@ -50,13 +50,9 @@ export function NavigationLayout({
 
       {/* Right navigation controls stack - Fixed positioning */}
       <div 
-        className={cn(
-          "fixed right-4 flex flex-col gap-4 pointer-events-auto transition-all duration-300",
-          rightStack ? "translate-x-0 opacity-100 visible" : "translate-x-20 opacity-0 invisible pointer-events-none"
-        )}
+        className="fixed right-4 z-[99999]"
         style={{ 
           top: '100px',
-          zIndex: 99999,
           isolation: 'isolate'
         }}
       >

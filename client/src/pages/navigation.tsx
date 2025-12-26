@@ -2972,6 +2972,7 @@ function NavigationPageContent() {
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
                       bearing={mapControlState.bearing}
+                      isVisible={showNavControls}
                     />
                   }
                   bottomBar={

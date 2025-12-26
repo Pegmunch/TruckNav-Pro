@@ -18,6 +18,7 @@ interface RightActionStackProps {
   bearing?: number;
   hideCompass?: boolean;
   restrictionViolations?: any[];
+  isVisible?: boolean;
 }
 
 export function RightActionStack({
@@ -35,16 +36,19 @@ export function RightActionStack({
   isSatelliteView = false,
   bearing = 0,
   hideCompass = false,
-  restrictionViolations = []
+  restrictionViolations = [],
+  isVisible = true
 }: RightActionStackProps) {
-  console.log('[RIGHT-STACK] Rendering with buttons:', {
-    zoom: !!onZoomIn,
-    recenter: !!onRecenter,
-    incidents: !!onViewIncidents
-  });
+  console.log('[RIGHT-STACK] Rendering with visibility:', isVisible);
   
   return (
-    <div className="flex flex-col gap-2" data-testid="right-action-stack">
+    <div 
+      className={cn(
+        "flex flex-col gap-2 transition-all duration-300",
+        isVisible ? "translate-x-0 opacity-100 visible" : "translate-x-20 opacity-0 invisible pointer-events-none"
+      )} 
+      data-testid="right-action-stack"
+    >
       {/* 1. Incidents - Red border */}
       {onViewIncidents && (
         <Button
