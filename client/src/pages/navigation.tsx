@@ -2949,40 +2949,31 @@ function NavigationPageContent() {
                       }}
                     />
                   }
-                  rightStack={
-                    <div 
-                      className={cn(
-                        "transition-opacity duration-300 flex flex-col gap-2",
-                        showNavControls ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                      )}
-                      data-testid="right-stack-wrapper"
-                      data-visible={showNavControls ? "true" : "false"}
-                    >
-                      <RightActionStack
-                        onZoomIn={() => mapRef.current?.zoomIn()}
-                        onZoomOut={() => mapRef.current?.zoomOut()}
-                        onRecenter={() => mapRef.current?.zoomToUserLocation()}
-                        onToggle3D={() => {
-                          mapRef.current?.toggle3DMode();
-                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                        }}
-                        onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                        onToggleMapView={() => {
-                          mapRef.current?.toggleMapView();
-                          setMapControlState(prev => ({ 
-                            ...prev, 
-                            isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                          }));
-                        }}
-                        onViewIncidents={() => setShowIncidentFeed(true)}
-                        onCompassClick={() => mapRef.current?.resetBearing()}
-                        is3DMode={mapControlState.is3DMode}
-                        showTraffic={showTrafficLayer}
-                        isSatelliteView={mapControlState.isSatelliteView}
-                        bearing={mapControlState.bearing}
-                      />
-                    </div>
-                  }
+                  rightStack={showNavControls ? (
+                    <RightActionStack
+                      onZoomIn={() => mapRef.current?.zoomIn()}
+                      onZoomOut={() => mapRef.current?.zoomOut()}
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleMapView={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ 
+                          ...prev, 
+                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                        }));
+                      }}
+                      onViewIncidents={() => setShowIncidentFeed(true)}
+                      onCompassClick={() => mapRef.current?.resetBearing()}
+                      is3DMode={mapControlState.is3DMode}
+                      showTraffic={showTrafficLayer}
+                      isSatelliteView={mapControlState.isSatelliteView}
+                      bearing={mapControlState.bearing}
+                    />
+                  ) : null}
                   bottomBar={
                     <SpeedometerHUD
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
