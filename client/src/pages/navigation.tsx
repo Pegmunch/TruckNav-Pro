@@ -215,6 +215,11 @@ function NavigationPageContent() {
   // Toggle visibility of navigation controls stack (right-side 8 buttons)
   const [showNavControls, setShowNavControls] = useState(false);
   
+  // Debug: Log whenever showNavControls changes
+  useEffect(() => {
+    console.log('[NAV-CONTROLS] showNavControls state is now:', showNavControls);
+  }, [showNavControls]);
+  
   // Incident reporting dialog state
   const [showIncidentReportDialog, setShowIncidentReportDialog] = useState(false);
   
