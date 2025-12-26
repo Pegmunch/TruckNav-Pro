@@ -41,10 +41,10 @@ export function RightActionStack({
           variant="ghost"
           size="icon"
           onClick={onViewIncidents}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 border-red-500 shadow-lg"
+          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
           data-testid="button-view-incidents"
         >
-          <AlertCircle className="h-4 w-4 text-gray-800" />
+          <AlertCircle className="h-4 w-4" />
         </Button>
       )}
 
@@ -55,12 +55,12 @@ export function RightActionStack({
           size="icon"
           onClick={onToggleMapView}
           className={cn(
-            "h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 shadow-lg",
-            isSatelliteView ? "border-green-500" : "border-gray-500"
+            "h-8 w-8 rounded-xl shadow-lg text-white",
+            isSatelliteView ? "bg-green-500 hover:bg-green-600" : "bg-gray-500 hover:bg-gray-600"
           )}
           data-testid="button-toggle-view"
         >
-          <Map className="h-4 w-4 text-gray-800" />
+          <Map className="h-4 w-4" />
         </Button>
       )}
 
@@ -70,10 +70,10 @@ export function RightActionStack({
           variant="ghost"
           size="icon"
           onClick={onRecenter}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 border-gray-500 shadow-lg"
+          className="h-8 w-8 rounded-xl bg-gray-500 hover:bg-gray-600 text-white shadow-lg"
           data-testid="button-recenter"
         >
-          <Crosshair className="h-4 w-4 text-gray-800" />
+          <Crosshair className="h-4 w-4" />
         </Button>
       )}
 
@@ -83,10 +83,10 @@ export function RightActionStack({
           variant="ghost"
           size="icon"
           onClick={onZoomIn}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 border-gray-500 shadow-lg"
+          className="h-8 w-8 rounded-xl bg-gray-500 hover:bg-gray-600 text-white shadow-lg"
           data-testid="button-zoom-in"
         >
-          <Plus className="h-4 w-4 text-gray-800" />
+          <Plus className="h-4 w-4" />
         </Button>
       )}
 
@@ -96,10 +96,10 @@ export function RightActionStack({
           variant="ghost"
           size="icon"
           onClick={onZoomOut}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 border-gray-500 shadow-lg"
+          className="h-8 w-8 rounded-xl bg-gray-500 hover:bg-gray-600 text-white shadow-lg"
           data-testid="button-zoom-out"
         >
-          <Minus className="h-4 w-4 text-gray-800" />
+          <Minus className="h-4 w-4" />
         </Button>
       )}
 
@@ -109,11 +109,11 @@ export function RightActionStack({
           variant="ghost"
           size="icon"
           onClick={onCompassClick}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 border-blue-500 shadow-lg"
+          className="h-8 w-8 rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
           data-testid="button-compass-reset"
         >
           <Compass 
-            className="h-4 w-4 text-gray-800 transition-transform duration-300" 
+            className="h-4 w-4 transition-transform duration-300" 
             style={{ transform: `rotate(${bearing}deg)` }}
           />
         </Button>
@@ -126,12 +126,12 @@ export function RightActionStack({
           size="icon"
           onClick={onToggle3D}
           className={cn(
-            "h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 shadow-lg",
-            is3DMode ? "border-blue-500" : "border-gray-500"
+            "h-8 w-8 rounded-xl shadow-lg text-white",
+            is3DMode ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-500 hover:bg-gray-600"
           )}
           data-testid="button-toggle-3d"
         >
-          <Box className="h-4 w-4 text-gray-800" />
+          <Box className="h-4 w-4" />
         </Button>
       )}
 
@@ -142,12 +142,12 @@ export function RightActionStack({
           size="icon"
           onClick={onToggleTraffic}
           className={cn(
-            "h-8 w-8 rounded-xl bg-white hover:bg-gray-50 border-2 shadow-lg",
-            showTraffic ? "border-orange-500" : "border-gray-500"
+            "h-8 w-8 rounded-xl shadow-lg text-white",
+            showTraffic ? "bg-orange-500 hover:bg-orange-600" : "bg-gray-500 hover:bg-gray-600"
           )}
           data-testid="button-toggle-traffic"
         >
-          <Layers className="h-4 w-4 text-gray-800" />
+          <Layers className="h-4 w-4" />
         </Button>
       )}
     </>
