@@ -18,30 +18,147 @@ interface MeasurementContextType {
 
 const MeasurementContext = createContext<MeasurementContextType | undefined>(undefined);
 
-export function MeasurementProvider({ children }: { children: React.ReactNode }) {
-  const [system, setSystemState] = useState<MeasurementSystem>("imperial");
-  const [region, setRegionState] = useState<Region>("uk");
+// Map country codes to measurement regions
+const getRegionFromCountry = (countryCode: string): Region => {
+  // UK region
+  if (countryCode === 'GB' || countryCode === 'UK') {
+    return 'uk';
+  }
+  
+  // USA region (includes US territories)
+  if (countryCode === 'US' || countryCode === 'USA') {
+    return 'usa';
+  }
+  
+  // European countries (including Spain, France, Germany, etc.)
+  const europeanCountries = [
+    'ES', 'DE', 'FR', 'IT', 'NL', 'BE', 'AT', 'CH', 'PL', 'CZ', 
+    'PT', 'SE', 'NO', 'DK', 'FI', 'IE', 'GR', 'HU', 'RO', 'BG',
+    'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'LU', 'MT', 'CY', 'IS',
+    'AD', 'MC', 'SM', 'VA', 'LI', 'RS', 'BA', 'ME', 'MK', 'AL', 'XK'
+  ];
+  
+  if (europeanCountries.includes(countryCode)) {
+    return 'europe';
+  }
+  
+  // Default to europe for most other countries (metric system is more common)
+  return 'europe';
+};
 
-  // Load measurement system and region from localStorage on mount
-  useEffect(() => {
+// Synchronous initialization function - runs before first render
+const getInitialState = (): { system: MeasurementSystem; region: Region } => {
+  // Check if we're in browser environment
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return { system: 'metric', region: 'europe' };
+  }
+  
+  try {
+    const savedCountry = localStorage.getItem("trucknav_country");
     const savedSystem = localStorage.getItem("measurement-system");
     const savedRegion = localStorage.getItem("measurement-region");
     
+    // Country is the source of truth for region
+    if (savedCountry) {
+      const derivedRegion = getRegionFromCountry(savedCountry);
+      
+      // Determine system based on saved value or derive from region
+      let system: MeasurementSystem;
+      if (savedSystem === "imperial" || savedSystem === "metric") {
+        system = savedSystem;
+      } else {
+        system = (derivedRegion === "uk" || derivedRegion === "usa") ? "imperial" : "metric";
+      }
+      
+      console.log(`[MEASUREMENT] Sync init: country=${savedCountry} → region=${derivedRegion}, system=${system}`);
+      return { system, region: derivedRegion };
+    }
+    
+    // No country saved, use saved region if valid
     if (savedRegion === "uk" || savedRegion === "usa" || savedRegion === "europe") {
-      setRegionState(savedRegion);
-      // Set default measurement system based on region if not already saved
-      if (!savedSystem) {
-        if (savedRegion === "uk" || savedRegion === "usa") {
-          setSystemState("imperial");
-        } else {
-          setSystemState("metric");
-        }
+      let system: MeasurementSystem;
+      if (savedSystem === "imperial" || savedSystem === "metric") {
+        system = savedSystem;
+      } else {
+        system = (savedRegion === "uk" || savedRegion === "usa") ? "imperial" : "metric";
+      }
+      return { system, region: savedRegion };
+    }
+    
+    // Default to europe/metric (most common internationally)
+    return { system: 'metric', region: 'europe' };
+  } catch (e) {
+    // localStorage might throw in some environments
+    return { system: 'metric', region: 'europe' };
+  }
+};
+
+// Get initial state synchronously
+const initialState = getInitialState();
+
+export function MeasurementProvider({ children }: { children: React.ReactNode }) {
+  const [system, setSystemState] = useState<MeasurementSystem>(initialState.system);
+  const [region, setRegionState] = useState<Region>(initialState.region);
+
+  // Helper to sync region from country
+  const syncRegionFromCountry = (countryCode: string, forceUpdate = false) => {
+    const derivedRegion = getRegionFromCountry(countryCode);
+    const currentRegion = localStorage.getItem("measurement-region");
+    
+    // Update if forced or if region doesn't match derived value
+    if (forceUpdate || currentRegion !== derivedRegion) {
+      setRegionState(derivedRegion);
+      localStorage.setItem("measurement-region", derivedRegion);
+      
+      // Auto-set measurement system based on region
+      if (derivedRegion === "uk" || derivedRegion === "usa") {
+        setSystemState("imperial");
+        localStorage.setItem("measurement-system", "imperial");
+      } else {
+        setSystemState("metric");
+        localStorage.setItem("measurement-system", "metric");
+      }
+      
+      console.log(`[MEASUREMENT] Region synced from country ${countryCode} → ${derivedRegion}`);
+    }
+  };
+
+  // Sync localStorage on mount if needed (initial state was derived from country)
+  // and set up event listeners for country changes
+  useEffect(() => {
+    const savedCountry = localStorage.getItem("trucknav_country");
+    const savedRegion = localStorage.getItem("measurement-region");
+    
+    // Update localStorage if region doesn't match derived region (fix stale data)
+    if (savedCountry) {
+      const derivedRegion = getRegionFromCountry(savedCountry);
+      if (savedRegion !== derivedRegion) {
+        console.log(`[MEASUREMENT] Fixing localStorage: ${savedRegion} → ${derivedRegion}`);
+        localStorage.setItem("measurement-region", derivedRegion);
       }
     }
     
-    if (savedSystem === "imperial" || savedSystem === "metric") {
-      setSystemState(savedSystem);
-    }
+    // Listen for country changes from other tabs (StorageEvent)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'trucknav_country' && event.newValue) {
+        syncRegionFromCountry(event.newValue, true);
+      }
+    };
+    
+    // Listen for country changes within the same tab (CustomEvent)
+    const handleCountryChange = (event: CustomEvent<{ countryCode: string }>) => {
+      if (event.detail?.countryCode) {
+        syncRegionFromCountry(event.detail.countryCode, true);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('country-changed', handleCountryChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('country-changed', handleCountryChange as EventListener);
+    };
   }, []);
 
   // Save to localStorage when system changes

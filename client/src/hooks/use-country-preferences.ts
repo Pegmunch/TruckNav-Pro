@@ -227,6 +227,11 @@ export function useCountryPreferences() {
       // Save to storage
       savePreferences(newPreferences);
       
+      // Dispatch custom event for same-tab listeners (e.g., MeasurementProvider)
+      window.dispatchEvent(new CustomEvent('country-changed', {
+        detail: { countryCode: country.code }
+      }));
+      
       // Change i18n language with error handling
       if (i18n.language !== country.defaultLanguage) {
         try {
@@ -290,6 +295,11 @@ export function useCountryPreferences() {
   const changeCountry = useCallback(async (countryCode: string) => {
     const country = getCountryByCode(countryCode) || DEFAULT_COUNTRY;
     await updateCountryPreferences(country);
+    
+    // Dispatch custom event for same-tab listeners (e.g., MeasurementProvider)
+    window.dispatchEvent(new CustomEvent('country-changed', {
+      detail: { countryCode: country.code }
+    }));
   }, [updateCountryPreferences]);
 
   // Reset to defaults
