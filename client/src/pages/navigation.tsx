@@ -267,37 +267,28 @@ function NavigationPageContent() {
     }
 
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
-      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Showing controls');
-      setShowNavControls(true);
+      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Toggling controls');
+      
+      // Toggle visibility on double tap
+      setShowNavControls(prev => !prev);
+      
       lastMapTapTimeRef.current = 0; // Reset to prevent triple-tap issues
       return;
     }
     
     lastMapTapTimeRef.current = now;
 
-    // Set a timer for single tap to hide controls
-    // Using a slightly longer delay and ensuring we check showNavControls BEFORE starting
-    singleTapTimerRef.current = setTimeout(() => {
-      // Re-verify that this is indeed a single tap (no newer tap happened)
-      if (lastMapTapTimeRef.current === now) {
-        console.log('[MAP-CLICK] SINGLE-TAP TRIGGERED - Hiding controls if they were visible');
-        // Close incident feed if user has interacted with it
-        if (hasInteractedWithIncidentFeed && showIncidentFeed) {
-          setShowIncidentFeed(false);
-        }
-        setShowNavControls(prev => {
-          if (prev === true) {
-            console.log('[MAP-CLICK] Successfully hiding controls');
-            return false;
-          }
-          return prev;
-        });
-      }
+    // Remove single tap timer entirely - single tap no longer hides controls
+    if (singleTapTimerRef.current) {
+      clearTimeout(singleTapTimerRef.current);
       singleTapTimerRef.current = null;
-    }, DOUBLE_TAP_THRESHOLD + 100);
+    }
 
-    // Initial check moved inside timer for consistency
-  }, [hasInteractedWithIncidentFeed, showIncidentFeed, showNavControls]);
+    // Close incident feed if user has interacted with it
+    if (hasInteractedWithIncidentFeed && showIncidentFeed) {
+      setShowIncidentFeed(false);
+    }
+  }, [hasInteractedWithIncidentFeed, showIncidentFeed]);
 
   // Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{
