@@ -2562,9 +2562,10 @@ function NavigationPageContent() {
         )}
         
         {/* Toggleable Navigation Controls - OUTSIDE mobile-layout for proper z-index stacking */}
+        {/* Double-tap map to show, single-tap to hide */}
         {showNavControls && !isARMode && (
           <div 
-            className="fixed z-[1600] pointer-events-auto"
+            className="fixed z-[1600] pointer-events-auto flex flex-col gap-2"
             style={{
               top: 'calc(70px + var(--safe-area-top, 0px))',
               right: 'calc(12px + var(--safe-area-right, 0px))'
@@ -3234,10 +3235,10 @@ function NavigationPageContent() {
                   onSettingsClick={() => setShowComprehensiveMenu(true)}
                 />
                 
-                {/* Toggleable Navigation Controls - Shown when green gear is clicked (plan/preview modes) */}
+                {/* Toggleable Navigation Controls - Double-tap map to show, single-tap to hide */}
                 {showNavControls && !isNavUIActive && (
                   <div 
-                    className="fixed z-[1600] pointer-events-auto"
+                    className="fixed z-[1600] pointer-events-auto flex flex-col gap-2"
                     style={{
                       top: 'calc(70px + var(--safe-area-top, 0px))',
                       right: 'calc(12px + var(--safe-area-right, 0px))'
