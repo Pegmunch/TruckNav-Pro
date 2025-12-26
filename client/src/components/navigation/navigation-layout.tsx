@@ -48,20 +48,20 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - Fixed positioning to prevent map overlay */}
-      {rightStack && (
-        <div 
-          className="fixed right-4 z-[9999] flex flex-col gap-4 pointer-events-auto"
-          data-testid="navigation-controls-container"
-          style={{ 
-            top: '100px', 
-            maxHeight: '80vh',
-            display: 'block'
-          }}
-        >
-          {rightStack}
-        </div>
-      )}
+      {/* Right navigation controls stack - Fixed positioning */}
+      <div 
+        className={cn(
+          "fixed right-4 flex flex-col gap-4 pointer-events-auto transition-all duration-300",
+          rightStack ? "translate-x-0 opacity-100 visible" : "translate-x-20 opacity-0 invisible pointer-events-none"
+        )}
+        style={{ 
+          top: '100px',
+          zIndex: 99999,
+          isolation: 'isolate'
+        }}
+      >
+        {rightStack}
+      </div>
 
       {/* Bottom instrumentation bar - positioned near base of map */}
       {shouldShowUI && bottomBar && (
