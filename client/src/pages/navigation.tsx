@@ -2567,7 +2567,7 @@ function NavigationPageContent() {
           <div 
             className="fixed z-[1600] pointer-events-auto flex flex-col gap-2"
             style={{
-              top: 'calc(70px + var(--safe-area-top, 0px))',
+              bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
               right: 'calc(12px + var(--safe-area-right, 0px))'
             }}
           >
@@ -3240,7 +3240,7 @@ function NavigationPageContent() {
                   <div 
                     className="fixed z-[1600] pointer-events-auto flex flex-col gap-2"
                     style={{
-                      top: 'calc(70px + var(--safe-area-top, 0px))',
+                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
                       right: 'calc(12px + var(--safe-area-right, 0px))'
                     }}
                   >
