@@ -50,9 +50,7 @@ import { useWeatherData } from "@/hooks/use-weather-data";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from 'react-i18next';
-import { cn } from "@/lib/utils";
-import { type Facility, type Route as RouteType, type Journey } from "@shared/schema";
-import { useGPS } from "@/contexts/gps-context";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 
 interface UnifiedSearchPanelProps {
   // Panel state
