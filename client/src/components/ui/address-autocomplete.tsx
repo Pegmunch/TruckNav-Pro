@@ -72,15 +72,16 @@ export function AddressAutocomplete({
   const updateDropdownPosition = useCallback(() => {
     if (inputRef.current && open) {
       const rect = inputRef.current.getBoundingClientRect();
-      // On iOS PWA, the visual viewport may be offset when keyboard is open
-      // getBoundingClientRect is relative to visual viewport, but fixed positioning is relative to layout viewport
+      // On iOS PWA, getBoundingClientRect returns visual viewport coordinates
+      // but fixed positioning uses layout viewport coordinates
+      // Use pageTop/pageLeft to get the layout viewport displacement
       const visualViewport = window.visualViewport;
-      const offsetTop = visualViewport?.offsetTop || 0;
-      const offsetLeft = visualViewport?.offsetLeft || 0;
+      const viewportTop = visualViewport?.pageTop ?? window.scrollY;
+      const viewportLeft = visualViewport?.pageLeft ?? window.scrollX;
       
       setDropdownPosition({
-        top: rect.bottom + offsetTop,
-        left: rect.left + offsetLeft,
+        top: rect.bottom + viewportTop,
+        left: rect.left + viewportLeft,
         width: rect.width
       });
     }
@@ -611,11 +612,12 @@ export function AddressAutocomplete({
       {/* Portal-based Dropdown - Renders outside transformed containers to fix mobile positioning */}
       {open && dropdownPosition && createPortal(
         <div 
-          className="fixed z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
+          className="absolute z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
           style={{ 
             top: dropdownPosition.top,
             left: dropdownPosition.left,
-            width: dropdownPosition.width
+            width: dropdownPosition.width,
+            position: 'absolute'
           }}
           onMouseDown={(e) => e.preventDefault()}
         >
