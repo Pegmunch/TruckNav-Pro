@@ -2618,13 +2618,13 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
 }
 
 /* ============================================
-   CRITICAL: FORCE WHITE LUCIDE ICONS IN RIGHT-SIDE NAV BUTTONS
-   All buttons have colored backgrounds (bg-gray-500, bg-blue-500, etc.)
-   so icons MUST be white to be visible!
+   CRITICAL: FORCE BLACK LUCIDE ICONS IN RIGHT-SIDE NAV BUTTONS
+   All buttons have white backgrounds with colored borders
+   so icons MUST be black to be visible!
    Using !important to override any conflicting MapLibre styles
    ============================================ */
 
-/* All right-side navigation buttons - WHITE icons */
+/* All right-side navigation buttons - BLACK icons */
 [data-testid="button-view-incidents"] svg,
 [data-testid="button-view-incidents"] svg *,
 [data-testid="button-toggle-view"] svg,
@@ -2641,8 +2641,8 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
 [data-testid="button-toggle-3d"] svg *,
 [data-testid="button-toggle-traffic"] svg,
 [data-testid="button-toggle-traffic"] svg * {
-  stroke: #ffffff !important;
-  color: #ffffff !important;
+  stroke: #000000 !important;
+  color: #000000 !important;
   fill: none !important;
 }
 
