@@ -532,7 +532,7 @@ export function AddressAutocomplete({
         )}
       </Button>
 
-      <div className="relative" style={{ position: 'relative', overflow: 'visible', width: '100%' }}>
+      <div className="relative isolate" style={{ position: 'relative', overflow: 'visible', width: '100%' }}>
         <Input
           id={id}
           value={searchTerm}
@@ -550,7 +550,7 @@ export function AddressAutocomplete({
           data-form-type="other"
           data-lpignore="true"
         />
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
           {isLoading && (
             <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400" />
           )}
@@ -560,14 +560,14 @@ export function AddressAutocomplete({
         {/* Inline Dropdown - Replaces Popover to fix PWA/Mobile viewport issues */}
         {open && (
           <div 
-            className="absolute left-0 right-0 z-[9999] shadow-2xl border-2 bg-background max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
+            className="absolute left-0 right-0 z-[10000] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg animate-in fade-in slide-in-from-top-1 duration-200"
             style={{ 
-              top: '100%', 
-              bottom: 'auto', // Explicitly disable top-side growth
-              marginTop: '0px',
-              position: 'absolute'
+              top: '100%',
+              marginTop: '4px',
+              position: 'absolute',
+              bottom: 'auto' // Force dropdown to stay below by ensuring bottom isn't constrained
             }}
-            onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking items
+            onMouseDown={(e) => e.preventDefault()}
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-none">
