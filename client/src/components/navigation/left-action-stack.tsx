@@ -65,6 +65,20 @@ export function LeftActionStack({
   
   return (
     <div className="flex flex-col gap-2 pointer-events-auto">
+      {/* Navigation button - red navigation arrow */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => {
+          console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button clicked');
+          onNavigate?.();
+        }}
+        className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+        data-testid="button-nav-left"
+      >
+        <Navigation className="h-4 w-4" />
+      </Button>
+
       {/* Voice command button - microphone - Always reserve space to prevent layout shift */}
       <Button
         variant="ghost"

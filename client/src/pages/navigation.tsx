@@ -2701,48 +2701,43 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* PLAN MODE CONTROLS - Bottom Left Stack */}
-              {/* Moved to LEFT side to avoid collision with right-side map controls */}
-              {/* Also hide when navigation UI is active to prevent duplicate buttons */}
+              {/* PLAN MODE CONTROLS - Left Stack */}
+              {/* Vertical stack for all left-side buttons in Plan mode */}
               {mobileNavMode === 'plan' && !currentRoute && !isNavUIActive && (
                 <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                   style={{
                     bottom: 'calc(56px + var(--safe-area-bottom))',
                     left: '16px'
                   }}>
-                  {/* GPS Mode / Cache Mode Toggle Buttons */}
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleGpsModeToggle('gps')}
-                      size="icon"
-                      className={`h-10 w-10 rounded-full shadow-lg font-medium ${
-                        gpsMode === 'gps'
-                          ? 'bg-green-500 hover:bg-green-600 text-white'
-                          : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
-                      }`}
-                      data-testid="button-gps-mode"
-                      aria-label="GPS Mode - Live tracking"
-                      aria-pressed={gpsMode === 'gps'}
-                      title="GPS Mode: Live GPS tracking with auto-follow"
-                    >
-                      <Navigation2 className="w-6 h-6" />
-                    </Button>
-                    <Button
-                      onClick={() => handleGpsModeToggle('cache')}
-                      size="icon"
-                      className={`h-10 w-10 rounded-full shadow-lg font-medium ${
-                        gpsMode === 'cache'
-                          ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                          : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
-                      }`}
-                      data-testid="button-cache-mode"
-                      aria-label="Cache Mode - Manual position"
-                      aria-pressed={gpsMode === 'cache'}
-                      title="Cache Mode: Manual/cached position without live GPS"
-                    >
-                      <MapPin className="w-6 h-6" />
-                    </Button>
-                  </div>
+                  {/* GPS Mode Button */}
+                  <Button
+                    onClick={() => handleGpsModeToggle('gps')}
+                    size="icon"
+                    className={`h-10 w-10 rounded-full shadow-lg font-medium ${
+                      gpsMode === 'gps'
+                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                        : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
+                    }`}
+                    data-testid="button-gps-mode"
+                    aria-label="GPS Mode"
+                  >
+                    <Navigation2 className="w-6 h-6" />
+                  </Button>
+
+                  {/* Cache Mode Button */}
+                  <Button
+                    onClick={() => handleGpsModeToggle('cache')}
+                    size="icon"
+                    className={`h-10 w-10 rounded-full shadow-lg font-medium ${
+                      gpsMode === 'cache'
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
+                    }`}
+                    data-testid="button-cache-mode"
+                    aria-label="Cache Mode"
+                  >
+                    <MapPin className="w-6 h-6" />
+                  </Button>
                   
                   {/* Voice Toggle Button */}
                   <Button
@@ -2750,14 +2745,8 @@ function NavigationPageContent() {
                     size="icon"
                     className="h-10 w-10 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
                     data-testid="button-toggle-voice"
-                    aria-label={professionalVoiceEnabled ? "Turn off voice" : "Turn on voice"}
-                    title={professionalVoiceEnabled ? "Voice on" : "Voice off"}
                   >
-                    {professionalVoiceEnabled ? (
-                      <Speaker className="w-6 h-6" />
-                    ) : (
-                      <VolumeX className="w-6 h-6" />
-                    )}
+                    {professionalVoiceEnabled ? <Speaker className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
                   </Button>
                   
                   {/* Menu Button */}
@@ -2766,7 +2755,6 @@ function NavigationPageContent() {
                     size="icon"
                     className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
                     data-testid="button-open-menu-plan"
-                    aria-label="Open menu"
                   >
                     <Menu className="w-6 h-6" />
                   </Button>
