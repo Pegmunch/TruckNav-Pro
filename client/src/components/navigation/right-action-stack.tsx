@@ -10,12 +10,14 @@ interface RightActionStackProps {
   onToggleTraffic?: () => void;
   onToggleMapView?: () => void;
   onViewIncidents?: () => void;
+  onViewRestrictionDetails?: () => void;
   onCompassClick?: () => void;
   is3DMode?: boolean;
   showTraffic?: boolean;
   isSatelliteView?: boolean;
   bearing?: number;
   hideCompass?: boolean;
+  restrictionViolations?: any[];
 }
 
 export function RightActionStack({
@@ -26,13 +28,21 @@ export function RightActionStack({
   onToggleTraffic,
   onToggleMapView,
   onViewIncidents,
+  onViewRestrictionDetails,
   onCompassClick,
   is3DMode = false,
   showTraffic = false,
   isSatelliteView = false,
   bearing = 0,
-  hideCompass = false
+  hideCompass = false,
+  restrictionViolations = []
 }: RightActionStackProps) {
+  console.log('[RIGHT-STACK] Rendering with buttons:', {
+    zoom: !!onZoomIn,
+    recenter: !!onRecenter,
+    incidents: !!onViewIncidents
+  });
+  
   return (
     <div className="flex flex-col gap-2" data-testid="right-action-stack">
       {/* 1. Incidents - Red border */}
