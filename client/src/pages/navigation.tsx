@@ -242,6 +242,21 @@ function NavigationPageContent() {
   // Double-tap detection for map controls toggle (when not navigating)
   const lastMapTapTimeRef = useRef<number>(0);
   const DOUBLE_TAP_THRESHOLD = 300; // ms
+
+  // Handle map click for double-tap detection
+  const handleMapClick = useCallback(() => {
+    const now = Date.now();
+    const timeSinceLastTap = now - lastMapTapTimeRef.current;
+    
+    if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD) {
+      console.log('[MAP-CLICK] Double-tap detected - toggling navigation controls');
+      setShowNavControls(prev => !prev);
+      // Reset tap time to prevent triple-tap from firing twice
+      lastMapTapTimeRef.current = 0;
+    } else {
+      lastMapTapTimeRef.current = now;
+    }
+  }, []);
   
   // Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{
