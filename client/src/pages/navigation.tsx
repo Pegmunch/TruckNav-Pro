@@ -50,6 +50,7 @@ import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-
 import TurnIndicator from "@/components/navigation/turn-indicator";
 import ComprehensiveMobileMenu from "@/components/navigation/comprehensive-mobile-menu";
 import { NavigationHeader } from "@/components/navigation/navigation-header";
+import { QuickSettingsPanel } from "@/components/navigation/quick-settings-panel";
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
@@ -189,6 +190,9 @@ function NavigationPageContent() {
   
   // Comprehensive mobile menu state
   const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
+  
+  // Quick settings panel state (green gear button)
+  const [showQuickSettings, setShowQuickSettings] = useState(false);
   
   // Current road name from GPS position (for speedometer display)
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
@@ -2574,10 +2578,10 @@ function NavigationPageContent() {
       {(isMobile || isStandalone) ? (
         <>
         {/* Navigation Header - OUTSIDE mobile-layout for proper z-index stacking */}
-        {/* Green gear opens the comprehensive settings menu */}
+        {/* Green gear opens the quick settings panel (vehicle, language, theme) */}
         {!isARMode && (
           <NavigationHeader 
-            onSettingsClick={() => setShowComprehensiveMenu(true)}
+            onSettingsClick={() => setShowQuickSettings(true)}
           />
         )}
         
@@ -3220,9 +3224,9 @@ function NavigationPageContent() {
                 )}
                 
                       {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
-                      {/* Green gear opens the comprehensive settings menu */}
+                      {/* Green gear opens the quick settings panel (vehicle, language, theme) */}
                       <NavigationHeader 
-                        onSettingsClick={() => setShowComprehensiveMenu(true)}
+                        onSettingsClick={() => setShowQuickSettings(true)}
                       />
                       
                       {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
@@ -3423,6 +3427,18 @@ function NavigationPageContent() {
         }}
         coordinates={currentGPSLocation}
         hideTabsInInputMode={showComprehensiveMenu}
+      />
+
+      {/* Quick Settings Panel - Green gear button opens this */}
+      <QuickSettingsPanel
+        open={showQuickSettings}
+        onOpenChange={setShowQuickSettings}
+        selectedProfile={selectedProfile}
+        onProfileSelect={(profile) => {
+          setSelectedProfile(profile);
+          setActiveProfile(profile);
+          queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+        }}
       />
 
       {/* Destination Reached Dialog */}
