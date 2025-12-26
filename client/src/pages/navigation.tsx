@@ -247,25 +247,20 @@ function NavigationPageContent() {
     const now = Date.now();
     const timeSinceLastTap = now - lastMapTapTimeRef.current;
     
-    if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD) {
-      console.log('[MAP-CLICK] Double-tap detected - toggling navigation controls');
-      // Force immediate state update and log it
+    // Log interaction for debugging
+    console.log('[MAP-CLICK] Interaction detected', { 
+      timeSinceLastTap, 
+      threshold: DOUBLE_TAP_THRESHOLD
+    });
+
+    if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
+      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Toggling controls');
       setShowNavControls(prev => !prev);
-      // Reset tap time to prevent triple-tap from firing twice
       lastMapTapTimeRef.current = 0;
-      return; 
+      return;
     }
     
     lastMapTapTimeRef.current = now;
-
-    // Optional: Add single-tap logic to hide after delay if no second tap
-    setTimeout(() => {
-      const timeSinceLastTap = Date.now() - lastMapTapTimeRef.current;
-      if (timeSinceLastTap >= DOUBLE_TAP_THRESHOLD && lastMapTapTimeRef.current !== 0) {
-        // This was a true single tap
-        console.log('[MAP-CLICK] Single tap detected');
-      }
-    }, DOUBLE_TAP_THRESHOLD);
 
     // Close incident feed if user has interacted with it
     if (hasInteractedWithIncidentFeed && showIncidentFeed) {
