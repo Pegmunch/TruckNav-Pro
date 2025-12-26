@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -63,7 +64,85 @@ export function AddressAutocomplete({
   
   // Ref for input element
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
+  
+  // Dropdown position state for portal rendering with visualViewport support
+  const [dropdownStyle, setDropdownStyle] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
+  
+  // Calculate dropdown position using visualViewport for iOS PWA keyboard handling
+  const updateDropdownPosition = useCallback(() => {
+    if (!inputRef.current || !open) {
+      setDropdownStyle(null);
+      return;
+    }
+    
+    const rect = inputRef.current.getBoundingClientRect();
+    const vv = window.visualViewport;
+    
+    // Use visualViewport offsets to account for iOS keyboard shifting
+    const vpOffsetTop = vv?.offsetTop ?? 0;
+    const vpOffsetLeft = vv?.offsetLeft ?? 0;
+    const vpHeight = vv?.height ?? window.innerHeight;
+    
+    // Calculate available space below the input within the visual viewport
+    const spaceBelow = vpHeight - (rect.bottom - vpOffsetTop);
+    const maxHeight = Math.min(300, Math.max(100, spaceBelow - 20));
+    
+    setDropdownStyle({
+      top: rect.bottom + vpOffsetTop,
+      left: rect.left + vpOffsetLeft,
+      width: rect.width,
+      maxHeight
+    });
+  }, [open]);
+  
+  // Update position on open, scroll, resize, and visualViewport changes
+  useLayoutEffect(() => {
+    if (!open) {
+      setDropdownStyle(null);
+      return;
+    }
+    
+    // Initial calculation
+    updateDropdownPosition();
+    
+    // Throttled update using RAF
+    let rafId: number | null = null;
+    const throttledUpdate = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        updateDropdownPosition();
+        rafId = null;
+      });
+    };
+    
+    // Listen to scroll and resize events
+    window.addEventListener('scroll', throttledUpdate, true);
+    window.addEventListener('resize', throttledUpdate);
+    
+    // Listen to visualViewport changes (critical for iOS keyboard)
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', throttledUpdate);
+      vv.addEventListener('scroll', throttledUpdate);
+    }
+    
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', throttledUpdate, true);
+      window.removeEventListener('resize', throttledUpdate);
+      if (vv) {
+        vv.removeEventListener('resize', throttledUpdate);
+        vv.removeEventListener('scroll', throttledUpdate);
+      }
+    };
+  }, [open, updateDropdownPosition]);
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
@@ -562,10 +641,19 @@ export function AddressAutocomplete({
 
       </div>
 
-      {/* Inline Dropdown - Uses normal flow positioning (no absolute) */}
-      {open && (
+      {/* Portal Dropdown - Fixed position with visualViewport offsets for iOS PWA */}
+      {open && dropdownStyle && createPortal(
         <div 
-          className="w-full mt-1 z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
+          ref={dropdownRef}
+          className="shadow-2xl border-2 bg-background overflow-y-auto rounded-lg"
+          style={{
+            position: 'fixed',
+            top: dropdownStyle.top,
+            left: dropdownStyle.left,
+            width: dropdownStyle.width,
+            maxHeight: dropdownStyle.maxHeight,
+            zIndex: 99999,
+          }}
           onMouseDown={(e) => e.preventDefault()}
         >
             <Command className="bg-transparent">
@@ -666,8 +754,9 @@ export function AddressAutocomplete({
                 )}
               </CommandList>
             </Command>
-          </div>
-        )}
+          </div>,
+        document.body
+      )}
     
     {/* Error Display */}
     {tomtomError && debouncedSearch.length >= 3 && (
