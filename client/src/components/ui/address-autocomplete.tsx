@@ -639,23 +639,13 @@ export function AddressAutocomplete({
           <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </div>
 
-      </div>
-
-      {/* Portal Dropdown - Fixed position with visualViewport offsets for iOS PWA */}
-      {open && dropdownStyle && createPortal(
-        <div 
-          ref={dropdownRef}
-          className="shadow-2xl border-2 bg-background overflow-y-auto rounded-lg"
-          style={{
-            position: 'fixed',
-            top: dropdownStyle.top,
-            left: dropdownStyle.left,
-            width: dropdownStyle.width,
-            maxHeight: dropdownStyle.maxHeight,
-            zIndex: 99999,
-          }}
-          onMouseDown={(e) => e.preventDefault()}
-        >
+        {/* Inline Results List - Locked inside the input container */}
+        {open && (
+          <div 
+            className="absolute top-full left-0 w-full mt-2 z-[100] shadow-2xl border-2 bg-background overflow-y-auto rounded-lg animate-in fade-in slide-in-from-top-2 duration-200"
+            style={{ maxHeight: '250px' }}
+            onMouseDown={(e) => e.preventDefault()}
+          >
             <Command className="bg-transparent">
               <CommandList className="max-h-none">
                 {favoriteLocations.length === 0 && 
@@ -754,9 +744,9 @@ export function AddressAutocomplete({
                 )}
               </CommandList>
             </Command>
-          </div>,
-        document.body
-      )}
+          </div>
+        )}
+      </div>
     
     {/* Error Display */}
     {tomtomError && debouncedSearch.length >= 3 && (
