@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverContentInline, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { 
   X,
@@ -681,13 +681,11 @@ function ComprehensiveMobileMenu({
                             autoComplete="off"
                           />
                         </PopoverAnchor>
-                        <PopoverContent 
+                        <PopoverContentInline 
                           className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
                           align="start"
                           side="bottom"
                           sideOffset={0}
-                          avoidCollisions={false}
-                          collisionPadding={0}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
@@ -725,7 +723,7 @@ function ComprehensiveMobileMenu({
                               )}
                             </CommandList>
                           </Command>
-                        </PopoverContent>
+                        </PopoverContentInline>
                       </Popover>
                     </div>
 
@@ -762,13 +760,11 @@ function ComprehensiveMobileMenu({
                             autoComplete="off"
                           />
                         </PopoverAnchor>
-                        <PopoverContent 
+                        <PopoverContentInline 
                           className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
                           align="start"
                           side="bottom"
                           sideOffset={0}
-                          avoidCollisions={false}
-                          collisionPadding={0}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
@@ -802,7 +798,7 @@ function ComprehensiveMobileMenu({
                               )}
                             </CommandList>
                           </Command>
-                        </PopoverContent>
+                        </PopoverContentInline>
                       </Popover>
                     </div>
 
