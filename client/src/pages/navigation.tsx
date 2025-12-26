@@ -2525,10 +2525,46 @@ function NavigationPageContent() {
       {(isMobile || isStandalone) ? (
         <>
         {/* Navigation Header - OUTSIDE mobile-layout for proper z-index stacking */}
+        {/* Green gear toggles the 8 navigation control buttons on the right side */}
         {!isARMode && (
           <NavigationHeader 
-            onSettingsClick={() => setShowComprehensiveMenu(true)}
+            onSettingsClick={() => setShowNavControls(prev => !prev)}
           />
+        )}
+        
+        {/* Toggleable Navigation Controls - OUTSIDE mobile-layout for proper z-index stacking */}
+        {showNavControls && !isARMode && (
+          <div 
+            className="fixed z-[1600] pointer-events-auto"
+            style={{
+              top: 'calc(70px + var(--safe-area-top, 0px))',
+              right: 'calc(12px + var(--safe-area-right, 0px))'
+            }}
+          >
+            <RightActionStack
+              onZoomIn={() => mapRef.current?.zoomIn()}
+              onZoomOut={() => mapRef.current?.zoomOut()}
+              onRecenter={() => mapRef.current?.zoomToUserLocation()}
+              onToggle3D={() => {
+                mapRef.current?.toggle3DMode();
+                setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+              }}
+              onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+              onToggleMapView={() => {
+                mapRef.current?.toggleMapView();
+                setMapControlState(prev => ({ 
+                  ...prev, 
+                  isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                }));
+              }}
+              onViewIncidents={() => setShowIncidentFeed(true)}
+              onCompassClick={() => mapRef.current?.resetBearing()}
+              is3DMode={mapControlState.is3DMode}
+              showTraffic={showTrafficLayer}
+              isSatelliteView={mapControlState.isSatelliteView}
+              bearing={mapControlState.bearing}
+            />
+          </div>
         )}
         
         <div className="mobile-layout">
