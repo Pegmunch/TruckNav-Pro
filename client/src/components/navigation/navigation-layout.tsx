@@ -4,6 +4,7 @@ interface NavigationLayoutProps {
   topStrip?: ReactNode;
   leftStack?: ReactNode;
   rightStack?: ReactNode;
+  rightStackVisible?: boolean;
   bottomBar?: ReactNode;
   mapContent: ReactNode;
   isNavigating: boolean;
@@ -14,6 +15,7 @@ export function NavigationLayout({
   topStrip,
   leftStack,
   rightStack,
+  rightStackVisible = true,
   bottomBar,
   mapContent,
   isNavigating,
@@ -49,19 +51,18 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - Fixed positioning */}
-      <div 
-        className="fixed right-4 z-[99999]"
-        style={{ 
-          top: '100px',
-          display: 'block',
-          pointerEvents: 'none',
-          userSelect: 'none'
-        }}
-      >
-        <div className="pointer-events-auto">
+      {rightStackVisible && (
+        <div 
+          className="fixed right-4 z-[99999]"
+          style={{ 
+            top: '100px',
+            pointerEvents: 'auto',
+            userSelect: 'none'
+          }}
+        >
           {rightStack}
         </div>
-      </div>
+      )}
 
       {/* Bottom instrumentation bar - positioned near base of map */}
       {shouldShowUI && bottomBar && (

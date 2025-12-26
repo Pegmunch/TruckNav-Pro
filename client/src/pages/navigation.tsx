@@ -270,7 +270,11 @@ function NavigationPageContent() {
       console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Toggling controls');
       
       // Toggle visibility on double tap
-      setShowNavControls(prev => !prev);
+      setShowNavControls(prev => {
+        const newValue = !prev;
+        console.log('[MAP-CLICK] State toggle:', prev, '->', newValue);
+        return newValue;
+      });
       
       lastMapTapTimeRef.current = 0; // Reset to prevent triple-tap issues
       return;
@@ -2854,10 +2858,10 @@ function NavigationPageContent() {
 
               {/* NAVIGATE MODE WITH NAVIGATION LAYOUT - Mobile Navigation UI */}
               {/* Only show navigation UI when menu is CLOSED to prevent z-index overlap */}
-              {showNavControls && !showComprehensiveMenu && (
+              {!showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
-                  isNavUIActive={showNavControls}
+                  rightStackVisible={showNavControls}
                   mapContent={
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
