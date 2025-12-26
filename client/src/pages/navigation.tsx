@@ -63,7 +63,6 @@ import { looksLikePostcode, detectPostcodeCountry } from "@/lib/postcode-utils";
 import { robustGeocode } from "@/lib/robust-geocoding";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 
-import { NavigationControlsStack } from "@/components/navigation/navigation-controls-stack";
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
@@ -74,10 +73,6 @@ import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
 
-// Removed duplicate NavigationControlsStack - now imported from component
-
-// NavigationControlsStack has been moved to its own component file
-// Import is at the top of this file
 
 // Extended Route type with API-only fields for route calculation responses
 type RouteWithViolations = Route & {
