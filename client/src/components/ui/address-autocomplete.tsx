@@ -560,12 +560,14 @@ export function AddressAutocomplete({
           <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </div>
 
-        {/* Inline Dropdown - Uses absolute positioning relative to input container */}
-        {open && (
-          <div 
-            className="absolute left-0 right-0 top-full mt-1 z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
-            onMouseDown={(e) => e.preventDefault()}
-          >
+      </div>
+
+      {/* Inline Dropdown - Uses normal flow positioning (no absolute) */}
+      {open && (
+        <div 
+          className="w-full mt-1 z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
+          onMouseDown={(e) => e.preventDefault()}
+        >
             <Command className="bg-transparent">
               <CommandList className="max-h-none">
                 {favoriteLocations.length === 0 && 
@@ -666,7 +668,6 @@ export function AddressAutocomplete({
             </Command>
           </div>
         )}
-      </div>
     
     {/* Error Display */}
     {tomtomError && debouncedSearch.length >= 3 && (
