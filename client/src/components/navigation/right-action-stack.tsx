@@ -39,8 +39,6 @@ export function RightActionStack({
   restrictionViolations = [],
   isVisible = true
 }: RightActionStackProps) {
-  console.log('[RIGHT-STACK] Rendering with visibility:', isVisible);
-  
   return (
     <div 
       className={cn(
