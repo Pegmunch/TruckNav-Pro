@@ -407,6 +407,33 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 )}
               </div>
             )}
+
+            {/* Fallback: Default circular sign when region not set or unknown */}
+            {region !== 'uk' && region !== 'usa' && region !== 'europe' && (
+              <div
+                className={cn(
+                  // Default circular shape (international standard)
+                  'flex items-center justify-center',
+                  'w-12 h-12',
+                  'rounded-full',
+                  // White background with red border (most common internationally)
+                  convertedSpeedLimit 
+                    ? 'bg-white dark:bg-white border-[3px] border-red-600' 
+                    : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
+                  'shadow-md',
+                  'transition-all duration-300'
+                )}
+                data-testid="speed-limit-display"
+              >
+                {convertedSpeedLimit ? (
+                  <span className="text-xl font-bold tabular-nums text-gray-900">
+                    {convertedSpeedLimit}
+                  </span>
+                ) : (
+                  <span className="text-base font-medium text-gray-500">--</span>
+                )}
+              </div>
+            )}
             
             {/* Vertical divider */}
             <div className={cn(
