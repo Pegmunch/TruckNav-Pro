@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -63,49 +61,8 @@ export function AddressAutocomplete({
   const { toast } = useToast();
   const gps = useGPS();
   
-  // Ref for input element and portal dropdown positioning
+  // Ref for input element
   const inputRef = useRef<HTMLInputElement>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
-  
-  // Update dropdown position when open changes or on scroll/resize
-  // Use fixed positioning with direct viewport coordinates from getBoundingClientRect
-  const updateDropdownPosition = useCallback(() => {
-    if (inputRef.current && open) {
-      const rect = inputRef.current.getBoundingClientRect();
-      // getBoundingClientRect returns viewport-relative coordinates
-      // position:fixed uses viewport-relative coordinates, so no offset needed
-      setDropdownPosition({
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width
-      });
-    }
-  }, [open]);
-  
-  useEffect(() => {
-    if (open) {
-      updateDropdownPosition();
-      // Update position on scroll and resize
-      window.addEventListener('scroll', updateDropdownPosition, true);
-      window.addEventListener('resize', updateDropdownPosition);
-      
-      // Subscribe to visual viewport events for iOS PWA keyboard handling
-      const visualViewport = window.visualViewport;
-      if (visualViewport) {
-        visualViewport.addEventListener('resize', updateDropdownPosition);
-        visualViewport.addEventListener('scroll', updateDropdownPosition);
-      }
-      
-      return () => {
-        window.removeEventListener('scroll', updateDropdownPosition, true);
-        window.removeEventListener('resize', updateDropdownPosition);
-        if (visualViewport) {
-          visualViewport.removeEventListener('resize', updateDropdownPosition);
-          visualViewport.removeEventListener('scroll', updateDropdownPosition);
-        }
-      };
-    }
-  }, [open, updateDropdownPosition]);
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
 
   // Detect country from GPS coordinates
@@ -577,7 +534,7 @@ export function AddressAutocomplete({
         )}
       </Button>
 
-      <div className="relative" style={{ position: 'relative', width: '100%' }}>
+      <div className="relative w-full">
         <Input
           ref={inputRef}
           id={id}
@@ -602,121 +559,114 @@ export function AddressAutocomplete({
           )}
           <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </div>
-      </div>
 
-      {/* Portal-based Dropdown - Renders outside transformed containers to fix mobile positioning */}
-      {open && dropdownPosition && createPortal(
-        <div 
-          className="z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
-          style={{ 
-            position: 'fixed',
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
-            width: dropdownPosition.width
-          }}
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <Command className="bg-transparent">
-            <CommandList className="max-h-none">
-              {favoriteLocations.length === 0 && 
-               recentLocations.length === 0 && 
-               tomtomResults.length === 0 && 
-               !ukPostcodeResult && (
-                <CommandEmpty className="py-6 text-center text-muted-foreground">
-                  {debouncedSearch.length < 3 
-                    ? "Type at least 3 characters to search..." 
-                    : "No locations found."}
-                </CommandEmpty>
-              )}
+        {/* Inline Dropdown - Uses absolute positioning relative to input container */}
+        {open && (
+          <div 
+            className="absolute left-0 right-0 top-full mt-1 z-[99999] shadow-2xl border-2 bg-background max-h-[300px] overflow-y-auto rounded-lg"
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <Command className="bg-transparent">
+              <CommandList className="max-h-none">
+                {favoriteLocations.length === 0 && 
+                 recentLocations.length === 0 && 
+                 tomtomResults.length === 0 && 
+                 !ukPostcodeResult && (
+                  <CommandEmpty className="py-6 text-center text-muted-foreground">
+                    {debouncedSearch.length < 3 
+                      ? "Type at least 3 characters to search..." 
+                      : "No locations found."}
+                  </CommandEmpty>
+                )}
 
-              {/* Saved/Favorite Locations */}
-              {(favoriteLocations.length > 0 || recentLocations.length > 0) && (
-                <CommandGroup heading="Saved Locations">
-                  {favoriteLocations.map(loc => (
-                    <CommandItem
-                      key={`fav-${loc.id}`}
-                      onSelect={() => handleSelectSavedLocation(loc)}
-                      className="flex items-center p-3 cursor-pointer hover:bg-accent"
-                    >
-                      <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{loc.label}</span>
-                        <span className="text-xs text-muted-foreground">Favorite Location</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                  {recentLocations.map(loc => (
-                    <CommandItem
-                      key={`recent-${loc.id}`}
-                      onSelect={() => handleSelectSavedLocation(loc)}
-                      className="flex items-center p-3 cursor-pointer hover:bg-accent"
-                    >
-                      <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{loc.label}</span>
-                        <span className="text-xs text-muted-foreground">Recent Location</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-
-              {/* UK Postcode Result (Fallback) */}
-              {ukPostcodeResult && (
-                <CommandGroup heading="Postcode Result">
-                  <CommandItem
-                    onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
-                    className="flex items-center p-3 cursor-pointer hover:bg-accent"
-                  >
-                    <MapPin className="mr-3 h-5 w-5 text-blue-500" />
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{ukPostcodeResult.address || ukPostcodeResult.formatted}</span>
-                      <span className="text-xs text-muted-foreground">UK Postcode Geocode</span>
-                    </div>
-                  </CommandItem>
-                </CommandGroup>
-              )}
-
-              {/* TomTom Search Results */}
-              {tomtomResults.length > 0 && (
-                <CommandGroup heading={poiCategory ? "Nearby Places" : "Search Results"}>
-                  {tomtomResults.map((result, index) => {
-                    const isPoi = isTomTomPOI(result);
-                    return (
+                {/* Saved/Favorite Locations */}
+                {(favoriteLocations.length > 0 || recentLocations.length > 0) && (
+                  <CommandGroup heading="Saved Locations">
+                    {favoriteLocations.map(loc => (
                       <CommandItem
-                        key={result.id || `tomtom-${index}`}
-                        onSelect={() => handleSelectTomTom(result)}
-                        className="flex items-center p-3 cursor-pointer hover:bg-accent border-b border-border/50 last:border-0"
+                        key={`fav-${loc.id}`}
+                        onSelect={() => handleSelectSavedLocation(loc)}
+                        className="flex items-center p-3 cursor-pointer hover:bg-accent"
                       >
-                        {isPoi ? (
-                          <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
-                        ) : (
-                          <Globe className="mr-3 h-5 w-5 text-blue-500 shrink-0" />
-                        )}
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="font-semibold truncate">
-                            {result.poi?.name || result.address.freeformAddress}
-                          </span>
-                          <span className="text-xs text-muted-foreground truncate">
-                            {result.address.municipality && `${result.address.municipality}, `}
-                            {result.address.countryCode || result.address.country}
-                          </span>
-                          {result.dist && (
-                            <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-4 px-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                              {(result.dist / 1609.34).toFixed(1)} miles away
-                            </Badge>
-                          )}
+                        <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{loc.label}</span>
+                          <span className="text-xs text-muted-foreground">Favorite Location</span>
                         </div>
                       </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </div>,
-        document.body
-      )}
+                    ))}
+                    {recentLocations.map(loc => (
+                      <CommandItem
+                        key={`recent-${loc.id}`}
+                        onSelect={() => handleSelectSavedLocation(loc)}
+                        className="flex items-center p-3 cursor-pointer hover:bg-accent"
+                      >
+                        <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{loc.label}</span>
+                          <span className="text-xs text-muted-foreground">Recent Location</span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+
+                {/* UK Postcode Result (Fallback) */}
+                {ukPostcodeResult && (
+                  <CommandGroup heading="Postcode Result">
+                    <CommandItem
+                      onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
+                      className="flex items-center p-3 cursor-pointer hover:bg-accent"
+                    >
+                      <MapPin className="mr-3 h-5 w-5 text-blue-500" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{ukPostcodeResult.address || ukPostcodeResult.formatted}</span>
+                        <span className="text-xs text-muted-foreground">UK Postcode Geocode</span>
+                      </div>
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+
+                {/* TomTom Search Results */}
+                {tomtomResults.length > 0 && (
+                  <CommandGroup heading={poiCategory ? "Nearby Places" : "Search Results"}>
+                    {tomtomResults.map((result, index) => {
+                      const isPoi = isTomTomPOI(result);
+                      return (
+                        <CommandItem
+                          key={result.id || `tomtom-${index}`}
+                          onSelect={() => handleSelectTomTom(result)}
+                          className="flex items-center p-3 cursor-pointer hover:bg-accent border-b border-border/50 last:border-0"
+                        >
+                          {isPoi ? (
+                            <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
+                          ) : (
+                            <Globe className="mr-3 h-5 w-5 text-blue-500 shrink-0" />
+                          )}
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="font-semibold truncate">
+                              {result.poi?.name || result.address.freeformAddress}
+                            </span>
+                            <span className="text-xs text-muted-foreground truncate">
+                              {result.address.municipality && `${result.address.municipality}, `}
+                              {result.address.countryCode || result.address.country}
+                            </span>
+                            {result.dist && (
+                              <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-4 px-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                {(result.dist / 1609.34).toFixed(1)} miles away
+                              </Badge>
+                            )}
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </div>
+        )}
+      </div>
     
     {/* Error Display */}
     {tomtomError && debouncedSearch.length >= 3 && (
