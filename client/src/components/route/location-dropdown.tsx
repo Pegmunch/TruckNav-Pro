@@ -423,7 +423,14 @@ const LocationDropdown = memo(function LocationDropdown({
               </div>
             </div>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="start">
+          <PopoverContent 
+            className="w-80 p-0" 
+            align="start"
+            side="bottom"
+            sideOffset={0}
+            avoidCollisions={false}
+            collisionPadding={0}
+          >
             <div className="p-3 border-b">
               <div className="flex items-center justify-between">
                 <Label htmlFor="postcode-mode" className="text-sm font-medium">

@@ -685,8 +685,9 @@ function ComprehensiveMobileMenu({
                           className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
                           align="start"
                           side="bottom"
-                          sideOffset={4}
-                          avoidCollisions={true}
+                          sideOffset={0}
+                          avoidCollisions={false}
+                          collisionPadding={0}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
@@ -765,8 +766,9 @@ function ComprehensiveMobileMenu({
                           className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
                           align="start"
                           side="bottom"
-                          sideOffset={4}
-                          avoidCollisions={true}
+                          sideOffset={0}
+                          avoidCollisions={false}
+                          collisionPadding={0}
                           onOpenAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
