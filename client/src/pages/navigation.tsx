@@ -246,52 +246,50 @@ function NavigationPageContent() {
   
   // Double-tap detection for map controls toggle (when not navigating)
   const lastMapTapTimeRef = useRef<number>(0);
+  const singleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
   const DOUBLE_TAP_THRESHOLD = 300; // ms
+
   // Handle map click to close overlays AND toggle nav controls via tap gestures
   const handleMapClick = useCallback(() => {
     const now = Date.now();
     const timeSinceLastTap = now - lastMapTapTimeRef.current;
     
-    // Log interaction for debugging
     console.log('[MAP-CLICK] Interaction detected', { 
       timeSinceLastTap, 
-      threshold: DOUBLE_TAP_THRESHOLD
+      threshold: DOUBLE_TAP_THRESHOLD,
+      currentShowNav: showNavControls
     });
+
+    // Clear any existing timer regardless of tap type
+    if (singleTapTimerRef.current) {
+      clearTimeout(singleTapTimerRef.current);
+      singleTapTimerRef.current = null;
+    }
 
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
       console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Showing controls');
-      // Clear any pending single-tap timeout
-      if ((window as any)._mapSingleTapTimeout) {
-        clearTimeout((window as any)._mapSingleTapTimeout);
-        (window as any)._mapSingleTapTimeout = null;
-      }
       setShowNavControls(true);
-      lastMapTapTimeRef.current = 0;
+      lastMapTapTimeRef.current = 0; // Reset to prevent triple-tap issues
       return;
     }
     
     lastMapTapTimeRef.current = now;
 
-    // Single tap detection logic
-    // We wait for the threshold to pass to see if it remains a single tap
-    if ((window as any)._mapSingleTapTimeout) {
-      clearTimeout((window as any)._mapSingleTapTimeout);
-    }
-
-    (window as any)._mapSingleTapTimeout = setTimeout(() => {
-      // If lastMapTapTimeRef is still the same 'now', no second tap happened
+    // Set a timer for single tap to hide controls
+    singleTapTimerRef.current = setTimeout(() => {
+      // Re-verify that this is indeed a single tap (no newer tap happened)
       if (lastMapTapTimeRef.current === now) {
-        console.log('[MAP-CLICK] SINGLE-TAP - Hiding controls');
+        console.log('[MAP-CLICK] SINGLE-TAP CONFIRMED - Hiding controls');
         setShowNavControls(false);
       }
-      (window as any)._mapSingleTapTimeout = null;
-    }, DOUBLE_TAP_THRESHOLD + 50);
+      singleTapTimerRef.current = null;
+    }, DOUBLE_TAP_THRESHOLD + 20);
 
     // Close incident feed if user has interacted with it
     if (hasInteractedWithIncidentFeed && showIncidentFeed) {
       setShowIncidentFeed(false);
     }
-  }, [hasInteractedWithIncidentFeed, showIncidentFeed]);
+  }, [hasInteractedWithIncidentFeed, showIncidentFeed, showNavControls]);
 
   // Turn-by-turn navigation state
   const [nextTurn, setNextTurn] = useState<{

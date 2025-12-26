@@ -54,10 +54,13 @@ export function NavigationLayout({
         style={{ 
           top: '100px',
           display: 'block',
-          pointerEvents: 'auto'
+          pointerEvents: 'none',
+          userSelect: 'none'
         }}
       >
-        {rightStack}
+        <div className="pointer-events-auto">
+          {rightStack}
+        </div>
       </div>
 
       {/* Bottom instrumentation bar - positioned near base of map */}
