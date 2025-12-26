@@ -68,13 +68,19 @@ export function AddressAutocomplete({
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
   
   // Update dropdown position when open changes or on scroll/resize
-  // Using fixed positioning so we use viewport-relative coordinates directly from getBoundingClientRect
+  // Account for iOS PWA visual viewport offsets (keyboard shifts the visual viewport)
   const updateDropdownPosition = useCallback(() => {
     if (inputRef.current && open) {
       const rect = inputRef.current.getBoundingClientRect();
+      // On iOS PWA, the visual viewport may be offset when keyboard is open
+      // getBoundingClientRect is relative to visual viewport, but fixed positioning is relative to layout viewport
+      const visualViewport = window.visualViewport;
+      const offsetTop = visualViewport?.offsetTop || 0;
+      const offsetLeft = visualViewport?.offsetLeft || 0;
+      
       setDropdownPosition({
-        top: rect.bottom, // Viewport-relative, no scroll offset needed for fixed positioning
-        left: rect.left,
+        top: rect.bottom + offsetTop,
+        left: rect.left + offsetLeft,
         width: rect.width
       });
     }
@@ -86,9 +92,21 @@ export function AddressAutocomplete({
       // Update position on scroll and resize
       window.addEventListener('scroll', updateDropdownPosition, true);
       window.addEventListener('resize', updateDropdownPosition);
+      
+      // Subscribe to visual viewport events for iOS PWA keyboard handling
+      const visualViewport = window.visualViewport;
+      if (visualViewport) {
+        visualViewport.addEventListener('resize', updateDropdownPosition);
+        visualViewport.addEventListener('scroll', updateDropdownPosition);
+      }
+      
       return () => {
         window.removeEventListener('scroll', updateDropdownPosition, true);
         window.removeEventListener('resize', updateDropdownPosition);
+        if (visualViewport) {
+          visualViewport.removeEventListener('resize', updateDropdownPosition);
+          visualViewport.removeEventListener('scroll', updateDropdownPosition);
+        }
       };
     }
   }, [open, updateDropdownPosition]);
