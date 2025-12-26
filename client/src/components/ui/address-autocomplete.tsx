@@ -563,7 +563,8 @@ export function AddressAutocomplete({
             className="absolute left-0 right-0 z-[9999] shadow-2xl border-2 bg-background max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ 
               top: '100%', 
-              marginTop: '0px', // Removed margin to ensure it sits exactly at the bottom edge
+              bottom: 'auto', // Explicitly disable top-side growth
+              marginTop: '0px',
               position: 'absolute'
             }}
             onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking items
