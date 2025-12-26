@@ -34,7 +34,7 @@ export function RightActionStack({
   hideCompass = false
 }: RightActionStackProps) {
   return (
-    <>
+    <div className="flex flex-col gap-2" data-testid="right-action-stack">
       {/* 1. Incidents - Red border */}
       {onViewIncidents && (
         <Button
@@ -150,6 +150,6 @@ export function RightActionStack({
           <Layers className="h-4 w-4" />
         </Button>
       )}
-    </>
+    </div>
   );
 }

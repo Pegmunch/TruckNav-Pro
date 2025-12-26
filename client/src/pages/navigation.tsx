@@ -2950,10 +2950,14 @@ function NavigationPageContent() {
                     />
                   }
                   rightStack={
-                    <div className={cn(
-                      "transition-opacity duration-300",
-                      showNavControls ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                    )}>
+                    <div 
+                      className={cn(
+                        "transition-opacity duration-300 flex flex-col gap-2",
+                        showNavControls ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                      )}
+                      data-testid="right-stack-wrapper"
+                      data-visible={showNavControls ? "true" : "false"}
+                    >
                       <RightActionStack
                         onZoomIn={() => mapRef.current?.zoomIn()}
                         onZoomOut={() => mapRef.current?.zoomOut()}
