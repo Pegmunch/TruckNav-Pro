@@ -447,9 +447,10 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
         </div>
       </div>
 
-      {/* Main Navigation Instruction Panel - Only show when instructions are available */}
+      {/* Main Navigation Instruction Panel - Only show on desktop when instructions are available */}
+      {/* Hidden on mobile as CompactTripStrip and TurnIndicator provide this info */}
       {currentInstruction && (
-        <div className="px-4 py-6">
+        <div className="px-4 py-6 hidden lg:block">
           <div className="max-w-4xl mx-auto">
             <Card className="bg-white shadow-lg border border-gray-200">
               <CardContent className="p-6">
