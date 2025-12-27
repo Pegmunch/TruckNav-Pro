@@ -38,18 +38,14 @@ export function LeftActionStack({
     }
   }, [isVoiceSupported, handleVoiceReport, voiceSystem, onVoiceIncidentReport]);
 
+  // Stop voice listening when navigation ends (cleanup only - no auto-start)
+  // Voice commands now only start when user manually taps the microphone button
   useEffect(() => {
-    if (isNavigating && isVoiceSupported) {
-      const started = voiceSystem.startListening();
-      setIsVoiceListening(started);
+    if (!isNavigating && isVoiceListening) {
+      voiceSystem.stopListening();
+      setIsVoiceListening(false);
     }
-    return () => {
-      if (isVoiceSupported) {
-        voiceSystem.stopListening();
-        setIsVoiceListening(false);
-      }
-    };
-  }, [isNavigating, isVoiceSupported, voiceSystem]);
+  }, [isNavigating, isVoiceListening, voiceSystem]);
 
   const toggleVoiceListening = () => {
     if (isVoiceListening) {
