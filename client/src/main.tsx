@@ -1,3 +1,13 @@
+// EARLY ERROR FILTER: Must run before any other code to suppress harmless ResizeObserver warnings
+// This prevents Vite's runtime-error-plugin from showing overlay for benign errors
+window.addEventListener('error', (event) => {
+  if (event.message?.includes('ResizeObserver loop')) {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+    return false;
+  }
+}, true);
+
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "./lib/queryClient";
