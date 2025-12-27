@@ -2934,6 +2934,7 @@ function NavigationPageContent() {
                   }
                   leftStack={
                     <LeftActionStack
+                      onNavigate={() => mapRef.current?.zoomToUserLocation()}
                       onCancel={handleStopNavigation}
                       onReportIncident={() => setShowIncidentReportDialog(true)}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
