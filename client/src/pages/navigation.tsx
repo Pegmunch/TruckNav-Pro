@@ -270,6 +270,12 @@ function NavigationPageContent() {
       singleTapTimerRef.current = null;
     }
 
+    // CRITICAL: Prevent map clicks from closing the Quick Settings panel
+    if (showQuickSettings) {
+      console.log('[MAP-CLICK] Quick settings active - ignoring click to prevent close');
+      return;
+    }
+
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
       console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Toggling controls');
       
