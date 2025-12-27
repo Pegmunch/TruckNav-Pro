@@ -43,12 +43,12 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Left action stack - ALWAYS visible for menu button access */}
+      {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
       {leftStack && (
         <div 
           className="fixed left-4 z-[1600] flex flex-col gap-3 pointer-events-auto"
           style={{ 
-            bottom: 'calc(140px + var(--safe-area-bottom, 0px))',
+            bottom: 'calc(24px + var(--safe-area-bottom, 0px))',
           }}
         >
           {leftStack}
