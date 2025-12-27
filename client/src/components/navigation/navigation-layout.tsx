@@ -24,22 +24,24 @@ export function NavigationLayout({
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
   
   return (
-    <div className="relative w-full h-screen overflow-hidden pointer-events-none">
-      {/* Map content - full screen overlay container (pointer-events: none to allow map clicks through) */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Map content - full screen overlay container */}
+      <div className="absolute inset-0 z-0">
         {mapContent}
       </div>
 
       {/* Top navigation strip - ETA header (CompactTripStrip) */}
       {shouldShowUI && topStrip && (
         <div 
-          className="absolute left-0 right-0 z-[1700] w-full"
+          className="fixed left-0 right-0 z-[1700] w-full pointer-events-none"
           style={{
             top: 'var(--safe-area-top, 0px)',
             maxHeight: '90px'
           }}
         >
-          {topStrip}
+          <div className="pointer-events-auto">
+            {topStrip}
+          </div>
         </div>
       )}
 
@@ -51,12 +53,11 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - Fixed positioning */}
-      {rightStackVisible && (
+      {rightStackVisible && rightStack && (
         <div 
-          className="fixed right-4 z-[99999]"
+          className="fixed right-4 z-[99999] pointer-events-auto"
           style={{ 
             top: '100px',
-            pointerEvents: 'auto',
             userSelect: 'none'
           }}
         >
@@ -67,7 +68,7 @@ export function NavigationLayout({
       {/* Bottom instrumentation bar - positioned near base of map */}
       {shouldShowUI && bottomBar && (
         <div 
-          className="absolute left-1/2 -translate-x-1/2 z-[1500]"
+          className="fixed left-1/2 -translate-x-1/2 z-[1500] pointer-events-auto"
           style={{ bottom: 'calc(24px + var(--safe-area-bottom, 0px))' }}
         >
           {bottomBar}
