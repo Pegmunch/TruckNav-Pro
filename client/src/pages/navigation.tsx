@@ -2286,12 +2286,12 @@ function NavigationPageContent() {
         if (zoomTarget) {
           console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
           // Use zoomToUserLocation with fallback coordinates for consistent API
-          // Navigation view: steep tilt (60°), close zoom (17) to show road ahead
+          // Navigation view: optimal 3D pitch (65°), close zoom (17.5) as requested in IMG_0410
           mapRef.current.zoomToUserLocation({
-            zoom: 17, // Navigation-level zoom showing road ahead (like TomTom GO)
-            pitch: isMapLibre ? 60 : 0, // Steep tilt for 3D navigation perspective
+            zoom: 17.5, // Navigation-level zoom from IMG_0410
+            pitch: isMapLibre ? 65 : 0, // Optimal pitch from IMG_0410
             bearing: 0,
-            duration: 1500,
+            duration: 2000,
             fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },
             forceStreetMode: true
           });

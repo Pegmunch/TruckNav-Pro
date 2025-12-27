@@ -628,11 +628,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const wasNavigating = previousNavigationStateRef.current;
     const isNowNavigating = isNavigating;
 
-    // Navigation started - activate 3D mode and save previous state
+    // Navigation started - activate 3D mode and set optimal view angle/zoom
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - activating enhanced 3D mode (60° pitch)');
+      console.log('[NAV-3D] Navigation started - setting optimal 3D view (65° pitch, 17.5 zoom)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
+      
+      // Target the visual style from IMG_0410: High pitch, tight zoom
+      map.current.easeTo({
+        pitch: 65,
+        zoom: 17.5,
+        duration: 2000,
+        easing: (t) => t * (2 - t)
+      });
+      
       setIs3DMode(true);
     }
     
