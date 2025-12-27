@@ -416,16 +416,6 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onToggleVoice}
-            className="text-gray-300 hover:text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8 p-0"
-            data-testid="button-toggle-voice"
-          >
-            {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-3.5 md:h-3.5" /> : <VolumeX className="w-3 h-3 md:w-3.5 md:h-3.5" />}
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
             onClick={onToggleFullscreen}
             className="text-gray-300 hover:text-white hover:bg-gray-800 h-7 w-7 md:h-8 md:w-8 p-0"
             data-testid="button-toggle-fullscreen"
