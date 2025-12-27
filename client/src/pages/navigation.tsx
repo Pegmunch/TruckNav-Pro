@@ -73,6 +73,7 @@ import { type IncidentType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
+import { OnboardingProvider } from "@/components/onboarding/onboarding-provider";
 
 
 // Extended Route type with API-only fields for route calculation responses
@@ -3589,7 +3590,9 @@ export default function NavigationPage() {
       headingSmoothingAlpha={0.25}
       enableHeadingSmoothing={true}
     >
-      <NavigationPageContent />
+      <OnboardingProvider isReady={true} isFleetPage={false}>
+        <NavigationPageContent />
+      </OnboardingProvider>
     </GPSProvider>
   );
 }

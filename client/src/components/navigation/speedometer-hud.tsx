@@ -296,6 +296,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
         className
       )}
       data-testid="speedometer-hud"
+      data-tour-id="speedometer"
     >
       {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
       <div

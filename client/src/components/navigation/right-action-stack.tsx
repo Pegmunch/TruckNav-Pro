@@ -46,6 +46,7 @@ export function RightActionStack({
         isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
       )} 
       data-testid="right-action-stack"
+      data-tour-id="right-controls"
       style={{
         visibility: isVisible ? 'visible' : 'hidden'
       }}

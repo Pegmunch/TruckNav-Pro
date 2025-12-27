@@ -51,7 +51,8 @@ import {
   ShoppingCart,
   Users,
   Crosshair,
-  Download
+  Download,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -84,6 +85,7 @@ import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads
 import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
 import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
 import { LanguageSelector } from "@/components/settings/language-selector";
+import { useOnboarding } from "@/components/onboarding/onboarding-provider";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -127,6 +129,7 @@ function ComprehensiveMobileMenu({
   const { toast } = useToast();
   const { formatDistance } = useMeasurement();
   const gps = useGPS();
+  const { resetTour } = useOnboarding();
   const [activeTab, setActiveTab] = useState("plan");
   
   // Local state for route planning inputs - Always start empty for new route planning
@@ -1424,6 +1427,20 @@ function ComprehensiveMobileMenu({
                     >
                       <Settings className="h-4 w-4 mr-2" />
                       App Settings
+                    </Button>
+                    
+                    {/* Replay Tour Button */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-blue-500 text-blue-600 hover:bg-blue-50"
+                      onClick={() => {
+                        onOpenChange(false);
+                        resetTour();
+                      }}
+                      data-testid="button-replay-tour"
+                    >
+                      <HelpCircle className="h-4 w-4 mr-2" />
+                      Replay App Tour
                     </Button>
                   </CardContent>
                 </Card>

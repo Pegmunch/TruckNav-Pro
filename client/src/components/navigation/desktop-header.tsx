@@ -35,6 +35,7 @@ export function DesktopHeader() {
                 size="sm"
                 className="gap-2"
                 data-testid="link-fleet-management"
+                data-tour-id="desktop-fleet-link"
               >
                 <Building2 className="w-4 h-4" />
                 Fleet Management

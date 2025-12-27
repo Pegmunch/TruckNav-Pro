@@ -44,6 +44,7 @@ export function NavigationHeader({ onSettingsClick, className }: NavigationHeade
         onClick={onSettingsClick}
         className="h-10 w-10 hover:bg-gray-100"
         data-testid="button-header-settings"
+        data-tour-id="header-settings"
       >
         <Settings className="h-6 w-6 text-green-600" />
       </Button>

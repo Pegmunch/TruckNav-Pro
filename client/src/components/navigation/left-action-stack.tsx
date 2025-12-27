@@ -78,6 +78,7 @@ export function LeftActionStack({
           }}
           className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
           data-testid="button-nav-left"
+          data-tour-id="nav-button"
         >
           <Navigation className="h-4 w-4" />
         </Button>
@@ -98,6 +99,7 @@ export function LeftActionStack({
               : 'bg-gray-300 cursor-not-allowed opacity-50'
           } text-white`}
           data-testid="button-voice-command"
+          data-tour-id="voice-button"
           title={!isVoiceSupported ? 'Voice not supported' : isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
         >
           {isVoiceListening ? (
@@ -119,6 +121,7 @@ export function LeftActionStack({
           }}
           className="h-8 w-8 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
           data-testid="button-report-incident"
+          data-tour-id="incident-button"
         >
           <AlertCircle className="h-4 w-4" />
         </Button>
@@ -150,6 +153,7 @@ export function LeftActionStack({
         }}
         className="h-8 w-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
         data-testid="button-menu"
+        data-tour-id="menu-button"
       >
         <Menu className="h-4 w-4" />
       </Button>

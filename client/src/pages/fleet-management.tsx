@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
 import { DesktopHeader } from '@/components/navigation/desktop-header';
+import { OnboardingProvider } from '@/components/onboarding/onboarding-provider';
 import { NotificationsBanner } from '@/components/fleet/notifications-banner';
 import { CostAnalyticsDashboard } from '@/components/fleet-analytics-dashboard';
 import { IncidentsTab } from '@/components/fleet-incidents-tab';
@@ -36,7 +37,7 @@ export default function FleetManagement() {
   const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
 
   return (
-    <>
+    <OnboardingProvider isReady={true} isFleetPage={true}>
       {/* Desktop-Only Navigation Header */}
       <DesktopHeader />
       
@@ -182,7 +183,7 @@ export default function FleetManagement() {
         </Tabs>
         </div>
       </div>
-    </>
+    </OnboardingProvider>
   );
 }
 
