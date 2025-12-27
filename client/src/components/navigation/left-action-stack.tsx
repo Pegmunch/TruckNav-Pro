@@ -61,76 +61,86 @@ export function LeftActionStack({
     }
   };
 
-  if (!isNavigating) return null;
+  // CRITICAL: The LeftActionStack should always be visible in Navigation view
+  // to provide access to the menu, even when not actively navigating.
+  // The internal buttons handle their own visibility if needed.
   
   return (
     <div className="flex flex-col gap-2 pointer-events-auto">
-      {/* Navigation button - red navigation arrow */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button clicked');
-          onNavigate?.();
-        }}
-        className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
-        data-testid="button-nav-left"
-      >
-        <Navigation className="h-4 w-4" />
-      </Button>
+      {/* Navigation button - red navigation arrow - Only show when navigating */}
+      {isNavigating && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button clicked');
+            onNavigate?.();
+          }}
+          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+          data-testid="button-nav-left"
+        >
+          <Navigation className="h-4 w-4" />
+        </Button>
+      )}
 
-      {/* Voice command button - microphone - Always reserve space to prevent layout shift */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleVoiceListening}
-        disabled={!isVoiceSupported}
-        className={`h-8 w-8 rounded-xl shadow-lg transition-all ${
-          isVoiceSupported
-            ? isVoiceListening 
-              ? 'bg-green-500 hover:bg-green-600 animate-pulse' 
-              : 'bg-purple-500 hover:bg-purple-600'
-            : 'bg-gray-300 cursor-not-allowed opacity-50'
-        } text-white`}
-        data-testid="button-voice-command"
-        title={!isVoiceSupported ? 'Voice not supported' : isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
-      >
-        {isVoiceListening ? (
-          <Mic className="h-4 w-4" />
-        ) : (
-          <MicOff className="h-4 w-4" />
-        )}
-      </Button>
+      {/* Voice command button - microphone - Only show when navigating */}
+      {isNavigating && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleVoiceListening}
+          disabled={!isVoiceSupported}
+          className={`h-8 w-8 rounded-xl shadow-lg transition-all ${
+            isVoiceSupported
+              ? isVoiceListening 
+                ? 'bg-green-500 hover:bg-green-600 animate-pulse' 
+                : 'bg-purple-500 hover:bg-purple-600'
+              : 'bg-gray-300 cursor-not-allowed opacity-50'
+          } text-white`}
+          data-testid="button-voice-command"
+          title={!isVoiceSupported ? 'Voice not supported' : isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
+        >
+          {isVoiceListening ? (
+            <Mic className="h-4 w-4" />
+          ) : (
+            <MicOff className="h-4 w-4" />
+          )}
+        </Button>
+      )}
 
-      {/* Incident report button - orange */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button clicked - Opening dialog');
-          onReportIncident?.();
-        }}
-        className="h-8 w-8 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
-        data-testid="button-report-incident"
-      >
-        <AlertCircle className="h-4 w-4" />
-      </Button>
+      {/* Incident report button - orange - Only show when navigating */}
+      {isNavigating && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button clicked - Opening dialog');
+            onReportIncident?.();
+          }}
+          className="h-8 w-8 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+          data-testid="button-report-incident"
+        >
+          <AlertCircle className="h-4 w-4" />
+        </Button>
+      )}
 
-      {/* Cancel navigation button - red X */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button clicked - Stopping navigation');
-          onCancel?.();
-        }}
-        className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
-        data-testid="button-cancel-nav"
-      >
-        <X className="h-4 w-4" />
-      </Button>
+      {/* Cancel navigation button - red X - Only show when navigating */}
+      {isNavigating && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button clicked - Stopping navigation');
+            onCancel?.();
+          }}
+          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+          data-testid="button-cancel-nav"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
 
-      {/* Menu button - blue hamburger at bottom */}
+      {/* Menu button - blue hamburger at bottom - ALWAYS SHOW */}
       <Button
         variant="ghost"
         size="icon"
