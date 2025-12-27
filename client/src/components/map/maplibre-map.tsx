@@ -1371,10 +1371,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            10, 2,  // 2px at zoom 10
-            18, 8   // 8px at zoom 18
+            10, 3,  // 3px at zoom 10
+            18, 10   // 10px at zoom 18 - wider to cover black road outlines
           ],
-          'line-opacity': 0.8
+          'line-opacity': 0.9,
+          'line-blur': 1 // Slight blur to soften edges
         }
       });
       // Mark layer as ready after adding
