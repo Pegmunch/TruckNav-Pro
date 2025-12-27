@@ -342,6 +342,13 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
+  // AUTO-SHOW navigation controls when navigation UI becomes active
+  useEffect(() => {
+    if (isNavUIActive) {
+      setShowNavControls(true);
+    }
+  }, [isNavUIActive]);
+  
   // GPS Mode effect - wire up mode changes to GPS context
   // CRITICAL FIX: Destructure callbacks to prevent render loop
   // (depending on entire gpsData object causes infinite re-renders)
