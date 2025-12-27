@@ -798,16 +798,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         safeSetVisibility('roads-3d-layer', is3D ? 'visible' : 'none');
         safeSetVisibility('satellite-2d-layer', 'none');
         safeSetVisibility('satellite-3d-layer', 'none');
+        // Hide labels overlay in roads mode (OSM tiles already have labels)
+        safeSetVisibility('labels-overlay-layer', 'none');
         // Show traffic layer in roads mode if it exists and traffic is enabled
         if (mapInstance.getLayer('traffic-flow-layer') && showTraffic) {
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'visible');
         }
       } else {
-        // Satellite mode - hide ALL overlays including traffic
+        // Satellite mode - hide road layers, show satellite and labels overlay
         safeSetVisibility('roads-2d-layer', 'none');
         safeSetVisibility('roads-3d-layer', 'none');
         safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
         safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
+        // Show labels overlay in satellite mode for city/town/road names
+        safeSetVisibility('labels-overlay-layer', 'visible');
         // CRITICAL: Hide traffic layer in satellite mode - fixes black lines issue
         if (mapInstance.getLayer('traffic-flow-layer')) {
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
@@ -1008,8 +1012,36 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           });
         }
 
+        // Add labels overlay source (CartoDB Positron labels-only layer)
+        // This provides city names, town names, and road names on top of satellite imagery
+        if (!mapInstance.getSource('labels-overlay')) {
+          mapInstance.addSource('labels-overlay', {
+            type: 'raster',
+            tiles: [
+              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}@2x.png'
+            ],
+            tileSize: 256,
+            maxzoom: 20,
+            attribution: '© <a href="https://carto.com/">CARTO</a>'
+          });
+        }
+
+        // Add labels layer on top of everything (always visible for satellite mode)
+        if (!mapInstance.getLayer('labels-overlay-layer')) {
+          mapInstance.addLayer({
+            id: 'labels-overlay-layer',
+            type: 'raster',
+            source: 'labels-overlay',
+            layout: {
+              visibility: 'none' // Initially hidden, shown in satellite mode
+            }
+          });
+        }
+
         setIsLoaded(true);
-        console.log('✅ MapLibre GL loaded - satellite sources added for map view toggle');
+        console.log('✅ MapLibre GL loaded - satellite sources and labels overlay added for map view toggle');
       });
 
       map.current.on('error', (e) => {
