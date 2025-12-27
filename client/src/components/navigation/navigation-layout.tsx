@@ -43,9 +43,14 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Left action stack - Fixed positioning to prevent map overlay */}
+      {/* Left action stack - Fixed positioning lower on screen to avoid ETA header clash */}
       {shouldShowUI && leftStack && (
-        <div className="fixed left-4 top-1/2 -translate-y-1/2 z-[1600] flex flex-col gap-4 pointer-events-auto" style={{ top: 'calc(50% + var(--safe-area-top, 0px))' }}>
+        <div 
+          className="fixed left-4 z-[1600] flex flex-col gap-3 pointer-events-auto"
+          style={{ 
+            bottom: 'calc(140px + var(--safe-area-bottom, 0px))',
+          }}
+        >
           {leftStack}
         </div>
       )}
