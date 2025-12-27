@@ -1012,15 +1012,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           });
         }
 
-        // Add labels overlay source (CartoDB Positron labels-only layer)
+        // Add labels overlay source (CartoDB Dark Matter labels-only layer)
         // This provides city names, town names, and road names on top of satellite imagery
+        // Using dark_only_labels which has white text perfect for satellite imagery
         if (!mapInstance.getSource('labels-overlay')) {
           mapInstance.addSource('labels-overlay', {
             type: 'raster',
             tiles: [
-              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}@2x.png',
-              'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}@2x.png',
-              'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}@2x.png'
+              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
             ],
             tileSize: 256,
             maxzoom: 20,
