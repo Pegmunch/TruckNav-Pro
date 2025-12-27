@@ -104,7 +104,7 @@ export function NavigationHeader({
           align="end"
           sideOffset={8}
         >
-          <ScrollArea className="max-h-[70vh]">
+          <ScrollArea className="max-h-[50vh] overflow-y-auto" type="always">
             <div className="p-2">
               {/* Header */}
               <div className="px-2 py-1.5 text-sm font-semibold text-gray-900">
