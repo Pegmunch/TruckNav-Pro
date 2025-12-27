@@ -11,6 +11,7 @@ interface LeftActionStackProps {
   isNavigating: boolean;
   currentLocation?: { lat: number; lng: number };
   onVoiceIncidentReport?: (type: IncidentType, severity: 'low' | 'medium' | 'high') => void;
+  showMenuButton?: boolean;
 }
 
 export function LeftActionStack({
@@ -20,7 +21,8 @@ export function LeftActionStack({
   onOpenMenu,
   isNavigating,
   currentLocation,
-  onVoiceIncidentReport
+  onVoiceIncidentReport,
+  showMenuButton = true
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const voiceSystem = getVoiceCommandSystem();
@@ -139,20 +141,22 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Menu button - blue hamburger at bottom - ALWAYS SHOW */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          console.log('[LEFT-BTN-4-MENU] ✅ Menu button clicked - Opening comprehensive menu');
-          onOpenMenu?.();
-        }}
-        className="h-8 w-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-        data-testid="button-menu"
-        data-tour-id="menu-button"
-      >
-        <Menu className="h-4 w-4" />
-      </Button>
+      {/* Menu button - blue hamburger at bottom - conditionally show */}
+      {showMenuButton && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            console.log('[LEFT-BTN-4-MENU] ✅ Menu button clicked - Opening comprehensive menu');
+            onOpenMenu?.();
+          }}
+          className="h-8 w-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          data-testid="button-menu"
+          data-tour-id="menu-button"
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

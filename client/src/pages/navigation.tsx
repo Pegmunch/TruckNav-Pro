@@ -73,7 +73,15 @@ import { type IncidentType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
-import { OnboardingProvider } from "@/components/onboarding/onboarding-provider";
+import { OnboardingProvider, useOnboarding } from "@/components/onboarding/onboarding-provider";
+import WeatherWidget from "@/components/weather/weather-widget";
+import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
+import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
+import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
+import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
+import { RegionSelector } from "@/components/measurement/region-selector";
+import { MeasurementSelector } from "@/components/measurement/measurement-selector";
+import LanguageSelector from "@/components/language/language-selector";
 
 
 // Extended Route type with API-only fields for route calculation responses
@@ -194,6 +202,19 @@ function NavigationPageContent() {
   
   // Quick settings panel state (green gear button)
   const [showQuickSettings, setShowQuickSettings] = useState(false);
+  
+  // Tool dialogs state (opened from navigation header dropdown)
+  const [showWeatherTool, setShowWeatherTool] = useState(false);
+  const [showEntertainmentTool, setShowEntertainmentTool] = useState(false);
+  const [showVoiceNavTool, setShowVoiceNavTool] = useState(false);
+  const [showFuelPricesTool, setShowFuelPricesTool] = useState(false);
+  const [showFatigueMonitorTool, setShowFatigueMonitorTool] = useState(false);
+  const [showRegionSettingsTool, setShowRegionSettingsTool] = useState(false);
+  const [showLanguageTool, setShowLanguageTool] = useState(false);
+  const [showMapSettingsTool, setShowMapSettingsTool] = useState(false);
+  
+  // Get onboarding context for replay tour
+  const { resetTour } = useOnboarding();
   
   // Current road name from GPS position (for speedometer display)
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
@@ -2595,7 +2616,20 @@ function NavigationPageContent() {
         {/* Green gear opens the quick settings panel (vehicle, language, theme) */}
         {!isARMode && (
           <NavigationHeader 
-            onSettingsClick={() => setShowQuickSettings(true)}
+            onSettingsClick={() => setShowVehicleSettings(true)}
+            onWeatherClick={() => setShowWeatherTool(true)}
+            onEntertainmentClick={() => setShowEntertainmentTool(true)}
+            onVoiceNavClick={() => setShowVoiceNavTool(true)}
+            onFuelPricesClick={() => setShowFuelPricesTool(true)}
+            onFatigueMonitorClick={() => setShowFatigueMonitorTool(true)}
+            onRegionSettingsClick={() => setShowRegionSettingsTool(true)}
+            onLanguageClick={() => setShowLanguageTool(true)}
+            onMapSettingsClick={() => setShowMapSettingsTool(true)}
+            onClearRouteClick={() => {
+              setCurrentRoute(null);
+              toast({ title: "Route cleared", description: "The map has been reset." });
+            }}
+            onReplayTourClick={() => resetTour()}
           />
         )}
         
@@ -2947,6 +2981,7 @@ function NavigationPageContent() {
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
                       isNavigating={isNavUIActive}
                       currentLocation={currentGPSLocation}
+                      showMenuButton={false}
                       onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
                         if (currentGPSLocation) {
                           const incidentLabels: Record<IncidentType, string> = {
@@ -3241,7 +3276,20 @@ function NavigationPageContent() {
                       {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
                       {/* Green gear opens the quick settings panel (vehicle, language, theme) */}
                       <NavigationHeader 
-                        onSettingsClick={() => setShowQuickSettings(true)}
+                        onSettingsClick={() => setShowVehicleSettings(true)}
+                        onWeatherClick={() => setShowWeatherTool(true)}
+                        onEntertainmentClick={() => setShowEntertainmentTool(true)}
+                        onVoiceNavClick={() => setShowVoiceNavTool(true)}
+                        onFuelPricesClick={() => setShowFuelPricesTool(true)}
+                        onFatigueMonitorClick={() => setShowFatigueMonitorTool(true)}
+                        onRegionSettingsClick={() => setShowRegionSettingsTool(true)}
+                        onLanguageClick={() => setShowLanguageTool(true)}
+                        onMapSettingsClick={() => setShowMapSettingsTool(true)}
+                        onClearRouteClick={() => {
+                          setCurrentRoute(null);
+                          toast({ title: "Route cleared", description: "The map has been reset." });
+                        }}
+                        onReplayTourClick={() => resetTour()}
                       />
                       
                       {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
@@ -3553,6 +3601,87 @@ function NavigationPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Weather Tool - Component has its own modal */}
+      <WeatherWidget 
+        isOpen={showWeatherTool} 
+        onClose={() => setShowWeatherTool(false)} 
+      />
+
+      {/* Entertainment Tool - Component has its own modal */}
+      <EntertainmentPanel 
+        isOpen={showEntertainmentTool} 
+        onClose={() => setShowEntertainmentTool(false)} 
+      />
+
+      {/* Voice Navigation Tool Dialog */}
+      <Dialog open={showVoiceNavTool} onOpenChange={setShowVoiceNavTool}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Voice Navigation</DialogTitle>
+          </DialogHeader>
+          <VoiceNavigationPanel />
+        </DialogContent>
+      </Dialog>
+
+      {/* Fuel Prices Tool Dialog */}
+      <Dialog open={showFuelPricesTool} onOpenChange={setShowFuelPricesTool}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Fuel Price Comparison</DialogTitle>
+          </DialogHeader>
+          <FuelPriceComparison />
+        </DialogContent>
+      </Dialog>
+
+      {/* Driver Fatigue Monitor Tool Dialog */}
+      <Dialog open={showFatigueMonitorTool} onOpenChange={setShowFatigueMonitorTool}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Driver Fatigue Monitor</DialogTitle>
+          </DialogHeader>
+          <DriverFatigueAlert />
+        </DialogContent>
+      </Dialog>
+
+      {/* Region Settings Tool Dialog */}
+      <Dialog open={showRegionSettingsTool} onOpenChange={setShowRegionSettingsTool}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Region & Speed Limit Sign</DialogTitle>
+            <DialogDescription>
+              Select your region to use local speed limit signs and units
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <RegionSelector />
+            <MeasurementSelector />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Language Tool Dialog */}
+      <Dialog open={showLanguageTool} onOpenChange={setShowLanguageTool}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Language / Idioma / Sprache</DialogTitle>
+            <DialogDescription>
+              Change app and voice navigation language
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <LanguageSelector />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Map Settings Tool - Opens the main settings modal */}
+      {showMapSettingsTool && (
+        <SettingsModal
+          open={showMapSettingsTool}
+          onOpenChange={setShowMapSettingsTool}
+        />
+      )}
 
     </div>
   );
