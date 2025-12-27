@@ -43,8 +43,8 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Left action stack - Fixed positioning lower on screen to avoid ETA header clash */}
-      {shouldShowUI && leftStack && (
+      {/* Left action stack - ALWAYS visible for menu button access */}
+      {leftStack && (
         <div 
           className="fixed left-4 z-[1600] flex flex-col gap-3 pointer-events-auto"
           style={{ 
