@@ -52,7 +52,7 @@ export default function FleetManagement() {
           <NotificationsBanner />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-wrap w-full mb-6 h-auto gap-1 p-1">
+          <TabsList className="flex flex-wrap w-full mb-6 h-auto gap-1 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
             <TabsTrigger value="vehicles" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-vehicles">
               <Truck className="w-4 h-4" />
               <span className="hidden sm:inline">Vehicles</span>
