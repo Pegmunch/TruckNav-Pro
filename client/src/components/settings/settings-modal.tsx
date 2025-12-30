@@ -609,24 +609,26 @@ const SettingsModal = memo(function SettingsModal({
           {/* Content */}
           <div className="flex-1 overflow-hidden min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-              {/* Tab Navigation */}
-              <div className="px-6 py-3 border-b bg-muted/30">
-                <TabsList className="grid grid-cols-8 w-full h-auto p-1">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <TabsTrigger
-                        key={tab.id}
-                        value={tab.id}
-                        className="flex flex-col items-center gap-1 px-3 py-2 text-xs data-[state=active]:bg-background"
-                        data-testid={`tab-${tab.id}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="hidden md:inline">{tab.label}</span>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
+              {/* Tab Navigation - Scrollable on mobile */}
+              <div className="px-2 md:px-6 py-3 border-b bg-gray-50 dark:bg-gray-800">
+                <div className="overflow-x-auto scrollbar-thin">
+                  <TabsList className="inline-flex w-max md:grid md:grid-cols-8 md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800">
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      return (
+                        <TabsTrigger
+                          key={tab.id}
+                          value={tab.id}
+                          className="flex flex-col items-center gap-1 px-4 py-2 text-xs min-w-[60px] whitespace-nowrap"
+                          data-testid={`tab-${tab.id}`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="text-[10px] md:text-xs">{tab.label}</span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
+                </div>
               </div>
 
               {/* Tab Content */}
