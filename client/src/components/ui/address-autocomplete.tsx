@@ -68,13 +68,34 @@ export function AddressAutocomplete({
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
   
   // Update dropdown position when open changes
+  // Use visualViewport for iOS keyboard handling
   useEffect(() => {
     if (open && inputWrapperRef.current) {
       const updatePosition = () => {
         if (inputWrapperRef.current) {
           const rect = inputWrapperRef.current.getBoundingClientRect();
+          
+          // Calculate available space below and above
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
+          const spaceBelow = viewportHeight - rect.bottom;
+          const spaceAbove = rect.top;
+          const dropdownHeight = 350; // max-h-[350px]
+          
+          // Prefer below, but flip above if not enough space
+          let top: number;
+          if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
+            // Position below input
+            top = rect.bottom + 8;
+          } else {
+            // Position above input
+            top = rect.top - dropdownHeight - 8;
+          }
+          
+          // Clamp to viewport bounds
+          top = Math.max(8, Math.min(top, viewportHeight - 100));
+          
           setDropdownPosition({
-            top: rect.bottom + 12, // Position 12px below input
+            top,
             left: rect.left,
             width: rect.width
           });
@@ -83,13 +104,17 @@ export function AddressAutocomplete({
       
       updatePosition();
       
-      // Update position on scroll/resize
+      // Update position on scroll/resize/viewport changes
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
+      window.visualViewport?.addEventListener('resize', updatePosition);
+      window.visualViewport?.addEventListener('scroll', updatePosition);
       
       return () => {
         window.removeEventListener('scroll', updatePosition, true);
         window.removeEventListener('resize', updatePosition);
+        window.visualViewport?.removeEventListener('resize', updatePosition);
+        window.visualViewport?.removeEventListener('scroll', updatePosition);
       };
     }
   }, [open]);

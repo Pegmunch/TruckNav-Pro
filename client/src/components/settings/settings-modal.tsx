@@ -574,7 +574,7 @@ const SettingsModal = memo(function SettingsModal({
           className={cn(
             "max-w-2xl w-full h-[75vh] max-h-[600px]",
             "p-0 overflow-hidden flex flex-col",
-            "bg-white dark:bg-gray-900 border",
+            "!bg-white dark:!bg-slate-900 border-2 border-gray-300 dark:border-gray-600",
             className
           )}
           data-testid="dialog-settings-modal"
