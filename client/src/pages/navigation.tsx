@@ -2749,7 +2749,7 @@ function NavigationPageContent() {
               {mobileNavMode === 'plan' && currentRoute && (
                 <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                   style={{
-                    top: 'calc(16px + var(--safe-area-top))',
+                    top: 'calc(70px + var(--safe-area-top))',
                     left: '16px'
                   }}>
                   {/* Preview Route Button */}
@@ -2883,7 +2883,7 @@ function NavigationPageContent() {
                   {/* PREVIEW MODE BUTTONS - Left side vertical stack */}
                   <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                     style={{
-                      top: 'calc(16px + var(--safe-area-top))',
+                      top: 'calc(70px + var(--safe-area-top))',
                       left: '16px'
                     }}>
                     {/* Back to Plan Button */}
