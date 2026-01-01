@@ -2308,10 +2308,10 @@ function NavigationPageContent() {
         if (zoomTarget) {
           console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
           // Use zoomToUserLocation with fallback coordinates for consistent API
-          // Navigation view: optimal 3D pitch (65°), close zoom (17.5) as requested in IMG_0410
+          // Navigation view: TomTom GO style with 70° pitch, zoom 18, vehicle at bottom
           mapRef.current.zoomToUserLocation({
-            zoom: 17.5, // Navigation-level zoom from IMG_0410
-            pitch: isMapLibre ? 65 : 0, // Optimal pitch from IMG_0410
+            zoom: 18, // Close zoom for TomTom GO immersive style
+            pitch: isMapLibre ? 70 : 0, // Steep pitch matching TomTom GO
             bearing: 0,
             duration: 2000,
             fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },

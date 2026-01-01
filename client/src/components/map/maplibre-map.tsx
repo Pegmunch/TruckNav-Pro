@@ -630,14 +630,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Navigation started - activate 3D mode and set optimal view angle/zoom
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - setting optimal 3D view (65° pitch, 17.5 zoom)');
+      console.log('[NAV-3D] Navigation started - setting TomTom GO style 3D view (70° pitch, zoom 18)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
       
-      // Target the visual style from IMG_0410: High pitch, tight zoom
+      // Target the TomTom GO navigation style: steep pitch, close zoom, bottom-centered vehicle
+      const containerHeight = map.current.getContainer().clientHeight || 800;
       map.current.easeTo({
-        pitch: 65,
-        zoom: 17.5,
+        pitch: 70,
+        zoom: 18,
+        padding: {
+          top: Math.round(containerHeight * 0.55),
+          bottom: 80,
+          left: 0,
+          right: 0
+        },
         duration: 2000,
         easing: (t) => t * (2 - t)
       });
@@ -2165,21 +2172,27 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           // This ensures continuous smooth rotation even during gradual curves
           // Only skip update if absolutely no change (prevents unnecessary renders)
           if (Math.abs(bearingDelta) > 0.05 || centerDelta > 0.0000001) {
+            // TomTom GO style navigation view:
+            // - Vehicle marker at bottom 20% of screen
+            // - Route line extends straight up toward horizon
+            // - Steep 3D perspective for immersive driving feel
+            const containerHeight = mapInstance.getContainer().clientHeight || 800;
+            
             mapInstance.easeTo({
               center: [longitude, latitude],
-              zoom: 17, // Navigation zoom showing road ahead (like TomTom GO)
-              pitch: 60, // Steep 3D tilt for professional navigation perspective
+              zoom: 18, // Closer zoom for TomTom GO style immersive view
+              pitch: 70, // Steep 3D tilt matching TomTom GO navigation perspective
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
-                // CRITICAL: Camera offset positions vehicle marker so route is centered vertically
-                // The speedometer HUD is at bottom (70px + safe area), ETA header at top
-                // Route should appear centered in the visible map area above the speedometer
-                top: 180, // Space for ETA header, turn indicator, and trip strip
-                bottom: 250, // Padding pushes route higher - clears speedometer zone
+                // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
+                // This makes the route line extend upward from the speedometer area
+                // Matching the visual style from TomTom GO reference (IMG_0028)
+                top: Math.round(containerHeight * 0.55), // Push center point to lower 45% of screen
+                bottom: 80, // Small bottom padding for speedometer
                 left: 0, 
                 right: 0 
               },
-              duration: 200, // Short duration for responsive feel (was 250ms, reduced for smoother tracking)
+              duration: 200, // Short duration for responsive feel
               easing: (t) => t, // Linear easing prevents acceleration artifacts during rotation
               essential: true // Ensure animation isn't interrupted by user gestures
             });
