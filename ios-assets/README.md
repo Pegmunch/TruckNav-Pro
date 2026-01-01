@@ -1,61 +1,72 @@
 # iOS Assets for TruckNav Pro
 
-## Required App Icons
+## ✅ Generated Assets
 
-Create these icon files from your 1024x1024 source image:
+All required iOS assets have been generated and are ready for Xcode.
 
-### iPhone Icons
-| Filename | Size | Purpose |
-|----------|------|---------|
-| Icon-20@2x.png | 40x40 | Notification |
-| Icon-20@3x.png | 60x60 | Notification |
-| Icon-29@2x.png | 58x58 | Settings |
-| Icon-29@3x.png | 87x87 | Settings |
-| Icon-40@2x.png | 80x80 | Spotlight |
-| Icon-40@3x.png | 120x120 | Spotlight |
-| Icon-60@2x.png | 120x120 | App Icon |
-| Icon-60@3x.png | 180x180 | App Icon |
-
-### iPad Icons
-| Filename | Size | Purpose |
-|----------|------|---------|
-| Icon-20.png | 20x20 | Notification |
-| Icon-20@2x.png | 40x40 | Notification |
-| Icon-29.png | 29x29 | Settings |
-| Icon-29@2x.png | 58x58 | Settings |
-| Icon-40.png | 40x40 | Spotlight |
-| Icon-40@2x.png | 80x80 | Spotlight |
-| Icon-76.png | 76x76 | App Icon |
-| Icon-76@2x.png | 152x152 | App Icon |
-| Icon-83.5@2x.png | 167x167 | App Icon (iPad Pro) |
-
-### App Store
+### App Icons (AppIcon.appiconset/)
 | Filename | Size | Purpose |
 |----------|------|---------|
 | Icon-1024.png | 1024x1024 | App Store |
+| Icon-60@3x.png | 180x180 | iPhone App Icon |
+| Icon-60@2x.png | 120x120 | iPhone App Icon |
+| Icon-40@3x.png | 120x120 | Spotlight |
+| Icon-40@2x.png | 80x80 | Spotlight |
+| Icon-40.png | 40x40 | Spotlight (iPad) |
+| Icon-29@3x.png | 87x87 | Settings |
+| Icon-29@2x.png | 58x58 | Settings |
+| Icon-29.png | 29x29 | Settings (iPad) |
+| Icon-20@3x.png | 60x60 | Notification |
+| Icon-20@2x.png | 40x40 | Notification |
+| Icon-20.png | 20x20 | Notification (iPad) |
+| Icon-76@2x.png | 152x152 | iPad App Icon |
+| Icon-76.png | 76x76 | iPad App Icon |
+| Icon-83.5@2x.png | 167x167 | iPad Pro App Icon |
 
-## Splash Screen Images
+### Splash Screens (splash/)
+| Filename | Size | Device |
+|----------|------|--------|
+| splash-2732x2732.png | 2732x2732 | Universal |
+| splash-2048x2732.png | 2048x2732 | iPad Pro 12.9" |
+| splash-1668x2224.png | 1668x2224 | iPad Pro 10.5" |
+| splash-1536x2048.png | 1536x2048 | iPad |
+| splash-1242x2688.png | 1242x2688 | iPhone XS Max |
+| splash-1125x2436.png | 1125x2436 | iPhone X/XS |
+| splash-828x1792.png | 828x1792 | iPhone XR |
+| splash-750x1334.png | 750x1334 | iPhone 8 |
+| splash-640x1136.png | 640x1136 | iPhone SE |
 
-Place in `splash/` folder:
-- splash-2732x2732.png (Universal)
-- splash-1242x2688.png (iPhone XS Max)
-- splash-1125x2436.png (iPhone X/XS)
-- splash-828x1792.png (iPhone XR)
+## Regenerating Assets
 
-## Quick Setup
+To regenerate all assets from the source icon:
 
-1. Create a 1024x1024 PNG icon with your truck logo
-2. Use a tool like https://appicon.co to generate all sizes
-3. Copy generated icons to `AppIcon.appiconset/`
-4. Run `npx cap sync ios` to update the iOS project
+```bash
+npx tsx scripts/generate-ios-assets.ts
+```
 
-## Xcode Configuration
+Source icon: `attached_assets/generated_images/trucknav_pro_app_icon.png`
 
-After running `npx cap open ios`:
-1. Select the App target
-2. Go to Signing & Capabilities
-3. Add these capabilities:
-   - Background Modes: Location updates, Background fetch, Remote notifications
-   - Push Notifications
-4. Set Team to your Apple Developer account
-5. Set Bundle Identifier to: uk.co.bespokemarketingai.trucknavpro
+## Xcode Setup
+
+After running `npx cap sync ios` and `npx cap open ios`:
+
+1. Select the App target in Xcode
+2. Go to **Signing & Capabilities** tab
+3. Sign in with your Apple Developer account
+4. Enable **Automatically Manage Signing**
+5. Set Bundle Identifier to: `uk.co.bespokemarketingai.trucknavpro`
+
+### Required Capabilities
+Add these in Signing & Capabilities:
+- **Background Modes**: Location updates, Background fetch, Remote notifications
+- **Push Notifications**
+
+## App Store Screenshots
+
+You'll need to capture screenshots from iOS Simulator for:
+- iPhone 6.7" (1290x2796) - iPhone 15 Pro Max
+- iPhone 6.5" (1284x2778) - iPhone 14 Plus  
+- iPhone 5.5" (1242x2208) - iPhone 8 Plus
+- iPad Pro 12.9" (2048x2732) - if supporting iPad
+
+Capture screenshots using: `Cmd + S` in iOS Simulator
