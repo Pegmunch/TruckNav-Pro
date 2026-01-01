@@ -792,6 +792,45 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     };
     
+    // Helper to ensure labels overlay exists and is on top
+    const ensureLabelsOverlay = () => {
+      // Add source if missing
+      if (!mapInstance.getSource('labels-overlay')) {
+        mapInstance.addSource('labels-overlay', {
+          type: 'raster',
+          tiles: [
+            'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
+            'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
+            'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
+          ],
+          tileSize: 256,
+          maxzoom: 20,
+          attribution: '© <a href="https://carto.com/">CARTO</a>'
+        });
+      }
+      
+      // Add layer if missing (on top of everything)
+      if (!mapInstance.getLayer('labels-overlay-layer')) {
+        mapInstance.addLayer({
+          id: 'labels-overlay-layer',
+          type: 'raster',
+          source: 'labels-overlay',
+          layout: {
+            visibility: 'visible'
+          }
+        });
+        console.log('[LABELS] Added labels overlay layer on top');
+      } else {
+        // Move labels layer to top to ensure visibility over satellite
+        try {
+          mapInstance.moveLayer('labels-overlay-layer');
+          console.log('[LABELS] Moved labels overlay layer to top');
+        } catch (e) {
+          // Layer might already be on top
+        }
+      }
+    };
+    
     try {
       if (viewMode === 'roads') {
         safeSetVisibility('roads-2d-layer', is3D ? 'none' : 'visible');
@@ -810,8 +849,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         safeSetVisibility('roads-3d-layer', 'none');
         safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
         safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
-        // Show labels overlay in satellite mode for city/town/road names
+        
+        // CRITICAL: Ensure labels overlay exists and is on TOP of satellite imagery
+        ensureLabelsOverlay();
         safeSetVisibility('labels-overlay-layer', 'visible');
+        
         // CRITICAL: Hide traffic layer in satellite mode - fixes black lines issue
         if (mapInstance.getLayer('traffic-flow-layer')) {
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
