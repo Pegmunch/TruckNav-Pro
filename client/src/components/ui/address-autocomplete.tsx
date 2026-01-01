@@ -84,15 +84,15 @@ export function AddressAutocomplete({
           // Prefer below, but flip above if not enough space
           let top: number;
           if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-            // Position below input
-            top = rect.bottom + 8;
+            // Position immediately below input (2px gap for clean appearance)
+            top = rect.bottom + 2;
           } else {
             // Position above input
-            top = rect.top - dropdownHeight - 8;
+            top = rect.top - dropdownHeight - 2;
           }
           
           // Clamp to viewport bounds
-          top = Math.max(8, Math.min(top, viewportHeight - 100));
+          top = Math.max(4, Math.min(top, viewportHeight - 50));
           
           setDropdownPosition({
             top,
