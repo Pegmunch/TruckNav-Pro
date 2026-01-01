@@ -41,7 +41,7 @@ export default function FleetManagement() {
       {/* Desktop-Only Navigation Header */}
       <DesktopHeader />
       
-      <div className="min-h-screen bg-background p-6 lg:pt-20">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6 lg:pt-20">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-foreground mb-2">Fleet Management System</h1>

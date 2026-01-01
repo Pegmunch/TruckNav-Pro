@@ -541,7 +541,7 @@ export function AddressAutocomplete({
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           placeholder={dynamicPlaceholder}
-          className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-background", className)}
+          className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-white dark:bg-slate-900", className)}
           data-testid={testId}
           autoComplete="off"
           autoCorrect="off"
@@ -560,7 +560,7 @@ export function AddressAutocomplete({
         {/* Inline Dropdown - Replaces Popover to fix PWA/Mobile viewport issues */}
         {open && (
           <div 
-            className="absolute left-0 right-0 mt-1 z-[9999] shadow-2xl border-2 bg-background max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
+            className="absolute left-0 right-0 mt-1 z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ top: '100%' }}
             onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking items
           >

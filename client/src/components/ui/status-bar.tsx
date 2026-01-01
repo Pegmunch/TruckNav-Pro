@@ -56,7 +56,7 @@ const StatusBar = memo(function StatusBar({
     <div 
       className={cn(
         "w-full flex items-center justify-between",
-        "bg-background/95 backdrop-blur-sm",
+        "bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm",
         "border-b border-border/50",
         compact ? "h-8 px-3 py-1" : "h-10 px-4 py-2", // Reduced height in compact mode
         "text-xs font-medium",

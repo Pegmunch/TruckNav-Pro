@@ -8,7 +8,7 @@ export function DesktopHeader() {
   const [location] = useLocation();
 
   return (
-    <header className="hidden lg:block fixed top-0 left-0 right-0 bg-background border-b border-border z-50">
+    <header className="hidden lg:block fixed top-0 left-0 right-0 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

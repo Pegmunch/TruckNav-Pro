@@ -3121,17 +3121,17 @@ function NavigationPageContent() {
       ) : (
         /* Desktop Layout - Keep existing sidebar layout with features sidebar */
         <div className={cn(
-          "flex h-screen overflow-hidden",
+          "flex h-screen overflow-hidden pt-14",
           "automotive-layout desktop-sidebar"
         )}>
           
-          {/* Desktop Hamburger Menu - Hidden during navigation mode */}
+          {/* Desktop Hamburger Menu - Hidden during navigation mode - positioned below header */}
           {!isSidebarOpen && !isNavigating && (
             <Button
               variant="default"
               size="icon"
               onClick={() => setSidebarState('open')}
-              className="fixed top-4 left-4 z-50 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 p-1.5"
+              className="fixed top-[72px] left-4 z-40 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 p-1.5"
               data-testid="button-menu-desktop"
             >
               <Menu className="w-3.5 h-3.5" />

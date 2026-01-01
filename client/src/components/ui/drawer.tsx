@@ -68,7 +68,7 @@ const DrawerContent = React.forwardRef<
       <DrawerPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex h-auto flex-col bg-background border-t",
+          "fixed inset-x-0 bottom-0 z-50 flex h-auto flex-col bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700",
           isMobile ? [
             "mobile-drawer",
             "rounded-t-[20px]",
