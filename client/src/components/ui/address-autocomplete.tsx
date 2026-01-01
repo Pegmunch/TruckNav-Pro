@@ -62,6 +62,7 @@ export function AddressAutocomplete({
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
@@ -69,13 +70,50 @@ export function AddressAutocomplete({
   // Update dropdown position when open changes
   useEffect(() => {
     if (open && inputWrapperRef.current) {
-      const rect = inputWrapperRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
+      const updatePosition = () => {
+        if (inputWrapperRef.current) {
+          const rect = inputWrapperRef.current.getBoundingClientRect();
+          setDropdownPosition({
+            top: rect.bottom + 8, // Position 8px below input
+            left: rect.left,
+            width: rect.width
+          });
+        }
+      };
+      
+      updatePosition();
+      
+      // Update position on scroll/resize
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
     }
+  }, [open]);
+  
+  // Handle outside clicks to close dropdown
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleClickOutside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      const isInsideInput = inputWrapperRef.current?.contains(target);
+      const isInsideDropdown = dropdownRef.current?.contains(target);
+      
+      if (!isInsideInput && !isInsideDropdown) {
+        setOpen(false);
+      }
+    };
+    
+    // Use pointerdown to catch clicks before blur fires
+    document.addEventListener('pointerdown', handleClickOutside, true);
+    
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside, true);
+    };
   }, [open]);
 
   // Detect country from GPS coordinates
@@ -306,10 +344,6 @@ export function AddressAutocomplete({
 
   const handleInputFocus = useCallback(() => {
     setOpen(true);
-  }, []);
-
-  const handleInputBlur = useCallback(() => {
-    setTimeout(() => setOpen(false), 150);
   }, []);
 
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
@@ -554,7 +588,6 @@ export function AddressAutocomplete({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
           placeholder={dynamicPlaceholder}
           className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-white dark:bg-slate-900", className)}
           data-testid={testId}
@@ -575,6 +608,7 @@ export function AddressAutocomplete({
         {/* Portal-based Dropdown - Escapes overflow containers for proper visibility */}
         {open && dropdownPosition && createPortal(
           <div 
+            ref={dropdownRef}
             className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ 
               top: dropdownPosition.top,
