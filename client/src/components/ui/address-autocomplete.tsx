@@ -62,7 +62,7 @@ export function AddressAutocomplete({
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const isInteractingWithDropdownRef = useRef(false);
   const { toast } = useToast();
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
@@ -74,7 +74,7 @@ export function AddressAutocomplete({
         if (inputWrapperRef.current) {
           const rect = inputWrapperRef.current.getBoundingClientRect();
           setDropdownPosition({
-            top: rect.bottom + 8, // Position 8px below input
+            top: rect.bottom + 12, // Position 12px below input
             left: rect.left,
             width: rect.width
           });
@@ -94,27 +94,15 @@ export function AddressAutocomplete({
     }
   }, [open]);
   
-  // Handle outside clicks to close dropdown
-  useEffect(() => {
-    if (!open) return;
-    
-    const handleClickOutside = (event: PointerEvent) => {
-      const target = event.target as Node;
-      const isInsideInput = inputWrapperRef.current?.contains(target);
-      const isInsideDropdown = dropdownRef.current?.contains(target);
-      
-      if (!isInsideInput && !isInsideDropdown) {
+  // Close dropdown when clicking outside (with delay to allow item selection)
+  const handleCloseDropdown = useCallback(() => {
+    // Delay closing to allow click events on dropdown items to fire first
+    setTimeout(() => {
+      if (!isInteractingWithDropdownRef.current) {
         setOpen(false);
       }
-    };
-    
-    // Use pointerdown to catch clicks before blur fires
-    document.addEventListener('pointerdown', handleClickOutside, true);
-    
-    return () => {
-      document.removeEventListener('pointerdown', handleClickOutside, true);
-    };
-  }, [open]);
+    }, 200);
+  }, []);
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
@@ -345,6 +333,10 @@ export function AddressAutocomplete({
   const handleInputFocus = useCallback(() => {
     setOpen(true);
   }, []);
+
+  const handleInputBlur = useCallback(() => {
+    handleCloseDropdown();
+  }, [handleCloseDropdown]);
 
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -588,6 +580,7 @@ export function AddressAutocomplete({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           placeholder={dynamicPlaceholder}
           className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-white dark:bg-slate-900", className)}
           data-testid={testId}
@@ -608,14 +601,29 @@ export function AddressAutocomplete({
         {/* Portal-based Dropdown - Escapes overflow containers for proper visibility */}
         {open && dropdownPosition && createPortal(
           <div 
-            ref={dropdownRef}
             className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ 
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               width: dropdownPosition.width
             }}
-            onMouseDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              isInteractingWithDropdownRef.current = true;
+            }}
+            onMouseUp={() => {
+              setTimeout(() => {
+                isInteractingWithDropdownRef.current = false;
+              }, 100);
+            }}
+            onTouchStart={() => {
+              isInteractingWithDropdownRef.current = true;
+            }}
+            onTouchEnd={() => {
+              setTimeout(() => {
+                isInteractingWithDropdownRef.current = false;
+              }, 100);
+            }}
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-none">
