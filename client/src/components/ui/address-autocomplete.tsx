@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -59,9 +60,23 @@ export function AddressAutocomplete({
   const [searchTerm, setSearchTerm] = useState(value);
   const [debouncedSearch, setDebouncedSearch] = useState(value);
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const inputWrapperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
+  
+  // Update dropdown position when open changes
+  useEffect(() => {
+    if (open && inputWrapperRef.current) {
+      const rect = inputWrapperRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [open]);
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
@@ -532,7 +547,7 @@ export function AddressAutocomplete({
         )}
       </Button>
 
-      <div className="relative" style={{ position: 'relative', overflow: 'visible' }}>
+      <div ref={inputWrapperRef} className="relative" style={{ position: 'relative', overflow: 'visible' }}>
         <Input
           id={id}
           value={searchTerm}
@@ -557,12 +572,16 @@ export function AddressAutocomplete({
           <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </div>
 
-        {/* Inline Dropdown - Replaces Popover to fix PWA/Mobile viewport issues */}
-        {open && (
+        {/* Portal-based Dropdown - Escapes overflow containers for proper visibility */}
+        {open && dropdownPosition && createPortal(
           <div 
-            className="absolute left-0 right-0 mt-1 z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
-            style={{ top: '100%' }}
-            onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking items
+            className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
+            style={{ 
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              width: dropdownPosition.width
+            }}
+            onMouseDown={(e) => e.preventDefault()}
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-none">
@@ -662,7 +681,8 @@ export function AddressAutocomplete({
                 )}
               </CommandList>
             </Command>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     

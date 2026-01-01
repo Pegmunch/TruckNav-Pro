@@ -87,7 +87,7 @@ const DrawerContent = React.forwardRef<
           isMobile ? "drawer-handle w-9 h-1 mt-3 mb-4" : "mt-4 h-2 w-[100px]"
         )} />
         <div className={cn(
-          "flex-1 overflow-hidden",
+          "flex-1 overflow-y-auto overflow-x-hidden",
           isMobile ? "drawer-content pb-[calc(var(--safe-area-inset-bottom)+1rem)]" : "px-4 pb-4"
         )}>
           {children}
