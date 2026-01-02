@@ -62,22 +62,24 @@ export function AddressAutocomplete({
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const isInteractingWithDropdownRef = useRef(false);
   const { toast } = useToast();
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
   
   // Update dropdown position when open changes
-  // Use visualViewport for iOS keyboard handling
+  // Use visualViewport for iOS keyboard handling including offsetTop
   useEffect(() => {
     if (open && inputWrapperRef.current) {
       const updatePosition = () => {
         if (inputWrapperRef.current) {
           const rect = inputWrapperRef.current.getBoundingClientRect();
           
-          // Calculate available space below and above
+          // Account for iOS visual viewport offset when keyboard is open
           const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const spaceBelow = viewportHeight - rect.bottom;
+          const viewportOffsetTop = window.visualViewport?.offsetTop || 0;
+          const spaceBelow = viewportHeight - rect.bottom + viewportOffsetTop;
           const spaceAbove = rect.top;
           const dropdownHeight = 350; // max-h-[350px]
           
@@ -91,8 +93,9 @@ export function AddressAutocomplete({
             top = rect.top - dropdownHeight - 2;
           }
           
-          // Clamp to viewport bounds
-          top = Math.max(4, Math.min(top, viewportHeight - 50));
+          // Clamp to viewport bounds accounting for iOS viewport offset
+          const maxTop = viewportHeight + viewportOffsetTop - 50;
+          top = Math.max(4 + viewportOffsetTop, Math.min(top, maxTop));
           
           setDropdownPosition({
             top,
@@ -119,15 +122,34 @@ export function AddressAutocomplete({
     }
   }, [open]);
   
-  // Close dropdown when clicking outside (with delay to allow item selection)
-  const handleCloseDropdown = useCallback(() => {
-    // Delay closing to allow click events on dropdown items to fire first
-    setTimeout(() => {
-      if (!isInteractingWithDropdownRef.current) {
-        setOpen(false);
-      }
-    }, 200);
-  }, []);
+  // Close dropdown when clicking/tapping outside using document-level listener
+  // This replaces blur-based closing which is unreliable on iOS
+  useEffect(() => {
+    if (!open) return;
+    
+    const handlePointerDown = (e: PointerEvent) => {
+      // Don't close if interacting with dropdown
+      if (isInteractingWithDropdownRef.current) return;
+      
+      const target = e.target as Node;
+      
+      // Check if click is inside input wrapper
+      if (inputWrapperRef.current?.contains(target)) return;
+      
+      // Check if click is inside dropdown portal
+      if (dropdownRef.current?.contains(target)) return;
+      
+      // Click was outside - close dropdown
+      setOpen(false);
+    };
+    
+    // Use capture phase to catch events before they bubble
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+    };
+  }, [open]);
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
@@ -359,9 +381,11 @@ export function AddressAutocomplete({
     setOpen(true);
   }, []);
 
+  // Don't close on blur - we use document-level pointerdown instead
+  // This prevents iOS from closing dropdown when tapping inside the portal
   const handleInputBlur = useCallback(() => {
-    handleCloseDropdown();
-  }, [handleCloseDropdown]);
+    // Intentionally empty - closing is handled by pointerdown listener
+  }, []);
 
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -626,28 +650,26 @@ export function AddressAutocomplete({
         {/* Portal-based Dropdown - Escapes overflow containers for proper visibility */}
         {open && dropdownPosition && createPortal(
           <div 
+            ref={dropdownRef}
             className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ 
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               width: dropdownPosition.width
             }}
-            onMouseDown={(e) => {
+            onPointerDown={(e) => {
+              // Prevent blur from firing when clicking dropdown
               e.preventDefault();
               isInteractingWithDropdownRef.current = true;
             }}
-            onMouseUp={() => {
-              setTimeout(() => {
-                isInteractingWithDropdownRef.current = false;
-              }, 100);
-            }}
-            onTouchStart={() => {
-              isInteractingWithDropdownRef.current = true;
-            }}
-            onTouchEnd={() => {
-              setTimeout(() => {
-                isInteractingWithDropdownRef.current = false;
-              }, 100);
+            onPointerUp={() => {
+              // Keep interaction flag set longer to prevent race conditions
+              // Use requestAnimationFrame + timeout for reliable timing
+              requestAnimationFrame(() => {
+                setTimeout(() => {
+                  isInteractingWithDropdownRef.current = false;
+                }, 300);
+              });
             }}
           >
             <Command className="bg-transparent">
