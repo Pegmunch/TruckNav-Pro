@@ -69,17 +69,16 @@ export function AddressAutocomplete({
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
   
   // Update dropdown position when open changes
-  // Use visualViewport for iOS keyboard handling including offsetTop
+  // getBoundingClientRect() already returns visual-viewport coordinates on iOS
   useEffect(() => {
     if (open && inputWrapperRef.current) {
       const updatePosition = () => {
         if (inputWrapperRef.current) {
           const rect = inputWrapperRef.current.getBoundingClientRect();
           
-          // Account for iOS visual viewport offset when keyboard is open
+          // Use visual viewport height for accurate space calculation on iOS
           const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const viewportOffsetTop = window.visualViewport?.offsetTop || 0;
-          const spaceBelow = viewportHeight - rect.bottom + viewportOffsetTop;
+          const spaceBelow = viewportHeight - rect.bottom;
           const spaceAbove = rect.top;
           const dropdownHeight = 350; // max-h-[350px]
           
@@ -93,9 +92,8 @@ export function AddressAutocomplete({
             top = rect.top - dropdownHeight - 2;
           }
           
-          // Clamp to viewport bounds accounting for iOS viewport offset
-          const maxTop = viewportHeight + viewportOffsetTop - 50;
-          top = Math.max(4 + viewportOffsetTop, Math.min(top, maxTop));
+          // Clamp to viewport bounds (no offset additions - rect already in viewport space)
+          top = Math.max(4, Math.min(top, viewportHeight - 50));
           
           setDropdownPosition({
             top,
