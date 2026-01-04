@@ -185,7 +185,7 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   userId: varchar("user_id").notNull(),
   planId: varchar("plan_id").notNull(),
   stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
-  status: text("status").notNull(), // 'active', 'canceled', 'past_due', 'unpaid', 'incomplete'
+  status: text("status").notNull(), // 'active', 'canceled', 'past_due', 'unpaid', 'incomplete', 'suspended'
   currentPeriodStart: timestamp("current_period_start"),
   currentPeriodEnd: timestamp("current_period_end"),
   cancelAt: timestamp("cancel_at"),
@@ -193,6 +193,26 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   category: text("category").default('navigation'), // 'navigation', 'fleet_management'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  // Renewal notification tracking
+  lastRenewalNotificationSent: timestamp("last_renewal_notification_sent"),
+  renewalNotification28DaySent: boolean("renewal_notification_28_day_sent").default(false),
+  renewalNotification7DaySent: boolean("renewal_notification_7_day_sent").default(false),
+  renewalNotification1DaySent: boolean("renewal_notification_1_day_sent").default(false),
+  renewalNotificationsStopped: boolean("renewal_notifications_stopped").default(false),
+});
+
+// Subscription notifications log
+export const subscriptionNotifications = pgTable("subscription_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  subscriptionId: varchar("subscription_id").notNull(),
+  notificationType: text("notification_type").notNull(), // 'renewal_28_day', 'renewal_7_day', 'renewal_1_day', 'payment_failed', 'subscription_expired', 'subscription_renewed'
+  emailSent: boolean("email_sent").default(false),
+  emailSentAt: timestamp("email_sent_at"),
+  emailRecipient: text("email_recipient"),
+  status: text("status").default('pending'), // 'pending', 'sent', 'failed', 'skipped'
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Location bookmarks and history
