@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requireSubscription, requireAuth } from "./subscriptionMiddleware";
+import { requireSubscription, requireAuth, requireFleetSubscription } from "./subscriptionMiddleware";
+import { sendPaymentFailedNotification, resetNotificationsForRenewedSubscription, stopNotificationsForExpiredSubscription } from "./services/subscription-notifications";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -3767,6 +3768,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 currentPeriodStart: new Date((paidInvoice as any).period_start * 1000),
                 currentPeriodEnd: new Date((paidInvoice as any).period_end * 1000),
               });
+              // Reset notification flags for the new billing period
+              await resetNotificationsForRenewedSubscription(userSub.id);
             }
           }
           break;
@@ -3781,6 +3784,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await storage.updateUserSubscription(userSub.id, {
                 status: 'past_due',
               });
+              // Send payment failed email notification
+              await sendPaymentFailedNotification(userSub.userId, userSub.id);
             }
           }
           break;
@@ -3813,6 +3818,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'canceled',
               canceledAt: new Date(),
             });
+            // Stop renewal notifications for canceled subscription
+            await stopNotificationsForExpiredSubscription(userSubDeleted.id);
           }
           break;
 
@@ -4527,11 +4534,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =============================================================================
 
   // =============================================================================
-  // FLEET MANAGEMENT SYSTEM API ROUTES (Desktop-only)
+  // FLEET MANAGEMENT SYSTEM API ROUTES (Desktop-only, requires Fleet Management subscription)
   // =============================================================================
 
   // Fleet Vehicles
-  app.get("/api/fleet/vehicles", async (req: Request, res: Response) => {
+  app.get("/api/fleet/vehicles", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const vehicles = await storage.getAllFleetVehicles();
       res.json(vehicles);
@@ -4541,7 +4548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/vehicles/active", async (req: Request, res: Response) => {
+  app.get("/api/fleet/vehicles/active", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const vehicles = await storage.getActiveFleetVehicles();
       res.json(vehicles);
@@ -4551,7 +4558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/vehicles/:id", async (req: Request, res: Response) => {
+  app.get("/api/fleet/vehicles/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const vehicle = await storage.getFleetVehicle(req.params.id);
       if (!vehicle) {
@@ -4564,7 +4571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/vehicles", validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/fleet/vehicles", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const vehicle = await storage.createFleetVehicle(req.body);
       res.status(201).json(vehicle);
@@ -4574,7 +4581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/fleet/vehicles/:id", validateRequest, async (req: Request, res: Response) => {
+  app.put("/api/fleet/vehicles/:id", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const vehicle = await storage.updateFleetVehicle(req.params.id, req.body);
       if (!vehicle) {
@@ -4587,7 +4594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/fleet/vehicles/:id", async (req: Request, res: Response) => {
+  app.delete("/api/fleet/vehicles/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       await storage.deleteFleetVehicle(req.params.id);
       res.json({ message: "Vehicle deleted successfully" });
@@ -4598,7 +4605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Operators
-  app.get("/api/fleet/operators", async (req: Request, res: Response) => {
+  app.get("/api/fleet/operators", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const operators = await storage.getAllOperators();
       res.json(operators);
@@ -4608,7 +4615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/operators/active", async (req: Request, res: Response) => {
+  app.get("/api/fleet/operators/active", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const operators = await storage.getActiveOperators();
       res.json(operators);
@@ -4618,7 +4625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/operators/:id", async (req: Request, res: Response) => {
+  app.get("/api/fleet/operators/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const operator = await storage.getOperator(req.params.id);
       if (!operator) {
@@ -4631,7 +4638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/operators", validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/fleet/operators", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const operator = await storage.createOperator(req.body);
       res.status(201).json(operator);
@@ -4641,7 +4648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/fleet/operators/:id", validateRequest, async (req: Request, res: Response) => {
+  app.put("/api/fleet/operators/:id", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const operator = await storage.updateOperator(req.params.id, req.body);
       if (!operator) {
@@ -4654,7 +4661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/fleet/operators/:id", async (req: Request, res: Response) => {
+  app.delete("/api/fleet/operators/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       await storage.deleteOperator(req.params.id);
       res.json({ message: "Operator deleted successfully" });
@@ -4665,7 +4672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Service Records
-  app.get("/api/fleet/service-records/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/service-records/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const records = await storage.getServiceRecordsByVehicle(req.params.vehicleId);
       res.json(records);
@@ -4675,7 +4682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/service-records/upcoming", async (req: Request, res: Response) => {
+  app.get("/api/fleet/service-records/upcoming", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const daysAhead = req.query.days ? parseInt(req.query.days as string) : 30;
       const records = await storage.getUpcomingServices(daysAhead);
@@ -4686,7 +4693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/service-records", validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/fleet/service-records", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const record = await storage.createServiceRecord(req.body);
       res.status(201).json(record);
@@ -4696,7 +4703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/fleet/service-records/:id", validateRequest, async (req: Request, res: Response) => {
+  app.put("/api/fleet/service-records/:id", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const record = await storage.updateServiceRecord(req.params.id, req.body);
       if (!record) {
@@ -4709,7 +4716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/fleet/service-records/:id", async (req: Request, res: Response) => {
+  app.delete("/api/fleet/service-records/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       await storage.deleteServiceRecord(req.params.id);
       res.json({ message: "Service record deleted successfully" });
@@ -4720,7 +4727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fuel Logs
-  app.get("/api/fleet/fuel-logs/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/fuel-logs/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       const logs = await storage.getFuelLogsByVehicle(req.params.vehicleId, limit);
@@ -4731,7 +4738,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/fuel-logs/vehicle/:vehicleId/efficiency", async (req: Request, res: Response) => {
+  app.get("/api/fleet/fuel-logs/vehicle/:vehicleId/efficiency", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const efficiency = await storage.getVehicleFuelEfficiency(req.params.vehicleId);
       res.json(efficiency);
@@ -4741,7 +4748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/fuel-logs", validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/fleet/fuel-logs", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const log = await storage.createFuelLog(req.body);
       res.status(201).json(log);
@@ -4751,7 +4758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/fleet/fuel-logs/:id", validateRequest, async (req: Request, res: Response) => {
+  app.put("/api/fleet/fuel-logs/:id", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const log = await storage.updateFuelLog(req.params.id, req.body);
       if (!log) {
@@ -4764,7 +4771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/fleet/fuel-logs/:id", async (req: Request, res: Response) => {
+  app.delete("/api/fleet/fuel-logs/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       await storage.deleteFuelLog(req.params.id);
       res.json({ message: "Fuel log deleted successfully" });
@@ -4775,7 +4782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vehicle Assignments
-  app.post("/api/fleet/assignments", validateRequest, async (req: Request, res: Response) => {
+  app.post("/api/fleet/assignments", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
     try {
       const assignment = await storage.assignVehicle(req.body);
       res.status(201).json(assignment);
@@ -4785,7 +4792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/assignments/unassign/:vehicleId", async (req: Request, res: Response) => {
+  app.post("/api/fleet/assignments/unassign/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       await storage.unassignVehicle(req.params.vehicleId);
       res.json({ message: "Vehicle unassigned successfully" });
@@ -4795,7 +4802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/assignments/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/assignments/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const assignment = await storage.getActiveAssignment(req.params.vehicleId);
       res.json(assignment || null);
@@ -4805,7 +4812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/assignments/operator/:operatorId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/assignments/operator/:operatorId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const assignment = await storage.getOperatorAssignment(req.params.operatorId);
       res.json(assignment || null);
@@ -5101,7 +5108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fleet Notifications API endpoints
-  app.get("/api/fleet/notifications", async (req: Request, res: Response) => {
+  app.get("/api/fleet/notifications", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const notifications = await storage.getFleetNotifications('active');
       res.json(notifications);
@@ -5111,7 +5118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/notifications/:id/dismiss", async (req: Request, res: Response) => {
+  app.post("/api/fleet/notifications/:id/dismiss", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const success = await storage.dismissFleetNotification(req.params.id);
       if (!success) {
@@ -5124,7 +5131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/fleet/notifications/:id/resolve", async (req: Request, res: Response) => {
+  app.post("/api/fleet/notifications/:id/resolve", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const success = await storage.resolveFleetNotification(req.params.id);
       if (!success) {
@@ -5138,7 +5145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vehicle Documents API endpoints
-  app.post("/api/fleet/documents/upload", multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }).single('file'), async (req: Request, res: Response) => {
+  app.post("/api/fleet/documents/upload", requireFleetSubscription, multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }).single('file'), async (req: Request, res: Response) => {
     try {
       performance.mark('api-document-upload-start');
       console.log('[PERF-API] 📤 Document upload start');
@@ -5181,7 +5188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/documents/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/documents/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       performance.mark('api-documents-fetch-start');
       console.log('[PERF-API] 📄 Fetching documents for vehicle:', req.params.vehicleId);
@@ -5199,7 +5206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/documents/download/:id", async (req: Request, res: Response) => {
+  app.get("/api/fleet/documents/download/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       performance.mark('api-document-download-start');
       console.log('[PERF-API] 📥 Downloading document:', req.params.id);
@@ -5222,7 +5229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/fleet/documents/:id", async (req: Request, res: Response) => {
+  app.delete("/api/fleet/documents/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       performance.mark('api-document-delete-start');
       console.log('[PERF-API] 🗑️ Deleting document:', req.params.id);
@@ -5247,7 +5254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Incidents API
-  app.post("/api/fleet/incidents", async (req: Request, res: Response) => {
+  app.post("/api/fleet/incidents", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const incident = await storage.createIncident(req.body);
       res.json(incident);
@@ -5257,7 +5264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/incidents/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/incidents/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const incidents = await storage.getIncidentsByVehicle(req.params.vehicleId);
       res.json(incidents);
@@ -5268,7 +5275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cost Analytics API
-  app.post("/api/fleet/costs", async (req: Request, res: Response) => {
+  app.post("/api/fleet/costs", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const cost = await storage.createCostRecord(req.body);
       res.json(cost);
@@ -5278,7 +5285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/costs/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/costs/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const costs = await storage.getCostsByVehicle(req.params.vehicleId);
       res.json(costs);
@@ -5288,7 +5295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/analytics/total-costs/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/analytics/total-costs/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const totals = await storage.getVehicleTotalCosts(req.params.vehicleId);
       res.json(totals);
@@ -5299,7 +5306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trip Tracking API
-  app.post("/api/fleet/trips", async (req: Request, res: Response) => {
+  app.post("/api/fleet/trips", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const trip = await storage.createTrip(req.body);
       res.json(trip);
@@ -5309,7 +5316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/trips/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/trips/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const trips = await storage.getTripsByVehicle(req.params.vehicleId);
       res.json(trips);
@@ -5319,7 +5326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/analytics/trips", async (req: Request, res: Response) => {
+  app.get("/api/fleet/analytics/trips", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const analytics = await storage.getFleetTripAnalytics();
       res.json(analytics);
@@ -5329,7 +5336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/fleet/trips/:id", async (req: Request, res: Response) => {
+  app.patch("/api/fleet/trips/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const trip = await storage.updateTrip(req.params.id, req.body);
       if (!trip) return res.status(404).json({ message: "Trip not found" });
@@ -5341,7 +5348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Maintenance Predictions API
-  app.get("/api/fleet/predictions/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/predictions/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const predictions = await storage.getPredictionsByVehicle(req.params.vehicleId);
       res.json(predictions);
@@ -5351,7 +5358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/predictions/high-risk", async (req: Request, res: Response) => {
+  app.get("/api/fleet/predictions/high-risk", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const predictions = await storage.getHighRiskPredictions();
       res.json(predictions);
@@ -5362,7 +5369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Compliance API
-  app.get("/api/fleet/compliance/vehicle/:vehicleId", async (req: Request, res: Response) => {
+  app.get("/api/fleet/compliance/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const records = await storage.getComplianceByVehicle(req.params.vehicleId);
       res.json(records);
@@ -5372,7 +5379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/fleet/compliance/non-compliant", async (req: Request, res: Response) => {
+  app.get("/api/fleet/compliance/non-compliant", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const records = await storage.getNonCompliantRecords();
       res.json(records);

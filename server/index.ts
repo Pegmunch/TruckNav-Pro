@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 // Re-enable security middleware for stable navigation functionality
 import { applySecurityMiddleware, authRateLimit, apiRateLimit, sessionBridge } from "./middleware/security";
 import { getSessionConfig, sessionDebugAndFallback, sessionRecovery } from "./middleware/session-security";
+import { startSubscriptionNotificationScheduler } from "./services/subscription-notifications";
 
 const app = express();
 
@@ -132,6 +133,10 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start subscription notification scheduler
+    startSubscriptionNotificationScheduler();
+    log('📧 Subscription notification scheduler started');
   });
 
   // Graceful shutdown handlers to properly free the port
