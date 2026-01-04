@@ -171,15 +171,19 @@ export function looksLikePostcode(input: string): boolean {
   if (!input || input.trim().length === 0) return false;
   
   // Remove spaces and check length
-  const cleaned = input.replace(/\s+/g, '');
+  const cleaned = input.replace(/\s+/g, '').toUpperCase();
   
-  // Basic heuristics for postcode-like strings
+  // Enhanced heuristics for postcode-like strings
   const patterns = [
-    /^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/i, // UK format
+    /^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/i, // UK format (standard)
+    /^[A-Z]{1,2}[0-9][A-Z0-9]?$/i, // UK format partial (first half)
     /^[0-9]{5}(-?[0-9]{4})?$/, // US ZIP format
     /^[A-Z][0-9][A-Z][0-9][A-Z][0-9]$/i, // Canadian format
     /^[0-9]{4,5}$/, // Australian/German/French format
   ];
+  
+  // If it's short, only trigger if it looks like the start of a postcode (at least 3 chars)
+  if (cleaned.length < 3) return false;
   
   return patterns.some(pattern => pattern.test(cleaned) || pattern.test(input));
 }

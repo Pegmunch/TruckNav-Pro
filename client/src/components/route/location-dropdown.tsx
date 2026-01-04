@@ -61,9 +61,9 @@ const LocationDropdown = memo(function LocationDropdown({
 }: LocationDropdownProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [isPostcodeMode, setIsPostcodeMode] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveLabel, setSaveLabel] = useState("");
-  const [isPostcodeMode, setIsPostcodeMode] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [postcodeValidation, setPostcodeValidation] = useState<{
     isValid: boolean;
@@ -71,34 +71,48 @@ const LocationDropdown = memo(function LocationDropdown({
     formatted: string;
     error?: string;
   }>({ isValid: false, country: null, formatted: "" });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const gps = useGPS();
 
-  // Detect country from GPS coordinates
-  const countryCode = useMemo(() => {
-    // Default to UK for truck navigation (until GPS confirms otherwise)
-    if (!gps?.position) return 'GB';
-    
-    const { latitude, longitude } = gps.position;
-    
-    // UK bounds: lat 49.9-60.9, lng -8.2-1.8
-    if (latitude >= 49.9 && latitude <= 60.9 && longitude >= -8.2 && longitude <= 1.8) {
-      return 'GB';
-    }
-    
-    // If GPS shows user is outside UK, allow worldwide search
-    return undefined;
-  }, [gps?.position]);
-
   // Sync internal search value with external value
   useEffect(() => {
-    setSearchValue(value);
-    
-    // Auto-detect if the input looks like a postcode
-    if (value && looksLikePostcode(value) && !isPostcodeMode) {
+    if (value !== searchValue) {
+      setSearchValue(value || "");
+    }
+  }, [value]);
+
+  // Auto-detect if the input looks like a postcode
+  useEffect(() => {
+    if (searchValue && looksLikePostcode(searchValue) && !isPostcodeMode) {
       setIsPostcodeMode(true);
     }
-  }, [value, isPostcodeMode]);
+  }, [searchValue, isPostcodeMode]);
+
+  // Handle click outside - better for mobile/iOS
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      // Don't close if clicking inside input or dropdown content
+      if (
+        dropdownRef.current?.contains(target) || 
+        inputRef.current?.parentElement?.contains(target)
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('touchstart', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('touchstart', handleClickOutside, true);
+    };
+  }, [open]);
 
   // Handle postcode validation and formatting
   useEffect(() => {
@@ -109,12 +123,12 @@ const LocationDropdown = memo(function LocationDropdown({
       // Auto-format the postcode if valid
       if (validation.isValid && validation.formatted !== searchValue) {
         setSearchValue(validation.formatted);
-        onChange(validation.formatted);
+        // Remove onChange call here to prevent loop
       }
     } else {
       setPostcodeValidation({ isValid: false, country: null, formatted: "" });
     }
-  }, [searchValue, isPostcodeMode, onChange]);
+  }, [searchValue, isPostcodeMode]);
 
   // Virtual keyboard handlers
   const handleKeyboardSearch = useCallback((searchTerm: string) => {
@@ -380,14 +394,17 @@ const LocationDropdown = memo(function LocationDropdown({
                 }`}></div>
               </div>
               <Input
+                ref={inputRef}
                 placeholder={isPostcodeMode 
-                  ? `Enter ${postcodeValidation.country ? POSTCODE_PATTERNS[postcodeValidation.country]?.label || 'postcode' : 'postcode'} (e.g., ${postcodeValidation.country ? POSTCODE_PATTERNS[postcodeValidation.country]?.example : 'SW1A 1AA, 10001'})`
+                  ? `Enter postcode (e.g., SW1A 1AA, 10001)`
                   : placeholder
                 }
                 value={searchValue}
+                onFocus={() => setOpen(true)}
                 onChange={(e) => {
                   setSearchValue(e.target.value);
                   onChange(e.target.value);
+                  if (e.target.value.length >= 1) setOpen(true);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && isPostcodeMode) {
@@ -424,12 +441,12 @@ const LocationDropdown = memo(function LocationDropdown({
             </div>
           </PopoverTrigger>
           <PopoverContent 
+            ref={dropdownRef}
             className="w-80 p-0" 
             align="start"
             side="bottom"
-            sideOffset={0}
-            avoidCollisions={false}
-            collisionPadding={0}
+            sideOffset={4}
+            onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <div className="p-3 border-b">
               <div className="flex items-center justify-between">
