@@ -5401,7 +5401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GPS TRACKING ROUTES (/api/enterprise/gps)
   // ========================================
 
-  app.post("/api/enterprise/gps/tracking", async (req: Request, res: Response) => {
+  app.post("/api/enterprise/gps/tracking", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5424,7 +5424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/gps/vehicle/:vehicleId/history", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/gps/vehicle/:vehicleId/history", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5451,7 +5451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/gps/vehicle/:vehicleId/latest", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/gps/vehicle/:vehicleId/latest", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5472,7 +5472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/gps/fleet", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/gps/fleet", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5491,7 +5491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GEOFENCING ROUTES (/api/enterprise/geofences)
   // ========================================
 
-  app.post("/api/enterprise/geofences", async (req: Request, res: Response) => {
+  app.post("/api/enterprise/geofences", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5515,7 +5515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/geofences", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/geofences", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5530,7 +5530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/geofences/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5554,7 +5554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
+  app.put("/api/enterprise/geofences/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5579,7 +5579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/enterprise/geofences/:id", async (req: Request, res: Response) => {
+  app.delete("/api/enterprise/geofences/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5604,7 +5604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/enterprise/geofences/:id/events", async (req: Request, res: Response) => {
+  app.post("/api/enterprise/geofences/:id/events", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5628,7 +5628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/geofences/:id/events", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/geofences/:id/events", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5651,7 +5651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DRIVER BEHAVIOR ROUTES (/api/enterprise/driver-behavior)
   // ========================================
 
-  app.post("/api/enterprise/driver-behavior", async (req: Request, res: Response) => {
+  app.post("/api/enterprise/driver-behavior", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5674,7 +5674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/driver-behavior/operator/:operatorId", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/driver-behavior/operator/:operatorId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5695,7 +5695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/driver-behavior/operator/:operatorId/score", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/driver-behavior/operator/:operatorId/score", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5711,7 +5711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/driver-behavior/fleet", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/driver-behavior/fleet", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5730,7 +5730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // HOURS OF SERVICE ROUTES (/api/enterprise/hos)
   // ========================================
 
-  app.post("/api/enterprise/hos", async (req: Request, res: Response) => {
+  app.post("/api/enterprise/hos", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5753,7 +5753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/hos/operator/:operatorId", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/hos/operator/:operatorId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5774,7 +5774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/hos/operator/:operatorId/latest", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/hos/operator/:operatorId/latest", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5795,7 +5795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/hos/violations", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/hos/violations", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5810,7 +5810,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/enterprise/hos/:id", async (req: Request, res: Response) => {
+  app.put("/api/enterprise/hos/:id", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5834,7 +5834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CUSTOMER BILLING ROUTES (/api/enterprise/billing)
   // ========================================
 
-  app.post("/api/enterprise/billing/customers", async (req: Request, res: Response) => {
+  app.post("/api/enterprise/billing/customers", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5858,7 +5858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/billing/customers", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/billing/customers", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5873,7 +5873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/billing/customers/:customerId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5897,7 +5897,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
+  app.put("/api/enterprise/billing/customers/:customerId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5922,7 +5922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/enterprise/billing/customers/:customerId", async (req: Request, res: Response) => {
+  app.delete("/api/enterprise/billing/customers/:customerId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
@@ -5947,7 +5947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/enterprise/billing/analytics", async (req: Request, res: Response) => {
+  app.get("/api/enterprise/billing/analytics", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const userId = getAuthUserId(req);
       if (!userId) {
