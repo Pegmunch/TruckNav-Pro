@@ -6,7 +6,7 @@ import { trafficService } from "./services/traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth, requireFleetSubscription } from "./subscriptionMiddleware";
-import { sendPaymentFailedNotification, resetNotificationsForRenewedSubscription, stopNotificationsForExpiredSubscription } from "./services/subscription-notifications";
+import { sendPaymentFailedNotification, resetNotificationsForRenewedSubscription, stopNotificationsForExpiredSubscription, getBrandedEmailTemplate } from "./services/subscription-notifications";
 import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, type VehicleProfile, type Restriction } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -3623,6 +3623,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ message: "Failed to get subscription plans" });
     }
+  });
+
+  // Email Template Preview (development only)
+  app.get("/api/email-preview/:type", (req, res) => {
+    const { type } = req.params;
+    const category = (req.query.category as string) || 'navigation';
+    
+    const sampleContent: Record<string, string> = {
+      'renewal-28': `
+        <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 22px;">Hi John,</h2>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 24px 0;">
+          Your <strong>Pro Monthly</strong> subscription will renew in <strong>4 weeks</strong>.
+        </p>
+        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 0 0 24px 0; border-radius: 0 12px 12px 0;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 4px 0;"><span style="color: #1e40af; font-weight: 600;">📅 Renewal Date:</span> <span style="color: #1e40af;">Sunday, 1 February 2026</span></td></tr>
+            <tr><td style="padding: 4px 0;"><span style="color: #1e40af; font-weight: 600;">📦 Plan:</span> <span style="color: #1e40af;">Pro Monthly</span></td></tr>
+          </table>
+        </div>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 32px 0;">
+          To ensure uninterrupted access, please make sure your payment method is up to date.
+        </p>
+        <div style="text-align: center; margin: 0 0 24px 0;">
+          <a href="#" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+            Manage Subscription
+          </a>
+        </div>
+      `,
+      'renewal-1': `
+        <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 22px;">Hi John,</h2>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 24px 0;">
+          This is a <strong style="color: #dc2626;">final reminder</strong> that your subscription expires <strong>tomorrow</strong>!
+        </p>
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 0 0 24px 0; border-radius: 0 12px 12px 0;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 4px 0;"><span style="color: #991b1b; font-weight: 600;">📅 Renewal Date:</span> <span style="color: #991b1b;">Tomorrow, 5 January 2026</span></td></tr>
+            <tr><td style="padding: 4px 0;"><span style="color: #991b1b; font-weight: 600;">📦 Plan:</span> <span style="color: #991b1b;">Pro Monthly</span></td></tr>
+          </table>
+        </div>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 20px; margin: 0 0 24px 0;">
+          <p style="color: #dc2626; font-weight: 600; margin: 0 0 12px 0;">⚠️ Without renewal, you will lose access to:</p>
+          <ul style="color: #7f1d1d; margin: 0; padding-left: 20px; line-height: 1.8;">
+            <li>Truck-safe route planning</li>
+            <li>Height & weight restriction avoidance</li>
+            <li>Real-time traffic updates</li>
+          </ul>
+        </div>
+        <div style="text-align: center; margin: 0 0 24px 0;">
+          <a href="#" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+            Manage Subscription
+          </a>
+        </div>
+      `,
+      'payment-failed': `
+        <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 22px;">Hi John,</h2>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 24px; margin: 0 0 24px 0; text-align: center;">
+          <div style="width: 64px; height: 64px; background: #fee2e2; border-radius: 50%; margin: 0 auto 16px auto; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 32px;">⚠️</span>
+          </div>
+          <h3 style="color: #dc2626; margin: 0 0 8px 0; font-size: 20px;">Payment Failed</h3>
+          <p style="color: #991b1b; margin: 0; font-size: 14px;">We were unable to process your payment</p>
+        </div>
+        <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 24px 0;">
+          We tried to charge your payment method for your <strong>Pro Monthly</strong> subscription, but the payment was unsuccessful.
+        </p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin: 0 0 24px 0; border-radius: 0 12px 12px 0;">
+          <p style="color: #92400e; margin: 0; font-weight: 500;">
+            🔔 Your subscription access may be interrupted if payment is not updated within the next few days.
+          </p>
+        </div>
+        <div style="text-align: center; margin: 0 0 24px 0;">
+          <a href="#" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);">
+            Update Payment Method
+          </a>
+        </div>
+      `,
+    };
+
+    const content = sampleContent[type];
+    if (!content) {
+      return res.status(404).send(`
+        <h1>Email Preview Types</h1>
+        <ul>
+          <li><a href="/api/email-preview/renewal-28">28-Day Renewal Reminder</a></li>
+          <li><a href="/api/email-preview/renewal-1">1-Day Urgent Renewal</a></li>
+          <li><a href="/api/email-preview/payment-failed">Payment Failed</a></li>
+          <li><a href="/api/email-preview/renewal-28?category=fleet_management">Fleet Management Version</a></li>
+        </ul>
+      `);
+    }
+
+    const emailHtml = getBrandedEmailTemplate(content, category);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(emailHtml);
   });
 
   // Zod schema for checkout request
