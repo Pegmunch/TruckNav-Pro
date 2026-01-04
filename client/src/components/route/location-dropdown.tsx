@@ -1,8 +1,9 @@
-import { useState, useEffect, memo, useCallback, useMemo } from "react";
+import { useState, useEffect, memo, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -73,8 +74,10 @@ const LocationDropdown = memo(function LocationDropdown({
   }>({ isValid: false, country: null, formatted: "" });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const gps = useGPS();
+  const isMobile = useIsMobile();
 
   // Sync internal search value with external value
   useEffect(() => {
@@ -382,334 +385,367 @@ const LocationDropdown = memo(function LocationDropdown({
     });
   }, [toggleFavoriteMutation]);
 
-  return (
-    <div className="relative">
-      <div className="flex items-center space-x-2">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative flex-1">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <div className={`w-3 h-3 rounded-full ${
-                  icon === "start" ? "bg-accent" : "bg-destructive"
-                }`}></div>
-              </div>
-              <Input
-                ref={inputRef}
-                placeholder={isPostcodeMode 
-                  ? `Enter postcode (e.g., SW1A 1AA, 10001)`
-                  : placeholder
-                }
-                value={searchValue}
-                onFocus={() => setOpen(true)}
-                onChange={(e) => {
-                  setSearchValue(e.target.value);
-                  onChange(e.target.value);
-                  if (e.target.value.length >= 1) setOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && isPostcodeMode) {
-                    e.preventDefault();
-                    handlePostcodeEnter();
-                  }
-                }}
-                className={`pl-10 pr-8 ${
-                  isPostcodeMode && postcodeValidation.error 
-                    ? "border-destructive focus:border-destructive" 
-                    : ""
-                } ${
-                  isPostcodeMode && postcodeValidation.isValid 
-                    ? "border-green-500 focus:border-green-500" 
-                    : ""
-                }`}
-                data-testid={testId}
-              />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                {isPostcodeMode && (
-                  <div className="flex items-center gap-1">
-                    {postcodeValidation.country && (
-                      <Badge variant="outline" className="text-xs px-1 py-0">
-                        {postcodeValidation.country}
-                      </Badge>
-                    )}
-                    {postcodeValidation.isValid && (
-                      <Check className="w-3 h-3 text-green-500" />
-                    )}
-                  </div>
-                )}
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              </div>
+  // Shared dropdown content component
+  const dropdownContent = (
+    <>
+      <div className="p-3 border-b">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="postcode-mode" className="text-sm font-medium">
+            Postcode Search
+          </Label>
+          <div className="flex items-center space-x-2">
+            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <Switch
+              id="postcode-mode"
+              checked={isPostcodeMode}
+              onCheckedChange={setIsPostcodeMode}
+              data-testid="switch-postcode-mode"
+            />
+            <Mail className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </div>
+        {isPostcodeMode && postcodeValidation.error && (
+          <div className="mt-2 text-xs text-destructive">
+            {postcodeValidation.error}
+          </div>
+        )}
+        {isPostcodeMode && postcodeValidation.isValid && (
+          <div className="mt-2 text-xs text-green-600">
+            Valid {postcodeValidation.country} postcode format
+          </div>
+        )}
+      </div>
+      <Command>
+        <CommandInput
+          placeholder={isPostcodeMode 
+            ? "Enter postcode/ZIP code..." 
+            : "Search locations..."
+          }
+          value={searchValue}
+          onValueChange={(value) => {
+            setSearchValue(value);
+            onChange(value);
+          }}
+        />
+        <CommandList>
+          {(isLoadingAll || isLoadingFavorites || isLoadingPostcodes || isLoadingPhoton) && (
+            <div className="p-4 space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
             </div>
-          </PopoverTrigger>
-          <PopoverContent 
-            ref={dropdownRef}
-            className="w-80 p-0" 
-            align="start"
-            side="bottom"
-            sideOffset={4}
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <div className="p-3 border-b">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="postcode-mode" className="text-sm font-medium">
-                  Postcode Search
-                </Label>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <Switch
-                    id="postcode-mode"
-                    checked={isPostcodeMode}
-                    onCheckedChange={setIsPostcodeMode}
-                    data-testid="switch-postcode-mode"
-                  />
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-              {isPostcodeMode && postcodeValidation.error && (
-                <div className="mt-2 text-xs text-destructive">
-                  {postcodeValidation.error}
-                </div>
-              )}
-              {isPostcodeMode && postcodeValidation.isValid && (
-                <div className="mt-2 text-xs text-green-600">
-                  Valid {postcodeValidation.country} postcode format
-                </div>
-              )}
-            </div>
-            <Command>
-              <CommandInput
-                placeholder={isPostcodeMode 
-                  ? "Enter postcode/ZIP code..." 
-                  : "Search locations..."
-                }
-                value={searchValue}
-                onValueChange={(value) => {
-                  setSearchValue(value);
-                  onChange(value);
-                }}
-              />
-              <CommandList>
-                {(isLoadingAll || isLoadingFavorites || isLoadingPostcodes || isLoadingPhoton) && (
-                  <div className="p-4 space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
+          )}
+
+          {/* Postcode Search Results */}
+          {isPostcodeMode && postcodeResults.length > 0 && (
+            <CommandGroup heading="Postcode Results">
+              {postcodeResults.map((result: any, index: number) => (
+                <CommandItem
+                  key={`postcode-${result.postcode}-${index}`}
+                  value={result.formatted}
+                  onSelect={() => handlePostcodeSelect(result)}
+                  className="flex items-center justify-between cursor-pointer"
+                  data-testid={`postcode-result-${index}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Mail className="w-4 h-4 text-blue-500" />
+                    <div>
+                      <div className="font-medium">{result.formatted}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {result.address || result.city} ({result.country})
+                      </div>
+                    </div>
                   </div>
-                )}
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline" className="text-xs">
+                      {(result.confidence * 100).toFixed(0)}%
+                    </Badge>
+                    <Globe className="w-3 h-3 text-muted-foreground" />
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
-                {/* Postcode Search Results */}
-                {isPostcodeMode && postcodeResults.length > 0 && (
-                  <CommandGroup heading="Postcode Results">
-                    {postcodeResults.map((result: any, index: number) => (
-                      <CommandItem
-                        key={`postcode-${result.postcode}-${index}`}
-                        value={result.formatted}
-                        onSelect={() => handlePostcodeSelect(result)}
-                        className="flex items-center justify-between cursor-pointer"
-                        data-testid={`postcode-result-${index}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Mail className="w-4 h-4 text-blue-500" />
-                          <div>
-                            <div className="font-medium">{result.formatted}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {result.address || result.city} ({result.country})
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">
-                            {(result.confidence * 100).toFixed(0)}%
-                          </Badge>
-                          <Globe className="w-3 h-3 text-muted-foreground" />
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
+          {/* Show "Press Enter to search" for valid postcodes */}
+          {isPostcodeMode && postcodeValidation.isValid && postcodeResults.length === 0 && !isLoadingPostcodes && (
+            <CommandGroup heading="Postcode Search">
+              <CommandItem
+                onSelect={handlePostcodeEnter}
+                className="flex items-center space-x-3 cursor-pointer"
+                data-testid="postcode-search-enter"
+              >
+                <Mail className="w-4 h-4 text-blue-500" />
+                <div>
+                  <div className="font-medium">Search for {postcodeValidation.formatted}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Press Enter or click to find this postcode
+                  </div>
+                </div>
+              </CommandItem>
+            </CommandGroup>
+          )}
 
-                {/* Show "Press Enter to search" for valid postcodes */}
-                {isPostcodeMode && postcodeValidation.isValid && postcodeResults.length === 0 && !isLoadingPostcodes && (
-                  <CommandGroup heading="Postcode Search">
+          {/* No results for postcode search */}
+          {isPostcodeMode && searchValue.length >= 3 && postcodeResults.length === 0 && !isLoadingPostcodes && !postcodeValidation.isValid && (
+            <CommandEmpty>
+              <div className="text-center py-4">
+                <Mail className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No postcodes found. Check the format and try again.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supported: UK, US, CA, AU, DE, FR postcodes
+                </p>
+              </div>
+            </CommandEmpty>
+          )}
+
+          {/* Photon Worldwide Address Search Results - Only shown when NOT in postcode mode */}
+          {!isPostcodeMode && photonResults.length > 0 && (
+            <>
+              {(postcodeResults.length > 0 || favoriteLocations.length > 0 || sortedLocations.length > 0) && <Separator />}
+              <CommandGroup heading="Worldwide Addresses">
+                {photonResults.map((feature: PhotonFeature, index: number) => {
+                  const displayLabel = formatPhotonDisplay(feature);
+                  const props = feature.properties;
+                  
+                  return (
                     <CommandItem
-                      onSelect={handlePostcodeEnter}
-                      className="flex items-center space-x-3 cursor-pointer"
-                      data-testid="postcode-search-enter"
+                      key={`photon-${index}`}
+                      value={displayLabel}
+                      onSelect={() => handlePhotonSelect(feature)}
+                      className="flex items-center justify-between cursor-pointer"
+                      data-testid={`photon-result-${index}`}
                     >
-                      <Mail className="w-4 h-4 text-blue-500" />
-                      <div>
-                        <div className="font-medium">Search for {postcodeValidation.formatted}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Press Enter or click to find this postcode
+                      <div className="flex items-center space-x-3">
+                        <Globe className="w-4 h-4 text-primary" />
+                        <div>
+                          <div className="font-medium">
+                            {props.name || props.street || 'Unknown'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {[props.city, props.country].filter(Boolean).join(", ")}
+                          </div>
                         </div>
                       </div>
                     </CommandItem>
-                  </CommandGroup>
-                )}
+                  );
+                })}
+              </CommandGroup>
+            </>
+          )}
 
-                {/* No results for postcode search */}
-                {isPostcodeMode && searchValue.length >= 3 && postcodeResults.length === 0 && !isLoadingPostcodes && !postcodeValidation.isValid && (
-                  <CommandEmpty>
-                    <div className="text-center py-4">
-                      <Mail className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        No postcodes found. Check the format and try again.
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Supported: UK, US, CA, AU, DE, FR postcodes
-                      </p>
+          {favoriteLocations.length > 0 && (
+            <CommandGroup heading="Favorites">
+              {favoriteLocations.map((location) => (
+                <CommandItem
+                  key={`fav-${location.id}`}
+                  value={location.label}
+                  onSelect={() => handleLocationSelect(location)}
+                  className="flex items-center justify-between cursor-pointer"
+                  data-testid={`location-favorite-${location.id}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Heart className="w-4 h-4 text-red-500 fill-current" />
+                    <div>
+                      <div className="font-medium">{location.label}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Used {location.useCount || 0} times
+                      </div>
                     </div>
-                  </CommandEmpty>
-                )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleToggleFavorite(location, e)}
+                    className="h-auto p-1"
+                    data-testid={`button-unfavorite-${location.id}`}
+                  >
+                    <Heart className="w-3 h-3 text-red-500 fill-current" />
+                  </Button>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
-                {/* Photon Worldwide Address Search Results - Only shown when NOT in postcode mode */}
-                {!isPostcodeMode && photonResults.length > 0 && (
-                  <>
-                    {(postcodeResults.length > 0 || favoriteLocations.length > 0 || sortedLocations.length > 0) && <Separator />}
-                    <CommandGroup heading="Worldwide Addresses">
-                      {photonResults.map((feature: PhotonFeature, index: number) => {
-                        const displayLabel = formatPhotonDisplay(feature);
-                        const props = feature.properties;
-                        
-                        return (
-                          <CommandItem
-                            key={`photon-${index}`}
-                            value={displayLabel}
-                            onSelect={() => handlePhotonSelect(feature)}
-                            className="flex items-center justify-between cursor-pointer"
-                            data-testid={`photon-result-${index}`}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <Globe className="w-4 h-4 text-primary" />
-                              <div>
-                                <div className="font-medium">
-                                  {props.name || props.street || 'Unknown'}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {[props.city, props.country].filter(Boolean).join(", ")}
-                                </div>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </>
-                )}
+          {favoriteLocations.length > 0 && sortedLocations.length > 0 && (
+            <Separator />
+          )}
 
-                {favoriteLocations.length > 0 && (
-                  <CommandGroup heading="Favorites">
-                    {favoriteLocations.map((location) => (
-                      <CommandItem
-                        key={`fav-${location.id}`}
-                        value={location.label}
-                        onSelect={() => handleLocationSelect(location)}
-                        className="flex items-center justify-between cursor-pointer"
-                        data-testid={`location-favorite-${location.id}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Heart className="w-4 h-4 text-red-500 fill-current" />
-                          <div>
-                            <div className="font-medium">{location.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Used {location.useCount || 0} times
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleToggleFavorite(location, e)}
-                          className="h-auto p-1"
-                          data-testid={`button-unfavorite-${location.id}`}
-                        >
-                          <Heart className="w-3 h-3 text-red-500 fill-current" />
-                        </Button>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-
-                {favoriteLocations.length > 0 && sortedLocations.length > 0 && (
-                  <Separator />
-                )}
-
-                {sortedLocations.length > 0 && (
-                  <CommandGroup heading="Recent Locations">
-                    {sortedLocations.map((location) => (
-                      <CommandItem
-                        key={`recent-${location.id}`}
-                        value={location.label}
-                        onSelect={() => handleLocationSelect(location)}
-                        className="flex items-center justify-between cursor-pointer"
-                        data-testid={`location-recent-${location.id}`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <div className="font-medium">{location.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Used {location.useCount || 0} times
-                              {location.lastUsedAt && (
-                                <> • {new Date(location.lastUsedAt).toLocaleDateString()}</>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleToggleFavorite(location, e)}
-                          className="h-auto p-1"
-                          data-testid={`button-favorite-${location.id}`}
-                        >
-                          <Heart className="w-3 h-3 text-muted-foreground" />
-                        </Button>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-
-                {!isLoadingAll && !isLoadingFavorites && 
-                 favoriteLocations.length === 0 && sortedLocations.length === 0 && (
-                  <CommandEmpty>
-                    <div className="text-center py-4">
-                      <MapPin className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">No locations found</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Save locations to see them here
-                      </p>
+          {sortedLocations.length > 0 && (
+            <CommandGroup heading="Recent Locations">
+              {sortedLocations.map((location) => (
+                <CommandItem
+                  key={`recent-${location.id}`}
+                  value={location.label}
+                  onSelect={() => handleLocationSelect(location)}
+                  className="flex items-center justify-between cursor-pointer"
+                  data-testid={`location-recent-${location.id}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <div className="font-medium">{location.label}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Used {location.useCount || 0} times
+                        {location.lastUsedAt && (
+                          <> • {new Date(location.lastUsedAt).toLocaleDateString()}</>
+                        )}
+                      </div>
                     </div>
-                  </CommandEmpty>
-                )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleToggleFavorite(location, e)}
+                    className="h-auto p-1"
+                    data-testid={`button-favorite-${location.id}`}
+                  >
+                    <Heart className="w-3 h-3 text-muted-foreground" />
+                  </Button>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
 
-                {searchValue && (
-                  <>
-                    <Separator />
-                    <CommandGroup>
-                      <CommandItem
-                        onSelect={() => {
-                          setSaveLabel(searchValue);
-                          setShowSaveDialog(true);
-                          setOpen(false);
-                        }}
-                        className="flex items-center space-x-3 cursor-pointer"
-                        data-testid={`button-save-new-location`}
-                      >
-                        <BookmarkPlus className="w-4 h-4 text-primary" />
-                        <div>
-                          <div className="font-medium">Save "{searchValue}"</div>
-                          <div className="text-xs text-muted-foreground">
-                            Add to your location history
-                          </div>
-                        </div>
-                      </CommandItem>
-                    </CommandGroup>
-                  </>
-                )}
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+          {!isLoadingAll && !isLoadingFavorites && 
+           favoriteLocations.length === 0 && sortedLocations.length === 0 && (
+            <CommandEmpty>
+              <div className="text-center py-4">
+                <MapPin className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No locations found</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Save locations to see them here
+                </p>
+              </div>
+            </CommandEmpty>
+          )}
+
+          {searchValue && (
+            <>
+              <Separator />
+              <CommandGroup>
+                <CommandItem
+                  onSelect={() => {
+                    setSaveLabel(searchValue);
+                    setShowSaveDialog(true);
+                    setOpen(false);
+                  }}
+                  className="flex items-center space-x-3 cursor-pointer"
+                  data-testid={`button-save-new-location`}
+                >
+                  <BookmarkPlus className="w-4 h-4 text-primary" />
+                  <div>
+                    <div className="font-medium">Save "{searchValue}"</div>
+                    <div className="text-xs text-muted-foreground">
+                      Add to your location history
+                    </div>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+            </>
+          )}
+        </CommandList>
+      </Command>
+    </>
+  );
+
+  // Input field component (shared between mobile and desktop)
+  const inputField = (
+    <div className="relative flex-1" ref={wrapperRef}>
+      <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+        <div className={`w-3 h-3 rounded-full ${
+          icon === "start" ? "bg-accent" : "bg-destructive"
+        }`}></div>
+      </div>
+      <Input
+        ref={inputRef}
+        placeholder={isPostcodeMode 
+          ? `Enter postcode (e.g., SW1A 1AA, 10001)`
+          : placeholder
+        }
+        value={searchValue}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => {
+          setSearchValue(e.target.value);
+          onChange(e.target.value);
+          if (e.target.value.length >= 1) setOpen(true);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && isPostcodeMode) {
+            e.preventDefault();
+            handlePostcodeEnter();
+          }
+        }}
+        className={`pl-10 pr-8 ${
+          isPostcodeMode && postcodeValidation.error 
+            ? "border-destructive focus:border-destructive" 
+            : ""
+        } ${
+          isPostcodeMode && postcodeValidation.isValid 
+            ? "border-green-500 focus:border-green-500" 
+            : ""
+        }`}
+        data-testid={testId}
+      />
+      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+        {isPostcodeMode && (
+          <div className="flex items-center gap-1">
+            {postcodeValidation.country && (
+              <Badge variant="outline" className="text-xs px-1 py-0">
+                {postcodeValidation.country}
+              </Badge>
+            )}
+            {postcodeValidation.isValid && (
+              <Check className="w-3 h-3 text-green-500" />
+            )}
+          </div>
+        )}
+        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+      </div>
+      
+      {/* Mobile: Inline absolutely positioned dropdown - appears directly below input */}
+      {isMobile && open && (
+        <div 
+          ref={dropdownRef}
+          className="absolute left-0 right-0 z-[9999] bg-popover border rounded-md shadow-lg overflow-hidden"
+          style={{ 
+            top: 'calc(100% + 8px)',  // 8px gap below input (50px total offset from input top)
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}
+        >
+          {dropdownContent}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="relative">
+      <div className="flex items-center space-x-2">
+        {/* Desktop: Use Popover with portal */}
+        {!isMobile ? (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              {inputField}
+            </PopoverTrigger>
+            <PopoverContent 
+              ref={dropdownRef}
+              className="w-80 p-0" 
+              align="start"
+              side="bottom"
+              sideOffset={8}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              {dropdownContent}
+            </PopoverContent>
+          </Popover>
+        ) : (
+          /* Mobile: Just render input with inline dropdown */
+          inputField
+        )}
 
         {/* Go Button for Postcode Search - appears when in postcode mode */}
         {isPostcodeMode && (
