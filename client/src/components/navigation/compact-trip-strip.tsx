@@ -1,6 +1,6 @@
 import { Clock, Route, Navigation2, ChevronDown, ChevronUp, GripHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useDragControls } from 'framer-motion';
 
 interface CompactTripStripProps {
@@ -19,12 +19,64 @@ export function CompactTripStrip({
   className
 }: CompactTripStripProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDraggable, setIsDraggable] = useState(false);
   const dragControls = useDragControls();
-  const constraintsRef = useRef(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const startLongPress = useCallback((e: React.PointerEvent) => {
+    // Only trigger for touch or left mouse button
+    if (e.button !== 0 && e.pointerType !== 'touch') return;
+
+    // Reset state
+    setIsDraggable(false);
+
+    longPressTimerRef.current = setTimeout(() => {
+      setIsDraggable(true);
+      // Haptic feedback if available
+      if ('vibrate' in navigator) {
+        navigator.vibrate(100);
+      }
+      // Start drag immediately on long press
+      dragControls.start(e);
+    }, 2000); // 2 second firm hold
+  }, [dragControls]);
+
+  const endLongPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  // Corner expand logic
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cornerSize = 40; // 40px touch area in corners
+
+    const isTopLeft = x < cornerSize && y < cornerSize;
+    const isTopRight = x > rect.width - cornerSize && y < cornerSize;
+    const isBottomLeft = x < cornerSize && y > rect.height - cornerSize;
+    const isBottomRight = x > rect.width - cornerSize && y > rect.height - cornerSize;
+
+    if (isTopLeft || isTopRight || isBottomLeft || isBottomRight) {
+      longPressTimerRef.current = setTimeout(() => {
+        setIsExpanded(prev => !prev);
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 50, 50]);
+        }
+      }, 2000);
+    } else {
+      startLongPress(e);
+    }
+  };
 
   return (
     <motion.div 
-      drag
+      ref={containerRef}
+      drag={isDraggable}
       dragControls={dragControls}
       dragListener={false}
       dragConstraints={{ 
@@ -35,23 +87,26 @@ export function CompactTripStrip({
       }}
       dragElastic={0.1}
       dragMomentum={false}
+      onPointerDown={handlePointerDown}
+      onPointerUp={endLongPress}
+      onPointerLeave={endLongPress}
       className={cn(
-        'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-2xl mobile-safe-top shrink-0 backdrop-blur-xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] left-[4vw] max-w-[400px]',
+        'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-2xl mobile-safe-top shrink-0 backdrop-blur-xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] left-[4vw] max-w-[400px] transition-shadow duration-300',
         isExpanded ? 'h-auto' : 'h-[72px]',
+        isDraggable ? 'ring-2 ring-blue-500 shadow-blue-500/20 cursor-grabbing' : 'cursor-pointer',
         className
       )}
       style={{ pointerEvents: 'auto' }}
       data-testid="compact-trip-strip"
     >
-      {/* Drag Handle */}
-      <div 
-        className="h-6 flex items-center justify-center bg-white/5 cursor-grab active:cursor-grabbing"
-        onPointerDown={(e) => dragControls.start(e)}
-      >
-        <GripHorizontal className="w-6 h-6 text-white/30" />
-      </div>
+      {/* Visual Feedback for Draggable Mode */}
+      {isDraggable && (
+        <div className="absolute inset-0 bg-blue-500/10 pointer-events-none animate-pulse flex items-center justify-center">
+          <GripHorizontal className="w-8 h-8 text-blue-400 opacity-50" />
+        </div>
+      )}
 
-      <div className="px-5 py-2 flex items-center justify-between gap-4">
+      <div className="px-5 py-4 flex items-center justify-between gap-4">
         {/* Left: ETA & Distance */}
         <div className="flex items-center gap-5 flex-1 min-w-0">
           <div className="flex items-center gap-2 shrink-0 bg-blue-500/15 px-3 py-1.5 rounded-lg">
@@ -68,24 +123,15 @@ export function CompactTripStrip({
           </div>
         </div>
 
-        {/* Right: Toggle & Maneuver */}
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-          >
-            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-          
-          {!isExpanded && (
-            <div className="flex items-center gap-2 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-3 py-1.5 rounded-lg max-w-[150px] overflow-hidden">
-              <Navigation2 className="w-5 h-5 text-blue-400 shrink-0 drop-shadow-glow" />
-              <span className="text-base font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-md">
-                {nextManeuver}
-              </span>
-            </div>
-          )}
-        </div>
+        {/* Right: Maneuver (only if not expanded) */}
+        {!isExpanded && (
+          <div className="flex items-center gap-2 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-3 py-1.5 rounded-lg max-w-[150px] overflow-hidden">
+            <Navigation2 className="w-5 h-5 text-blue-400 shrink-0 drop-shadow-glow" />
+            <span className="text-base font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-md">
+              {nextManeuver}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Expanded Content */}
@@ -116,6 +162,11 @@ export function CompactTripStrip({
           </div>
         </motion.div>
       )}
+
+      {/* Interactive Hint (only visible briefly) */}
+      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/20 uppercase tracking-widest pointer-events-none">
+        Hold corners to expand • Hold center to move
+      </div>
     </motion.div>
   );
 }
