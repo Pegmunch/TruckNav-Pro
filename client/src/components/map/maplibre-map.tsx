@@ -468,8 +468,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomToUserLocation: (options) => {
       const {
         forceStreetMode = true,
-        zoom = 17.5,
-        pitch = 45,
+        zoom = 18,
+        pitch = 70,
         bearing: optionsBearing,
         duration = 2000,
         fallbackCoordinates,
@@ -497,11 +497,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Zoom helper
       const performZoom = (lat: number, lng: number, bearing: number = 0) => {
         try {
+          const containerHeight = mapInstance.getContainer().clientHeight || 800;
           mapInstance.flyTo({
             center: [lng, lat],
             zoom,
             pitch,
             bearing,
+            padding: {
+              top: Math.round(containerHeight * 0.55),
+              bottom: 80,
+              left: 0,
+              right: 0
+            },
             duration,
             essential: true
           });
@@ -620,6 +627,29 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   useEffect(() => {
     currentZoomRef.current = currentZoom;
   }, [currentZoom]);
+
+  // Effect to update map rotation and position in navigation mode
+  useEffect(() => {
+    if (!map.current || !isNavigating || !gpsPosition || !isLoaded) return;
+
+    const { latitude, longitude, heading } = gpsPosition;
+    const containerHeight = map.current.getContainer().clientHeight || 800;
+
+    map.current.easeTo({
+      center: [longitude, latitude],
+      bearing: heading || 0,
+      pitch: 70,
+      zoom: 18,
+      padding: {
+        top: Math.round(containerHeight * 0.55),
+        bottom: 80,
+        left: 0,
+        right: 0
+      },
+      duration: 1000,
+      easing: (t) => t
+    });
+  }, [isNavigating, gpsPosition, isLoaded]);
 
   // Enhanced 3D Navigation Mode: Auto-activate when navigation starts, smooth exit when it ends
   useEffect(() => {

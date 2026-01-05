@@ -49,8 +49,9 @@ export function NavigationGuidelineOverlay({
     const isLargeScreen = rect.width > 800;
     
     const centerX = rect.width / 2;
-    const startY = rect.height * 0.15;
-    const endY = rect.height * 0.68;
+    // Lower startY and endY to align with the bottom-centered map perspective
+    const startY = rect.height * 0.45;
+    const endY = rect.height * 0.85; 
     
     // Scale corridor width based on screen size (max 50% of screen width)
     let corridorWidth = Math.min(48, rect.width * 0.25);
