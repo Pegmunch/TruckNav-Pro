@@ -270,6 +270,9 @@ function NavigationPageContent() {
   const [showDestinationReached, setShowDestinationReached] = useState(false);
   const hasShownDestinationDialogRef = useRef(false);
   
+  // Dynamic distance remaining that counts down during navigation
+  const [dynamicDistanceRemaining, setDynamicDistanceRemaining] = useState<number>(0);
+  
   // Route cancellation guard to prevent race condition
   const isCancellingRouteRef = useRef(false);
   
@@ -2451,9 +2454,15 @@ function NavigationPageContent() {
   };
 
   const handleStopNavigation = () => {
+    console.log('[NAV-STOP] 🔴 Cancel button pressed!');
+    
     // GUARD: Prevent double-clicks - if already cancelling or mutation pending, ignore
     if (isCancellingRouteRef.current || completeJourneyMutation.isPending) {
-      console.log('[NAV-STOP] ⏸️ Already cancelling - ignoring duplicate press');
+      console.log('[NAV-STOP] ⏸️ Already cancelling - forcing reset anyway');
+      // Force reset after 500ms to prevent stuck state
+      setTimeout(() => {
+        isCancellingRouteRef.current = false;
+      }, 500);
       return;
     }
     
@@ -2461,6 +2470,14 @@ function NavigationPageContent() {
     // currentJourney still exists and triggers route re-fetch before completion
     isCancellingRouteRef.current = true;
     console.log('[NAV-STOP] 🛡️ Route cancellation guard activated');
+    
+    // Safety timeout: Reset guard after 3 seconds in case mutation fails
+    setTimeout(() => {
+      if (isCancellingRouteRef.current) {
+        isCancellingRouteRef.current = false;
+        console.log('[NAV-STOP] ⚠️ Safety timeout - guard force reset');
+      }
+    }, 3000);
     
     // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
     // This ensures the hamburger button reappears immediately

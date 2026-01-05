@@ -70,11 +70,12 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
-            console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button clicked');
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button pressed');
             onNavigate?.();
           }}
-          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-lg touch-none"
           data-testid="button-nav-left"
           data-tour-id="nav-button"
         >
@@ -113,11 +114,12 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
-            console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button clicked - Opening dialog');
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button pressed - Opening dialog');
             onReportIncident?.();
           }}
-          className="h-8 w-8 rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-lg"
+          className="h-8 w-8 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white shadow-lg touch-none"
           data-testid="button-report-incident"
           data-tour-id="incident-button"
         >
@@ -130,11 +132,13 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
-            console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button clicked - Stopping navigation');
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button pressed - Stopping navigation');
             onCancel?.();
           }}
-          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-lg touch-none"
           data-testid="button-cancel-nav"
         >
           <X className="h-4 w-4" />
@@ -146,11 +150,12 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
-            console.log('[LEFT-BTN-4-MENU] ✅ Menu button clicked - Opening comprehensive menu');
+          onPointerDown={(e) => {
+            e.preventDefault();
+            console.log('[LEFT-BTN-4-MENU] ✅ Menu button pressed - Opening comprehensive menu');
             onOpenMenu?.();
           }}
-          className="h-8 w-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          className="h-8 w-8 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-lg touch-none"
           data-testid="button-menu"
           data-tour-id="menu-button"
         >
