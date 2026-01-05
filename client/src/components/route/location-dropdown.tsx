@@ -96,27 +96,28 @@ const LocationDropdown = memo(function LocationDropdown({
     }
   }, [searchValue, isPostcodeMode]);
 
-  // Handle click outside - better for mobile/iOS
+  // Handle click outside - only use mousedown to avoid iOS keyboard touch conflicts
+  // On mobile, keyboard taps trigger touchstart events that would incorrectly close the dropdown
   useEffect(() => {
     if (!open) return;
     
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       // Don't close if clicking inside input or dropdown content
       if (
         dropdownRef.current?.contains(target) || 
-        inputRef.current?.parentElement?.contains(target)
+        inputRef.current?.parentElement?.contains(target) ||
+        wrapperRef.current?.contains(target)
       ) {
         return;
       }
       setOpen(false);
     };
     
+    // Only use mousedown - touchstart causes issues with iOS keyboard
     document.addEventListener('mousedown', handleClickOutside, true);
-    document.addEventListener('touchstart', handleClickOutside, true);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside, true);
-      document.removeEventListener('touchstart', handleClickOutside, true);
     };
   }, [open]);
 
