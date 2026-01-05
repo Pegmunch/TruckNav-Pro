@@ -2848,12 +2848,15 @@ function NavigationPageContent() {
                   }}>
                   {/* GPS Mode Button */}
                   <Button
-                    onClick={() => handleGpsModeToggle('gps')}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      handleGpsModeToggle('gps');
+                    }}
                     size="icon"
-                    className={`h-10 w-10 rounded-full shadow-lg font-medium ${
+                    className={`h-10 w-10 rounded-full shadow-lg font-medium touch-none ${
                       gpsMode === 'gps'
-                        ? 'bg-green-500 hover:bg-green-600 text-white'
-                        : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
+                        ? 'bg-green-500 hover:bg-green-600 active:bg-green-700 text-white'
+                        : 'bg-white/90 hover:bg-white active:bg-gray-100 text-gray-700 border border-gray-300'
                     }`}
                     data-testid="button-gps-mode"
                     aria-label="GPS Mode"
@@ -2863,12 +2866,15 @@ function NavigationPageContent() {
 
                   {/* Cache Mode Button */}
                   <Button
-                    onClick={() => handleGpsModeToggle('cache')}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      handleGpsModeToggle('cache');
+                    }}
                     size="icon"
-                    className={`h-10 w-10 rounded-full shadow-lg font-medium ${
+                    className={`h-10 w-10 rounded-full shadow-lg font-medium touch-none ${
                       gpsMode === 'cache'
-                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                        : 'bg-white/90 hover:bg-white text-gray-700 border border-gray-300'
+                        ? 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white'
+                        : 'bg-white/90 hover:bg-white active:bg-gray-100 text-gray-700 border border-gray-300'
                     }`}
                     data-testid="button-cache-mode"
                     aria-label="Cache Mode"
@@ -2878,12 +2884,15 @@ function NavigationPageContent() {
                   
                   {/* Voice Toggle Button - Visual indicator for mute state */}
                   <Button
-                    onClick={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      setProfessionalVoiceEnabled(!professionalVoiceEnabled);
+                    }}
                     size="icon"
-                    className={`h-10 w-10 rounded-full shadow-lg font-medium ${
+                    className={`h-10 w-10 rounded-full shadow-lg font-medium touch-none ${
                       professionalVoiceEnabled 
-                        ? 'bg-green-500 hover:bg-green-600 text-white' 
-                        : 'bg-red-500 hover:bg-red-600 text-white'
+                        ? 'bg-green-500 hover:bg-green-600 active:bg-green-700 text-white' 
+                        : 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white'
                     }`}
                     data-testid="button-toggle-voice"
                     aria-label={professionalVoiceEnabled ? "Mute voice navigation" : "Unmute voice navigation"}
@@ -2893,9 +2902,13 @@ function NavigationPageContent() {
                   
                   {/* Menu Button */}
                   <Button
-                    onClick={() => setShowComprehensiveMenu(true)}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      console.log('[PLAN-MENU] Menu button pressed');
+                      setShowComprehensiveMenu(true);
+                    }}
                     size="icon"
-                    className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                    className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium touch-none"
                     data-testid="button-open-menu-plan"
                   >
                     <Menu className="w-6 h-6" />
