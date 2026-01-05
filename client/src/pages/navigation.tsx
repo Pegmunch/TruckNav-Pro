@@ -2045,7 +2045,7 @@ function NavigationPageContent() {
     // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
     // This ensures the hamburger button reappears immediately
     setIsLocalNavActive(false);
-    setShowComprehensiveMenu(false);
+    // NOTE: Do NOT call setShowComprehensiveMenu(false) here - it prevents the menu from opening after cancellation
     setIsShowingPreview(false); // Also reset preview mode
     localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
@@ -2497,7 +2497,7 @@ function NavigationPageContent() {
     // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
     // This ensures the hamburger button reappears immediately
     setIsLocalNavActive(false);
-    setShowComprehensiveMenu(false);
+    // NOTE: Do NOT call setShowComprehensiveMenu(false) here - it prevents the menu from opening after cancellation
     setCurrentRoute(null); // Clear route immediately for instant UI feedback
     setPreviewRoute(null);
     localStorage.removeItem('navigation_ui_active');
@@ -3208,13 +3208,13 @@ function NavigationPageContent() {
           "automotive-layout desktop-sidebar"
         )}>
           
-          {/* Desktop Hamburger Menu - Hidden during navigation mode - positioned below header */}
-          {!isSidebarOpen && !isNavigating && (
+          {/* Desktop Hamburger Menu - Hidden during navigation mode and on mobile - positioned below header */}
+          {!isSidebarOpen && !isNavigating && !isMobile && (
             <Button
               variant="default"
               size="icon"
               onClick={() => setSidebarState('open')}
-              className="fixed top-[72px] left-4 z-40 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 p-1.5"
+              className="fixed top-[72px] left-4 z-40 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 p-1.5 hidden md:flex"
               data-testid="button-menu-desktop"
             >
               <Menu className="w-3.5 h-3.5" />
@@ -3447,27 +3447,27 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Cancel Route Button - Square X button at bottom-left */}
+                    {/* Cancel Route Button - Compact square X button at bottom-left (half size) */}
                     <Button
                       onClick={handleStopNavigation}
                       size="icon"
                       variant="destructive"
                       disabled={completeJourneyMutation.isPending || isCancellingRouteRef.current}
                       className={cn(
-                        "fixed z-[170] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
+                        "fixed z-[170] h-7 w-7 rounded-lg shadow-lg pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
                         completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
                       )}
                       style={{
-                        bottom: 'calc(20px + var(--safe-area-bottom, 0px))',
-                        left: 'calc(20px + var(--safe-area-left, 0px))'
+                        bottom: 'calc(16px + var(--safe-area-bottom, 0px))',
+                        left: 'calc(16px + var(--safe-area-left, 0px))'
                       }}
                       data-testid="button-cancel-route"
                       aria-label="Cancel route and return to start"
                     >
                       {completeJourneyMutation.isPending ? (
-                        <Loader2 className="w-7 h-7 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <X className="w-7 h-7" />
+                        <X className="w-3.5 h-3.5" />
                       )}
                     </Button>
 
