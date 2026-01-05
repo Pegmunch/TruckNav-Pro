@@ -938,11 +938,11 @@ function ComprehensiveMobileMenu({
                         
                         {/* Green Start Navigation Button */}
                         <Button
-                          onClick={() => {
+                          onPointerDown={() => {
                             onStartNavigation();
                             onOpenChange(false);
                           }}
-                          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
+                          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md active:scale-95 transition-transform"
                           data-testid="button-start-navigation-menu"
                         >
                           <Navigation className="h-5 w-5 mr-2" />

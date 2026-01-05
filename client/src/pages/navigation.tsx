@@ -2249,7 +2249,13 @@ function NavigationPageContent() {
   }, [isMobile, mobileNavMode, currentRoute, fromLocation, toLocation, selectedProfile]);
 
   // Production-grade robust navigation flow
-  const handleStartNavigation = async () => {
+  const handleStartNavigation = async (e?: React.MouseEvent | React.PointerEvent) => {
+    // PREVENT PROPAGATION: Ensure event doesn't bubble if it exists
+    if (e) {
+      if ('preventDefault' in e) e.preventDefault();
+      if ('stopPropagation' in e) e.stopPropagation();
+    }
+    
     performance.mark('nav-activation-start');
     console.log('========================================');
     console.log('[PERF] 🎬 NAVIGATION ACTIVATION START');
@@ -2781,18 +2787,18 @@ function NavigationPageContent() {
                   }}>
                   {/* Preview Route Button */}
                   <Button
-                    onClick={handlePreviewRoute}
+                    onPointerDown={handlePreviewRoute}
                     size="sm"
-                    className="h-6 px-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm"
+                    className="h-6 px-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm active:scale-95 transition-transform"
                     data-testid="button-preview-route"
                   >
                     Preview
                   </Button>
                   {/* Start Navigation Button */}
                   <Button
-                    onClick={handleStartNavigation}
+                    onPointerDown={handleStartNavigation}
                     size="sm"
-                    className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+                    className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
                     data-testid="button-start-navigation-plan"
                   >
                     Start
@@ -2929,9 +2935,9 @@ function NavigationPageContent() {
                     </Button>
                     {/* Start Navigation Button */}
                     <Button
-                      onClick={handleStartNavigation}
+                      onPointerDown={handleStartNavigation}
                       size="sm"
-                      className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm"
+                      className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
                       data-testid="button-start-navigation-preview"
                     >
                       Start
