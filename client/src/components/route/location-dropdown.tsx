@@ -79,67 +79,8 @@ const LocationDropdown = memo(function LocationDropdown({
   const gps = useGPS();
   const isMobile = useIsMobile();
   
-  // Mobile dropdown positioning state - uses fixed positioning with viewport coordinates
-  const [dropdownPosition, setDropdownPosition] = useState<{
-    top: number;
-    left: number;
-    width: number;
-  } | null>(null);
-  
-  // Calculate dropdown position based on input's viewport coordinates
-  // Uses visualViewport API for accurate positioning on iOS Safari during keyboard open/close
-  const updateDropdownPosition = useCallback(() => {
-    if (!inputRef.current || !open || !isMobile) return;
-    
-    const rect = inputRef.current.getBoundingClientRect();
-    const viewport = window.visualViewport;
-    
-    // On iOS Safari, when keyboard is open, the visual viewport shifts.
-    // We need to use the visual viewport's offset to correctly position the dropdown
-    // relative to the current visible area, not the layout viewport.
-    const offsetTop = viewport?.offsetTop || 0;
-    const offsetLeft = viewport?.offsetLeft || 0;
-    
-    // rect.bottom is relative to layout viewport, but fixed positioning uses layout viewport
-    // The visual viewport offset tells us how much the viewport has scrolled/shifted
-    // We add the offset to keep the dropdown visually attached to the input
-    setDropdownPosition({
-      top: rect.bottom + offsetTop, // Dropdown top aligns exactly with input bottom
-      left: rect.left + offsetLeft,
-      width: rect.width,
-    });
-  }, [open, isMobile]);
-  
-  // Update position when dropdown opens and on viewport changes (keyboard open/close)
-  useEffect(() => {
-    if (!open || !isMobile) {
-      setDropdownPosition(null);
-      return;
-    }
-    
-    // Initial position calculation
-    updateDropdownPosition();
-    
-    // Listen for visual viewport changes (keyboard open/close on iOS)
-    const viewport = window.visualViewport;
-    if (viewport) {
-      viewport.addEventListener('resize', updateDropdownPosition);
-      viewport.addEventListener('scroll', updateDropdownPosition);
-    }
-    
-    // Also listen for scroll and resize on window
-    window.addEventListener('scroll', updateDropdownPosition, true);
-    window.addEventListener('resize', updateDropdownPosition);
-    
-    return () => {
-      if (viewport) {
-        viewport.removeEventListener('resize', updateDropdownPosition);
-        viewport.removeEventListener('scroll', updateDropdownPosition);
-      }
-      window.removeEventListener('scroll', updateDropdownPosition, true);
-      window.removeEventListener('resize', updateDropdownPosition);
-    };
-  }, [open, isMobile, updateDropdownPosition]);
+  // No complex viewport calculation needed - use simple absolute positioning
+  // within a relative wrapper. The dropdown follows the input naturally.
 
   // Sync internal search value with external value
   useEffect(() => {
@@ -776,15 +717,14 @@ const LocationDropdown = memo(function LocationDropdown({
         <ChevronDown className="w-4 h-4 text-muted-foreground" />
       </div>
       
-      {/* Mobile: Fixed positioned dropdown using viewport coordinates - appears directly below input */}
-      {isMobile && open && dropdownPosition && (
+      {/* Mobile: Absolute positioned dropdown within relative wrapper - follows input naturally */}
+      {isMobile && open && (
         <div 
           ref={dropdownRef}
-          className="fixed z-[9999] bg-popover border rounded-md shadow-lg overflow-hidden"
+          className="absolute left-0 right-0 z-[9999] bg-popover border rounded-md shadow-lg overflow-hidden"
           style={{ 
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            width: `${dropdownPosition.width}px`,
+            top: '100%', // Position at bottom edge of parent (the input wrapper)
+            marginTop: '0px', // No gap - dropdown top aligns with input bottom
             maxHeight: '300px',
             overflowY: 'auto'
           }}

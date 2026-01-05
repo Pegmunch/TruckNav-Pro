@@ -2811,12 +2811,17 @@ function NavigationPageContent() {
                     <MapPin className="w-6 h-6" />
                   </Button>
                   
-                  {/* Voice Toggle Button */}
+                  {/* Voice Toggle Button - Visual indicator for mute state */}
                   <Button
                     onClick={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                     size="icon"
-                    className="h-10 w-10 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium"
+                    className={`h-10 w-10 rounded-full shadow-lg font-medium ${
+                      professionalVoiceEnabled 
+                        ? 'bg-green-500 hover:bg-green-600 text-white' 
+                        : 'bg-red-500 hover:bg-red-600 text-white'
+                    }`}
                     data-testid="button-toggle-voice"
+                    aria-label={professionalVoiceEnabled ? "Mute voice navigation" : "Unmute voice navigation"}
                   >
                     {professionalVoiceEnabled ? <Speaker className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
                   </Button>
