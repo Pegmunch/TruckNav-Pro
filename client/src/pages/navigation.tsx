@@ -360,7 +360,8 @@ function NavigationPageContent() {
   
   // CRITICAL FIX: Navigation UI should show in preview AND navigate modes (not plan)
   // This ensures buttons and ETA header render whenever a route is calculated
-  const isNavUIActive = shouldShowHUD || mobileNavMode !== 'plan';
+  // Also check isLocalNavActive to ensure immediate UI response when navigation is cancelled
+  const isNavUIActive = (shouldShowHUD && isLocalNavActive) || mobileNavMode === 'navigate';
   
   // CRITICAL FIX: Only show GPS truck marker during ACTIVE navigation
   // Hide in plan and preview modes across all platforms for consistency
