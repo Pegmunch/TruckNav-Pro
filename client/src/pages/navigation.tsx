@@ -131,6 +131,9 @@ function NavigationPageContent() {
   
   // Use centralized vehicle profile management
   const { activeProfile, activeProfileId, isLoading: profileLoading, setActiveProfile } = useActiveVehicleProfile();
+  const { data: allVehicleProfiles = [] } = useQuery<VehicleProfile[]>({
+    queryKey: ['/api/vehicle-profiles']
+  });
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
   
@@ -2028,7 +2031,7 @@ function NavigationPageContent() {
 
 
 
-  // Handle cancel route - stop navigation
+  // Handle cancel route - stop navigation and reset to default Class 1 Truck
   const handleCancelRoute = () => {
     // CRITICAL: Set cancellation guard to prevent race condition where
     // currentJourney still exists and triggers route re-fetch before completion
@@ -2045,12 +2048,21 @@ function NavigationPageContent() {
     localStorage.removeItem('navigation_timestamp');
     console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to plan mode');
     
+    // Reset to default Class 1 Truck
+    const class1Profile = allVehicleProfiles?.find(p => p.type === 'class_1_lorry');
+    if (class1Profile) {
+      setSelectedProfile(class1Profile);
+      setActiveProfile(class1Profile);
+      console.log('[ROUTE-CANCEL] ✅ Reset to default Class 1 Truck');
+    }
+    
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
     document.documentElement.classList.remove('overlay-safe-mode');
     
     // CRITICAL: Clear all route persistence - fresh start page
     localStorage.removeItem('activeJourneyId');
+    localStorage.removeItem('activeVehicleProfileId'); // Force reset to default on next load
     
     // Clear URL parameter
     const url = new URL(window.location.href);
@@ -2075,7 +2087,7 @@ function NavigationPageContent() {
       console.log('[ROUTE-CANCEL] ℹ️ No journey to complete - guard reset immediately');
     }
     
-    console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to plan mode');
+    console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to plan mode with default truck');
   };
 
   // Handle preview route - zoom to full route bounds
@@ -2454,7 +2466,16 @@ function NavigationPageContent() {
     localStorage.removeItem('navigation_timestamp');
     localStorage.removeItem('activeRouteId');
     localStorage.removeItem('activeJourneyId');
+    localStorage.removeItem('activeVehicleProfileId'); // Force reset to default
     console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
+
+    // Reset to default Class 1 Truck
+    const class1Profile = allVehicleProfiles?.find(p => p.type === 'class_1_lorry');
+    if (class1Profile) {
+      setSelectedProfile(class1Profile);
+      setActiveProfile(class1Profile);
+      console.log('[NAV-STOP] ✅ Reset to default Class 1 Truck');
+    }
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);

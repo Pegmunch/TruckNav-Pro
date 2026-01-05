@@ -41,7 +41,7 @@ export function useActiveVehicleProfile(): UseActiveVehicleProfileResult {
       profileToUse = profiles.find(p => p.id === storedActiveId) || null;
     }
 
-    // If no valid stored profile, use the first available profile
+    // If no valid stored profile, always prefer the Class 1 Truck (the first one)
     if (!profileToUse && profiles.length > 0) {
       profileToUse = profiles[0];
     }
