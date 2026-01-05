@@ -192,6 +192,10 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
     }
   ], []);
 
+  // DISABLED: Auto-start tour removed - users can manually trigger tour from menu
+  // This prevents the "NAV" label and tour highlights from appearing unexpectedly
+  // To re-enable auto-start, uncomment the effect below
+  /*
   useEffect(() => {
     if (isFleetPage && !isFleetOnboardingComplete && isReady) {
       const timer = setTimeout(() => {
@@ -205,6 +209,7 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
       return () => clearTimeout(timer);
     }
   }, [isReady, isOnboardingComplete, isFleetOnboardingComplete, isFleetPage]);
+  */
 
   const handleJoyrideCallback = useCallback((data: CallBackProps) => {
     const { status, action, type } = data;
