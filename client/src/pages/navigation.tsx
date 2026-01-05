@@ -2432,6 +2432,12 @@ function NavigationPageContent() {
   };
 
   const handleStopNavigation = () => {
+    // GUARD: Prevent double-clicks - if already cancelling or mutation pending, ignore
+    if (isCancellingRouteRef.current || completeJourneyMutation.isPending) {
+      console.log('[NAV-STOP] ⏸️ Already cancelling - ignoring duplicate press');
+      return;
+    }
+    
     // CRITICAL: Set cancellation guard to prevent race condition where
     // currentJourney still exists and triggers route re-fetch before completion
     isCancellingRouteRef.current = true;
@@ -2441,6 +2447,8 @@ function NavigationPageContent() {
     // This ensures the hamburger button reappears immediately
     setIsLocalNavActive(false);
     setShowComprehensiveMenu(false);
+    setCurrentRoute(null); // Clear route immediately for instant UI feedback
+    setPreviewRoute(null);
     localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
     localStorage.removeItem('navigation_timestamp');
@@ -2462,10 +2470,6 @@ function NavigationPageContent() {
       url.searchParams.delete('journey');
       window.history.replaceState({}, '', url.pathname);
     }
-    
-    // Comprehensive state reset - completely cancel navigation
-    setCurrentRoute(null);
-    setPreviewRoute(null);
     
     // Reset destination reached state for next journey
     hasShownDestinationDialogRef.current = false;
@@ -3374,6 +3378,7 @@ function NavigationPageContent() {
                       onClick={handleStopNavigation}
                       size="icon"
                       variant="destructive"
+                      disabled={completeJourneyMutation.isPending || isCancellingRouteRef.current}
                       className={cn(
                         "fixed z-[170] h-14 w-14 shadow-2xl pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-2 border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
                         completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
