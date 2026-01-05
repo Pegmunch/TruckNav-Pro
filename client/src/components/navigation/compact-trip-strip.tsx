@@ -2,6 +2,7 @@ import { Clock, Route, Navigation2, ChevronDown, ChevronUp, GripHorizontal } fro
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useDragControls } from 'framer-motion';
+import { useMeasurement } from '@/components/measurement/measurement-provider';
 
 interface CompactTripStripProps {
   eta: number;
@@ -20,6 +21,7 @@ export function CompactTripStrip({
 }: CompactTripStripProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDraggable, setIsDraggable] = useState(false);
+  const { formatDistance } = useMeasurement();
   const dragControls = useDragControls();
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -111,14 +113,19 @@ export function CompactTripStrip({
         <div className="flex items-center gap-5 flex-1 min-w-0">
           <div className="flex items-center gap-2 shrink-0 bg-blue-500/15 px-3 py-1.5 rounded-lg">
             <Clock className="w-5 h-5 text-blue-400 drop-shadow-glow" />
-            <span className="text-base font-bold text-white whitespace-nowrap drop-shadow-md">
-              {eta}m
-            </span>
+            <div className="flex flex-col">
+              <span className="text-base font-bold text-white whitespace-nowrap drop-shadow-md leading-none">
+                {eta}m
+              </span>
+              <span className="text-[10px] font-medium text-blue-300 whitespace-nowrap leading-tight mt-0.5">
+                {formatDistance(distanceRemaining, "miles")}
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Route className="w-5 h-5 text-emerald-400" />
             <span className="text-base font-semibold text-gray-200 whitespace-nowrap">
-              {distanceRemaining.toFixed(1)} mi
+              {formatDistance(distanceRemaining, "miles")}
             </span>
           </div>
         </div>
@@ -146,14 +153,14 @@ export function CompactTripStrip({
             <div>
               <div className="text-xs font-medium text-blue-400 uppercase tracking-wider">Next Maneuver</div>
               <div className="text-lg font-bold text-white leading-tight">{nextManeuver}</div>
-              <div className="text-sm font-semibold text-gray-400 mt-1">In {nextDistance.toFixed(1)} miles</div>
+              <div className="text-sm font-semibold text-gray-400 mt-1">In {formatDistance(nextDistance, "miles")}</div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white/5 p-3 rounded-xl border border-white/10">
               <div className="text-xs text-gray-400 mb-1">Total Distance</div>
-              <div className="text-lg font-bold text-white">{distanceRemaining.toFixed(1)} mi</div>
+              <div className="text-lg font-bold text-white">{formatDistance(distanceRemaining, "miles")}</div>
             </div>
             <div className="bg-white/5 p-3 rounded-xl border border-white/10">
               <div className="text-xs text-gray-400 mb-1">Remaining Time</div>
