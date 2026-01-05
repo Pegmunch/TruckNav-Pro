@@ -244,32 +244,42 @@ async function callTomTomRoutingAPI(
     // Add API key
     tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
     
-    // Set travel mode to truck for commercial vehicle routing
-    tomtomUrl.searchParams.set('travelMode', 'truck');
+    // VEHICLE-TYPE-AWARE ROUTING: Cars get car routing, trucks get truck routing
+    // This ensures cars can freely use all roads (low bridges, narrow lanes)
+    // while trucks are routed around restrictions based on their dimensions
+    const isCarType = vehicleProfile.type === 'car' || vehicleProfile.type === 'car_caravan';
     
-    // Add vehicle dimensions and specifications
-    if (heightMeters > 0) {
-      tomtomUrl.searchParams.set('vehicleHeight', heightMeters.toFixed(2));
-    }
-    if (widthMeters > 0) {
-      tomtomUrl.searchParams.set('vehicleWidth', widthMeters.toFixed(2));
-    }
-    if (lengthMeters > 0) {
-      tomtomUrl.searchParams.set('vehicleLength', lengthMeters.toFixed(2));
-    }
-    if (weightKg > 0) {
-      tomtomUrl.searchParams.set('vehicleWeight', weightKg.toString());
-    }
-    
-    // Add axle count if specified
-    if (vehicleProfile.axles) {
-      // TomTom uses axleWeight parameter - distribute total weight across axles
-      const axleWeight = Math.round(weightKg / vehicleProfile.axles);
-      tomtomUrl.searchParams.set('vehicleAxleWeight', axleWeight.toString());
-    }
-    
-    // Set commercial vehicle flag for trucks
-    if (vehicleProfile.type !== 'car' && vehicleProfile.type !== 'car_caravan') {
+    if (isCarType) {
+      // CAR ROUTING: Fast, direct routes using all roads
+      tomtomUrl.searchParams.set('travelMode', 'car');
+      console.log(`[TOMTOM-ROUTING] Using CAR routing for vehicle type: ${vehicleProfile.type}`);
+    } else {
+      // TRUCK ROUTING: Restriction-aware routing with vehicle dimensions
+      tomtomUrl.searchParams.set('travelMode', 'truck');
+      console.log(`[TOMTOM-ROUTING] Using TRUCK routing for vehicle type: ${vehicleProfile.type}`);
+      
+      // Add vehicle dimensions and specifications (ONLY for trucks)
+      if (heightMeters > 0) {
+        tomtomUrl.searchParams.set('vehicleHeight', heightMeters.toFixed(2));
+      }
+      if (widthMeters > 0) {
+        tomtomUrl.searchParams.set('vehicleWidth', widthMeters.toFixed(2));
+      }
+      if (lengthMeters > 0) {
+        tomtomUrl.searchParams.set('vehicleLength', lengthMeters.toFixed(2));
+      }
+      if (weightKg > 0) {
+        tomtomUrl.searchParams.set('vehicleWeight', weightKg.toString());
+      }
+      
+      // Add axle count if specified
+      if (vehicleProfile.axles) {
+        // TomTom uses axleWeight parameter - distribute total weight across axles
+        const axleWeight = Math.round(weightKg / vehicleProfile.axles);
+        tomtomUrl.searchParams.set('vehicleAxleWeight', axleWeight.toString());
+      }
+      
+      // Set commercial vehicle flag for trucks
       tomtomUrl.searchParams.set('vehicleCommercial', 'true');
     }
     
