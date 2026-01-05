@@ -2053,7 +2053,8 @@ function NavigationPageContent() {
     if (class1Profile) {
       setSelectedProfile(class1Profile);
       setActiveProfile(class1Profile);
-      console.log('[ROUTE-CANCEL] ✅ Reset to default Class 1 Truck');
+      localStorage.setItem('activeVehicleProfileId', class1Profile.id); // Also sync storage
+      console.log('[ROUTE-CANCEL] ✅ Reset to default Class 1 Truck and synced storage');
     }
     
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
@@ -2474,7 +2475,8 @@ function NavigationPageContent() {
     if (class1Profile) {
       setSelectedProfile(class1Profile);
       setActiveProfile(class1Profile);
-      console.log('[NAV-STOP] ✅ Reset to default Class 1 Truck');
+      localStorage.setItem('activeVehicleProfileId', class1Profile.id); // Sync storage
+      console.log('[NAV-STOP] ✅ Reset to default Class 1 Truck and synced storage');
     }
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {

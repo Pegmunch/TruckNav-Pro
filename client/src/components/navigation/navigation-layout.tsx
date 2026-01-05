@@ -33,11 +33,7 @@ export function NavigationLayout({
       {/* Top navigation strip - ETA header (CompactTripStrip) */}
       {shouldShowUI && topStrip && (
         <div 
-          className="absolute left-0 right-0 z-[1700] w-full"
-          style={{
-            top: 'var(--safe-area-top, 0px)',
-            maxHeight: '90px'
-          }}
+          className="absolute inset-0 z-[1700] pointer-events-none"
         >
           {topStrip}
         </div>
