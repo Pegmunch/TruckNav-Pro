@@ -1284,6 +1284,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         });
       }
     }
+    
+    // CRITICAL: Always move route layers to top to ensure visibility over satellite/label layers
+    try {
+      if (map.current.getLayer('route-outline')) {
+        map.current.moveLayer('route-outline');
+      }
+      if (map.current.getLayer('route-line')) {
+        map.current.moveLayer('route-line');
+      }
+      console.log('[ROUTE-RENDER] ✅ Route layers moved to top for visibility');
+    } catch (e) {
+      // Layer might already be on top or not exist yet
+    }
 
     // Add destination flag marker at the end of the route (ONLY in preview mode, hide during navigation)
     // During active navigation, the flag clutters the view - driver knows destination
@@ -1319,7 +1332,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
   }, [currentRoute, isNavigating, gpsPosition]);
 
-  // Route layer manager effect
+  // Route layer manager effect - CONTINUOUS style listener to persist route through view mode changes
   useEffect(() => {
     if (!map.current || !isLoaded) return;
 
@@ -1338,38 +1351,34 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[ROUTE-RENDER] No route data - removing route layers');
       if (mapInstance.isStyleLoaded()) {
         removeRouteLayers();
-      } else {
-        // Style not loaded - wait for it then remove
-        const listener = () => {
-          removeRouteLayers();
-          pendingStyleListenerRef.current = null;
-        };
-        pendingStyleListenerRef.current = listener;
-        mapInstance.once('styledata', listener);
-        console.log('[ROUTE-RENDER] Waiting for style load to remove route');
       }
-    } else {
-      // Render route if currentRoute exists
-      if (mapInstance.isStyleLoaded()) {
-        renderRouteLayers();
-      } else {
-        // Style not loaded - wait for it then render
-        const listener = () => {
-          renderRouteLayers();
-          pendingStyleListenerRef.current = null;
-        };
-        pendingStyleListenerRef.current = listener;
-        mapInstance.once('styledata', listener);
-        console.log('[ROUTE-RENDER] Waiting for style load to render route');
-      }
+      return;
     }
 
-    // Cleanup: ALWAYS remove pending listener on unmount or deps change
+    // Render route immediately if style is loaded
+    if (mapInstance.isStyleLoaded()) {
+      renderRouteLayers();
+    }
+
+    // CRITICAL: Listen CONTINUOUSLY for styledata events to re-render route after view mode changes
+    // This ensures the route layer persists when switching roads ⇄ satellite or during zoom
+    const handleStyleChange = () => {
+      if (!currentRoute?.routePath) return;
+      
+      // Small delay to ensure style has fully loaded all layers
+      setTimeout(() => {
+        if (mapInstance.isStyleLoaded()) {
+          console.log('[ROUTE-RENDER] Re-rendering route after style change');
+          renderRouteLayers();
+        }
+      }, 100);
+    };
+
+    mapInstance.on('styledata', handleStyleChange);
+
+    // Cleanup: Remove continuous listener on unmount or deps change
     return () => {
-      if (pendingStyleListenerRef.current) {
-        mapInstance.off('styledata', pendingStyleListenerRef.current);
-        pendingStyleListenerRef.current = null;
-      }
+      mapInstance.off('styledata', handleStyleChange);
     };
   }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers]);
 
