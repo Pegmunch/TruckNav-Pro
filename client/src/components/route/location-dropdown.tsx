@@ -36,11 +36,11 @@ import {
   type PostcodeCountry 
 } from "@/lib/postcode-utils";
 import { 
-  usePhotonAutocomplete, 
-  formatPhotonDisplay, 
-  extractPhotonCoordinates,
-  type PhotonFeature 
-} from "@/hooks/use-photon-autocomplete";
+  useTomTomAutocomplete, 
+  formatTomTomDisplay, 
+  extractTomTomCoordinates,
+  type TomTomResult 
+} from "@/hooks/use-tomtom-autocomplete";
 import { useGPS } from "@/contexts/gps-context";
 
 interface LocationDropdownProps {
@@ -87,15 +87,25 @@ const LocationDropdown = memo(function LocationDropdown({
   } | null>(null);
   
   // Calculate dropdown position based on input's viewport coordinates
+  // Uses visualViewport API for accurate positioning on iOS Safari during keyboard open/close
   const updateDropdownPosition = useCallback(() => {
     if (!inputRef.current || !open || !isMobile) return;
     
     const rect = inputRef.current.getBoundingClientRect();
-    const viewportOffset = window.visualViewport?.offsetTop || 0;
+    const viewport = window.visualViewport;
     
+    // On iOS Safari, when keyboard is open, the visual viewport shifts.
+    // We need to use the visual viewport's offset to correctly position the dropdown
+    // relative to the current visible area, not the layout viewport.
+    const offsetTop = viewport?.offsetTop || 0;
+    const offsetLeft = viewport?.offsetLeft || 0;
+    
+    // rect.bottom is relative to layout viewport, but fixed positioning uses layout viewport
+    // The visual viewport offset tells us how much the viewport has scrolled/shifted
+    // We add the offset to keep the dropdown visually attached to the input
     setDropdownPosition({
-      top: rect.bottom + viewportOffset + 4, // 4px gap below input
-      left: rect.left,
+      top: rect.bottom + offsetTop, // Dropdown top aligns exactly with input bottom
+      left: rect.left + offsetLeft,
       width: rect.width,
     });
   }, [open, isMobile]);
@@ -267,11 +277,22 @@ const LocationDropdown = memo(function LocationDropdown({
     retry: false,
   });
 
-  // Photon autocomplete (only active when NOT in postcode mode)
-  const { results: photonResults, isLoading: isLoadingPhoton, error: photonError } = usePhotonAutocomplete(
+  // Derive country code from GPS position for location-biased search
+  const countryCode = gps?.position ? 'GB' : undefined; // Default to GB for UK-focused app
+  
+  // GPS coordinates for location-biased autocomplete
+  const gpsCoordinates = gps?.position ? {
+    lat: gps.position.latitude,
+    lng: gps.position.longitude
+  } : undefined;
+  
+  // TomTom autocomplete (only active when NOT in postcode mode)
+  const { results: tomtomResults, isLoading: isLoadingTomTom, error: tomtomError } = useTomTomAutocomplete(
     searchValue,
     !isPostcodeMode, // Only enabled when NOT in postcode mode
-    countryCode
+    countryCode,
+    undefined, // no POI category filter
+    gpsCoordinates
   );
 
   // Postcode geocoding mutation for exact lookups
@@ -377,17 +398,17 @@ const LocationDropdown = memo(function LocationDropdown({
     // Toast notification removed per user request
   }, [onChange, onCoordinatesChange, createLocationMutation]);
 
-  // Handle Photon result selection
-  const handlePhotonSelect = useCallback((photonFeature: PhotonFeature) => {
-    const displayLabel = formatPhotonDisplay(photonFeature);
-    const coordinates = extractPhotonCoordinates(photonFeature);
+  // Handle TomTom result selection
+  const handleTomTomSelect = useCallback((tomtomResult: TomTomResult) => {
+    const displayLabel = formatTomTomDisplay(tomtomResult);
+    const coordinates = extractTomTomCoordinates(tomtomResult);
     
     onChange(displayLabel);
     onCoordinatesChange?.(coordinates);
     setSearchValue(displayLabel);
     setOpen(false);
     
-    // Create location entry for this Photon result
+    // Create location entry for this TomTom result
     const locationData = {
       label: displayLabel,
       coordinates,
@@ -395,8 +416,6 @@ const LocationDropdown = memo(function LocationDropdown({
     };
     
     createLocationMutation.mutate(locationData);
-    
-    // Toast notification removed per user request
   }, [onChange, onCoordinatesChange, createLocationMutation]);
 
   // Handle enter key press for postcode search
@@ -480,7 +499,7 @@ const LocationDropdown = memo(function LocationDropdown({
           }}
         />
         <CommandList>
-          {(isLoadingAll || isLoadingFavorites || isLoadingPostcodes || isLoadingPhoton) && (
+          {(isLoadingAll || isLoadingFavorites || isLoadingPostcodes || isLoadingTomTom) && (
             <div className="p-4 space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
@@ -553,31 +572,31 @@ const LocationDropdown = memo(function LocationDropdown({
             </CommandEmpty>
           )}
 
-          {/* Photon Worldwide Address Search Results - Only shown when NOT in postcode mode */}
-          {!isPostcodeMode && photonResults.length > 0 && (
+          {/* TomTom Address Search Results - Only shown when NOT in postcode mode */}
+          {!isPostcodeMode && tomtomResults.length > 0 && (
             <>
               {(postcodeResults.length > 0 || favoriteLocations.length > 0 || sortedLocations.length > 0) && <Separator />}
-              <CommandGroup heading="Worldwide Addresses">
-                {photonResults.map((feature: PhotonFeature, index: number) => {
-                  const displayLabel = formatPhotonDisplay(feature);
-                  const props = feature.properties;
+              <CommandGroup heading="Address Results">
+                {tomtomResults.map((result: TomTomResult, index: number) => {
+                  const displayLabel = formatTomTomDisplay(result);
+                  const addr = result.address;
                   
                   return (
                     <CommandItem
-                      key={`photon-${index}`}
+                      key={`tomtom-${result.id || index}`}
                       value={displayLabel}
-                      onSelect={() => handlePhotonSelect(feature)}
+                      onSelect={() => handleTomTomSelect(result)}
                       className="flex items-center justify-between cursor-pointer"
-                      data-testid={`photon-result-${index}`}
+                      data-testid={`tomtom-result-${index}`}
                     >
                       <div className="flex items-center space-x-3">
                         <Globe className="w-4 h-4 text-primary" />
                         <div>
                           <div className="font-medium">
-                            {props.name || props.street || 'Unknown'}
+                            {result.poi?.name || addr.streetName || addr.freeformAddress || 'Unknown'}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {[props.city, props.country].filter(Boolean).join(", ")}
+                            {[addr.municipality, addr.country].filter(Boolean).join(", ")}
                           </div>
                         </div>
                       </div>
@@ -887,7 +906,7 @@ const LocationDropdown = memo(function LocationDropdown({
       )}
 
       {/* Error Display */}
-      {photonError && !isPostcodeMode && searchValue.length >= 3 && (
+      {tomtomError && !isPostcodeMode && searchValue.length >= 3 && (
         <div className="flex items-start gap-2 mt-2 px-2 py-1.5 bg-destructive/10 border border-destructive/20 rounded text-xs text-destructive" data-testid="location-dropdown-error">
           <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
           <span>Address search unavailable. Please check your connection or try again later.</span>
