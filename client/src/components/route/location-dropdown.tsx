@@ -78,6 +78,58 @@ const LocationDropdown = memo(function LocationDropdown({
   const { toast } = useToast();
   const gps = useGPS();
   const isMobile = useIsMobile();
+  
+  // Mobile dropdown positioning state - uses fixed positioning with viewport coordinates
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  
+  // Calculate dropdown position based on input's viewport coordinates
+  const updateDropdownPosition = useCallback(() => {
+    if (!inputRef.current || !open || !isMobile) return;
+    
+    const rect = inputRef.current.getBoundingClientRect();
+    const viewportOffset = window.visualViewport?.offsetTop || 0;
+    
+    setDropdownPosition({
+      top: rect.bottom + viewportOffset + 4, // 4px gap below input
+      left: rect.left,
+      width: rect.width,
+    });
+  }, [open, isMobile]);
+  
+  // Update position when dropdown opens and on viewport changes (keyboard open/close)
+  useEffect(() => {
+    if (!open || !isMobile) {
+      setDropdownPosition(null);
+      return;
+    }
+    
+    // Initial position calculation
+    updateDropdownPosition();
+    
+    // Listen for visual viewport changes (keyboard open/close on iOS)
+    const viewport = window.visualViewport;
+    if (viewport) {
+      viewport.addEventListener('resize', updateDropdownPosition);
+      viewport.addEventListener('scroll', updateDropdownPosition);
+    }
+    
+    // Also listen for scroll and resize on window
+    window.addEventListener('scroll', updateDropdownPosition, true);
+    window.addEventListener('resize', updateDropdownPosition);
+    
+    return () => {
+      if (viewport) {
+        viewport.removeEventListener('resize', updateDropdownPosition);
+        viewport.removeEventListener('scroll', updateDropdownPosition);
+      }
+      window.removeEventListener('scroll', updateDropdownPosition, true);
+      window.removeEventListener('resize', updateDropdownPosition);
+    };
+  }, [open, isMobile, updateDropdownPosition]);
 
   // Sync internal search value with external value
   useEffect(() => {
@@ -705,13 +757,15 @@ const LocationDropdown = memo(function LocationDropdown({
         <ChevronDown className="w-4 h-4 text-muted-foreground" />
       </div>
       
-      {/* Mobile: Inline absolutely positioned dropdown - appears directly below input */}
-      {isMobile && open && (
+      {/* Mobile: Fixed positioned dropdown using viewport coordinates - appears directly below input */}
+      {isMobile && open && dropdownPosition && (
         <div 
           ref={dropdownRef}
-          className="absolute left-0 right-0 z-[9999] bg-popover border rounded-md shadow-lg overflow-hidden"
+          className="fixed z-[9999] bg-popover border rounded-md shadow-lg overflow-hidden"
           style={{ 
-            top: 'calc(100% + 8px)',  // 8px gap below input (50px total offset from input top)
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`,
             maxHeight: '300px',
             overflowY: 'auto'
           }}
