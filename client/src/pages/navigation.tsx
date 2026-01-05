@@ -2457,6 +2457,20 @@ function NavigationPageContent() {
   const handleStopNavigation = () => {
     console.log('[NAV-STOP] 🔴 Cancel button pressed!');
     
+    // If navigation is already cancelled (no route), go back to fresh start
+    if (!isLocalNavActive && !currentRoute) {
+      console.log('[NAV-STOP] ✅ Already cancelled - refreshing to clean state');
+      // Reset all state to fresh start
+      setFromLocation('');
+      setToLocation('');
+      setFromCoordinates(null);
+      setToCoordinates(null);
+      setIsMapExpanded(false);
+      setShowComprehensiveMenu(false);
+      setSidebarState(isMobile ? 'closed' : 'open');
+      return;
+    }
+    
     // GUARD: Prevent double-clicks - if already cancelling or mutation pending, ignore
     if (isCancellingRouteRef.current || completeJourneyMutation.isPending) {
       console.log('[NAV-STOP] ⏸️ Already cancelling - forcing reset anyway');
