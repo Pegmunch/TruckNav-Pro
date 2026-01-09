@@ -46,6 +46,8 @@ interface AddressAutocompleteProps {
   testId: string;
   /** Hide the SEARCH TYPE toggles (Addresses, Truck Stops, etc.) - useful for "From" field where simple input is preferred */
   showSearchTypeToggles?: boolean;
+  /** Hide the GPS "Use My Current Location" button - useful when parent component has its own GPS button */
+  hideGPSButton?: boolean;
 }
 
 export function AddressAutocomplete({
@@ -57,7 +59,8 @@ export function AddressAutocomplete({
   id,
   className,
   testId,
-  showSearchTypeToggles = true
+  showSearchTypeToggles = true,
+  hideGPSButton = false
 }: AddressAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
@@ -654,36 +657,38 @@ export function AddressAutocomplete({
         </div>
       )}
 
-      {/* GPS Quick Access Button - Always shown */}
-      <Button
-          onClick={handleUseGPSLocation}
-          disabled={isGettingLocation}
-          variant="default"
-          className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
-          data-testid="button-use-gps-location"
-        >
-          {isGettingLocation ? (
-            <>
-              <Loader2 className="h-6 w-6 mr-2 animate-spin" />
-              <span>Getting Location...</span>
-            </>
-          ) : (
-            <>
-              <Crosshair className="h-6 w-6 mr-2" />
-              <span className="flex-1">Use My Current Location</span>
-              {gps?.status === 'ready' && gps?.position && (
-                <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
-                  GPS Ready
-                </Badge>
-              )}
-              {gps?.manualLocation && !gps?.position && (
-                <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                  Manual
-                </Badge>
-              )}
-            </>
-          )}
-      </Button>
+      {/* GPS Quick Access Button - Hidden when parent has its own GPS button */}
+      {!hideGPSButton && (
+        <Button
+            onClick={handleUseGPSLocation}
+            disabled={isGettingLocation}
+            variant="default"
+            className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
+            data-testid="button-use-gps-location"
+          >
+            {isGettingLocation ? (
+              <>
+                <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+                <span>Getting Location...</span>
+              </>
+            ) : (
+              <>
+                <Crosshair className="h-6 w-6 mr-2" />
+                <span className="flex-1">Use My Current Location</span>
+                {gps?.status === 'ready' && gps?.position && (
+                  <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                    GPS Ready
+                  </Badge>
+                )}
+                {gps?.manualLocation && !gps?.position && (
+                  <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                    Manual
+                  </Badge>
+                )}
+              </>
+            )}
+        </Button>
+      )}
 
       <div ref={inputWrapperRef} className="relative" style={{ position: 'relative', overflow: 'visible' }}>
         <Input

@@ -152,6 +152,7 @@ export function SimplifiedRouteDrawer({
               testId="input-from-location"
               className="flex-1"
               showSearchTypeToggles={false}
+              hideGPSButton={true}
             />
             <Button
               variant="outline"
@@ -260,6 +261,7 @@ export function SimplifiedRouteDrawer({
               placeholder="Search for destination..."
               testId="input-to-location"
               className="flex-1"
+              hideGPSButton={true}
             />
           </div>
         </div>
