@@ -653,6 +653,7 @@ function ComprehensiveMobileMenu({
                         placeholder="Search for address, postcode, or POI..."
                         testId="input-from-location"
                         showSearchTypeToggles={false}
+                        hideGPSButton={true}
                       />
                     </div>
 
@@ -693,6 +694,8 @@ function ComprehensiveMobileMenu({
                         coordinates={toCoordinates}
                         placeholder="Search for destination..."
                         testId="input-to-location"
+                        showSearchTypeToggles={false}
+                        hideGPSButton={true}
                       />
                     </div>
 
@@ -773,7 +776,7 @@ function ComprehensiveMobileMenu({
                                           <div className="text-xs text-muted-foreground mt-0.5 truncate">
                                             {result.address?.freeformAddress || result.address || "No address"}
                                           </div>
-                                          {result.dist !== undefined && (
+                                          {result.dist != null && !isNaN(result.dist) && (
                                             <div className="text-[10px] text-blue-600 font-bold mt-1 uppercase tracking-wider">
                                               {(result.dist / 1609.34).toFixed(1)} miles away
                                             </div>
@@ -934,7 +937,7 @@ function ComprehensiveMobileMenu({
                                   <div className="text-xs text-muted-foreground mt-1 truncate">
                                     {formatTomTomDisplay(result)}
                                   </div>
-                                  {result.dist !== undefined && (
+                                  {result.dist != null && !isNaN(result.dist) && (
                                     <div className="text-xs text-muted-foreground mt-1">
                                       {formatDistance(result.dist, 'meters')} away
                                     </div>

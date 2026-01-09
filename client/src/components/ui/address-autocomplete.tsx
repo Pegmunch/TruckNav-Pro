@@ -781,7 +781,7 @@ export function AddressAutocomplete({
             }}
           >
             <Command className="bg-transparent">
-              <CommandList className="max-h-none">
+              <CommandList className="max-h-[300px] overflow-y-auto">
                 {/* GPS Location Loading/Candidate - Always at top when GPS is active */}
                 {(isGettingLocation || gpsCandidate) && (
                   <CommandGroup heading="Your Location">
@@ -897,7 +897,7 @@ export function AddressAutocomplete({
                               {result.address.municipality && `${result.address.municipality}, `}
                               {result.address.countryCode || result.address.country}
                             </span>
-                            {result.dist && (
+                            {result.dist != null && !isNaN(result.dist) && (
                               <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-4 px-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                                 {(result.dist / 1609.34).toFixed(1)} miles away
                               </Badge>
