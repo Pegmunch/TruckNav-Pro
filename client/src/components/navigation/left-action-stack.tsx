@@ -1,5 +1,5 @@
 import { AlertCircle, Menu, Navigation, X, Mic, MicOff } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType } from '@/lib/voice-commands';
 
@@ -59,6 +59,31 @@ export function LeftActionStack({
     }
   };
 
+  // Guard to prevent double-firing from both pointer and click events
+  const handledByPointerRef = useRef(false);
+  
+  // Create a handler wrapper that prevents double-firing while maintaining keyboard accessibility
+  const createHandler = (callback: (() => void) | undefined, label: string) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handledByPointerRef.current = true;
+      console.log(`[LEFT-BTN-${label}] ✅ Pressed via pointerDown`);
+      callback?.();
+      // Reset after a short delay to allow keyboard events
+      setTimeout(() => { handledByPointerRef.current = false; }, 300);
+    },
+    onClick: (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only fire if not already handled by pointer (allows keyboard Enter/Space)
+      if (!handledByPointerRef.current) {
+        console.log(`[LEFT-BTN-${label}] ✅ Pressed via onClick (keyboard)`);
+        callback?.();
+      }
+    }
+  });
+
   // CRITICAL: The LeftActionStack should always be visible in Navigation view
   // to provide access to the menu, even when not actively navigating.
   // The internal buttons handle their own visibility if needed.
@@ -70,18 +95,7 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button pressed');
-            onNavigate?.();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button touched');
-            onNavigate?.();
-          }}
+          {...createHandler(onNavigate, 'NAV')}
           className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
           style={{ touchAction: 'manipulation' }}
           data-testid="button-nav-left"
@@ -96,16 +110,7 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleVoiceListening();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleVoiceListening();
-          }}
+          {...createHandler(toggleVoiceListening, 'VOICE')}
           disabled={!isVoiceSupported}
           className={`h-10 w-10 rounded-xl shadow-lg transition-all select-none touch-manipulation ${
             isVoiceSupported
@@ -132,18 +137,7 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button pressed - Opening dialog');
-            onReportIncident?.();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button touched');
-            onReportIncident?.();
-          }}
+          {...createHandler(onReportIncident, 'INCIDENT')}
           className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
           style={{ touchAction: 'manipulation' }}
           data-testid="button-report-incident"
@@ -158,18 +152,7 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button pressed - Stopping navigation');
-            onCancel?.();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button touched');
-            onCancel?.();
-          }}
+          {...createHandler(onCancel, 'CANCEL')}
           className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
           style={{ touchAction: 'manipulation' }}
           data-testid="button-cancel-nav"
@@ -183,18 +166,7 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-4-MENU] ✅ Menu button pressed - Opening comprehensive menu');
-            onOpenMenu?.();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-BTN-4-MENU] ✅ Menu button touched');
-            onOpenMenu?.();
-          }}
+          {...createHandler(onOpenMenu, 'MENU')}
           className="h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation"
           style={{ touchAction: 'manipulation' }}
           data-testid="button-menu"
