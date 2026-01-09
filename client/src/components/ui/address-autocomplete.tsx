@@ -44,8 +44,8 @@ interface AddressAutocompleteProps {
   id: string;
   className?: string;
   testId: string;
-  /** Hide the SEARCH TYPE toggles and GPS button - useful for "From" field where simple input is preferred */
-  showSearchOptions?: boolean;
+  /** Hide the SEARCH TYPE toggles (Addresses, Truck Stops, etc.) - useful for "From" field where simple input is preferred */
+  showSearchTypeToggles?: boolean;
 }
 
 export function AddressAutocomplete({
@@ -57,7 +57,7 @@ export function AddressAutocomplete({
   id,
   className,
   testId,
-  showSearchOptions = true
+  showSearchTypeToggles = true
 }: AddressAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
@@ -570,9 +570,9 @@ export function AddressAutocomplete({
   }, [poiCategory, placeholder]);
 
   return (
-    <div className={showSearchOptions ? "space-y-3" : ""}>
-      {/* POI Category Selector - Only shown when showSearchOptions is true */}
-      {showSearchOptions && (
+    <div className="space-y-3">
+      {/* POI Category Selector - Only shown when showSearchTypeToggles is true */}
+      {showSearchTypeToggles && (
         <div className="flex flex-col gap-2">
           <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Search Type
@@ -630,9 +630,8 @@ export function AddressAutocomplete({
         </div>
       )}
 
-      {/* GPS Quick Access Button - Only shown when showSearchOptions is true */}
-      {showSearchOptions && (
-        <Button
+      {/* GPS Quick Access Button - Always shown */}
+      <Button
           onClick={handleUseGPSLocation}
           disabled={isGettingLocation}
           variant="default"
@@ -660,8 +659,7 @@ export function AddressAutocomplete({
               )}
             </>
           )}
-        </Button>
-      )}
+      </Button>
 
       <div ref={inputWrapperRef} className="relative" style={{ position: 'relative', overflow: 'visible' }}>
         <Input

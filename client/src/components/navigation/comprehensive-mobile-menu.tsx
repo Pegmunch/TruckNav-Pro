@@ -628,7 +628,7 @@ function ComprehensiveMobileMenu({
                         coordinates={fromCoordinates}
                         placeholder="Search for address, postcode, or POI..."
                         testId="input-from-location"
-                        showSearchOptions={false}
+                        showSearchTypeToggles={false}
                       />
                     </div>
 
