@@ -362,10 +362,10 @@ function NavigationPageContent() {
     ? 'navigate' 
     : 'plan';
   
-  // CRITICAL FIX: Navigation UI should show in preview AND navigate modes (not plan)
-  // This ensures buttons and ETA header render whenever a route is calculated
-  // Also check isLocalNavActive to ensure immediate UI response when navigation is cancelled
-  const isNavUIActive = (shouldShowHUD && isLocalNavActive) || mobileNavMode === 'navigate';
+  // CRITICAL FIX: Navigation UI should show whenever isLocalNavActive is true
+  // This ensures HUD (speedometer, ETA header) appears immediately when GO is pressed
+  // even before route calculation completes
+  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate';
   
   // CRITICAL FIX: Only show GPS truck marker during ACTIVE navigation
   // Hide in plan and preview modes across all platforms for consistency
@@ -381,12 +381,13 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
-  // AUTO-SHOW navigation controls when navigation UI becomes active
+  // AUTO-SHOW navigation controls when navigation UI becomes active OR when navigating
   useEffect(() => {
-    if (isNavUIActive) {
+    if (isNavUIActive || isLocalNavActive) {
+      console.log('[NAV-CONTROLS] Auto-showing controls - isNavUIActive:', isNavUIActive, 'isLocalNavActive:', isLocalNavActive);
       setShowNavControls(true);
     }
-  }, [isNavUIActive]);
+  }, [isNavUIActive, isLocalNavActive]);
   
   // GPS Mode effect - wire up mode changes to GPS context
   // CRITICAL FIX: Destructure callbacks to prevent render loop
@@ -3660,7 +3661,17 @@ function NavigationPageContent() {
         currentRoute={currentRoute}
         isCalculating={calculateRouteMutation.isPending}
         isNavigating={isNavigating}
-        onRequestAutoNavigation={() => setShouldAutoNavigateOnMobile(true)}
+        onRequestAutoNavigation={() => {
+          console.log('[GO-BUTTON] Mobile GO pressed - immediately enabling navigation UI');
+          setShouldAutoNavigateOnMobile(true);
+          // Show navigation controls immediately
+          setShowNavControls(true);
+          // Set navigation mode active immediately so HUD appears
+          setIsLocalNavActive(true);
+          setIsShowingPreview(false);
+          localStorage.setItem('navigation_mode', 'active');
+          localStorage.setItem('navigation_timestamp', Date.now().toString());
+        }}
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);

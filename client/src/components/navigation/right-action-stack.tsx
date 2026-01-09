@@ -104,6 +104,9 @@ export function RightActionStack({
         </Button>
       )}
 
+      {/* Spacer to separate top 2 buttons from remaining controls on mobile */}
+      <div className="h-4 md:h-2" aria-hidden="true" />
+
       {/* 3. Recenter - Gray border */}
       {onRecenter && (
         <Button
