@@ -70,7 +70,6 @@ export function AddressAutocomplete({
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isInteractingWithDropdownRef = useRef(false);
-  const selectionHandledRef = useRef(false); // Prevents double-firing on touch
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const { toast } = useToast();
   
@@ -163,33 +162,34 @@ export function AddressAutocomplete({
   
   // Close dropdown when clicking/tapping outside using document-level listener
   // This replaces blur-based closing which is unreliable on iOS
+  // CRITICAL: Use BUBBLE phase (not capture) so React onSelect handlers run first
   useEffect(() => {
     if (!open) return;
     
     const handlePointerDown = (e: PointerEvent) => {
-      // Don't close if interacting with dropdown
-      if (isInteractingWithDropdownRef.current) return;
-      
       const target = e.target as HTMLElement;
       
       // Check if click is inside input wrapper
       if (inputWrapperRef.current?.contains(target)) return;
       
-      // Check if click is inside dropdown portal (ref-based)
-      if (dropdownRef.current?.contains(target)) return;
+      // Check if click is inside dropdown portal using composedPath for shadow DOM support
+      const path = e.composedPath();
+      if (dropdownRef.current && path.includes(dropdownRef.current)) return;
       
       // Fallback: Check if target or any ancestor has our dropdown marker
       if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
       
-      // Click was outside - close dropdown
-      setOpen(false);
+      // Click was outside - close dropdown with slight delay to allow any pending handlers
+      requestAnimationFrame(() => {
+        setOpen(false);
+      });
     };
     
-    // Use capture phase to catch events before they bubble
-    document.addEventListener('pointerdown', handlePointerDown, true);
+    // CRITICAL: Use bubble phase (false) so onSelect handlers run before this
+    document.addEventListener('pointerdown', handlePointerDown, false);
     
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('pointerdown', handlePointerDown, false);
     };
   }, [open]);
 
@@ -371,22 +371,22 @@ export function AddressAutocomplete({
   }, [open]);
 
   const handleSelectTomTom = useCallback((tomtomResult: TomTomResult) => {
-    // Prevent double-firing from both click and touchend
-    if (selectionHandledRef.current) return;
-    selectionHandledRef.current = true;
-    setTimeout(() => { selectionHandledRef.current = false; }, 300);
+    console.log('[AUTOCOMPLETE] TomTom selection triggered');
     
     const displayLabel = formatTomTomDisplay(tomtomResult);
     const coordinates = extractTomTomCoordinates(tomtomResult);
     
+    // Update state immediately
     setSearchTerm(displayLabel);
     onChange(displayLabel);
     onCoordinatesChange?.(coordinates);
     
-    // Close and blur immediately
-    setOpen(false);
-    const input = document.getElementById(id) as HTMLInputElement;
-    if (input) input.blur();
+    // CRITICAL: Delay close until next frame so handler completes before unmount
+    requestAnimationFrame(() => {
+      setOpen(false);
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) input.blur();
+    });
     
     // Create location entry
     createLocationMutation.mutate({
@@ -397,25 +397,22 @@ export function AddressAutocomplete({
   }, [onChange, onCoordinatesChange, createLocationMutation, id]);
 
   const handleSelectSavedLocation = useCallback((location: SavedLocation) => {
-    // Prevent double-firing from both click and touchend
-    if (selectionHandledRef.current) return;
-    selectionHandledRef.current = true;
-    setTimeout(() => { selectionHandledRef.current = false; }, 300);
+    console.log('[AUTOCOMPLETE] Saved location selection triggered');
     
     setSearchTerm(location.label);
     onChange(location.label);
     onCoordinatesChange?.(location.coordinates);
     
-    setOpen(false);
-    const input = document.getElementById(id) as HTMLInputElement;
-    if (input) input.blur();
+    // CRITICAL: Delay close until next frame so handler completes before unmount
+    requestAnimationFrame(() => {
+      setOpen(false);
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) input.blur();
+    });
   }, [onChange, onCoordinatesChange, id]);
 
   const handleSelectUKPostcode = useCallback((result: PostcodeGeocodeResult) => {
-    // Prevent double-firing from both click and touchend
-    if (selectionHandledRef.current) return;
-    selectionHandledRef.current = true;
-    setTimeout(() => { selectionHandledRef.current = false; }, 300);
+    console.log('[AUTOCOMPLETE] UK postcode selection triggered');
     
     const displayLabel = result.address || result.formatted;
     
@@ -423,9 +420,12 @@ export function AddressAutocomplete({
     onChange(displayLabel);
     onCoordinatesChange?.(result.coordinates);
     
-    setOpen(false);
-    const input = document.getElementById(id) as HTMLInputElement;
-    if (input) input.blur();
+    // CRITICAL: Delay close until next frame so handler completes before unmount
+    requestAnimationFrame(() => {
+      setOpen(false);
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) input.blur();
+    });
     
     createLocationMutation.mutate({
       label: displayLabel,
@@ -451,20 +451,28 @@ export function AddressAutocomplete({
   const handleSelectGPSCandidate = useCallback(() => {
     if (!gpsCandidate) return;
     
-    console.log('[GPS-LOCATION] User confirmed GPS candidate:', gpsCandidate.address);
-    setSearchTerm(gpsCandidate.address);
-    onChange(gpsCandidate.address);
-    onCoordinatesChange?.(gpsCandidate.coordinates);
-    setOpen(false);
+    console.log('[AUTOCOMPLETE] GPS candidate selection triggered:', gpsCandidate.address);
+    
+    // Capture values before state changes
+    const address = gpsCandidate.address;
+    const coordinates = gpsCandidate.coordinates;
+    
+    setSearchTerm(address);
+    onChange(address);
+    onCoordinatesChange?.(coordinates);
     setGpsCandidate(null);
     
-    const input = document.getElementById(id) as HTMLInputElement;
-    if (input) input.blur();
+    // CRITICAL: Delay close until next frame so handler completes before unmount
+    requestAnimationFrame(() => {
+      setOpen(false);
+      const input = document.getElementById(id) as HTMLInputElement;
+      if (input) input.blur();
+    });
     
     // Save to recent locations
     createLocationMutation.mutate({
-      label: gpsCandidate.address,
-      coordinates: gpsCandidate.coordinates,
+      label: address,
+      coordinates,
       isFavorite: false,
     });
   }, [gpsCandidate, onChange, onCoordinatesChange, createLocationMutation, id]);
@@ -788,16 +796,6 @@ export function AddressAutocomplete({
                         value={`gps-candidate-${gpsCandidate.address}`}
                         onSelect={handleSelectGPSCandidate}
                         className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-100 dark:active:bg-blue-900 border-2 border-blue-500 rounded-lg"
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectGPSCandidate();
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectGPSCandidate();
-                        }}
                       >
                         <Navigation2 className="mr-3 h-6 w-6 text-blue-600 dark:text-blue-400" />
                         <div className="flex flex-col flex-1">
@@ -832,16 +830,6 @@ export function AddressAutocomplete({
                         value={`fav-${loc.id}-${loc.label}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectSavedLocation(loc);
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectSavedLocation(loc);
-                        }}
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
                         <div className="flex flex-col">
@@ -856,16 +844,6 @@ export function AddressAutocomplete({
                         value={`recent-${loc.id}-${loc.label}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectSavedLocation(loc);
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleSelectSavedLocation(loc);
-                        }}
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
                         <div className="flex flex-col">
@@ -884,16 +862,6 @@ export function AddressAutocomplete({
                       value={`postcode-${ukPostcodeResult.formatted}`}
                       onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSelectUKPostcode(ukPostcodeResult);
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSelectUKPostcode(ukPostcodeResult);
-                      }}
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
                       <div className="flex flex-col">
@@ -915,16 +883,6 @@ export function AddressAutocomplete({
                           value={`tomtom-${result.id || index}-${result.address?.freeformAddress || ''}`}
                           onSelect={() => handleSelectTomTom(result)}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
-                          onPointerDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSelectTomTom(result);
-                          }}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSelectTomTom(result);
-                          }}
                         >
                           {isPoi ? (
                             <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
