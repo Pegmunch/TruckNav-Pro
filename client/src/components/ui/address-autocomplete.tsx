@@ -17,7 +17,6 @@ import {
   type TomTomResult 
 } from '@/hooks/use-tomtom-autocomplete';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 import { useGPS } from '@/contexts/gps-context';
 import { detectPostcodeCountry, looksLikePostcode } from '@/lib/postcode-utils';
 import { geocodeUKPostcode, type PostcodeGeocodeResult } from '@/lib/uk-postcode-geocoding';
@@ -67,7 +66,6 @@ export function AddressAutocomplete({
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   
   // GPS candidate state - holds geocoded location pending user confirmation
   const [gpsCandidate, setGpsCandidate] = useState<{
@@ -518,20 +516,10 @@ export function AddressAutocomplete({
         if (!success) {
           console.warn('[GPS-LOCATION] Could not acquire location - check device permissions');
           setOpen(false); // Close dropdown on error
-          toast({
-            title: "Location unavailable",
-            description: "Please enable location services in your device settings, or type an address manually.",
-            variant: "destructive",
-          });
         }
       } else {
         console.warn('[GPS-LOCATION] Geolocation not supported in this browser');
         setOpen(false); // Close dropdown on error
-        toast({
-          title: "Location not supported",
-          description: "Your browser doesn't support location services. Please type an address manually.",
-          variant: "destructive",
-        });
       }
     } catch (error) {
       console.warn('[GPS-LOCATION] Failed to get GPS position:', error);
@@ -540,7 +528,7 @@ export function AddressAutocomplete({
       // CRITICAL: Always reset loading state, guaranteed by finally block
       setIsGettingLocation(false);
     }
-  }, [gps, toast]);
+  }, [gps]);
 
   // Dynamic placeholder based on POI category
   const dynamicPlaceholder = useMemo(() => {

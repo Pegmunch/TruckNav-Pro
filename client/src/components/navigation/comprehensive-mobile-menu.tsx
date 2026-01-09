@@ -53,7 +53,6 @@ import {
   HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { type Route as RouteType, type Journey, type VehicleProfile } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -98,6 +97,8 @@ interface ComprehensiveMobileMenuProps {
   currentRoute: RouteType | null;
   isCalculating?: boolean;
   isNavigating?: boolean;
+  // Auto-navigation flag for GO button flow
+  onRequestAutoNavigation?: () => void;
   // Vehicle
   selectedProfile: VehicleProfile | null;
   onProfileSelect: (profile: VehicleProfile) => void;
@@ -119,13 +120,13 @@ function ComprehensiveMobileMenu({
   currentRoute,
   isCalculating = false,
   isNavigating = false,
+  onRequestAutoNavigation,
   selectedProfile,
   onProfileSelect,
   coordinates,
   onSelectFacility,
   hideTabsInInputMode = false
 }: ComprehensiveMobileMenuProps) {
-  const { toast } = useToast();
   const { formatDistance } = useMeasurement();
   const gps = useGPS();
   const { resetTour } = useOnboarding();
@@ -264,11 +265,6 @@ function ComprehensiveMobileMenu({
           onFromLocationChange(displayAddress);
           // Store coordinates for POI search (same as autocomplete flow)
           setFromCoordinates({ lat: latitude, lng: longitude });
-          
-          toast({
-            title: "Location Set",
-            description: displayAddress,
-          });
         } else {
           throw new Error('Could not determine address');
         }
@@ -277,16 +273,10 @@ function ComprehensiveMobileMenu({
       }
     } catch (error) {
       console.error('GPS location error:', error);
-      // Show toast with error message to help user understand the issue
-      toast({
-        title: "Location unavailable",
-        description: error instanceof Error ? error.message : "Please enable location services or type an address manually.",
-        variant: "destructive",
-      });
     } finally {
       setIsGettingLocation(false);
     }
-  }, [isGettingLocation, onFromLocationChange, toast]);
+  }, [isGettingLocation, onFromLocationChange]);
   
   // Get GPS coordinates for location-biased search
   const gpsCoordinates = gps?.position ? {
@@ -370,17 +360,11 @@ function ComprehensiveMobileMenu({
     if (lat && lng) {
       setToInput(fullLabel);
       onToLocationChange(fullLabel);
-      // We don't have direct access to onToCoordinatesChange here, but we can update the input
-      // ComprehensiveMobileMenu uses onToLocationChange to communicate back
-      toast({
-        title: "Destination Set",
-        description: displayLabel,
-      });
       setActiveTab("plan");
       setActivePOICategory(null);
       setPoiSearchEnabled(false);
     }
-  }, [onToLocationChange, toast]);
+  }, [onToLocationChange]);
   
   // Modal states for sub-panels
   const [showVehicleSetup, setShowVehicleSetup] = useState(false);
@@ -511,7 +495,7 @@ function ComprehensiveMobileMenu({
     console.log('[POI-SEARCH] Starting search with coordinates:', searchCenter);
     setActivePOICategory(categoryId);
     setPoiSearchEnabled(true);
-  }, [fromCoordinates, gpsCoordinates, toast, gps]);
+  }, [fromCoordinates, gpsCoordinates, gps]);
 
   return (
     <>
@@ -662,6 +646,8 @@ function ComprehensiveMobileMenu({
                           variant="default"
                           size="sm"
                           onClick={async () => {
+                            // Request auto-navigation on mobile after route calculation
+                            onRequestAutoNavigation?.();
                             await onPlanRoute();
                           }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
@@ -806,6 +792,8 @@ function ComprehensiveMobileMenu({
                     {!currentRoute && fromInput && toInput && selectedProfile && (
                       <Button
                         onClick={async () => {
+                          // Request auto-navigation on mobile after route calculation
+                          onRequestAutoNavigation?.();
                           await onPlanRoute();
                         }}
                         disabled={isCalculating}
@@ -1472,10 +1460,6 @@ function ComprehensiveMobileMenu({
           <FuelPriceComparison 
             onNavigateToStation={(station) => {
               setShowFuelPrices(false);
-              toast({
-                title: "Navigation Started",
-                description: `Navigating to ${station.brand} - ${station.postcode}`,
-              });
             }}
           />
         </DialogContent>
@@ -1497,10 +1481,6 @@ function ComprehensiveMobileMenu({
             isNavigating={isNavigating}
             onRequestBreak={() => {
               setShowFatigueMonitor(false);
-              toast({
-                title: "Break Requested",
-                description: "Find a safe place to rest. We'll show nearby truck stops.",
-              });
             }}
           />
         </DialogContent>

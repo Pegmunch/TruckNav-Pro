@@ -204,6 +204,9 @@ function NavigationPageContent() {
   // Comprehensive mobile menu state
   const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
   
+  // Flag to auto-start navigation on mobile after route calculation (GO button flow)
+  const [shouldAutoNavigateOnMobile, setShouldAutoNavigateOnMobile] = useState(false);
+  
   // Quick settings panel state (green gear button)
   const [showQuickSettings, setShowQuickSettings] = useState(false);
   
@@ -1785,6 +1788,20 @@ function NavigationPageContent() {
         }
       }
       
+      // Cache route for offline use
+      if (route && route.startLocation && route.endLocation) {
+        try {
+          // Cache as active route
+          localStorage.setItem('trucknav_active_route', JSON.stringify(route));
+          // Also cache by destination for future offline lookups
+          const cacheKey = `trucknav_cached_route_${route.startLocation}_${route.endLocation}`;
+          localStorage.setItem(cacheKey, JSON.stringify(route));
+          console.log('[ROUTE-CACHE] Route cached for offline use:', cacheKey);
+        } catch (error) {
+          console.error('[ROUTE-CACHE] Failed to cache route:', error);
+        }
+      }
+      
       // If route calculation includes a plannedJourney (from route calculation), update sync
       // NOTE: We don't persist to localStorage here - only persist when user actually starts navigation
       // This prevents preview routes from reappearing on app reload
@@ -1794,13 +1811,19 @@ function NavigationPageContent() {
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
-      // Route calculated - stay in plan mode, show "Preview Route" button
-      console.log('[ROUTE-CALC] Route calculated - waiting for user to click Preview or Start Navigation');
+      // Route calculated - check if auto-navigation is requested (mobile GO button flow)
+      console.log('[ROUTE-CALC] Route calculated - checking auto-navigation flag:', shouldAutoNavigateOnMobile);
       
-      // Collapse sidebar to show the route on the map
-      if (isMobile && sidebarState === 'open') {
-        setSidebarState('collapsed');
-        localStorage.setItem('navigationSidebarState', 'collapsed');
+      // On mobile: close menu and trigger auto-navigation if flag is set
+      if (isMobile) {
+        // Always close the menu after successful route calculation on mobile
+        setShowComprehensiveMenu(false);
+        
+        // Collapse sidebar to show the route on the map
+        if (sidebarState === 'open') {
+          setSidebarState('collapsed');
+          localStorage.setItem('navigationSidebarState', 'collapsed');
+        }
       }
     },
     onError: (error) => {
@@ -1829,6 +1852,7 @@ function NavigationPageContent() {
     console.log('[PLAN-ROUTE] To Location:', toLocation);
     console.log('[PLAN-ROUTE] From Coordinates:', fromCoordinates);
     console.log('[PLAN-ROUTE] To Coordinates:', toCoordinates);
+    console.log('[PLAN-ROUTE] Online status:', navigator.onLine);
     
     // Guard against duplicate requests while calculating
     if (calculateRouteMutation.isPending) {
@@ -1839,7 +1863,6 @@ function NavigationPageContent() {
     // Ensure we have a valid vehicle profile ID before planning route
     if (!activeProfileId || activeProfileId.trim().length === 0) {
       console.error('[PLAN-ROUTE] ERROR: No vehicle profile selected! Please select a vehicle profile first.');
-      // REMOVED TOAST: No popups per user request
       return;
     }
 
@@ -1849,11 +1872,65 @@ function NavigationPageContent() {
     
     if (!finalStartLoc || !finalEndLoc) {
       console.error('[PLAN-ROUTE] ERROR: Missing locations - From:', finalStartLoc, 'To:', finalEndLoc);
-      // REMOVED TOAST: No popups per user request
       return;
     }
 
-    // Geocode missing coordinates using robust multi-fallback approach
+    // OFFLINE MODE: Try to use cached route if offline
+    if (!navigator.onLine) {
+      console.log('[PLAN-ROUTE] 📴 OFFLINE MODE - checking for cached routes...');
+      
+      try {
+        // Try to load cached route from localStorage
+        const cachedRouteKey = `trucknav_cached_route_${finalStartLoc}_${finalEndLoc}`;
+        const cachedRouteData = localStorage.getItem(cachedRouteKey);
+        
+        // Also check for active route that might match
+        const activeRoute = localStorage.getItem('trucknav_active_route');
+        
+        if (cachedRouteData) {
+          console.log('[PLAN-ROUTE] ✅ Found cached route for this destination');
+          const cachedRoute = JSON.parse(cachedRouteData);
+          setCurrentRoute(cachedRoute);
+          
+          // Close menu and start navigation on mobile
+          if (isMobile) {
+            setShowComprehensiveMenu(false);
+            if (shouldAutoNavigateOnMobile) {
+              setShouldAutoNavigateOnMobile(false);
+              setIsLocalNavActive(true);
+              setIsShowingPreview(false);
+            }
+          }
+          return;
+        } else if (activeRoute) {
+          console.log('[PLAN-ROUTE] ✅ Using active cached route for offline navigation');
+          const parsedRoute = JSON.parse(activeRoute);
+          setCurrentRoute(parsedRoute);
+          
+          // Close menu and start navigation on mobile
+          if (isMobile) {
+            setShowComprehensiveMenu(false);
+            if (shouldAutoNavigateOnMobile) {
+              setShouldAutoNavigateOnMobile(false);
+              setIsLocalNavActive(true);
+              setIsShowingPreview(false);
+            }
+          }
+          return;
+        } else {
+          console.warn('[PLAN-ROUTE] ⚠️ No cached route available for offline mode');
+          // Reset auto-navigation flag since we can't complete the request
+          setShouldAutoNavigateOnMobile(false);
+          return;
+        }
+      } catch (error) {
+        console.error('[PLAN-ROUTE] Offline route loading failed:', error);
+        setShouldAutoNavigateOnMobile(false);
+        return;
+      }
+    }
+
+    // ONLINE MODE: Normal geocoding and API call
     let finalStartCoords = fromCoordinates;
     let finalEndCoords = toCoordinates;
 
@@ -1877,7 +1954,6 @@ function NavigationPageContent() {
       }
     } catch (error) {
       console.error('[PLAN-ROUTE] Geocoding failed:', error);
-      // REMOVED TOAST: Error will be displayed in UI
       return;
     }
 
@@ -2031,8 +2107,24 @@ function NavigationPageContent() {
     }
   }, [currentRoute, isMapExpanded, isMobile]);
 
-
-
+  // Auto-start navigation on mobile when route is ready and GO button was pressed
+  useEffect(() => {
+    if (shouldAutoNavigateOnMobile && currentRoute && isMobile && !isNavigating) {
+      console.log('[AUTO-NAV] Mobile auto-navigation triggered after route calculation');
+      // Reset the flag
+      setShouldAutoNavigateOnMobile(false);
+      // Start navigation after a brief delay for smooth transition
+      const timer = setTimeout(() => {
+        // Simulate clicking the Start Navigation button
+        setIsLocalNavActive(true);
+        setIsShowingPreview(false);
+        localStorage.setItem('navigation_mode', 'active');
+        localStorage.setItem('navigation_timestamp', Date.now().toString());
+        console.log('[AUTO-NAV] Navigation mode activated');
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoNavigateOnMobile, currentRoute, isMobile, isNavigating]);
 
 
 
@@ -3568,6 +3660,7 @@ function NavigationPageContent() {
         currentRoute={currentRoute}
         isCalculating={calculateRouteMutation.isPending}
         isNavigating={isNavigating}
+        onRequestAutoNavigation={() => setShouldAutoNavigateOnMobile(true)}
         selectedProfile={selectedProfile}
         onProfileSelect={(profile) => {
           setSelectedProfile(profile);
