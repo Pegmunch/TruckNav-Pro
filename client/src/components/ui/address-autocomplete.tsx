@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -66,11 +65,9 @@ export function AddressAutocomplete({
   const [searchTerm, setSearchTerm] = useState(value);
   const [debouncedSearch, setDebouncedSearch] = useState(value);
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const activePointerIdRef = useRef<number | null>(null);
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const { toast } = useToast();
   
   // GPS candidate state - holds geocoded location pending user confirmation
@@ -91,76 +88,8 @@ export function AddressAutocomplete({
     }
   }, [value, searchTerm]);
   
-  // Find the dialog content container to portal dropdown inside it
-  // This prevents Radix Dialog from treating dropdown clicks as "outside" clicks
-  useEffect(() => {
-    if (inputWrapperRef.current) {
-      const dialogContent = inputWrapperRef.current.closest('[data-radix-dialog-content]') as HTMLElement;
-      setPortalContainer(dialogContent || document.body);
-    }
-  }, []);
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
-  
-  // Update dropdown position when open changes
-  // getBoundingClientRect() already returns visual-viewport coordinates on iOS
-  useEffect(() => {
-    if (open && inputWrapperRef.current) {
-      const updatePosition = () => {
-        if (inputWrapperRef.current) {
-          const rect = inputWrapperRef.current.getBoundingClientRect();
-          
-          // Use visual viewport height for accurate space calculation on iOS
-          const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          const spaceBelow = viewportHeight - rect.bottom;
-          const spaceAbove = rect.top;
-          const dropdownHeight = 350; // max-h-[350px]
-          
-          // Prefer below, but flip above if not enough space
-          let top: number;
-          const inputHeight = rect.height || 56; // Fallback to 56px (h-14)
-          
-          if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-            // Position immediately below input with 8px gap to prevent overlap
-            top = rect.bottom + 8;
-          } else {
-            // Position above input
-            top = rect.top - dropdownHeight - 8;
-          }
-          
-          // Ensure dropdown never overlaps input (minimum gap = input height + 8px from input top)
-          const minTop = rect.top + inputHeight + 8;
-          if (top < minTop && spaceBelow >= 100) {
-            top = minTop;
-          }
-          
-          // Clamp to viewport bounds (no offset additions - rect already in viewport space)
-          top = Math.max(4, Math.min(top, viewportHeight - 50));
-          
-          setDropdownPosition({
-            top,
-            left: rect.left,
-            width: rect.width
-          });
-        }
-      };
-      
-      updatePosition();
-      
-      // Update position on scroll/resize/viewport changes
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-      window.visualViewport?.addEventListener('resize', updatePosition);
-      window.visualViewport?.addEventListener('scroll', updatePosition);
-      
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
-        window.visualViewport?.removeEventListener('resize', updatePosition);
-        window.visualViewport?.removeEventListener('scroll', updatePosition);
-      };
-    }
-  }, [open]);
   
   // Close dropdown when clicking/tapping outside using document-level listener
   // This replaces blur-based closing which is unreliable on iOS
@@ -749,19 +678,16 @@ export function AddressAutocomplete({
           <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </div>
 
-        {/* Portal-based Dropdown - Portals to dialog content to prevent Radix Dialog from closing on click */}
-        {open && dropdownPosition && portalContainer && createPortal(
+        {/* Inline Dropdown - No portal, renders directly under input for proper touch handling */}
+        {open && (
           <div 
             ref={dropdownRef}
             data-autocomplete-dropdown="true"
-            className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
+            className="absolute left-0 right-0 top-full mt-1 z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ 
-              top: dropdownPosition.top,
-              left: dropdownPosition.left,
-              width: dropdownPosition.width,
-              touchAction: 'manipulation', // Enables fast tap without 300ms delay
-              WebkitTapHighlightColor: 'transparent', // Remove iOS tap highlight
-              WebkitUserSelect: 'none', // Prevent text selection on iOS
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              WebkitUserSelect: 'none',
               userSelect: 'none'
             }}
           >
@@ -905,8 +831,7 @@ export function AddressAutocomplete({
                 )}
               </CommandList>
             </Command>
-          </div>,
-          portalContainer
+          </div>
         )}
       </div>
     
