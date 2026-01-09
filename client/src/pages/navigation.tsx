@@ -2946,9 +2946,10 @@ function NavigationPageContent() {
                     }}>
                     {/* Start Navigation Button */}
                     <Button
-                      onPointerDown={handleStartNavigation}
+                      onClick={handleStartNavigation}
                       size="sm"
                       className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
+                      style={{ touchAction: 'manipulation' }}
                       data-testid="button-start-navigation-preview"
                     >
                       Start
