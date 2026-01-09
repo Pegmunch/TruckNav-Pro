@@ -108,12 +108,20 @@ export function AddressAutocomplete({
           
           // Prefer below, but flip above if not enough space
           let top: number;
+          const inputHeight = rect.height || 56; // Fallback to 56px (h-14)
+          
           if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-            // Position immediately below input (2px gap for clean appearance)
-            top = rect.bottom + 2;
+            // Position immediately below input with 8px gap to prevent overlap
+            top = rect.bottom + 8;
           } else {
             // Position above input
-            top = rect.top - dropdownHeight - 2;
+            top = rect.top - dropdownHeight - 8;
+          }
+          
+          // Ensure dropdown never overlaps input (minimum gap = input height + 8px from input top)
+          const minTop = rect.top + inputHeight + 8;
+          if (top < minTop && spaceBelow >= 100) {
+            top = minTop;
           }
           
           // Clamp to viewport bounds (no offset additions - rect already in viewport space)
@@ -469,7 +477,7 @@ export function AddressAutocomplete({
             setSearchTerm(address);
             onChange(address);
             onCoordinatesChange?.({ lat: latitude, lng: longitude });
-            setOpen(true);
+            setOpen(false); // Close dropdown after setting location
             console.log('[GPS-LOCATION] Location set from reverse geocode:', address);
             return true;
           }
@@ -479,7 +487,7 @@ export function AddressAutocomplete({
         setSearchTerm(fallbackAddress);
         onChange(fallbackAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
-        setOpen(true);
+        setOpen(false); // Close dropdown after setting location
         console.log('[GPS-LOCATION] Location set as Current Location (reverse geocode empty)');
         return true;
       } catch (error) {
@@ -488,7 +496,7 @@ export function AddressAutocomplete({
         setSearchTerm(fallbackAddress);
         onChange(fallbackAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
-        setOpen(true);
+        setOpen(false); // Close dropdown after setting location
         console.log('[GPS-LOCATION] Location set as Current Location (error fallback)');
         return true;
       }
@@ -510,7 +518,7 @@ export function AddressAutocomplete({
           lat: gps.manualLocation.latitude, 
           lng: gps.manualLocation.longitude 
         });
-        setOpen(true);
+        setOpen(false); // Close dropdown after setting location
         console.log('[GPS-LOCATION] Using manual location');
         return;
       }
