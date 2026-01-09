@@ -44,6 +44,8 @@ interface AddressAutocompleteProps {
   id: string;
   className?: string;
   testId: string;
+  /** Hide the SEARCH TYPE toggles and GPS button - useful for "From" field where simple input is preferred */
+  showSearchOptions?: boolean;
 }
 
 export function AddressAutocomplete({
@@ -54,7 +56,8 @@ export function AddressAutocomplete({
   placeholder,
   id,
   className,
-  testId
+  testId,
+  showSearchOptions = true
 }: AddressAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
@@ -557,94 +560,98 @@ export function AddressAutocomplete({
   }, [poiCategory, placeholder]);
 
   return (
-    <div className="space-y-3">
-      {/* POI Category Selector - Enhanced Design */}
-      <div className="flex flex-col gap-2">
-        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Search Type
-        </Label>
-        <ToggleGroup 
-          type="single" 
-          value={poiCategory} 
-          onValueChange={(value) => {
-            setPoiCategory(value);
-            // Clear search when switching categories
-            if (value !== poiCategory) {
-              setSearchTerm('');
-              setDebouncedSearch('');
-            }
-          }}
-          className="justify-start gap-2 flex-wrap"
-        >
-          <ToggleGroupItem 
-            value="" 
-            aria-label="Search addresses"
-            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-blue-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-blue-500/50 hover:scale-105"
-            data-testid="poi-category-addresses"
+    <div className={showSearchOptions ? "space-y-3" : ""}>
+      {/* POI Category Selector - Only shown when showSearchOptions is true */}
+      {showSearchOptions && (
+        <div className="flex flex-col gap-2">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Search Type
+          </Label>
+          <ToggleGroup 
+            type="single" 
+            value={poiCategory} 
+            onValueChange={(value) => {
+              setPoiCategory(value);
+              // Clear search when switching categories
+              if (value !== poiCategory) {
+                setSearchTerm('');
+                setDebouncedSearch('');
+              }
+            }}
+            className="justify-start gap-2 flex-wrap"
           >
-            <MapPin className="h-4 w-4 mr-2" />
-            Addresses
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="7315" 
-            aria-label="Truck stops"
-            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-emerald-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-emerald-500/50 hover:scale-105"
-            data-testid="poi-category-truck-stops"
-          >
-            <Store className="h-4 w-4 mr-2" />
-            Truck Stops
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="7311" 
-            aria-label="Gas stations"
-            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-orange-600 data-[state=on]:to-orange-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-orange-500/50 hover:scale-105"
-            data-testid="poi-category-gas-stations"
-          >
-            <Fuel className="h-4 w-4 mr-2" />
-            Gas Stations
-          </ToggleGroupItem>
-          <ToggleGroupItem 
-            value="9920" 
-            aria-label="Rest areas"
-            className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-purple-600 data-[state=on]:to-purple-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-purple-500/50 hover:scale-105"
-            data-testid="poi-category-rest-areas"
-          >
-            <UtensilsCrossed className="h-4 w-4 mr-2" />
-            Rest Areas
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
+            <ToggleGroupItem 
+              value="" 
+              aria-label="Search addresses"
+              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-blue-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-blue-500/50 hover:scale-105"
+              data-testid="poi-category-addresses"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Addresses
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="7315" 
+              aria-label="Truck stops"
+              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-emerald-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-emerald-500/50 hover:scale-105"
+              data-testid="poi-category-truck-stops"
+            >
+              <Store className="h-4 w-4 mr-2" />
+              Truck Stops
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="7311" 
+              aria-label="Gas stations"
+              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-orange-600 data-[state=on]:to-orange-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-orange-500/50 hover:scale-105"
+              data-testid="poi-category-gas-stations"
+            >
+              <Fuel className="h-4 w-4 mr-2" />
+              Gas Stations
+            </ToggleGroupItem>
+            <ToggleGroupItem 
+              value="9920" 
+              aria-label="Rest areas"
+              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-purple-600 data-[state=on]:to-purple-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-purple-500/50 hover:scale-105"
+              data-testid="poi-category-rest-areas"
+            >
+              <UtensilsCrossed className="h-4 w-4 mr-2" />
+              Rest Areas
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+      )}
 
-      {/* GPS Quick Access Button - Always visible, works in PWA mode */}
-      <Button
-        onClick={handleUseGPSLocation}
-        disabled={isGettingLocation}
-        variant="default"
-        className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
-        data-testid="button-use-gps-location"
-      >
-        {isGettingLocation ? (
-          <>
-            <Loader2 className="h-6 w-6 mr-2 animate-spin" />
-            <span>Getting Location...</span>
-          </>
-        ) : (
-          <>
-            <Crosshair className="h-6 w-6 mr-2" />
-            <span className="flex-1">Use My Current Location</span>
-            {gps?.status === 'ready' && gps?.position && (
-              <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
-                GPS Ready
-              </Badge>
-            )}
-            {gps?.manualLocation && !gps?.position && (
-              <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                Manual
-              </Badge>
-            )}
-          </>
-        )}
-      </Button>
+      {/* GPS Quick Access Button - Only shown when showSearchOptions is true */}
+      {showSearchOptions && (
+        <Button
+          onClick={handleUseGPSLocation}
+          disabled={isGettingLocation}
+          variant="default"
+          className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
+          data-testid="button-use-gps-location"
+        >
+          {isGettingLocation ? (
+            <>
+              <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+              <span>Getting Location...</span>
+            </>
+          ) : (
+            <>
+              <Crosshair className="h-6 w-6 mr-2" />
+              <span className="flex-1">Use My Current Location</span>
+              {gps?.status === 'ready' && gps?.position && (
+                <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                  GPS Ready
+                </Badge>
+              )}
+              {gps?.manualLocation && !gps?.position && (
+                <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                  Manual
+                </Badge>
+              )}
+            </>
+          )}
+        </Button>
+      )}
 
       <div ref={inputWrapperRef} className="relative" style={{ position: 'relative', overflow: 'visible' }}>
         <Input

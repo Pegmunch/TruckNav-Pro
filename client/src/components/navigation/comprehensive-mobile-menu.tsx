@@ -610,7 +610,7 @@ function ComprehensiveMobileMenu({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* From Location with AddressAutocomplete */}
+                    {/* From Location with AddressAutocomplete - Simple input without search options */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">From</Label>
                       <AddressAutocomplete
@@ -628,6 +628,7 @@ function ComprehensiveMobileMenu({
                         coordinates={fromCoordinates}
                         placeholder="Search for address, postcode, or POI..."
                         testId="input-from-location"
+                        showSearchOptions={false}
                       />
                     </div>
 
