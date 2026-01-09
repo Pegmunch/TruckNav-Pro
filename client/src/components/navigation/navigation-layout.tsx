@@ -63,12 +63,12 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - Positioned at bottom-right */}
+      {/* Right navigation controls stack - Positioned lower during navigation mode */}
       {rightStackVisible && (
         <div 
           className="fixed right-4 z-[99999]"
           style={{ 
-            bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+            bottom: shouldShowUI ? 'calc(180px + var(--safe-area-bottom, 0px))' : 'calc(100px + var(--safe-area-bottom, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}

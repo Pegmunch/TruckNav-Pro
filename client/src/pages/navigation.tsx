@@ -3089,6 +3089,7 @@ function NavigationPageContent() {
               {!showComprehensiveMenu && (
                 <NavigationLayout
                   isNavigating={isNavigating}
+                  isNavUIActive={isNavUIActive}
                   rightStackVisible={showNavControls}
                   mapContent={
                     <>
