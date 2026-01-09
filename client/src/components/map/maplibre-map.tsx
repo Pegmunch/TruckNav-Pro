@@ -189,6 +189,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const flyByCancelledRef = useRef(false);
   const flyByCallbacksRef = useRef<{ onComplete?: () => void; onCancel?: () => void }>({});
   
+  // CRITICAL: Cached route GeoJSON for rebuilding after style changes
+  // This ensures the route persists across map view toggles (roads ⇄ satellite)
+  const cachedRouteGeoJsonRef = useRef<GeoJSON.Feature<GeoJSON.LineString> | null>(null);
+  
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
   const gpsStatus = gps?.status ?? 'acquiring';
@@ -1385,6 +1389,80 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
   }, []);
 
+  // Helper: Ensure route layers exist (create if missing, called by styledata handler)
+  const ensureRouteLayers = useCallback(() => {
+    if (!map.current || !map.current.isStyleLoaded()) return false;
+    
+    // Check if we have cached data to restore
+    if (!cachedRouteGeoJsonRef.current) {
+      console.log('[ROUTE-ENSURE] No cached route data to restore');
+      return false;
+    }
+    
+    // If source already exists, just ensure layers are on top
+    if (map.current.getSource('route')) {
+      try {
+        if (map.current.getLayer('route-outline')) {
+          map.current.moveLayer('route-outline');
+        }
+        if (map.current.getLayer('route-line')) {
+          map.current.moveLayer('route-line');
+        }
+      } catch (e) {
+        // Layers might not exist yet
+      }
+      return true;
+    }
+    
+    console.log('[ROUTE-ENSURE] Rebuilding route from cache after style change');
+    
+    try {
+      // Recreate source from cached GeoJSON
+      map.current.addSource('route', {
+        type: 'geojson',
+        data: cachedRouteGeoJsonRef.current
+      });
+
+      // Add route outline (white background for visibility)
+      map.current.addLayer({
+        id: 'route-outline',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': 10,
+          'line-opacity': 1.0
+        }
+      });
+
+      // Add blue route line on top
+      map.current.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#3b82f6',
+          'line-width': 8,
+          'line-opacity': 1.0
+        }
+      });
+      
+      console.log('[ROUTE-ENSURE] ✅ Route layers rebuilt from cache');
+      return true;
+    } catch (error) {
+      console.error('[ROUTE-ENSURE] Failed to rebuild route:', error);
+      return false;
+    }
+  }, []);
+
   // Helper: Render route layers
   const renderRouteLayers = useCallback(() => {
     if (!map.current || !currentRoute?.routePath) return;
@@ -1421,19 +1499,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         console.warn('Failed to calculate remaining route:', error);
       }
     }
+    
+    // CRITICAL: Cache the GeoJSON for rebuilding after style changes
+    const geoJsonData: GeoJSON.Feature<GeoJSON.LineString> = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: routeCoordinates
+      }
+    };
+    cachedRouteGeoJsonRef.current = geoJsonData;
 
     if (!map.current.getSource('route')) {
       console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 8px');
       map.current.addSource('route', {
         type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: routeCoordinates
-          }
-        }
+        data: geoJsonData
       });
 
       // Add route outline (white background for visibility)
@@ -1547,7 +1629,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Remove route visualization if currentRoute is null
     if (!currentRoute?.routePath) {
-      console.log('[ROUTE-RENDER] No route data - removing route layers');
+      console.log('[ROUTE-RENDER] No route data - removing route layers and clearing cache');
+      cachedRouteGeoJsonRef.current = null; // Clear cache when no route
       if (mapInstance.isStyleLoaded()) {
         removeRouteLayers();
       }
@@ -1562,15 +1645,46 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // CRITICAL: Listen CONTINUOUSLY for styledata events to re-render route after view mode changes
     // This ensures the route layer persists when switching roads ⇄ satellite or during zoom
     const handleStyleChange = () => {
-      if (!currentRoute?.routePath) return;
+      // Use cached data for rebuilding - don't depend on React state which may be stale
+      if (!cachedRouteGeoJsonRef.current) {
+        console.log('[ROUTE-STYLE] No cached route data during style change');
+        return;
+      }
       
       // Small delay to ensure style has fully loaded all layers
       setTimeout(() => {
         if (mapInstance.isStyleLoaded()) {
-          console.log('[ROUTE-RENDER] Re-rendering route after style change');
-          renderRouteLayers();
+          const source = mapInstance.getSource('route') as maplibregl.GeoJSONSource;
+          
+          // If source is missing, rebuild everything from cache
+          if (!source) {
+            console.log('[ROUTE-STYLE] Route source missing after style change - rebuilding from cache');
+            ensureRouteLayers();
+          } else if (cachedRouteGeoJsonRef.current) {
+            // Source exists - always refresh data from cache and move layers to top
+            console.log('[ROUTE-STYLE] Refreshing route data from cache after style change');
+            try {
+              source.setData(cachedRouteGeoJsonRef.current);
+              if (mapInstance.getLayer('route-outline')) {
+                mapInstance.moveLayer('route-outline');
+              }
+              if (mapInstance.getLayer('route-line')) {
+                mapInstance.moveLayer('route-line');
+              }
+            } catch (e) {
+              // Layers might not exist, rebuild them
+              ensureRouteLayers();
+            }
+          }
+          
+          // CRITICAL: Always re-render to apply latest GPS-based route shortening during navigation
+          // This ensures the visible line matches the current route segment
+          if (currentRoute?.routePath) {
+            console.log('[ROUTE-STYLE] Re-rendering route with latest data after style change');
+            renderRouteLayers();
+          }
         }
-      }, 100);
+      }, 150); // Slightly longer delay to ensure style is fully loaded
     };
 
     mapInstance.on('styledata', handleStyleChange);
@@ -1579,7 +1693,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     return () => {
       mapInstance.off('styledata', handleStyleChange);
     };
-  }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers]);
+  }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers, ensureRouteLayers]);
 
   // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
   // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
