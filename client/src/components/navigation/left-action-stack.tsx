@@ -1,5 +1,5 @@
 import { AlertCircle, Menu, Navigation, X, Mic, MicOff } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type PointerEvent, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType } from '@/lib/voice-commands';
 
@@ -59,25 +59,26 @@ export function LeftActionStack({
     }
   };
 
-  // Guard to prevent double-firing from both pointer and click events
-  const handledByPointerRef = useRef(false);
+  // Per-button guard to prevent double-firing from both pointer and click events
+  const handledByPointerRef = useRef<Record<string, boolean>>({});
   
   // Create a handler wrapper that prevents double-firing while maintaining keyboard accessibility
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
-    onPointerDown: (e: React.PointerEvent) => {
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      handledByPointerRef.current = true;
-      console.log(`[LEFT-BTN-${label}] ✅ Pressed via pointerDown`);
+      // Mark this specific button as handled by pointer
+      handledByPointerRef.current[label] = true;
+      console.log(`[LEFT-BTN-${label}] ✅ Pressed via pointerDown (${e.pointerType})`);
       callback?.();
-      // Reset after a short delay to allow keyboard events
-      setTimeout(() => { handledByPointerRef.current = false; }, 300);
+      // Reset this specific button's guard after a short delay
+      setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
     },
-    onClick: (e: React.MouseEvent) => {
+    onClick: (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      // Only fire if not already handled by pointer (allows keyboard Enter/Space)
-      if (!handledByPointerRef.current) {
+      // Only fire if not already handled by pointer for this specific button
+      if (!handledByPointerRef.current[label]) {
         console.log(`[LEFT-BTN-${label}] ✅ Pressed via onClick (keyboard)`);
         callback?.();
       }
