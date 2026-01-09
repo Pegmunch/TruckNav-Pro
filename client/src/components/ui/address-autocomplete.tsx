@@ -164,13 +164,16 @@ export function AddressAutocomplete({
       // Don't close if interacting with dropdown
       if (isInteractingWithDropdownRef.current) return;
       
-      const target = e.target as Node;
+      const target = e.target as HTMLElement;
       
       // Check if click is inside input wrapper
       if (inputWrapperRef.current?.contains(target)) return;
       
-      // Check if click is inside dropdown portal
+      // Check if click is inside dropdown portal (ref-based)
       if (dropdownRef.current?.contains(target)) return;
+      
+      // Fallback: Check if target or any ancestor has our dropdown marker
+      if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
       
       // Click was outside - close dropdown
       setOpen(false);
@@ -660,32 +663,29 @@ export function AddressAutocomplete({
       {/* GPS Quick Access Button - Hidden when parent has its own GPS button */}
       {!hideGPSButton && (
         <Button
-            onClick={handleUseGPSLocation}
-            disabled={isGettingLocation}
+            onClick={() => {
+              // Focus input and open dropdown so user can confirm selection
+              const input = document.getElementById(id) as HTMLInputElement;
+              if (input) {
+                input.focus();
+              }
+              setOpen(true);
+            }}
             variant="default"
             className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
             data-testid="button-use-gps-location"
           >
-            {isGettingLocation ? (
-              <>
-                <Loader2 className="h-6 w-6 mr-2 animate-spin" />
-                <span>Getting Location...</span>
-              </>
-            ) : (
-              <>
-                <Crosshair className="h-6 w-6 mr-2" />
-                <span className="flex-1">Use My Current Location</span>
-                {gps?.status === 'ready' && gps?.position && (
-                  <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
-                    GPS Ready
-                  </Badge>
-                )}
-                {gps?.manualLocation && !gps?.position && (
-                  <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                    Manual
-                  </Badge>
-                )}
-              </>
+            <Crosshair className="h-6 w-6 mr-2" />
+            <span className="flex-1">Use My Current Location</span>
+            {gps?.status === 'ready' && gps?.position && (
+              <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                GPS Ready
+              </Badge>
+            )}
+            {gps?.manualLocation && !gps?.position && (
+              <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                Manual
+              </Badge>
             )}
         </Button>
       )}
@@ -719,6 +719,7 @@ export function AddressAutocomplete({
         {open && dropdownPosition && portalContainer && createPortal(
           <div 
             ref={dropdownRef}
+            data-autocomplete-dropdown="true"
             className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
             style={{ 
               top: dropdownPosition.top,
@@ -729,14 +730,16 @@ export function AddressAutocomplete({
               WebkitUserSelect: 'none', // Prevent text selection on iOS
               userSelect: 'none'
             }}
+            onPointerDownCapture={(e) => {
+              // Set flag FIRST in capture phase - before document listener runs
+              isInteractingWithDropdownRef.current = true;
+            }}
             onMouseDown={(e) => {
-              // Set flag to prevent document listener from closing dropdown
-              // Don't use preventDefault - we need click events to reach CommandItem
+              // Backup for non-pointer browsers
               isInteractingWithDropdownRef.current = true;
             }}
             onTouchStart={(e) => {
-              // For touch, set flag and prevent default only on the container
-              // This stops iOS from firing blur while allowing clicks to bubble to items
+              // Backup for touch devices
               isInteractingWithDropdownRef.current = true;
             }}
             onClick={(e) => {
