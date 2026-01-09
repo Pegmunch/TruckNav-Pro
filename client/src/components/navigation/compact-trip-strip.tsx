@@ -1,4 +1,4 @@
-import { Clock, Route, Wifi, WifiOff, Navigation, MapPin } from 'lucide-react';
+import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ interface CompactTripStripProps {
   onSetLocation?: () => void;
   isPreviewActive?: boolean;
   isNavigating?: boolean;
+  voiceEnabled?: boolean;
+  onVoiceToggle?: () => void;
 }
 
 export function CompactTripStrip({
@@ -32,53 +34,68 @@ export function CompactTripStrip({
   onGoStop,
   onSetLocation,
   isPreviewActive = false,
-  isNavigating = false
+  isNavigating = false,
+  voiceEnabled = true,
+  onVoiceToggle
 }: CompactTripStripProps) {
   const { formatDistance } = useMeasurement();
   
   const isGpsReady = gpsStatus === 'ready' || gpsStatus === 'manual';
   const isGpsAcquiring = gpsStatus === 'acquiring' || gpsStatus === 'initializing';
 
+  const arrivalTime = new Date(Date.now() + eta * 60000);
+  const arrivalTimeStr = arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
   return (
     <div 
       className={cn(
-        'fixed left-0 right-0 h-14 px-3',
+        'fixed left-0 right-0 px-3 py-2',
         'bg-white/30 backdrop-blur-xl',
         'border-2 border-blue-500 shadow-lg',
-        'flex items-center justify-between gap-2',
+        'flex items-center justify-between gap-3',
         'pointer-events-auto',
         'lg:hidden',
         className
       )}
       style={{ 
         top: 'calc(56px + max(env(safe-area-inset-top, 0px), 0px))',
-        zIndex: 4800
+        zIndex: 4800,
+        minHeight: '80px'
       }}
       data-testid="compact-trip-strip"
     >
-      {/* Left Section: ETA & Distance */}
-      <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
-        <div className="flex items-center gap-1 bg-blue-500/20 px-2 py-1 rounded-lg">
-          <Clock className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-xs font-bold text-gray-900">{eta}m</span>
+      {/* Left Section: ETA, Distance, Arrival Time */}
+      <div className="flex flex-col gap-1 min-w-0 flex-shrink-0">
+        {/* ETA */}
+        <div className="flex items-center gap-1.5 bg-blue-500/20 px-2 py-1 rounded-lg">
+          <Clock className="w-4 h-4 text-blue-600" />
+          <span className="text-sm font-bold text-gray-900">{eta} min</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Route className="w-3.5 h-3.5 text-emerald-600" />
-          <span className="text-xs font-semibold text-gray-800">
+        {/* Distance */}
+        <div className="flex items-center gap-1.5 bg-emerald-500/20 px-2 py-1 rounded-lg">
+          <Route className="w-4 h-4 text-emerald-600" />
+          <span className="text-sm font-semibold text-gray-800">
             {formatDistance(distanceRemaining, "miles")}
+          </span>
+        </div>
+        {/* Arrival Time */}
+        <div className="flex items-center gap-1.5 bg-purple-500/20 px-2 py-1 rounded-lg">
+          <Timer className="w-4 h-4 text-purple-600" />
+          <span className="text-sm font-semibold text-gray-800">
+            Arrive {arrivalTimeStr}
           </span>
         </div>
       </div>
 
       {/* Center Section: Action Buttons - Stacked */}
-      <div className="flex flex-col items-center gap-1 flex-shrink-0">
-        {/* Preview Button - Split */}
-        <div className="flex flex-row bg-blue-600 rounded-full overflow-hidden shadow-sm">
+      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+        {/* Preview Button - Split: Blue / Red */}
+        <div className="flex flex-row rounded-full overflow-hidden shadow-md">
           <Button
             onClick={onPreviewStart}
             size="sm"
             disabled={isPreviewActive}
-            className="h-5 px-2 bg-transparent hover:bg-white/10 text-white font-medium text-[10px] active:scale-95 transition-transform disabled:opacity-50 border-r border-white/30 rounded-none"
+            className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
             style={{ touchAction: 'manipulation' }}
             data-testid="button-preview-start"
           >
@@ -88,7 +105,7 @@ export function CompactTripStrip({
             onClick={onPreviewStop}
             size="sm"
             disabled={!isPreviewActive}
-            className="h-5 px-2 bg-transparent hover:bg-white/10 text-white font-medium text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded-none"
+            className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
             style={{ touchAction: 'manipulation' }}
             data-testid="button-preview-stop"
           >
@@ -96,13 +113,13 @@ export function CompactTripStrip({
           </Button>
         </div>
 
-        {/* Go/Stop Button - Split */}
-        <div className="flex flex-row bg-green-600 rounded-full overflow-hidden shadow-sm">
+        {/* Go/Stop Button - Split: Green / Red */}
+        <div className="flex flex-row rounded-full overflow-hidden shadow-md">
           <Button
             onClick={onGoStart}
             size="sm"
             disabled={isNavigating}
-            className="h-5 px-2 bg-transparent hover:bg-white/10 text-white font-medium text-[10px] active:scale-95 transition-transform disabled:opacity-50 border-r border-white/30 rounded-none"
+            className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
             style={{ touchAction: 'manipulation' }}
             data-testid="button-go-start"
           >
@@ -112,7 +129,7 @@ export function CompactTripStrip({
             onClick={onGoStop}
             size="sm"
             disabled={!isNavigating}
-            className="h-5 px-2 bg-transparent hover:bg-white/10 text-white font-medium text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded-none"
+            className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
             style={{ touchAction: 'manipulation' }}
             data-testid="button-go-stop"
           >
@@ -122,15 +139,30 @@ export function CompactTripStrip({
       </div>
 
       {/* Right Section: Status Indicators - Stacked */}
-      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+        {/* Voice Navigation Toggle */}
+        <button
+          onClick={onVoiceToggle}
+          className={cn(
+            'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors',
+            voiceEnabled 
+              ? 'bg-green-500/20 text-green-700 hover:bg-green-500/30' 
+              : 'bg-red-500/20 text-red-700 hover:bg-red-500/30'
+          )}
+          data-testid="voice-toggle-button"
+        >
+          {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+          <span>{voiceEnabled ? 'Voice On' : 'Voice Off'}</span>
+        </button>
+
         {/* Online Status */}
         <div className={cn(
-          'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium',
+          'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
           isOnline 
             ? 'bg-green-500/20 text-green-700' 
             : 'bg-red-500/20 text-red-700'
         )}>
-          {isOnline ? <Wifi className="w-2.5 h-2.5" /> : <WifiOff className="w-2.5 h-2.5" />}
+          {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
           <span>{isOnline ? 'Online' : 'Offline'}</span>
         </div>
 
@@ -138,7 +170,7 @@ export function CompactTripStrip({
         <button
           onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
           className={cn(
-            'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors',
+            'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors',
             isGpsReady 
               ? 'bg-green-500/20 text-green-700 cursor-default'
               : isGpsAcquiring
@@ -149,13 +181,13 @@ export function CompactTripStrip({
           data-testid="gps-status-button"
         >
           {isGpsReady ? (
-            <Navigation className="w-2.5 h-2.5" />
+            <Navigation className="w-3 h-3" />
           ) : (
-            <MapPin className="w-2.5 h-2.5" />
+            <MapPin className="w-3 h-3" />
           )}
           <span>
             {isGpsReady 
-              ? 'GPS' 
+              ? 'GPS Ready' 
               : isGpsAcquiring 
                 ? 'Acquiring' 
                 : 'Set location'}

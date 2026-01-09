@@ -3082,6 +3082,8 @@ function NavigationPageContent() {
                     onSetLocation={() => setShowManualLocationDialog(true)}
                     isPreviewActive={isFlyByInProgress}
                     isNavigating={isNavigating}
+                    voiceEnabled={professionalVoiceEnabled}
+                    onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                   />
                 </>
               )}
@@ -3160,6 +3162,8 @@ function NavigationPageContent() {
                       onSetLocation={() => setShowManualLocationDialog(true)}
                       isPreviewActive={isFlyByInProgress}
                       isNavigating={isNavigating}
+                      voiceEnabled={professionalVoiceEnabled}
+                      onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                     />
                   }
                   leftStack={
@@ -3533,6 +3537,8 @@ function NavigationPageContent() {
                           onSetLocation={() => setShowManualLocationDialog(true)}
                           isPreviewActive={isFlyByInProgress}
                           isNavigating={isNavigating}
+                          voiceEnabled={professionalVoiceEnabled}
+                          onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                         />
                       )}
                       
