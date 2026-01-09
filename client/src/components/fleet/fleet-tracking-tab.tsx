@@ -280,20 +280,21 @@ export function FleetTrackingTab() {
               </CardTitle>
               <CardDescription>{t('fleet.tracking.realTimePositions')}</CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 flex-wrap justify-end">
               <Button
                 variant={isSatelliteView ? "default" : "outline"}
-                size="sm"
+                size="icon"
+                className="h-8 w-8"
                 onClick={toggleSatelliteView}
                 data-testid="button-toggle-satellite"
-                title={t('fleet.tracking.toggleSatellite')}
+                title={isSatelliteView ? t('fleet.tracking.street') : t('fleet.tracking.satellite')}
               >
-                <Satellite className="w-4 h-4 mr-2" />
-                {isSatelliteView ? t('fleet.tracking.street') : t('fleet.tracking.satellite')}
+                {isSatelliteView ? <Map className="w-4 h-4" /> : <Satellite className="w-4 h-4" />}
               </Button>
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
+                className="h-8 w-8"
                 onClick={() => handleZoom('in')}
                 data-testid="button-zoom-in"
                 title={t('fleet.common.zoomIn')}
@@ -302,7 +303,8 @@ export function FleetTrackingTab() {
               </Button>
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
+                className="h-8 w-8"
                 onClick={() => handleZoom('out')}
                 data-testid="button-zoom-out"
                 title={t('fleet.common.zoomOut')}
@@ -311,13 +313,14 @@ export function FleetTrackingTab() {
               </Button>
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
+                className="h-8 w-8"
                 onClick={handleRefresh}
                 disabled={isFetching}
                 data-testid="button-refresh-positions"
+                title={t('fleet.common.refresh')}
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                {t('fleet.common.refresh')}
+                <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </CardHeader>
