@@ -67,7 +67,6 @@ export function AddressAutocomplete({
   const [poiCategory, setPoiCategory] = useState<string>(''); // '' = addresses, '7315' = truck stops, '7311' = gas stations, '9920' = rest areas
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const activePointerIdRef = useRef<number | null>(null);
   const { toast } = useToast();
   
   // GPS candidate state - holds geocoded location pending user confirmation
@@ -96,21 +95,11 @@ export function AddressAutocomplete({
   useEffect(() => {
     if (!open) return;
     
-    const handlePointerUp = (e: PointerEvent) => {
-      // CRITICAL: If this pointer is being used for a selection, don't close
-      if (activePointerIdRef.current === e.pointerId) {
-        // Don't clear here - let the selection handler clear it
-        return;
-      }
-      
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
       
-      // Check if click is inside input wrapper
+      // Check if click is inside input wrapper (which now includes inline dropdown)
       if (inputWrapperRef.current?.contains(target)) return;
-      
-      // Check if click is inside dropdown portal using composedPath for shadow DOM support
-      const path = e.composedPath();
-      if (dropdownRef.current && path.includes(dropdownRef.current)) return;
       
       // Fallback: Check if target or any ancestor has our dropdown marker
       if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
@@ -119,11 +108,13 @@ export function AddressAutocomplete({
       setOpen(false);
     };
     
-    // Use bubble phase so event handlers on elements run first
-    document.addEventListener('pointerup', handlePointerUp, false);
+    // Use mousedown/touchstart to close before onClick fires elsewhere
+    document.addEventListener('mousedown', handleClickOutside, false);
+    document.addEventListener('touchstart', handleClickOutside, false);
     
     return () => {
-      document.removeEventListener('pointerup', handlePointerUp, false);
+      document.removeEventListener('mousedown', handleClickOutside, false);
+      document.removeEventListener('touchstart', handleClickOutside, false);
     };
   }, [open]);
 
@@ -706,8 +697,8 @@ export function AddressAutocomplete({
                       <div
                         role="option"
                         tabIndex={0}
-                        onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
-                        onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectGPSCandidate(); }}
+                        onClick={() => handleSelectGPSCandidate()}
+                        style={{ touchAction: 'manipulation' }}
                         className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-200 dark:active:bg-blue-800 border-2 border-blue-500 rounded-lg"
                       >
                         <Navigation2 className="mr-3 h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -742,8 +733,8 @@ export function AddressAutocomplete({
                         key={`fav-${loc.id}`}
                         role="option"
                         tabIndex={0}
-                        onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
-                        onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectSavedLocation(loc); }}
+                        onClick={() => handleSelectSavedLocation(loc)}
+                        style={{ touchAction: 'manipulation' }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
@@ -758,8 +749,8 @@ export function AddressAutocomplete({
                         key={`recent-${loc.id}`}
                         role="option"
                         tabIndex={0}
-                        onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
-                        onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectSavedLocation(loc); }}
+                        onClick={() => handleSelectSavedLocation(loc)}
+                        style={{ touchAction: 'manipulation' }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
@@ -778,8 +769,8 @@ export function AddressAutocomplete({
                     <div
                       role="option"
                       tabIndex={0}
-                      onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
-                      onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectUKPostcode(ukPostcodeResult); }}
+                      onClick={() => handleSelectUKPostcode(ukPostcodeResult)}
+                      style={{ touchAction: 'manipulation' }}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
@@ -801,8 +792,8 @@ export function AddressAutocomplete({
                           key={result.id || `tomtom-${index}`}
                           role="option"
                           tabIndex={0}
-                          onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
-                          onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectTomTom(result); }}
+                          onClick={() => handleSelectTomTom(result)}
+                          style={{ touchAction: 'manipulation' }}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80 border-b border-border/50 last:border-0"
                         >
                           {isPoi ? (
