@@ -167,14 +167,35 @@ export function SimplifiedRouteDrawer({
 
             {/* Manual Dropdown Menu */}
             {isLocationDropdownOpen && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 p-2" data-testid="location-dropdown-menu">
+              <div 
+                className="absolute top-full right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg p-2" 
+                style={{ zIndex: 9999 }}
+                data-testid="location-dropdown-menu"
+                onClick={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+              >
                 <div className="space-y-1">
                   {/* Current GPS Location - Always at top */}
                   {isGPSReady && gps?.position && (
                     <Button
                       variant="ghost"
-                      className="w-full justify-start h-auto py-2"
-                      onClick={() => {
+                      className="w-full justify-start h-auto py-2 active:bg-gray-100"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[DROPDOWN] Current Location selected');
+                        const coords = { lat: gps.position!.latitude, lng: gps.position!.longitude };
+                        const locationName = 'Current Location';
+                        onFromCoordinatesChange?.(coords);
+                        onFromLocationChange(locationName);
+                        saveRecentLocation(locationName, coords.lat, coords.lng);
+                        onUseCurrentLocation?.();
+                        setIsLocationDropdownOpen(false);
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[DROPDOWN] Current Location touched');
                         const coords = { lat: gps.position!.latitude, lng: gps.position!.longitude };
                         const locationName = 'Current Location';
                         onFromCoordinatesChange?.(coords);
@@ -214,8 +235,22 @@ export function SimplifiedRouteDrawer({
                     <Button
                       key={idx}
                       variant="ghost"
-                      className="w-full justify-start h-auto py-2"
-                      onClick={() => {
+                      className="w-full justify-start h-auto py-2 active:bg-gray-100"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[DROPDOWN] Recent location selected:', location.name);
+                        const coords = { lat: location.lat, lng: location.lng };
+                        onFromCoordinatesChange?.(coords);
+                        onFromLocationChange(location.name);
+                        saveRecentLocation(location.name, location.lat, location.lng);
+                        onUseCurrentLocation?.();
+                        setIsLocationDropdownOpen(false);
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[DROPDOWN] Recent location touched:', location.name);
                         const coords = { lat: location.lat, lng: location.lng };
                         onFromCoordinatesChange?.(coords);
                         onFromLocationChange(location.name);
@@ -240,12 +275,19 @@ export function SimplifiedRouteDrawer({
               </div>
             )}
 
-            {/* Close dropdown when clicking outside */}
+            {/* Close dropdown when clicking outside - z-45 so it's below the dropdown (z-50) */}
             {isLocationDropdownOpen && (
               <div 
-                className="fixed inset-0 z-40"
-                onClick={() => setIsLocationDropdownOpen(false)}
-                onTouchStart={() => setIsLocationDropdownOpen(false)}
+                className="fixed inset-0"
+                style={{ zIndex: 45 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsLocationDropdownOpen(false);
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  setIsLocationDropdownOpen(false);
+                }}
               />
             )}
           </div>

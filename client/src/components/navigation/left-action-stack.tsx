@@ -70,15 +70,24 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button pressed');
             onNavigate?.();
           }}
-          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LEFT-BTN-1-NAV] ✅ Navigation arrow button touched');
+            onNavigate?.();
+          }}
+          className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-nav-left"
           data-tour-id="nav-button"
         >
-          <Navigation className="h-4 w-4" />
+          <Navigation className="h-5 w-5" />
         </Button>
       )}
 
@@ -87,23 +96,33 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={toggleVoiceListening}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleVoiceListening();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleVoiceListening();
+          }}
           disabled={!isVoiceSupported}
-          className={`h-8 w-8 rounded-xl shadow-lg transition-all select-none ${
+          className={`h-10 w-10 rounded-xl shadow-lg transition-all select-none touch-manipulation ${
             isVoiceSupported
               ? isVoiceListening 
                 ? 'bg-green-500 hover:bg-green-600 animate-pulse' 
                 : 'bg-purple-500 hover:bg-purple-600'
               : 'bg-gray-300 cursor-not-allowed opacity-50'
           } text-white active:scale-95`}
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-voice-command"
           data-tour-id="voice-button"
           title={!isVoiceSupported ? 'Voice not supported' : isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
         >
           {isVoiceListening ? (
-            <Mic className="h-4 w-4" />
+            <Mic className="h-5 w-5" />
           ) : (
-            <MicOff className="h-4 w-4" />
+            <MicOff className="h-5 w-5" />
           )}
         </Button>
       )}
@@ -113,15 +132,24 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button pressed - Opening dialog');
             onReportIncident?.();
           }}
-          className="h-8 w-8 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LEFT-BTN-2-INCIDENT] ✅ Report Incident button touched');
+            onReportIncident?.();
+          }}
+          className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-report-incident"
           data-tour-id="incident-button"
         >
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-5 w-5" />
         </Button>
       )}
 
@@ -130,14 +158,23 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button pressed - Stopping navigation');
             onCancel?.();
           }}
-          className="h-8 w-8 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LEFT-BTN-3-CANCEL] ✅ Cancel Navigation button touched');
+            onCancel?.();
+          }}
+          className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-cancel-nav"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </Button>
       )}
 
@@ -146,15 +183,24 @@ export function LeftActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('[LEFT-BTN-4-MENU] ✅ Menu button pressed - Opening comprehensive menu');
             onOpenMenu?.();
           }}
-          className="h-8 w-8 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LEFT-BTN-4-MENU] ✅ Menu button touched');
+            onOpenMenu?.();
+          }}
+          className="h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-menu"
           data-tour-id="menu-button"
         >
-          <Menu className="h-4 w-4" />
+          <Menu className="h-5 w-5" />
         </Button>
       )}
     </div>
