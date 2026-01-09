@@ -485,7 +485,7 @@ export function AddressAutocomplete({
           const timeoutHandle = setTimeout(() => {
             console.warn('[GPS-LOCATION] GPS request timed out');
             resolve(false);
-          }, 20000); // Hard timeout safety net
+          }, 10000); // Reduced to 10 seconds for better UX
           
           navigator.geolocation.getCurrentPosition(
             async (position) => {
@@ -501,18 +501,28 @@ export function AddressAutocomplete({
               resolve(false);
             },
             {
-              enableHighAccuracy: true,
-              timeout: 15000,
-              maximumAge: 60000 // Allow 1-minute old positions
+              enableHighAccuracy: false, // Faster acquisition with network-based location
+              timeout: 8000,
+              maximumAge: 300000 // Allow 5-minute old positions for faster response
             }
           );
         });
         
         if (!success) {
           console.warn('[GPS-LOCATION] Could not acquire location - check device permissions');
+          toast({
+            title: "Location unavailable",
+            description: "Please enable location services in your device settings, or type an address manually.",
+            variant: "destructive",
+          });
         }
       } else {
         console.warn('[GPS-LOCATION] Geolocation not supported in this browser');
+        toast({
+          title: "Location not supported",
+          description: "Your browser doesn't support location services. Please type an address manually.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.warn('[GPS-LOCATION] Failed to get GPS position:', error);
@@ -653,21 +663,30 @@ export function AddressAutocomplete({
             style={{ 
               top: dropdownPosition.top,
               left: dropdownPosition.left,
-              width: dropdownPosition.width
+              width: dropdownPosition.width,
+              touchAction: 'manipulation', // Enables fast tap without 300ms delay
+              WebkitTapHighlightColor: 'transparent', // Remove iOS tap highlight
+              WebkitUserSelect: 'none', // Prevent text selection on iOS
+              userSelect: 'none'
             }}
             onPointerDown={(e) => {
-              // Prevent blur from firing when clicking dropdown
+              // CRITICAL: Prevent default to stop blur from firing on input
+              // This works for both mouse and touch via PointerEvents API
               e.preventDefault();
               isInteractingWithDropdownRef.current = true;
             }}
             onPointerUp={() => {
-              // Keep interaction flag set longer to prevent race conditions
-              // Use requestAnimationFrame + timeout for reliable timing
-              requestAnimationFrame(() => {
-                setTimeout(() => {
-                  isInteractingWithDropdownRef.current = false;
-                }, 300);
-              });
+              // Keep interaction flag set long enough for onSelect to fire
+              // Use longer timeout for touch which has more latency
+              setTimeout(() => {
+                isInteractingWithDropdownRef.current = false;
+              }, 400);
+            }}
+            onPointerCancel={() => {
+              // Handle cancelled touch gestures (e.g., scroll instead of tap)
+              setTimeout(() => {
+                isInteractingWithDropdownRef.current = false;
+              }, 100);
             }}
           >
             <Command className="bg-transparent">
@@ -690,7 +709,7 @@ export function AddressAutocomplete({
                       <CommandItem
                         key={`fav-${loc.id}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
-                        className="flex items-center p-3 cursor-pointer hover:bg-accent"
+                        className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
                         <div className="flex flex-col">
@@ -703,7 +722,7 @@ export function AddressAutocomplete({
                       <CommandItem
                         key={`recent-${loc.id}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
-                        className="flex items-center p-3 cursor-pointer hover:bg-accent"
+                        className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
                         <div className="flex flex-col">
@@ -720,7 +739,7 @@ export function AddressAutocomplete({
                   <CommandGroup heading="Postcode Result">
                     <CommandItem
                       onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
-                      className="flex items-center p-3 cursor-pointer hover:bg-accent"
+                      className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
                       <div className="flex flex-col">
@@ -740,7 +759,7 @@ export function AddressAutocomplete({
                         <CommandItem
                           key={result.id || `tomtom-${index}`}
                           onSelect={() => handleSelectTomTom(result)}
-                          className="flex items-center p-3 cursor-pointer hover:bg-accent border-b border-border/50 last:border-0"
+                          className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
                         >
                           {isPoi ? (
                             <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
@@ -753,7 +772,7 @@ export function AddressAutocomplete({
                             </span>
                             <span className="text-xs text-muted-foreground truncate">
                               {result.address.municipality && `${result.address.municipality}, `}
-                              {result.address.countryCodeISO3 || result.address.country}
+                              {result.address.countryCode || result.address.country}
                             </span>
                             {result.dist && (
                               <Badge variant="secondary" className="w-fit mt-1 text-[10px] h-4 px-1 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
