@@ -797,6 +797,7 @@ export function AddressAutocomplete({
                       <div
                         role="option"
                         tabIndex={0}
+                        onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
                         onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
                         className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-100 dark:active:bg-blue-900 border-2 border-blue-500 rounded-lg"
@@ -833,6 +834,7 @@ export function AddressAutocomplete({
                         key={`fav-${loc.id}`}
                         role="option"
                         tabIndex={0}
+                        onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
@@ -849,6 +851,7 @@ export function AddressAutocomplete({
                         key={`recent-${loc.id}`}
                         role="option"
                         tabIndex={0}
+                        onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
@@ -869,6 +872,7 @@ export function AddressAutocomplete({
                     <div
                       role="option"
                       tabIndex={0}
+                      onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
                       onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
@@ -892,6 +896,7 @@ export function AddressAutocomplete({
                           key={result.id || `tomtom-${index}`}
                           role="option"
                           tabIndex={0}
+                          onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
                           onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
