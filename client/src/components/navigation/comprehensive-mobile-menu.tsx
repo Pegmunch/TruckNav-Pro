@@ -653,7 +653,6 @@ function ComprehensiveMobileMenu({
                         placeholder="Search for address, postcode, or POI..."
                         testId="input-from-location"
                         showSearchTypeToggles={false}
-                        hideGPSButton={true}
                       />
                     </div>
 
