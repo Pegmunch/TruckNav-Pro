@@ -2915,6 +2915,28 @@ function NavigationPageContent() {
                 </MapShell>
               </div>
               
+              {/* ETA GLASS BAR - ALWAYS VISIBLE when route exists (plan, preview, navigate modes) */}
+              {currentRoute && (
+                <CompactTripStrip
+                  eta={currentRoute.duration || 0}
+                  distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
+                  isOnline={navigator.onLine}
+                  gpsStatus={gpsData?.status || 'unavailable'}
+                  onPreviewStart={handlePreviewRoute}
+                  onPreviewStop={() => {
+                    console.log('[FLYBY] Stop requested');
+                    setIsFlyByInProgress(false);
+                  }}
+                  onGoStart={handleStartNavigation}
+                  onGoStop={handleStopNavigation}
+                  onSetLocation={() => setShowManualLocationDialog(true)}
+                  isPreviewActive={isFlyByInProgress}
+                  isNavigating={isNavigating}
+                  voiceEnabled={professionalVoiceEnabled}
+                  onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                />
+              )}
+
               {/* GPS Permission Button removed - moved to route planning panel */}
               {/* GPS Loading Indicator - HIDDEN IN PWA STANDALONE MODE */}
               {gpsLoadingState?.isLoading && !isStandalone && (
@@ -3066,25 +3088,7 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* ETA Glass Bar with integrated buttons - replaces old separate Preview/Start buttons */}
-                  <CompactTripStrip
-                    eta={currentRoute.duration || 0}
-                    distanceRemaining={currentRoute.distance || 0}
-                    isOnline={navigator.onLine}
-                    gpsStatus={gpsData?.status || 'unavailable'}
-                    onPreviewStart={handlePreviewRoute}
-                    onPreviewStop={() => {
-                      console.log('[FLYBY] Stop requested');
-                      setIsFlyByInProgress(false);
-                    }}
-                    onGoStart={handleStartNavigation}
-                    onGoStop={handleStopNavigation}
-                    onSetLocation={() => setShowManualLocationDialog(true)}
-                    isPreviewActive={isFlyByInProgress}
-                    isNavigating={isNavigating}
-                    voiceEnabled={professionalVoiceEnabled}
-                    onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                  />
+                  {/* ETA Glass Bar moved to top level - always visible when route exists */}
                 </>
               )}
 
@@ -3146,26 +3150,7 @@ function NavigationPageContent() {
                       )}
                     </>
                   }
-                  topStrip={
-                    <CompactTripStrip
-                      eta={currentRoute?.duration || 0}
-                      distanceRemaining={currentRoute?.distance || 0}
-                      isOnline={navigator.onLine}
-                      gpsStatus={gpsData?.status || 'unavailable'}
-                      onPreviewStart={handlePreviewRoute}
-                      onPreviewStop={() => {
-                        console.log('[FLYBY] Stop requested');
-                        setIsFlyByInProgress(false);
-                      }}
-                      onGoStart={handleStartNavigation}
-                      onGoStop={handleStopNavigation}
-                      onSetLocation={() => setShowManualLocationDialog(true)}
-                      isPreviewActive={isFlyByInProgress}
-                      isNavigating={isNavigating}
-                      voiceEnabled={professionalVoiceEnabled}
-                      onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                    />
-                  }
+                  topStrip={null}
                   leftStack={
                     <LeftActionStack
                       onNavigate={() => mapRef.current?.zoomToUserLocation()}
@@ -3520,27 +3505,7 @@ function NavigationPageContent() {
                         onReplayTourClick={() => resetTour()}
                       />
                       
-                      {/* ETA HEADER - Shows whenever there's a route (plan, preview, or navigate modes) */}
-                      {currentRoute && (
-                        <CompactTripStrip
-                          eta={currentRoute.duration || 0}
-                          distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
-                          isOnline={navigator.onLine}
-                          gpsStatus={gpsData?.status || 'unavailable'}
-                          onPreviewStart={handlePreviewRoute}
-                          onPreviewStop={() => {
-                            console.log('[FLYBY] Stop requested');
-                            setIsFlyByInProgress(false);
-                          }}
-                          onGoStart={handleStartNavigation}
-                          onGoStop={handleStopNavigation}
-                          onSetLocation={() => setShowManualLocationDialog(true)}
-                          isPreviewActive={isFlyByInProgress}
-                          isNavigating={isNavigating}
-                          voiceEnabled={professionalVoiceEnabled}
-                          onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                        />
-                      )}
+                      {/* ETA HEADER moved to mobile layout top level - always visible when route exists */}
                       
                       {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                       {isNavUIActive && (
