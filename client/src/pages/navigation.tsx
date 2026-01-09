@@ -2938,43 +2938,7 @@ function NavigationPageContent() {
                 </div>
               )}
               
-              {/* GPS Fallback - Discreet Transparent Chip */}
-              {isShowingPreview && 
-               gpsData && 
-               (gpsData.status === 'unavailable' || gpsData.status === 'error' || gpsData.errorType === 'PERMISSION_DENIED') && 
-               !gpsData.manualLocation && (
-                <div 
-                  className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto cursor-pointer"
-                  onClick={() => setShowManualLocationDialog(true)}
-                  data-testid="gps-fallback-chip"
-                >
-                  <div className="flex items-center gap-2 border border-amber-500/60 bg-white/70 hover:bg-white/80 text-amber-700 px-2.5 py-1.5 rounded-full backdrop-blur-md transition-all hover:border-amber-600">
-                    <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="text-xs font-medium whitespace-nowrap">Set location</span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Manual Location Active - Compact Chip */}
-              {isShowingPreview && 
-               gpsData?.manualLocation && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[160] pointer-events-auto" data-testid="manual-location-indicator">
-                  <div className="flex items-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-full shadow-lg">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-sm font-medium truncate max-w-[180px]">
-                      {gpsData.manualLocation.address}
-                    </span>
-                    <button
-                      onClick={() => gpsData.clearManualLocation()}
-                      className="h-5 w-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
-                      data-testid="button-clear-manual-location"
-                      aria-label="Clear manual location"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* GPS indicators now integrated into CompactTripStrip header */}
 
               {/* PLAN MODE - Route calculated indicator removed - user uses GO button in drawer */}
               
@@ -3066,53 +3030,60 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* ROUTE READY - Preview (Flyby) and Start Navigation Buttons */}
-                  {/* Positioned below the ETA header strip (64px start + 72px height + 12px gap = 148px) */}
-                  <div className="fixed flex flex-row gap-3 z-[200] pointer-events-auto"
-                    style={{
-                      top: 'calc(148px + var(--safe-area-top))',
-                      left: '16px'
-                    }}>
+                  {/* Full-width ETA Header with integrated controls */}
+                  <CompactTripStrip
+                    eta={currentRoute?.duration || 0}
+                    distanceRemaining={currentRoute?.distance || 0}
+                    nextManeuver={nextTurn?.roadName || 'Continue'}
+                    nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                    isOnline={navigator.onLine}
+                    gpsStatus={
+                      gpsData?.status === 'unavailable' || gpsData?.status === 'error' || gpsData?.errorType === 'PERMISSION_DENIED'
+                        ? 'unavailable'
+                        : gpsLoadingState?.isLoading
+                        ? 'acquiring'
+                        : 'available'
+                    }
+                    onSetLocation={() => setShowManualLocationDialog(true)}
+                  >
                     {/* Preview Button - Triggers Fly-by Animation */}
-                    <div className="flex flex-row gap-1 bg-blue-600 rounded-full shadow-lg overflow-hidden">
+                    <div className="flex flex-row gap-1 bg-blue-600 rounded-full shadow-md overflow-hidden">
                       <Button
                         onClick={handlePreviewRoute}
                         size="sm"
                         disabled={isFlyByInProgress}
-                        className="h-8 px-4 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 border-r border-white/20 rounded-none"
+                        className="h-7 px-3 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 border-r border-white/20 rounded-none"
                         style={{ touchAction: 'manipulation' }}
                         data-testid="button-preview-flyby"
                       >
-                        {isFlyByInProgress ? 'Flying...' : 'Start Preview'}
+                        {isFlyByInProgress ? 'Flying...' : 'Preview'}
                       </Button>
                       <Button
                         onClick={() => {
                           if (isFlyByInProgress) {
-                            // Logic to stop flyby would go here if supported by the engine
-                            // For now we'll just force the state change if the engine allows interruption
                             console.log('[FLYBY] Stop requested');
                           }
                         }}
                         size="sm"
                         disabled={!isFlyByInProgress}
-                        className="h-8 px-4 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-none"
+                        className="h-7 px-3 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-none"
                         style={{ touchAction: 'manipulation' }}
                         data-testid="button-stop-preview"
                       >
-                        Stop Preview
+                        Stop
                       </Button>
                     </div>
                     {/* Start Navigation Button */}
                     <Button
                       onClick={handleStartNavigation}
                       size="sm"
-                      className="h-8 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
+                      className="h-7 px-3 rounded-full shadow-md bg-green-600 hover:bg-green-700 text-white font-medium text-xs active:scale-95 transition-transform"
                       style={{ touchAction: 'manipulation' }}
                       data-testid="button-start-navigation-preview"
                     >
                       Start
                     </Button>
-                  </div>
+                  </CompactTripStrip>
                 </>
               )}
 
@@ -3180,6 +3151,15 @@ function NavigationPageContent() {
                       distanceRemaining={currentRoute?.distance || 0}
                       nextManeuver={nextTurn?.roadName || 'Continue'}
                       nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                      isOnline={navigator.onLine}
+                      gpsStatus={
+                        gpsData?.status === 'unavailable' || gpsData?.status === 'error' || gpsData?.errorType === 'PERMISSION_DENIED'
+                          ? 'unavailable'
+                          : gpsLoadingState?.isLoading
+                          ? 'acquiring'
+                          : 'available'
+                      }
+                      onSetLocation={() => setShowManualLocationDialog(true)}
                     />
                   }
                   leftStack={
@@ -3543,6 +3523,15 @@ function NavigationPageContent() {
                           distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
                           nextManeuver={nextTurn?.roadName || 'Continue'}
                           nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                          isOnline={navigator.onLine}
+                          gpsStatus={
+                            gpsData?.status === 'unavailable' || gpsData?.status === 'error' || gpsData?.errorType === 'PERMISSION_DENIED'
+                              ? 'unavailable'
+                              : gpsLoadingState?.isLoading
+                              ? 'acquiring'
+                              : 'available'
+                          }
+                          onSetLocation={() => setShowManualLocationDialog(true)}
                         />
                       )}
                       

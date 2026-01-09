@@ -1,10 +1,8 @@
-import { Clock, Route, Navigation2, GripHorizontal } from 'lucide-react';
+import { Clock, Route, Navigation2, Wifi, MapPin, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, PanInfo } from 'framer-motion';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
+import { ReactNode } from 'react';
 
-const STORAGE_KEY = 'trucknav-eta-position-v2';
 const HEADER_HEIGHT = 56;
 
 interface CompactTripStripProps {
@@ -13,62 +11,11 @@ interface CompactTripStripProps {
   nextManeuver: string;
   nextDistance: number;
   className?: string;
-}
-
-interface Position {
-  x: number;
-  y: number;
-}
-
-function getDefaultPosition(): Position {
-  if (typeof window === 'undefined') {
-    return { x: 20, y: HEADER_HEIGHT + 20 };
-  }
-  
-  const stripWidth = Math.min(380, window.innerWidth * 0.92);
-  
-  // Start centered and below the navigation header (56px header + safe area + padding)
-  const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top') || '0', 10) || 0;
-  return { 
-    x: Math.max(10, (window.innerWidth - stripWidth) / 2), 
-    y: safeTop + 56 + 8 // Position below the 56px TruckNav Pro header with 8px gap
-  };
-}
-
-function clampPosition(pos: Position, expanded: boolean): Position {
-  if (typeof window === 'undefined') return pos;
-  
-  const stripWidth = Math.min(380, window.innerWidth * 0.92);
-  const stripHeight = expanded ? 200 : 80;
-  const padding = 10;
-  const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top') || '0', 10) || 0;
-  const safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-bottom') || '0', 10) || 0;
-  
-  return {
-    x: Math.max(padding, Math.min(pos.x, window.innerWidth - stripWidth - padding)),
-    y: Math.max(safeTop + padding, Math.min(pos.y, window.innerHeight - stripHeight - safeBottom - padding))
-  };
-}
-
-function loadPosition(): Position | null {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const pos = JSON.parse(stored) as Position;
-      return clampPosition(pos, false);
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null;
-}
-
-function savePosition(pos: Position): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
-  } catch {
-    // Ignore storage errors
-  }
+  children?: ReactNode;
+  showOnlineIndicator?: boolean;
+  isOnline?: boolean;
+  gpsStatus?: 'available' | 'unavailable' | 'error' | 'acquiring';
+  onSetLocation?: () => void;
 }
 
 export function CompactTripStrip({
@@ -76,174 +23,88 @@ export function CompactTripStrip({
   distanceRemaining,
   nextManeuver,
   nextDistance,
-  className
+  className,
+  children,
+  showOnlineIndicator = true,
+  isOnline = true,
+  gpsStatus = 'available',
+  onSetLocation
 }: CompactTripStripProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const { formatDistance } = useMeasurement();
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  const [position, setPosition] = useState<Position>(() => {
-    const saved = loadPosition();
-    const initial = saved || getDefaultPosition();
-    return clampPosition(initial, false);
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setPosition(prev => clampPosition(prev, isExpanded));
-    };
-    
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, [isExpanded]);
-
-  const handleDragStart = useCallback(() => {
-    setIsDragging(true);
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50);
-    }
-  }, []);
-
-  const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    setIsDragging(false);
-    const newPos = clampPosition({
-      x: position.x + info.offset.x,
-      y: position.y + info.offset.y
-    }, isExpanded);
-    setPosition(newPos);
-    savePosition(newPos);
-  }, [position, isExpanded]);
-
-  const handleExpandToggle = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsExpanded(prev => !prev);
-    if ('vibrate' in navigator) {
-      navigator.vibrate([30, 30, 30]);
-    }
-  }, []);
 
   return (
-    <motion.div 
-      ref={containerRef}
-      drag
-      dragMomentum={false}
-      dragElastic={0}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      initial={false}
-      animate={{ x: position.x, y: position.y }}
-      transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.5 }}
+    <div 
       className={cn(
-        'bg-white/20 backdrop-blur-xl border-2 border-blue-600/60 shadow-2xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] max-w-[380px] transition-shadow duration-300',
-        isExpanded ? 'h-auto' : 'h-[72px]',
-        isDragging ? 'ring-2 ring-blue-500 shadow-blue-500/30 cursor-grabbing scale-[1.02]' : 'cursor-grab',
+        'fixed left-0 right-0 bg-white/20 backdrop-blur-xl border-b-2 border-blue-600/60 shadow-lg',
         className
       )}
       style={{ 
-        pointerEvents: 'auto',
-        left: 0,
-        top: 0,
-        zIndex: 4000
+        top: `calc(${HEADER_HEIGHT}px + var(--safe-area-top, 0px))`,
+        height: `${HEADER_HEIGHT}px`,
+        zIndex: 3900,
+        pointerEvents: 'auto'
       }}
       data-testid="compact-trip-strip"
     >
-      {/* Drag Handle */}
-      <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
-      >
-        <div className="w-8 h-1 bg-blue-600/40 rounded-full" />
-      </div>
-
-      {/* Expand/Collapse Button */}
-      <button
-        onPointerDown={(e) => {
-          e.stopPropagation();
-          setIsExpanded(prev => !prev);
-          if ('vibrate' in navigator) {
-            navigator.vibrate([30, 30, 30]);
-          }
-        }}
-        className="absolute top-2 right-2 p-2.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 active:bg-blue-600/30 active:scale-95 transition-all z-10 select-none touch-manipulation"
-        style={{ touchAction: 'manipulation' }}
-        aria-label={isExpanded ? 'Collapse' : 'Expand'}
-      >
-        <GripHorizontal className="w-5 h-5 text-blue-600/60" />
-      </button>
-
-      <div className="px-5 py-4 flex items-center justify-between gap-4 pt-6">
-        {/* Left: ETA & Distance */}
-        <div className="flex items-center gap-5 flex-1 min-w-0">
-          <div className="flex items-center gap-2 shrink-0 bg-blue-600/20 px-3 py-1.5 rounded-lg">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <div className="flex flex-col">
-              <span className="text-base font-bold text-gray-900 whitespace-nowrap leading-none">
-                {eta}m
-              </span>
-              <span className="text-[10px] font-medium text-blue-700 whitespace-nowrap leading-tight mt-0.5">
-                {formatDistance(distanceRemaining, "miles")}
-              </span>
-            </div>
+      <div className="h-full px-3 flex items-center justify-between gap-2">
+        {/* Left Section: ETA & Distance */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 bg-blue-600/20 px-2 py-1 rounded-lg">
+            <Clock className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
+              {eta}m
+            </span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Route className="w-5 h-5 text-emerald-600" />
-            <span className="text-base font-semibold text-gray-800 whitespace-nowrap">
+          <div className="flex items-center gap-1.5">
+            <Route className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm font-semibold text-gray-800 whitespace-nowrap">
               {formatDistance(distanceRemaining, "miles")}
             </span>
           </div>
         </div>
 
-        {/* Right: Maneuver (only if not expanded) */}
-        {!isExpanded && (
-          <div className="flex items-center gap-2 shrink-0 bg-blue-600/15 px-3 py-1.5 rounded-lg max-w-[120px] overflow-hidden">
-            <Navigation2 className="w-5 h-5 text-blue-600 shrink-0" />
-            <span className="text-base font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
-              {nextManeuver}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Expanded Content */}
-      {isExpanded && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-5 pb-4 space-y-3 border-t border-blue-600/20 mt-2 pt-3"
-        >
-          <div className="flex items-start gap-3 bg-blue-600/15 p-3 rounded-xl border border-blue-600/20">
-            <Navigation2 className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
-            <div>
-              <div className="text-xs font-medium text-blue-700 uppercase tracking-wider">Next Maneuver</div>
-              <div className="text-lg font-bold text-gray-900 leading-tight">{nextManeuver}</div>
-              <div className="text-sm font-semibold text-gray-600 mt-1">In {formatDistance(nextDistance, "miles")}</div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-blue-600/10 p-3 rounded-xl border border-blue-600/20">
-              <div className="text-xs text-gray-600 mb-1">Total Distance</div>
-              <div className="text-lg font-bold text-gray-900">{formatDistance(distanceRemaining, "miles")}</div>
-            </div>
-            <div className="bg-blue-600/10 p-3 rounded-xl border border-blue-600/20">
-              <div className="text-xs text-gray-600 mb-1">Remaining Time</div>
-              <div className="text-lg font-bold text-gray-900">{eta} min</div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Drag hint - subtle */}
-      {!isDragging && (
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-blue-600/30 uppercase tracking-widest pointer-events-none">
-          Drag to reposition
+        {/* Center Section: Control Buttons (children) */}
+        <div className="flex items-center gap-2 flex-1 justify-center min-w-0">
+          {children}
         </div>
-      )}
-    </motion.div>
+
+        {/* Right Section: Status Indicators */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Online Indicator */}
+          {showOnlineIndicator && (
+            <div className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+              isOnline 
+                ? "bg-green-500/20 text-green-700 border border-green-500/40"
+                : "bg-red-500/20 text-red-700 border border-red-500/40"
+            )}>
+              <Wifi className="w-3 h-3" />
+              <span className="hidden sm:inline">{isOnline ? 'Online' : 'Offline'}</span>
+            </div>
+          )}
+
+          {/* GPS Status */}
+          {gpsStatus === 'unavailable' || gpsStatus === 'error' ? (
+            <button
+              onClick={onSetLocation}
+              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-700 border border-amber-500/40 hover:bg-amber-500/30 transition-colors"
+            >
+              <AlertCircle className="w-3 h-3" />
+              <span className="hidden sm:inline">Set location</span>
+            </button>
+          ) : gpsStatus === 'acquiring' ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-700 border border-blue-500/40">
+              <MapPin className="w-3 h-3 animate-pulse" />
+              <span className="hidden sm:inline">GPS...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-700 border border-green-500/40">
+              <MapPin className="w-3 h-3" />
+              <span className="hidden sm:inline">GPS</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
