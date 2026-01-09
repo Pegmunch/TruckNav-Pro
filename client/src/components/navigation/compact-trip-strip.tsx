@@ -25,12 +25,12 @@ function getDefaultPosition(): Position {
     return { x: 20, y: HEADER_HEIGHT + 20 };
   }
   
-  const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top') || '0', 10) || 0;
   const stripWidth = Math.min(380, window.innerWidth * 0.92);
   
+  // Start centered and slightly down from the top to ensure visibility
   return { 
     x: Math.max(10, (window.innerWidth - stripWidth) / 2), 
-    y: safeTop + HEADER_HEIGHT + 40 
+    y: 100 // Hardcoded starting Y to ensure it's not hidden behind notch/status bar
   };
 }
 

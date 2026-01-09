@@ -388,13 +388,18 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
-  // AUTO-SHOW navigation controls when navigation UI becomes active OR when navigating
+  // CRITICAL FIX: Ensure HUD is ALWAYS visible when UI is active
   useEffect(() => {
-    if (isNavUIActive || isLocalNavActive) {
-      console.log('[NAV-CONTROLS] Auto-showing controls - isNavUIActive:', isNavUIActive, 'isLocalNavActive:', isLocalNavActive);
+    if (isNavUIActive) {
+      console.log('[NAV-UI] Forcing HUD controls visibility for active mode:', isNavUIActive);
       setShowNavControls(true);
+      
+      // Also ensure the map is expanded/visible
+      if (isMobile && !isMapExpanded) {
+        setIsMapExpanded(true);
+      }
     }
-  }, [isNavUIActive, isLocalNavActive, setShowNavControls]); // Added setShowNavControls to dependency array
+  }, [isNavUIActive, isMobile, isMapExpanded]);
   
   // GPS Mode effect - wire up mode changes to GPS context
   // CRITICAL FIX: Destructure callbacks to prevent render loop
