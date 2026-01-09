@@ -25,6 +25,8 @@ interface SpeedometerHUDProps {
   } | null;
   onUnitToggle?: () => void;
   isNavigating?: boolean;
+  onStartNavigation?: () => void;
+  showGoButton?: boolean;
 }
 
 /**
@@ -36,7 +38,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   speedLimit: propSpeedLimit,
   roadInfo: propRoadInfo,
   onUnitToggle,
-  isNavigating = false
+  isNavigating = false,
+  onStartNavigation,
+  showGoButton = false
 }: SpeedometerHUDProps) {
   // Get GPS data and measurement preferences
   const gps = useGPS();
@@ -305,12 +309,32 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   return (
     <div
       className={cn(
-        'relative flex justify-center w-full',
+        'relative flex justify-center items-center w-full',
         className
       )}
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
+      {/* GO BUTTON - Left side of speedometer with small gap */}
+      {showGoButton && onStartNavigation && !isNavigating && (
+        <button
+          onClick={onStartNavigation}
+          className={cn(
+            'h-[48px] sm:h-[52px] md:h-[56px] px-5',
+            'bg-green-600 hover:bg-green-700 active:bg-green-800',
+            'text-white font-bold text-sm',
+            'rounded-full shadow-lg',
+            'border border-green-700',
+            'transition-all duration-200 active:scale-95',
+            'mr-2' // Small gap between Go button and speedometer
+          )}
+          style={{ touchAction: 'manipulation' }}
+          data-testid="button-go-speedometer"
+        >
+          Go
+        </button>
+      )}
+
       {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
       <div
         className={cn(

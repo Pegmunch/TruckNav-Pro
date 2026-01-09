@@ -2927,11 +2927,8 @@ function NavigationPageContent() {
                     console.log('[FLYBY] Stop requested');
                     setIsFlyByInProgress(false);
                   }}
-                  onGoStart={handleStartNavigation}
-                  onGoStop={handleStopNavigation}
                   onSetLocation={() => setShowManualLocationDialog(true)}
                   isPreviewActive={isFlyByInProgress}
-                  isNavigating={isNavigating}
                   voiceEnabled={professionalVoiceEnabled}
                   onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
                 />
@@ -3268,6 +3265,8 @@ function NavigationPageContent() {
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
                       speedLimit={currentSpeedLimit || undefined}
                       isNavigating={isNavUIActive}
+                      showGoButton={!!currentRoute && !isNavigating}
+                      onStartNavigation={handleStartNavigation}
                     />
                   }
                 />
@@ -3560,6 +3559,7 @@ function NavigationPageContent() {
                         speedLimit={currentSpeedLimit || undefined}
                         roadInfo={roadInfo}
                         isNavigating={true}
+                        showGoButton={false}
                       />
                     </div>
 

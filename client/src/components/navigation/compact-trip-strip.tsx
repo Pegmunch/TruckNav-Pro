@@ -13,11 +13,8 @@ interface CompactTripStripProps {
   gpsStatus?: 'ready' | 'acquiring' | 'unavailable' | 'error' | 'initializing' | 'manual';
   onPreviewStart?: () => void;
   onPreviewStop?: () => void;
-  onGoStart?: () => void;
-  onGoStop?: () => void;
   onSetLocation?: () => void;
   isPreviewActive?: boolean;
-  isNavigating?: boolean;
   voiceEnabled?: boolean;
   onVoiceToggle?: () => void;
 }
@@ -30,11 +27,8 @@ export function CompactTripStrip({
   gpsStatus = 'ready',
   onPreviewStart,
   onPreviewStop,
-  onGoStart,
-  onGoStop,
   onSetLocation,
   isPreviewActive = false,
-  isNavigating = false,
   voiceEnabled = true,
   onVoiceToggle
 }: CompactTripStripProps) {
@@ -87,15 +81,14 @@ export function CompactTripStrip({
         </div>
       </div>
 
-      {/* Center Section: Action Buttons - Stacked */}
-      <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-        {/* Preview Button - Split: Blue / Red */}
-        <div className="flex flex-row rounded-full overflow-hidden shadow-md">
+      {/* Center Section: Preview Button Only (larger) */}
+      <div className="flex items-center justify-center flex-1">
+        <div className="flex flex-row rounded-full overflow-hidden shadow-lg">
           <Button
             onClick={onPreviewStart}
-            size="sm"
+            size="lg"
             disabled={isPreviewActive}
-            className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
+            className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
             style={{ touchAction: 'manipulation' }}
             data-testid="button-preview-start"
           >
@@ -103,35 +96,11 @@ export function CompactTripStrip({
           </Button>
           <Button
             onClick={onPreviewStop}
-            size="sm"
+            size="lg"
             disabled={!isPreviewActive}
-            className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
+            className="h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
             style={{ touchAction: 'manipulation' }}
             data-testid="button-preview-stop"
-          >
-            Stop
-          </Button>
-        </div>
-
-        {/* Go/Stop Button - Split: Green / Red */}
-        <div className="flex flex-row rounded-full overflow-hidden shadow-md">
-          <Button
-            onClick={onGoStart}
-            size="sm"
-            disabled={isNavigating}
-            className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
-            style={{ touchAction: 'manipulation' }}
-            data-testid="button-go-start"
-          >
-            Go
-          </Button>
-          <Button
-            onClick={onGoStop}
-            size="sm"
-            disabled={!isNavigating}
-            className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
-            style={{ touchAction: 'manipulation' }}
-            data-testid="button-go-stop"
           >
             Stop
           </Button>
