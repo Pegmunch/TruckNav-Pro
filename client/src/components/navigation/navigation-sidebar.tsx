@@ -693,6 +693,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     id="current-location-input"
                     testId="input-current-location"
                     className="automotive-input"
+                    showSearchTypeToggles={false}
                   />
                 </div>
 

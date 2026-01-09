@@ -143,6 +143,7 @@ export function SimplifiedRouteDrawer({
               placeholder="Search for address, postcode, or POI..."
               testId="input-from-location"
               className="flex-1"
+              showSearchTypeToggles={false}
             />
             <Button
               variant="outline"

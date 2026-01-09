@@ -411,6 +411,7 @@ export default function ManualSearchPanel({
             placeholder="Enter location or click GPS button"
             testId="input-from-location"
             className="w-full"
+            showSearchTypeToggles={false}
           />
           
           {/* Route calculation available after locations are set */}
