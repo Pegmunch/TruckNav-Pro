@@ -2848,45 +2848,7 @@ function NavigationPageContent() {
                 </div>
               )}
 
-              {/* PLAN MODE BUTTONS - Left side vertical stack */}
-              {mobileNavMode === 'plan' && currentRoute && (
-                <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
-                  style={{
-                    top: 'calc(70px + var(--safe-area-top))',
-                    left: '16px'
-                  }}>
-                  {/* Preview Route Split Button - Start/Cancel */}
-                  <div className="flex gap-1">
-                    <Button
-                      onPointerDown={handlePreviewRoute}
-                      size="sm"
-                      disabled={isFlyByInProgress}
-                      className="h-6 px-2 rounded-l-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50"
-                      data-testid="button-preview-route"
-                    >
-                      Preview
-                    </Button>
-                    <Button
-                      onPointerDown={handleCancelPreview}
-                      size="sm"
-                      disabled={!isFlyByInProgress}
-                      className="h-6 px-2 rounded-r-full shadow-lg bg-red-500 hover:bg-red-600 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:bg-gray-400"
-                      data-testid="button-cancel-preview"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                  {/* Start Navigation Button */}
-                  <Button
-                    onPointerDown={handleStartNavigation}
-                    size="sm"
-                    className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
-                    data-testid="button-start-navigation-plan"
-                  >
-                    Start
-                  </Button>
-                </div>
-              )}
+              {/* PLAN MODE - Route calculated indicator removed - user uses GO button in drawer */}
               
               {/* PLAN MODE CONTROLS - Left Stack - Only Menu and Voice buttons remain here */}
               {mobileNavMode === 'plan' && !currentRoute && !isNavUIActive && (
@@ -2976,21 +2938,12 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* PREVIEW MODE BUTTONS - Left side vertical stack */}
+                  {/* PREVIEW MODE - Start Navigation Button only */}
                   <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                     style={{
                       top: 'calc(70px + var(--safe-area-top))',
                       left: '16px'
                     }}>
-                    {/* Back to Plan Button */}
-                    <Button
-                      onClick={() => setIsShowingPreview(false)}
-                      size="sm"
-                      className="h-6 px-3 rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm"
-                      data-testid="button-back-to-plan"
-                    >
-                      Back
-                    </Button>
                     {/* Start Navigation Button */}
                     <Button
                       onPointerDown={handleStartNavigation}
