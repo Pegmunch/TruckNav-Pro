@@ -645,23 +645,21 @@ function ComprehensiveMobileMenu({
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={async () => {
+                          onClick={() => {
+                            console.log('[GO-BUTTON] Clicked - closing menu and starting route calculation');
                             // Request auto-navigation on mobile after route calculation
                             onRequestAutoNavigation?.();
-                            await onPlanRoute();
+                            // Close menu immediately so user sees the map
+                            onOpenChange(false);
+                            // Fire route calculation (don't await - it runs in background)
+                            onPlanRoute();
                           }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
                           className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold"
                           data-testid="button-go-route"
                         >
-                          {isCalculating ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Navigation className="h-4 w-4 mr-1" />
-                              GO
-                            </>
-                          )}
+                          <Navigation className="h-4 w-4 mr-1" />
+                          GO
                         </Button>
                       </Label>
                       <AddressAutocomplete
