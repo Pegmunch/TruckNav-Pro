@@ -202,21 +202,21 @@ function ComprehensiveMobileMenu({
             let message = 'Could not get location';
             switch (error.code) {
               case error.PERMISSION_DENIED:
-                message = 'Location permission denied. Please enable location access.';
+                message = 'Location permission denied. Please enable location access in your device settings.';
                 break;
               case error.POSITION_UNAVAILABLE:
-                message = 'Location unavailable. Please try again.';
+                message = 'Location unavailable. Please ensure location services are enabled.';
                 break;
               case error.TIMEOUT:
-                message = 'Location request timed out. Please try again.';
+                message = 'Location request timed out. Please try again or type an address manually.';
                 break;
             }
             reject(new Error(message));
           }, 
           {
-            enableHighAccuracy: true,
+            enableHighAccuracy: false, // Use network-based location for faster response
             timeout: 10000,
-            maximumAge: 30000
+            maximumAge: 300000 // Allow 5-minute old positions for faster response
           }
         );
       });
@@ -279,8 +279,12 @@ function ComprehensiveMobileMenu({
       }
     } catch (error) {
       console.error('GPS location error:', error);
-      // Toast removed per user request - GPS errors shown inline instead
-      // Users can see GPS status in the simplified route drawer
+      // Show toast with error message to help user understand the issue
+      toast({
+        title: "Location unavailable",
+        description: error instanceof Error ? error.message : "Please enable location services or type an address manually.",
+        variant: "destructive",
+      });
     } finally {
       setIsGettingLocation(false);
     }

@@ -64,6 +64,7 @@ export function AddressAutocomplete({
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isInteractingWithDropdownRef = useRef(false);
+  const selectionHandledRef = useRef(false); // Prevents double-firing on touch
   const { toast } = useToast();
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
@@ -327,6 +328,11 @@ export function AddressAutocomplete({
   }, [open]);
 
   const handleSelectTomTom = useCallback((tomtomResult: TomTomResult) => {
+    // Prevent double-firing from both click and touchend
+    if (selectionHandledRef.current) return;
+    selectionHandledRef.current = true;
+    setTimeout(() => { selectionHandledRef.current = false; }, 300);
+    
     const displayLabel = formatTomTomDisplay(tomtomResult);
     const coordinates = extractTomTomCoordinates(tomtomResult);
     
@@ -348,6 +354,11 @@ export function AddressAutocomplete({
   }, [onChange, onCoordinatesChange, createLocationMutation, id]);
 
   const handleSelectSavedLocation = useCallback((location: SavedLocation) => {
+    // Prevent double-firing from both click and touchend
+    if (selectionHandledRef.current) return;
+    selectionHandledRef.current = true;
+    setTimeout(() => { selectionHandledRef.current = false; }, 300);
+    
     setSearchTerm(location.label);
     onChange(location.label);
     onCoordinatesChange?.(location.coordinates);
@@ -358,6 +369,11 @@ export function AddressAutocomplete({
   }, [onChange, onCoordinatesChange, id]);
 
   const handleSelectUKPostcode = useCallback((result: PostcodeGeocodeResult) => {
+    // Prevent double-firing from both click and touchend
+    if (selectionHandledRef.current) return;
+    selectionHandledRef.current = true;
+    setTimeout(() => { selectionHandledRef.current = false; }, 300);
+    
     const displayLabel = result.address || result.formatted;
     
     setSearchTerm(displayLabel);
@@ -669,21 +685,18 @@ export function AddressAutocomplete({
               WebkitUserSelect: 'none', // Prevent text selection on iOS
               userSelect: 'none'
             }}
-            onPointerDown={(e) => {
-              // CRITICAL: Prevent default to stop blur from firing on input
-              // This works for both mouse and touch via PointerEvents API
-              e.preventDefault();
+            onMouseDown={(e) => {
+              // Set flag to prevent document listener from closing dropdown
+              // Don't use preventDefault - we need click events to reach CommandItem
               isInteractingWithDropdownRef.current = true;
             }}
-            onPointerUp={() => {
-              // Keep interaction flag set long enough for onSelect to fire
-              // Use longer timeout for touch which has more latency
-              setTimeout(() => {
-                isInteractingWithDropdownRef.current = false;
-              }, 400);
+            onTouchStart={(e) => {
+              // For touch, set flag and prevent default only on the container
+              // This stops iOS from firing blur while allowing clicks to bubble to items
+              isInteractingWithDropdownRef.current = true;
             }}
-            onPointerCancel={() => {
-              // Handle cancelled touch gestures (e.g., scroll instead of tap)
+            onClick={(e) => {
+              // Reset flag after click completes
               setTimeout(() => {
                 isInteractingWithDropdownRef.current = false;
               }, 100);
@@ -708,8 +721,10 @@ export function AddressAutocomplete({
                     {favoriteLocations.map(loc => (
                       <CommandItem
                         key={`fav-${loc.id}`}
+                        value={`fav-${loc.id}-${loc.label}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
+                        onPointerUp={() => handleSelectSavedLocation(loc)}
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
                         <div className="flex flex-col">
@@ -721,8 +736,10 @@ export function AddressAutocomplete({
                     {recentLocations.map(loc => (
                       <CommandItem
                         key={`recent-${loc.id}`}
+                        value={`recent-${loc.id}-${loc.label}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
+                        onPointerUp={() => handleSelectSavedLocation(loc)}
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
                         <div className="flex flex-col">
@@ -738,8 +755,10 @@ export function AddressAutocomplete({
                 {ukPostcodeResult && (
                   <CommandGroup heading="Postcode Result">
                     <CommandItem
+                      value={`postcode-${ukPostcodeResult.formatted}`}
                       onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
+                      onPointerUp={() => handleSelectUKPostcode(ukPostcodeResult)}
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
                       <div className="flex flex-col">
@@ -758,8 +777,10 @@ export function AddressAutocomplete({
                       return (
                         <CommandItem
                           key={result.id || `tomtom-${index}`}
+                          value={`tomtom-${result.id || index}-${result.address?.freeformAddress || ''}`}
                           onSelect={() => handleSelectTomTom(result)}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
+                          onPointerUp={() => handleSelectTomTom(result)}
                         >
                           {isPoi ? (
                             <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
