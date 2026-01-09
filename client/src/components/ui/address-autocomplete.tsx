@@ -68,7 +68,17 @@ export function AddressAutocomplete({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isInteractingWithDropdownRef = useRef(false);
   const selectionHandledRef = useRef(false); // Prevents double-firing on touch
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const { toast } = useToast();
+  
+  // Find the dialog content container to portal dropdown inside it
+  // This prevents Radix Dialog from treating dropdown clicks as "outside" clicks
+  useEffect(() => {
+    if (inputWrapperRef.current) {
+      const dialogContent = inputWrapperRef.current.closest('[data-radix-dialog-content]') as HTMLElement;
+      setPortalContainer(dialogContent || document.body);
+    }
+  }, []);
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
   
@@ -678,8 +688,8 @@ export function AddressAutocomplete({
           <MapPinned className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
         </div>
 
-        {/* Portal-based Dropdown - Escapes overflow containers for proper visibility */}
-        {open && dropdownPosition && createPortal(
+        {/* Portal-based Dropdown - Portals to dialog content to prevent Radix Dialog from closing on click */}
+        {open && dropdownPosition && portalContainer && createPortal(
           <div 
             ref={dropdownRef}
             className="fixed z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
@@ -816,7 +826,7 @@ export function AddressAutocomplete({
               </CommandList>
             </Command>
           </div>,
-          document.body
+          portalContainer
         )}
       </div>
     
