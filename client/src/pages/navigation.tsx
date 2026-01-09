@@ -2931,6 +2931,16 @@ function NavigationPageContent() {
                   isPreviewActive={isFlyByInProgress}
                   voiceEnabled={professionalVoiceEnabled}
                   onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                  roadInfo={roadInfo ? {
+                    roadRef: roadInfo.roadRef,
+                    junction: roadInfo.junction,
+                    destination: roadInfo.destination
+                  } : null}
+                  turnInfo={nextTurn ? {
+                    direction: nextTurn.direction,
+                    distance: nextTurn.distance,
+                    roadName: nextTurn.roadName
+                  } : null}
                 />
               )}
 
@@ -3266,7 +3276,9 @@ function NavigationPageContent() {
                       speedLimit={currentSpeedLimit || undefined}
                       isNavigating={isNavUIActive}
                       showGoButton={!!currentRoute && !isNavigating}
+                      showStopButton={isNavigating}
                       onStartNavigation={handleStartNavigation}
+                      onStopNavigation={handleStopNavigation}
                     />
                   }
                 />
@@ -3560,6 +3572,8 @@ function NavigationPageContent() {
                         roadInfo={roadInfo}
                         isNavigating={true}
                         showGoButton={false}
+                        showStopButton={true}
+                        onStopNavigation={handleStopNavigation}
                       />
                     </div>
 

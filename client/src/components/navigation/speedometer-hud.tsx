@@ -26,7 +26,9 @@ interface SpeedometerHUDProps {
   onUnitToggle?: () => void;
   isNavigating?: boolean;
   onStartNavigation?: () => void;
+  onStopNavigation?: () => void;
   showGoButton?: boolean;
+  showStopButton?: boolean;
 }
 
 /**
@@ -40,7 +42,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   onUnitToggle,
   isNavigating = false,
   onStartNavigation,
-  showGoButton = false
+  onStopNavigation,
+  showGoButton = false,
+  showStopButton = false
 }: SpeedometerHUDProps) {
   // Get GPS data and measurement preferences
   const gps = useGPS();
@@ -603,6 +607,26 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           </div>
         </div>
       </div>
+
+      {/* STOP BUTTON - Right side of speedometer with small gap */}
+      {showStopButton && onStopNavigation && isNavigating && (
+        <button
+          onClick={onStopNavigation}
+          className={cn(
+            'h-[48px] sm:h-[52px] md:h-[56px] px-5',
+            'bg-red-600 hover:bg-red-700 active:bg-red-800',
+            'text-white font-bold text-sm',
+            'rounded-full shadow-lg',
+            'border border-red-700',
+            'transition-all duration-200 active:scale-95',
+            'ml-2' // Small gap between speedometer and Stop button
+          )}
+          style={{ touchAction: 'manipulation' }}
+          data-testid="button-stop-speedometer"
+        >
+          Stop
+        </button>
+      )}
     </div>
   );
 });
