@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect, useCallback, useRef } from 'react';
 
 interface NavigationLayoutProps {
   topStrip?: ReactNode;
@@ -22,6 +22,35 @@ export function NavigationLayout({
   isNavUIActive
 }: NavigationLayoutProps) {
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
+  const [isRightStackElevated, setIsRightStackElevated] = useState(false);
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const handleScreenTouch = useCallback(() => {
+    setIsRightStackElevated(true);
+    
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+    
+    inactivityTimeoutRef.current = setTimeout(() => {
+      setIsRightStackElevated(false);
+    }, 5000);
+  }, []);
+  
+  useEffect(() => {
+    const handleTouch = () => handleScreenTouch();
+    
+    document.addEventListener('touchstart', handleTouch, { passive: true });
+    document.addEventListener('pointerdown', handleTouch, { passive: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouch);
+      document.removeEventListener('pointerdown', handleTouch);
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
+    };
+  }, [handleScreenTouch]);
   
   return (
     <div className="relative w-full h-screen overflow-hidden pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]">
