@@ -81,13 +81,15 @@ export function AddressAutocomplete({
   
   // CRITICAL: Sync searchTerm with external value prop changes
   // This ensures the input displays the correct value when parent updates it
+  // NOTE: Only sync from parent when value differs and isn't already being updated by user interaction
   useEffect(() => {
     // Only sync if value is different and not coordinate-like (avoid showing raw coords)
     const looksLikeCoordinates = /^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(value.trim());
     if (value !== searchTerm && !looksLikeCoordinates) {
+      console.log('[AUTOCOMPLETE] Syncing searchTerm from value prop:', value, '(was:', searchTerm, ')');
       setSearchTerm(value);
     }
-  }, [value]);
+  }, [value, searchTerm]);
   
   // Find the dialog content container to portal dropdown inside it
   // This prevents Radix Dialog from treating dropdown clicks as "outside" clicks
@@ -162,11 +164,12 @@ export function AddressAutocomplete({
   
   // Close dropdown when clicking/tapping outside using document-level listener
   // This replaces blur-based closing which is unreliable on iOS
-  // CRITICAL: Use BUBBLE phase (not capture) so React onSelect handlers run first
+  // CRITICAL: Use pointerup (not pointerdown) so cmdk's onSelect fires FIRST
+  // cmdk dispatches onSelect on pointerup, so we must wait for that before closing
   useEffect(() => {
     if (!open) return;
     
-    const handlePointerDown = (e: PointerEvent) => {
+    const handlePointerUp = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
       
       // Check if click is inside input wrapper
@@ -179,17 +182,18 @@ export function AddressAutocomplete({
       // Fallback: Check if target or any ancestor has our dropdown marker
       if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
       
-      // Click was outside - close dropdown with slight delay to allow any pending handlers
-      requestAnimationFrame(() => {
+      // Click was outside - close dropdown
+      // Use setTimeout to ensure any selection handlers complete first
+      setTimeout(() => {
         setOpen(false);
-      });
+      }, 0);
     };
     
-    // CRITICAL: Use bubble phase (false) so onSelect handlers run before this
-    document.addEventListener('pointerdown', handlePointerDown, false);
+    // Use bubble phase so event handlers on elements run first
+    document.addEventListener('pointerup', handlePointerUp, false);
     
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown, false);
+      document.removeEventListener('pointerup', handlePointerUp, false);
     };
   }, [open]);
 
@@ -217,10 +221,6 @@ export function AddressAutocomplete({
     // No default - allow worldwide search when no GPS
     return undefined;
   }, [coordinates, gps?.position]);
-
-  useEffect(() => {
-    setSearchTerm(value);
-  }, [value]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -371,15 +371,17 @@ export function AddressAutocomplete({
   }, [open]);
 
   const handleSelectTomTom = useCallback((tomtomResult: TomTomResult) => {
-    console.log('[AUTOCOMPLETE] TomTom selection triggered');
-    
     const displayLabel = formatTomTomDisplay(tomtomResult);
     const coordinates = extractTomTomCoordinates(tomtomResult);
     
-    // Update state immediately
+    console.log('[AUTOCOMPLETE] TomTom selection triggered - setting display:', displayLabel);
+    
+    // Update local state and parent SYNCHRONOUSLY before any async operations
     setSearchTerm(displayLabel);
     onChange(displayLabel);
     onCoordinatesChange?.(coordinates);
+    
+    console.log('[AUTOCOMPLETE] Selection complete - searchTerm set to:', displayLabel);
     
     // CRITICAL: Delay close until next frame so handler completes before unmount
     requestAnimationFrame(() => {
