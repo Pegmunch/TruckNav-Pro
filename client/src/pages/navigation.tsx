@@ -3539,19 +3539,14 @@ function NavigationPageContent() {
                       {isNavUIActive && (
                   <>
                     
-                    {/* 2. Compact Trip Strip - Shows ETA, Distance, Next Maneuver - Below header */}
+                    {/* 2. Compact Trip Strip - Shows ETA, Distance, Next Maneuver - Fixed position, self-contained */}
                     {currentRoute && (
-                      <div 
-                        className="absolute left-0 right-0 z-[1700]"
-                        style={{ top: 'calc(56px + var(--safe-area-top, 0px))' }}
-                      >
-                        <CompactTripStrip
-                          eta={currentRoute.duration || 0}
-                          distanceRemaining={currentRoute.distance || 0}
-                          nextManeuver={nextTurn?.roadName || 'Continue'}
-                          nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
-                        />
-                      </div>
+                      <CompactTripStrip
+                        eta={currentRoute.duration || 0}
+                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
+                        nextManeuver={nextTurn?.roadName || 'Continue'}
+                        nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                      />
                     )}
                     
                     {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}

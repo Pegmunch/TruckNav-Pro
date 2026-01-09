@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 
-const STORAGE_KEY = 'trucknav-eta-position';
+const STORAGE_KEY = 'trucknav-eta-position-v2';
 const HEADER_HEIGHT = 56;
 
 interface CompactTripStripProps {
