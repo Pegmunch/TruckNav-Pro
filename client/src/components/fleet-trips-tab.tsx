@@ -15,7 +15,9 @@ export function TripsTab() {
     queryKey: ['/api/fleet/analytics/trips'],
     queryFn: async () => {
       const response = await fetch('/api/fleet/analytics/trips');
-      return response.json();
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data && typeof data.totalDistance === 'number' ? data : null;
     },
   });
 
@@ -23,7 +25,9 @@ export function TripsTab() {
     queryKey: ['/api/fleet/trips'],
     queryFn: async () => {
       const response = await fetch('/api/fleet/trips');
-      return response.json();
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
