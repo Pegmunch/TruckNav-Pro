@@ -71,6 +71,16 @@ export function AddressAutocomplete({
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const { toast } = useToast();
   
+  // CRITICAL: Sync searchTerm with external value prop changes
+  // This ensures the input displays the correct value when parent updates it
+  useEffect(() => {
+    // Only sync if value is different and not coordinate-like (avoid showing raw coords)
+    const looksLikeCoordinates = /^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(value.trim());
+    if (value !== searchTerm && !looksLikeCoordinates) {
+      setSearchTerm(value);
+    }
+  }, [value]);
+  
   // Find the dialog content container to portal dropdown inside it
   // This prevents Radix Dialog from treating dropdown clicks as "outside" clicks
   useEffect(() => {
@@ -444,11 +454,17 @@ export function AddressAutocomplete({
           if (data.features && data.features.length > 0) {
             const feature = data.features[0];
             const props = feature.properties;
-            const address = props.name || 
-                          `${props.street || ''} ${props.housenumber || ''}`.trim() ||
-                          props.city || 
-                          props.state || 
-                          'Current Location';
+            // Build a readable address from components, never show raw coordinates
+            const addressParts: string[] = [];
+            if (props.name) addressParts.push(props.name);
+            else if (props.street) {
+              addressParts.push(`${props.housenumber || ''} ${props.street}`.trim());
+            }
+            if (props.city) addressParts.push(props.city);
+            if (props.postcode) addressParts.push(props.postcode);
+            if (props.country) addressParts.push(props.country);
+            
+            const address = addressParts.length > 0 ? addressParts.join(', ') : 'Current Location';
             
             setSearchTerm(address);
             onChange(address);
@@ -458,22 +474,22 @@ export function AddressAutocomplete({
             return true;
           }
         }
-        // Fallback to coordinates
-        const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        setSearchTerm(coordAddress);
-        onChange(coordAddress);
+        // Fallback to "Current Location" text (never raw coordinates)
+        const fallbackAddress = 'Current Location';
+        setSearchTerm(fallbackAddress);
+        onChange(fallbackAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
         setOpen(true);
-        console.log('[GPS-LOCATION] Location set from coordinates:', coordAddress);
+        console.log('[GPS-LOCATION] Location set as Current Location (reverse geocode empty)');
         return true;
       } catch (error) {
-        // Fallback to coordinates on error
-        const coordAddress = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        setSearchTerm(coordAddress);
-        onChange(coordAddress);
+        // Fallback to "Current Location" on error (never raw coordinates)
+        const fallbackAddress = 'Current Location';
+        setSearchTerm(fallbackAddress);
+        onChange(fallbackAddress);
         onCoordinatesChange?.({ lat: latitude, lng: longitude });
         setOpen(true);
-        console.log('[GPS-LOCATION] Location set from coordinates (error fallback):', coordAddress);
+        console.log('[GPS-LOCATION] Location set as Current Location (error fallback)');
         return true;
       }
     };
