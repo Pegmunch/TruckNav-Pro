@@ -159,6 +159,7 @@ function NavigationPageContent() {
   
   // Preview mode state - user explicitly clicks "Preview Route" button to see full route
   const [isShowingPreview, setIsShowingPreview] = useState(false);
+  const [isFlyByInProgress, setIsFlyByInProgress] = useState(false);
   
   // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
   const isNavigating = isLocalNavActive;
@@ -2104,6 +2105,7 @@ function NavigationPageContent() {
     
     console.log('[PREVIEW] Starting fly-by route preview at 10x speed');
     setIsShowingPreview(true);
+    setIsFlyByInProgress(true);
     
     // Trigger fly-by animation via map ref
     if (mapRef.current) {
@@ -2111,6 +2113,7 @@ function NavigationPageContent() {
         speedMultiplier: 10,
         onComplete: () => {
           console.log('[PREVIEW] Fly-by animation complete - zooming to full route bounds');
+          setIsFlyByInProgress(false);
           // After fly-by, zoom out to show full route
           if (!currentRoute.routePath) return;
           const lats = currentRoute.routePath.map((p: any) => p.lat);
@@ -2127,9 +2130,14 @@ function NavigationPageContent() {
             }
           });
           window.dispatchEvent(zoomEvent);
+        },
+        onCancel: () => {
+          console.log('[PREVIEW] Fly-by cancelled');
+          setIsFlyByInProgress(false);
         }
       });
     } else {
+      setIsFlyByInProgress(false);
       // Fallback to simple zoom if map ref not available
       const lats = currentRoute.routePath.map((p: any) => p.lat);
       const lngs = currentRoute.routePath.map((p: any) => p.lng);
@@ -2146,6 +2154,14 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(zoomEvent);
     }
+  };
+  
+  // Handle cancel fly-by preview
+  const handleCancelPreview = () => {
+    if (mapRef.current) {
+      mapRef.current.cancelFlyBy();
+    }
+    setIsFlyByInProgress(false);
   };
 
   // Handle use current location with reverse geocoding
@@ -2842,15 +2858,27 @@ function NavigationPageContent() {
                     top: 'calc(70px + var(--safe-area-top))',
                     left: '16px'
                   }}>
-                  {/* Preview Route Button */}
-                  <Button
-                    onPointerDown={handlePreviewRoute}
-                    size="sm"
-                    className="h-6 px-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-sm active:scale-95 transition-transform"
-                    data-testid="button-preview-route"
-                  >
-                    Preview
-                  </Button>
+                  {/* Preview Route Split Button - Start/Cancel */}
+                  <div className="flex gap-1">
+                    <Button
+                      onPointerDown={handlePreviewRoute}
+                      size="sm"
+                      disabled={isFlyByInProgress}
+                      className="h-6 px-2 rounded-l-full shadow-lg bg-green-500 hover:bg-green-600 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50"
+                      data-testid="button-preview-route"
+                    >
+                      Preview
+                    </Button>
+                    <Button
+                      onPointerDown={handleCancelPreview}
+                      size="sm"
+                      disabled={!isFlyByInProgress}
+                      className="h-6 px-2 rounded-r-full shadow-lg bg-red-500 hover:bg-red-600 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 disabled:bg-gray-400"
+                      data-testid="button-cancel-preview"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                   {/* Start Navigation Button */}
                   <Button
                     onPointerDown={handleStartNavigation}
