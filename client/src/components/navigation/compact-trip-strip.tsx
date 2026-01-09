@@ -140,7 +140,7 @@ export function CompactTripStrip({
       animate={{ x: position.x, y: position.y }}
       transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.5 }}
       className={cn(
-        'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-2xl backdrop-blur-xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] max-w-[380px] transition-shadow duration-300',
+        'bg-white/20 backdrop-blur-xl border-2 border-blue-600/60 shadow-2xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] max-w-[380px] transition-shadow duration-300',
         isExpanded ? 'h-auto' : 'h-[72px]',
         isDragging ? 'ring-2 ring-blue-500 shadow-blue-500/30 cursor-grabbing scale-[1.02]' : 'cursor-grab',
         className
@@ -157,7 +157,7 @@ export function CompactTripStrip({
       <div 
         className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
       >
-        <div className="w-8 h-1 bg-white/30 rounded-full" />
+        <div className="w-8 h-1 bg-blue-600/40 rounded-full" />
       </div>
 
       {/* Expand/Collapse Button */}
@@ -169,30 +169,30 @@ export function CompactTripStrip({
             navigator.vibrate([30, 30, 30]);
           }
         }}
-        className="absolute top-2 right-2 p-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 active:scale-95 transition-all z-10 select-none touch-manipulation"
+        className="absolute top-2 right-2 p-2.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 active:bg-blue-600/30 active:scale-95 transition-all z-10 select-none touch-manipulation"
         style={{ touchAction: 'manipulation' }}
         aria-label={isExpanded ? 'Collapse' : 'Expand'}
       >
-        <GripHorizontal className="w-5 h-5 text-white/60" />
+        <GripHorizontal className="w-5 h-5 text-blue-600/60" />
       </button>
 
       <div className="px-5 py-4 flex items-center justify-between gap-4 pt-6">
         {/* Left: ETA & Distance */}
         <div className="flex items-center gap-5 flex-1 min-w-0">
-          <div className="flex items-center gap-2 shrink-0 bg-blue-500/15 px-3 py-1.5 rounded-lg">
-            <Clock className="w-5 h-5 text-blue-400 drop-shadow-glow" />
+          <div className="flex items-center gap-2 shrink-0 bg-blue-600/20 px-3 py-1.5 rounded-lg">
+            <Clock className="w-5 h-5 text-blue-600" />
             <div className="flex flex-col">
-              <span className="text-base font-bold text-white whitespace-nowrap drop-shadow-md leading-none">
+              <span className="text-base font-bold text-gray-900 whitespace-nowrap leading-none">
                 {eta}m
               </span>
-              <span className="text-[10px] font-medium text-blue-300 whitespace-nowrap leading-tight mt-0.5">
+              <span className="text-[10px] font-medium text-blue-700 whitespace-nowrap leading-tight mt-0.5">
                 {formatDistance(distanceRemaining, "miles")}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Route className="w-5 h-5 text-emerald-400" />
-            <span className="text-base font-semibold text-gray-200 whitespace-nowrap">
+            <Route className="w-5 h-5 text-emerald-600" />
+            <span className="text-base font-semibold text-gray-800 whitespace-nowrap">
               {formatDistance(distanceRemaining, "miles")}
             </span>
           </div>
@@ -200,9 +200,9 @@ export function CompactTripStrip({
 
         {/* Right: Maneuver (only if not expanded) */}
         {!isExpanded && (
-          <div className="flex items-center gap-2 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-3 py-1.5 rounded-lg max-w-[120px] overflow-hidden">
-            <Navigation2 className="w-5 h-5 text-blue-400 shrink-0 drop-shadow-glow" />
-            <span className="text-base font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-md">
+          <div className="flex items-center gap-2 shrink-0 bg-blue-600/15 px-3 py-1.5 rounded-lg max-w-[120px] overflow-hidden">
+            <Navigation2 className="w-5 h-5 text-blue-600 shrink-0" />
+            <span className="text-base font-bold text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">
               {nextManeuver}
             </span>
           </div>
@@ -214,25 +214,25 @@ export function CompactTripStrip({
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-5 pb-4 space-y-3 border-t border-white/10 mt-2 pt-3"
+          className="px-5 pb-4 space-y-3 border-t border-blue-600/20 mt-2 pt-3"
         >
-          <div className="flex items-start gap-3 bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
-            <Navigation2 className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
+          <div className="flex items-start gap-3 bg-blue-600/15 p-3 rounded-xl border border-blue-600/20">
+            <Navigation2 className="w-6 h-6 text-blue-600 shrink-0 mt-1" />
             <div>
-              <div className="text-xs font-medium text-blue-400 uppercase tracking-wider">Next Maneuver</div>
-              <div className="text-lg font-bold text-white leading-tight">{nextManeuver}</div>
-              <div className="text-sm font-semibold text-gray-400 mt-1">In {formatDistance(nextDistance, "miles")}</div>
+              <div className="text-xs font-medium text-blue-700 uppercase tracking-wider">Next Maneuver</div>
+              <div className="text-lg font-bold text-gray-900 leading-tight">{nextManeuver}</div>
+              <div className="text-sm font-semibold text-gray-600 mt-1">In {formatDistance(nextDistance, "miles")}</div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-              <div className="text-xs text-gray-400 mb-1">Total Distance</div>
-              <div className="text-lg font-bold text-white">{formatDistance(distanceRemaining, "miles")}</div>
+            <div className="bg-blue-600/10 p-3 rounded-xl border border-blue-600/20">
+              <div className="text-xs text-gray-600 mb-1">Total Distance</div>
+              <div className="text-lg font-bold text-gray-900">{formatDistance(distanceRemaining, "miles")}</div>
             </div>
-            <div className="bg-white/5 p-3 rounded-xl border border-white/10">
-              <div className="text-xs text-gray-400 mb-1">Remaining Time</div>
-              <div className="text-lg font-bold text-white">{eta} min</div>
+            <div className="bg-blue-600/10 p-3 rounded-xl border border-blue-600/20">
+              <div className="text-xs text-gray-600 mb-1">Remaining Time</div>
+              <div className="text-lg font-bold text-gray-900">{eta} min</div>
             </div>
           </div>
         </motion.div>
@@ -240,7 +240,7 @@ export function CompactTripStrip({
 
       {/* Drag hint - subtle */}
       {!isDragging && (
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/15 uppercase tracking-widest pointer-events-none">
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-blue-600/30 uppercase tracking-widest pointer-events-none">
           Drag to reposition
         </div>
       )}

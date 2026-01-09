@@ -3067,9 +3067,10 @@ function NavigationPageContent() {
                   )}
 
                   {/* ROUTE READY - Preview (Flyby) and Start Navigation Buttons */}
+                  {/* Positioned below the ETA header strip (64px start + 72px height + 12px gap = 148px) */}
                   <div className="fixed flex flex-row gap-3 z-[200] pointer-events-auto"
                     style={{
-                      top: 'calc(100px + var(--safe-area-top))',
+                      top: 'calc(148px + var(--safe-area-top))',
                       left: '16px'
                     }}>
                     {/* Preview Button - Triggers Fly-by Animation */}
