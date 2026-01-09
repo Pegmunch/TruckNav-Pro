@@ -370,8 +370,9 @@ function NavigationPageContent() {
   // CRITICAL FIX: Navigation UI should show whenever isLocalNavActive is true
   // This ensures HUD (speedometer, ETA header) appears immediately when GO is pressed
   // even before route calculation completes
-  // Navigation UI is active when: local nav flag, mobile nav mode, OR route calculation in progress (GO button flow)
-  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile;
+  // Navigation UI is active when: local nav flag, mobile nav mode, route calculation in progress (GO button flow),
+  // OR showing preview mode with a valid route (route-ready state)
+  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile || (isShowingPreview && currentRoute !== null);
   
   // CRITICAL FIX: Only show GPS truck marker during ACTIVE navigation
   // Hide in plan and preview modes across all platforms for consistency
@@ -1918,13 +1919,14 @@ function NavigationPageContent() {
           const cachedRoute = JSON.parse(cachedRouteData);
           setCurrentRoute(cachedRoute);
           
-          // Close menu and start navigation on mobile
+          // Close menu and show route-ready state on mobile
           if (isMobile) {
             setShowComprehensiveMenu(false);
             if (shouldAutoNavigateOnMobile) {
               setShouldAutoNavigateOnMobile(false);
-              setIsLocalNavActive(true);
-              setIsShowingPreview(false);
+              // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
+              setIsShowingPreview(true);
+              setShowNavControls(true);
             }
           }
           return;
@@ -1933,13 +1935,14 @@ function NavigationPageContent() {
           const parsedRoute = JSON.parse(activeRoute);
           setCurrentRoute(parsedRoute);
           
-          // Close menu and start navigation on mobile
+          // Close menu and show route-ready state on mobile
           if (isMobile) {
             setShowComprehensiveMenu(false);
             if (shouldAutoNavigateOnMobile) {
               setShouldAutoNavigateOnMobile(false);
-              setIsLocalNavActive(true);
-              setIsShowingPreview(false);
+              // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
+              setIsShowingPreview(true);
+              setShowNavControls(true);
             }
           }
           return;
@@ -2133,20 +2136,20 @@ function NavigationPageContent() {
     }
   }, [currentRoute, isMapExpanded, isMobile]);
 
-  // Auto-start navigation on mobile when route is ready and GO button was pressed
+  // Show route-ready state with Preview/Start buttons when route calculation completes after GO press
   useEffect(() => {
     if (shouldAutoNavigateOnMobile && currentRoute && isMobile && !isNavigating) {
-      console.log('[AUTO-NAV] Mobile auto-navigation triggered after route calculation');
-      // Reset the flag
+      console.log('[ROUTE-READY] Route calculation complete - showing Preview/Start buttons');
+      // Reset the auto-navigate flag
       setShouldAutoNavigateOnMobile(false);
-      // Start navigation after a brief delay for smooth transition
+      // Show route-ready state with Preview + Start buttons (don't start navigation yet)
       const timer = setTimeout(() => {
-        // Simulate clicking the Start Navigation button
-        setIsLocalNavActive(true);
-        setIsShowingPreview(false);
-        localStorage.setItem('navigation_mode', 'active');
+        // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
+        setIsShowingPreview(true);
+        setShowNavControls(true);
+        localStorage.setItem('navigation_mode', 'route_ready');
         localStorage.setItem('navigation_timestamp', Date.now().toString());
-        console.log('[AUTO-NAV] Navigation mode activated');
+        console.log('[ROUTE-READY] Preview/Start buttons now visible - user can choose action');
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -3064,17 +3067,28 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* PREVIEW MODE - Start Navigation Button only */}
-                  <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
+                  {/* ROUTE READY - Preview (Flyby) and Start Navigation Buttons */}
+                  <div className="fixed flex flex-row gap-3 z-[200] pointer-events-auto"
                     style={{
                       top: 'calc(70px + var(--safe-area-top))',
                       left: '16px'
                     }}>
+                    {/* Preview Button - Triggers Fly-by Animation */}
+                    <Button
+                      onClick={handlePreviewRoute}
+                      size="sm"
+                      disabled={isFlyByInProgress}
+                      className="h-8 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm active:scale-95 transition-transform disabled:opacity-50"
+                      style={{ touchAction: 'manipulation' }}
+                      data-testid="button-preview-flyby"
+                    >
+                      {isFlyByInProgress ? 'Flying...' : 'Preview'}
+                    </Button>
                     {/* Start Navigation Button */}
                     <Button
                       onClick={handleStartNavigation}
                       size="sm"
-                      className="h-6 px-3 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
+                      className="h-8 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
                       style={{ touchAction: 'manipulation' }}
                       data-testid="button-start-navigation-preview"
                     >
@@ -3696,14 +3710,14 @@ function NavigationPageContent() {
         isCalculating={calculateRouteMutation.isPending}
         isNavigating={isNavigating}
         onRequestAutoNavigation={() => {
-          console.log('[GO-BUTTON] Mobile GO pressed - immediately enabling navigation UI');
+          console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
           setShouldAutoNavigateOnMobile(true);
           // Show navigation controls immediately
           setShowNavControls(true);
-          // Set navigation mode active immediately so HUD appears
-          setIsLocalNavActive(true);
-          setIsShowingPreview(false);
-          localStorage.setItem('navigation_mode', 'active');
+          // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
+          // DON'T set isLocalNavActive yet - let user choose to start navigation
+          setIsShowingPreview(true);
+          localStorage.setItem('navigation_mode', 'route_ready');
           localStorage.setItem('navigation_timestamp', Date.now().toString());
         }}
         selectedProfile={selectedProfile}
