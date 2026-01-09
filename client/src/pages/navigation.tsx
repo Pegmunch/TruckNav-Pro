@@ -2512,14 +2512,21 @@ function NavigationPageContent() {
       return;
     }
     
-    // GUARD: Prevent double-clicks - if already cancelling or mutation pending, ignore
-    if (isCancellingRouteRef.current || completeJourneyMutation.isPending) {
-      console.log('[NAV-STOP] ⏸️ Already cancelling - forcing reset anyway');
-      // Force reset after 500ms to prevent stuck state
-      setTimeout(() => {
-        isCancellingRouteRef.current = false;
-      }, 500);
+    // GUARD: Prevent double-clicks - if mutation is pending, force complete UI reset
+    if (completeJourneyMutation.isPending) {
+      console.log('[NAV-STOP] ⏸️ Mutation pending - forcing UI cleanup');
+      // Force immediate UI cleanup even if mutation is pending
+      setIsLocalNavActive(false);
+      setCurrentRoute(null);
+      setPreviewRoute(null);
+      localStorage.removeItem('navigation_ui_active');
       return;
+    }
+    
+    // If already cancelling, reset the guard and continue (user tapped again)
+    if (isCancellingRouteRef.current) {
+      console.log('[NAV-STOP] ⏸️ Already cancelling - resetting guard and continuing');
+      isCancellingRouteRef.current = false;
     }
     
     // CRITICAL: Set cancellation guard to prevent race condition where
