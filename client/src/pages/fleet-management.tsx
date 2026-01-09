@@ -26,6 +26,7 @@ import { DriverBehaviorTab } from '@/components/fleet/driver-behavior-tab';
 import { HoursOfServiceTab } from '@/components/fleet/hos-tab';
 import { CustomerBillingTab } from '@/components/fleet/customer-billing-tab';
 import { GeofencingTab } from '@/components/fleet/geofencing-tab';
+import { UserGuideTab } from '@/components/fleet/user-guide-tab';
 
 export default function FleetManagement() {
   const { toast } = useToast();
@@ -123,6 +124,11 @@ export default function FleetManagement() {
               <span className="hidden sm:inline">Geofencing</span>
               <span className="sm:hidden">G</span>
             </TabsTrigger>
+            <TabsTrigger value="guide" className="flex items-center gap-2 text-xs sm:text-sm bg-blue-100 dark:bg-blue-900/30" data-testid="tab-guide">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">User Guide</span>
+              <span className="sm:hidden">?</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="vehicles">
@@ -179,6 +185,10 @@ export default function FleetManagement() {
 
           <TabsContent value="geofencing">
             <GeofencingTab />
+          </TabsContent>
+
+          <TabsContent value="guide">
+            <UserGuideTab />
           </TabsContent>
         </Tabs>
         </div>
