@@ -45,12 +45,12 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - Fixed positioning near bottom to avoid ETA header */}
+      {/* Right navigation controls stack - Repositioned to top-right, slightly down to avoid ETA header */}
       {rightStackVisible && (
         <div 
           className="fixed right-4 z-[99999]"
           style={{ 
-            bottom: 'calc(24px + var(--safe-area-bottom, 0px))',
+            top: 'calc(80px + var(--safe-area-top, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}
