@@ -86,6 +86,8 @@ import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
 import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
 import { LanguageSelector } from "@/components/settings/language-selector";
 import { useOnboarding } from "@/components/onboarding/onboarding-provider";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import { Tabs as RouteTabs, TabsList as RouteTabsList, TabsTrigger as RouteTabsTrigger } from "@/components/ui/tabs";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -173,6 +175,10 @@ function ComprehensiveMobileMenu({
   
   // Store coordinates from "From" location for POI search
   const [fromCoordinates, setFromCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [toCoordinates, setToCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // Route preference state (Fastest, Eco, No Tolls)
+  const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   
   // POI search state
   const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
@@ -648,162 +654,85 @@ function ComprehensiveMobileMenu({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* From Location with Autocomplete using Radix Popover */}
+                    {/* From Location with AddressAutocomplete */}
                     <div className="space-y-2">
-                      <Label htmlFor="from-input" className="text-sm font-medium">
-                        From
-                      </Label>
-                      <Popover open={fromOpen} onOpenChange={setFromOpen} modal={false}>
-                        <PopoverAnchor asChild>
-                          <Input
-                            id="from-input"
-                            placeholder="Enter starting location..."
-                            value={fromInput}
-                            onChange={(e) => {
-                              setFromInput(e.target.value);
-                              onFromLocationChange(e.target.value);
-                              setFromCoordinates(null);
-                              setActivePOICategory(null);
-                              setPoiSearchEnabled(false);
-                              if (e.target.value.length >= 2) {
-                                setFromOpen(true);
-                              } else {
-                                setFromOpen(false);
-                              }
-                            }}
-                            onFocus={() => {
-                              if (fromInput.length >= 2) {
-                                setFromOpen(true);
-                              }
-                            }}
-                            onBlur={() => {
-                              setTimeout(() => setFromOpen(false), 200);
-                            }}
-                            data-testid="input-from-location"
-                            className="h-11"
-                            autoComplete="off"
-                          />
-                        </PopoverAnchor>
-                        <PopoverContentInline 
-                          className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
-                          align="start"
-                          side="bottom"
-                          sideOffset={0}
-                          onOpenAutoFocus={(e) => e.preventDefault()}
-                        >
-                          <Command>
-                            <CommandList className="max-h-[200px]">
-                              {fromLoading && (
-                                <div className="flex items-center justify-center py-6">
-                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                </div>
-                              )}
-                              {!fromLoading && fromResults.length === 0 && fromSearch.length >= 3 && (
-                                <CommandEmpty>No locations found.</CommandEmpty>
-                              )}
-                              {fromResults.length > 0 && (
-                                <CommandGroup>
-                                  {fromResults.map((result) => (
-                                    <CommandItem
-                                      key={result.id}
-                                      onSelect={() => {
-                                        const display = formatTomTomDisplay(result);
-                                        const coords = extractTomTomCoordinates(result);
-                                        setFromInput(display);
-                                        onFromLocationChange(display);
-                                        if (coords) {
-                                          setFromCoordinates(coords);
-                                        }
-                                        setFromOpen(false);
-                                      }}
-                                      className="cursor-pointer"
-                                    >
-                                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                                      <span className="text-sm">{formatTomTomDisplay(result)}</span>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              )}
-                            </CommandList>
-                          </Command>
-                        </PopoverContentInline>
-                      </Popover>
+                      <Label className="text-sm font-medium">From</Label>
+                      <AddressAutocomplete
+                        id="from-input-menu"
+                        value={fromInput}
+                        onChange={(value) => {
+                          setFromInput(value);
+                          onFromLocationChange(value);
+                          setActivePOICategory(null);
+                          setPoiSearchEnabled(false);
+                        }}
+                        onCoordinatesChange={(coords) => {
+                          setFromCoordinates(coords);
+                        }}
+                        coordinates={fromCoordinates}
+                        placeholder="Search for address, postcode, or POI..."
+                        testId="input-from-location"
+                      />
                     </div>
 
-                    {/* To Location with Autocomplete using Radix Popover */}
+                    {/* To Location with AddressAutocomplete */}
                     <div className="space-y-2">
-                      <Label htmlFor="to-input" className="text-sm font-medium">
-                        To
-                      </Label>
-                      <Popover open={toOpen} onOpenChange={setToOpen} modal={false}>
-                        <PopoverAnchor asChild>
-                          <Input
-                            id="to-input"
-                            placeholder="Enter destination..."
-                            value={toInput}
-                            onChange={(e) => {
-                              setToInput(e.target.value);
-                              onToLocationChange(e.target.value);
-                              if (e.target.value.length >= 2) {
-                                setToOpen(true);
-                              } else {
-                                setToOpen(false);
-                              }
-                            }}
-                            onFocus={() => {
-                              if (toInput.length >= 2) {
-                                setToOpen(true);
-                              }
-                            }}
-                            onBlur={() => {
-                              setTimeout(() => setToOpen(false), 200);
-                            }}
-                            data-testid="input-to-location"
-                            className="h-11"
-                            autoComplete="off"
-                          />
-                        </PopoverAnchor>
-                        <PopoverContentInline 
-                          className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]" 
-                          align="start"
-                          side="bottom"
-                          sideOffset={0}
-                          onOpenAutoFocus={(e) => e.preventDefault()}
+                      <Label className="text-sm font-medium flex items-center justify-between">
+                        <span>To</span>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={async () => {
+                            await onPlanRoute();
+                          }}
+                          disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
+                          className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                          data-testid="button-go-route"
                         >
-                          <Command>
-                            <CommandList className="max-h-[200px]">
-                              {toLoading && (
-                                <div className="flex items-center justify-center py-6">
-                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                </div>
-                              )}
-                              {!toLoading && toResults.length === 0 && toSearch.length >= 3 && (
-                                <CommandEmpty>No locations found.</CommandEmpty>
-                              )}
-                              {toResults.length > 0 && (
-                                <CommandGroup>
-                                  {toResults.map((result) => (
-                                    <CommandItem
-                                      key={result.id}
-                                      onSelect={() => {
-                                        const display = formatTomTomDisplay(result);
-                                        setToInput(display);
-                                        onToLocationChange(display);
-                                        setToOpen(false);
-                                      }}
-                                      className="cursor-pointer"
-                                    >
-                                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                                      <span className="text-sm">{formatTomTomDisplay(result)}</span>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              )}
-                            </CommandList>
-                          </Command>
-                        </PopoverContentInline>
-                      </Popover>
+                          {isCalculating ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Navigation className="h-4 w-4 mr-1" />
+                              GO
+                            </>
+                          )}
+                        </Button>
+                      </Label>
+                      <AddressAutocomplete
+                        id="to-input-menu"
+                        value={toInput}
+                        onChange={(value) => {
+                          setToInput(value);
+                          onToLocationChange(value);
+                        }}
+                        onCoordinatesChange={(coords) => {
+                          setToCoordinates(coords);
+                        }}
+                        coordinates={toCoordinates}
+                        placeholder="Search for destination..."
+                        testId="input-to-location"
+                      />
                     </div>
+
+                    {/* Route Preferences - Fastest/Eco/No Tolls */}
+                    <RouteTabs 
+                      value={routePreference} 
+                      onValueChange={(value) => setRoutePreference(value as 'fastest' | 'eco' | 'avoid_tolls')} 
+                      className="w-full"
+                    >
+                      <RouteTabsList className="grid w-full grid-cols-3 h-10">
+                        <RouteTabsTrigger value="fastest" className="text-sm" data-testid="tab-fastest">
+                          Fastest
+                        </RouteTabsTrigger>
+                        <RouteTabsTrigger value="eco" className="text-sm" data-testid="tab-eco">
+                          Eco
+                        </RouteTabsTrigger>
+                        <RouteTabsTrigger value="avoid_tolls" className="text-sm" data-testid="tab-avoid-tolls">
+                          No Tolls
+                        </RouteTabsTrigger>
+                      </RouteTabsList>
+                    </RouteTabs>
 
                     {/* Quick POI Search - Integrated into Plan Tab */}
                     <div className="space-y-3 pt-2">
