@@ -3066,52 +3066,23 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* ROUTE READY - Preview (Flyby) and Start Navigation Buttons */}
-                  <div className="fixed flex flex-row gap-3 z-[200] pointer-events-auto"
-                    style={{
-                      top: 'calc(100px + var(--safe-area-top))',
-                      left: '16px'
-                    }}>
-                    {/* Preview Button - Triggers Fly-by Animation */}
-                    <div className="flex flex-row gap-1 bg-blue-600 rounded-full shadow-lg overflow-hidden">
-                      <Button
-                        onClick={handlePreviewRoute}
-                        size="sm"
-                        disabled={isFlyByInProgress}
-                        className="h-8 px-4 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 border-r border-white/20 rounded-none"
-                        style={{ touchAction: 'manipulation' }}
-                        data-testid="button-preview-flyby"
-                      >
-                        {isFlyByInProgress ? 'Flying...' : 'Start Preview'}
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          if (isFlyByInProgress) {
-                            // Logic to stop flyby would go here if supported by the engine
-                            // For now we'll just force the state change if the engine allows interruption
-                            console.log('[FLYBY] Stop requested');
-                          }
-                        }}
-                        size="sm"
-                        disabled={!isFlyByInProgress}
-                        className="h-8 px-4 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-none"
-                        style={{ touchAction: 'manipulation' }}
-                        data-testid="button-stop-preview"
-                      >
-                        Stop Preview
-                      </Button>
-                    </div>
-                    {/* Start Navigation Button */}
-                    <Button
-                      onClick={handleStartNavigation}
-                      size="sm"
-                      className="h-8 px-4 rounded-full shadow-lg bg-green-600 hover:bg-green-700 text-white font-medium text-sm active:scale-95 transition-transform"
-                      style={{ touchAction: 'manipulation' }}
-                      data-testid="button-start-navigation-preview"
-                    >
-                      Start
-                    </Button>
-                  </div>
+                  {/* ETA Glass Bar with integrated buttons - replaces old separate Preview/Start buttons */}
+                  <CompactTripStrip
+                    eta={currentRoute.duration || 0}
+                    distanceRemaining={currentRoute.distance || 0}
+                    isOnline={navigator.onLine}
+                    gpsStatus={gpsData?.status || 'unavailable'}
+                    onPreviewStart={handlePreviewRoute}
+                    onPreviewStop={() => {
+                      console.log('[FLYBY] Stop requested');
+                      setIsFlyByInProgress(false);
+                    }}
+                    onGoStart={handleStartNavigation}
+                    onGoStop={handleStopNavigation}
+                    onSetLocation={() => setShowManualLocationDialog(true)}
+                    isPreviewActive={isFlyByInProgress}
+                    isNavigating={isNavigating}
+                  />
                 </>
               )}
 
@@ -3177,8 +3148,18 @@ function NavigationPageContent() {
                     <CompactTripStrip
                       eta={currentRoute?.duration || 0}
                       distanceRemaining={currentRoute?.distance || 0}
-                      nextManeuver={nextTurn?.roadName || 'Continue'}
-                      nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                      isOnline={navigator.onLine}
+                      gpsStatus={gpsData?.status || 'unavailable'}
+                      onPreviewStart={handlePreviewRoute}
+                      onPreviewStop={() => {
+                        console.log('[FLYBY] Stop requested');
+                        setIsFlyByInProgress(false);
+                      }}
+                      onGoStart={handleStartNavigation}
+                      onGoStop={handleStopNavigation}
+                      onSetLocation={() => setShowManualLocationDialog(true)}
+                      isPreviewActive={isFlyByInProgress}
+                      isNavigating={isNavigating}
                     />
                   }
                   leftStack={
@@ -3540,8 +3521,18 @@ function NavigationPageContent() {
                         <CompactTripStrip
                           eta={currentRoute.duration || 0}
                           distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
-                          nextManeuver={nextTurn?.roadName || 'Continue'}
-                          nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                          isOnline={navigator.onLine}
+                          gpsStatus={gpsData?.status || 'unavailable'}
+                          onPreviewStart={handlePreviewRoute}
+                          onPreviewStop={() => {
+                            console.log('[FLYBY] Stop requested');
+                            setIsFlyByInProgress(false);
+                          }}
+                          onGoStart={handleStartNavigation}
+                          onGoStop={handleStopNavigation}
+                          onSetLocation={() => setShowManualLocationDialog(true)}
+                          isPreviewActive={isFlyByInProgress}
+                          isNavigating={isNavigating}
                         />
                       )}
                       
