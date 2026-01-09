@@ -2095,32 +2095,57 @@ function NavigationPageContent() {
     console.log('[ROUTE-CANCEL] ✅ Route cancelled - returned to plan mode with default truck');
   };
 
-  // Handle preview route - zoom to full route bounds
+  // Handle preview route - fly-by animation along the route at 10x speed
   const handlePreviewRoute = () => {
     if (!currentRoute || !currentRoute.routePath || currentRoute.routePath.length < 2) {
       console.warn('[PREVIEW] Cannot preview - invalid route');
       return;
     }
     
-    console.log('[PREVIEW] Showing full route preview - zooming to bounds');
+    console.log('[PREVIEW] Starting fly-by route preview at 10x speed');
     setIsShowingPreview(true);
     
-    // Calculate route bounds from all waypoints
-    const lats = currentRoute.routePath.map((p: any) => p.lat);
-    const lngs = currentRoute.routePath.map((p: any) => p.lng);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
-    
-    // Dispatch zoom-to-bounds event
-    const zoomEvent = new CustomEvent('zoom_to_bounds', {
-      detail: {
-        bounds: { north: maxLat, south: minLat, east: maxLng, west: minLng },
-        padding: 50
-      }
-    });
-    window.dispatchEvent(zoomEvent);
+    // Trigger fly-by animation via map ref
+    if (mapRef.current) {
+      mapRef.current.flyByRoute(currentRoute.routePath!, {
+        speedMultiplier: 10,
+        onComplete: () => {
+          console.log('[PREVIEW] Fly-by animation complete - zooming to full route bounds');
+          // After fly-by, zoom out to show full route
+          if (!currentRoute.routePath) return;
+          const lats = currentRoute.routePath.map((p: any) => p.lat);
+          const lngs = currentRoute.routePath.map((p: any) => p.lng);
+          const minLat = Math.min(...lats);
+          const maxLat = Math.max(...lats);
+          const minLng = Math.min(...lngs);
+          const maxLng = Math.max(...lngs);
+          
+          const zoomEvent = new CustomEvent('zoom_to_bounds', {
+            detail: {
+              bounds: { north: maxLat, south: minLat, east: maxLng, west: minLng },
+              padding: 50
+            }
+          });
+          window.dispatchEvent(zoomEvent);
+        }
+      });
+    } else {
+      // Fallback to simple zoom if map ref not available
+      const lats = currentRoute.routePath.map((p: any) => p.lat);
+      const lngs = currentRoute.routePath.map((p: any) => p.lng);
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+      
+      const zoomEvent = new CustomEvent('zoom_to_bounds', {
+        detail: {
+          bounds: { north: maxLat, south: minLat, east: maxLng, west: minLng },
+          padding: 50
+        }
+      });
+      window.dispatchEvent(zoomEvent);
+    }
   };
 
   // Handle use current location with reverse geocoding

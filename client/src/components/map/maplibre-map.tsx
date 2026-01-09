@@ -24,6 +24,13 @@ export interface MapLibreMapRef {
   zoomOut: () => void;
   toggleMapView: () => void;
   getMapViewMode: () => 'roads' | 'satellite';
+  flyByRoute: (routeCoordinates: Array<{lat: number; lng: number}>, options?: {
+    speedMultiplier?: number;
+    onComplete?: () => void;
+    onCancel?: () => void;
+  }) => void;
+  cancelFlyBy: () => void;
+  isFlyByActive: () => boolean;
   zoomToUserLocation: (options?: {
     forceStreetMode?: boolean;
     zoom?: number;
@@ -175,6 +182,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
+  
+  // Fly-by animation state
+  const [isFlyByActive, setIsFlyByActive] = useState(false);
+  const flyByAnimationRef = useRef<number | null>(null);
+  const flyByCancelledRef = useRef(false);
+  const flyByCallbacksRef = useRef<{ onComplete?: () => void; onCancel?: () => void }>({});
   
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
@@ -609,8 +622,164 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       setPreferences(newPrefs);
       saveMapPreferences(newPrefs);
     },
-    getMapViewMode: () => preferences.mapViewMode
-  }), [bearing, is3DMode, preferences.mapViewMode]);
+    getMapViewMode: () => preferences.mapViewMode,
+    flyByRoute: (routeCoordinates, options = {}) => {
+      const { speedMultiplier = 10, onComplete, onCancel } = options;
+      
+      if (!map.current || !isLoaded || routeCoordinates.length < 2) {
+        console.warn('[FLY-BY] Cannot start - map not ready or invalid route');
+        return;
+      }
+      
+      // Cancel any existing fly-by
+      if (flyByAnimationRef.current) {
+        cancelAnimationFrame(flyByAnimationRef.current);
+        flyByAnimationRef.current = null;
+      }
+      
+      flyByCancelledRef.current = false;
+      flyByCallbacksRef.current = { onComplete, onCancel };
+      setIsFlyByActive(true);
+      
+      console.log('[FLY-BY] Starting route fly-by animation at', speedMultiplier, 'x speed');
+      
+      const mapInstance = map.current;
+      const coords = routeCoordinates.map(c => [c.lng, c.lat] as [number, number]);
+      
+      // Calculate total route distance in kilometers for timing
+      let totalDistanceKm = 0;
+      for (let i = 1; i < coords.length; i++) {
+        // Haversine distance calculation
+        const lat1 = coords[i-1][1] * Math.PI / 180;
+        const lat2 = coords[i][1] * Math.PI / 180;
+        const dLat = (coords[i][1] - coords[i-1][1]) * Math.PI / 180;
+        const dLng = (coords[i][0] - coords[i-1][0]) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1) * Math.cos(lat2) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        totalDistanceKm += 6371 * c; // Earth radius in km
+      }
+      
+      // Duration based on real distance at 10x speed
+      // At 100 km/h normal speed, 10x = 1000 km/h = 16.67 km/min
+      // So 1 km takes ~60ms at 10x speed, minimum 3s, max 60s
+      const msPerKm = 60 / speedMultiplier; // ms per km at desired speed
+      const calculatedDuration = totalDistanceKm * msPerKm * 1000;
+      const totalDuration = Math.max(3000, Math.min(60000, calculatedDuration));
+      
+      console.log(`[FLY-BY] Route distance: ${totalDistanceKm.toFixed(1)} km, duration: ${(totalDuration/1000).toFixed(1)}s`);
+      
+      // Sample route at regular intervals (every ~100 points for smooth animation)
+      const sampleCount = Math.min(coords.length, 150);
+      const sampleStep = Math.max(1, Math.floor(coords.length / sampleCount));
+      const sampledCoords: [number, number][] = [];
+      for (let i = 0; i < coords.length; i += sampleStep) {
+        sampledCoords.push(coords[i]);
+      }
+      // Always include the last point
+      if (sampledCoords[sampledCoords.length - 1] !== coords[coords.length - 1]) {
+        sampledCoords.push(coords[coords.length - 1]);
+      }
+      
+      const startTime = performance.now();
+      let currentIndex = 0;
+      
+      // Calculate bearing between two points
+      const calculateBearing = (from: [number, number], to: [number, number]): number => {
+        const dLng = (to[0] - from[0]) * Math.PI / 180;
+        const lat1 = from[1] * Math.PI / 180;
+        const lat2 = to[1] * Math.PI / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+      };
+      
+      const animate = () => {
+        if (flyByCancelledRef.current) {
+          console.log('[FLY-BY] Animation cancelled');
+          setIsFlyByActive(false);
+          flyByCallbacksRef.current.onCancel?.();
+          return;
+        }
+        
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(elapsed / totalDuration, 1);
+        
+        // Calculate current position along sampled route
+        const floatIndex = progress * (sampledCoords.length - 1);
+        const idx = Math.floor(floatIndex);
+        const fraction = floatIndex - idx;
+        
+        if (idx >= sampledCoords.length - 1) {
+          // Animation complete
+          const lastCoord = sampledCoords[sampledCoords.length - 1];
+          mapInstance.jumpTo({
+            center: lastCoord,
+            zoom: 14,
+            pitch: 45,
+            bearing: 0
+          });
+          console.log('[FLY-BY] Animation complete');
+          setIsFlyByActive(false);
+          flyByAnimationRef.current = null;
+          flyByCallbacksRef.current.onComplete?.();
+          return;
+        }
+        
+        // Interpolate position
+        const from = sampledCoords[idx];
+        const to = sampledCoords[idx + 1];
+        const lng = from[0] + (to[0] - from[0]) * fraction;
+        const lat = from[1] + (to[1] - from[1]) * fraction;
+        
+        // Calculate bearing to next point
+        const bearing = calculateBearing(from, to);
+        
+        // Smooth zoom: start at 12, go to 15 at midpoint, back to 12 at end
+        const zoomCurve = 12 + 3 * Math.sin(progress * Math.PI);
+        
+        // Smooth pitch: 30 at start, 60 at midpoint, 30 at end
+        const pitchCurve = 30 + 30 * Math.sin(progress * Math.PI);
+        
+        mapInstance.jumpTo({
+          center: [lng, lat],
+          zoom: zoomCurve,
+          pitch: pitchCurve,
+          bearing: bearing
+        });
+        
+        flyByAnimationRef.current = requestAnimationFrame(animate);
+      };
+      
+      // Start animation with initial view
+      const firstCoord = sampledCoords[0];
+      const secondCoord = sampledCoords[1];
+      const initialBearing = calculateBearing(firstCoord, secondCoord);
+      
+      mapInstance.jumpTo({
+        center: firstCoord,
+        zoom: 12,
+        pitch: 30,
+        bearing: initialBearing
+      });
+      
+      // Start animation loop
+      flyByAnimationRef.current = requestAnimationFrame(animate);
+    },
+    cancelFlyBy: () => {
+      if (flyByAnimationRef.current) {
+        flyByCancelledRef.current = true;
+        cancelAnimationFrame(flyByAnimationRef.current);
+        flyByAnimationRef.current = null;
+        setIsFlyByActive(false);
+        console.log('[FLY-BY] Cancelled by user');
+        // Invoke callback so consumers can react
+        flyByCallbacksRef.current.onCancel?.();
+      }
+    },
+    isFlyByActive: () => isFlyByActive
+  }), [bearing, is3DMode, preferences.mapViewMode, isLoaded, isFlyByActive]);
   
   // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({
