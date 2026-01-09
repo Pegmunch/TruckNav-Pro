@@ -763,7 +763,16 @@ export function AddressAutocomplete({
                         value={`fav-${loc.id}-${loc.label}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
-                        onPointerUp={() => handleSelectSavedLocation(loc)}
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectSavedLocation(loc);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectSavedLocation(loc);
+                        }}
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
                         <div className="flex flex-col">
@@ -778,7 +787,16 @@ export function AddressAutocomplete({
                         value={`recent-${loc.id}-${loc.label}`}
                         onSelect={() => handleSelectSavedLocation(loc)}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
-                        onPointerUp={() => handleSelectSavedLocation(loc)}
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectSavedLocation(loc);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectSavedLocation(loc);
+                        }}
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
                         <div className="flex flex-col">
@@ -797,7 +815,16 @@ export function AddressAutocomplete({
                       value={`postcode-${ukPostcodeResult.formatted}`}
                       onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
-                      onPointerUp={() => handleSelectUKPostcode(ukPostcodeResult)}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSelectUKPostcode(ukPostcodeResult);
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSelectUKPostcode(ukPostcodeResult);
+                      }}
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
                       <div className="flex flex-col">
@@ -819,7 +846,16 @@ export function AddressAutocomplete({
                           value={`tomtom-${result.id || index}-${result.address?.freeformAddress || ''}`}
                           onSelect={() => handleSelectTomTom(result)}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
-                          onPointerUp={() => handleSelectTomTom(result)}
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectTomTom(result);
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectTomTom(result);
+                          }}
                         >
                           {isPoi ? (
                             <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
