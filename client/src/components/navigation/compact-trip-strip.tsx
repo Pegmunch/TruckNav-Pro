@@ -27,10 +27,11 @@ function getDefaultPosition(): Position {
   
   const stripWidth = Math.min(380, window.innerWidth * 0.92);
   
-  // Start centered and below the navigation header (56px + safe area)
+  // Start centered and below the navigation header (56px header + safe area + padding)
+  const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top') || '0', 10) || 0;
   return { 
     x: Math.max(10, (window.innerWidth - stripWidth) / 2), 
-    y: 70 // Position below the TruckNav Pro header
+    y: safeTop + 56 + 8 // Position below the 56px TruckNav Pro header with 8px gap
   };
 }
 
@@ -148,7 +149,7 @@ export function CompactTripStrip({
         pointerEvents: 'auto',
         left: 0,
         top: 0,
-        zIndex: 6000
+        zIndex: 4000
       }}
       data-testid="compact-trip-strip"
     >
