@@ -1005,6 +1005,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // Helper to ensure labels overlay exists and is on top
     const ensureLabelsOverlay = () => {
       // Add source if missing - using dark_only_labels which has white text for satellite imagery
+      // CRITICAL: Use tileSize: 512 for @2x tiles to prevent black seam artifacts
       if (!mapInstance.getSource('labels-overlay')) {
         mapInstance.addSource('labels-overlay', {
           type: 'raster',
@@ -1013,7 +1014,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
             'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
           ],
-          tileSize: 256,
+          tileSize: 512,
           maxzoom: 20,
           attribution: '© <a href="https://carto.com/">CARTO</a>'
         });
@@ -1286,6 +1287,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         // Add labels overlay source (CartoDB Dark Matter labels-only layer)
         // This provides city names, town names, and road names on top of satellite imagery
         // Using dark_only_labels which has white text perfect for satellite imagery
+        // CRITICAL: Use tileSize: 512 for @2x tiles to prevent black seam artifacts
         if (!mapInstance.getSource('labels-overlay')) {
           mapInstance.addSource('labels-overlay', {
             type: 'raster',
@@ -1294,7 +1296,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
               'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
             ],
-            tileSize: 256,
+            tileSize: 512,
             maxzoom: 20,
             attribution: '© <a href="https://carto.com/">CARTO</a>'
           });
