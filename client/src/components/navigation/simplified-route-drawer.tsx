@@ -1,6 +1,5 @@
 import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -43,23 +42,20 @@ export function SimplifiedRouteDrawer({
 }: SimplifiedRouteDrawerProps) {
   const gps = useGPS();
   const [selectedPOICategory, setSelectedPOICategory] = useState<string>('');
-  const [poiSearchQuery, setPOISearchQuery] = useState('');
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [recentLocations, setRecentLocations] = useState<Array<{ name: string; lat: number; lng: number; timestamp: number }>>([]);
 
-  // Load recent locations from localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem('trucknav_recent_locations');
       if (stored) {
-        setRecentLocations(JSON.parse(stored).slice(0, 5)); // Keep last 5
+        setRecentLocations(JSON.parse(stored).slice(0, 5));
       }
     } catch (error) {
       console.error('Failed to load recent locations:', error);
     }
   }, []);
 
-  // Save a location to recent locations
   const saveRecentLocation = (name: string, lat: number, lng: number) => {
     const newLocation = { name, lat, lng, timestamp: Date.now() };
     const updated = [newLocation, ...recentLocations.filter(l => !(l.lat === lat && l.lng === lng))].slice(0, 5);
@@ -94,7 +90,6 @@ export function SimplifiedRouteDrawer({
     }
   }), []);
 
-  // POI Categories - mapped to TomTom POI types
   const poiCategories = [
     { value: 'restaurant', label: 'Restaurant', icon: UtensilsCrossed },
     { value: 'fuel', label: 'Fuel', icon: Fuel },
@@ -104,12 +99,9 @@ export function SimplifiedRouteDrawer({
     { value: 'supermarket', label: 'Supermarket', icon: ShoppingCart },
   ];
 
-  // When POI category selected, automatically search with available location
-  // Priority: 1) fromCoordinates (from address or GPS button), 2) direct GPS position
   const hasSearchableLocation = fromCoordinates || (isGPSReady && gps?.position);
   const shouldSearchPOI = selectedPOICategory && hasSearchableLocation;
   
-  // Get coordinates for POI search
   const gpsCoords = fromCoordinates ? {
     lat: fromCoordinates.lat,
     lng: fromCoordinates.lng
@@ -118,11 +110,9 @@ export function SimplifiedRouteDrawer({
     lng: gps.position.longitude 
   } : undefined;
   
-  // Build POI search parameters for TomTom API
   const poiSearchParams = gpsCoords && selectedPOICategory ? 
     `lat=${gpsCoords.lat}&lng=${gpsCoords.lng}&radius=25&type=${selectedPOICategory}` : null;
   
-  // Fetch POI results using TomTom-based /api/poi-search endpoint
   const { data: poiResults = [], isLoading: isLoadingPOI } = useQuery<Facility[]>({
     queryKey: ['/api/poi-search', poiSearchParams],
     queryFn: async () => {
@@ -134,30 +124,24 @@ export function SimplifiedRouteDrawer({
       return response.json();
     },
     enabled: !!shouldSearchPOI && !!poiSearchParams,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Handle POI selection
   const handleSelectPOI = (poi: Facility) => {
     const displayLabel = poi.name;
     const address = poi.address || "";
     const fullLabel = address ? `${displayLabel}, ${address}` : displayLabel;
-    
     const coordinates = { lat: poi.coordinates.lat, lng: poi.coordinates.lng };
-    
     onToLocationChange(fullLabel);
     onToCoordinatesChange?.(coordinates);
-    setSelectedPOICategory(''); // Clear selection after choosing
+    setSelectedPOICategory('');
   };
 
   return (
     <div className="space-y-6">
-      {/* Route Inputs */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="from-location" className="text-sm font-medium">
-            From
-          </Label>
+          <Label htmlFor="from-location" className="text-sm font-medium">From</Label>
           <div className="flex gap-2 relative">
             <AddressAutocomplete
               id="from-location"
@@ -176,26 +160,20 @@ export function SimplifiedRouteDrawer({
               style={{ touchAction: 'manipulation' }}
               data-testid="button-location-dropdown"
               title="Select location or use GPS"
-              {...createTouchHandler(() => {
-                console.log('[GPS-BUTTON] Clicked - current state:', isLocationDropdownOpen);
-                setIsLocationDropdownOpen(!isLocationDropdownOpen);
-              }, 'GPS-DROPDOWN')}
+              {...createTouchHandler(() => setIsLocationDropdownOpen(!isLocationDropdownOpen), 'GPS-DROPDOWN')}
               type="button"
             >
               <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600' : 'text-gray-400'}`} />
             </Button>
 
-            {/* Manual Dropdown Menu */}
             {isLocationDropdownOpen && (
               <div 
                 className="absolute top-full right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg p-2" 
                 style={{ zIndex: 9999 }}
                 data-testid="location-dropdown-menu"
                 onClick={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
               >
                 <div className="space-y-1">
-                  {/* Current GPS Location - Always at top */}
                   {isGPSReady && gps?.position && (
                     <Button
                       variant="ghost"
@@ -204,7 +182,6 @@ export function SimplifiedRouteDrawer({
                       onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('[DROPDOWN] Current Location selected');
                         const coords = { lat: gps.position!.latitude, lng: gps.position!.longitude };
                         const locationName = 'Current Location';
                         onFromCoordinatesChange?.(coords);
@@ -213,33 +190,24 @@ export function SimplifiedRouteDrawer({
                         onUseCurrentLocation?.();
                         setIsLocationDropdownOpen(false);
                       }}
-                      data-testid="location-option-current"
                     >
                       <Crosshair className="w-4 h-4 mr-2 shrink-0 text-green-600" />
                       <span className="text-sm font-medium">Current Location</span>
                     </Button>
                   )}
-
-                  {/* GPS Initializing state */}
                   {isGPSInitializing && !isGPSReady && (
                     <div className="p-3 text-xs text-center text-muted-foreground flex flex-col items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Waiting for GPS...</span>
                     </div>
                   )}
-
-                  {/* GPS Error state */}
                   {hasGPSError && !isGPSReady && (
                     <div className="p-3 text-xs text-center text-destructive flex flex-col items-center gap-2">
                       <AlertCircle className="w-4 h-4" />
                       <span>{gps?.errorMessage || 'Enable GPS in your browser settings'}</span>
                     </div>
                   )}
-
-                  {/* Divider if there are recent locations */}
                   {recentLocations.length > 0 && <div className="border-t my-1" />}
-
-                  {/* Recent Locations */}
                   {recentLocations.map((location, idx) => (
                     <Button
                       key={idx}
@@ -249,7 +217,6 @@ export function SimplifiedRouteDrawer({
                       onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('[DROPDOWN] Recent location selected:', location.name);
                         const coords = { lat: location.lat, lng: location.lng };
                         onFromCoordinatesChange?.(coords);
                         onFromLocationChange(location.name);
@@ -257,69 +224,33 @@ export function SimplifiedRouteDrawer({
                         onUseCurrentLocation?.();
                         setIsLocationDropdownOpen(false);
                       }}
-                      data-testid={`location-option-recent-${idx}`}
                     >
                       <Clock className="w-4 h-4 mr-2 shrink-0 text-gray-400" />
                       <span className="text-sm truncate">{location.name}</span>
                     </Button>
                   ))}
-
-                  {/* Empty state */}
-                  {recentLocations.length === 0 && !isGPSInitializing && !hasGPSError && (
-                    <div className="p-2 text-xs text-muted-foreground text-center">
-                      Locations will appear here as you use them
-                    </div>
-                  )}
                 </div>
               </div>
             )}
-
-            {/* Close dropdown when clicking outside - z-45 so it's below the dropdown (z-50) */}
             {isLocationDropdownOpen && (
-              <div 
-                className="fixed inset-0"
-                style={{ zIndex: 45 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsLocationDropdownOpen(false);
-                }}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  setIsLocationDropdownOpen(false);
-                }}
-              />
+              <div className="fixed inset-0" style={{ zIndex: 45 }} onClick={() => setIsLocationDropdownOpen(false)} />
             )}
           </div>
-
-          {/* GPS Status Indicator */}
           {gps && (
-            <div className="flex items-center gap-2 text-xs" data-testid="gps-status-indicator">
-              {isGPSReady && (
-                <>
-                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  <span className="text-green-600 dark:text-green-400">GPS Ready</span>
-                </>
-              )}
-              {hasGPSError && (
-                <>
-                  <AlertCircle className="w-4 h-4 text-destructive" />
-                  <span className="text-destructive">{gps.errorMessage || 'GPS unavailable'}</span>
-                </>
-              )}
-              {isGPSInitializing && (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                  <span className="text-muted-foreground">Waiting for GPS...</span>
-                </>
-              )}
+            <div className="flex items-center gap-2 text-xs">
+              {isGPSReady ? (
+                <><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-green-600">GPS Ready</span></>
+              ) : hasGPSError ? (
+                <><AlertCircle className="w-4 h-4 text-destructive" /><span className="text-destructive">{gps.errorMessage || 'GPS unavailable'}</span></>
+              ) : isGPSInitializing ? (
+                <><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /><span className="text-muted-foreground">Waiting for GPS...</span></>
+              ) : null}
             </div>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="to-location" className="text-sm font-medium">
-            To
-          </Label>
+          <Label htmlFor="to-location" className="text-sm font-medium">To</Label>
           <div className="flex gap-2">
             <AddressAutocomplete
               id="to-location"
@@ -330,131 +261,88 @@ export function SimplifiedRouteDrawer({
               testId="input-to-location"
               className="flex-1"
             />
-            <Button
-              variant="default"
-              size="lg"
-              {...createTouchHandler(onPlanRoute, 'GO-ROUTE')}
-              disabled={!fromLocation || !toLocation || !activeProfileId}
-              className="h-12 px-6 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 text-white font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed select-none touch-manipulation"
-              style={{ touchAction: 'manipulation' }}
-              data-testid="button-plan-route"
-              title={!activeProfileId ? "Please select a vehicle profile first" : "Plan route"}
-            >
-              <Navigation className="w-5 h-5 mr-2" />
-              GO
-            </Button>
           </div>
         </div>
       </div>
 
-      {/* Route Preferences */}
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-muted-foreground">Route Preferences</h3>
-        <Tabs value={routePreference} onValueChange={(value) => onRoutePreferenceChange(value as 'fastest' | 'eco' | 'avoid_tolls')} className="w-full">
+        <Tabs value={routePreference} onValueChange={(value) => onRoutePreferenceChange(value as 'fastest' | 'eco' | 'avoid_tolls')}>
           <TabsList className="grid w-full grid-cols-3 h-10">
-            <TabsTrigger value="fastest" className="text-sm" data-testid="tab-fastest">
-              Fastest
-            </TabsTrigger>
-            <TabsTrigger value="eco" className="text-sm" data-testid="tab-eco">
-              Eco
-            </TabsTrigger>
-            <TabsTrigger value="avoid_tolls" className="text-sm" data-testid="tab-avoid-tolls">
-              No Tolls
-            </TabsTrigger>
+            <TabsTrigger value="fastest">Fastest</TabsTrigger>
+            <TabsTrigger value="eco">Eco</TabsTrigger>
+            <TabsTrigger value="avoid_tolls">No Tolls</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* POI Near Me */}
       <div className="space-y-3 pb-4">
         <h3 className="text-sm font-medium text-muted-foreground">Find Places Near Me</h3>
-        
-        {/* POI Category Buttons */}
-        <ToggleGroup 
-          type="single" 
-          value={selectedPOICategory} 
-          onValueChange={setSelectedPOICategory}
-          className="grid grid-cols-2 gap-2 w-full"
-        >
+        <ToggleGroup type="single" value={selectedPOICategory} onValueChange={setSelectedPOICategory} className="grid grid-cols-2 gap-2 w-full">
           {poiCategories.map((category) => {
             const Icon = category.icon;
             return (
-              <ToggleGroupItem
-                key={category.value}
-                value={category.value}
-                className="h-12 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                data-testid={`poi-category-${category.value}`}
-                disabled={!hasSearchableLocation}
-              >
-                <Icon className="w-4 h-4 mr-2" />
-                {category.label}
+              <ToggleGroupItem key={category.value} value={category.value} className="h-12 text-sm" disabled={!hasSearchableLocation}>
+                <Icon className="w-4 h-4 mr-2" />{category.label}
               </ToggleGroupItem>
             );
           })}
         </ToggleGroup>
 
-        {!hasSearchableLocation && (
-          <p className="text-xs text-muted-foreground text-center">
-            {hasGPSError 
-              ? 'Enter an address or click the GPS button to search nearby places' 
-              : fromLocation 
-                ? 'Enter a more specific address to search nearby places'
-                : 'Enter a starting location to search nearby places'
-            }
-          </p>
-        )}
-
-        {/* POI Results */}
         {selectedPOICategory && hasSearchableLocation && (
           <div className="mt-3 space-y-2">
-            {isLoadingPOI && (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">Searching nearby...</span>
-              </div>
-            )}
-
-            {!isLoadingPOI && poiResults.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-2">
-                No {selectedPOICategory.replace('_', ' ')}s found nearby
-              </p>
-            )}
-
-            {!isLoadingPOI && poiResults.length > 0 && (
+            {isLoadingPOI ? (
+              <div className="flex items-center justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /><span className="ml-2 text-sm text-muted-foreground">Searching nearby...</span></div>
+            ) : poiResults.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-2">No {selectedPOICategory.replace('_', ' ')}s found nearby</p>
+            ) : (
               <div className="space-y-1 max-h-48 overflow-y-auto">
-                <p className="text-xs font-medium text-muted-foreground px-2">
-                  Found {poiResults.length} nearby:
-                </p>
-                {poiResults.slice(0, 10).map((poi, index) => (
-                  <Button
-                    key={poi.id || index}
-                    variant="ghost"
-                    className="w-full justify-start h-auto py-3 px-2 text-left active:bg-gray-100 active:scale-98 select-none touch-manipulation"
-                    style={{ touchAction: 'manipulation' }}
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSelectPOI(poi);
-                    }}
-                    data-testid={`poi-result-${index}`}
-                  >
-                    <MapPin className="w-4 h-4 mr-2 shrink-0 text-primary" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {poi.name}
-                      </p>
-                      {poi.address && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {poi.address}
-                        </p>
-                      )}
-                    </div>
-                  </Button>
-                ))}
+                <p className="text-xs font-medium text-muted-foreground px-2">Found {poiResults.length} nearby:</p>
+                {poiResults.slice(0, 10).map((poi, index) => {
+                  let distanceStr = '';
+                  if (gpsCoords && poi.coordinates) {
+                    const lat1 = gpsCoords.lat, lon1 = gpsCoords.lng, lat2 = poi.coordinates.lat, lon2 = poi.coordinates.lng;
+                    const R = 3958.8, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+                    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+                    distanceStr = `(${(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1)} miles)`;
+                  }
+                  return (
+                    <Button
+                      key={poi.id || index}
+                      variant="ghost"
+                      className="w-full justify-start h-auto py-3 px-2 text-left active:bg-gray-100 active:scale-98 select-none touch-manipulation"
+                      style={{ touchAction: 'manipulation' }}
+                      onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectPOI(poi); }}
+                    >
+                      <MapPin className="w-4 h-4 mr-2 shrink-0 text-primary" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium truncate">{poi.name}</p>
+                          {distanceStr && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">{distanceStr}</span>}
+                        </div>
+                        {poi.address && <p className="text-xs text-muted-foreground truncate">{poi.address}</p>}
+                      </div>
+                    </Button>
+                  );
+                })}
               </div>
             )}
           </div>
         )}
+      </div>
+
+      <div className="pt-4 mt-2 border-t sticky bottom-0 bg-white">
+        <Button
+          variant="default"
+          size="lg"
+          {...createTouchHandler(onPlanRoute, 'GO-ROUTE-FOOTER')}
+          disabled={!fromLocation || !toLocation || !activeProfileId}
+          className="w-full h-14 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 text-white text-lg font-bold shadow-lg flex items-center justify-center gap-3 select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
+        >
+          <Navigation className="w-6 h-6" />
+          GO
+        </Button>
       </div>
     </div>
   );
