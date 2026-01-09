@@ -794,11 +794,11 @@ export function AddressAutocomplete({
                       </div>
                     )}
                     {gpsCandidate && (
-                      <CommandItem
-                        value={`gps-candidate-${gpsCandidate.address}`}
-                        onSelect={handleSelectGPSCandidate}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
+                      <div
+                        role="option"
+                        tabIndex={0}
                         onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
                         className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-100 dark:active:bg-blue-900 border-2 border-blue-500 rounded-lg"
                       >
                         <Navigation2 className="mr-3 h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -807,7 +807,7 @@ export function AddressAutocomplete({
                           <span className="text-xs text-blue-600 dark:text-blue-400">Tap to use this location</span>
                         </div>
                         <Crosshair className="h-5 w-5 text-blue-500" />
-                      </CommandItem>
+                      </div>
                     )}
                   </CommandGroup>
                 )}
@@ -829,12 +829,12 @@ export function AddressAutocomplete({
                 {(favoriteLocations.length > 0 || recentLocations.length > 0) && (
                   <CommandGroup heading="Saved Locations">
                     {favoriteLocations.map(loc => (
-                      <CommandItem
+                      <div
                         key={`fav-${loc.id}`}
-                        value={`fav-${loc.id}-${loc.label}`}
-                        onSelect={() => handleSelectSavedLocation(loc)}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
+                        role="option"
+                        tabIndex={0}
                         onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
@@ -842,15 +842,15 @@ export function AddressAutocomplete({
                           <span className="font-semibold">{loc.label}</span>
                           <span className="text-xs text-muted-foreground">Favorite Location</span>
                         </div>
-                      </CommandItem>
+                      </div>
                     ))}
                     {recentLocations.map(loc => (
-                      <CommandItem
+                      <div
                         key={`recent-${loc.id}`}
-                        value={`recent-${loc.id}-${loc.label}`}
-                        onSelect={() => handleSelectSavedLocation(loc)}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
+                        role="option"
+                        tabIndex={0}
                         onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
                         className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
@@ -858,7 +858,7 @@ export function AddressAutocomplete({
                           <span className="font-semibold">{loc.label}</span>
                           <span className="text-xs text-muted-foreground">Recent Location</span>
                         </div>
-                      </CommandItem>
+                      </div>
                     ))}
                   </CommandGroup>
                 )}
@@ -866,11 +866,11 @@ export function AddressAutocomplete({
                 {/* UK Postcode Result (Fallback) */}
                 {ukPostcodeResult && (
                   <CommandGroup heading="Postcode Result">
-                    <CommandItem
-                      value={`postcode-${ukPostcodeResult.formatted}`}
-                      onSelect={() => handleSelectUKPostcode(ukPostcodeResult)}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
+                    <div
+                      role="option"
+                      tabIndex={0}
                       onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
                       className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
@@ -878,7 +878,7 @@ export function AddressAutocomplete({
                         <span className="font-semibold">{ukPostcodeResult.address || ukPostcodeResult.formatted}</span>
                         <span className="text-xs text-muted-foreground">UK Postcode Geocode</span>
                       </div>
-                    </CommandItem>
+                    </div>
                   </CommandGroup>
                 )}
 
@@ -888,12 +888,12 @@ export function AddressAutocomplete({
                     {tomtomResults.map((result, index) => {
                       const isPoi = isTomTomPOI(result);
                       return (
-                        <CommandItem
+                        <div
                           key={result.id || `tomtom-${index}`}
-                          value={`tomtom-${result.id || index}-${result.address?.freeformAddress || ''}`}
-                          onSelect={() => handleSelectTomTom(result)}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
+                          role="option"
+                          tabIndex={0}
                           onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
                           className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
                         >
                           {isPoi ? (
@@ -915,7 +915,7 @@ export function AddressAutocomplete({
                               </Badge>
                             )}
                           </div>
-                        </CommandItem>
+                        </div>
                       );
                     })}
                   </CommandGroup>
