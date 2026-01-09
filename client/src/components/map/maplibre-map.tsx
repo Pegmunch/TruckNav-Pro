@@ -1004,14 +1004,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     // Helper to ensure labels overlay exists and is on top
     const ensureLabelsOverlay = () => {
-      // Add source if missing
+      // Add source if missing - using light_only_labels for transparent background (no black artifacts)
       if (!mapInstance.getSource('labels-overlay')) {
         mapInstance.addSource('labels-overlay', {
           type: 'raster',
           tiles: [
-            'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
-            'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
-            'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
+            'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/light_only_labels/{z}/{x}/{y}@2x.png',
+            'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/light_only_labels/{z}/{x}/{y}@2x.png',
+            'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/light_only_labels/{z}/{x}/{y}@2x.png'
           ],
           tileSize: 256,
           maxzoom: 20,
@@ -1038,6 +1038,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         } catch (e) {
           // Layer might already be on top
         }
+      }
+    };
+    
+    // Helper to ensure route layers are on top (above all base layers including labels)
+    const ensureRouteLayers = () => {
+      try {
+        if (mapInstance.getLayer('route-outline')) {
+          mapInstance.moveLayer('route-outline');
+        }
+        if (mapInstance.getLayer('route-line')) {
+          mapInstance.moveLayer('route-line');
+        }
+        console.log('[ROUTE-LAYERS] Moved route layers to top after mode switch');
+      } catch (e) {
+        // Layers might not exist yet
       }
     };
     
@@ -1069,6 +1084,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
         }
       }
+      
+      // CRITICAL: Always ensure route layers are on top after mode switch
+      // This prevents the blue navigation line from being hidden behind other layers
+      ensureRouteLayers();
     } catch (error) {
       console.warn('Failed to update layer visibility:', error);
     }
@@ -1264,16 +1283,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           });
         }
 
-        // Add labels overlay source (CartoDB Dark Matter labels-only layer)
+        // Add labels overlay source (CartoDB Light labels-only layer)
         // This provides city names, town names, and road names on top of satellite imagery
-        // Using dark_only_labels which has white text perfect for satellite imagery
+        // Using light_only_labels which has transparent background - fixes black line artifacts
         if (!mapInstance.getSource('labels-overlay')) {
           mapInstance.addSource('labels-overlay', {
             type: 'raster',
             tiles: [
-              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
-              'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png',
-              'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/dark_only_labels/{z}/{x}/{y}@2x.png'
+              'https://cartodb-basemaps-a.global.ssl.fastly.net/rastertiles/light_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-b.global.ssl.fastly.net/rastertiles/light_only_labels/{z}/{x}/{y}@2x.png',
+              'https://cartodb-basemaps-c.global.ssl.fastly.net/rastertiles/light_only_labels/{z}/{x}/{y}@2x.png'
             ],
             tileSize: 256,
             maxzoom: 20,
