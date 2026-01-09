@@ -24,9 +24,9 @@ export function NavigationLayout({
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
   
   return (
-    <div className="relative w-full h-screen overflow-hidden pointer-events-none">
+    <div className="relative w-full h-screen overflow-hidden pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]">
       {/* Map content - full screen overlay container (pointer-events: none to allow map clicks through) */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 lg:top-[calc(env(safe-area-inset-top,0px)+56px)] z-0 pointer-events-none">
         {mapContent}
       </div>
 
