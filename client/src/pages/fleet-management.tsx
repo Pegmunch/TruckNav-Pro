@@ -195,12 +195,16 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
       performance.mark('fleet-vehicles-fetch-start');
       console.log('[PERF-FLEET] 🚗 Fetching fleet vehicles...');
       const response = await fetch('/api/fleet/vehicles');
+      if (!response.ok) {
+        console.log('[PERF-FLEET] ❌ Fleet vehicles fetch failed:', response.status);
+        return [];
+      }
       const data = await response.json();
       performance.mark('fleet-vehicles-fetch-end');
       performance.measure('fleet-vehicles-fetch', 'fleet-vehicles-fetch-start', 'fleet-vehicles-fetch-end');
       const measure = performance.getEntriesByName('fleet-vehicles-fetch')[0];
-      console.log(`[PERF-FLEET] ✅ Fleet vehicles loaded: ${data.length} vehicles in ${measure.duration.toFixed(0)}ms`);
-      return data;
+      console.log(`[PERF-FLEET] ✅ Fleet vehicles loaded: ${Array.isArray(data) ? data.length : 0} vehicles in ${measure.duration.toFixed(0)}ms`);
+      return Array.isArray(data) ? data : [];
     }
   });
 
