@@ -74,6 +74,7 @@ export function NavigationHeader({
         "flex items-center justify-between",
         "shadow-sm",
         "pointer-events-auto",
+        "lg:hidden",
         className
       )}
       style={{
