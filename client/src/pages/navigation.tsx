@@ -3535,20 +3535,19 @@ function NavigationPageContent() {
                         onReplayTourClick={() => resetTour()}
                       />
                       
+                      {/* ETA HEADER - Shows whenever there's a route (plan, preview, or navigate modes) */}
+                      {currentRoute && (
+                        <CompactTripStrip
+                          eta={currentRoute.duration || 0}
+                          distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
+                          nextManeuver={nextTurn?.roadName || 'Continue'}
+                          nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
+                        />
+                      )}
+                      
                       {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
                       {isNavUIActive && (
                   <>
-                    
-                    {/* 2. Compact Trip Strip - Shows ETA, Distance, Next Maneuver - Fixed position, self-contained */}
-                    {currentRoute && (
-                      <CompactTripStrip
-                        eta={currentRoute.duration || 0}
-                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
-                        nextManeuver={nextTurn?.roadName || 'Continue'}
-                        nextDistance={nextTurn?.distance ? nextTurn.distance / 1609.34 : 0}
-                      />
-                    )}
-                    
                     {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}
                     {nextTurn && (
                       <div 

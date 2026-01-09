@@ -27,10 +27,10 @@ function getDefaultPosition(): Position {
   
   const stripWidth = Math.min(380, window.innerWidth * 0.92);
   
-  // Start centered and slightly down from the top to ensure visibility
+  // Start centered and below the navigation header (56px + safe area)
   return { 
     x: Math.max(10, (window.innerWidth - stripWidth) / 2), 
-    y: 100 // Hardcoded starting Y to ensure it's not hidden behind notch/status bar
+    y: 70 // Position below the TruckNav Pro header
   };
 }
 
@@ -148,7 +148,7 @@ export function CompactTripStrip({
         pointerEvents: 'auto',
         left: 0,
         top: 0,
-        zIndex: 1700
+        zIndex: 6000
       }}
       data-testid="compact-trip-strip"
     >
