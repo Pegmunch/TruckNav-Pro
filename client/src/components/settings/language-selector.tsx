@@ -14,6 +14,7 @@ import { navigationVoice } from '@/lib/navigation-voice';
 const SUPPORTED_LANGUAGES = [
   { code: 'en-US', flag: '🇺🇸', voiceCode: 'en-US' },
   { code: 'en-GB', flag: '🇬🇧', voiceCode: 'en-GB' },
+  { code: 'fr-FR', flag: '🇫🇷', voiceCode: 'fr-FR' },
   { code: 'es-ES', flag: '🇪🇸', voiceCode: 'es-ES' },
   { code: 'de-DE', flag: '🇩🇪', voiceCode: 'de-DE' },
   { code: 'it-IT', flag: '🇮🇹', voiceCode: 'it-IT' },
