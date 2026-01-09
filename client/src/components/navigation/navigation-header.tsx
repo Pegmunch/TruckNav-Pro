@@ -70,7 +70,7 @@ export function NavigationHeader({
       className={cn(
         "fixed left-0 right-0 z-[5000]",
         "bg-white border-b border-gray-200",
-        "h-14 px-4",
+        "h-16 px-4",
         "flex items-center justify-between",
         "shadow-sm",
         "pointer-events-auto",

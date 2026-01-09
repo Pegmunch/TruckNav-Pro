@@ -135,7 +135,7 @@ export function CompactTripStrip({
         className
       )}
       style={{ 
-        top: 'calc(56px + max(env(safe-area-inset-top, 0px), 0px))',
+        top: 'calc(64px + max(env(safe-area-inset-top, 0px), 0px))',
         zIndex: 4800,
         minHeight: '90px'
       }}
