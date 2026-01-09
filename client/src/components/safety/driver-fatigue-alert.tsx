@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getAlertSoundsService } from "@/lib/alert-sounds";
 
 // Time constants (in milliseconds)
 const MINUTE = 60 * 1000;
@@ -143,9 +144,9 @@ export function DriverFatigueAlert({
           // Show break dialog when critical
           if (alertLevel === 'critical' && prev.alertLevel !== 'critical') {
             setShowBreakDialog(true);
-            // Play alert sound
-            if (soundEnabled && audioRef.current) {
-              audioRef.current.play().catch(() => {});
+            // Play customizable fatigue alert sound
+            if (soundEnabled) {
+              getAlertSoundsService().playAlert('fatigue', true);
             }
           }
           

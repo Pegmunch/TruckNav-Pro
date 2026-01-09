@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
 import { type AlternativeRoute } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { cn } from "@/lib/utils";
+import { getAlertSoundsService } from "@/lib/alert-sounds";
 
 interface TrafficAlertBannerProps {
   isVisible: boolean;
@@ -49,6 +50,15 @@ const TrafficAlertBanner = memo(function TrafficAlertBanner({
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(autoCollapseAfter);
   const { formatDistance } = useMeasurement();
+  const wasVisibleRef = useRef(false);
+  
+  // Play traffic alert sound when banner becomes visible
+  useEffect(() => {
+    if (isVisible && !wasVisibleRef.current) {
+      getAlertSoundsService().playAlert('traffic');
+    }
+    wasVisibleRef.current = isVisible;
+  }, [isVisible]);
 
   // Auto-collapse timer
   useEffect(() => {

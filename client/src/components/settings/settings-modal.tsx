@@ -45,7 +45,11 @@ import {
   Crosshair,
   Wifi,
   WifiOff,
-  MapPinned
+  MapPinned,
+  Play,
+  Gauge,
+  Coffee,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +62,12 @@ import LanguageSelector from "@/components/language/language-selector";
 import CountryLanguageSelector from "@/components/country/country-language-selector";
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import LegalNotices from "@/components/legal/legal-notices";
+import { 
+  getAlertSoundsService, 
+  type AllAlertSoundSettings, 
+  type AlertType,
+  SOUND_OPTIONS 
+} from "@/lib/alert-sounds";
 
 // Types
 interface SettingsModalProps {
@@ -181,6 +191,11 @@ const SettingsModal = memo(function SettingsModal({
     loadSettings(ENTERTAINMENT_SETTINGS_KEY, defaultEntertainmentSettings)
   );
   
+  // Alert sounds state
+  const [alertSoundSettings, setAlertSoundSettings] = useState<AllAlertSoundSettings>(() => 
+    getAlertSoundsService().getSettings()
+  );
+  
   // Mock state for demonstration - in real app these would come from context/hooks
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isNavigating] = useState(false);
@@ -243,6 +258,12 @@ const SettingsModal = memo(function SettingsModal({
       label: "Notifications",
       icon: Bell,
       description: "Notification and Do Not Disturb settings"
+    },
+    {
+      id: "alert-sounds",
+      label: "Alert Sounds",
+      icon: Volume2,
+      description: "Customize audio alerts for warnings"
     },
     {
       id: "legal",
@@ -845,6 +866,309 @@ const SettingsModal = memo(function SettingsModal({
                           // });
                         }}
                       />
+                    </TabsContent>
+
+                    <TabsContent value="alert-sounds" className="mt-0">
+                      <div className="space-y-6">
+                        {/* Master Volume */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Volume2 className="w-5 h-5" />
+                              Alert Sound Settings
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Master Volume</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round(alertSoundSettings.masterVolume * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round(alertSoundSettings.masterVolume * 100)}
+                                onChange={(e) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    masterVolume: parseInt(e.target.value) / 100
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Speed Limit Alerts */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Gauge className="w-5 h-5 text-red-500" />
+                              Speed Limit Warnings
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-base font-medium">Enable Sound</Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Play sound when exceeding speed limit
+                                </p>
+                              </div>
+                              <Switch
+                                checked={alertSoundSettings.speedLimit.enabled}
+                                onCheckedChange={(checked) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    speedLimit: { ...alertSoundSettings.speedLimit, enabled: checked }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                data-testid="switch-speed-limit-sound"
+                              />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">Sound Type</Label>
+                              <div className="flex flex-wrap gap-2">
+                                {SOUND_OPTIONS.speedLimit.map((sound) => (
+                                  <Button
+                                    key={sound.id}
+                                    variant={alertSoundSettings.speedLimit.selectedSound === sound.id ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      const newSettings = {
+                                        ...alertSoundSettings,
+                                        speedLimit: { ...alertSoundSettings.speedLimit, selectedSound: sound.id }
+                                      };
+                                      setAlertSoundSettings(newSettings);
+                                      getAlertSoundsService().saveSettings(newSettings);
+                                      if (sound.id !== 'none') {
+                                        getAlertSoundsService().previewSound('speedLimit', sound.id);
+                                      }
+                                    }}
+                                    className="gap-1"
+                                    data-testid={`btn-sound-speedlimit-${sound.id}`}
+                                  >
+                                    {sound.id !== 'none' && <Play className="w-3 h-3" />}
+                                    {sound.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Volume</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round(alertSoundSettings.speedLimit.volume * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round(alertSoundSettings.speedLimit.volume * 100)}
+                                onChange={(e) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    speedLimit: { ...alertSoundSettings.speedLimit, volume: parseInt(e.target.value) / 100 }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                disabled={!alertSoundSettings.speedLimit.enabled}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Traffic Alerts */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5 text-amber-500" />
+                              Traffic Incident Alerts
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-base font-medium">Enable Sound</Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Play sound for traffic incidents
+                                </p>
+                              </div>
+                              <Switch
+                                checked={alertSoundSettings.traffic.enabled}
+                                onCheckedChange={(checked) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    traffic: { ...alertSoundSettings.traffic, enabled: checked }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                data-testid="switch-traffic-sound"
+                              />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">Sound Type</Label>
+                              <div className="flex flex-wrap gap-2">
+                                {SOUND_OPTIONS.traffic.map((sound) => (
+                                  <Button
+                                    key={sound.id}
+                                    variant={alertSoundSettings.traffic.selectedSound === sound.id ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      const newSettings = {
+                                        ...alertSoundSettings,
+                                        traffic: { ...alertSoundSettings.traffic, selectedSound: sound.id }
+                                      };
+                                      setAlertSoundSettings(newSettings);
+                                      getAlertSoundsService().saveSettings(newSettings);
+                                      if (sound.id !== 'none') {
+                                        getAlertSoundsService().previewSound('traffic', sound.id);
+                                      }
+                                    }}
+                                    className="gap-1"
+                                    data-testid={`btn-sound-traffic-${sound.id}`}
+                                  >
+                                    {sound.id !== 'none' && <Play className="w-3 h-3" />}
+                                    {sound.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Volume</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round(alertSoundSettings.traffic.volume * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round(alertSoundSettings.traffic.volume * 100)}
+                                onChange={(e) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    traffic: { ...alertSoundSettings.traffic, volume: parseInt(e.target.value) / 100 }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                disabled={!alertSoundSettings.traffic.enabled}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Fatigue Alerts */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Coffee className="w-5 h-5 text-blue-500" />
+                              Fatigue & Break Reminders
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-base font-medium">Enable Sound</Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Play sound for break reminders
+                                </p>
+                              </div>
+                              <Switch
+                                checked={alertSoundSettings.fatigue.enabled}
+                                onCheckedChange={(checked) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    fatigue: { ...alertSoundSettings.fatigue, enabled: checked }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                data-testid="switch-fatigue-sound"
+                              />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">Sound Type</Label>
+                              <div className="flex flex-wrap gap-2">
+                                {SOUND_OPTIONS.fatigue.map((sound) => (
+                                  <Button
+                                    key={sound.id}
+                                    variant={alertSoundSettings.fatigue.selectedSound === sound.id ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => {
+                                      const newSettings = {
+                                        ...alertSoundSettings,
+                                        fatigue: { ...alertSoundSettings.fatigue, selectedSound: sound.id }
+                                      };
+                                      setAlertSoundSettings(newSettings);
+                                      getAlertSoundsService().saveSettings(newSettings);
+                                      if (sound.id !== 'none') {
+                                        getAlertSoundsService().previewSound('fatigue', sound.id);
+                                      }
+                                    }}
+                                    className="gap-1"
+                                    data-testid={`btn-sound-fatigue-${sound.id}`}
+                                  >
+                                    {sound.id !== 'none' && <Play className="w-3 h-3" />}
+                                    {sound.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Volume</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round(alertSoundSettings.fatigue.volume * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round(alertSoundSettings.fatigue.volume * 100)}
+                                onChange={(e) => {
+                                  const newSettings = {
+                                    ...alertSoundSettings,
+                                    fatigue: { ...alertSoundSettings.fatigue, volume: parseInt(e.target.value) / 100 }
+                                  };
+                                  setAlertSoundSettings(newSettings);
+                                  getAlertSoundsService().saveSettings(newSettings);
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                disabled={!alertSoundSettings.fatigue.enabled}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </TabsContent>
 
                     <TabsContent value="legal" className="mt-0">

@@ -4,13 +4,14 @@
  * Features speed limit on left, current speed in center, road info on right
  */
 
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { Shield, AlertCircle, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGPS } from '@/contexts/gps-context';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { useSpeedLimit } from '@/hooks/use-speed-limit';
 import { useToast } from '@/hooks/use-toast';
+import { getAlertSoundsService } from '@/lib/alert-sounds';
 
 interface SpeedometerHUDProps {
   className?: string;
@@ -46,6 +47,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   // State for smooth speed animation
   const [animatedSpeed, setAnimatedSpeed] = useState(0);
   const [showJunctionInfo, setShowJunctionInfo] = useState(false);
+  
+  // Track speeding state for alert sound
+  const wasSpeedingRef = useRef(false);
   
   // Use provided data or fetch from hooks
   const gpsSpeed = gps?.position?.speed ?? 0;
@@ -86,6 +90,15 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   
   // Determine speed status - simpler logic
   const isSpeeding = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit;
+  
+  // Play speed limit alert sound when starting to speed
+  useEffect(() => {
+    if (isSpeeding && !wasSpeedingRef.current && isNavigating) {
+      // Just started speeding - play alert
+      getAlertSoundsService().playAlert('speedLimit');
+    }
+    wasSpeedingRef.current = !!isSpeeding;
+  }, [isSpeeding, isNavigating]);
   
   // Smooth speed animation
   useEffect(() => {
