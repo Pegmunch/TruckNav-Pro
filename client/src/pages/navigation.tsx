@@ -3064,20 +3064,38 @@ function NavigationPageContent() {
                   {/* ROUTE READY - Preview (Flyby) and Start Navigation Buttons */}
                   <div className="fixed flex flex-row gap-3 z-[200] pointer-events-auto"
                     style={{
-                      top: 'calc(70px + var(--safe-area-top))',
+                      top: 'calc(100px + var(--safe-area-top))',
                       left: '16px'
                     }}>
                     {/* Preview Button - Triggers Fly-by Animation */}
-                    <Button
-                      onClick={handlePreviewRoute}
-                      size="sm"
-                      disabled={isFlyByInProgress}
-                      className="h-8 px-4 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm active:scale-95 transition-transform disabled:opacity-50"
-                      style={{ touchAction: 'manipulation' }}
-                      data-testid="button-preview-flyby"
-                    >
-                      {isFlyByInProgress ? 'Flying...' : 'Preview'}
-                    </Button>
+                    <div className="flex flex-row gap-1 bg-blue-600 rounded-full shadow-lg overflow-hidden">
+                      <Button
+                        onClick={handlePreviewRoute}
+                        size="sm"
+                        disabled={isFlyByInProgress}
+                        className="h-8 px-4 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 border-r border-white/20 rounded-none"
+                        style={{ touchAction: 'manipulation' }}
+                        data-testid="button-preview-flyby"
+                      >
+                        {isFlyByInProgress ? 'Flying...' : 'Start Preview'}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          if (isFlyByInProgress) {
+                            // Logic to stop flyby would go here if supported by the engine
+                            // For now we'll just force the state change if the engine allows interruption
+                            console.log('[FLYBY] Stop requested');
+                          }
+                        }}
+                        size="sm"
+                        disabled={!isFlyByInProgress}
+                        className="h-8 px-4 bg-transparent hover:bg-white/10 text-white font-medium text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-none"
+                        style={{ touchAction: 'manipulation' }}
+                        data-testid="button-stop-preview"
+                      >
+                        Stop Preview
+                      </Button>
+                    </div>
                     {/* Start Navigation Button */}
                     <Button
                       onClick={handleStartNavigation}

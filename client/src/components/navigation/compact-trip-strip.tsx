@@ -30,7 +30,7 @@ function getDefaultPosition(): Position {
   
   return { 
     x: Math.max(10, (window.innerWidth - stripWidth) / 2), 
-    y: safeTop + HEADER_HEIGHT + 20 
+    y: safeTop + HEADER_HEIGHT + 40 
   };
 }
 
