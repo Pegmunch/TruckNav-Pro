@@ -280,6 +280,11 @@ function NavigationPageContent() {
   // Route cancellation guard to prevent race condition
   const isCancellingRouteRef = useRef(false);
   
+  // Route calculation counter - tracks number of active route calculations
+  // Uses counter instead of boolean to handle overlapping requests safely
+  // Watchdog only fires when counter is 0 (no active calculations)
+  const routeCalculationCountRef = useRef(0);
+  
   // Double-tap detection for map controls toggle (when not navigating)
   const lastMapTapTimeRef = useRef<number>(0);
   const singleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -365,7 +370,8 @@ function NavigationPageContent() {
   // CRITICAL FIX: Navigation UI should show whenever isLocalNavActive is true
   // This ensures HUD (speedometer, ETA header) appears immediately when GO is pressed
   // even before route calculation completes
-  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate';
+  // Navigation UI is active when: local nav flag, mobile nav mode, OR route calculation in progress (GO button flow)
+  const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile;
   
   // CRITICAL FIX: Only show GPS truck marker during ACTIVE navigation
   // Hide in plan and preview modes across all platforms for consistency
@@ -506,13 +512,15 @@ function NavigationPageContent() {
   
   useEffect(() => {
     // Only reset if route data has settled AND there's no route AND local nav is active
-    if (routeDataSettled && currentRoute === null && isLocalNavActive) {
+    // GUARD: Skip reset if GO button flow is active OR any route calculation is in progress
+    // Using counter ref to handle overlapping requests (counter > 0 means at least one calculation active)
+    if (routeDataSettled && currentRoute === null && isLocalNavActive && !shouldAutoNavigateOnMobile && routeCalculationCountRef.current === 0) {
       console.log('[NAV-STATE] Auto-resetting isLocalNavActive - no route exists after data settled');
       setIsLocalNavActive(false);
       localStorage.removeItem('navigation_ui_active');
       localStorage.removeItem('navigation_mode');
     }
-  }, [currentRoute, isLocalNavActive, routeDataSettled]);
+  }, [currentRoute, isLocalNavActive, routeDataSettled, shouldAutoNavigateOnMobile]);
   
   // Mode transition debouncing to prevent race conditions
   // REMOVED: Debounced setter was causing race conditions
@@ -1732,6 +1740,10 @@ function NavigationPageContent() {
       vehicleProfileId?: string; 
       routePreference?: string 
     }) => {
+      // Increment counter to track active route calculation (prevents watchdog from resetting UI)
+      routeCalculationCountRef.current++;
+      console.log('[ROUTE-CALC] Active calculations:', routeCalculationCountRef.current);
+      
       performance.mark('route-calc-start');
       console.log('[PERF] 🚀 Route calculation START - from:', routeData.startLocation, 'to:', routeData.endLocation);
       
@@ -1826,6 +1838,14 @@ function NavigationPageContent() {
           localStorage.setItem('navigationSidebarState', 'collapsed');
         }
       }
+      
+      // Reset auto-navigation flag now that route calculation is complete
+      // This allows watchdog to work normally for future navigation cancellations
+      setShouldAutoNavigateOnMobile(false);
+      
+      // Decrement counter - only when all calculations complete will watchdog be able to fire
+      routeCalculationCountRef.current = Math.max(0, routeCalculationCountRef.current - 1);
+      console.log('[ROUTE-CALC] Calculation complete. Active calculations:', routeCalculationCountRef.current);
     },
     onError: (error) => {
       if (import.meta.env.DEV) {
@@ -1835,6 +1855,11 @@ function NavigationPageContent() {
       setCurrentRoute(null);
       // Comprehensive UI recovery on route calculation failure
       recoverUIOnError();
+      // Reset auto-navigation flag on error
+      setShouldAutoNavigateOnMobile(false);
+      // Decrement counter - only when all calculations complete will watchdog be able to fire
+      routeCalculationCountRef.current = Math.max(0, routeCalculationCountRef.current - 1);
+      console.log('[ROUTE-CALC] Calculation failed. Active calculations:', routeCalculationCountRef.current);
       // DISABLED: Toast notifications removed per user request
       // Errors will be handled silently or shown in the UI instead
     },
@@ -2135,6 +2160,10 @@ function NavigationPageContent() {
     // currentJourney still exists and triggers route re-fetch before completion
     isCancellingRouteRef.current = true;
     console.log('[ROUTE-CANCEL] 🛡️ Route cancellation guard activated');
+    
+    // Reset route calculation counter to 0 if user cancels (abort all pending calculations)
+    routeCalculationCountRef.current = 0;
+    setShouldAutoNavigateOnMobile(false);
     
     // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
     // This ensures the hamburger button reappears immediately
@@ -2585,6 +2614,10 @@ function NavigationPageContent() {
 
   const handleStopNavigation = () => {
     console.log('[NAV-STOP] 🔴 Cancel button pressed!');
+    
+    // Reset route calculation counter to 0 if user cancels (abort all pending calculations)
+    routeCalculationCountRef.current = 0;
+    setShouldAutoNavigateOnMobile(false);
     
     // If navigation is already cancelled (no route), go back to fresh start
     if (!isLocalNavActive && !currentRoute) {

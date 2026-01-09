@@ -136,7 +136,8 @@ async function geocodeWithTomTom(address: string): Promise<GeocodeResult | null>
   const url = `/api/tomtom-search?` +
     `q=${encodeURIComponent(address)}` +
     `&limit=1` +
-    `&searchType=fuzzy`;
+    `&searchType=fuzzy` +
+    `&countrySet=GB,IE`;
   
   console.log(`[TOMTOM-GEOCODE] Fetching: ${url}`);
   

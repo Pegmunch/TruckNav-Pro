@@ -3220,10 +3220,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tomtomUrl.searchParams.set('categorySet', categorySet);
       }
       
-      // Add country filter
-      if (countrySet && typeof countrySet === 'string') {
-        tomtomUrl.searchParams.set('countrySet', countrySet);
-      }
+      // Add country filter - default to UK/Ireland for accurate geocoding
+      const effectiveCountrySet = (countrySet && typeof countrySet === 'string') ? countrySet : 'GB,IE';
+      tomtomUrl.searchParams.set('countrySet', effectiveCountrySet);
+      console.log(`[TOMTOM-PROXY] Country filter: ${effectiveCountrySet}`);
       
       console.log('[TOMTOM-PROXY] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
       
