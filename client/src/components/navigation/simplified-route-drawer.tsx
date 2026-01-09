@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { useGPS } from '@/contexts/gps-context';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, type PointerEvent, type MouseEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Facility } from '@shared/schema';
 
@@ -74,6 +74,25 @@ export function SimplifiedRouteDrawer({
   const hasGPSError = gps?.error !== null || gps?.errorType !== null;
   const isGPSReady = gps?.position !== null && !hasGPSError;
   const isGPSInitializing = gps?.isTracking && !gps?.position && !hasGPSError;
+
+  const handledByPointerRef = useRef<Record<string, boolean>>({});
+  
+  const createTouchHandler = useCallback((callback: (() => void) | undefined, label: string) => ({
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handledByPointerRef.current[label] = true;
+      callback?.();
+      setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
+    },
+    onClick: (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!handledByPointerRef.current[label]) {
+        callback?.();
+      }
+    }
+  }), []);
 
   // POI Categories - mapped to TomTom POI types
   const poiCategories = [
@@ -153,13 +172,14 @@ export function SimplifiedRouteDrawer({
             <Button
               variant="outline"
               size="lg"
-              className="h-10 px-3 shrink-0 touch-none cursor-pointer active:bg-gray-100"
+              className="h-12 px-3 shrink-0 cursor-pointer active:bg-gray-100 active:scale-95 select-none touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
               data-testid="button-location-dropdown"
               title="Select location or use GPS"
-              onClick={() => {
+              {...createTouchHandler(() => {
                 console.log('[GPS-BUTTON] Clicked - current state:', isLocationDropdownOpen);
                 setIsLocationDropdownOpen(!isLocationDropdownOpen);
-              }}
+              }, 'GPS-DROPDOWN')}
               type="button"
             >
               <Crosshair className={`w-5 h-5 ${isGPSReady ? 'text-green-600' : 'text-gray-400'}`} />
@@ -179,23 +199,12 @@ export function SimplifiedRouteDrawer({
                   {isGPSReady && gps?.position && (
                     <Button
                       variant="ghost"
-                      className="w-full justify-start h-auto py-2 active:bg-gray-100"
-                      onClick={(e) => {
+                      className="w-full justify-start h-auto py-3 active:bg-gray-100 active:scale-98 select-none touch-manipulation"
+                      style={{ touchAction: 'manipulation' }}
+                      onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         console.log('[DROPDOWN] Current Location selected');
-                        const coords = { lat: gps.position!.latitude, lng: gps.position!.longitude };
-                        const locationName = 'Current Location';
-                        onFromCoordinatesChange?.(coords);
-                        onFromLocationChange(locationName);
-                        saveRecentLocation(locationName, coords.lat, coords.lng);
-                        onUseCurrentLocation?.();
-                        setIsLocationDropdownOpen(false);
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('[DROPDOWN] Current Location touched');
                         const coords = { lat: gps.position!.latitude, lng: gps.position!.longitude };
                         const locationName = 'Current Location';
                         onFromCoordinatesChange?.(coords);
@@ -235,22 +244,12 @@ export function SimplifiedRouteDrawer({
                     <Button
                       key={idx}
                       variant="ghost"
-                      className="w-full justify-start h-auto py-2 active:bg-gray-100"
-                      onClick={(e) => {
+                      className="w-full justify-start h-auto py-3 active:bg-gray-100 active:scale-98 select-none touch-manipulation"
+                      style={{ touchAction: 'manipulation' }}
+                      onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         console.log('[DROPDOWN] Recent location selected:', location.name);
-                        const coords = { lat: location.lat, lng: location.lng };
-                        onFromCoordinatesChange?.(coords);
-                        onFromLocationChange(location.name);
-                        saveRecentLocation(location.name, location.lat, location.lng);
-                        onUseCurrentLocation?.();
-                        setIsLocationDropdownOpen(false);
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('[DROPDOWN] Recent location touched:', location.name);
                         const coords = { lat: location.lat, lng: location.lng };
                         onFromCoordinatesChange?.(coords);
                         onFromLocationChange(location.name);
@@ -334,9 +333,10 @@ export function SimplifiedRouteDrawer({
             <Button
               variant="default"
               size="lg"
-              onClick={onPlanRoute}
+              {...createTouchHandler(onPlanRoute, 'GO-ROUTE')}
               disabled={!fromLocation || !toLocation || !activeProfileId}
-              className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-12 px-6 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 text-white font-semibold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed select-none touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
               data-testid="button-plan-route"
               title={!activeProfileId ? "Please select a vehicle profile first" : "Plan route"}
             >
@@ -429,8 +429,13 @@ export function SimplifiedRouteDrawer({
                   <Button
                     key={poi.id || index}
                     variant="ghost"
-                    className="w-full justify-start h-auto py-2 px-2 text-left"
-                    onClick={() => handleSelectPOI(poi)}
+                    className="w-full justify-start h-auto py-3 px-2 text-left active:bg-gray-100 active:scale-98 select-none touch-manipulation"
+                    style={{ touchAction: 'manipulation' }}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelectPOI(poi);
+                    }}
                     data-testid={`poi-result-${index}`}
                   >
                     <MapPin className="w-4 h-4 mr-2 shrink-0 text-primary" />

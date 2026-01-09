@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type PointerEvent, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Menu, 
@@ -27,7 +27,6 @@ interface MobileFABProps {
   style?: React.CSSProperties;
 }
 
-// Custom Compass Icon with red top pointer and blue bottom pointer
 function CompassIcon({ bearing = 0, className = "" }: { bearing?: number; className?: string }) {
   return (
     <svg 
@@ -39,26 +38,19 @@ function CompassIcon({ bearing = 0, className = "" }: { bearing?: number; classN
       className={className}
       style={{ transform: `rotate(${bearing}deg)` }}
     >
-      {/* Compass circle */}
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-      
-      {/* Red North pointer (top) */}
       <path 
         d="M 12 2 L 14 12 L 12 10 L 10 12 Z" 
         fill="#EF4444" 
         stroke="#DC2626" 
         strokeWidth="0.5"
       />
-      
-      {/* Blue South pointer (bottom) */}
       <path 
         d="M 12 22 L 14 12 L 12 14 L 10 12 Z" 
         fill="#3B82F6" 
         stroke="#2563EB" 
         strokeWidth="0.5"
       />
-      
-      {/* Center dot */}
       <circle cx="12" cy="12" r="1.5" fill="currentColor" />
     </svg>
   );
@@ -78,12 +70,10 @@ export function MobileFAB({
   style
 }: MobileFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Synchronized icon state to prevent race conditions
   const [currentIcon, setCurrentIcon] = useState<'menu' | 'navigation' | 'x'>('menu');
+  const handledByPointerRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Synchronize icon with mode
     if (isExpanded) {
       setCurrentIcon('x');
     } else if (mode === 'navigate') {
@@ -92,6 +82,25 @@ export function MobileFAB({
       setCurrentIcon('menu');
     }
   }, [mode, isExpanded]);
+
+  const createHandler = (callback: (() => void) | undefined, label: string, shouldCloseMenu = true) => ({
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handledByPointerRef.current[label] = true;
+      callback?.();
+      if (shouldCloseMenu) setIsExpanded(false);
+      setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
+    },
+    onClick: (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!handledByPointerRef.current[label]) {
+        callback?.();
+        if (shouldCloseMenu) setIsExpanded(false);
+      }
+    }
+  });
 
   const speedDialOptions = [
     {
@@ -108,7 +117,7 @@ export function MobileFAB({
       customIcon: null,
       label: 'View Incidents',
       onClick: onViewIncidents,
-      showInModes: ['plan', 'preview'] // Removed from navigate mode - now has dedicated button on left
+      showInModes: ['plan', 'preview']
     },
     {
       id: 'report',
@@ -172,20 +181,18 @@ export function MobileFAB({
             <Button
               key={option.id}
               size="icon"
-              onClick={() => {
-                option.onClick?.();
-                setIsExpanded(false);
-              }}
+              {...createHandler(option.onClick, option.id)}
               className={cn(
-                'h-8 w-8 rounded-xl',
-                'bg-white/95 text-gray-800 hover:bg-white backdrop-blur-md',
+                'h-10 w-10 rounded-xl',
+                'bg-white/95 text-gray-800 hover:bg-white active:bg-gray-100 backdrop-blur-md',
                 'border border-white/50',
                 'shadow-2xl hover:scale-105 active:scale-95',
-                'transition-all duration-200'
+                'transition-all duration-200 select-none touch-manipulation'
               )}
+              style={{ touchAction: 'manipulation' }}
               data-testid={`fab-option-${option.id}`}
             >
-              {option.customIcon ? option.customIcon : Icon && <Icon className="w-3 h-3" />}
+              {option.customIcon ? option.customIcon : Icon && <Icon className="w-5 h-5" />}
               <span className="sr-only">{option.label}</span>
             </Button>
           );
@@ -196,25 +203,26 @@ export function MobileFAB({
       <Button
         variant="default"
         size="icon"
-        onClick={() => setIsExpanded(!isExpanded)}
+        {...createHandler(() => setIsExpanded(!isExpanded), 'FAB-MAIN', false)}
         className={cn(
-          'h-10 w-10 rounded-2xl',
+          'h-12 w-12 rounded-2xl',
           'shadow-2xl',
           'backdrop-blur-md',
-          'transition-all duration-200 hover:scale-105 active:scale-95',
+          'transition-all duration-200 hover:scale-105 active:scale-95 select-none touch-manipulation',
           mode === 'navigate' 
             ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-red-400/50'
             : 'bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border border-blue-400/50',
           isExpanded && 'rotate-45'
         )}
+        style={{ touchAction: 'manipulation' }}
         data-testid="fab-main"
       >
         {currentIcon === 'x' ? (
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         ) : currentIcon === 'navigation' ? (
-          <Navigation className="w-5 h-5" />
+          <Navigation className="w-6 h-6" />
         ) : (
-          <Menu className="w-5 h-5" />
+          <Menu className="w-6 h-6" />
         )}
       </Button>
     </div>

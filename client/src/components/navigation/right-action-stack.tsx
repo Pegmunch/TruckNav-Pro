@@ -1,4 +1,5 @@
 import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from 'lucide-react';
+import { useRef, type PointerEvent, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +42,25 @@ export function RightActionStack({
   restrictionViolations = [],
   isVisible = true
 }: RightActionStackProps) {
+  const handledByPointerRef = useRef<Record<string, boolean>>({});
+  
+  const createHandler = (callback: (() => void) | undefined, label: string) => ({
+    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handledByPointerRef.current[label] = true;
+      callback?.();
+      setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
+    },
+    onClick: (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!handledByPointerRef.current[label]) {
+        callback?.();
+      }
+    }
+  });
+
   return (
     <div 
       className={cn(
@@ -58,11 +78,12 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onViewIncidents}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-lg"
+          {...createHandler(onViewIncidents, 'INCIDENTS')}
+          className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-view-incidents"
         >
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-5 w-5" />
         </Button>
       )}
 
@@ -71,14 +92,15 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggleMapView}
+          {...createHandler(onToggleMapView, 'MAP-VIEW')}
           className={cn(
-            "h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 shadow-lg",
+            "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation",
             isSatelliteView ? "border-green-500" : "border-gray-400"
           )}
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-toggle-view"
         >
-          <Map className="h-4 w-4" />
+          <Map className="h-5 w-5" />
         </Button>
       )}
 
@@ -87,11 +109,12 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onRecenter}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 border-gray-400 shadow-lg"
+          {...createHandler(onRecenter, 'RECENTER')}
+          className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-recenter"
         >
-          <Crosshair className="h-4 w-4" />
+          <Crosshair className="h-5 w-5" />
         </Button>
       )}
 
@@ -100,11 +123,12 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onZoomIn}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 border-gray-400 shadow-lg"
+          {...createHandler(onZoomIn, 'ZOOM-IN')}
+          className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-zoom-in"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-5 w-5" />
         </Button>
       )}
 
@@ -113,11 +137,12 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onZoomOut}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 border-gray-400 shadow-lg"
+          {...createHandler(onZoomOut, 'ZOOM-OUT')}
+          className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-zoom-out"
         >
-          <Minus className="h-4 w-4" />
+          <Minus className="h-5 w-5" />
         </Button>
       )}
 
@@ -126,12 +151,13 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onCompassClick}
-          className="h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 border-blue-500 shadow-lg"
+          {...createHandler(onCompassClick, 'COMPASS')}
+          className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-blue-500 shadow-lg select-none touch-manipulation"
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-compass-reset"
         >
           <Compass 
-            className="h-4 w-4 transition-transform duration-300" 
+            className="h-5 w-5 transition-transform duration-300" 
             style={{ transform: `rotate(${bearing}deg)` }}
           />
         </Button>
@@ -142,14 +168,15 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggle3D}
+          {...createHandler(onToggle3D, '3D')}
           className={cn(
-            "h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 shadow-lg",
+            "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation",
             is3DMode ? "border-blue-500" : "border-gray-400"
           )}
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-toggle-3d"
         >
-          <Box className="h-4 w-4" />
+          <Box className="h-5 w-5" />
         </Button>
       )}
 
@@ -158,14 +185,15 @@ export function RightActionStack({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggleTraffic}
+          {...createHandler(onToggleTraffic, 'TRAFFIC')}
           className={cn(
-            "h-8 w-8 rounded-xl bg-white hover:bg-gray-50 text-black border-2 shadow-lg",
+            "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation",
             showTraffic ? "border-orange-500" : "border-gray-400"
           )}
+          style={{ touchAction: 'manipulation' }}
           data-testid="button-toggle-traffic"
         >
-          <Layers className="h-4 w-4" />
+          <Layers className="h-5 w-5" />
         </Button>
       )}
     </div>

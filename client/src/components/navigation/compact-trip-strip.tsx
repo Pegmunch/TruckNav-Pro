@@ -161,11 +161,18 @@ export function CompactTripStrip({
 
       {/* Expand/Collapse Button */}
       <button
-        onClick={handleExpandToggle}
-        className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors z-10"
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          setIsExpanded(prev => !prev);
+          if ('vibrate' in navigator) {
+            navigator.vibrate([30, 30, 30]);
+          }
+        }}
+        className="absolute top-2 right-2 p-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 active:scale-95 transition-all z-10 select-none touch-manipulation"
+        style={{ touchAction: 'manipulation' }}
         aria-label={isExpanded ? 'Collapse' : 'Expand'}
       >
-        <GripHorizontal className="w-4 h-4 text-white/60" />
+        <GripHorizontal className="w-5 h-5 text-white/60" />
       </button>
 
       <div className="px-5 py-4 flex items-center justify-between gap-4 pt-6">
