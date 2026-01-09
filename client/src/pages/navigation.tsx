@@ -1840,6 +1840,15 @@ function NavigationPageContent() {
         }
       }
       
+      // CRITICAL: If GO button was pressed (shouldAutoNavigateOnMobile flag), show route-ready state
+      // This MUST happen BEFORE resetting the flag, so the HUD becomes visible
+      if (shouldAutoNavigateOnMobile) {
+        console.log('[ROUTE-CALC] GO button flow - showing route-ready state with Preview/Start buttons');
+        setIsShowingPreview(true);
+        setShowNavControls(true);
+        localStorage.setItem('navigation_mode', 'route_ready');
+      }
+      
       // Reset auto-navigation flag now that route calculation is complete
       // This allows watchdog to work normally for future navigation cancellations
       setShouldAutoNavigateOnMobile(false);
@@ -2136,24 +2145,9 @@ function NavigationPageContent() {
     }
   }, [currentRoute, isMapExpanded, isMobile]);
 
-  // Show route-ready state with Preview/Start buttons when route calculation completes after GO press
-  useEffect(() => {
-    if (shouldAutoNavigateOnMobile && currentRoute && isMobile && !isNavigating) {
-      console.log('[ROUTE-READY] Route calculation complete - showing Preview/Start buttons');
-      // Reset the auto-navigate flag
-      setShouldAutoNavigateOnMobile(false);
-      // Show route-ready state with Preview + Start buttons (don't start navigation yet)
-      const timer = setTimeout(() => {
-        // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
-        setIsShowingPreview(true);
-        setShowNavControls(true);
-        localStorage.setItem('navigation_mode', 'route_ready');
-        localStorage.setItem('navigation_timestamp', Date.now().toString());
-        console.log('[ROUTE-READY] Preview/Start buttons now visible - user can choose action');
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldAutoNavigateOnMobile, currentRoute, isMobile, isNavigating]);
+  // NOTE: Route-ready state with Preview/Start buttons is now handled directly in
+  // calculateRouteMutation.onSuccess when shouldAutoNavigateOnMobile is true.
+  // This ensures proper timing - HUD shows immediately after route calculation completes.
 
 
 
