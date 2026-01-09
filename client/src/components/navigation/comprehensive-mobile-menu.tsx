@@ -19,8 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Popover, PopoverContent, PopoverContentInline, PopoverTrigger, PopoverAnchor } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { 
   X,
   History,
@@ -79,7 +77,6 @@ import WeatherWidget from "@/components/weather/weather-widget";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
 import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
 import SettingsModal from "@/components/settings/settings-modal";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
 import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
@@ -167,11 +164,6 @@ function ComprehensiveMobileMenu({
     window.location.reload();
   };
   
-  // Autocomplete state
-  const [fromOpen, setFromOpen] = useState(false);
-  const [toOpen, setToOpen] = useState(false);
-  const [fromSearch, setFromSearch] = useState("");
-  const [toSearch, setToSearch] = useState("");
   
   // Store coordinates from "From" location for POI search
   const [fromCoordinates, setFromCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -270,15 +262,10 @@ function ComprehensiveMobileMenu({
         if (displayAddress) {
           // Update local input state
           setFromInput(displayAddress);
-          // CRITICAL: Directly set search query to bypass debounce - query needs this to fire
-          setFromSearch(displayAddress);
           // Notify parent component (same as autocomplete flow)
           onFromLocationChange(displayAddress);
           // Store coordinates for POI search (same as autocomplete flow)
           setFromCoordinates({ lat: latitude, lng: longitude });
-          
-          // Open dropdown immediately to show it's active
-          setFromOpen(true);
           
           toast({
             title: "Location Set",
@@ -299,21 +286,6 @@ function ComprehensiveMobileMenu({
     }
   }, [isGettingLocation, onFromLocationChange, toast]);
   
-  // Debounced search for autocomplete
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setFromSearch(fromInput);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [fromInput]);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setToSearch(toInput);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [toInput]);
-  
   // Get GPS coordinates for location-biased search
   const gpsCoordinates = gps?.position ? {
     lat: gps.position.latitude,
@@ -322,26 +294,6 @@ function ComprehensiveMobileMenu({
   
   // Use "From" location coordinates for POI search if available, otherwise use GPS
   const poiSearchCoordinates = fromCoordinates || gpsCoordinates;
-  
-  // TomTom autocomplete for From input
-  const { results: fromResults, isLoading: fromLoading } = useTomTomAutocomplete(
-    fromSearch,
-    fromOpen && fromSearch.length >= 3,
-    undefined, // No country restriction
-    undefined, // No POI category
-    gpsCoordinates,
-    'fuzzy' // Address search
-  );
-  
-  // TomTom autocomplete for To input
-  const { results: toResults, isLoading: toLoading } = useTomTomAutocomplete(
-    toSearch,
-    toOpen && toSearch.length >= 3,
-    undefined, // No country restriction
-    undefined, // No POI category
-    gpsCoordinates,
-    'fuzzy' // Address search
-  );
   
   // Search query for each POI category (no categorySet - let TomTom find best matches)
   const poiSearchQueryMap: { [key: string]: string } = {
