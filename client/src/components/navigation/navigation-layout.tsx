@@ -1,9 +1,10 @@
-import { ReactNode, useState, useEffect, useCallback, useRef } from 'react';
+import { ReactNode } from 'react';
 
 interface NavigationLayoutProps {
   topStrip?: ReactNode;
   leftStack?: ReactNode;
   rightStack?: ReactNode;
+  topRightStack?: ReactNode;
   rightStackVisible?: boolean;
   bottomBar?: ReactNode;
   mapContent: ReactNode;
@@ -15,6 +16,7 @@ export function NavigationLayout({
   topStrip,
   leftStack,
   rightStack,
+  topRightStack,
   rightStackVisible = true,
   bottomBar,
   mapContent,
@@ -22,35 +24,6 @@ export function NavigationLayout({
   isNavUIActive
 }: NavigationLayoutProps) {
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
-  const [isRightStackElevated, setIsRightStackElevated] = useState(false);
-  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const handleScreenTouch = useCallback(() => {
-    setIsRightStackElevated(true);
-    
-    if (inactivityTimeoutRef.current) {
-      clearTimeout(inactivityTimeoutRef.current);
-    }
-    
-    inactivityTimeoutRef.current = setTimeout(() => {
-      setIsRightStackElevated(false);
-    }, 5000);
-  }, []);
-  
-  useEffect(() => {
-    const handleTouch = () => handleScreenTouch();
-    
-    document.addEventListener('touchstart', handleTouch, { passive: true });
-    document.addEventListener('pointerdown', handleTouch, { passive: true });
-    
-    return () => {
-      document.removeEventListener('touchstart', handleTouch);
-      document.removeEventListener('pointerdown', handleTouch);
-      if (inactivityTimeoutRef.current) {
-        clearTimeout(inactivityTimeoutRef.current);
-      }
-    };
-  }, [handleScreenTouch]);
   
   return (
     <div className="relative w-full h-screen overflow-hidden pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]">
@@ -73,6 +46,20 @@ export function NavigationLayout({
           }}
         >
           {leftStack}
+        </div>
+      )}
+
+      {/* Top-right quick access buttons (GPS + Incidents) - positioned below ETA header */}
+      {topRightStack && (
+        <div 
+          className="fixed right-4 z-[99999] flex flex-col gap-3"
+          style={{ 
+            top: 'calc(100px + var(--safe-area-top, 0px))',
+            pointerEvents: 'auto',
+            userSelect: 'none'
+          }}
+        >
+          {topRightStack}
         </div>
       )}
 

@@ -3073,9 +3073,9 @@ function NavigationPageContent() {
                       }}
                     />
                   }
-                  rightStack={
-                    <div className="flex flex-col gap-3">
-                      {/* Cache Mode Button - Moved here to be part of the right stack */}
+                  topRightStack={
+                    <>
+                      {/* GPS Mode Toggle Button */}
                       <Button
                         onPointerDown={(e) => {
                           e.preventDefault();
@@ -3083,7 +3083,7 @@ function NavigationPageContent() {
                         }}
                         size="icon"
                         className={cn(
-                          "h-12 w-12 rounded-full shadow-xl font-medium touch-none border-2 transition-all duration-300",
+                          "h-10 w-10 rounded-full shadow-xl font-medium touch-none border-2 transition-all duration-300",
                           gpsMode === 'cache'
                             ? 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white border-amber-400 animate-pulse'
                             : 'bg-white/95 hover:bg-white active:bg-gray-100 text-gray-700 border-gray-200'
@@ -3091,34 +3091,48 @@ function NavigationPageContent() {
                         data-testid="button-gps-mode-toggle"
                         aria-label="Toggle GPS/Cache Mode"
                       >
-                        {gpsMode === 'gps' ? <Navigation2 className="w-6 h-6" /> : <MapPin className="w-6 h-6" />}
+                        {gpsMode === 'gps' ? <Navigation2 className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
                       </Button>
-
-                      <RightActionStack
-                        onZoomIn={() => mapRef.current?.zoomIn()}
-                        onZoomOut={() => mapRef.current?.zoomOut()}
-                        onRecenter={() => mapRef.current?.zoomToUserLocation()}
-                        onToggle3D={() => {
-                          mapRef.current?.toggle3DMode();
-                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                        }}
-                        onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                        onToggleMapView={() => {
-                          mapRef.current?.toggleMapView();
-                          setMapControlState(prev => ({ 
-                            ...prev, 
-                            isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                          }));
-                        }}
-                        onViewIncidents={() => setShowIncidentFeed(true)}
-                        onCompassClick={() => mapRef.current?.resetBearing()}
-                        is3DMode={mapControlState.is3DMode}
-                        showTraffic={showTrafficLayer}
-                        isSatelliteView={mapControlState.isSatelliteView}
-                        bearing={mapControlState.bearing}
-                        isVisible={showNavControls}
-                      />
-                    </div>
+                      
+                      {/* View Incidents Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowIncidentFeed(true)}
+                        className="h-10 w-10 rounded-full bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-xl"
+                        data-testid="button-view-incidents-top"
+                        aria-label="View traffic incidents"
+                      >
+                        <AlertCircle className="h-5 w-5" />
+                      </Button>
+                    </>
+                  }
+                  rightStack={
+                    <RightActionStack
+                      onZoomIn={() => mapRef.current?.zoomIn()}
+                      onZoomOut={() => mapRef.current?.zoomOut()}
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleMapView={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ 
+                          ...prev, 
+                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                        }));
+                      }}
+                      onViewIncidents={() => setShowIncidentFeed(true)}
+                      onCompassClick={() => mapRef.current?.resetBearing()}
+                      is3DMode={mapControlState.is3DMode}
+                      showTraffic={showTrafficLayer}
+                      isSatelliteView={mapControlState.isSatelliteView}
+                      bearing={mapControlState.bearing}
+                      isVisible={showNavControls}
+                      hideIncidents={true}
+                    />
                   }
                   bottomBar={
                     <SpeedometerHUD

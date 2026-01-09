@@ -17,6 +17,7 @@ interface RightActionStackProps {
   isSatelliteView?: boolean;
   bearing?: number;
   hideCompass?: boolean;
+  hideIncidents?: boolean;
   restrictionViolations?: any[];
   isVisible?: boolean;
 }
@@ -36,6 +37,7 @@ export function RightActionStack({
   isSatelliteView = false,
   bearing = 0,
   hideCompass = false,
+  hideIncidents = false,
   restrictionViolations = [],
   isVisible = true
 }: RightActionStackProps) {
@@ -51,8 +53,8 @@ export function RightActionStack({
         visibility: isVisible ? 'visible' : 'hidden'
       }}
     >
-      {/* 1. Incidents - Red border */}
-      {onViewIncidents && (
+      {/* 1. Incidents - Red border (hidden when moved to top-right) */}
+      {onViewIncidents && !hideIncidents && (
         <Button
           variant="ghost"
           size="icon"
