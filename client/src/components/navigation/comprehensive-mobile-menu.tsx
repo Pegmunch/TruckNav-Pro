@@ -353,12 +353,36 @@ function ComprehensiveMobileMenu({
         score: 100,
         poi: { name: shop.name },
         address: { freeformAddress: shop.address },
-        dist: shop.distance * 1000, // Convert km to meters
+        dist: (shop.distance || 0) * 1000, // Convert km to meters
         position: { lat: shop.lat || shop.latitude, lon: shop.lng || shop.longitude }
       }))
     : tomtomPoiResults;
   
   const poiLoading = activePOICategory === 'shops' ? shopLoading : tomtomPoiLoading;
+
+  // Handle POI selection
+  const handleSelectPOI = useCallback((poi: any) => {
+    const displayLabel = poi.poi?.name || poi.name || "Unknown Place";
+    const address = poi.address?.freeformAddress || poi.address || "";
+    const fullLabel = address ? `${displayLabel}, ${address}` : displayLabel;
+    
+    const lat = poi.position?.lat || poi.position?.latitude;
+    const lng = poi.position?.lon || poi.position?.lng;
+
+    if (lat && lng) {
+      setToInput(fullLabel);
+      onToLocationChange(fullLabel);
+      // We don't have direct access to onToCoordinatesChange here, but we can update the input
+      // ComprehensiveMobileMenu uses onToLocationChange to communicate back
+      toast({
+        title: "Destination Set",
+        description: displayLabel,
+      });
+      setActiveTab("plan");
+      setActivePOICategory(null);
+      setPoiSearchEnabled(false);
+    }
+  }, [onToLocationChange, toast]);
   
   // Modal states for sub-panels
   const [showVehicleSetup, setShowVehicleSetup] = useState(false);
@@ -695,81 +719,73 @@ function ComprehensiveMobileMenu({
                     <div className="space-y-3 pt-2">
                       <Separator />
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium flex items-center gap-2">
+                        <Label className="text-sm font-medium flex items-center gap-2 px-1">
                           <MapPin className="h-4 w-4 text-purple-500" />
-                          Or find nearby truck-friendly locations
+                          Nearby truck-friendly locations
                         </Label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2 px-1">
                           {poiCategories.map((category) => (
                             <Button
                               key={category.id}
                               variant={activePOICategory === category.id ? "default" : "outline"}
-                              className="h-14 flex flex-col gap-1 transition-opacity hover:opacity-90 active:opacity-70"
+                              className={cn(
+                                "h-14 flex flex-col gap-1 transition-all active:scale-95",
+                                activePOICategory === category.id && "bg-blue-600 text-white border-blue-600"
+                              )}
                               onClick={() => handlePOISearch(category.id)}
                               data-testid={`button-poi-${category.id}-plan`}
                             >
                               <category.icon className="h-4 w-4" />
-                              <span className="text-xs">{category.label}</span>
+                              <span className="text-[10px] font-medium">{category.label}</span>
                             </Button>
                           ))}
                         </div>
                         
                         {/* POI Results in Plan Tab */}
-                        {poiLoading && activePOICategory && (
-                          <div className="flex items-center justify-center py-3 bg-muted/30 rounded-lg">
-                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                            <span className="ml-2 text-xs text-muted-foreground">Searching nearby...</span>
-                          </div>
-                        )}
-                        
-                        {!poiLoading && activePOICategory && poiResults.length === 0 && (
-                          <div className="text-xs text-muted-foreground py-3 text-center bg-muted/20 rounded-lg">
-                            No {poiCategories.find(c => c.id === activePOICategory)?.label} found nearby
-                          </div>
-                        )}
-                        
-                        {!poiLoading && poiResults.length > 0 && (
-                          <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                            <div className="text-xs font-medium text-muted-foreground">
-                              Found {poiResults.length} nearby
+                        {activePOICategory && (
+                          <div className="mt-2 space-y-2 px-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold uppercase text-muted-foreground">
+                                {poiCategories.find(c => c.id === activePOICategory)?.label} Results
+                              </span>
+                              {poiLoading && <Loader2 className="h-3 w-3 animate-spin" />}
                             </div>
-                            {poiResults.slice(0, 8).map((result, idx) => (
-                              <Card 
-                                key={result.id} 
-                                className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:translate-x-1 active:translate-x-0"
-                                onClick={() => {
-                                  const display = formatTomTomDisplay(result);
-                                  setToInput(display);
-                                  onToLocationChange(display);
-                                  setActivePOICategory(null);
-                                  setPoiSearchEnabled(false);
-                                  // toast({
-                                  //   title: "Destination set",
-                                  //   description: `Route to: ${result.poi?.name || display}`,
-                                  // });
-                                }}
-                                data-testid={`card-poi-result-plan-${idx}`}
-                              >
-                                <CardContent className="p-2.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="font-medium text-xs truncate">
-                                        {result.poi?.name || formatTomTomDisplay(result)}
-                                      </div>
-                                      <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                                        {formatTomTomDisplay(result)}
-                                      </div>
-                                      {result.dist !== undefined && (
-                                        <div className="text-[11px] text-muted-foreground mt-0.5">
-                                          {formatDistance(result.dist, 'meters')} away
+
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 pb-2">
+                              {!poiLoading && poiResults.length === 0 ? (
+                                <div className="text-center py-8 text-xs text-muted-foreground border rounded-lg border-dashed">
+                                  No results found nearby
+                                </div>
+                              ) : (
+                                poiResults.slice(0, 10).map((result: any, idx: number) => (
+                                  <Card 
+                                    key={result.id || idx} 
+                                    className="cursor-pointer hover:border-blue-400 transition-all active:scale-[0.98] shadow-sm"
+                                    onClick={() => handleSelectPOI(result)}
+                                    data-testid={`card-poi-result-plan-${idx}`}
+                                  >
+                                    <CardContent className="p-3">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-bold text-sm truncate">
+                                            {result.poi?.name || result.name || "Unknown"}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                                            {result.address?.freeformAddress || result.address || "No address"}
+                                          </div>
+                                          {result.dist !== undefined && (
+                                            <div className="text-[10px] text-blue-600 font-bold mt-1 uppercase tracking-wider">
+                                              {(result.dist / 1609.34).toFixed(1)} miles away
+                                            </div>
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
-                                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                ))
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>

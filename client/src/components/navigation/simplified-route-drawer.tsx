@@ -81,6 +81,8 @@ export function SimplifiedRouteDrawer({
     { value: 'fuel', label: 'Fuel', icon: Fuel },
     { value: 'parking', label: 'Parking', icon: Store },
     { value: 'truck_stop', label: 'Truck Stop', icon: ShoppingCart },
+    { value: 'shop', label: 'Shop', icon: Store },
+    { value: 'supermarket', label: 'Supermarket', icon: ShoppingCart },
   ];
 
   // When POI category selected, automatically search with available location
@@ -118,10 +120,13 @@ export function SimplifiedRouteDrawer({
 
   // Handle POI selection
   const handleSelectPOI = (poi: Facility) => {
-    const displayLabel = `${poi.name}${poi.address ? `, ${poi.address}` : ''}`;
+    const displayLabel = poi.name;
+    const address = poi.address || "";
+    const fullLabel = address ? `${displayLabel}, ${address}` : displayLabel;
+    
     const coordinates = { lat: poi.coordinates.lat, lng: poi.coordinates.lng };
     
-    onToLocationChange(displayLabel);
+    onToLocationChange(fullLabel);
     onToCoordinatesChange?.(coordinates);
     setSelectedPOICategory(''); // Clear selection after choosing
   };

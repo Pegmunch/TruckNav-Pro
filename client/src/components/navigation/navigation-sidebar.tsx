@@ -497,30 +497,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   const handleShopsClick = () => {
     console.log('Shops clicked');
-    console.log('[SHOPS] Current fromCoordinates:', fromCoordinates);
-    console.log('[SHOPS] Current coordinates priority:', {
-      gpsPosition: gpsData?.position,
-      manualLocation: gpsData?.manualLocation,
-      fromCoordinates,
-      providedCoordinates: coordinates,
-    });
-    
-    // Build params before setting category to see what we have
-    const currentParams = buildFacilitySearchParams();
-    console.log('[SHOPS] Search params BEFORE setting category:', currentParams);
-    
     handlePOISearch("shop");
-    
-    // Check params after setting category
-    setTimeout(() => {
-      const newParams = buildFacilitySearchParams();
-      console.log('[SHOPS] Search params AFTER setting category:', newParams);
-      console.log('[SHOPS] Should fetch facilities:', shouldFetchFacilities);
-      console.log('[SHOPS] Selected POI Category:', selectedPOICategory);
-      if (newParams) {
-        console.log('[SHOPS] API call should be made to:', `/api/poi-search?${newParams}`);
-      }
-    }, 100);
+  };
+
+  const handleSupermarketsClick = () => {
+    console.log('Supermarkets clicked');
+    handlePOISearch("supermarket");
   };
 
   return (
@@ -870,7 +852,7 @@ Calculating route...
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={handleTruckStopsClick}
-                      variant="outline"
+                      variant={selectedPOICategory === 'truck_stop' ? "default" : "outline"}
                       size="sm"
                       className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-truck-stops"
@@ -881,7 +863,7 @@ Calculating route...
                     
                     <Button
                       onClick={handleFuelStationsClick}
-                      variant="outline"
+                      variant={selectedPOICategory === 'fuel' ? "default" : "outline"}
                       size="sm"
                       className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-fuel-stations"
@@ -892,7 +874,7 @@ Calculating route...
                     
                     <Button
                       onClick={handleParkingClick}
-                      variant="outline"
+                      variant={selectedPOICategory === 'parking' ? "default" : "outline"}
                       size="sm"
                       className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-parking"
@@ -903,7 +885,7 @@ Calculating route...
                     
                     <Button
                       onClick={handleRestaurantsClick}
-                      variant="outline"
+                      variant={selectedPOICategory === 'restaurant' ? "default" : "outline"}
                       size="sm"
                       className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-restaurants"
@@ -914,13 +896,24 @@ Calculating route...
                     
                     <Button
                       onClick={handleShopsClick}
-                      variant="outline"
+                      variant={selectedPOICategory === 'shop' ? "default" : "outline"}
                       size="sm"
                       className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
                       data-testid="button-shops"
                     >
                       <Store className="w-4 h-4 flex-shrink-0" />
                       <span className="text-center leading-tight">Shops</span>
+                    </Button>
+
+                    <Button
+                      onClick={handleSupermarketsClick}
+                      variant={selectedPOICategory === 'supermarket' ? "default" : "outline"}
+                      size="sm"
+                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
+                      data-testid="button-supermarkets"
+                    >
+                      <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-center leading-tight">Markets</span>
                     </Button>
                   </div>
                 </div>
