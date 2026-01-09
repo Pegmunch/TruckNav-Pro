@@ -69,7 +69,7 @@ export function AddressAutocomplete({
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isInteractingWithDropdownRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const { toast } = useToast();
   
@@ -164,12 +164,16 @@ export function AddressAutocomplete({
   
   // Close dropdown when clicking/tapping outside using document-level listener
   // This replaces blur-based closing which is unreliable on iOS
-  // CRITICAL: Use pointerup (not pointerdown) so cmdk's onSelect fires FIRST
-  // cmdk dispatches onSelect on pointerup, so we must wait for that before closing
   useEffect(() => {
     if (!open) return;
     
     const handlePointerUp = (e: PointerEvent) => {
+      // CRITICAL: If this pointer is being used for a selection, don't close
+      if (activePointerIdRef.current === e.pointerId) {
+        // Don't clear here - let the selection handler clear it
+        return;
+      }
+      
       const target = e.target as HTMLElement;
       
       // Check if click is inside input wrapper
@@ -183,10 +187,7 @@ export function AddressAutocomplete({
       if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
       
       // Click was outside - close dropdown
-      // Use setTimeout to ensure any selection handlers complete first
-      setTimeout(() => {
-        setOpen(false);
-      }, 0);
+      setOpen(false);
     };
     
     // Use bubble phase so event handlers on elements run first
@@ -763,24 +764,6 @@ export function AddressAutocomplete({
               WebkitUserSelect: 'none', // Prevent text selection on iOS
               userSelect: 'none'
             }}
-            onPointerDownCapture={(e) => {
-              // Set flag FIRST in capture phase - before document listener runs
-              isInteractingWithDropdownRef.current = true;
-            }}
-            onMouseDown={(e) => {
-              // Backup for non-pointer browsers
-              isInteractingWithDropdownRef.current = true;
-            }}
-            onTouchStart={(e) => {
-              // Backup for touch devices
-              isInteractingWithDropdownRef.current = true;
-            }}
-            onClick={(e) => {
-              // Reset flag after click completes
-              setTimeout(() => {
-                isInteractingWithDropdownRef.current = false;
-              }, 100);
-            }}
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-[300px] overflow-y-auto">
@@ -797,10 +780,9 @@ export function AddressAutocomplete({
                       <div
                         role="option"
                         tabIndex={0}
-                        onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
-                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectGPSCandidate(); }}
-                        className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-100 dark:active:bg-blue-900 border-2 border-blue-500 rounded-lg"
+                        onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
+                        onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectGPSCandidate(); }}
+                        className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-200 dark:active:bg-blue-800 border-2 border-blue-500 rounded-lg"
                       >
                         <Navigation2 className="mr-3 h-6 w-6 text-blue-600 dark:text-blue-400" />
                         <div className="flex flex-col flex-1">
@@ -834,10 +816,9 @@ export function AddressAutocomplete({
                         key={`fav-${loc.id}`}
                         role="option"
                         tabIndex={0}
-                        onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
-                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
-                        className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
+                        onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
+                        onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectSavedLocation(loc); }}
+                        className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
                       >
                         <Star className="mr-3 h-5 w-5 text-yellow-500 fill-yellow-500" />
                         <div className="flex flex-col">
@@ -851,10 +832,9 @@ export function AddressAutocomplete({
                         key={`recent-${loc.id}`}
                         role="option"
                         tabIndex={0}
-                        onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
-                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectSavedLocation(loc); }}
-                        className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
+                        onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
+                        onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectSavedLocation(loc); }}
+                        className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
                       >
                         <Clock className="mr-3 h-5 w-5 text-muted-foreground" />
                         <div className="flex flex-col">
@@ -872,10 +852,9 @@ export function AddressAutocomplete({
                     <div
                       role="option"
                       tabIndex={0}
-                      onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
-                      onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectUKPostcode(ukPostcodeResult); }}
-                      className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent"
+                      onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
+                      onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectUKPostcode(ukPostcodeResult); }}
+                      className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80"
                     >
                       <MapPin className="mr-3 h-5 w-5 text-blue-500" />
                       <div className="flex flex-col">
@@ -896,10 +875,9 @@ export function AddressAutocomplete({
                           key={result.id || `tomtom-${index}`}
                           role="option"
                           tabIndex={0}
-                          onPointerUp={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectTomTom(result); }}
-                          className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent border-b border-border/50 last:border-0"
+                          onPointerDown={(e) => { activePointerIdRef.current = e.pointerId; }}
+                          onPointerUp={(e) => { e.stopPropagation(); activePointerIdRef.current = null; handleSelectTomTom(result); }}
+                          className="flex items-center p-3 cursor-pointer hover:bg-accent active:bg-accent/80 border-b border-border/50 last:border-0"
                         >
                           {isPoi ? (
                             <Store className="mr-3 h-5 w-5 text-emerald-500 shrink-0" />
