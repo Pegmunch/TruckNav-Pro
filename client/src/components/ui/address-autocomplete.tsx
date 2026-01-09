@@ -74,6 +74,12 @@ export function AddressAutocomplete({
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const { toast } = useToast();
   
+  // GPS candidate state - holds geocoded location pending user confirmation
+  const [gpsCandidate, setGpsCandidate] = useState<{
+    address: string;
+    coordinates: { lat: number; lng: number };
+  } | null>(null);
+  
   // CRITICAL: Sync searchTerm with external value prop changes
   // This ensures the input displays the correct value when parent updates it
   useEffect(() => {
@@ -441,13 +447,37 @@ export function AddressAutocomplete({
   const isLoading = isLoadingTomTom || isLoadingUKPostcode;
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-  // GPS Quick-Set Handler - Works in PWA mode by requesting fresh GPS
+  // Handler to confirm and select GPS candidate
+  const handleSelectGPSCandidate = useCallback(() => {
+    if (!gpsCandidate) return;
+    
+    console.log('[GPS-LOCATION] User confirmed GPS candidate:', gpsCandidate.address);
+    setSearchTerm(gpsCandidate.address);
+    onChange(gpsCandidate.address);
+    onCoordinatesChange?.(gpsCandidate.coordinates);
+    setOpen(false);
+    setGpsCandidate(null);
+    
+    const input = document.getElementById(id) as HTMLInputElement;
+    if (input) input.blur();
+    
+    // Save to recent locations
+    createLocationMutation.mutate({
+      label: gpsCandidate.address,
+      coordinates: gpsCandidate.coordinates,
+      isFavorite: false,
+    });
+  }, [gpsCandidate, onChange, onCoordinatesChange, createLocationMutation, id]);
+
+  // GPS Quick-Set Handler - Gets GPS, geocodes, and shows in dropdown for confirmation
   const handleUseGPSLocation = useCallback(async () => {
     setIsGettingLocation(true);
+    setGpsCandidate(null); // Clear any previous candidate
+    setOpen(true); // Open dropdown immediately to show loading state
     console.log('[GPS-LOCATION] Button clicked - status:', gps?.status, 'position:', gps?.position ? 'available' : 'none');
     
-    // Helper function to reverse geocode and set location
-    const setLocationFromCoords = async (latitude: number, longitude: number): Promise<boolean> => {
+    // Helper function to reverse geocode and set as candidate (not final)
+    const setLocationCandidate = async (latitude: number, longitude: number): Promise<boolean> => {
       try {
         // Try reverse geocoding to get address
         const controller = new AbortController();
@@ -480,30 +510,20 @@ export function AddressAutocomplete({
             
             const address = addressParts.length > 0 ? addressParts.join(', ') : 'Current Location';
             
-            setSearchTerm(address);
-            onChange(address);
-            onCoordinatesChange?.({ lat: latitude, lng: longitude });
-            setOpen(false); // Close dropdown after setting location
-            console.log('[GPS-LOCATION] Location set from reverse geocode:', address);
+            // Set as candidate - user must confirm by tapping
+            setGpsCandidate({ address, coordinates: { lat: latitude, lng: longitude } });
+            console.log('[GPS-LOCATION] GPS candidate ready for confirmation:', address);
             return true;
           }
         }
         // Fallback to "Current Location" text (never raw coordinates)
-        const fallbackAddress = 'Current Location';
-        setSearchTerm(fallbackAddress);
-        onChange(fallbackAddress);
-        onCoordinatesChange?.({ lat: latitude, lng: longitude });
-        setOpen(false); // Close dropdown after setting location
-        console.log('[GPS-LOCATION] Location set as Current Location (reverse geocode empty)');
+        setGpsCandidate({ address: 'Current Location', coordinates: { lat: latitude, lng: longitude } });
+        console.log('[GPS-LOCATION] GPS candidate set as Current Location (reverse geocode empty)');
         return true;
       } catch (error) {
         // Fallback to "Current Location" on error (never raw coordinates)
-        const fallbackAddress = 'Current Location';
-        setSearchTerm(fallbackAddress);
-        onChange(fallbackAddress);
-        onCoordinatesChange?.({ lat: latitude, lng: longitude });
-        setOpen(false); // Close dropdown after setting location
-        console.log('[GPS-LOCATION] Location set as Current Location (error fallback)');
+        setGpsCandidate({ address: 'Current Location', coordinates: { lat: latitude, lng: longitude } });
+        console.log('[GPS-LOCATION] GPS candidate set as Current Location (error fallback)');
         return true;
       }
     };
@@ -512,20 +532,17 @@ export function AddressAutocomplete({
       // First priority: Use existing GPS position if ready
       if (gps?.status === 'ready' && gps?.position) {
         const { latitude, longitude } = gps.position;
-        await setLocationFromCoords(latitude, longitude);
+        await setLocationCandidate(latitude, longitude);
         return;
       }
       
       // Second priority: Use manual location if available
       if (gps?.manualLocation) {
-        setSearchTerm(gps.manualLocation.address || 'Manual Location');
-        onChange(gps.manualLocation.address || 'Manual Location');
-        onCoordinatesChange?.({ 
-          lat: gps.manualLocation.latitude, 
-          lng: gps.manualLocation.longitude 
+        setGpsCandidate({
+          address: gps.manualLocation.address || 'Manual Location',
+          coordinates: { lat: gps.manualLocation.latitude, lng: gps.manualLocation.longitude }
         });
-        setOpen(false); // Close dropdown after setting location
-        console.log('[GPS-LOCATION] Using manual location');
+        console.log('[GPS-LOCATION] Manual location candidate ready');
         return;
       }
       
@@ -533,7 +550,7 @@ export function AddressAutocomplete({
       if (gps?.cachedPosition?.position) {
         const { latitude, longitude } = gps.cachedPosition.position;
         console.log('[GPS-LOCATION] Using cached GPS position (age:', gps.cachedPosition.ageDisplay, ')');
-        await setLocationFromCoords(latitude, longitude);
+        await setLocationCandidate(latitude, longitude);
         return;
       }
       
@@ -551,7 +568,7 @@ export function AddressAutocomplete({
               clearTimeout(timeoutHandle);
               const { latitude, longitude } = position.coords;
               console.log('[GPS-LOCATION] Fresh GPS acquired:', latitude, longitude);
-              await setLocationFromCoords(latitude, longitude);
+              await setLocationCandidate(latitude, longitude);
               resolve(true);
             },
             (error) => {
@@ -569,6 +586,7 @@ export function AddressAutocomplete({
         
         if (!success) {
           console.warn('[GPS-LOCATION] Could not acquire location - check device permissions');
+          setOpen(false); // Close dropdown on error
           toast({
             title: "Location unavailable",
             description: "Please enable location services in your device settings, or type an address manually.",
@@ -577,6 +595,7 @@ export function AddressAutocomplete({
         }
       } else {
         console.warn('[GPS-LOCATION] Geolocation not supported in this browser');
+        setOpen(false); // Close dropdown on error
         toast({
           title: "Location not supported",
           description: "Your browser doesn't support location services. Please type an address manually.",
@@ -585,11 +604,12 @@ export function AddressAutocomplete({
       }
     } catch (error) {
       console.warn('[GPS-LOCATION] Failed to get GPS position:', error);
+      setOpen(false); // Close dropdown on error
     } finally {
       // CRITICAL: Always reset loading state, guaranteed by finally block
       setIsGettingLocation(false);
     }
-  }, [gps, onChange, onCoordinatesChange]);
+  }, [gps, toast]);
 
   // Dynamic placeholder based on POI category
   const dynamicPlaceholder = useMemo(() => {
@@ -663,29 +683,32 @@ export function AddressAutocomplete({
       {/* GPS Quick Access Button - Hidden when parent has its own GPS button */}
       {!hideGPSButton && (
         <Button
-            onClick={() => {
-              // Focus input and open dropdown so user can confirm selection
-              const input = document.getElementById(id) as HTMLInputElement;
-              if (input) {
-                input.focus();
-              }
-              setOpen(true);
-            }}
+            onClick={handleUseGPSLocation}
+            disabled={isGettingLocation}
             variant="default"
             className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
             data-testid="button-use-gps-location"
           >
-            <Crosshair className="h-6 w-6 mr-2" />
-            <span className="flex-1">Use My Current Location</span>
-            {gps?.status === 'ready' && gps?.position && (
-              <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
-                GPS Ready
-              </Badge>
-            )}
-            {gps?.manualLocation && !gps?.position && (
-              <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-                Manual
-              </Badge>
+            {isGettingLocation ? (
+              <>
+                <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+                <span>Getting Location...</span>
+              </>
+            ) : (
+              <>
+                <Crosshair className="h-6 w-6 mr-2" />
+                <span className="flex-1">Use My Current Location</span>
+                {gps?.status === 'ready' && gps?.position && (
+                  <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                    GPS Ready
+                  </Badge>
+                )}
+                {gps?.manualLocation && !gps?.position && (
+                  <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                    Manual
+                  </Badge>
+                )}
+              </>
             )}
         </Button>
       )}
@@ -751,10 +774,48 @@ export function AddressAutocomplete({
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-none">
+                {/* GPS Location Loading/Candidate - Always at top when GPS is active */}
+                {(isGettingLocation || gpsCandidate) && (
+                  <CommandGroup heading="Your Location">
+                    {isGettingLocation && !gpsCandidate && (
+                      <div className="flex items-center p-4 text-muted-foreground">
+                        <Loader2 className="mr-3 h-5 w-5 animate-spin text-blue-500" />
+                        <span>Getting your location...</span>
+                      </div>
+                    )}
+                    {gpsCandidate && (
+                      <CommandItem
+                        value={`gps-candidate-${gpsCandidate.address}`}
+                        onSelect={handleSelectGPSCandidate}
+                        className="flex items-center p-4 cursor-pointer bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 active:bg-blue-100 dark:active:bg-blue-900 border-2 border-blue-500 rounded-lg"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectGPSCandidate();
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSelectGPSCandidate();
+                        }}
+                      >
+                        <Navigation2 className="mr-3 h-6 w-6 text-blue-600 dark:text-blue-400" />
+                        <div className="flex flex-col flex-1">
+                          <span className="font-bold text-blue-700 dark:text-blue-300">{gpsCandidate.address}</span>
+                          <span className="text-xs text-blue-600 dark:text-blue-400">Tap to use this location</span>
+                        </div>
+                        <Crosshair className="h-5 w-5 text-blue-500" />
+                      </CommandItem>
+                    )}
+                  </CommandGroup>
+                )}
+
                 {favoriteLocations.length === 0 && 
                  recentLocations.length === 0 && 
                  tomtomResults.length === 0 && 
-                 !ukPostcodeResult && (
+                 !ukPostcodeResult &&
+                 !gpsCandidate &&
+                 !isGettingLocation && (
                   <CommandEmpty className="py-6 text-center text-muted-foreground">
                     {debouncedSearch.length < 3 
                       ? "Type at least 3 characters to search..." 
