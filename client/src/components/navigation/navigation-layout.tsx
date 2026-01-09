@@ -30,14 +30,8 @@ export function NavigationLayout({
         {mapContent}
       </div>
 
-      {/* Top navigation strip - ETA header (CompactTripStrip) */}
-      {shouldShowUI && topStrip && (
-        <div 
-          className="absolute inset-0 z-[1700] pointer-events-none"
-        >
-          {topStrip}
-        </div>
-      )}
+      {/* Top navigation strip - ETA header (CompactTripStrip) - now self-positioning and draggable */}
+      {shouldShowUI && topStrip && topStrip}
 
       {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
       {leftStack && (

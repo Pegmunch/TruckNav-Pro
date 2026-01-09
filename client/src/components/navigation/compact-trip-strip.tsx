@@ -1,8 +1,11 @@
-import { Clock, Route, Navigation2, ChevronDown, ChevronUp, GripHorizontal } from 'lucide-react';
+import { Clock, Route, Navigation2, GripHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, useDragControls } from 'framer-motion';
+import { motion, PanInfo } from 'framer-motion';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
+
+const STORAGE_KEY = 'trucknav-eta-position';
+const HEADER_HEIGHT = 56;
 
 interface CompactTripStripProps {
   eta: number;
@@ -10,6 +13,61 @@ interface CompactTripStripProps {
   nextManeuver: string;
   nextDistance: number;
   className?: string;
+}
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+function getDefaultPosition(): Position {
+  if (typeof window === 'undefined') {
+    return { x: 20, y: HEADER_HEIGHT + 20 };
+  }
+  
+  const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top') || '0', 10) || 0;
+  const stripWidth = Math.min(380, window.innerWidth * 0.92);
+  
+  return { 
+    x: Math.max(10, (window.innerWidth - stripWidth) / 2), 
+    y: safeTop + HEADER_HEIGHT + 20 
+  };
+}
+
+function clampPosition(pos: Position, expanded: boolean): Position {
+  if (typeof window === 'undefined') return pos;
+  
+  const stripWidth = Math.min(380, window.innerWidth * 0.92);
+  const stripHeight = expanded ? 200 : 80;
+  const padding = 10;
+  const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-top') || '0', 10) || 0;
+  const safeBottom = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-bottom') || '0', 10) || 0;
+  
+  return {
+    x: Math.max(padding, Math.min(pos.x, window.innerWidth - stripWidth - padding)),
+    y: Math.max(safeTop + padding, Math.min(pos.y, window.innerHeight - stripHeight - safeBottom - padding))
+  };
+}
+
+function loadPosition(): Position | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const pos = JSON.parse(stored) as Position;
+      return clampPosition(pos, false);
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+function savePosition(pos: Position): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 export function CompactTripStrip({
@@ -20,95 +78,97 @@ export function CompactTripStrip({
   className
 }: CompactTripStripProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isDraggable, setIsDraggable] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const { formatDistance } = useMeasurement();
-  const dragControls = useDragControls();
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  const [position, setPosition] = useState<Position>(() => {
+    const saved = loadPosition();
+    const initial = saved || getDefaultPosition();
+    return clampPosition(initial, false);
+  });
 
-  const startLongPress = useCallback((e: React.PointerEvent) => {
-    // Only trigger for touch or left mouse button
-    if (e.button !== 0 && e.pointerType !== 'touch') return;
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => clampPosition(prev, isExpanded));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [isExpanded]);
 
-    // Reset state
-    setIsDraggable(false);
-
-    longPressTimerRef.current = setTimeout(() => {
-      setIsDraggable(true);
-      // Haptic feedback if available
-      if ('vibrate' in navigator) {
-        navigator.vibrate(100);
-      }
-      // Start drag immediately on long press
-      dragControls.start(e);
-    }, 2000); // 2 second firm hold
-  }, [dragControls]);
-
-  const endLongPress = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
     }
   }, []);
 
-  // Corner expand logic
-  const handlePointerDown = (e: React.PointerEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const cornerSize = 40; // 40px touch area in corners
+  const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    setIsDragging(false);
+    const newPos = clampPosition({
+      x: position.x + info.offset.x,
+      y: position.y + info.offset.y
+    }, isExpanded);
+    setPosition(newPos);
+    savePosition(newPos);
+  }, [position, isExpanded]);
 
-    const isTopLeft = x < cornerSize && y < cornerSize;
-    const isTopRight = x > rect.width - cornerSize && y < cornerSize;
-    const isBottomLeft = x < cornerSize && y > rect.height - cornerSize;
-    const isBottomRight = x > rect.width - cornerSize && y > rect.height - cornerSize;
-
-    if (isTopLeft || isTopRight || isBottomLeft || isBottomRight) {
-      longPressTimerRef.current = setTimeout(() => {
-        setIsExpanded(prev => !prev);
-        if ('vibrate' in navigator) {
-          navigator.vibrate([50, 50, 50]);
-        }
-      }, 2000);
-    } else {
-      startLongPress(e);
+  const handleExpandToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(prev => !prev);
+    if ('vibrate' in navigator) {
+      navigator.vibrate([30, 30, 30]);
     }
-  };
+  }, []);
 
   return (
     <motion.div 
       ref={containerRef}
-      drag={isDraggable}
-      dragControls={dragControls}
-      dragListener={false}
-      dragConstraints={{ 
-        top: 10, 
-        left: 10, 
-        right: typeof window !== 'undefined' ? window.innerWidth - 410 : 300, 
-        bottom: typeof window !== 'undefined' ? window.innerHeight - 150 : 500 
-      }}
-      dragElastic={0.1}
+      drag
       dragMomentum={false}
-      onPointerDown={handlePointerDown}
-      onPointerUp={endLongPress}
-      onPointerLeave={endLongPress}
+      dragElastic={0}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      initial={false}
+      animate={{ x: position.x, y: position.y }}
+      transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.5 }}
       className={cn(
-        'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-2xl mobile-safe-top shrink-0 backdrop-blur-xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] left-[4vw] max-w-[400px] transition-shadow duration-300',
+        'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-2xl backdrop-blur-xl rounded-2xl overflow-hidden touch-none fixed w-[92vw] max-w-[380px] transition-shadow duration-300',
         isExpanded ? 'h-auto' : 'h-[72px]',
-        isDraggable ? 'ring-2 ring-blue-500 shadow-blue-500/20 cursor-grabbing' : 'cursor-pointer',
+        isDragging ? 'ring-2 ring-blue-500 shadow-blue-500/30 cursor-grabbing scale-[1.02]' : 'cursor-grab',
         className
       )}
-      style={{ pointerEvents: 'auto' }}
+      style={{ 
+        pointerEvents: 'auto',
+        left: 0,
+        top: 0,
+        zIndex: 1700
+      }}
       data-testid="compact-trip-strip"
     >
-      {/* Visual Feedback for Draggable Mode */}
-      {isDraggable && (
-        <div className="absolute inset-0 bg-blue-500/10 pointer-events-none animate-pulse flex items-center justify-center">
-          <GripHorizontal className="w-8 h-8 text-blue-400 opacity-50" />
-        </div>
-      )}
+      {/* Drag Handle */}
+      <div 
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
+      >
+        <div className="w-8 h-1 bg-white/30 rounded-full" />
+      </div>
 
-      <div className="px-5 py-4 flex items-center justify-between gap-4">
+      {/* Expand/Collapse Button */}
+      <button
+        onClick={handleExpandToggle}
+        className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors z-10"
+        aria-label={isExpanded ? 'Collapse' : 'Expand'}
+      >
+        <GripHorizontal className="w-4 h-4 text-white/60" />
+      </button>
+
+      <div className="px-5 py-4 flex items-center justify-between gap-4 pt-6">
         {/* Left: ETA & Distance */}
         <div className="flex items-center gap-5 flex-1 min-w-0">
           <div className="flex items-center gap-2 shrink-0 bg-blue-500/15 px-3 py-1.5 rounded-lg">
@@ -132,7 +192,7 @@ export function CompactTripStrip({
 
         {/* Right: Maneuver (only if not expanded) */}
         {!isExpanded && (
-          <div className="flex items-center gap-2 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-3 py-1.5 rounded-lg max-w-[150px] overflow-hidden">
+          <div className="flex items-center gap-2 shrink-0 bg-gradient-to-r from-blue-500/20 to-transparent px-3 py-1.5 rounded-lg max-w-[120px] overflow-hidden">
             <Navigation2 className="w-5 h-5 text-blue-400 shrink-0 drop-shadow-glow" />
             <span className="text-base font-bold text-white whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-md">
               {nextManeuver}
@@ -170,10 +230,12 @@ export function CompactTripStrip({
         </motion.div>
       )}
 
-      {/* Interactive Hint (only visible briefly) */}
-      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/20 uppercase tracking-widest pointer-events-none">
-        Hold corners to expand • Hold center to move
-      </div>
+      {/* Drag hint - subtle */}
+      {!isDragging && (
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-white/15 uppercase tracking-widest pointer-events-none">
+          Drag to reposition
+        </div>
+      )}
     </motion.div>
   );
 }
