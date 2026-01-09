@@ -35,7 +35,7 @@ export function CompactTripStrip({
   return (
     <div 
       className={cn(
-        'fixed left-0 right-0 bg-white/20 backdrop-blur-xl border-b-2 border-blue-600/60 shadow-lg',
+        'fixed left-0 right-0 bg-white/80 backdrop-blur-xl border-b-2 border-blue-600/60 shadow-lg',
         className
       )}
       style={{ 
