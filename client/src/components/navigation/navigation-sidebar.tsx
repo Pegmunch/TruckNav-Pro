@@ -1078,11 +1078,11 @@ Calculating route...
                                 <div className="font-medium text-sm truncate" data-testid={`text-facility-name-${facility.id}`}>
                                   {facility.name}
                                 </div>
-                                {(facility as any).distance !== undefined && (
+                                {typeof (facility as any).distance === 'number' && (
                                   <span className="text-xs font-medium text-blue-600 dark:text-blue-400 shrink-0">
                                     {(facility as any).distance < 1 
                                       ? `${Math.round((facility as any).distance * 1000)}m` 
-                                      : `${(facility as any).distance.toFixed(1)}km`}
+                                      : `${((facility as any).distance as number).toFixed(1)}km`}
                                   </span>
                                 )}
                               </div>
