@@ -2053,14 +2053,9 @@ function NavigationPageContent() {
     localStorage.removeItem('navigation_timestamp');
     console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to plan mode');
     
-    // Reset to default Class 1 Truck
-    const class1Profile = allVehicleProfiles?.find(p => p.type === 'class_1_lorry');
-    if (class1Profile) {
-      setSelectedProfile(class1Profile);
-      setActiveProfile(class1Profile);
-      localStorage.setItem('activeVehicleProfileId', class1Profile.id); // Also sync storage
-      console.log('[ROUTE-CANCEL] ✅ Reset to default Class 1 Truck and synced storage');
-    }
+    // NOTE: Do NOT reset vehicle profile - respect user's truck/car selection
+    // The selected profile will be used for the next route planning
+    console.log('[ROUTE-CANCEL] ℹ️ Keeping current vehicle profile selection');
     
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
@@ -2068,7 +2063,7 @@ function NavigationPageContent() {
     
     // CRITICAL: Clear all route persistence - fresh start page
     localStorage.removeItem('activeJourneyId');
-    localStorage.removeItem('activeVehicleProfileId'); // Force reset to default on next load
+    // NOTE: Do NOT remove activeVehicleProfileId - preserve user's vehicle selection
     
     // Clear URL parameter
     const url = new URL(window.location.href);
@@ -2553,17 +2548,12 @@ function NavigationPageContent() {
     localStorage.removeItem('navigation_timestamp');
     localStorage.removeItem('activeRouteId');
     localStorage.removeItem('activeJourneyId');
-    localStorage.removeItem('activeVehicleProfileId'); // Force reset to default
+    // NOTE: Do NOT remove activeVehicleProfileId - preserve user's vehicle selection
     console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
 
-    // Reset to default Class 1 Truck
-    const class1Profile = allVehicleProfiles?.find(p => p.type === 'class_1_lorry');
-    if (class1Profile) {
-      setSelectedProfile(class1Profile);
-      setActiveProfile(class1Profile);
-      localStorage.setItem('activeVehicleProfileId', class1Profile.id); // Sync storage
-      console.log('[NAV-STOP] ✅ Reset to default Class 1 Truck and synced storage');
-    }
+    // NOTE: Do NOT reset vehicle profile - respect user's truck/car selection
+    // The selected profile will be used for the next route planning
+    console.log('[NAV-STOP] ℹ️ Keeping current vehicle profile selection');
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
