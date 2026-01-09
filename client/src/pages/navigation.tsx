@@ -394,7 +394,7 @@ function NavigationPageContent() {
       console.log('[NAV-CONTROLS] Auto-showing controls - isNavUIActive:', isNavUIActive, 'isLocalNavActive:', isLocalNavActive);
       setShowNavControls(true);
     }
-  }, [isNavUIActive, isLocalNavActive]);
+  }, [isNavUIActive, isLocalNavActive, setShowNavControls]); // Added setShowNavControls to dependency array
   
   // GPS Mode effect - wire up mode changes to GPS context
   // CRITICAL FIX: Destructure callbacks to prevent render loop
