@@ -83,6 +83,7 @@ import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
 import { LanguageSelector } from "@/components/settings/language-selector";
 import { useOnboarding } from "@/components/onboarding/onboarding-provider";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import { useDestinationHistory } from "@/hooks/use-destination-history";
 import { Tabs as RouteTabs, TabsList as RouteTabsList, TabsTrigger as RouteTabsTrigger } from "@/components/ui/tabs";
 
 interface ComprehensiveMobileMenuProps {
@@ -133,6 +134,7 @@ function ComprehensiveMobileMenu({
   const { formatDistance } = useMeasurement();
   const gps = useGPS();
   const { resetTour } = useOnboarding();
+  const { destinations: previousDestinations, removeDestination } = useDestinationHistory();
   const [activeTab, setActiveTab] = useState("plan");
   
   // Local state for route planning inputs - Always start empty for new route planning
@@ -948,6 +950,79 @@ function ComprehensiveMobileMenu({
                           </Card>
                         ))}
                       </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Previous Destinations - Order of Travel (Most Recent First) */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <History className="h-4 w-4 text-blue-500" />
+                      Previous Destinations
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Tap to navigate again (ordered by travel)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {previousDestinations.length === 0 ? (
+                      <div className="text-sm text-muted-foreground py-4 text-center">
+                        No previous destinations yet
+                      </div>
+                    ) : (
+                      previousDestinations.slice(0, 10).map((dest) => (
+                        <Card 
+                          key={dest.id} 
+                          className="bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all hover:translate-x-1 active:translate-x-0"
+                          onClick={() => {
+                            if (onSelectFacility) {
+                              onSelectFacility({
+                                name: dest.label,
+                                coordinates: dest.coordinates,
+                                type: 'previous',
+                                address: dest.formattedAddress
+                              });
+                              onOpenChange(false);
+                            }
+                          }}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm truncate">
+                                  {dest.label}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1 truncate">
+                                  {dest.formattedAddress}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                                  <span>{new Date(dest.lastVisitedAt).toLocaleDateString()}</span>
+                                  {dest.visitCount > 1 && (
+                                    <Badge variant="secondary" className="text-xs px-1 py-0">
+                                      {dest.visitCount}x
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeDestination(dest.id);
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
                     )}
                   </CardContent>
                 </Card>

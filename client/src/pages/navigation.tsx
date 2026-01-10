@@ -35,6 +35,7 @@ import { MobileNotificationStack } from "@/components/notifications/mobile-notif
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
+import { useDestinationHistory } from "@/hooks/use-destination-history";
 import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import { useNavigationSession } from "@/hooks/use-navigation-session";
 import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
@@ -115,6 +116,9 @@ function NavigationPageContent() {
   
   // Get GPS data from singleton provider
   const gpsData = useGPS();
+  
+  // Destination history for storing previous destinations (ordered by travel)
+  const { addDestination } = useDestinationHistory();
   
   // Manual location dialog hook
   const { 
@@ -2599,6 +2603,16 @@ function NavigationPageContent() {
       // Store journey ID in localStorage for persistence across page refreshes
       localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
       console.log('[NAV-ACTIVATION] ✅ Journey ID stored in localStorage');
+      
+      // Save destination to history (ordered by travel - most recent first)
+      if (toLocation && toCoordinates) {
+        addDestination(
+          toLocation.split(',')[0], // Short label from first part of address
+          toLocation,
+          toCoordinates
+        );
+        console.log('[NAV-ACTIVATION] ✅ Destination saved to history:', toLocation);
+      }
       
       // NOTE: isLocalNavActive was already set earlier in Step 2 to ensure proper SpeedometerHUD state
       // Verify localStorage persistence is still in place
