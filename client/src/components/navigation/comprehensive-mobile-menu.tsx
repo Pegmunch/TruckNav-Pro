@@ -500,7 +500,7 @@ function ComprehensiveMobileMenu({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col" data-testid="comprehensive-mobile-menu">
+        <DialogContent className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col z-[3000]" data-testid="comprehensive-mobile-menu">
           {/* Header */}
           <DialogHeader className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0 relative z-10">
             <div className="flex items-center justify-between">
