@@ -1734,6 +1734,13 @@ function NavigationPageContent() {
       // Reset cancellation guard after journey is completed
       isCancellingRouteRef.current = false;
       console.log('[JOURNEY-COMPLETE] ✅ Route cancellation guard reset, route cleared');
+      
+      // CRITICAL: Dispatch full reset event to trigger complete state reset
+      // This remounts NavigationPageContent with fresh initial state (same as after T&C accept)
+      const resetEvent = new CustomEvent('navigation:fullReset', {
+        detail: { source: 'journeyComplete', journeyId: journey?.id, timestamp: Date.now() }
+      });
+      window.dispatchEvent(resetEvent);
     },
     onError: (error) => {
       console.error('Failed to complete journey:', error);
@@ -4025,10 +4032,47 @@ function NavigationPageContent() {
 // Main NavigationPage wrapper - checks consent BEFORE starting GPS
 export default function NavigationPage() {
   const { hasAcceptedTerms, setConsentAccepted, isLoading } = useLegalConsent();
+  
+  // Navigation epoch key - increment to force complete remount of NavigationPageContent
+  // This provides a clean "fresh start" state identical to first load after T&C accept
+  const [navigationEpoch, setNavigationEpoch] = useState(0);
 
   const handleAccept = useCallback(async () => {
     await setConsentAccepted();
   }, [setConsentAccepted]);
+  
+  // Listen for navigation reset events (triggered by stop button or destination reached)
+  useEffect(() => {
+    const handleNavigationReset = (event: CustomEvent) => {
+      console.log('[NAV-RESET] 🔄 Full navigation reset triggered', event.detail);
+      
+      // Clear all navigation-related localStorage keys
+      const keysToRemove = [
+        'navigation_ui_active',
+        'navigation_mode', 
+        'navigation_timestamp',
+        'activeRouteId',
+        'activeJourneyId',
+        'navigationSidebarState',
+        'shouldShowHUD',
+        'mobileNavMode',
+        'isLocalNavActive',
+        'last_navigation_state'
+      ];
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Increment epoch to force complete remount with fresh state
+      setNavigationEpoch(prev => {
+        console.log('[NAV-RESET] ✅ Epoch incremented:', prev + 1);
+        return prev + 1;
+      });
+    };
+    
+    window.addEventListener('navigation:fullReset', handleNavigationReset as EventListener);
+    return () => {
+      window.removeEventListener('navigation:fullReset', handleNavigationReset as EventListener);
+    };
+  }, []);
 
   // Wait for consent state to load before deciding what to show
   // This prevents flashing Legal Disclaimer in PWA mode when consent is already stored
@@ -4046,6 +4090,7 @@ export default function NavigationPage() {
   }
 
   // Only start GPS AFTER consent is accepted
+  // Key prop forces complete remount when epoch changes, giving fresh initial state
   return (
     <GPSProvider
       enableHighAccuracy={true}
@@ -4055,7 +4100,7 @@ export default function NavigationPage() {
       enableHeadingSmoothing={true}
     >
       <OnboardingProvider isReady={true} isFleetPage={false}>
-        <NavigationPageContent />
+        <NavigationPageContent key={`nav-epoch-${navigationEpoch}`} />
       </OnboardingProvider>
     </GPSProvider>
   );
