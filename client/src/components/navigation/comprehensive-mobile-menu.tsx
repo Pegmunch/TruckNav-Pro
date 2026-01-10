@@ -513,6 +513,13 @@ function ComprehensiveMobileMenu({
     setPoiSearchEnabled(true);
   }, [fromCoordinates, gpsCoordinates, gps]);
 
+  // CRITICAL FIX: Fully unmount the Dialog when closed to remove Radix overlay from DOM
+  // This prevents the "glass overlay" blocking issue on iOS Safari where the invisible
+  // overlay remains mounted and captures all touch events after navigation stops
+  if (!open) {
+    return null;
+  }
+
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
