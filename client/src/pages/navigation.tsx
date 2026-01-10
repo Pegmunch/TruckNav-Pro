@@ -2864,22 +2864,8 @@ function NavigationPageContent() {
           />
         )}
         
-        {/* Navigation UI active? (HUD) */}
-        {isNavUIActive && (
-          <ProfessionalNavHUD
-            currentRoute={currentRoute}
-            selectedProfile={selectedProfile}
-            isNavigating={isNavigating}
-            currentSpeed={currentSpeed}
-            currentLocation={currentGPSLocation}
-            onToggleVoice={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-            onToggleFullscreen={() => setIsFullscreenNav(!isFullscreenNav)}
-            onCancelRoute={handleCancelRoute}
-            isCancellingRoute={isCancellingRouteRef.current}
-            voiceEnabled={professionalVoiceEnabled}
-            isFullscreen={isFullscreenNav}
-          />
-        )}
+        {/* Navigation UI active? (HUD) - DISABLED: Consolidated into CompactTripStrip glass bar */}
+        {/* ProfessionalNavHUD removed to avoid duplicate ETA displays - all elements now in CompactTripStrip */}
         
         <div className="mobile-layout">
           
