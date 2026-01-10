@@ -46,9 +46,9 @@ export function RightActionStack({
   isVisible = true,
   compact = false
 }: RightActionStackProps) {
-  // Button and icon sizes - smaller for better fit on mobile
-  const buttonSize = compact ? "h-7 w-7" : "h-9 w-9";
-  const iconSize = compact ? "h-3.5 w-3.5" : "h-4 w-4";
+  // Button and icon sizes - compact for mobile navigation
+  const buttonSize = compact ? "h-7 w-7" : "h-8 w-8";
+  const iconSize = compact ? "h-3 w-3" : "h-3.5 w-3.5";
   const handledByPointerRef = useRef<Record<string, boolean>>({});
   
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
