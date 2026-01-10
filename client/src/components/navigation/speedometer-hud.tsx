@@ -340,9 +340,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 <stop offset="100%" stopColor="#16a34a" />
               </linearGradient>
             </defs>
-            {/* Crescent shape: left rounded, right concave curve */}
+            {/* Crescent shape: left rounded, right convex curve bulging outward */}
             <path 
-              d="M 24,0 L 48,0 Q 70,24 48,48 L 24,48 Q 0,48 0,24 Q 0,0 24,0 Z"
+              d="M 24,0 L 55,0 Q 75,24 55,48 L 24,48 Q 0,48 0,24 Q 0,0 24,0 Z"
               fill="url(#goGradient)"
               className="transition-all duration-200"
             />
@@ -355,13 +355,12 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               'text-white font-bold text-lg tracking-wide',
               'flex items-center justify-center',
               'transition-all duration-200 active:scale-95',
-              'pl-2',
               isNavigating && 'opacity-40 cursor-not-allowed'
             )}
             style={{ 
               touchAction: 'manipulation',
               background: 'transparent',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              textShadow: '0 1px 3px rgba(0,0,0,0.4)'
             }}
             data-testid="button-go-speedometer"
           >
@@ -656,9 +655,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                 <stop offset="100%" stopColor="#dc2626" />
               </linearGradient>
             </defs>
-            {/* Crescent shape: left concave curve, right rounded */}
+            {/* Crescent shape: left convex curve bulging outward, right rounded */}
             <path 
-              d="M 22,0 Q 0,24 22,48 L 46,48 Q 70,48 70,24 Q 70,0 46,0 Z"
+              d="M 15,0 Q -5,24 15,48 L 46,48 Q 70,48 70,24 Q 70,0 46,0 Z"
               fill="url(#stopGradient)"
               className="transition-all duration-200"
             />
@@ -671,13 +670,12 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               'text-white font-bold text-lg tracking-wide',
               'flex items-center justify-center',
               'transition-all duration-200 active:scale-95',
-              'pr-2',
               !isNavigating && 'opacity-40 cursor-not-allowed'
             )}
             style={{ 
               touchAction: 'manipulation',
               background: 'transparent',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+              textShadow: '0 1px 3px rgba(0,0,0,0.4)'
             }}
             data-testid="button-stop-speedometer"
           >
