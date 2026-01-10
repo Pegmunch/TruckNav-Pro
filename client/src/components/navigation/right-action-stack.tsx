@@ -46,9 +46,9 @@ export function RightActionStack({
   isVisible = true,
   compact = false
 }: RightActionStackProps) {
-  // Button and icon sizes based on compact mode
-  const buttonSize = compact ? "h-8 w-8" : "h-10 w-10";
-  const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
+  // Button and icon sizes - smaller for better fit on mobile
+  const buttonSize = compact ? "h-7 w-7" : "h-9 w-9";
+  const iconSize = compact ? "h-3.5 w-3.5" : "h-4 w-4";
   const handledByPointerRef = useRef<Record<string, boolean>>({});
   
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
@@ -72,7 +72,7 @@ export function RightActionStack({
     <div 
       className={cn(
         "flex flex-col transition-all duration-300 transform-gpu",
-        compact ? "gap-1" : "gap-2",
+        compact ? "gap-2" : "gap-3",
         isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
       )} 
       data-testid="right-action-stack"
@@ -112,8 +112,6 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* Spacer to separate top 2 buttons from remaining controls on mobile */}
-      {!compact && <div className="h-4 md:h-2" aria-hidden="true" />}
 
       {/* 3. Recenter - Gray border */}
       {onRecenter && (
