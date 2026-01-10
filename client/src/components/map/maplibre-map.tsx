@@ -1492,7 +1492,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     let routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
 
     // During navigation, show only remaining route from current GPS position
-    if (isNavigating && gpsPosition) {
+    // CRITICAL: Only clip route if GPS coordinates are valid (non-zero, non-NaN)
+    const hasValidGPS = isNavigating && 
+      gpsPosition && 
+      typeof gpsPosition.latitude === 'number' && 
+      typeof gpsPosition.longitude === 'number' &&
+      !isNaN(gpsPosition.latitude) && 
+      !isNaN(gpsPosition.longitude) &&
+      gpsPosition.latitude !== 0 && 
+      gpsPosition.longitude !== 0;
+    
+    if (hasValidGPS) {
       const currentPoint = [gpsPosition.longitude, gpsPosition.latitude];
       
       try {
@@ -1519,6 +1529,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       } catch (error) {
         console.warn('Failed to calculate remaining route:', error);
       }
+    } else if (isNavigating) {
+      // GPS unavailable during navigation - show full route without clipping
+      console.log('[ROUTE-RENDER] Navigation active but GPS unavailable - showing full route');
     }
     
     // CRITICAL: Cache the GeoJSON for rebuilding after style changes
