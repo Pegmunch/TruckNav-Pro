@@ -210,11 +210,11 @@ export function CompactTripStrip({
               onClick={onCancelNavigation}
               size="sm"
               disabled={isCancellingNavigation}
-              className="h-7 px-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-1"
+              className="h-6 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
               style={{ touchAction: 'manipulation' }}
               data-testid="button-cancel-navigation"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
               End
             </Button>
           )}
@@ -224,7 +224,7 @@ export function CompactTripStrip({
                 onClick={onPreviewStart}
                 size="sm"
                 disabled={isPreviewActive}
-                className="h-7 px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-l rounded-r-none border-r border-white/30"
+                className="h-5 px-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[9px] active:scale-95 transition-transform disabled:opacity-50 rounded-l rounded-r-none border-r border-white/30"
                 style={{ touchAction: 'manipulation' }}
                 data-testid="button-preview-start"
               >
@@ -234,7 +234,7 @@ export function CompactTripStrip({
                 onClick={onPreviewStop}
                 size="sm"
                 disabled={!isPreviewActive}
-                className="h-7 px-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-r rounded-l-none"
+                className="h-5 px-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[9px] active:scale-95 transition-transform disabled:opacity-50 rounded-r rounded-l-none"
                 style={{ touchAction: 'manipulation' }}
                 data-testid="button-preview-stop"
               >
@@ -254,7 +254,7 @@ export function CompactTripStrip({
             aria-label={voiceEnabled ? "Mute voice" : "Enable voice"}
             className={cn(
               'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors shadow-sm text-[10px] font-bold',
-              voiceEnabled ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+              voiceEnabled ? 'bg-green-500 text-white' : 'bg-slate-400 text-white'
             )}
             data-testid="voice-toggle-button"
           >
@@ -265,7 +265,7 @@ export function CompactTripStrip({
             aria-label={isOnline ? "Online" : "Offline"}
             className={cn(
               'flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm text-[10px] font-bold',
-              isOnline ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+              isOnline ? 'bg-green-500 text-white' : 'bg-slate-400 text-white'
             )}
           >
             {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
