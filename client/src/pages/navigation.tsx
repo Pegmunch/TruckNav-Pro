@@ -254,7 +254,8 @@ function NavigationPageContent() {
   });
   
   // Toggle visibility of navigation controls stack (right-side 8 buttons)
-  const [showNavControls, setShowNavControls] = useState(false);
+  // Default to visible (true) so buttons show on entry, double-tap toggles
+  const [showNavControls, setShowNavControls] = useState(true);
   
   // Debug: Log whenever showNavControls changes
   useEffect(() => {
@@ -3158,8 +3159,8 @@ function NavigationPageContent() {
                     </Button>
                   </div>
                   
-                  {/* PLAN MODE CONTROLS - Right Stack - Map control buttons */}
-                  <div className="fixed flex flex-col gap-2 z-[200] pointer-events-auto"
+                  {/* PLAN MODE CONTROLS - Right Stack - Map control buttons (controlled by showNavControls toggle) */}
+                  <div className="fixed flex flex-col gap-1.5 z-[200] pointer-events-auto"
                     style={{
                       bottom: 'calc(56px + var(--safe-area-bottom))',
                       right: '16px'
@@ -3185,8 +3186,9 @@ function NavigationPageContent() {
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
                       bearing={mapControlState.bearing}
-                      isVisible={true}
+                      isVisible={showNavControls}
                       hideIncidents={true}
+                      compact={true}
                     />
                   </div>
                 </>
