@@ -3120,42 +3120,76 @@ function NavigationPageContent() {
               
               {/* PLAN MODE CONTROLS - Left Stack - Only Menu and Voice buttons remain here */}
               {mobileNavMode === 'plan' && !currentRoute && !isNavUIActive && (
-                <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
-                  style={{
-                    bottom: 'calc(56px + var(--safe-area-bottom))',
-                    left: '16px'
-                  }}>
-                  {/* Voice Toggle Button - Visual indicator for mute state */}
-                  <Button
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      setProfessionalVoiceEnabled(!professionalVoiceEnabled);
-                    }}
-                    size="icon"
-                    className={`h-10 w-10 rounded-full shadow-lg font-medium touch-none ${
-                      professionalVoiceEnabled 
-                        ? 'bg-green-500 hover:bg-green-600 active:bg-green-700 text-white' 
-                        : 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white'
-                    }`}
-                    data-testid="button-toggle-voice"
-                    aria-label={professionalVoiceEnabled ? "Mute voice navigation" : "Unmute voice navigation"}
-                  >
-                    {professionalVoiceEnabled ? <Speaker className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
-                  </Button>
+                <>
+                  <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
+                    style={{
+                      bottom: 'calc(56px + var(--safe-area-bottom))',
+                      left: '16px'
+                    }}>
+                    {/* Voice Toggle Button - Visual indicator for mute state */}
+                    <Button
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        setProfessionalVoiceEnabled(!professionalVoiceEnabled);
+                      }}
+                      size="icon"
+                      className={`h-10 w-10 rounded-full shadow-lg font-medium touch-none ${
+                        professionalVoiceEnabled 
+                          ? 'bg-green-500 hover:bg-green-600 active:bg-green-700 text-white' 
+                          : 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white'
+                      }`}
+                      data-testid="button-toggle-voice"
+                      aria-label={professionalVoiceEnabled ? "Mute voice navigation" : "Unmute voice navigation"}
+                    >
+                      {professionalVoiceEnabled ? <Speaker className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
+                    </Button>
+                    
+                    {/* Menu Button */}
+                    <Button
+                      onClick={() => {
+                        console.log('[MENU-BUTTON] Hamburger menu button pressed');
+                        setShowComprehensiveMenu(true);
+                      }}
+                      size="icon"
+                      className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium"
+                      data-testid="button-open-menu-plan"
+                    >
+                      <Menu className="w-6 h-6" />
+                    </Button>
+                  </div>
                   
-                  {/* Menu Button */}
-                  <Button
-                    onClick={() => {
-                      console.log('[MENU-BUTTON] Hamburger menu button pressed');
-                      setShowComprehensiveMenu(true);
-                    }}
-                    size="icon"
-                    className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium"
-                    data-testid="button-open-menu-plan"
-                  >
-                    <Menu className="w-6 h-6" />
-                  </Button>
-                </div>
+                  {/* PLAN MODE CONTROLS - Right Stack - Map control buttons */}
+                  <div className="fixed flex flex-col gap-2 z-[200] pointer-events-auto"
+                    style={{
+                      bottom: 'calc(56px + var(--safe-area-bottom))',
+                      right: '16px'
+                    }}>
+                    <RightActionStack
+                      onZoomIn={() => mapRef.current?.zoomIn()}
+                      onZoomOut={() => mapRef.current?.zoomOut()}
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleMapView={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ 
+                          ...prev, 
+                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                        }));
+                      }}
+                      onCompassClick={() => mapRef.current?.resetBearing()}
+                      is3DMode={mapControlState.is3DMode}
+                      showTraffic={showTrafficLayer}
+                      isSatelliteView={mapControlState.isSatelliteView}
+                      bearing={mapControlState.bearing}
+                      isVisible={true}
+                      hideIncidents={true}
+                    />
+                  </div>
+                </>
               )}
 
               {/* PREVIEW MODE OVERLAY (z-10+) - Visible only when showing preview, overlays on top of stable map */}
