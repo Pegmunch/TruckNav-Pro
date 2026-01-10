@@ -336,7 +336,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           style={{ 
             touchAction: 'manipulation',
             borderRadius: '24px 0 0 24px',
-            clipPath: 'polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%)'
+            clipPath: 'path("M 0,0 L 50,0 C 35,10 35,38 50,48 L 0,48 Z")'
           }}
           data-testid="button-go-speedometer"
         >
@@ -630,7 +630,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           style={{ 
             touchAction: 'manipulation',
             borderRadius: '0 24px 24px 0',
-            clipPath: 'polygon(25% 0%, 100% 0%, 100% 100%, 25% 100%, 0% 50%)'
+            clipPath: 'path("M 15,0 L 65,0 L 65,48 L 15,48 C 30,38 30,10 15,0 Z")'
           }}
           data-testid="button-stop-speedometer"
         >
