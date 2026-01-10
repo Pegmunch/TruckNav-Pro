@@ -319,18 +319,19 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
-      {/* GO BUTTON - Left side of speedometer with small gap */}
+      {/* GO BUTTON - Left side, half-pill shape moulded around speedometer end */}
       {showGoButton && onStartNavigation && !isNavigating && (
         <button
           onClick={onStartNavigation}
           className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] px-5',
+            'h-[48px] sm:h-[52px] md:h-[56px] px-6',
             'bg-green-600 hover:bg-green-700 active:bg-green-800',
-            'text-white font-bold text-sm',
-            'rounded-full shadow-lg',
-            'border border-green-700',
+            'text-white font-bold text-base',
+            'rounded-l-full rounded-r-md',
+            'shadow-lg',
+            'border border-green-700 border-r-0',
             'transition-all duration-200 active:scale-95',
-            'mr-2' // Small gap between Go button and speedometer
+            'mr-1.5'
           )}
           style={{ touchAction: 'manipulation' }}
           data-testid="button-go-speedometer"
@@ -608,18 +609,19 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
         </div>
       </div>
 
-      {/* STOP BUTTON - Right side of speedometer with small gap */}
+      {/* STOP BUTTON - Right side, half-pill shape moulded around speedometer end */}
       {showStopButton && onStopNavigation && isNavigating && (
         <button
           onClick={onStopNavigation}
           className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] px-5',
+            'h-[48px] sm:h-[52px] md:h-[56px] px-6',
             'bg-red-600 hover:bg-red-700 active:bg-red-800',
-            'text-white font-bold text-sm',
-            'rounded-full shadow-lg',
-            'border border-red-700',
+            'text-white font-bold text-base',
+            'rounded-r-full rounded-l-md',
+            'shadow-lg',
+            'border border-red-700 border-l-0',
             'transition-all duration-200 active:scale-95',
-            'ml-2' // Small gap between speedometer and Stop button
+            'ml-1.5'
           )}
           style={{ touchAction: 'manipulation' }}
           data-testid="button-stop-speedometer"
