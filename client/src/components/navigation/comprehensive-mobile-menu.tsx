@@ -11,6 +11,7 @@
  */
 
 import { useState, memo, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -497,17 +498,16 @@ function ComprehensiveMobileMenu({
     setPoiSearchEnabled(true);
   }, [fromCoordinates, gpsCoordinates, gps]);
 
-  return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent 
-          className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col" 
-          style={{ zIndex: 3000 }}
-          data-testid="comprehensive-mobile-menu"
-          overlayZIndex={2999}
-          onInteractOutside={(e) => e.preventDefault()}
-          onPointerDownOutside={(e) => e.preventDefault()}
-        >
+  const menuContent = (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent 
+        className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col" 
+        style={{ zIndex: 9998 }}
+        data-testid="comprehensive-mobile-menu"
+        overlayZIndex={9997}
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
           {/* Header */}
           <DialogHeader className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0 relative z-10">
             <div className="flex items-center justify-between">
@@ -1417,8 +1417,18 @@ function ComprehensiveMobileMenu({
           </Tabs>
         </DialogContent>
       </Dialog>
+  );
 
-      {/* Sub-Modals */}
+  return (
+    <>
+      {createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9990, pointerEvents: open ? 'auto' : 'none' }}>
+          {menuContent}
+        </div>,
+        document.body
+      )}
+
+      {/* Sub-Modals - rendered outside portal for proper stacking */}
       {showVehicleSetup && (
         <VehicleProfileSetup
           onClose={() => setShowVehicleSetup(false)}
