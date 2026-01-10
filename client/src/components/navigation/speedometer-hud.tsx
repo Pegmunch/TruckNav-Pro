@@ -319,29 +319,55 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
-      {/* GO BUTTON - Left side, concave right edge wrapping around speedometer's left curve */}
+      {/* GO BUTTON - Left crescent hugging speedometer's left edge */}
       {showGoButton && onStartNavigation && (
-        <button
-          onClick={onStartNavigation}
-          disabled={isNavigating}
-          className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] w-[60px] sm:w-[65px]',
-            'bg-green-600 hover:bg-green-700 active:bg-green-800',
-            'text-white font-bold text-base',
-            'shadow-lg',
-            'transition-all duration-200 active:scale-95',
-            'mr-1',
-            isNavigating && 'opacity-50 cursor-not-allowed'
-          )}
-          style={{ 
-            touchAction: 'manipulation',
-            borderRadius: '24px 0 0 24px',
-            clipPath: 'path("M 0,0 L 50,0 C 35,10 35,38 50,48 L 0,48 Z")'
-          }}
-          data-testid="button-go-speedometer"
+        <div 
+          className="relative h-[48px] sm:h-[52px] md:h-[56px] w-[70px] sm:w-[75px] mr-0.5"
+          style={{ marginRight: '-2px' }}
         >
-          Go
-        </button>
+          <svg 
+            viewBox="0 0 70 48" 
+            className="absolute inset-0 w-full h-full"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="goGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#16a34a" />
+                <stop offset="100%" stopColor="#22c55e" />
+              </linearGradient>
+              <linearGradient id="goGradientHover" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#15803d" />
+                <stop offset="100%" stopColor="#16a34a" />
+              </linearGradient>
+            </defs>
+            {/* Crescent shape: left rounded, right concave curve */}
+            <path 
+              d="M 24,0 L 48,0 Q 70,24 48,48 L 24,48 Q 0,48 0,24 Q 0,0 24,0 Z"
+              fill="url(#goGradient)"
+              className="transition-all duration-200"
+            />
+          </svg>
+          <button
+            onClick={onStartNavigation}
+            disabled={isNavigating}
+            className={cn(
+              'absolute inset-0 w-full h-full',
+              'text-white font-bold text-lg tracking-wide',
+              'flex items-center justify-center',
+              'transition-all duration-200 active:scale-95',
+              'pl-2',
+              isNavigating && 'opacity-40 cursor-not-allowed'
+            )}
+            style={{ 
+              touchAction: 'manipulation',
+              background: 'transparent',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}
+            data-testid="button-go-speedometer"
+          >
+            GO
+          </button>
+        </div>
       )}
 
       {/* Main speedometer - OVAL SHAPE WITH WHITE BACKGROUND */}
@@ -613,29 +639,51 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
         </div>
       </div>
 
-      {/* STOP BUTTON - Right side, concave left edge wrapping around speedometer's right curve */}
+      {/* STOP BUTTON - Right crescent hugging speedometer's right edge */}
       {showStopButton && onStopNavigation && (
-        <button
-          onClick={onStopNavigation}
-          disabled={!isNavigating}
-          className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] w-[65px] sm:w-[70px]',
-            'bg-red-600 hover:bg-red-700 active:bg-red-800',
-            'text-white font-bold text-base',
-            'shadow-lg',
-            'transition-all duration-200 active:scale-95',
-            'ml-1',
-            !isNavigating && 'opacity-50 cursor-not-allowed'
-          )}
-          style={{ 
-            touchAction: 'manipulation',
-            borderRadius: '0 24px 24px 0',
-            clipPath: 'path("M 15,0 L 65,0 L 65,48 L 15,48 C 30,38 30,10 15,0 Z")'
-          }}
-          data-testid="button-stop-speedometer"
+        <div 
+          className="relative h-[48px] sm:h-[52px] md:h-[56px] w-[70px] sm:w-[75px] ml-0.5"
+          style={{ marginLeft: '-2px' }}
         >
-          Stop
-        </button>
+          <svg 
+            viewBox="0 0 70 48" 
+            className="absolute inset-0 w-full h-full"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="stopGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#ef4444" />
+                <stop offset="100%" stopColor="#dc2626" />
+              </linearGradient>
+            </defs>
+            {/* Crescent shape: left concave curve, right rounded */}
+            <path 
+              d="M 22,0 Q 0,24 22,48 L 46,48 Q 70,48 70,24 Q 70,0 46,0 Z"
+              fill="url(#stopGradient)"
+              className="transition-all duration-200"
+            />
+          </svg>
+          <button
+            onClick={onStopNavigation}
+            disabled={!isNavigating}
+            className={cn(
+              'absolute inset-0 w-full h-full',
+              'text-white font-bold text-lg tracking-wide',
+              'flex items-center justify-center',
+              'transition-all duration-200 active:scale-95',
+              'pr-2',
+              !isNavigating && 'opacity-40 cursor-not-allowed'
+            )}
+            style={{ 
+              touchAction: 'manipulation',
+              background: 'transparent',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+            }}
+            data-testid="button-stop-speedometer"
+          >
+            STOP
+          </button>
+        </div>
       )}
     </div>
   );
