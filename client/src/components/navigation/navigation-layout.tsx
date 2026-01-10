@@ -10,6 +10,7 @@ interface NavigationLayoutProps {
   mapContent: ReactNode;
   isNavigating: boolean;
   isNavUIActive?: boolean;
+  showBottomBar?: boolean; // Allow showing speedometer even when not actively navigating (for Go button)
 }
 
 export function NavigationLayout({
@@ -21,9 +22,11 @@ export function NavigationLayout({
   bottomBar,
   mapContent,
   isNavigating,
-  isNavUIActive
+  isNavUIActive,
+  showBottomBar
 }: NavigationLayoutProps) {
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
+  const shouldShowBottomBar = showBottomBar !== undefined ? showBottomBar : shouldShowUI;
   
   return (
     <div className="relative w-full h-screen overflow-visible pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]">
@@ -78,7 +81,7 @@ export function NavigationLayout({
       )}
 
       {/* Bottom instrumentation bar - positioned near base of map */}
-      {shouldShowUI && bottomBar && (
+      {shouldShowBottomBar && bottomBar && (
         <div 
           className="absolute left-1/2 -translate-x-1/2 z-[1500]"
           style={{ bottom: 'calc(24px + var(--safe-area-bottom, 0px))' }}

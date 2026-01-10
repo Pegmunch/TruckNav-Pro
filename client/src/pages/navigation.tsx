@@ -3105,6 +3105,7 @@ function NavigationPageContent() {
                 <NavigationLayout
                   isNavigating={isNavigating}
                   isNavUIActive={isNavUIActive}
+                  showBottomBar={!!currentRoute}
                   rightStackVisible={showNavControls}
                   mapContent={
                     <>
