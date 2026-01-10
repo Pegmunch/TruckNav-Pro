@@ -588,6 +588,12 @@ const SettingsModal = memo(function SettingsModal({
     </div>
   );
 
+  // CRITICAL FIX: Fully unmount the Dialog when closed to remove Radix overlay from DOM
+  // This prevents the "glass overlay" blocking issue on iOS Safari
+  if (!open) {
+    return null;
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>

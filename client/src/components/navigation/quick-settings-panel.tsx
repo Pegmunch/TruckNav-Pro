@@ -37,8 +37,17 @@ export function QuickSettingsPanel({
     localStorage.setItem('activeVehicleProfileId', profile.id.toString());
   };
 
+  // CRITICAL FIX: Fully unmount the Sheet when closed to remove Radix overlay from DOM
+  // This prevents the "glass overlay" blocking issue on iOS Safari
+  // BUT: Keep component mounted if VehicleProfileSetup is open (it shows after closing the sheet)
+  if (!open && !showVehicleSetup) {
+    return null;
+  }
+
   return (
     <>
+      {/* Only render the Sheet when open to prevent overlay blocking */}
+      {open && (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent 
           side="right" 
@@ -150,6 +159,7 @@ export function QuickSettingsPanel({
           </ScrollArea>
         </SheetContent>
       </Sheet>
+      )}
 
       {/* Vehicle Setup Modal */}
       {showVehicleSetup && (
