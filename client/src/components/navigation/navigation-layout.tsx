@@ -57,7 +57,7 @@ export function NavigationLayout({
         <div 
           className="fixed right-4 z-[99999] flex flex-col gap-3"
           style={{ 
-            top: 'calc(240px + var(--safe-area-top, 0px))',
+            top: 'calc(180px + var(--safe-area-top, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}
@@ -66,12 +66,12 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - Positioned lower during navigation mode */}
+      {/* Right navigation controls stack - Positioned from bottom, below instrumentation bar */}
       {rightStackVisible && (
         <div 
           className="fixed right-4 z-[99999]"
           style={{ 
-            bottom: shouldShowUI ? 'calc(180px + var(--safe-area-bottom, 0px))' : 'calc(100px + var(--safe-area-bottom, 0px))',
+            bottom: shouldShowUI ? 'calc(120px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}
