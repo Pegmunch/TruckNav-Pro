@@ -485,8 +485,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomToUserLocation: (options) => {
       const {
         forceStreetMode = true,
-        zoom = 18,
-        pitch = 70,
+        zoom = 15.5, // TomTom GO style - zoomed out to show more route
+        pitch = 55, // Moderate 3D tilt for good route visibility
         bearing: optionsBearing,
         duration = 2000,
         fallbackCoordinates,
@@ -511,7 +511,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         saveMapPreferences(newPrefs);
       }
 
-      // Zoom helper
+      // Zoom helper - uses TomTom GO style padding (60% top, 60 bottom)
       const performZoom = (lat: number, lng: number, bearing: number = 0) => {
         try {
           const containerHeight = mapInstance.getContainer().clientHeight || 800;
@@ -521,8 +521,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             pitch,
             bearing,
             padding: {
-              top: Math.round(containerHeight * 0.55),
-              bottom: 80,
+              top: Math.round(containerHeight * 0.60), // TomTom GO style
+              bottom: 60,
               left: 0,
               right: 0
             },
@@ -811,11 +811,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     map.current.easeTo({
       center: [longitude, latitude],
       bearing: heading || 0,
-      pitch: 70,
-      zoom: 18,
+      pitch: 55, // Moderate 3D tilt for good route visibility (TomTom GO style)
+      zoom: 15.5, // Zoomed out to show more route ahead
       padding: {
-        top: Math.round(containerHeight * 0.55),
-        bottom: 80,
+        top: Math.round(containerHeight * 0.60),
+        bottom: 60,
         left: 0,
         right: 0
       },
@@ -833,18 +833,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Navigation started - activate 3D mode and set optimal view angle/zoom
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - setting TomTom GO style 3D view (70° pitch, zoom 18)');
+      console.log('[NAV-3D] Navigation started - setting TomTom GO style 3D view (55° pitch, zoom 15.5)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
       
-      // Target the TomTom GO navigation style: steep pitch, close zoom, bottom-centered vehicle
+      // Target the TomTom GO navigation style: moderate pitch, zoomed out, bottom-centered vehicle
       const containerHeight = map.current.getContainer().clientHeight || 800;
       map.current.easeTo({
-        pitch: 70,
-        zoom: 18,
+        pitch: 55, // Moderate 3D tilt for good route visibility
+        zoom: 15.5, // Zoomed out to show more route ahead
         padding: {
-          top: Math.round(containerHeight * 0.55),
-          bottom: 80,
+          top: Math.round(containerHeight * 0.60),
+          bottom: 60,
           left: 0,
           right: 0
         },
@@ -2536,15 +2536,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             
             mapInstance.easeTo({
               center: [longitude, latitude],
-              zoom: 18, // Closer zoom for TomTom GO style immersive view
-              pitch: 70, // Steep 3D tilt matching TomTom GO navigation perspective
+              zoom: 15.5, // Zoomed out to show more route ahead (matches TomTom GO overview)
+              pitch: 55, // Moderate 3D tilt for good visibility of route ahead
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
                 // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
                 // This makes the route line extend upward from the speedometer area
-                // Matching the visual style from TomTom GO reference (IMG_0028)
-                top: Math.round(containerHeight * 0.55), // Push center point to lower 45% of screen
-                bottom: 80, // Small bottom padding for speedometer
+                // Matching the visual style from TomTom GO reference (IMG_0145)
+                top: Math.round(containerHeight * 0.60), // Push center point to lower 40% of screen
+                bottom: 60, // Small bottom padding for speedometer
                 left: 0, 
                 right: 0 
               },
