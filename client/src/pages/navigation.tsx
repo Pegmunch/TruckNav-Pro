@@ -3032,13 +3032,12 @@ function NavigationPageContent() {
                   
                   {/* Menu Button */}
                   <Button
-                    onPointerDown={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       console.log('[PLAN-MENU] Menu button pressed');
                       setShowComprehensiveMenu(true);
                     }}
                     size="icon"
-                    className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium touch-none"
+                    className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium"
                     data-testid="button-open-menu-plan"
                   >
                     <Menu className="w-6 h-6" />
