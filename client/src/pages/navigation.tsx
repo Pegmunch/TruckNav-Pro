@@ -3391,6 +3391,8 @@ function NavigationPageContent() {
                     />
                   }
                   topLeftStack={
+                    /* Only show map controls in entry/plan mode - hide during navigation */
+                    !isNavUIActive ? (
                     <>
                       {/* Map View Toggle - Mobile only (moved from right stack) */}
                       <Button
@@ -3425,6 +3427,7 @@ function NavigationPageContent() {
                         <Crosshair className="h-5 w-5" />
                       </Button>
                     </>
+                    ) : null
                   }
                   topRightStack={
                     <>
@@ -3464,19 +3467,11 @@ function NavigationPageContent() {
                     <RightActionStack
                       onZoomIn={() => mapRef.current?.zoomIn()}
                       onZoomOut={() => mapRef.current?.zoomOut()}
-                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
                       onToggle3D={() => {
                         mapRef.current?.toggle3DMode();
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                       }}
                       onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                      onToggleMapView={() => {
-                        mapRef.current?.toggleMapView();
-                        setMapControlState(prev => ({ 
-                          ...prev, 
-                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                        }));
-                      }}
                       onViewIncidents={() => setShowIncidentFeed(true)}
                       onCompassClick={() => mapRef.current?.resetBearing()}
                       is3DMode={mapControlState.is3DMode}
