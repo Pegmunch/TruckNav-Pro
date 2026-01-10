@@ -97,6 +97,8 @@ interface ComprehensiveMobileMenuProps {
   currentRoute: RouteType | null;
   isCalculating?: boolean;
   isNavigating?: boolean;
+  // Reset trigger to clear inputs immediately (incremented on route cancellation)
+  resetTrigger?: number;
   // Auto-navigation flag for GO button flow
   onRequestAutoNavigation?: () => void;
   // Vehicle
@@ -120,6 +122,7 @@ function ComprehensiveMobileMenu({
   currentRoute,
   isCalculating = false,
   isNavigating = false,
+  resetTrigger = 0,
   onRequestAutoNavigation,
   selectedProfile,
   onProfileSelect,
@@ -136,42 +139,6 @@ function ComprehensiveMobileMenu({
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
   
-  // Clear inputs when menu opens and there's no active route (fresh start after cancellation)
-  // Preserve inputs when there IS a route (user may want to modify existing route)
-  useEffect(() => {
-    if (open) {
-      setActivePOICategory(null);
-      setPoiSearchEnabled(false);
-      
-      // Clear inputs when opening with no route (fresh start / after cancellation)
-      if (!currentRoute && !isNavigating) {
-        setFromInput('');
-        setToInput('');
-        setFromCoordinates(null);
-        setToCoordinates(null);
-      }
-    }
-  }, [open, currentRoute, isNavigating]);
-  
-  // Temporary function to clear old route data
-  const handleClearOldRoute = () => {
-    localStorage.removeItem('activeJourneyId');
-    localStorage.removeItem('trucknav_active_journey');
-    // Clear any URL parameters
-    const url = new URL(window.location.href);
-    url.searchParams.delete('journey');
-    window.history.replaceState({}, '', url.pathname);
-    
-    // toast({
-    //   title: "Route Cleared",
-    //   description: "Map reset to clean state",
-    // });
-    
-    // Refresh page to ensure clean state
-    window.location.reload();
-  };
-  
-  
   // Store coordinates from "From" location for POI search
   const [fromCoordinates, setFromCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [toCoordinates, setToCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -182,6 +149,41 @@ function ComprehensiveMobileMenu({
   // POI search state
   const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
   const [poiSearchEnabled, setPoiSearchEnabled] = useState(false);
+  
+  // Clear inputs when resetTrigger changes (immediate reset on route cancellation)
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      console.log('[MENU-RESET] Clearing inputs on reset trigger:', resetTrigger);
+      setFromInput('');
+      setToInput('');
+      setFromCoordinates(null);
+      setToCoordinates(null);
+      // Notify parent of cleared values
+      onFromLocationChange('');
+      onToLocationChange('');
+    }
+  }, [resetTrigger, onFromLocationChange, onToLocationChange]);
+  
+  // Reset POI state when menu opens
+  useEffect(() => {
+    if (open) {
+      setActivePOICategory(null);
+      setPoiSearchEnabled(false);
+    }
+  }, [open]);
+  
+  // Temporary function to clear old route data
+  const handleClearOldRoute = () => {
+    localStorage.removeItem('activeJourneyId');
+    localStorage.removeItem('trucknav_active_journey');
+    // Clear any URL parameters
+    const url = new URL(window.location.href);
+    url.searchParams.delete('journey');
+    window.history.replaceState({}, '', url.pathname);
+    
+    // Refresh page to ensure clean state
+    window.location.reload();
+  };
   
   // GPS location fill state
   const [isGettingLocation, setIsGettingLocation] = useState(false);

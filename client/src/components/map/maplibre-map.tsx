@@ -1743,6 +1743,26 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers, ensureRouteLayers]);
 
+  // CRITICAL: Restore route layers when navigation state changes
+  // This ensures the blue polyline stays visible when switching to/from navigation mode
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    if (!map.current.isStyleLoaded()) return;
+    
+    // When navigation starts, ensure route layers exist
+    if (isNavigating && cachedRouteGeoJsonRef.current) {
+      console.log('[ROUTE-NAV-STATE] Navigation state changed to:', isNavigating);
+      console.log('[ROUTE-NAV-STATE] Ensuring route layers are visible');
+      
+      // Small delay to let other state updates settle
+      setTimeout(() => {
+        if (map.current && map.current.isStyleLoaded()) {
+          ensureRouteLayers();
+        }
+      }, 100);
+    }
+  }, [isNavigating, isLoaded, ensureRouteLayers]);
+
   // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
   // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
   useEffect(() => {

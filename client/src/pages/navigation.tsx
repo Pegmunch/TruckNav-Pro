@@ -204,6 +204,9 @@ function NavigationPageContent() {
   // Comprehensive mobile menu state
   const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
   
+  // Reset trigger to clear menu inputs immediately on route cancellation
+  const [menuResetTrigger, setMenuResetTrigger] = useState(0);
+  
   // Flag to auto-start navigation on mobile after route calculation (GO button flow)
   const [shouldAutoNavigateOnMobile, setShouldAutoNavigateOnMobile] = useState(false);
   
@@ -1511,11 +1514,18 @@ function NavigationPageContent() {
       });
     } else {
       // No journey - clear route data
-      console.log('[JOURNEY-LOAD] No journey - clearing route data');
-      setCurrentRoute(null);
+      // CRITICAL GUARD: Do NOT clear route during active navigation (isLocalNavActive)
+      // This prevents the route from disappearing during navigation start transitions
+      // when currentJourney is briefly null before the journey is created/activated
+      if (!isLocalNavActive) {
+        console.log('[JOURNEY-LOAD] No journey - clearing route data');
+        setCurrentRoute(null);
+      } else {
+        console.log('[JOURNEY-LOAD] No journey but navigation active - preserving currentRoute');
+      }
       // NOTE: Navigation state is automatically derived by useNavigationSession
     }
-  }, [currentJourney, navState, shouldShowHUD]);
+  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive]);
 
   // Handle page refresh - restore journey if it exists
   // NOTE: Navigation state is automatically derived by useNavigationSession hook
@@ -1845,13 +1855,32 @@ function NavigationPageContent() {
         }
       }
       
-      // CRITICAL: If GO button was pressed (shouldAutoNavigateOnMobile flag), show route-ready state
-      // This MUST happen BEFORE resetting the flag, so the HUD becomes visible
+      // CRITICAL: If GO button was pressed (shouldAutoNavigateOnMobile flag), start navigation automatically
+      // This provides single-tap navigation: GO → route calculates → navigation starts immediately
       if (shouldAutoNavigateOnMobile) {
-        console.log('[ROUTE-CALC] GO button flow - showing route-ready state with Preview/Start buttons');
-        setIsShowingPreview(true);
-        setShowNavControls(true);
-        localStorage.setItem('navigation_mode', 'route_ready');
+        console.log('[ROUTE-CALC] GO button flow - auto-starting navigation (single-tap GO experience)');
+        
+        // CRITICAL: Reset any stale cancellation guard from previous navigation session
+        // This ensures Stop button is never stuck in disabled state
+        isCancellingRouteRef.current = false;
+        
+        // Reset auto-navigation flag FIRST to prevent re-entry
+        setShouldAutoNavigateOnMobile(false);
+        
+        // Decrement counter before auto-navigation (won't reach the normal decrement below)
+        routeCalculationCountRef.current = Math.max(0, routeCalculationCountRef.current - 1);
+        console.log('[ROUTE-CALC] Calculation complete (auto-nav path). Active calculations:', routeCalculationCountRef.current);
+        
+        // CRITICAL FIX: Trigger full handleStartNavigation to create journey on server
+        // This ensures backend is in sync with UI state
+        // Schedule for next tick to ensure route state is committed
+        setTimeout(() => {
+          console.log('[ROUTE-CALC] Auto-triggering handleStartNavigation for journey creation');
+          handleStartNavigation();
+        }, 0);
+        
+        // Don't set UI state here - handleStartNavigation will do it
+        return; // Exit early - handleStartNavigation handles everything
       }
       
       // Reset auto-navigation flag now that route calculation is complete
@@ -2509,6 +2538,15 @@ function NavigationPageContent() {
       document.body.classList.add('navigation-active');
       document.documentElement.classList.add('overlay-safe-mode');
       
+      // CRITICAL FIX: Set isLocalNavActive EARLY so SpeedometerHUD renders with correct state
+      // This prevents the STOP button from being disabled when the menu closes
+      setIsLocalNavActive(true);
+      localStorage.setItem('navigation_ui_active', 'true');
+      console.log('[NAV-ACTIVATION] ✅ Navigation UI state set EARLY to prevent disabled STOP button');
+      
+      // Reset any stale cancellation guard
+      isCancellingRouteRef.current = false;
+      
       console.log('[NAV-ACTIVATION] Step 3: Close overlays and prepare UI');
       // Close all known overlay components using proper state management
       setIsAlternativeRoutesOpen(false);
@@ -2553,11 +2591,9 @@ function NavigationPageContent() {
       localStorage.setItem('activeJourneyId', activatedJourney.id.toString());
       console.log('[NAV-ACTIVATION] ✅ Journey ID stored in localStorage');
       
-      // CRITICAL FIX: Set local navigation UI state to persist across session changes
-      // This ensures UI stays visible even if server session changes in PWA mode
-      setIsLocalNavActive(true);
-      localStorage.setItem('navigation_ui_active', 'true');
-      console.log('[NAV-ACTIVATION] ✅ Local navigation UI state activated - UI will persist');
+      // NOTE: isLocalNavActive was already set earlier in Step 2 to ensure proper SpeedometerHUD state
+      // Verify localStorage persistence is still in place
+      console.log('[NAV-ACTIVATION] ✅ Navigation UI state verified - already set in Step 2');
       
       // SAFETY GUARD: Force re-render after a microtask to ensure state updates propagate
       await new Promise(resolve => setTimeout(resolve, 0));
@@ -2609,6 +2645,15 @@ function NavigationPageContent() {
 
     } catch (error) {
       console.error('Navigation start failed:', error);
+      
+      // CRITICAL: Revert isLocalNavActive since journey creation failed
+      // This prevents stuck "navigating" state when backend never entered navigation
+      setIsLocalNavActive(false);
+      localStorage.removeItem('navigation_ui_active');
+      localStorage.removeItem('navigation_mode');
+      localStorage.removeItem('navigation_timestamp');
+      console.log('[NAV-ACTIVATION] ❌ Failed - reverted navigation UI state');
+      
       recoverUIOnError();
       
       // REMOVED TOAST: No popups per user request
@@ -2621,6 +2666,11 @@ function NavigationPageContent() {
     // Reset route calculation counter to 0 if user cancels (abort all pending calculations)
     routeCalculationCountRef.current = 0;
     setShouldAutoNavigateOnMobile(false);
+    
+    // CRITICAL: Always reset cancellation guard at start of stop - prevents stuck disabled state
+    // This ensures the Stop button is never permanently disabled due to stale guard state
+    isCancellingRouteRef.current = false;
+    console.log('[NAV-STOP] 🔓 Cancellation guard reset at entry');
     
     // If navigation is already cancelled (no route), go back to fresh start
     if (!isLocalNavActive && !currentRoute) {
@@ -2645,12 +2695,6 @@ function NavigationPageContent() {
       setPreviewRoute(null);
       localStorage.removeItem('navigation_ui_active');
       return;
-    }
-    
-    // If already cancelling, reset the guard and continue (user tapped again)
-    if (isCancellingRouteRef.current) {
-      console.log('[NAV-STOP] ⏸️ Already cancelling - resetting guard and continuing');
-      isCancellingRouteRef.current = false;
     }
     
     // CRITICAL: Set cancellation guard to prevent race condition where
@@ -2710,24 +2754,31 @@ function NavigationPageContent() {
     setFromCoordinates(null);
     setToCoordinates(null);
     
+    // CRITICAL: Trigger menu input reset to clear local state in ComprehensiveMobileMenu
+    setMenuResetTrigger(prev => prev + 1);
+    
     // Clear alternative routes state
     setIsAlternativeRoutesOpen(false);
     setSelectedAlternativeRouteId(null);
     setIsApplyingRoute(false);
     
-    // Reset map and UI states
-    setIsMapExpanded(false);
+    // Reset UI states - but preserve map position/expansion unless in fullscreen nav
+    // Only collapse map if we were in fullscreen navigation mode
+    if (isFullscreenNav) {
+      setIsMapExpanded(false);
+    }
     setShowLaneGuidance(false);
     setIsARMode(false);
     setIsFullscreenNav(false);
     
-    // CRITICAL: Reset navigation controls visibility to restore plan mode buttons
-    // This must be set to false so the hamburger menu button reappears
-    setShowNavControls(false);
+    // NOTE: Do NOT reset showNavControls here - HUD buttons should remain functional
+    // The hamburger menu visibility is controlled by mobileNavMode derived from isLocalNavActive
+    // which we already set to false above, so hamburger will reappear automatically
     
-    // CRITICAL: Reset sidebar to allow new route planning on mobile
-    // Open the comprehensive menu so user can immediately start a new route
-    setSidebarState(isMobile ? 'closed' : 'open');
+    // CRITICAL FIX: Set sidebar to 'open' on ALL platforms after stopping navigation
+    // Previously mobile was set to 'collapsed' which blocked the ComprehensiveMobileMenu dialog
+    // The dialog's open state is tied to sidebar state, so 'collapsed' negates the open prop
+    setSidebarState('open');
     // NOTE: mobileNavMode is derived from isLocalNavActive - no setter needed
     
     // Dispatch navigation stopped event for notification system
@@ -2942,7 +2993,7 @@ function NavigationPageContent() {
                   speedLimit={currentSpeedLimit || undefined}
                   isNavigating={isNavigating}
                   onCancelNavigation={handleStopNavigation}
-                  isCancellingNavigation={isCancellingRouteRef.current}
+                  isCancellingNavigation={completeJourneyMutation.isPending}
                 />
               )}
 
@@ -3189,7 +3240,7 @@ function NavigationPageContent() {
                         speedLimit={currentSpeedLimit || undefined}
                         isNavigating={isNavigating}
                         onCancelNavigation={handleStopNavigation}
-                        isCancellingNavigation={isCancellingRouteRef.current}
+                        isCancellingNavigation={completeJourneyMutation.isPending}
                       />
                     ) : null
                   }
@@ -3732,6 +3783,7 @@ function NavigationPageContent() {
         currentRoute={currentRoute}
         isCalculating={calculateRouteMutation.isPending}
         isNavigating={isNavigating}
+        resetTrigger={menuResetTrigger}
         onRequestAutoNavigation={() => {
           console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
           setShouldAutoNavigateOnMobile(true);
