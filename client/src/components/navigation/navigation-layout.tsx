@@ -57,7 +57,7 @@ export function NavigationLayout({
         <div 
           className="fixed right-4 z-[99999] flex flex-col gap-3"
           style={{ 
-            top: 'calc(168px + var(--safe-area-top, 0px))',
+            top: 'calc(200px + var(--safe-area-top, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}
@@ -83,7 +83,7 @@ export function NavigationLayout({
       {/* Bottom instrumentation bar - positioned near base of map */}
       {shouldShowBottomBar && bottomBar && (
         <div 
-          className="absolute left-1/2 -translate-x-1/2 z-[1500]"
+          className="fixed left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto"
           style={{ bottom: 'calc(24px + var(--safe-area-bottom, 0px))' }}
         >
           {bottomBar}
