@@ -1674,11 +1674,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // Render route immediately if style is loaded
     if (mapInstance.isStyleLoaded()) {
       renderRouteLayers();
+    } else {
+      // Style not ready yet - schedule render when it becomes ready
+      console.log('[ROUTE-RENDER] Style not loaded yet - will render on styledata event');
     }
 
     // CRITICAL: Listen CONTINUOUSLY for styledata events to re-render route after view mode changes
     // This ensures the route layer persists when switching roads ⇄ satellite or during zoom
     const handleStyleChange = () => {
+      // If no cached data but we have a route, render it now (initial load case)
+      if (!cachedRouteGeoJsonRef.current && currentRoute?.routePath) {
+        console.log('[ROUTE-STYLE] No cached data but route exists - calling renderRouteLayers');
+        setTimeout(() => {
+          if (mapInstance.isStyleLoaded()) {
+            renderRouteLayers();
+          }
+        }, 100);
+        return;
+      }
+      
       // Use cached data for rebuilding - don't depend on React state which may be stale
       if (!cachedRouteGeoJsonRef.current) {
         console.log('[ROUTE-STYLE] No cached route data during style change');
