@@ -1,4 +1,4 @@
-import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX, ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, ChevronRight } from 'lucide-react';
+import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX, ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, ChevronRight, X, Gauge } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,12 @@ interface CompactTripStripProps {
   roadInfo?: RoadInfo | null;
   turnInfo?: TurnInfo | null;
   laneInfo?: LaneInfo | null;
+  // New props from ProfessionalNavHUD
+  currentSpeed?: number; // in m/s
+  speedLimit?: number; // in km/h
+  isNavigating?: boolean;
+  onCancelNavigation?: () => void;
+  isCancellingNavigation?: boolean;
 }
 
 export function CompactTripStrip({
@@ -55,7 +61,12 @@ export function CompactTripStrip({
   onVoiceToggle,
   roadInfo,
   turnInfo,
-  laneInfo
+  laneInfo,
+  currentSpeed = 0,
+  speedLimit,
+  isNavigating = false,
+  onCancelNavigation,
+  isCancellingNavigation = false
 }: CompactTripStripProps) {
   const { formatDistance, system } = useMeasurement();
   const unit = system === 'imperial' ? 'mi' : 'km';
@@ -65,6 +76,18 @@ export function CompactTripStrip({
 
   const arrivalTime = new Date(Date.now() + eta * 60000);
   const arrivalTimeStr = arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Speed conversion
+  const convertedSpeed = unit === 'mi' 
+    ? Math.round(currentSpeed * 2.237) // m/s to mph
+    : Math.round(currentSpeed * 3.6);   // m/s to km/h
+  
+  const convertedSpeedLimit = speedLimit 
+    ? (unit === 'mi' ? Math.round(speedLimit * 0.621371) : speedLimit)
+    : null;
+  
+  const isSpeeding = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit;
+  const speedUnit = unit === 'mi' ? 'MPH' : 'KM/H';
 
   // Get turn icon
   const getTurnIcon = (direction: string) => {
@@ -164,10 +187,77 @@ export function CompactTripStrip({
         </div>
       </div>
 
-      {/* Center Section: Road Signage, Turn & Lane Indicators */}
+      {/* Center Section: Speed Display + Road Signage, Turn & Lane Indicators */}
       <div className="flex flex-col items-center justify-center gap-1.5 flex-1 min-w-0">
-        {/* Road Badge */}
-        {roadInfo?.roadRef && (
+        {/* Speed Display Oval - Show during preview or active navigation */}
+        {(isNavigating || isPreviewActive) && (
+          <div className={cn(
+            'flex items-center gap-2 px-3 py-1.5 rounded-full shadow-md border-2 transition-all duration-300',
+            isSpeeding
+              ? 'bg-red-500/40 border-red-500 backdrop-blur-sm'
+              : 'bg-white/60 border-blue-400/50 backdrop-blur-sm'
+          )}>
+            {/* Speed Limit */}
+            <div className={cn(
+              'flex flex-col items-center justify-center w-9 h-9 rounded-full border-2',
+              convertedSpeedLimit
+                ? 'bg-white border-red-500'
+                : 'bg-gray-100 border-gray-300'
+            )}>
+              {convertedSpeedLimit ? (
+                <span className="text-xs font-bold text-gray-900">{convertedSpeedLimit}</span>
+              ) : (
+                <span className="text-[10px] text-gray-500">--</span>
+              )}
+            </div>
+            
+            {/* Current Speed */}
+            <div className="flex items-center gap-1">
+              <Gauge className={cn(
+                'w-4 h-4',
+                isSpeeding ? 'text-white' : 'text-blue-600'
+              )} />
+              <div className="text-center">
+                <div className={cn(
+                  'text-xl font-bold leading-tight',
+                  isSpeeding ? 'text-white animate-pulse' : 'text-gray-900'
+                )}>
+                  {convertedSpeed}
+                </div>
+                <div className={cn(
+                  'text-[9px] leading-none',
+                  isSpeeding ? 'text-red-100' : 'text-gray-500'
+                )}>
+                  {speedUnit}
+                </div>
+              </div>
+            </div>
+            
+            {/* Road Badge - inline with speed */}
+            {roadInfo?.roadRef && (
+              <div className={cn(
+                'px-2 py-0.5 rounded text-xs font-bold',
+                getRoadBadgeStyle(roadInfo.roadRef)
+              )}>
+                {roadInfo.roadRef}
+              </div>
+            )}
+            
+            {/* Navigation Active / GPS Status Badge */}
+            <div className={cn(
+              'flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold',
+              isNavigating 
+                ? 'bg-green-500/40 text-green-800' 
+                : 'bg-blue-500/30 text-blue-800'
+            )}>
+              <Navigation className="w-3 h-3" />
+              <span>{isNavigating ? 'Active' : 'Preview'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Road Badge - show when not navigating/previewing */}
+        {roadInfo?.roadRef && !isNavigating && !isPreviewActive && (
           <div className={cn(
             'px-3 py-1 rounded-md text-sm font-bold shadow-sm border',
             getRoadBadgeStyle(roadInfo.roadRef)
@@ -216,31 +306,48 @@ export function CompactTripStrip({
         )}
       </div>
 
-      {/* Right Section: Preview + Status Buttons - Stacked (all same h-8 size) */}
+      {/* Right Section: Preview/Cancel + Status Buttons - Stacked (all same h-8 size) */}
       <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        {/* Preview Button - same h-8 size as other buttons */}
-        <div className="flex flex-row rounded-full overflow-hidden shadow-sm">
+        {/* Cancel Navigation Button - Show when actively navigating */}
+        {isNavigating && onCancelNavigation && (
           <Button
-            onClick={onPreviewStart}
+            onClick={onCancelNavigation}
             size="sm"
-            disabled={isPreviewActive}
-            className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
+            disabled={isCancellingNavigation}
+            className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-full shadow-sm flex items-center gap-1.5"
             style={{ touchAction: 'manipulation' }}
-            data-testid="button-preview-start"
+            data-testid="button-cancel-navigation"
           >
-            Preview
+            <X className="w-4 h-4" />
+            End
           </Button>
-          <Button
-            onClick={onPreviewStop}
-            size="sm"
-            disabled={!isPreviewActive}
-            className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
-            style={{ touchAction: 'manipulation' }}
-            data-testid="button-preview-stop"
-          >
-            Stop
-          </Button>
-        </div>
+        )}
+
+        {/* Preview Button - hide when navigating */}
+        {!isNavigating && (
+          <div className="flex flex-row rounded-full overflow-hidden shadow-sm">
+            <Button
+              onClick={onPreviewStart}
+              size="sm"
+              disabled={isPreviewActive}
+              className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
+              style={{ touchAction: 'manipulation' }}
+              data-testid="button-preview-start"
+            >
+              Preview
+            </Button>
+            <Button
+              onClick={onPreviewStop}
+              size="sm"
+              disabled={!isPreviewActive}
+              className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
+              style={{ touchAction: 'manipulation' }}
+              data-testid="button-preview-stop"
+            >
+              Stop
+            </Button>
+          </div>
+        )}
 
         {/* Voice Navigation Toggle - h-8 uniform size */}
         <button

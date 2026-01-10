@@ -2927,6 +2927,11 @@ function NavigationPageContent() {
                     distance: nextTurn.distance,
                     roadName: nextTurn.roadName
                   } : null}
+                  currentSpeed={gpsData?.position?.speed || 0}
+                  speedLimit={currentSpeedLimit || undefined}
+                  isNavigating={isNavigating}
+                  onCancelNavigation={handleStopNavigation}
+                  isCancellingNavigation={isCancellingRouteRef.current}
                 />
               )}
 
