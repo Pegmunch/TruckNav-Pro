@@ -530,7 +530,7 @@ function NavigationPageContent() {
   
   // Mode transition debouncing to prevent race conditions
   // REMOVED: Debounced setter was causing race conditions
-  // Now using direct setMobileNavMode for immediate UI updates
+  // mobileNavMode is derived from isLocalNavActive - no manual updates needed
 
   // Cleanup removed - no longer using debounced transitions
   
