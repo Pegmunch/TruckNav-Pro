@@ -22,14 +22,13 @@ interface IncidentFeedPopupProps {
   className?: string;
 }
 
-// Haversine formula to calculate distance between two coordinates
 function calculateDistance(
   lat1: number,
   lng1: number,
   lat2: number,
   lng2: number
 ): number {
-  const R = 6371; // Earth's radius in kilometers
+  const R = 6371;
   const dLat = toRadians(lat2 - lat1);
   const dLng = toRadians(lng2 - lng1);
   
@@ -57,35 +56,24 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
   onClose,
   onInteraction
 }: IncidentFeedPopupProps) {
-  // Don't render if showIncidents is false - MUST be before hooks
-  if (!showIncidents) {
-    return null;
-  }
-
   const [expandState, setExpandState] = useState<'small' | 'fullscreen'>('small');
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ 
-    x: typeof window !== 'undefined' ? (window.innerWidth / 2 - 125) : 100, // Horizontally centered (250px width / 2)
-    y: typeof window !== 'undefined' ? (window.innerHeight / 2 - 150) : 100 // Vertically centered
+    x: typeof window !== 'undefined' ? (window.innerWidth / 2 - 125) : 100,
+    y: typeof window !== 'undefined' ? (window.innerHeight / 2 - 150) : 100
   });
   const dragRef = useRef<HTMLDivElement>(null);
   
-  // Fetch incidents to calculate count
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({
     queryKey: ["/api/traffic-incidents"],
-    refetchInterval: 120000, // 2 minutes
+    refetchInterval: 120000,
     enabled: showIncidents,
   });
 
-  // Calculate nearby incident count (same logic as IncidentFeed)
   const nearbyIncidentCount = incidents.filter((incident) => {
-    // Only show active incidents
     if (!incident.isActive) return false;
-    
-    // If no current location, show all incidents
     if (!currentLocation) return true;
     
-    // Calculate distance and filter by radius
     const distance = calculateDistance(
       currentLocation.lat,
       currentLocation.lng,
@@ -93,19 +81,16 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
       incident.coordinates.lng
     );
     
-    // Filter within 50km (30mi) radius
     const maxDistanceKm = 50;
     return distance <= maxDistanceKm;
   }).length;
   
-  // Handle close with proper cleanup
   const handleClose = () => {
     if (onClose) {
       onClose();
     }
   };
 
-  // Focus trap for accessibility - ESC key closes the modal
   const focusTrapRef = useFocusTrap<HTMLDivElement>({
     enabled: showIncidents && expandState === 'fullscreen',
     onEscape: handleClose,
@@ -113,10 +98,9 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
     returnFocus: true,
   });
 
-  // Handle drag functionality
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) return; // Only drag from header area
-    if (expandState === 'fullscreen') return; // Don't drag when fullscreen
+    if (e.target !== e.currentTarget) return;
+    if (expandState === 'fullscreen') return;
     setIsDragging(true);
     e.preventDefault();
   };
@@ -145,6 +129,10 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging]);
+
+  if (!showIncidents) {
+    return null;
+  }
   
   return (
     <Card 
@@ -167,7 +155,6 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
       }}
       data-testid="incident-feed-popup"
     >
-      {/* Header with controls */}
       <div 
         className={cn(
           "absolute top-0 left-0 right-0 h-10 bg-blue-600 flex items-center justify-between px-3 text-white text-sm z-10 rounded-t-md",
@@ -226,7 +213,6 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
         </div>
       </div>
       
-      {/* Incident Feed Content */}
       <CardContent className="p-0 h-full pt-10">
         <div className="h-full rounded-b-md overflow-hidden">
           <IncidentFeed
