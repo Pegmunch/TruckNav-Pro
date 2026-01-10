@@ -46,6 +46,10 @@ interface AddressAutocompleteProps {
   showSearchTypeToggles?: boolean;
   /** Hide the GPS "Use My Current Location" button - useful when parent component has its own GPS button */
   hideGPSButton?: boolean;
+  /** Externally control whether dropdown is open - used by parent to open after GPS fill */
+  forceOpen?: boolean;
+  /** Callback when forceOpen should be reset after dropdown opened */
+  onForceOpenConsumed?: () => void;
 }
 
 export function AddressAutocomplete({
@@ -58,7 +62,9 @@ export function AddressAutocomplete({
   className,
   testId,
   showSearchTypeToggles = true,
-  hideGPSButton = false
+  hideGPSButton = false,
+  forceOpen = false,
+  onForceOpenConsumed
 }: AddressAutocompleteProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
@@ -84,6 +90,16 @@ export function AddressAutocomplete({
       setSearchTerm(value);
     }
   }, [value, searchTerm]);
+  
+  // Handle forceOpen prop - allows parent to programmatically open the dropdown
+  useEffect(() => {
+    if (forceOpen && !open) {
+      console.log('[AUTOCOMPLETE] Force opening dropdown from parent');
+      setOpen(true);
+      // Notify parent that forceOpen has been consumed
+      onForceOpenConsumed?.();
+    }
+  }, [forceOpen, open, onForceOpenConsumed]);
   
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
