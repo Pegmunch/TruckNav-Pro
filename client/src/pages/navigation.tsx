@@ -3181,7 +3181,10 @@ function NavigationPageContent() {
                           isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
                         }));
                       }}
-                      onCompassClick={() => mapRef.current?.resetBearing()}
+                      onCompassClick={() => {
+                        mapRef.current?.resetBearing();
+                        mapRef.current?.zoomToUserLocation({ bearing: 0, pitch: 0 });
+                      }}
                       is3DMode={mapControlState.is3DMode}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
@@ -3394,11 +3397,14 @@ function NavigationPageContent() {
                     /* Only show map controls in entry/plan mode - hide during navigation */
                     !isNavUIActive ? (
                     <>
-                      {/* Compass Button - Reset bearing */}
+                      {/* Compass Button - Reset bearing and recenter north */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => mapRef.current?.resetBearing()}
+                        onClick={() => {
+                          mapRef.current?.resetBearing();
+                          mapRef.current?.zoomToUserLocation({ bearing: 0, pitch: 0 });
+                        }}
                         className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 border-blue-500 shadow-lg"
                         data-testid="button-compass-mobile"
                         aria-label="Reset compass bearing"
