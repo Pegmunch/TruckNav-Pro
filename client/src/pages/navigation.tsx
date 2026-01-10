@@ -2666,9 +2666,10 @@ function NavigationPageContent() {
       }
     }, 3000);
     
-    // CRITICAL FIX: Immediately clear navigation UI state to return to preview mode
+    // CRITICAL FIX: Immediately clear navigation UI state to return to plan mode
     // This ensures the hamburger button reappears immediately
     setIsLocalNavActive(false);
+    setIsShowingPreview(false); // CRITICAL: Reset preview mode so isNavUIActive becomes false
     // NOTE: Do NOT call setShowComprehensiveMenu(false) here - it prevents the menu from opening after cancellation
     setCurrentRoute(null); // Clear route immediately for instant UI feedback
     setPreviewRoute(null);
@@ -3778,6 +3779,10 @@ function NavigationPageContent() {
               onClick={() => {
                 // CRITICAL: Clear all route persistence - fresh start page
                 localStorage.removeItem('activeJourneyId');
+                localStorage.removeItem('navigation_ui_active');
+                localStorage.removeItem('navigation_mode');
+                localStorage.removeItem('navigation_timestamp');
+                localStorage.removeItem('activeRouteId');
                 
                 // Clear URL parameter
                 const url = new URL(window.location.href);
@@ -3786,10 +3791,19 @@ function NavigationPageContent() {
                   window.history.replaceState({}, '', url.pathname);
                 }
                 
-                // Clear route and return to preview mode
+                // CRITICAL: Clear ALL navigation state for fresh start
+                setIsLocalNavActive(false);
+                setIsShowingPreview(false);
                 setCurrentRoute(null);
+                setPreviewRoute(null);
+                setFromLocation('');
+                setToLocation('');
+                setFromCoordinates(null);
+                setToCoordinates(null);
+                setIsMapExpanded(false);
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
+                setSidebarState(isMobile ? 'collapsed' : 'open');
                 
                 console.log('[ROUTE-COMPLETE] ✅ Route completed - fresh start page restored');
               }}
