@@ -3448,38 +3448,24 @@ function NavigationPageContent() {
                     ) : null
                   }
                   topRightStack={
-                    <>
-                      {/* GPS Mode Toggle Button */}
-                      <Button
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          handleGpsModeToggle(gpsMode === 'gps' ? 'cache' : 'gps');
-                        }}
-                        size="icon"
-                        className={cn(
-                          "h-10 w-10 rounded-full shadow-xl font-medium touch-none border-2 transition-all duration-300",
-                          gpsMode === 'cache'
-                            ? 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white border-amber-400 animate-pulse'
-                            : 'bg-white/95 hover:bg-white active:bg-gray-100 text-gray-700 border-gray-200'
-                        )}
-                        data-testid="button-gps-mode-toggle"
-                        aria-label="Toggle GPS/Cache Mode"
-                      >
-                        {gpsMode === 'gps' ? <Navigation2 className="w-5 h-5" /> : <MapPin className="w-5 h-5" />}
-                      </Button>
-                      
-                      {/* View Incidents Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowIncidentFeed(true)}
-                        className="h-10 w-10 rounded-full bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-xl"
-                        data-testid="button-view-incidents-top"
-                        aria-label="View traffic incidents"
-                      >
-                        <AlertCircle className="h-5 w-5" />
-                      </Button>
-                    </>
+                    /* GPS Mode Toggle - Only one button here to avoid overlap with right stack */
+                    <Button
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        handleGpsModeToggle(gpsMode === 'gps' ? 'cache' : 'gps');
+                      }}
+                      size="icon"
+                      className={cn(
+                        "h-9 w-9 rounded-full shadow-xl font-medium touch-none border-2 transition-all duration-300",
+                        gpsMode === 'cache'
+                          ? 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white border-amber-400 animate-pulse'
+                          : 'bg-white/95 hover:bg-white active:bg-gray-100 text-gray-700 border-gray-200'
+                      )}
+                      data-testid="button-gps-mode-toggle"
+                      aria-label="Toggle GPS/Cache Mode"
+                    >
+                      {gpsMode === 'gps' ? <Navigation2 className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+                    </Button>
                   }
                   rightStack={
                     <RightActionStack
@@ -3498,7 +3484,7 @@ function NavigationPageContent() {
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
                       isVisible={showNavControls}
-                      hideIncidents={true}
+                      hideIncidents={false}
                       hideCompass={true}
                       hide3D={true}
                     />
