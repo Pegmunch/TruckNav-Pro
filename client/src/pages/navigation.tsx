@@ -2768,8 +2768,9 @@ function NavigationPageContent() {
     setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
     setSidebarState(isMobile ? 'closed' : 'open'); // CRITICAL: Reset sidebar to prevent full-screen overlay blocking map
     resetRerouteState(); // Reset auto-reroute state for next navigation session
-    // NOTE: Do NOT clear currentRoute here - defer to completeJourneyMutation.onSuccess
-    // This preserves the route polyline during the stop transition
+    // CRITICAL FIX: Clear currentRoute immediately to prevent NavigationLayout from blocking
+    // This ensures the hamburger menu button becomes visible immediately
+    setCurrentRoute(null);
     setPreviewRoute(null);
     localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
@@ -2786,10 +2787,9 @@ function NavigationPageContent() {
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
     } else {
-      // No journey to complete - clear route immediately and reset guard
-      setCurrentRoute(null);
+      // No journey to complete - just reset guard (route already cleared above)
       isCancellingRouteRef.current = false;
-      console.log('[NAV-STOP] ℹ️ No journey to complete - route cleared, guard reset immediately');
+      console.log('[NAV-STOP] ℹ️ No journey to complete - guard reset immediately');
     }
     
     // Clear URL parameter

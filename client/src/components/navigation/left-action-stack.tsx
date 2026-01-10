@@ -85,9 +85,13 @@ export function LeftActionStack({
     }
   });
 
-  // CRITICAL: The LeftActionStack should always be visible in Navigation view
-  // to provide access to the menu, even when not actively navigating.
-  // The internal buttons handle their own visibility if needed.
+  // CRITICAL: Return null if no buttons would be visible
+  // This prevents an empty container from blocking touch events
+  const hasVisibleButtons = isNavigating || showMenuButton;
+  
+  if (!hasVisibleButtons) {
+    return null;
+  }
   
   return (
     <div className="flex flex-col gap-2 pointer-events-auto">
