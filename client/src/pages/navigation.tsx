@@ -2721,9 +2721,13 @@ function NavigationPageContent() {
     setIsARMode(false);
     setIsFullscreenNav(false);
     
+    // CRITICAL: Reset navigation controls visibility to restore plan mode buttons
+    // This must be set to false so the hamburger menu button reappears
+    setShowNavControls(false);
+    
     // CRITICAL: Reset sidebar to allow new route planning on mobile
     // Open the comprehensive menu so user can immediately start a new route
-    setSidebarState(isMobile ? 'collapsed' : 'open');
+    setSidebarState(isMobile ? 'closed' : 'open');
     // NOTE: mobileNavMode is derived from isLocalNavActive - no setter needed
     
     // Dispatch navigation stopped event for notification system

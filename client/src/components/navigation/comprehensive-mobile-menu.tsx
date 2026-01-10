@@ -136,14 +136,22 @@ function ComprehensiveMobileMenu({
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
   
-  // DON'T clear inputs when menu opens - preserve user's selections
-  // Only reset POI category state, not the route inputs
+  // Clear inputs when menu opens and there's no active route (fresh start after cancellation)
+  // Preserve inputs when there IS a route (user may want to modify existing route)
   useEffect(() => {
     if (open) {
       setActivePOICategory(null);
       setPoiSearchEnabled(false);
+      
+      // Clear inputs when opening with no route (fresh start / after cancellation)
+      if (!currentRoute && !isNavigating) {
+        setFromInput('');
+        setToInput('');
+        setFromCoordinates(null);
+        setToCoordinates(null);
+      }
     }
-  }, [open]);
+  }, [open, currentRoute, isNavigating]);
   
   // Temporary function to clear old route data
   const handleClearOldRoute = () => {
