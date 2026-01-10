@@ -149,10 +149,10 @@ export function CompactTripStrip({
   return (
     <div 
       className={cn(
-        'fixed left-0 right-0 px-3 py-2',
-        'bg-white/30 backdrop-blur-xl',
-        'border-2 border-blue-500 shadow-lg',
-        'flex items-stretch justify-between gap-2',
+        'fixed left-0 right-0 px-2 py-1',
+        'bg-white/40 backdrop-blur-xl',
+        'border-b-2 border-blue-500 shadow-md',
+        'flex flex-col gap-1',
         'pointer-events-auto',
         'lg:hidden',
         className
@@ -160,248 +160,176 @@ export function CompactTripStrip({
       style={{ 
         top: 'calc(64px + max(env(safe-area-inset-top, 0px), 0px))',
         zIndex: 4800,
-        minHeight: '90px'
       }}
       data-testid="compact-trip-strip"
     >
-      {/* Left Section: ETA, Distance, Arrival Time - Same size as right buttons */}
-      <div className="flex flex-col gap-1.5 min-w-0 flex-shrink-0">
-        {/* ETA */}
-        <div className="flex items-center gap-1.5 h-8 bg-blue-500/30 px-3 py-1.5 rounded-full shadow-sm border border-blue-400/50">
-          <Clock className="w-4 h-4 text-blue-700" />
-          <span className="text-sm font-bold text-blue-900">{eta} min</span>
-        </div>
-        {/* Distance */}
-        <div className="flex items-center gap-1.5 h-8 bg-emerald-500/30 px-3 py-1.5 rounded-full shadow-sm border border-emerald-400/50">
-          <Route className="w-4 h-4 text-emerald-700" />
-          <span className="text-sm font-bold text-emerald-900">
-            {formatDistance(distanceRemaining, "miles")}
-          </span>
-        </div>
-        {/* Arrival Time */}
-        <div className="flex items-center gap-1.5 h-8 bg-purple-500/30 px-3 py-1.5 rounded-full shadow-sm border border-purple-400/50">
-          <Timer className="w-4 h-4 text-purple-700" />
-          <span className="text-sm font-bold text-purple-900">
-            {arrivalTimeStr}
-          </span>
-        </div>
-      </div>
-
-      {/* Center Section: Speed Display + Road Signage, Turn & Lane Indicators */}
-      <div className="flex flex-col items-center justify-center gap-1.5 flex-1 min-w-0">
-        {/* Speed Display Oval - Show during preview or active navigation */}
-        {(isNavigating || isPreviewActive) && (
-          <div className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-full shadow-md border-2 transition-all duration-300',
-            isSpeeding
-              ? 'bg-red-500/40 border-red-500 backdrop-blur-sm'
-              : 'bg-white/60 border-blue-400/50 backdrop-blur-sm'
-          )}>
-            {/* Speed Limit */}
-            <div className={cn(
-              'flex flex-col items-center justify-center w-9 h-9 rounded-full border-2',
-              convertedSpeedLimit
-                ? 'bg-white border-red-500'
-                : 'bg-gray-100 border-gray-300'
-            )}>
-              {convertedSpeedLimit ? (
-                <span className="text-xs font-bold text-gray-900">{convertedSpeedLimit}</span>
-              ) : (
-                <span className="text-[10px] text-gray-500">--</span>
-              )}
-            </div>
-            
-            {/* Current Speed */}
-            <div className="flex items-center gap-1">
-              <Gauge className={cn(
-                'w-4 h-4',
-                isSpeeding ? 'text-white' : 'text-blue-600'
-              )} />
-              <div className="text-center">
-                <div className={cn(
-                  'text-xl font-bold leading-tight',
-                  isSpeeding ? 'text-white animate-pulse' : 'text-gray-900'
-                )}>
-                  {convertedSpeed}
-                </div>
-                <div className={cn(
-                  'text-[9px] leading-none',
-                  isSpeeding ? 'text-red-100' : 'text-gray-500'
-                )}>
-                  {speedUnit}
-                </div>
-              </div>
-            </div>
-            
-            {/* Road Badge - inline with speed */}
-            {roadInfo?.roadRef && (
-              <div className={cn(
-                'px-2 py-0.5 rounded text-xs font-bold',
-                getRoadBadgeStyle(roadInfo.roadRef)
-              )}>
-                {roadInfo.roadRef}
-              </div>
-            )}
-            
-            {/* Navigation Active / GPS Status Badge */}
-            <div className={cn(
-              'flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold',
-              isNavigating 
-                ? 'bg-green-500/40 text-green-800' 
-                : 'bg-blue-500/30 text-blue-800'
-            )}>
-              <Navigation className="w-3 h-3" />
-              <span>{isNavigating ? 'Active' : 'Preview'}</span>
-            </div>
+      {/* Top Row: ETA info + Action buttons */}
+      <div className="flex items-center justify-between gap-1">
+        {/* Left: Compact ETA pills */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1 rounded shadow-sm">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold">{eta}m</span>
           </div>
-        )}
-
-        {/* Road Badge - show when not navigating/previewing */}
-        {roadInfo?.roadRef && !isNavigating && !isPreviewActive && (
-          <div className={cn(
-            'px-3 py-1 rounded-md text-sm font-bold shadow-sm border',
-            getRoadBadgeStyle(roadInfo.roadRef)
-          )}>
-            <span>{roadInfo.roadRef}</span>
-            {roadInfo.junction?.ref && (
-              <span className="ml-1 text-xs opacity-80">J{roadInfo.junction.ref}</span>
-            )}
+          <div className="flex items-center gap-1 bg-emerald-600 text-white px-2 py-1 rounded shadow-sm">
+            <Route className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold">{formatDistance(distanceRemaining, "miles")}</span>
           </div>
-        )}
-
-        {/* Turn Indicator (compact) */}
-        {turnInfo && (
-          <div className="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-xl shadow-sm border border-gray-200/50">
-            <div className="text-blue-600">
-              {getTurnIcon(turnInfo.direction)}
-            </div>
-            <div className="text-sm font-bold text-gray-900">
-              {formatTurnDistance(turnInfo.distance)}
-            </div>
-            {turnInfo.roadName && (
-              <div className="text-xs text-gray-600 truncate max-w-[80px]">
-                {turnInfo.roadName}
-              </div>
-            )}
+          <div className="flex items-center gap-1 bg-purple-600 text-white px-2 py-1 rounded shadow-sm">
+            <Timer className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold">{arrivalTimeStr}</span>
           </div>
-        )}
-
-        {/* Lane Guidance (compact) */}
-        {laneInfo && laneInfo.lanes.length > 0 && (
-          <div className="flex items-center gap-0.5 bg-white/60 px-2 py-1 rounded-lg shadow-sm border border-gray-200/50">
-            {laneInfo.lanes.map((lane, index) => (
-              <div 
-                key={index}
-                className={cn(
-                  'w-5 h-5 rounded border flex items-center justify-center',
-                  lane.isRecommended 
-                    ? 'bg-green-100 border-green-500' 
-                    : 'bg-gray-100 border-gray-300'
-                )}
+        </div>
+        
+        {/* Right: Action buttons */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {isNavigating && onCancelNavigation && (
+            <Button
+              onClick={onCancelNavigation}
+              size="sm"
+              disabled={isCancellingNavigation}
+              className="h-6 px-2 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
+              style={{ touchAction: 'manipulation' }}
+              data-testid="button-cancel-navigation"
+            >
+              <X className="w-3 h-3" />
+              End
+            </Button>
+          )}
+          {!isNavigating && (
+            <div className="flex flex-row rounded overflow-hidden shadow-sm">
+              <Button
+                onClick={onPreviewStart}
+                size="sm"
+                disabled={isPreviewActive}
+                className="h-6 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded-l rounded-r-none border-r border-white/30"
+                style={{ touchAction: 'manipulation' }}
+                data-testid="button-preview-start"
               >
-                {getLaneIcon(lane.direction, lane.isRecommended)}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Right Section: Preview/Cancel + Status Buttons - Stacked (all same h-8 size) */}
-      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-        {/* Cancel Navigation Button - Show when actively navigating */}
-        {isNavigating && onCancelNavigation && (
-          <Button
-            onClick={onCancelNavigation}
-            size="sm"
-            disabled={isCancellingNavigation}
-            className="h-8 px-4 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-full shadow-sm flex items-center gap-1.5"
-            style={{ touchAction: 'manipulation' }}
-            data-testid="button-cancel-navigation"
-          >
-            <X className="w-4 h-4" />
-            End
-          </Button>
-        )}
-
-        {/* Preview Button - hide when navigating */}
-        {!isNavigating && (
-          <div className="flex flex-row rounded-full overflow-hidden shadow-sm">
-            <Button
-              onClick={onPreviewStart}
-              size="sm"
-              disabled={isPreviewActive}
-              className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-l-full rounded-r-none border-r border-white/30"
-              style={{ touchAction: 'manipulation' }}
-              data-testid="button-preview-start"
-            >
-              Preview
-            </Button>
-            <Button
-              onClick={onPreviewStop}
-              size="sm"
-              disabled={!isPreviewActive}
-              className="h-8 px-3 bg-red-600 hover:bg-red-700 text-white font-bold text-sm active:scale-95 transition-transform disabled:opacity-50 rounded-r-full rounded-l-none"
-              style={{ touchAction: 'manipulation' }}
-              data-testid="button-preview-stop"
-            >
-              Stop
-            </Button>
-          </div>
-        )}
-
-        {/* Voice Navigation Toggle - h-8 uniform size */}
-        <button
-          onClick={onVoiceToggle}
-          className={cn(
-            'flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-bold transition-colors shadow-sm',
-            voiceEnabled 
-              ? 'bg-green-500/30 text-green-800 hover:bg-green-500/40 border border-green-400/50' 
-              : 'bg-red-500/30 text-red-800 hover:bg-red-500/40 border border-red-400/50'
+                Preview
+              </Button>
+              <Button
+                onClick={onPreviewStop}
+                size="sm"
+                disabled={!isPreviewActive}
+                className="h-6 px-2 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded-r rounded-l-none"
+                style={{ touchAction: 'manipulation' }}
+                data-testid="button-preview-stop"
+              >
+                Stop
+              </Button>
+            </div>
           )}
-          data-testid="voice-toggle-button"
-        >
-          {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          <span>{voiceEnabled ? 'Voice' : 'Muted'}</span>
-        </button>
-
-        {/* Online Status - h-8 uniform size */}
-        <div className={cn(
-          'flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-bold shadow-sm',
-          isOnline 
-            ? 'bg-green-500/30 text-green-800 border border-green-400/50' 
-            : 'bg-red-500/30 text-red-800 border border-red-400/50'
-        )}>
-          {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
         </div>
-
-        {/* GPS Status - h-8 uniform size */}
-        <button
-          onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
-          className={cn(
-            'flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-bold transition-colors shadow-sm',
-            isGpsReady 
-              ? 'bg-green-500/30 text-green-800 cursor-default border border-green-400/50'
-              : isGpsAcquiring
-                ? 'bg-blue-500/30 text-blue-800 cursor-default border border-blue-400/50'
-                : 'bg-amber-500/30 text-amber-800 hover:bg-amber-500/40 cursor-pointer border border-amber-400/50'
+      </div>
+      
+      {/* Bottom Row: Status icons + Speed/Turn info */}
+      <div className="flex items-center justify-between gap-1">
+        {/* Left: Status icons */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onVoiceToggle}
+            aria-label={voiceEnabled ? "Mute voice" : "Enable voice"}
+            className={cn(
+              'flex items-center justify-center w-6 h-6 rounded-full transition-colors shadow-sm',
+              voiceEnabled ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            )}
+            data-testid="voice-toggle-button"
+          >
+            {voiceEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+          </button>
+          <div 
+            aria-label={isOnline ? "Online" : "Offline"}
+            className={cn(
+              'flex items-center justify-center w-6 h-6 rounded-full shadow-sm',
+              isOnline ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            )}
+          >
+            {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+          </div>
+          <button
+            onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
+            aria-label={isGpsReady ? "GPS ready" : isGpsAcquiring ? "Acquiring GPS" : "Set GPS location"}
+            className={cn(
+              'flex items-center justify-center w-6 h-6 rounded-full transition-colors shadow-sm',
+              isGpsReady 
+                ? 'bg-green-500 text-white cursor-default'
+                : isGpsAcquiring
+                  ? 'bg-blue-500 text-white cursor-default animate-pulse'
+                  : 'bg-amber-500 text-white cursor-pointer'
+            )}
+            disabled={isGpsReady || isGpsAcquiring}
+            data-testid="gps-status-button"
+          >
+            {isGpsReady ? <Navigation className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+          </button>
+        </div>
+        
+        {/* Center: Speed + Road + Turn info */}
+        <div className="flex items-center justify-center gap-1.5 flex-1 min-w-0">
+          {/* Road badge - always show when available */}
+          {roadInfo?.roadRef && !isNavigating && !isPreviewActive && (
+            <div className={cn('px-2 py-0.5 rounded text-xs font-bold shadow-sm', getRoadBadgeStyle(roadInfo.roadRef))}>
+              {roadInfo.roadRef}
+            </div>
           )}
-          disabled={isGpsReady || isGpsAcquiring}
-          data-testid="gps-status-button"
-        >
-          {isGpsReady ? (
-            <Navigation className="w-4 h-4" />
-          ) : (
-            <MapPin className="w-4 h-4" />
+          
+          {/* Speed Display during navigation/preview */}
+          {(isNavigating || isPreviewActive) && (
+            <div className={cn(
+              'flex items-center gap-1.5 px-2 py-1 rounded-lg shadow-sm border transition-all',
+              isSpeeding ? 'bg-red-500 border-red-600 text-white' : 'bg-white/80 border-gray-300'
+            )}>
+              <div className={cn(
+                'flex items-center justify-center w-6 h-6 rounded-full border-2',
+                convertedSpeedLimit ? 'bg-white border-red-500' : 'bg-gray-100 border-gray-300'
+              )}>
+                <span className="text-[10px] font-bold text-gray-900">{convertedSpeedLimit || '--'}</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <Gauge className={cn('w-3 h-3', isSpeeding ? 'text-white' : 'text-blue-600')} />
+                <span className={cn('text-sm font-bold', isSpeeding ? 'text-white' : 'text-gray-900')}>{convertedSpeed}</span>
+                <span className={cn('text-[9px]', isSpeeding ? 'text-red-100' : 'text-gray-500')}>{speedUnit}</span>
+              </div>
+              {roadInfo?.roadRef && (
+                <div className={cn('px-1.5 py-0.5 rounded text-xs font-bold', getRoadBadgeStyle(roadInfo.roadRef))}>
+                  {roadInfo.roadRef}
+                </div>
+              )}
+              <div className={cn(
+                'px-1.5 py-0.5 rounded-full text-[9px] font-bold',
+                isNavigating ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+              )}>
+                {isNavigating ? 'NAV' : 'PRV'}
+              </div>
+            </div>
           )}
-          <span>
-            {isGpsReady 
-              ? 'GPS' 
-              : isGpsAcquiring 
-                ? 'GPS...' 
-                : 'Set GPS'}
-          </span>
-        </button>
+          
+          {/* Turn Indicator */}
+          {turnInfo && (
+            <div className="flex items-center gap-1 bg-white/80 px-2 py-1 rounded-lg shadow-sm border border-gray-200">
+              <div className="text-blue-600">{getTurnIcon(turnInfo.direction)}</div>
+              <span className="text-xs font-bold text-gray-900">{formatTurnDistance(turnInfo.distance)}</span>
+            </div>
+          )}
+          
+          {/* Lane Guidance */}
+          {laneInfo && laneInfo.lanes.length > 0 && (
+            <div className="flex items-center gap-0.5 bg-white/80 px-1.5 py-0.5 rounded shadow-sm border border-gray-200">
+              {laneInfo.lanes.map((lane, index) => (
+                <div 
+                  key={index}
+                  className={cn(
+                    'w-4 h-4 rounded border flex items-center justify-center',
+                    lane.isRecommended ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300'
+                  )}
+                >
+                  {getLaneIcon(lane.direction, lane.isRecommended)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
