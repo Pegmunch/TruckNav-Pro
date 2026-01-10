@@ -319,21 +319,25 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
-      {/* GO BUTTON - Left side, half-pill shape moulded around speedometer end */}
+      {/* GO BUTTON - Left side, curved right edge to blend around speedometer's left edge */}
       {showGoButton && onStartNavigation && !isNavigating && (
         <button
           onClick={onStartNavigation}
           className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] px-6',
+            'h-[48px] sm:h-[52px] md:h-[56px] px-5',
             'bg-green-600 hover:bg-green-700 active:bg-green-800',
             'text-white font-bold text-base',
-            'rounded-l-full rounded-r-md',
+            'rounded-l-full',
             'shadow-lg',
             'border border-green-700 border-r-0',
             'transition-all duration-200 active:scale-95',
-            'mr-1.5'
+            '-mr-1'
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ 
+            touchAction: 'manipulation',
+            borderTopRightRadius: '24px',
+            borderBottomRightRadius: '24px'
+          }}
           data-testid="button-go-speedometer"
         >
           Go
