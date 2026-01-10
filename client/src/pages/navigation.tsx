@@ -2726,28 +2726,23 @@ function NavigationPageContent() {
     
     // If navigation is already cancelled (no route), go back to fresh start
     if (!isLocalNavActive && !currentRoute) {
-      console.log('[NAV-STOP] ✅ Already cancelled - refreshing to clean state');
-      // Reset all state to fresh start
-      setFromLocation('');
-      setToLocation('');
-      setFromCoordinates(null);
-      setToCoordinates(null);
-      setIsMapExpanded(false);
-      setShowComprehensiveMenu(false);
-      setSidebarState(isMobile ? 'closed' : 'open');
+      console.log('[NAV-STOP] ✅ Already cancelled - triggering full reset to clean state');
+      // Dispatch full reset to restore initial screen state (same as after T&C accept)
+      const resetEvent = new CustomEvent('navigation:fullReset', {
+        detail: { source: 'stopNavigation_alreadyCancelled', timestamp: Date.now() }
+      });
+      window.dispatchEvent(resetEvent);
       return;
     }
     
     // GUARD: Prevent double-clicks - if mutation is pending, force complete UI reset
     if (completeJourneyMutation.isPending) {
-      console.log('[NAV-STOP] ⏸️ Mutation pending - forcing UI cleanup');
-      // Force immediate UI cleanup even if mutation is pending
-      setIsLocalNavActive(false);
-      setIsShowingPreview(false);
-      setShouldAutoNavigateOnMobile(false);
-      setCurrentRoute(null);
-      setPreviewRoute(null);
-      localStorage.removeItem('navigation_ui_active');
+      console.log('[NAV-STOP] ⏸️ Mutation pending - triggering full reset');
+      // Dispatch full reset to restore initial screen state (same as after T&C accept)
+      const resetEvent = new CustomEvent('navigation:fullReset', {
+        detail: { source: 'stopNavigation_mutationPending', timestamp: Date.now() }
+      });
+      window.dispatchEvent(resetEvent);
       return;
     }
     
@@ -2834,11 +2829,8 @@ function NavigationPageContent() {
     // The hamburger menu visibility is controlled by mobileNavMode derived from isLocalNavActive
     // which we already set to false above, so hamburger will reappear automatically
     
-    // CRITICAL FIX: Set sidebar to 'collapsed' on mobile to prevent full-screen drawer from blocking map
-    // The ComprehensiveMobileMenu is a separate Dialog and not tied to sidebar state
-    // On desktop, set to 'open' to show the sidebar panel
-    setSidebarState(isMobile ? 'collapsed' : 'open');
-    // NOTE: mobileNavMode is derived from isLocalNavActive - no setter needed
+    // NOTE: Sidebar state already set to 'closed' on mobile at line 2773 - do NOT overwrite
+    // This ensures the UI returns to the exact initial state (same as after T&C accept)
     
     // Dispatch navigation stopped event for notification system
     const navigationStoppedEvent = new CustomEvent('navigation:stopped', {
@@ -2846,7 +2838,14 @@ function NavigationPageContent() {
     });
     window.dispatchEvent(navigationStoppedEvent);
     
-    console.log('[ROUTE-CANCEL] ✅ Route cancelled - fresh start page restored');
+    // CRITICAL: Dispatch full reset event to trigger complete state reset
+    // This remounts NavigationPageContent with fresh initial state (same as after T&C accept)
+    const resetEvent = new CustomEvent('navigation:fullReset', {
+      detail: { source: 'stopNavigation', timestamp: Date.now() }
+    });
+    window.dispatchEvent(resetEvent);
+    
+    console.log('[ROUTE-CANCEL] ✅ Route cancelled - full reset triggered for fresh start');
   };
 
   const handleOpenLaneSelection = () => {
