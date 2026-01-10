@@ -2099,11 +2099,12 @@ function NavigationPageContent() {
   };
 
   // Clear current route when locations change to ensure fresh planning
+  // GUARD: Do NOT clear route during active navigation or when preparing to navigate
   useEffect(() => {
-    if (currentRoute && (fromLocation || toLocation)) {
+    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile) {
       setCurrentRoute(null);
     }
-  }, [fromLocation, toLocation]);
+  }, [fromLocation, toLocation, isNavigating, shouldAutoNavigateOnMobile]);
 
   // Auto-plan route when both locations are set (with 3-second debounce)
   // Also triggers when coordinates change (e.g., from AddressAutocomplete)
