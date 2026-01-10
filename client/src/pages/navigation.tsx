@@ -2720,6 +2720,11 @@ function NavigationPageContent() {
     setIsARMode(false);
     setIsFullscreenNav(false);
     
+    // CRITICAL: Reset sidebar to allow new route planning on mobile
+    // Open the comprehensive menu so user can immediately start a new route
+    setSidebarState(isMobile ? 'collapsed' : 'open');
+    setMobileNavMode('plan');
+    
     // Dispatch navigation stopped event for notification system
     const navigationStoppedEvent = new CustomEvent('navigation:stopped', {
       detail: { timestamp: Date.now() }
@@ -3150,7 +3155,40 @@ function NavigationPageContent() {
                       )}
                     </>
                   }
-                  topStrip={null}
+                  topStrip={
+                    currentRoute ? (
+                      <CompactTripStrip
+                        eta={currentRoute.duration || 0}
+                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
+                        isOnline={navigator.onLine}
+                        gpsStatus={gpsData?.status || 'unavailable'}
+                        onPreviewStart={handlePreviewRoute}
+                        onPreviewStop={() => {
+                          console.log('[FLYBY] Stop requested');
+                          setIsFlyByInProgress(false);
+                        }}
+                        onSetLocation={() => setShowManualLocationDialog(true)}
+                        isPreviewActive={isFlyByInProgress}
+                        voiceEnabled={professionalVoiceEnabled}
+                        onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                        roadInfo={roadInfo ? {
+                          roadRef: roadInfo.roadRef,
+                          junction: roadInfo.junction,
+                          destination: roadInfo.destination
+                        } : null}
+                        turnInfo={nextTurn ? {
+                          direction: nextTurn.direction,
+                          distance: nextTurn.distance,
+                          roadName: nextTurn.roadName
+                        } : null}
+                        currentSpeed={gpsData?.position?.speed || 0}
+                        speedLimit={currentSpeedLimit || undefined}
+                        isNavigating={isNavigating}
+                        onCancelNavigation={handleStopNavigation}
+                        isCancellingNavigation={isCancellingRouteRef.current}
+                      />
+                    ) : null
+                  }
                   leftStack={
                     <LeftActionStack
                       onNavigate={() => mapRef.current?.zoomToUserLocation()}
