@@ -10,6 +10,7 @@ export interface DestinationHistoryItem {
 }
 
 const STORAGE_KEY = 'navigation_recentDestinations';
+const SYNC_EVENT = 'destination-history-sync';
 const MAX_DESTINATIONS = 20;
 
 function generateId(coords: { lat: number; lng: number }): string {
@@ -34,6 +35,8 @@ function loadFromStorage(): DestinationHistoryItem[] {
 function saveToStorage(destinations: DestinationHistoryItem[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(destinations));
+    // Dispatch custom event for same-tab sync (storage event only fires in other tabs)
+    window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: destinations }));
   } catch (e) {
     console.error('[DEST-HISTORY] Failed to save to storage:', e);
   }
@@ -42,9 +45,39 @@ function saveToStorage(destinations: DestinationHistoryItem[]): void {
 export function useDestinationHistory() {
   const [destinations, setDestinations] = useState<DestinationHistoryItem[]>(() => loadFromStorage());
 
+  // Save to storage when destinations change
   useEffect(() => {
     saveToStorage(destinations);
   }, [destinations]);
+
+  // Listen for sync events from other hook instances in the same tab
+  useEffect(() => {
+    const handleSync = (e: CustomEvent<DestinationHistoryItem[]>) => {
+      setDestinations(e.detail);
+    };
+    
+    // Listen for storage events from other tabs
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setDestinations(parsed);
+          }
+        } catch (err) {
+          console.error('[DEST-HISTORY] Failed to parse storage event:', err);
+        }
+      }
+    };
+    
+    window.addEventListener(SYNC_EVENT, handleSync as EventListener);
+    window.addEventListener('storage', handleStorage);
+    
+    return () => {
+      window.removeEventListener(SYNC_EVENT, handleSync as EventListener);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   const addDestination = useCallback((
     label: string,
