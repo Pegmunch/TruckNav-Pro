@@ -513,9 +513,9 @@ function ComprehensiveMobileMenu({
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col !z-[10000]" 
+        className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col !z-[200000] pointer-events-auto" 
         data-testid="comprehensive-mobile-menu"
-        overlayZIndex={9999}
+        overlayZIndex={199999}
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
       >

@@ -499,6 +499,10 @@ function NavigationPageContent() {
       }
       
       // Only clear navigation-specific state keys (not prefixed with trucknav_)
+      // PRESERVE: navigation_recentDestinations for destination history feature
+      if (key === 'navigation_recentDestinations') {
+        continue; // Keep destination history across resets
+      }
       if (key.includes('navigation') || key.includes('journey') || key.includes('route') || key.includes('Journey') || key.includes('Route')) {
         localStorage.removeItem(key);
         console.log(`[NAV-STATE] ✓ Cleared localStorage: ${key}`);
