@@ -1,0 +1,279 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useGPS, type GPSContextValue } from '@/contexts/gps-context';
+import { useToast } from '@/hooks/use-toast';
+import * as turf from '@turf/turf';
+import type { Route } from '@shared/schema';
+
+interface AutoRerouteConfig {
+  lateralThresholdMeters: number;
+  consecutiveFixesRequired: number;
+  minSecondsBetweenReroutes: number;
+  minProgressMeters: number;
+  headingDeviationDegrees: number;
+}
+
+const DEFAULT_CONFIG: AutoRerouteConfig = {
+  lateralThresholdMeters: 50,
+  consecutiveFixesRequired: 2,
+  minSecondsBetweenReroutes: 15,
+  minProgressMeters: 100,
+  headingDeviationDegrees: 60,
+};
+
+interface RerouteState {
+  isOffRoute: boolean;
+  isRerouting: boolean;
+  lastRerouteAt: number | null;
+  offRouteCount: number;
+  distanceFromRoute: number;
+}
+
+interface UseAutoRerouteReturn {
+  isOffRoute: boolean;
+  isRerouting: boolean;
+  distanceFromRoute: number;
+  triggerReroute: () => void;
+  resetRerouteState: () => void;
+}
+
+export function useAutoReroute(
+  currentRoute: Route | null,
+  isNavigating: boolean,
+  toCoordinates: { lat: number; lng: number } | null,
+  activeProfileId: string | null,
+  onRerouteSuccess: (newRoute: Route) => void,
+  config: Partial<AutoRerouteConfig> = {}
+): UseAutoRerouteReturn {
+  const gpsData = useGPS();
+  const { toast } = useToast();
+  
+  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
+  
+  const [state, setState] = useState<RerouteState>({
+    isOffRoute: false,
+    isRerouting: false,
+    lastRerouteAt: null,
+    offRouteCount: 0,
+    distanceFromRoute: 0,
+  });
+  
+  const consecutiveOffRouteFixesRef = useRef(0);
+  const lastProgressDistanceRef = useRef(0);
+  const routeLineRef = useRef<ReturnType<typeof turf.lineString> | null>(null);
+  const isReroutingRef = useRef(false);
+  
+  useEffect(() => {
+    if (!currentRoute?.geometry) {
+      routeLineRef.current = null;
+      return;
+    }
+    
+    try {
+      const geometry = typeof currentRoute.geometry === 'string' 
+        ? JSON.parse(currentRoute.geometry) 
+        : currentRoute.geometry;
+      
+      if (geometry?.coordinates && Array.isArray(geometry.coordinates)) {
+        routeLineRef.current = turf.lineString(geometry.coordinates);
+      }
+    } catch (e) {
+      console.error('[AUTO-REROUTE] Failed to parse route geometry:', e);
+      routeLineRef.current = null;
+    }
+  }, [currentRoute?.geometry]);
+  
+  // Helper to check if GPS has valid coordinates
+  const hasValidGpsCoordinates = useCallback((gps: GPSContextValue | null): boolean => {
+    if (!gps?.position) return false;
+    const { latitude, longitude } = gps.position;
+    return (
+      typeof latitude === 'number' &&
+      typeof longitude === 'number' &&
+      !isNaN(latitude) &&
+      !isNaN(longitude) &&
+      latitude !== 0 &&
+      longitude !== 0
+    );
+  }, []);
+  
+  const checkOffRoute = useCallback((gps: GPSContextValue): { isOff: boolean; distance: number; bearing: number } => {
+    if (!routeLineRef.current || !hasValidGpsCoordinates(gps)) {
+      return { isOff: false, distance: 0, bearing: 0 };
+    }
+    
+    const currentPoint = turf.point([gps.position!.longitude, gps.position!.latitude]);
+    const nearestOnLine = turf.nearestPointOnLine(routeLineRef.current, currentPoint);
+    
+    const distanceKm = turf.distance(currentPoint, nearestOnLine, { units: 'kilometers' });
+    const distanceMeters = distanceKm * 1000;
+    
+    let headingDeviation = 0;
+    const heading = gps.position!.heading;
+    if (heading !== null && heading !== undefined) {
+      const routeCoords = routeLineRef.current.geometry.coordinates;
+      const nearestIndex = nearestOnLine.properties.index || 0;
+      
+      if (nearestIndex < routeCoords.length - 1) {
+        const segmentStart = turf.point(routeCoords[nearestIndex]);
+        const segmentEnd = turf.point(routeCoords[nearestIndex + 1]);
+        const routeBearing = turf.bearing(segmentStart, segmentEnd);
+        
+        headingDeviation = Math.abs(heading - routeBearing);
+        if (headingDeviation > 180) {
+          headingDeviation = 360 - headingDeviation;
+        }
+      }
+    }
+    
+    const isLaterallyOff = distanceMeters > mergedConfig.lateralThresholdMeters;
+    const isHeadingOff = headingDeviation > mergedConfig.headingDeviationDegrees;
+    
+    return {
+      isOff: isLaterallyOff || (distanceMeters > 30 && isHeadingOff),
+      distance: distanceMeters,
+      bearing: headingDeviation,
+    };
+  }, [mergedConfig.lateralThresholdMeters, mergedConfig.headingDeviationDegrees, hasValidGpsCoordinates]);
+  
+  const triggerReroute = useCallback(async () => {
+    if (isReroutingRef.current || !toCoordinates || !hasValidGpsCoordinates(gpsData)) {
+      return;
+    }
+    
+    const now = Date.now();
+    if (state.lastRerouteAt && (now - state.lastRerouteAt) < mergedConfig.minSecondsBetweenReroutes * 1000) {
+      console.log('[AUTO-REROUTE] Skipping - too soon since last reroute');
+      return;
+    }
+    
+    isReroutingRef.current = true;
+    setState(prev => ({ ...prev, isRerouting: true }));
+    
+    toast({
+      title: "Recalculating route...",
+      description: "Finding the best route from your current position",
+      duration: 3000,
+    });
+    
+    try {
+      const currentLat = gpsData!.position!.latitude;
+      const currentLng = gpsData!.position!.longitude;
+      
+      const response = await fetch('/api/routes/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startLocation: `${currentLat},${currentLng}`,
+          endLocation: `${toCoordinates.lat},${toCoordinates.lng}`,
+          startCoordinates: {
+            lat: currentLat,
+            lng: currentLng,
+          },
+          endCoordinates: toCoordinates,
+          vehicleProfileId: activeProfileId,
+          routePreference: 'fastest',
+          isReroute: true,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Reroute failed: ${response.status}`);
+      }
+      
+      const newRoute = await response.json();
+      
+      console.log('[AUTO-REROUTE] Successfully calculated new route');
+      
+      toast({
+        title: "Route updated",
+        description: "Following new route to destination",
+        duration: 2000,
+      });
+      
+      onRerouteSuccess(newRoute);
+      
+      setState(prev => ({
+        ...prev,
+        isOffRoute: false,
+        isRerouting: false,
+        lastRerouteAt: Date.now(),
+        offRouteCount: 0,
+        distanceFromRoute: 0,
+      }));
+      consecutiveOffRouteFixesRef.current = 0;
+      
+    } catch (error) {
+      console.error('[AUTO-REROUTE] Reroute failed:', error);
+      
+      toast({
+        title: "Reroute failed",
+        description: "Continuing on current route",
+        variant: "destructive",
+        duration: 3000,
+      });
+      
+      setState(prev => ({ ...prev, isRerouting: false }));
+    } finally {
+      isReroutingRef.current = false;
+    }
+  }, [toCoordinates, gpsData?.position, activeProfileId, state.lastRerouteAt, mergedConfig.minSecondsBetweenReroutes, onRerouteSuccess, toast]);
+  
+  useEffect(() => {
+    if (!isNavigating || !gpsData?.position || !routeLineRef.current || isReroutingRef.current) {
+      return;
+    }
+    
+    const { isOff, distance } = checkOffRoute(gpsData);
+    
+    setState(prev => ({ ...prev, distanceFromRoute: distance }));
+    
+    if (isOff) {
+      consecutiveOffRouteFixesRef.current++;
+      
+      if (consecutiveOffRouteFixesRef.current >= mergedConfig.consecutiveFixesRequired) {
+        console.log(`[AUTO-REROUTE] Off-route detected: ${distance.toFixed(0)}m from route (${consecutiveOffRouteFixesRef.current} consecutive fixes)`);
+        
+        setState(prev => ({
+          ...prev,
+          isOffRoute: true,
+          offRouteCount: prev.offRouteCount + 1,
+        }));
+        
+        triggerReroute();
+      }
+    } else {
+      if (consecutiveOffRouteFixesRef.current > 0) {
+        console.log('[AUTO-REROUTE] Back on route');
+      }
+      consecutiveOffRouteFixesRef.current = 0;
+      setState(prev => ({ ...prev, isOffRoute: false }));
+    }
+  }, [gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired]);
+  
+  const resetRerouteState = useCallback(() => {
+    setState({
+      isOffRoute: false,
+      isRerouting: false,
+      lastRerouteAt: null,
+      offRouteCount: 0,
+      distanceFromRoute: 0,
+    });
+    consecutiveOffRouteFixesRef.current = 0;
+    lastProgressDistanceRef.current = 0;
+    routeLineRef.current = null;
+  }, []);
+  
+  useEffect(() => {
+    if (!isNavigating) {
+      resetRerouteState();
+    }
+  }, [isNavigating, resetRerouteState]);
+  
+  return {
+    isOffRoute: state.isOffRoute,
+    isRerouting: state.isRerouting,
+    distanceFromRoute: state.distanceFromRoute,
+    triggerReroute,
+    resetRerouteState,
+  };
+}

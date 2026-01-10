@@ -38,6 +38,7 @@ import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { useDestinationHistory } from "@/hooks/use-destination-history";
 import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import { useNavigationSession } from "@/hooks/use-navigation-session";
+import { useAutoReroute } from "@/hooks/use-auto-reroute";
 import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
@@ -291,6 +292,30 @@ function NavigationPageContent() {
   // Uses counter instead of boolean to handle overlapping requests safely
   // Watchdog only fires when counter is 0 (no active calculations)
   const routeCalculationCountRef = useRef(0);
+  
+  // Auto-reroute callback - updates current route when driver goes off-route
+  const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
+    console.log('[AUTO-REROUTE] Updating route with new TomTom route');
+    setCurrentRoute(newRoute);
+    // Reset distance remaining with new route distance
+    if (newRoute.distance) {
+      setDynamicDistanceRemaining(newRoute.distance);
+    }
+  }, []);
+  
+  // Auto-reroute hook - detects off-route and automatically recalculates via TomTom API
+  const { isOffRoute, isRerouting, distanceFromRoute, resetRerouteState } = useAutoReroute(
+    currentRoute,
+    isNavigating,
+    toCoordinates,
+    activeProfileId,
+    handleRerouteSuccess,
+    {
+      lateralThresholdMeters: 50,
+      consecutiveFixesRequired: 2,
+      minSecondsBetweenReroutes: 15,
+    }
+  );
   
   // Double-tap detection for map controls toggle (when not navigating)
   const lastMapTapTimeRef = useRef<number>(0);
@@ -2746,6 +2771,7 @@ function NavigationPageContent() {
     setShowComprehensiveMenu(false); // Reset menu state to allow fresh opening
     setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
     setSidebarState(isMobile ? 'closed' : 'open'); // CRITICAL: Reset sidebar to prevent full-screen overlay blocking map
+    resetRerouteState(); // Reset auto-reroute state for next navigation session
     // NOTE: Do NOT clear currentRoute here - defer to completeJourneyMutation.onSuccess
     // This preserves the route polyline during the stop transition
     setPreviewRoute(null);

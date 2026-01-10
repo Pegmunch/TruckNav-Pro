@@ -1460,7 +1460,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       });
 
-      // Add blue route line on top
+      // Add TomTom blue route line on top
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -1470,7 +1470,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#3b82f6',
+          'line-color': '#0067FF',
           'line-width': 8,
           'line-opacity': 1.0
         }
@@ -1546,7 +1546,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     cachedRouteGeoJsonRef.current = geoJsonData;
 
     if (!map.current.getSource('route')) {
-      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - Blue #3b82f6, width 8px');
+      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - TomTom Blue #0067FF, width 8px');
       map.current.addSource('route', {
         type: 'geojson',
         data: geoJsonData
@@ -1568,7 +1568,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       });
 
-      // Add blue route line on top
+      // Add TomTom blue route line on top
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -1578,7 +1578,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#3b82f6',
+          'line-color': '#0067FF',
           'line-width': 8,
           'line-opacity': 1.0
         }
