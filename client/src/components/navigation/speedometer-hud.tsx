@@ -348,19 +348,31 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             />
           </svg>
           <button
-            onClick={onStartNavigation}
+            onPointerDown={(e) => {
+              if (e.pointerType !== 'mouse' && !isNavigating && onStartNavigation) {
+                e.preventDefault();
+                e.stopPropagation();
+                onStartNavigation();
+              }
+            }}
+            onClick={() => {
+              if (!isNavigating && onStartNavigation) {
+                onStartNavigation();
+              }
+            }}
             disabled={isNavigating}
             className={cn(
               'absolute inset-0 w-full h-full',
               'text-white font-bold text-lg tracking-wide',
               'flex items-center justify-center',
-              'transition-all duration-200 active:scale-95',
+              'select-none',
               isNavigating && 'opacity-40 cursor-not-allowed'
             )}
             style={{ 
               touchAction: 'manipulation',
               background: 'transparent',
-              textShadow: '0 1px 3px rgba(0,0,0,0.4)'
+              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              WebkitTapHighlightColor: 'transparent'
             }}
             data-testid="button-go-speedometer"
           >
@@ -663,19 +675,31 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             />
           </svg>
           <button
-            onClick={onStopNavigation}
+            onPointerDown={(e) => {
+              if (e.pointerType !== 'mouse' && isNavigating && onStopNavigation) {
+                e.preventDefault();
+                e.stopPropagation();
+                onStopNavigation();
+              }
+            }}
+            onClick={() => {
+              if (isNavigating && onStopNavigation) {
+                onStopNavigation();
+              }
+            }}
             disabled={!isNavigating}
             className={cn(
               'absolute inset-0 w-full h-full',
               'text-white font-bold text-lg tracking-wide',
               'flex items-center justify-center',
-              'transition-all duration-200 active:scale-95',
+              'select-none',
               !isNavigating && 'opacity-40 cursor-not-allowed'
             )}
             style={{ 
               touchAction: 'manipulation',
               background: 'transparent',
-              textShadow: '0 1px 3px rgba(0,0,0,0.4)'
+              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              WebkitTapHighlightColor: 'transparent'
             }}
             data-testid="button-stop-speedometer"
           >

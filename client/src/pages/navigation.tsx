@@ -2723,7 +2723,7 @@ function NavigationPageContent() {
     // CRITICAL: Reset sidebar to allow new route planning on mobile
     // Open the comprehensive menu so user can immediately start a new route
     setSidebarState(isMobile ? 'collapsed' : 'open');
-    setMobileNavMode('plan');
+    // NOTE: mobileNavMode is derived from isLocalNavActive - no setter needed
     
     // Dispatch navigation stopped event for notification system
     const navigationStoppedEvent = new CustomEvent('navigation:stopped', {
