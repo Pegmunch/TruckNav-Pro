@@ -149,8 +149,8 @@ export function CompactTripStrip({
   return (
     <div 
       className={cn(
-        'fixed left-0 right-0 px-2 py-1',
-        'bg-white/40 backdrop-blur-xl',
+        'fixed left-0 right-0 px-2 py-1.5',
+        'bg-white/50 backdrop-blur-xl',
         'border-b-2 border-blue-500 shadow-md',
         'flex flex-col gap-1',
         'pointer-events-auto',
@@ -163,10 +163,10 @@ export function CompactTripStrip({
       }}
       data-testid="compact-trip-strip"
     >
-      {/* Top Row: ETA info + Action buttons */}
-      <div className="flex items-center justify-between gap-1">
-        {/* Left: Compact ETA pills */}
-        <div className="flex items-center gap-1 flex-wrap">
+      {/* Row 1: ETA info + Speed + Action buttons */}
+      <div className="flex items-center justify-between gap-2">
+        {/* Left: ETA/Distance/Arrival */}
+        <div className="flex items-center gap-1">
           <div className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1 rounded shadow-sm">
             <Clock className="w-3.5 h-3.5" />
             <span className="text-xs font-bold">{eta}m</span>
@@ -181,6 +181,28 @@ export function CompactTripStrip({
           </div>
         </div>
         
+        {/* Center: Speed limit + Current speed (unpacked) */}
+        {(isNavigating || isPreviewActive) && (
+          <div className="flex items-center gap-2">
+            {/* Speed Limit Sign */}
+            <div className={cn(
+              'flex items-center justify-center w-8 h-8 rounded-full border-2',
+              convertedSpeedLimit ? 'bg-white border-red-500' : 'bg-gray-100 border-gray-300'
+            )}>
+              <span className="text-xs font-bold text-gray-900">{convertedSpeedLimit || '--'}</span>
+            </div>
+            {/* Current Speed */}
+            <div className={cn(
+              'flex items-center gap-1 px-2 py-1 rounded-lg shadow-sm',
+              isSpeeding ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-900'
+            )}>
+              <Gauge className={cn('w-4 h-4', isSpeeding ? 'text-white' : 'text-blue-600')} />
+              <span className={cn('text-base font-bold', isSpeeding && 'animate-pulse')}>{convertedSpeed}</span>
+              <span className={cn('text-[10px]', isSpeeding ? 'text-red-100' : 'text-gray-500')}>{speedUnit}</span>
+            </div>
+          </div>
+        )}
+        
         {/* Right: Action buttons */}
         <div className="flex items-center gap-1 flex-shrink-0">
           {isNavigating && onCancelNavigation && (
@@ -188,11 +210,11 @@ export function CompactTripStrip({
               onClick={onCancelNavigation}
               size="sm"
               disabled={isCancellingNavigation}
-              className="h-6 px-2 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
+              className="h-7 px-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-1"
               style={{ touchAction: 'manipulation' }}
               data-testid="button-cancel-navigation"
             >
-              <X className="w-3 h-3" />
+              <X className="w-3.5 h-3.5" />
               End
             </Button>
           )}
@@ -202,7 +224,7 @@ export function CompactTripStrip({
                 onClick={onPreviewStart}
                 size="sm"
                 disabled={isPreviewActive}
-                className="h-6 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded-l rounded-r-none border-r border-white/30"
+                className="h-7 px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-l rounded-r-none border-r border-white/30"
                 style={{ touchAction: 'manipulation' }}
                 data-testid="button-preview-start"
               >
@@ -212,7 +234,7 @@ export function CompactTripStrip({
                 onClick={onPreviewStop}
                 size="sm"
                 disabled={!isPreviewActive}
-                className="h-6 px-2 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded-r rounded-l-none"
+                className="h-7 px-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs active:scale-95 transition-transform disabled:opacity-50 rounded-r rounded-l-none"
                 style={{ touchAction: 'manipulation' }}
                 data-testid="button-preview-stop"
               >
@@ -223,35 +245,37 @@ export function CompactTripStrip({
         </div>
       </div>
       
-      {/* Bottom Row: Status icons + Speed/Turn info */}
-      <div className="flex items-center justify-between gap-1">
-        {/* Left: Status icons */}
-        <div className="flex items-center gap-1">
+      {/* Row 2: Status icons + Road/Turn/Lane info + Nav status */}
+      <div className="flex items-center justify-between gap-2">
+        {/* Left: Status icons with labels */}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={onVoiceToggle}
             aria-label={voiceEnabled ? "Mute voice" : "Enable voice"}
             className={cn(
-              'flex items-center justify-center w-6 h-6 rounded-full transition-colors shadow-sm',
+              'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors shadow-sm text-[10px] font-bold',
               voiceEnabled ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
             )}
             data-testid="voice-toggle-button"
           >
             {voiceEnabled ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
+            {voiceEnabled ? 'On' : 'Off'}
           </button>
           <div 
             aria-label={isOnline ? "Online" : "Offline"}
             className={cn(
-              'flex items-center justify-center w-6 h-6 rounded-full shadow-sm',
+              'flex items-center gap-1 px-2 py-0.5 rounded-full shadow-sm text-[10px] font-bold',
               isOnline ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
             )}
           >
             {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+            {isOnline ? 'Net' : 'Off'}
           </div>
           <button
             onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
             aria-label={isGpsReady ? "GPS ready" : isGpsAcquiring ? "Acquiring GPS" : "Set GPS location"}
             className={cn(
-              'flex items-center justify-center w-6 h-6 rounded-full transition-colors shadow-sm',
+              'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors shadow-sm text-[10px] font-bold',
               isGpsReady 
                 ? 'bg-green-500 text-white cursor-default'
                 : isGpsAcquiring
@@ -262,52 +286,23 @@ export function CompactTripStrip({
             data-testid="gps-status-button"
           >
             {isGpsReady ? <Navigation className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+            {isGpsReady ? 'GPS' : isGpsAcquiring ? '...' : 'Set'}
           </button>
         </div>
         
-        {/* Center: Speed + Road + Turn info */}
-        <div className="flex items-center justify-center gap-1.5 flex-1 min-w-0">
-          {/* Road badge - always show when available */}
-          {roadInfo?.roadRef && !isNavigating && !isPreviewActive && (
+        {/* Center: Road badge + Turn + Lane */}
+        <div className="flex items-center gap-1.5 flex-1 justify-center min-w-0">
+          {/* Road badge */}
+          {roadInfo?.roadRef && (
             <div className={cn('px-2 py-0.5 rounded text-xs font-bold shadow-sm', getRoadBadgeStyle(roadInfo.roadRef))}>
               {roadInfo.roadRef}
-            </div>
-          )}
-          
-          {/* Speed Display during navigation/preview */}
-          {(isNavigating || isPreviewActive) && (
-            <div className={cn(
-              'flex items-center gap-1.5 px-2 py-1 rounded-lg shadow-sm border transition-all',
-              isSpeeding ? 'bg-red-500 border-red-600 text-white' : 'bg-white/80 border-gray-300'
-            )}>
-              <div className={cn(
-                'flex items-center justify-center w-6 h-6 rounded-full border-2',
-                convertedSpeedLimit ? 'bg-white border-red-500' : 'bg-gray-100 border-gray-300'
-              )}>
-                <span className="text-[10px] font-bold text-gray-900">{convertedSpeedLimit || '--'}</span>
-              </div>
-              <div className="flex items-center gap-0.5">
-                <Gauge className={cn('w-3 h-3', isSpeeding ? 'text-white' : 'text-blue-600')} />
-                <span className={cn('text-sm font-bold', isSpeeding ? 'text-white' : 'text-gray-900')}>{convertedSpeed}</span>
-                <span className={cn('text-[9px]', isSpeeding ? 'text-red-100' : 'text-gray-500')}>{speedUnit}</span>
-              </div>
-              {roadInfo?.roadRef && (
-                <div className={cn('px-1.5 py-0.5 rounded text-xs font-bold', getRoadBadgeStyle(roadInfo.roadRef))}>
-                  {roadInfo.roadRef}
-                </div>
-              )}
-              <div className={cn(
-                'px-1.5 py-0.5 rounded-full text-[9px] font-bold',
-                isNavigating ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
-              )}>
-                {isNavigating ? 'NAV' : 'PRV'}
-              </div>
+              {roadInfo.junction?.ref && <span className="ml-1 text-[10px] opacity-80">J{roadInfo.junction.ref}</span>}
             </div>
           )}
           
           {/* Turn Indicator */}
           {turnInfo && (
-            <div className="flex items-center gap-1 bg-white/80 px-2 py-1 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center gap-1 bg-white/80 px-2 py-0.5 rounded shadow-sm border border-gray-200">
               <div className="text-blue-600">{getTurnIcon(turnInfo.direction)}</div>
               <span className="text-xs font-bold text-gray-900">{formatTurnDistance(turnInfo.distance)}</span>
             </div>
@@ -330,6 +325,16 @@ export function CompactTripStrip({
             </div>
           )}
         </div>
+        
+        {/* Right: Nav status badge */}
+        {(isNavigating || isPreviewActive) && (
+          <div className={cn(
+            'px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex-shrink-0',
+            isNavigating ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+          )}>
+            {isNavigating ? 'NAV' : 'PRV'}
+          </div>
+        )}
       </div>
     </div>
   );
