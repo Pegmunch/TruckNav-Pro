@@ -501,8 +501,10 @@ function ComprehensiveMobileMenu({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col z-[3000]" 
+          className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col" 
+          style={{ zIndex: 3000 }}
           data-testid="comprehensive-mobile-menu"
+          overlayZIndex={2999}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
