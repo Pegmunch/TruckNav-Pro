@@ -1721,7 +1721,9 @@ function NavigationPageContent() {
       return response.json();
     },
     onSuccess: (journey) => {
+      // CRITICAL: Clear route AFTER backend confirms - preserves polyline during transition
       setCurrentRoute(null);
+      setPreviewRoute(null);
       localStorage.removeItem('activeJourneyId');
       // CRITICAL: Invalidate the exact query key that navSession uses
       queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
@@ -1731,7 +1733,7 @@ function NavigationPageContent() {
       
       // Reset cancellation guard after journey is completed
       isCancellingRouteRef.current = false;
-      console.log('[JOURNEY-COMPLETE] ✅ Route cancellation guard reset');
+      console.log('[JOURNEY-COMPLETE] ✅ Route cancellation guard reset, route cleared');
     },
     onError: (error) => {
       console.error('Failed to complete journey:', error);
@@ -2691,6 +2693,8 @@ function NavigationPageContent() {
       console.log('[NAV-STOP] ⏸️ Mutation pending - forcing UI cleanup');
       // Force immediate UI cleanup even if mutation is pending
       setIsLocalNavActive(false);
+      setIsShowingPreview(false);
+      setShouldAutoNavigateOnMobile(false);
       setCurrentRoute(null);
       setPreviewRoute(null);
       localStorage.removeItem('navigation_ui_active');
@@ -2714,8 +2718,10 @@ function NavigationPageContent() {
     // This ensures the hamburger button reappears immediately
     setIsLocalNavActive(false);
     setIsShowingPreview(false); // CRITICAL: Reset preview mode so isNavUIActive becomes false
-    // NOTE: Do NOT call setShowComprehensiveMenu(false) here - it prevents the menu from opening after cancellation
-    setCurrentRoute(null); // Clear route immediately for instant UI feedback
+    setShowComprehensiveMenu(false); // Reset menu state to allow fresh opening
+    setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
+    // NOTE: Do NOT clear currentRoute here - defer to completeJourneyMutation.onSuccess
+    // This preserves the route polyline during the stop transition
     setPreviewRoute(null);
     localStorage.removeItem('navigation_ui_active');
     localStorage.removeItem('navigation_mode');
@@ -2732,9 +2738,10 @@ function NavigationPageContent() {
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       completeJourneyMutation.mutate(currentJourney.id);
     } else {
-      // No journey to complete - reset guard immediately
+      // No journey to complete - clear route immediately and reset guard
+      setCurrentRoute(null);
       isCancellingRouteRef.current = false;
-      console.log('[NAV-STOP] ℹ️ No journey to complete - guard reset immediately');
+      console.log('[NAV-STOP] ℹ️ No journey to complete - route cleared, guard reset immediately');
     }
     
     // Clear URL parameter
@@ -2775,10 +2782,10 @@ function NavigationPageContent() {
     // The hamburger menu visibility is controlled by mobileNavMode derived from isLocalNavActive
     // which we already set to false above, so hamburger will reappear automatically
     
-    // CRITICAL FIX: Set sidebar to 'open' on ALL platforms after stopping navigation
-    // Previously mobile was set to 'collapsed' which blocked the ComprehensiveMobileMenu dialog
-    // The dialog's open state is tied to sidebar state, so 'collapsed' negates the open prop
-    setSidebarState('open');
+    // CRITICAL FIX: Set sidebar to 'collapsed' on mobile to prevent full-screen drawer from blocking map
+    // The ComprehensiveMobileMenu is a separate Dialog and not tied to sidebar state
+    // On desktop, set to 'open' to show the sidebar panel
+    setSidebarState(isMobile ? 'collapsed' : 'open');
     // NOTE: mobileNavMode is derived from isLocalNavActive - no setter needed
     
     // Dispatch navigation stopped event for notification system
@@ -3088,7 +3095,6 @@ function NavigationPageContent() {
                   {/* Menu Button */}
                   <Button
                     onClick={() => {
-                      console.log('[PLAN-MENU] Menu button pressed');
                       setShowComprehensiveMenu(true);
                     }}
                     size="icon"
