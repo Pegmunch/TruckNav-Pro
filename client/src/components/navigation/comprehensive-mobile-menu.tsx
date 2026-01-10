@@ -189,6 +189,8 @@ function ComprehensiveMobileMenu({
   
   // GPS location fill state
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  // State to force open the From dropdown after GPS location is obtained
+  const [forceOpenFromDropdown, setForceOpenFromDropdown] = useState(false);
   
   // Dropdown positioning is handled by Radix Popover which automatically
   // handles scroll/resize and portal rendering
@@ -271,12 +273,14 @@ function ComprehensiveMobileMenu({
         }
         
         if (displayAddress) {
-          // Update local input state
-          setFromInput(displayAddress);
-          // Notify parent component (same as autocomplete flow)
-          onFromLocationChange(displayAddress);
-          // Store coordinates for POI search (same as autocomplete flow)
+          // Store coordinates FIRST for location-biased search
           setFromCoordinates({ lat: latitude, lng: longitude });
+          // Use just the postcode as search term to trigger autocomplete choices
+          // This mimics typing a postcode - shows multiple address options
+          const searchTerm = address.postalCode || displayAddress;
+          setFromInput(searchTerm);
+          // Force open the dropdown to show address choices from this location
+          setForceOpenFromDropdown(true);
         } else {
           throw new Error('Could not determine address');
         }
@@ -653,6 +657,8 @@ function ComprehensiveMobileMenu({
                         placeholder="Search for address, postcode, or POI..."
                         testId="input-from-location"
                         showSearchTypeToggles={false}
+                        forceOpen={forceOpenFromDropdown}
+                        onForceOpenConsumed={() => setForceOpenFromDropdown(false)}
                       />
                     </div>
 
