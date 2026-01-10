@@ -19,6 +19,7 @@ interface RightActionStackProps {
   bearing?: number;
   hideCompass?: boolean;
   hideIncidents?: boolean;
+  hide3D?: boolean;
   restrictionViolations?: any[];
   isVisible?: boolean;
   compact?: boolean;
@@ -40,6 +41,7 @@ export function RightActionStack({
   bearing = 0,
   hideCompass = false,
   hideIncidents = false,
+  hide3D = false,
   restrictionViolations = [],
   isVisible = true,
   compact = false
@@ -173,7 +175,7 @@ export function RightActionStack({
       )}
 
       {/* 7. 3D Toggle - Blue/Gray border */}
-      {onToggle3D && (
+      {onToggle3D && !hide3D && (
         <Button
           variant="ghost"
           size="icon"

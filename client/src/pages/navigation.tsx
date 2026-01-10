@@ -3394,28 +3394,40 @@ function NavigationPageContent() {
                     /* Only show map controls in entry/plan mode - hide during navigation */
                     !isNavUIActive ? (
                     <>
-                      {/* Map View Toggle - Mobile only (moved from right stack) */}
+                      {/* Compass Button - Reset bearing */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => mapRef.current?.resetBearing()}
+                        className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 border-blue-500 shadow-lg"
+                        data-testid="button-compass-mobile"
+                        aria-label="Reset compass bearing"
+                      >
+                        <Compass 
+                          className="h-5 w-5 transition-transform duration-300"
+                          style={{ transform: `rotate(${mapControlState.bearing}deg)` }}
+                        />
+                      </Button>
+                      
+                      {/* 3D Toggle Button */}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          mapRef.current?.toggleMapView();
-                          setMapControlState(prev => ({ 
-                            ...prev, 
-                            isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                          }));
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                         }}
                         className={cn(
                           "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 shadow-lg",
-                          mapControlState.isSatelliteView ? "border-green-500" : "border-gray-400"
+                          mapControlState.is3DMode ? "border-blue-500" : "border-gray-400"
                         )}
-                        data-testid="button-toggle-view-mobile"
-                        aria-label="Toggle map view"
+                        data-testid="button-3d-mobile"
+                        aria-label="Toggle 3D mode"
                       >
-                        <Map className="h-5 w-5" />
+                        <Box className="h-5 w-5" />
                       </Button>
                       
-                      {/* Recenter Button - Mobile only (moved from right stack) */}
+                      {/* Recenter Button */}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -3467,19 +3479,22 @@ function NavigationPageContent() {
                     <RightActionStack
                       onZoomIn={() => mapRef.current?.zoomIn()}
                       onZoomOut={() => mapRef.current?.zoomOut()}
-                      onToggle3D={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggleMapView={() => {
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ 
+                          ...prev, 
+                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                        }));
                       }}
                       onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                       onViewIncidents={() => setShowIncidentFeed(true)}
-                      onCompassClick={() => mapRef.current?.resetBearing()}
-                      is3DMode={mapControlState.is3DMode}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
-                      bearing={mapControlState.bearing}
                       isVisible={showNavControls}
                       hideIncidents={true}
+                      hideCompass={true}
+                      hide3D={true}
                     />
                   }
                   bottomBar={

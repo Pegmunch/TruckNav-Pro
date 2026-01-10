@@ -86,7 +86,7 @@ export function NavigationLayout({
         <div 
           className="fixed right-4 z-[99999]"
           style={{ 
-            bottom: shouldShowUI ? 'calc(120px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
+            bottom: shouldShowUI ? 'calc(60px + var(--safe-area-bottom, 0px))' : 'calc(40px + var(--safe-area-bottom, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}
