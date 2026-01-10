@@ -3268,8 +3268,8 @@ function NavigationPageContent() {
                       currentSpeed={gpsData?.position?.speed || 0} // Speed in m/s (component converts internally)
                       speedLimit={currentSpeedLimit || undefined}
                       isNavigating={isNavigating}
-                      showGoButton={!!currentRoute && !isNavigating}
-                      showStopButton={isNavigating}
+                      showGoButton={true}
+                      showStopButton={true}
                       onStartNavigation={handleStartNavigation}
                       onStopNavigation={handleStopNavigation}
                     />
@@ -3564,8 +3564,9 @@ function NavigationPageContent() {
                         speedLimit={currentSpeedLimit || undefined}
                         roadInfo={roadInfo}
                         isNavigating={true}
-                        showGoButton={false}
+                        showGoButton={true}
                         showStopButton={true}
+                        onStartNavigation={handleStartNavigation}
                         onStopNavigation={handleStopNavigation}
                       />
                     </div>

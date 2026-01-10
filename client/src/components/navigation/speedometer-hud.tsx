@@ -319,24 +319,24 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
-      {/* GO BUTTON - Left side, curved right edge to blend around speedometer's left edge */}
-      {showGoButton && onStartNavigation && !isNavigating && (
+      {/* GO BUTTON - Left side, concave right edge wrapping around speedometer's left curve */}
+      {showGoButton && onStartNavigation && (
         <button
           onClick={onStartNavigation}
+          disabled={isNavigating}
           className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] px-5',
+            'h-[48px] sm:h-[52px] md:h-[56px] w-[60px] sm:w-[65px]',
             'bg-green-600 hover:bg-green-700 active:bg-green-800',
             'text-white font-bold text-base',
-            'rounded-l-full',
             'shadow-lg',
-            'border border-green-700 border-r-0',
             'transition-all duration-200 active:scale-95',
-            '-mr-1'
+            'mr-1',
+            isNavigating && 'opacity-50 cursor-not-allowed'
           )}
           style={{ 
             touchAction: 'manipulation',
-            borderTopRightRadius: '24px',
-            borderBottomRightRadius: '24px'
+            borderRadius: '24px 0 0 24px',
+            clipPath: 'polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%)'
           }}
           data-testid="button-go-speedometer"
         >
@@ -613,21 +613,25 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
         </div>
       </div>
 
-      {/* STOP BUTTON - Right side, half-pill shape moulded around speedometer end */}
-      {showStopButton && onStopNavigation && isNavigating && (
+      {/* STOP BUTTON - Right side, concave left edge wrapping around speedometer's right curve */}
+      {showStopButton && onStopNavigation && (
         <button
           onClick={onStopNavigation}
+          disabled={!isNavigating}
           className={cn(
-            'h-[48px] sm:h-[52px] md:h-[56px] px-6',
+            'h-[48px] sm:h-[52px] md:h-[56px] w-[65px] sm:w-[70px]',
             'bg-red-600 hover:bg-red-700 active:bg-red-800',
             'text-white font-bold text-base',
-            'rounded-r-full rounded-l-md',
             'shadow-lg',
-            'border border-red-700 border-l-0',
             'transition-all duration-200 active:scale-95',
-            'ml-1.5'
+            'ml-1',
+            !isNavigating && 'opacity-50 cursor-not-allowed'
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ 
+            touchAction: 'manipulation',
+            borderRadius: '0 24px 24px 0',
+            clipPath: 'polygon(25% 0%, 100% 0%, 100% 100%, 25% 100%, 0% 50%)'
+          }}
           data-testid="button-stop-speedometer"
         >
           Stop
