@@ -3794,6 +3794,7 @@ function NavigationPageContent() {
                 // CRITICAL: Clear ALL navigation state for fresh start
                 setIsLocalNavActive(false);
                 setIsShowingPreview(false);
+                setShouldAutoNavigateOnMobile(false); // Reset auto-navigate flag
                 setCurrentRoute(null);
                 setPreviewRoute(null);
                 setFromLocation('');
