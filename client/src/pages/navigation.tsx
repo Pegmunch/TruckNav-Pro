@@ -3355,6 +3355,42 @@ function NavigationPageContent() {
                       }}
                     />
                   }
+                  topLeftStack={
+                    <>
+                      {/* Map View Toggle - Mobile only (moved from right stack) */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          mapRef.current?.toggleMapView();
+                          setMapControlState(prev => ({ 
+                            ...prev, 
+                            isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
+                          }));
+                        }}
+                        className={cn(
+                          "h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 shadow-lg",
+                          mapControlState.isSatelliteView ? "border-green-500" : "border-gray-400"
+                        )}
+                        data-testid="button-toggle-view-mobile"
+                        aria-label="Toggle map view"
+                      >
+                        <Map className="h-5 w-5" />
+                      </Button>
+                      
+                      {/* Recenter Button - Mobile only (moved from right stack) */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => mapRef.current?.zoomToUserLocation()}
+                        className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 border-gray-400 shadow-lg"
+                        data-testid="button-recenter-mobile"
+                        aria-label="Recenter on location"
+                      >
+                        <Crosshair className="h-5 w-5" />
+                      </Button>
+                    </>
+                  }
                   topRightStack={
                     <>
                       {/* GPS Mode Toggle Button */}

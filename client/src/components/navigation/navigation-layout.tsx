@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 interface NavigationLayoutProps {
   topStrip?: ReactNode;
   leftStack?: ReactNode;
+  topLeftStack?: ReactNode;
   rightStack?: ReactNode;
   topRightStack?: ReactNode;
   rightStackVisible?: boolean;
@@ -10,12 +11,13 @@ interface NavigationLayoutProps {
   mapContent: ReactNode;
   isNavigating: boolean;
   isNavUIActive?: boolean;
-  showBottomBar?: boolean; // Allow showing speedometer even when not actively navigating (for Go button)
+  showBottomBar?: boolean;
 }
 
 export function NavigationLayout({
   topStrip,
   leftStack,
+  topLeftStack,
   rightStack,
   topRightStack,
   rightStackVisible = true,
@@ -37,6 +39,19 @@ export function NavigationLayout({
 
       {/* Top navigation strip - ETA header (CompactTripStrip) - ALWAYS visible when route exists */}
       {topStrip && topStrip}
+
+      {/* Top-left stack - Mobile only: Map/Recenter buttons below ETA */}
+      {topLeftStack && (
+        <div 
+          className="fixed left-4 z-[99999] flex flex-col gap-2 lg:hidden pointer-events-auto"
+          style={{ 
+            top: 'calc(180px + var(--safe-area-top, 0px))',
+            userSelect: 'none'
+          }}
+        >
+          {topLeftStack}
+        </div>
+      )}
 
       {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
       {leftStack && (
