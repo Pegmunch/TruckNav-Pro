@@ -2745,6 +2745,7 @@ function NavigationPageContent() {
     setIsShowingPreview(false); // CRITICAL: Reset preview mode so isNavUIActive becomes false
     setShowComprehensiveMenu(false); // Reset menu state to allow fresh opening
     setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
+    setSidebarState(isMobile ? 'closed' : 'open'); // CRITICAL: Reset sidebar to prevent full-screen overlay blocking map
     // NOTE: Do NOT clear currentRoute here - defer to completeJourneyMutation.onSuccess
     // This preserves the route polyline during the stop transition
     setPreviewRoute(null);
