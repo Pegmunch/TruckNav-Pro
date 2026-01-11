@@ -294,6 +294,43 @@ function NavigationPageContent() {
   // Watchdog only fires when counter is 0 (no active calculations)
   const routeCalculationCountRef = useRef(0);
   
+  // Ref to track current journey ID - avoids stale closure in mutation callbacks
+  // Initialize from localStorage for hydration/offline flows
+  const getInitialJourneyId = (): number | null => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('activeJourneyId');
+      return stored ? parseInt(stored, 10) : null;
+    }
+    return null;
+  };
+  const currentJourneyIdRef = useRef<number | null>(getInitialJourneyId());
+  
+  // Ref to track current route ID - avoids stale closure in mutation callbacks
+  const currentRouteIdRef = useRef<string | null>(null);
+  
+  // Monotonic navigation session counter - incremented at START of each new route calculation
+  // Used for stale completion detection: if session changed since completion was initiated, it's stale
+  const navigationSessionRef = useRef<number>(0);
+  
+  // Helper to get active journey ID from both ref and localStorage (synchronous fallback)
+  const getActiveJourneyId = useCallback((): number | null => {
+    // Prefer the ref if set (most current)
+    if (currentJourneyIdRef.current !== null) {
+      return currentJourneyIdRef.current;
+    }
+    // Fallback to localStorage for hydration/offline flows
+    const stored = localStorage.getItem('activeJourneyId');
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (!isNaN(parsed)) {
+        // Update ref with persisted value
+        currentJourneyIdRef.current = parsed;
+        return parsed;
+      }
+    }
+    return null;
+  }, []);
+  
   // Auto-reroute callback - updates current route when driver goes off-route
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
     console.log('[AUTO-REROUTE] Updating route with new TomTom route');
@@ -525,9 +562,9 @@ function NavigationPageContent() {
       }
       
       // Only clear navigation-specific state keys (not prefixed with trucknav_)
-      // PRESERVE: navigation_recentDestinations for destination history feature
+      // PRESERVE: Recent destinations for user convenience
       if (key === 'navigation_recentDestinations') {
-        continue; // Keep destination history across resets
+        continue;
       }
       if (key.includes('navigation') || key.includes('journey') || key.includes('route') || key.includes('Journey') || key.includes('Route')) {
         localStorage.removeItem(key);
@@ -651,6 +688,24 @@ function NavigationPageContent() {
     };
     
     checkARSupport();
+  }, []);
+  
+  // Listen for overlay cleanup events (triggered by stale journey completions)
+  // This closes Radix overlays without clearing the active route
+  useEffect(() => {
+    const handleOverlayCleanup = () => {
+      console.log('[NAV-OVERLAY] 🧹 Closing overlays via event');
+      setShowComprehensiveMenu(false);
+      setShowQuickSettings(false);
+      setShowSettingsModal(false);
+      setShowIncidentFeed(false);
+      setIsAlternativeRoutesOpen(false);
+    };
+    
+    window.addEventListener('navigation:overlayCleanup', handleOverlayCleanup);
+    return () => {
+      window.removeEventListener('navigation:overlayCleanup', handleOverlayCleanup);
+    };
   }, []);
   
   // Fetch enhanced speed limit and road info when GPS position changes
@@ -1468,6 +1523,22 @@ function NavigationPageContent() {
       setSelectedProfile(activeProfile);
     }
   }, [activeProfile]);
+  
+  // Sync currentJourneyIdRef from currentJourney for persisted/rehydrated journeys
+  // This ensures the stale completion guard works for journeys loaded from storage
+  // Syncs for 'active' and 'planned' statuses (not completed/cancelled)
+  useEffect(() => {
+    if (currentJourney?.id && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
+      if (currentJourneyIdRef.current !== currentJourney.id) {
+        console.log('[JOURNEY-SYNC] Syncing currentJourneyIdRef from query:', currentJourney.id, 'status:', currentJourney.status);
+        currentJourneyIdRef.current = currentJourney.id;
+      }
+    } else if (!currentJourney) {
+      // Journey is null/undefined - DON'T clear the ref here as it may be set by pending route calculation
+      // Only clear on legitimate completion (in completeJourneyMutation.onSuccess)
+    }
+  }, [currentJourney?.id, currentJourney?.status]);
+  
 
   // SIMPLIFIED: Sync route data with current journey
   // Navigation state is now automatically derived by useNavigationSession hook
@@ -1750,11 +1821,59 @@ function NavigationPageContent() {
 
   const completeJourneyMutation = useMutation({
     mutationKey: ['completeJourney'], // CRITICAL: For useNavigationSession to track 'completing' state
-    mutationFn: async (journeyId: number) => {
+    mutationFn: async ({ journeyId, sessionAtInvocation }: { journeyId: number; sessionAtInvocation: number }) => {
       const response = await apiRequest("PATCH", `/api/journeys/${journeyId}/complete`, {});
-      return response.json();
+      const result = await response.json();
+      // Echo back the session number captured at invocation time
+      return { journey: result, sessionAtInvocation };
     },
-    onSuccess: (journey) => {
+    onSuccess: ({ journey, sessionAtInvocation }) => {
+      // GUARD: Don't clear route if session has changed since this completion was initiated
+      // This is the primary guard - if a new route calculation started, the session number changed
+      const currentSession = navigationSessionRef.current;
+      const isSessionStale = sessionAtInvocation !== currentSession;
+      
+      // Secondary guards: journey/route ID mismatches
+      const completingJourneyId = journey?.id;
+      const completingRouteId = journey?.routeId;
+      const activeJourneyId = getActiveJourneyId();
+      const currentRouteId = currentRouteIdRef.current;
+      
+      const isJourneyStale = activeJourneyId !== null && completingJourneyId !== activeJourneyId;
+      const isRouteStale = currentRouteId !== null && completingRouteId !== undefined && 
+                          completingRouteId !== currentRouteId;
+      const isStaleCompletion = isSessionStale || isJourneyStale || isRouteStale;
+      
+      if (routeCalculationCountRef.current > 0 || isStaleCompletion) {
+        console.log('[JOURNEY-COMPLETE] ⏸️ Skipping route clear - stale completion detected', {
+          activeCalculations: routeCalculationCountRef.current,
+          isSessionStale,
+          sessionAtInvocation,
+          currentSession,
+          isJourneyStale,
+          isRouteStale,
+          completingJourneyId,
+          activeJourneyId
+        });
+        // Still invalidate queries to sync backend state, but don't clear UI route
+        queryClient.invalidateQueries({ queryKey: ["/api/journeys/active"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/journeys"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/journeys", "last"] });
+        isCancellingRouteRef.current = false;
+        
+        // CRITICAL: Still dispatch targeted overlay cleanup to prevent stuck UI
+        // This ensures Radix overlays from the old journey are closed without clearing the new route
+        const cleanupEvent = new CustomEvent('navigation:overlayCleanup', {
+          detail: { source: 'staleCompletion', completingJourneyId, activeJourneyId, timestamp: Date.now() }
+        });
+        window.dispatchEvent(cleanupEvent);
+        return;
+      }
+      
+      // Clear all tracking refs since this is a legitimate completion
+      currentJourneyIdRef.current = null;
+      currentRouteIdRef.current = null;
+      
       // CRITICAL: Clear route AFTER backend confirms - preserves polyline during transition
       setCurrentRoute(null);
       setPreviewRoute(null);
@@ -1800,6 +1919,8 @@ function NavigationPageContent() {
       routePreference?: string 
     }) => {
       // Increment counter to track active route calculation (prevents watchdog from resetting UI)
+      // NOTE: Session counter is now incremented in handleStartNavigation ONLY for GO flow
+      // Plan-only routes and auto-reroutes should NOT affect session
       routeCalculationCountRef.current++;
       console.log('[ROUTE-CALC] Active calculations:', routeCalculationCountRef.current);
       
@@ -1829,6 +1950,8 @@ function NavigationPageContent() {
       setShowDestinationReached(false);
       
       setCurrentRoute(route);
+      // Update route ID ref SYNCHRONOUSLY before any callbacks can fire
+      currentRouteIdRef.current = route.id || null;
       // Update window sync with new route
       windowSync.updateRoute(route);
       
@@ -1875,11 +1998,12 @@ function NavigationPageContent() {
       }
       
       // If route calculation includes a plannedJourney (from route calculation), update sync
-      // NOTE: We don't persist to localStorage here - only persist when user actually starts navigation
+      // NOTE: We only set the ref here, not localStorage - localStorage is set when navigation STARTS
       // This prevents preview routes from reappearing on app reload
       if (route.plannedJourney) {
-        // Removed: localStorage.setItem('activeJourneyId', route.plannedJourney.id.toString());
-        // Only startNavigationMutation (line ~1417) persists to localStorage
+        // Track the journey ID from this route calculation - used to detect stale completions
+        currentJourneyIdRef.current = route.plannedJourney.id;
+        console.log('[ROUTE-CALC] Set currentJourneyIdRef to:', route.plannedJourney.id);
         windowSync.updateJourney(route.plannedJourney, false);
       }
       
@@ -2278,7 +2402,11 @@ function NavigationPageContent() {
     setPreviewRoute(null);
     
     if (currentJourney?.id && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
-      completeJourneyMutation.mutate(currentJourney.id);
+      // Capture current session at invocation time for stale detection
+      completeJourneyMutation.mutate({ 
+        journeyId: currentJourney.id, 
+        sessionAtInvocation: navigationSessionRef.current 
+      });
     } else {
       // No journey to complete - reset guard immediately
       isCancellingRouteRef.current = false;
@@ -2551,6 +2679,11 @@ function NavigationPageContent() {
         return;
       }
       
+      // CRITICAL: Increment session counter ONLY AFTER route is ready
+      // This ensures valid completions still work if route acquisition fails
+      navigationSessionRef.current++;
+      console.log('[NAV-GO] New session after route ready:', navigationSessionRef.current);
+      
       // CRITICAL: Persist route to state so component receives valid route
       setCurrentRoute(route);
       console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state, proceeding with journey activation');
@@ -2785,7 +2918,11 @@ function NavigationPageContent() {
     console.log('[NAV-STOP] ℹ️ Keeping current vehicle profile selection');
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
-      completeJourneyMutation.mutate(currentJourney.id);
+      // Capture current session at invocation time for stale detection
+      completeJourneyMutation.mutate({ 
+        journeyId: currentJourney.id, 
+        sessionAtInvocation: navigationSessionRef.current 
+      });
     } else {
       // No journey to complete - just reset guard (route already cleared above)
       isCancellingRouteRef.current = false;
