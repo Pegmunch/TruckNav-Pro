@@ -10,7 +10,7 @@
  * - General Settings
  */
 
-import { useState, memo, useCallback, useEffect } from "react";
+import { useState, memo, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -194,6 +194,15 @@ function ComprehensiveMobileMenu({
   // Flow: Press mic button → tap input field → speak → text fills that field
   const [activeDictationField, setActiveDictationField] = useState<'from' | 'to' | null>(null);
   const [isVoiceModeActive, setIsVoiceModeActive] = useState(false); // Mic button pressed, waiting for field selection
+  
+  // Use ref to avoid stale closure in callbacks - React state is captured at callback creation time
+  const activeDictationFieldRef = useRef<'from' | 'to' | null>(null);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeDictationFieldRef.current = activeDictationField;
+  }, [activeDictationField]);
+  
   const { 
     isSupported: voiceSupported,
     isListening,
@@ -204,22 +213,25 @@ function ComprehensiveMobileMenu({
     lang: 'en-GB',
     timeout: 10000,
     onFinalResult: (transcript) => {
-      console.log('[VOICE-DICTATION] Final result for field:', activeDictationField, 'transcript:', transcript);
-      if (activeDictationField === 'from') {
+      const field = activeDictationFieldRef.current;
+      console.log('[VOICE-DICTATION] Final result for field:', field, 'transcript:', transcript);
+      if (field === 'from') {
         setFromInput(transcript);
         onFromLocationChange(transcript);
         // Force open the dropdown to show autocomplete suggestions
         setForceOpenFromDropdown(true);
-      } else if (activeDictationField === 'to') {
+      } else if (field === 'to') {
         setToInput(transcript);
         onToLocationChange(transcript);
       }
       // Reset voice mode after successful dictation
+      activeDictationFieldRef.current = null;
       setActiveDictationField(null);
       setIsVoiceModeActive(false);
     },
     onError: (error) => {
       console.error('[VOICE-DICTATION] Error:', error);
+      activeDictationFieldRef.current = null;
       setActiveDictationField(null);
       setIsVoiceModeActive(false);
     },
@@ -227,7 +239,8 @@ function ComprehensiveMobileMenu({
       console.log('[VOICE-DICTATION] State changed to:', state);
       if (state === 'idle' || state === 'error') {
         // Only reset field selection, keep voice mode active if user hasn't spoken yet
-        if (activeDictationField) {
+        if (activeDictationFieldRef.current) {
+          activeDictationFieldRef.current = null;
           setActiveDictationField(null);
         }
       }
@@ -256,6 +269,8 @@ function ComprehensiveMobileMenu({
   const handleFieldTapForVoice = useCallback((field: 'from' | 'to') => {
     if (isVoiceModeActive && !isListening) {
       console.log('[VOICE-DICTATION] Starting dictation for field:', field);
+      // Set both ref and state - ref is used in callbacks to avoid stale closures
+      activeDictationFieldRef.current = field;
       setActiveDictationField(field);
       startVoiceDictation();
     }
