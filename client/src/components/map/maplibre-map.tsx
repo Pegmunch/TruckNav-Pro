@@ -1433,7 +1433,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         },
         paint: {
           'line-color': '#ffffff',
-          'line-width': 10,
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 6,
+            12, 16,
+            16, 24,
+            20, 32
+          ],
           'line-opacity': 1.0
         }
       });
@@ -1449,8 +1457,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         },
         paint: {
           'line-color': '#0067FF',
-          'line-width': 8,
-          'line-opacity': 1.0
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 4,
+            12, 12,
+            16, 18,
+            20, 24
+          ],
+          'line-opacity': 0.95
         }
       });
       
@@ -1541,7 +1557,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         },
         paint: {
           'line-color': '#ffffff',
-          'line-width': 10,
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 6,
+            12, 16,
+            16, 24,
+            20, 32
+          ],
           'line-opacity': 1.0
         }
       });
@@ -1557,8 +1581,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         },
         paint: {
           'line-color': '#0067FF',
-          'line-width': 8,
-          'line-opacity': 1.0
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 4,
+            12, 12,
+            16, 18,
+            20, 24
+          ],
+          'line-opacity': 0.95
         }
       });
 
@@ -1593,6 +1625,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Add destination flag marker at the end of the route (ONLY in preview mode, hide during navigation)
     // During active navigation, the flag clutters the view - driver knows destination
+    if (mapInstance && mapInstance.isStyleLoaded()) {
+      try {
+        const layers = mapInstance.getStyle().layers;
+        layers.forEach(layer => {
+          if (layer.id.includes('road') || layer.id.includes('tunnel') || layer.id.includes('bridge')) {
+            if (layer.type === 'line') {
+              // Ensure road lines are not black in road mode (fix for black line issue)
+              if (preferences.mapViewMode === 'roads') {
+                mapInstance.setPaintProperty(layer.id, 'line-color', '#ffffff');
+              }
+            }
+          }
+        });
+      } catch (e) {
+        console.warn('[MAP-ROADS] Style cleanup failed:', e);
+      }
+    }
+
     if (!isNavigating && routeCoordinates.length > 0) {
       const lastCoord = routeCoordinates[routeCoordinates.length - 1];
       // Validate coordinates are not at origin (0,0) which indicates invalid data

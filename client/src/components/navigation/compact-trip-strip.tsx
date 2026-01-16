@@ -164,57 +164,57 @@ export function CompactTripStrip({
       data-testid="compact-trip-strip"
     >
       {/* Row 1: ETA info + Speed + Action buttons */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1">
         {/* Left: ETA/Distance/Arrival */}
-        <div className="flex items-center gap-1">
-          <div className="flex items-center gap-1 bg-blue-600 text-white px-2 py-1 rounded shadow-sm">
+        <div className="flex items-center gap-0.5 flex-1 min-w-0">
+          <div className="flex items-center gap-0.5 bg-blue-600 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0">
             <Clock className="w-3.5 h-3.5" />
-            <span className="text-xs font-bold">{eta}m</span>
+            <span className="text-[11px] font-bold whitespace-nowrap">{eta}m</span>
           </div>
-          <div className="flex items-center gap-1 bg-emerald-600 text-white px-2 py-1 rounded shadow-sm">
+          <div className="flex items-center gap-0.5 bg-emerald-600 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0">
             <Route className="w-3.5 h-3.5" />
-            <span className="text-xs font-bold">{formatDistance(distanceRemaining, "miles")}</span>
+            <span className="text-[11px] font-bold whitespace-nowrap">{formatDistance(distanceRemaining, "miles")}</span>
           </div>
-          <div className="flex items-center gap-1 bg-purple-600 text-white px-2 py-1 rounded shadow-sm">
+          <div className="flex items-center gap-0.5 bg-purple-600 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0">
             <Timer className="w-3.5 h-3.5" />
-            <span className="text-xs font-bold">{arrivalTimeStr}</span>
+            <span className="text-[11px] font-bold whitespace-nowrap">{arrivalTimeStr}</span>
           </div>
         </div>
         
         {/* Center: Speed limit + Current speed (unpacked) */}
         {(isNavigating || isPreviewActive) && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Speed Limit Sign */}
             <div className={cn(
               'flex items-center justify-center w-8 h-8 rounded-full border-2',
               convertedSpeedLimit ? 'bg-white border-red-500' : 'bg-gray-100 border-gray-300'
             )}>
-              <span className="text-xs font-bold text-gray-900">{convertedSpeedLimit || '--'}</span>
+              <span className="text-[11px] font-bold text-gray-900">{convertedSpeedLimit || '--'}</span>
             </div>
             {/* Current Speed */}
             <div className={cn(
-              'flex items-center gap-1 px-2 py-1 rounded-lg shadow-sm',
+              'flex items-center gap-0.5 px-1.5 py-1 rounded-lg shadow-sm min-w-[65px] justify-center',
               isSpeeding ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-900'
             )}>
               <Gauge className={cn('w-4 h-4', isSpeeding ? 'text-white' : 'text-blue-600')} />
-              <span className={cn('text-base font-bold', isSpeeding && 'animate-pulse')}>{convertedSpeed}</span>
-              <span className={cn('text-[10px]', isSpeeding ? 'text-red-100' : 'text-gray-500')}>{speedUnit}</span>
+              <span className={cn('text-sm font-bold', isSpeeding && 'animate-pulse')}>{convertedSpeed}</span>
+              <span className={cn('text-[9px] font-medium opacity-80', isSpeeding ? 'text-red-100' : 'text-gray-500')}>{speedUnit}</span>
             </div>
           </div>
         )}
         
-        {/* Right: Action buttons - positioned slightly left */}
-        <div className="flex items-center gap-1 flex-shrink-0 mr-4">
+        {/* Right: Action buttons - moved to prevent overlap with right stack */}
+        <div className="flex items-center gap-1 flex-shrink-0 pr-1">
           {isNavigating && onCancelNavigation && (
             <Button
               onClick={onCancelNavigation}
               size="sm"
               disabled={isCancellingNavigation}
-              className="h-5 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[9px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
+              className="h-7 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
               style={{ touchAction: 'manipulation' }}
               data-testid="button-cancel-navigation"
             >
-              <X className="w-3 h-3" />
+              <X className="w-3.5 h-3.5" />
               End
             </Button>
           )}
@@ -223,7 +223,7 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStart}
                 disabled={isPreviewActive}
-                className="h-2 px-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[6px] active:scale-95 transition-all disabled:opacity-40 rounded-l-full shadow-sm flex items-center justify-center leading-none"
+                className="h-7 px-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-l shadow-sm flex items-center justify-center leading-none"
                 style={{ touchAction: 'manipulation', minWidth: '42px' }}
                 data-testid="button-preview-start"
               >
@@ -232,7 +232,7 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStop}
                 disabled={!isPreviewActive}
-                className="h-2 px-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[6px] active:scale-95 transition-all disabled:opacity-40 rounded-r-full shadow-sm flex items-center justify-center leading-none"
+                className="h-7 px-2 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-r shadow-sm flex items-center justify-center leading-none"
                 style={{ touchAction: 'manipulation', minWidth: '32px' }}
                 data-testid="button-preview-stop"
               >

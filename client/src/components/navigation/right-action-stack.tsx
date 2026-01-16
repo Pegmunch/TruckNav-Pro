@@ -78,7 +78,8 @@ export function RightActionStack({
       data-testid="right-action-stack"
       data-tour-id="right-controls"
       style={{
-        visibility: isVisible ? 'visible' : 'hidden'
+        visibility: isVisible ? 'visible' : 'hidden',
+        marginTop: compact ? '24px' : '0px'
       }}
     >
       {/* 1. Incidents - Red border (hidden when moved to top-right) */}
