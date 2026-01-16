@@ -72,7 +72,7 @@ export function RightActionStack({
     <div 
       className={cn(
         "flex flex-col transition-all duration-300 transform-gpu",
-        compact ? "gap-2" : "gap-3",
+        compact ? "gap-1" : "gap-1.5",
         isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
       )} 
       data-testid="right-action-stack"

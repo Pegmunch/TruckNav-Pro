@@ -3322,7 +3322,7 @@ function NavigationPageContent() {
                   </div>
                   
                   {/* PLAN MODE CONTROLS - Right Stack - Map control buttons (controlled by showNavControls toggle) */}
-                  <div className="fixed flex flex-col gap-1.5 z-[200] pointer-events-auto"
+                  <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
                     style={{
                       bottom: 'calc(56px + var(--safe-area-bottom))',
                       right: '16px'
