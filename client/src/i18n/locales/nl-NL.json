@@ -57,7 +57,8 @@
     "accept": "Ik Accepteer Deze Voorwaarden",
     "decline": "Ik Accepteer Niet",
     "terms_of_service": "Servicevoorwaarden",
-    "privacy_policy": "Privacybeleid"
+    "privacy_policy": "Privacybeleid",
+    "termsTitle": "TruckNav Pro - Juridische Voorwaarden en Bescherming"
   },
   "subscription": {
     "plans": "Abonnement Plannen",
@@ -86,7 +87,9 @@
     "close": "Sluiten",
     "search": "Zoeken",
     "filter": "Filter",
-    "language": "Taal"
+    "language": "Taal",
+    "guide": "Gids",
+    "legal": "Juridisch"
   },
   "amazon": {
     "fire_tv": "Geoptimaliseerd voor Fire TV",
@@ -94,5 +97,108 @@
     "silk_browser": "Verbeterd voor Silk Browser",
     "voice_support": "Spraaknavigatie Ondersteund",
     "remote_navigation": "Afstandsbediening Navigatie"
+  },
+  "userGuide": {
+    "title": "TruckNav Pro Gebruikershandleiding",
+    "subtitle": "Complete gids voor alle functies en hoe ze te gebruiken",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Aan de Slag",
+      "planMode": "Planmodus",
+      "planModeDesc": "Tik op de menuknop (☰) in de linkerbovenhoek om de routeplanner te openen. Voer uw bestemming in via de zoekbalk. De app vindt vrachtwagenveilige routes en vermijdt lage bruggen en gewichtsbeperkingen.",
+      "previewMode": "Voorbeeldmodus",
+      "previewModeDesc": "Na het plannen kunt u uw route op de kaart bekijken. Gele waarschuwingspictogrammen tonen beperkingen langs uw route. Tik op een beperking om details te zien over hoogte-, gewichts- of breedtebeperkingen.",
+      "navigateMode": "Navigatiemodus",
+      "navigateModeDesc": "Tik op \"Start Navigatie\" om stapsgewijze begeleiding te starten. De kaart volgt automatisch uw positie en toont komende manoeuvres."
+    },
+    "vehicleSetup": {
+      "title": "Voertuig Instellen",
+      "profiles": "Voertuigprofielen",
+      "profilesDesc": "Toegang via Menu → tabblad Voertuig. Maak profielen voor elk voertuig met afmetingen (hoogte, breedte, lengte), gewicht en aantal assen. De app gebruikt deze om ongeschikte routes te vermijden.",
+      "hazmat": "Gevaarlijke Stoffen Instellingen",
+      "hazmatDesc": "Schakel opties voor gevaarlijke stoffen in voor ADR-conforme routering. De app vermijdt tunnels en routes die verboden zijn voor gevaarlijke goederen."
+    },
+    "mapControls": {
+      "title": "Kaartbediening",
+      "compass": "Kompasknop",
+      "compassDesc": "Bevindt zich aan de rechterkant van de kaart. Tik om de kaartrotatie naar het noorden te resetten. Tijdens navigatie draait de kaart mee met uw richting.",
+      "recenter": "Hercentreerknop",
+      "recenterDesc": "Tik om de kaart terug te brengen naar uw huidige GPS-positie. Het GPS-vergrendelingspictogram geeft aan wanneer positietracking actief is.",
+      "3dMode": "3D-modus",
+      "3dModeDesc": "Tik op de 3D-knop om de kaart te kantelen voor een perspectiefweergave. Bij zoomniveau 14+ verschijnen gebouwen in 3D. Ideaal voor stadsnavigatie.",
+      "satellite": "Satellietweergave",
+      "satelliteDesc": "Schakel tussen wegenkaart en satellietbeelden. Handig voor het identificeren van truckstops en parkeerplaatsen vanuit luchtfoto.",
+      "traffic": "Verkeerslaag",
+      "trafficDesc": "Schakel live verkeersvisualisatie in. Wegen zijn kleurgecodeerd: groen (doorstromen), geel (langzaam), rood (file). Real-time bijgewerkt."
+    },
+    "restrictions": {
+      "title": "Beperkingswaarschuwingen",
+      "panel": "Beperkingenpaneel",
+      "panelDesc": "In voorbeeldmodus toont een paneel alle beperkingen op uw route. Kritieke overtredingen (rood) moeten worden vermeden. Hoge (oranje) en gemiddelde (geel) vereisen aandacht.",
+      "markers": "Kaartmarkeringen",
+      "markersDesc": "Gele driehoekpictogrammen op de kaart tonen beperkingslocaties. Tik op een markering om details te zien inclusief de specifieke dimensie die uw voertuigprofiel overtreedt."
+    },
+    "dynamicRoutes": {
+      "title": "Dynamische Routesuggesties",
+      "alternative": "Alternatieve Routes",
+      "alternativeDesc": "Tijdens navigatie controleert de app elke 5 minuten op snellere routes. Wanneer een snellere optie wordt gevonden, verschijnt een groene banner met de tijdsbesparing. Tik op \"Wissel Route\" om te accepteren."
+    },
+    "voiceCommands": {
+      "title": "Spraakopdrachten",
+      "reporting": "Incidentrapportage",
+      "reportingDesc": "Tik tijdens navigatie op de microfoonknop aan de linkerkant. Zeg opdrachten zoals \"meld file\", \"meld ongeluk\", \"weggevaar\", \"politie vooruit\" of \"flitser\" om andere chauffeurs te waarschuwen."
+    },
+    "alertSounds": {
+      "title": "Aanpasbare Waarschuwingsgeluiden",
+      "settings": "Geluidsinstellingen",
+      "settingsDesc": "Toegang via Menu → Instellingen → Waarschuwingsgeluiden. Kies verschillende geluiden voor snelheidswaarschuwingen, verkeersmeldingen en pauzeherinneringen. Pas het volume voor elk type waarschuwing onafhankelijk aan."
+    },
+    "hapticFeedback": {
+      "title": "Haptische Feedback",
+      "vibration": "Trillingswaarschuwingen",
+      "vibrationDesc": "Uw apparaat trilt bij het indrukken van knoppen en tijdens navigatie-evenementen. Verschillende patronen geven verschillende acties aan: lichte tik voor knoppen, sterke puls voor waarschuwingen en succespatroon bij aankomst."
+    },
+    "3dBuildings": {
+      "title": "3D-gebouwen",
+      "viewing": "3D-gebouwen Bekijken",
+      "viewingDesc": "Schakel 3D-modus in en zoom naar niveau 14 of dichterbij. Gebouwen verschijnen als 3D-extrusies met hoogtevariaties. Hogere gebouwen verschijnen donkerder. Helpt bij het visualiseren van stedelijke gebieden en het vinden van herkenningspunten."
+    },
+    "arOverlay": {
+      "title": "AR Navigatie-overlay",
+      "camera": "Cameraweergave",
+      "cameraDesc": "Toegang tot de AR-overlay tijdens navigatie voor een op camera gebaseerde weergave met navigatie-overlays. Toont uw huidige snelheid, snelheidslimiet, volgende manoeuvre en ETA over de live camerafeed. Vereist cameratoestemming."
+    },
+    "dashboardWidgets": {
+      "title": "Dashboard Widgets",
+      "customizing": "Uw Dashboard Aanpassen",
+      "customizingDesc": "Tik op het instellingenpictogram in de widgetbalk om aan te passen welke gegevens worden weergegeven. Beschikbare widgets: snelheid, ETA, resterende afstand, kompasrichting, hoogte, brandstofschatting, weer en verkeersvertraging."
+    },
+    "entertainment": {
+      "title": "Entertainmentsysteem",
+      "radio": "Internetradio",
+      "radioDesc": "Toegang via de radioknop tijdens navigatie. Stream truckvriendelijke radiozenders. Bedien het afspelen met de minispeler onderaan het scherm."
+    },
+    "facilities": {
+      "title": "Faciliteiten Zoeken",
+      "finding": "Truckstops Vinden",
+      "findingDesc": "Gebruik de POI-zoekopdracht in het menu om nabijgelegen truckstops, tankstations, parkeerplaatsen, restaurants en rustplaatsen te vinden. Resultaten zijn gefilterd op voor vrachtwagens toegankelijke locaties."
+    },
+    "fleetManagement": {
+      "title": "Wagenparkbeheer (Desktop)",
+      "access": "Toegang tot Wagenpark Tools",
+      "accessDesc": "Wagenparkbeheer is alleen beschikbaar op desktop. Toegang via de bovenste navigatiebalk. Beheer voertuigen, chauffeurs, servicerecords, brandstoflogboeken, nalevingstracking en klantfacturering."
+    },
+    "pwa": {
+      "title": "Mobiele App Installatie",
+      "installing": "Installeren op Uw Apparaat",
+      "installingDesc": "Op iOS: Tik op Delen → Voeg toe aan Beginscherm. Op Android: Tik op het menu → Installeer App. Dit creëert een app-ervaring op volledig scherm met offline ondersteuning voor gecachte routes."
+    },
+    "settings": {
+      "title": "Instellingen & Voorkeuren",
+      "language": "Taalinstellingen",
+      "languageDesc": "Toegang via Menu → Instellingen. Kies uw voorkeurstaal. De hele app-interface, spraakbegeleiding en deze gebruikershandleiding worden bijgewerkt naar uw geselecteerde taal.",
+      "units": "Eenheidsvoorkeuren",
+      "unitsDesc": "Schakel tussen metrische (kilometers, meters) en imperiale (mijlen, voet) maten. Snelheidslimieten en afstanden worden weergegeven in uw voorkeurseenheden."
+    }
   }
 }

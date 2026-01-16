@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { X, Volume2, VolumeX, AlertTriangle, Info, Navigation, Clock, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 // Notification Classification System
 export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -65,6 +66,7 @@ export function useMobileNotificationSystem({
 }: MobileNotificationSystemProps) {
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { i18n } = useTranslation();
   
   // Notification queue and state
   const [notificationQueue, setNotificationQueue] = useState<NotificationQueueItem[]>([]);
@@ -441,7 +443,7 @@ export function useMobileNotificationSystem({
       utterance.rate = 0.85; // Slightly slower for navigation
       utterance.pitch = 1;
       utterance.volume = 0.9; // Higher volume for navigation
-      utterance.lang = 'en-US';
+      utterance.lang = i18n.language || 'en-US';
       
       // Enhanced error handling
       utterance.onerror = (event) => {

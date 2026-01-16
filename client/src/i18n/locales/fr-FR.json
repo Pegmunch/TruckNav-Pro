@@ -57,7 +57,8 @@
     "accept": "J'Accepte Ces Conditions",
     "decline": "Je N'Accepte Pas",
     "terms_of_service": "Conditions de Service",
-    "privacy_policy": "Politique de Confidentialité"
+    "privacy_policy": "Politique de Confidentialité",
+    "termsTitle": "TruckNav Pro - Conditions Légales et Protections"
   },
   "subscription": {
     "plans": "Plans d'Abonnement",
@@ -86,7 +87,9 @@
     "close": "Fermer",
     "search": "Rechercher",
     "filter": "Filtrer",
-    "language": "Langue"
+    "language": "Langue",
+    "guide": "Guide",
+    "legal": "Juridique"
   },
   "amazon": {
     "fire_tv": "Optimisé pour Fire TV",
@@ -94,5 +97,108 @@
     "silk_browser": "Amélioré pour Silk Browser",
     "voice_support": "Navigation Vocale Supportée",
     "remote_navigation": "Navigation avec Télécommande"
+  },
+  "userGuide": {
+    "title": "Guide Utilisateur TruckNav Pro",
+    "subtitle": "Guide complet de toutes les fonctionnalités et comment les utiliser",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Premiers Pas",
+      "planMode": "Mode Planification",
+      "planModeDesc": "Appuyez sur le bouton menu (☰) dans le coin supérieur gauche pour ouvrir le planificateur d'itinéraire. Entrez votre destination dans la barre de recherche. L'application trouvera des itinéraires sécurisés pour les camions en évitant les ponts bas et les restrictions de poids.",
+      "previewMode": "Mode Aperçu",
+      "previewModeDesc": "Après la planification, examinez votre itinéraire sur la carte. Les icônes d'avertissement jaunes montrent les restrictions le long de votre route. Appuyez sur n'importe quelle restriction pour voir les détails sur les limites de hauteur, poids ou largeur.",
+      "navigateMode": "Mode Navigation",
+      "navigateModeDesc": "Appuyez sur \"Démarrer la Navigation\" pour commencer le guidage virage par virage. La carte suit automatiquement votre position et affiche les manœuvres à venir."
+    },
+    "vehicleSetup": {
+      "title": "Configuration du Véhicule",
+      "profiles": "Profils de Véhicule",
+      "profilesDesc": "Accédez via Menu → onglet Véhicule. Créez des profils pour chaque véhicule avec les dimensions (hauteur, largeur, longueur), le poids et le nombre d'essieux. L'application utilise ces données pour éviter les routes inadaptées.",
+      "hazmat": "Paramètres Matières Dangereuses",
+      "hazmatDesc": "Activez les options matières dangereuses pour un routage conforme ADR. L'application évitera les tunnels et les routes interdites aux marchandises dangereuses."
+    },
+    "mapControls": {
+      "title": "Commandes de la Carte",
+      "compass": "Bouton Boussole",
+      "compassDesc": "Situé sur le côté droit de la carte. Appuyez pour réinitialiser la rotation de la carte vers le nord. Pendant la navigation, la carte tourne pour correspondre à votre direction.",
+      "recenter": "Bouton Recentrer",
+      "recenterDesc": "Appuyez pour recentrer la carte sur votre position GPS actuelle. L'icône de verrouillage GPS indique quand le suivi de position est actif.",
+      "3dMode": "Mode 3D",
+      "3dModeDesc": "Appuyez sur le bouton 3D pour incliner la carte pour une vue en perspective. À partir du niveau de zoom 14+, les bâtiments apparaissent en 3D. Idéal pour la navigation urbaine.",
+      "satellite": "Vue Satellite",
+      "satelliteDesc": "Basculez entre la carte routière et l'imagerie satellite. Utile pour identifier les aires de repos et les parkings depuis une vue aérienne.",
+      "traffic": "Couche Trafic",
+      "trafficDesc": "Activez la visualisation du trafic en direct. Les routes sont codées par couleur: vert (fluide), jaune (lent), rouge (congestionné). Mise à jour en temps réel."
+    },
+    "restrictions": {
+      "title": "Avertissements de Restrictions",
+      "panel": "Panneau des Restrictions",
+      "panelDesc": "En mode aperçu, un panneau affiche toutes les restrictions sur votre itinéraire. Les violations critiques (rouge) doivent être évitées. Les hautes (orange) et moyennes (jaune) nécessitent attention.",
+      "markers": "Marqueurs de Carte",
+      "markersDesc": "Les icônes triangulaires jaunes sur la carte montrent les emplacements des restrictions. Appuyez sur n'importe quel marqueur pour voir les détails incluant la dimension spécifique qui viole votre profil de véhicule."
+    },
+    "dynamicRoutes": {
+      "title": "Suggestions d'Itinéraires Dynamiques",
+      "alternative": "Itinéraires Alternatifs",
+      "alternativeDesc": "Pendant la navigation, l'application vérifie toutes les 5 minutes s'il y a des itinéraires plus rapides. Lorsqu'une option plus rapide est trouvée, une bannière verte apparaît montrant le gain de temps. Appuyez sur \"Changer d'Itinéraire\" pour accepter."
+    },
+    "voiceCommands": {
+      "title": "Commandes Vocales",
+      "reporting": "Signalement d'Incidents",
+      "reportingDesc": "Pendant la navigation, appuyez sur le bouton microphone sur le côté gauche. Dites des commandes comme \"signaler trafic\", \"signaler accident\", \"danger sur la route\", \"police devant\" ou \"radar\" pour alerter les autres conducteurs."
+    },
+    "alertSounds": {
+      "title": "Sons d'Alerte Personnalisables",
+      "settings": "Paramètres Sonores",
+      "settingsDesc": "Accédez via Menu → Paramètres → Sons d'Alerte. Choisissez différents sons pour les avertissements de vitesse, alertes de trafic et rappels de pause. Ajustez le volume pour chaque type d'alerte indépendamment."
+    },
+    "hapticFeedback": {
+      "title": "Retour Haptique",
+      "vibration": "Alertes Vibration",
+      "vibrationDesc": "Votre appareil vibre lors de l'appui sur les boutons et pendant les événements de navigation. Différents motifs indiquent différentes actions: tapotement léger pour les boutons, pulsation forte pour les avertissements et motif de succès à l'arrivée."
+    },
+    "3dBuildings": {
+      "title": "Bâtiments 3D",
+      "viewing": "Afficher les Bâtiments 3D",
+      "viewingDesc": "Activez le mode 3D et zoomez au niveau 14 ou plus près. Les bâtiments apparaissent en extrusions 3D avec des variations de hauteur. Les bâtiments plus hauts apparaissent plus sombres. Aide à visualiser les zones urbaines et localiser les repères."
+    },
+    "arOverlay": {
+      "title": "Superposition Navigation AR",
+      "camera": "Vue Caméra",
+      "cameraDesc": "Accédez à la superposition AR pendant la navigation pour une vue basée sur la caméra avec des superpositions de navigation. Affiche votre vitesse actuelle, limite de vitesse, prochaine manœuvre et ETA sur le flux caméra en direct. Nécessite l'autorisation caméra."
+    },
+    "dashboardWidgets": {
+      "title": "Widgets du Tableau de Bord",
+      "customizing": "Personnaliser Votre Tableau de Bord",
+      "customizingDesc": "Appuyez sur l'icône paramètres dans la barre de widgets pour personnaliser les données affichées. Widgets disponibles: vitesse, ETA, distance restante, cap boussole, altitude, estimation carburant, météo et délai trafic."
+    },
+    "entertainment": {
+      "title": "Système de Divertissement",
+      "radio": "Radio Internet",
+      "radioDesc": "Accédez via le bouton radio pendant la navigation. Diffusez des stations de radio conviviales pour les routiers. Contrôlez la lecture avec le mini lecteur en bas de l'écran."
+    },
+    "facilities": {
+      "title": "Recherche d'Installations",
+      "finding": "Trouver des Aires de Repos",
+      "findingDesc": "Utilisez la recherche POI dans le menu pour trouver des aires de repos, stations-service, parkings, restaurants et zones de repos à proximité. Les résultats sont filtrés pour les emplacements accessibles aux camions."
+    },
+    "fleetManagement": {
+      "title": "Gestion de Flotte (Bureau)",
+      "access": "Accéder aux Outils de Flotte",
+      "accessDesc": "La gestion de flotte est disponible uniquement sur bureau. Accédez via la barre de navigation supérieure. Gérez les véhicules, conducteurs, dossiers de service, journaux de carburant, suivi de conformité et facturation clients."
+    },
+    "pwa": {
+      "title": "Installation App Mobile",
+      "installing": "Installation sur Votre Appareil",
+      "installingDesc": "Sur iOS: Appuyez sur Partager → Ajouter à l'Écran d'Accueil. Sur Android: Appuyez sur le menu → Installer l'App. Cela crée une expérience app plein écran avec support hors ligne pour les itinéraires en cache."
+    },
+    "settings": {
+      "title": "Paramètres et Préférences",
+      "language": "Paramètres de Langue",
+      "languageDesc": "Accédez via Menu → Paramètres. Choisissez votre langue préférée. Toute l'interface de l'app, le guidage vocal et ce guide utilisateur seront mis à jour dans votre langue sélectionnée.",
+      "units": "Préférences d'Unités",
+      "unitsDesc": "Basculez entre les mesures métriques (kilomètres, mètres) et impériales (miles, pieds). Les limites de vitesse et distances s'afficheront dans vos unités préférées."
+    }
   }
 }

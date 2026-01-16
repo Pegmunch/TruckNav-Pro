@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 interface VoiceNavigationPanelProps {
   isNavigating?: boolean;
@@ -45,6 +46,7 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
   onNavigationCommand,
   className
 }: VoiceNavigationPanelProps) {
+  const { i18n } = useTranslation();
   const [isListening, setIsListening] = useState(false);
   const [speechEnabled, setSpeechEnabled] = useState(true);
   const [voiceInputEnabled, setVoiceInputEnabled] = useState(true);
@@ -114,7 +116,7 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-US';
+    recognition.lang = i18n.language || 'en-US';
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -161,7 +163,7 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
     return () => {
       recognition.stop();
     };
-  }, [isNavigating, speechEnabled, voiceIntents, onDestinationVoice, onNavigationCommand]);
+  }, [isNavigating, speechEnabled, voiceIntents, onDestinationVoice, onNavigationCommand, i18n.language]);
 
   // Text-to-speech function
   const speak = useCallback((text: string) => {
@@ -177,9 +179,10 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
     utterance.rate = 0.9;
     utterance.pitch = 1;
     utterance.volume = 0.8;
+    utterance.lang = i18n.language || 'en-US';
     
     synthesis.speak(utterance);
-  }, [speechEnabled]);
+  }, [speechEnabled, i18n.language]);
 
   // Start/stop listening
   const toggleListening = useCallback(() => {

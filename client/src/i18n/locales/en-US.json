@@ -57,7 +57,8 @@
     "accept": "I Accept These Terms",
     "decline": "I Do Not Accept",
     "terms_of_service": "Terms of Service",
-    "privacy_policy": "Privacy Policy"
+    "privacy_policy": "Privacy Policy",
+    "termsTitle": "TruckNav Pro - Legal Terms & Protections"
   },
   "subscription": {
     "plans": "Subscription Plans",
@@ -86,7 +87,9 @@
     "close": "Close",
     "search": "Search",
     "filter": "Filter",
-    "language": "Language"
+    "language": "Language",
+    "guide": "Guide",
+    "legal": "Legal"
   },
   "amazon": {
     "fire_tv": "Optimized for Fire TV",

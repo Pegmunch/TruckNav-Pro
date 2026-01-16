@@ -57,7 +57,8 @@
     "accept": "我接受这些条款",
     "decline": "我不接受",
     "terms_of_service": "服务条款",
-    "privacy_policy": "隐私政策"
+    "privacy_policy": "隐私政策",
+    "termsTitle": "TruckNav Pro - 法律条款和保护"
   },
   "subscription": {
     "plans": "订阅计划",
@@ -86,7 +87,9 @@
     "close": "关闭",
     "search": "搜索",
     "filter": "筛选",
-    "language": "语言"
+    "language": "语言",
+    "guide": "指南",
+    "legal": "法律"
   },
   "amazon": {
     "fire_tv": "为Fire TV优化",
@@ -454,6 +457,109 @@
       "hours": "小时",
       "miles": "英里",
       "km": "公里"
+    }
+  },
+  "userGuide": {
+    "title": "TruckNav Pro 用户指南",
+    "subtitle": "所有功能及其使用方法的完整指南",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "开始使用",
+      "planMode": "规划模式",
+      "planModeDesc": "点击左上角的菜单按钮(☰)打开路线规划器。使用搜索栏输入目的地。应用程序将找到避开低矮桥梁和重量限制的卡车安全路线。",
+      "previewMode": "预览模式",
+      "previewModeDesc": "规划后，在地图上查看您的路线。黄色警告图标显示沿途的限制。点击任何限制可查看高度、重量或宽度限制的详细信息。",
+      "navigateMode": "导航模式",
+      "navigateModeDesc": "点击\"开始导航\"开始逐向导航。地图会自动跟随您的位置并显示即将到来的操作。"
+    },
+    "vehicleSetup": {
+      "title": "车辆设置",
+      "profiles": "车辆配置文件",
+      "profilesDesc": "通过菜单 → 车辆选项卡访问。为每辆车创建包含尺寸(高度、宽度、长度)、重量和轴数的配置文件。应用程序使用这些信息来避开不合适的路线。",
+      "hazmat": "危险品设置",
+      "hazmatDesc": "启用危险品选项以进行符合ADR规定的路线规划。应用程序将避开隧道和禁止危险货物通行的路线。"
+    },
+    "mapControls": {
+      "title": "地图控制",
+      "compass": "指南针按钮",
+      "compassDesc": "位于地图右侧。点击可将地图旋转重置为朝北。导航期间，地图会根据您的行驶方向旋转。",
+      "recenter": "重新居中按钮",
+      "recenterDesc": "点击可将地图返回到当前GPS位置。GPS锁定图标表示位置跟踪处于活动状态。",
+      "3dMode": "3D模式",
+      "3dModeDesc": "点击3D按钮可倾斜地图以获得透视图。在缩放级别14+时，建筑物以3D形式显示。最适合城市导航。",
+      "satellite": "卫星视图",
+      "satelliteDesc": "在道路地图和卫星图像之间切换。从空中视图识别卡车停靠站和停车区域时很有用。",
+      "traffic": "交通图层",
+      "trafficDesc": "启用实时交通可视化。道路按颜色编码：绿色(畅通)、黄色(缓慢)、红色(拥堵)。实时更新。"
+    },
+    "restrictions": {
+      "title": "限制警告",
+      "panel": "限制面板",
+      "panelDesc": "在预览模式下，面板显示路线上的所有限制。必须避开严重违规(红色)。高级(橙色)和中级(黄色)需要注意。",
+      "markers": "地图标记",
+      "markersDesc": "地图上的黄色三角形图标显示限制位置。点击任何标记可查看详细信息，包括违反您车辆配置文件的具体尺寸。"
+    },
+    "dynamicRoutes": {
+      "title": "动态路线建议",
+      "alternative": "备选路线",
+      "alternativeDesc": "导航期间，应用程序每5分钟检查一次是否有更快的路线。当发现更快的选项时，会出现显示节省时间的绿色横幅。点击\"切换路线\"接受。"
+    },
+    "voiceCommands": {
+      "title": "语音命令",
+      "reporting": "事件报告",
+      "reportingDesc": "导航期间，点击左侧的麦克风按钮。说出\"报告交通\"、\"报告事故\"、\"道路危险\"、\"前方有警察\"或\"测速摄像头\"等命令来提醒其他司机。"
+    },
+    "alertSounds": {
+      "title": "可自定义的警报声音",
+      "settings": "声音设置",
+      "settingsDesc": "通过菜单 → 设置 → 警报声音访问。为超速警告、交通警报和休息提醒选择不同的声音。独立调整每种警报类型的音量。"
+    },
+    "hapticFeedback": {
+      "title": "触觉反馈",
+      "vibration": "振动警报",
+      "vibrationDesc": "按下按钮和导航事件期间设备会振动。不同的模式表示不同的操作：按钮轻触、警告强脉冲、到达时的成功模式。"
+    },
+    "3dBuildings": {
+      "title": "3D建筑",
+      "viewing": "查看3D建筑",
+      "viewingDesc": "启用3D模式并放大到级别14或更近。建筑物以具有高度变化的3D挤压形式显示。较高的建筑物显示得较暗。有助于可视化城市区域和定位地标。"
+    },
+    "arOverlay": {
+      "title": "AR导航叠加",
+      "camera": "相机视图",
+      "cameraDesc": "导航期间访问AR叠加以获得带有导航叠加的基于相机的视图。在实时相机画面上显示当前速度、速度限制、下一个操作和预计到达时间。需要相机权限。"
+    },
+    "dashboardWidgets": {
+      "title": "仪表板小部件",
+      "customizing": "自定义您的仪表板",
+      "customizingDesc": "点击小部件栏中的设置图标可自定义显示的数据。可用小部件：速度、预计到达时间、剩余距离、指南针方向、海拔、燃油估算、天气和交通延误。"
+    },
+    "entertainment": {
+      "title": "娱乐系统",
+      "radio": "网络电台",
+      "radioDesc": "导航期间通过电台按钮访问。播放适合卡车司机的电台。使用屏幕底部的迷你播放器控制播放。"
+    },
+    "facilities": {
+      "title": "设施搜索",
+      "finding": "查找卡车停靠站",
+      "findingDesc": "使用菜单中的POI搜索查找附近的卡车停靠站、加油站、停车场、餐厅和休息区。结果按卡车可进入的位置过滤。"
+    },
+    "fleetManagement": {
+      "title": "车队管理(桌面版)",
+      "access": "访问车队工具",
+      "accessDesc": "车队管理仅在桌面版上可用。通过顶部导航栏访问。管理车辆、司机、服务记录、加油记录、合规跟踪和客户计费。"
+    },
+    "pwa": {
+      "title": "移动应用安装",
+      "installing": "在您的设备上安装",
+      "installingDesc": "在iOS上：点击分享 → 添加到主屏幕。在Android上：点击菜单 → 安装应用。这将创建具有离线支持的全屏应用体验，用于缓存的路线。"
+    },
+    "settings": {
+      "title": "设置和偏好",
+      "language": "语言设置",
+      "languageDesc": "通过菜单 → 设置访问。选择您的首选语言。整个应用界面、语音导航和本用户指南将更新为您选择的语言。",
+      "units": "单位偏好",
+      "unitsDesc": "在公制(公里、米)和英制(英里、英尺)测量之间切换。速度限制和距离将以您首选的单位显示。"
     }
   }
 }

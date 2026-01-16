@@ -74,6 +74,7 @@ class VoiceCommandSystem {
   private navigationVoice: NavigationVoice;
   private lastCommandTime: number = 0;
   private commandCooldown: number = 3000;
+  private currentLanguage: string = 'en-US';
 
   private readonly INCIDENT_COMMANDS: Record<string, { type: IncidentType; severity: 'low' | 'medium' | 'high' }> = {
     'report traffic': { type: 'traffic_jam', severity: 'medium' },
@@ -134,7 +135,7 @@ class VoiceCommandSystem {
     this.recognition = new SpeechRecognitionAPI();
     this.recognition.continuous = true;
     this.recognition.interimResults = false;
-    this.recognition.lang = 'en-US';
+    this.recognition.lang = this.currentLanguage;
     this.recognition.maxAlternatives = 3;
 
     this.recognition.onresult = (event: SpeechRecognitionEventResult) => {
@@ -287,6 +288,18 @@ class VoiceCommandSystem {
 
   public isVoiceCommandSupported(): boolean {
     return this.isSupported;
+  }
+
+  public setLanguage(lang: string): void {
+    this.currentLanguage = lang;
+    if (this.recognition) {
+      this.recognition.lang = lang;
+      console.log('[VoiceCommands] Language set to:', lang);
+    }
+  }
+
+  public getLanguage(): string {
+    return this.currentLanguage;
   }
 
   public getAvailableCommands(): string[] {

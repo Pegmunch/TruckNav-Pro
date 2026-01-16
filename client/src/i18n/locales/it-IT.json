@@ -57,7 +57,8 @@
     "accept": "Accetto Questi Termini",
     "decline": "Non Accetto",
     "terms_of_service": "Termini di Servizio",
-    "privacy_policy": "Politica sulla Privacy"
+    "privacy_policy": "Politica sulla Privacy",
+    "termsTitle": "TruckNav Pro - Termini Legali e Protezioni"
   },
   "subscription": {
     "plans": "Piani di Abbonamento",
@@ -86,7 +87,9 @@
     "close": "Chiudi",
     "search": "Cerca",
     "filter": "Filtra",
-    "language": "Lingua"
+    "language": "Lingua",
+    "guide": "Guida",
+    "legal": "Legale"
   },
   "amazon": {
     "fire_tv": "Ottimizzato per Fire TV",
@@ -454,6 +457,109 @@
       "hours": "ore",
       "miles": "miglia",
       "km": "km"
+    }
+  },
+  "userGuide": {
+    "title": "Guida Utente TruckNav Pro",
+    "subtitle": "Guida completa a tutte le funzionalità e come utilizzarle",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Per Iniziare",
+      "planMode": "Modalità Pianificazione",
+      "planModeDesc": "Tocca il pulsante menu (☰) nell'angolo in alto a sinistra per aprire il pianificatore di percorso. Inserisci la tua destinazione usando la barra di ricerca. L'app troverà percorsi sicuri per i camion evitando ponti bassi e restrizioni di peso.",
+      "previewMode": "Modalità Anteprima",
+      "previewModeDesc": "Dopo la pianificazione, rivedi il tuo percorso sulla mappa. Le icone di avviso gialle mostrano le restrizioni lungo il tuo percorso. Tocca qualsiasi restrizione per vedere i dettagli su limiti di altezza, peso o larghezza.",
+      "navigateMode": "Modalità Navigazione",
+      "navigateModeDesc": "Tocca \"Inizia Navigazione\" per iniziare la guida svolta per svolta. La mappa segue automaticamente la tua posizione e mostra le prossime manovre."
+    },
+    "vehicleSetup": {
+      "title": "Configurazione Veicolo",
+      "profiles": "Profili Veicolo",
+      "profilesDesc": "Accedi tramite Menu → scheda Veicolo. Crea profili per ogni veicolo con dimensioni (altezza, larghezza, lunghezza), peso e numero di assi. L'app usa questi dati per evitare percorsi inadatti.",
+      "hazmat": "Impostazioni Merci Pericolose",
+      "hazmatDesc": "Attiva le opzioni merci pericolose per il routing conforme ADR. L'app eviterà tunnel e percorsi vietati per merci pericolose."
+    },
+    "mapControls": {
+      "title": "Controlli Mappa",
+      "compass": "Pulsante Bussola",
+      "compassDesc": "Situato sul lato destro della mappa. Tocca per reimpostare la rotazione della mappa verso nord. Durante la navigazione, la mappa ruota per corrispondere alla tua direzione.",
+      "recenter": "Pulsante Ricentra",
+      "recenterDesc": "Tocca per riportare la mappa sulla tua posizione GPS attuale. L'icona di blocco GPS indica quando il tracciamento della posizione è attivo.",
+      "3dMode": "Modalità 3D",
+      "3dModeDesc": "Tocca il pulsante 3D per inclinare la mappa per una vista prospettica. A livello di zoom 14+, gli edifici appaiono in 3D. Ideale per la navigazione urbana.",
+      "satellite": "Vista Satellite",
+      "satelliteDesc": "Passa tra mappa stradale e immagini satellitari. Utile per identificare aree di sosta e parcheggi dalla vista aerea.",
+      "traffic": "Livello Traffico",
+      "trafficDesc": "Attiva la visualizzazione del traffico in tempo reale. Le strade sono codificate per colore: verde (scorrevole), giallo (lento), rosso (congestionato). Aggiornato in tempo reale."
+    },
+    "restrictions": {
+      "title": "Avvisi Restrizioni",
+      "panel": "Pannello Restrizioni",
+      "panelDesc": "In modalità anteprima, un pannello mostra tutte le restrizioni sul tuo percorso. Le violazioni critiche (rosso) devono essere evitate. Le alte (arancione) e medie (giallo) richiedono attenzione.",
+      "markers": "Marcatori Mappa",
+      "markersDesc": "Le icone triangolari gialle sulla mappa mostrano le posizioni delle restrizioni. Tocca qualsiasi marcatore per vedere i dettagli inclusa la dimensione specifica che viola il tuo profilo veicolo."
+    },
+    "dynamicRoutes": {
+      "title": "Suggerimenti Percorsi Dinamici",
+      "alternative": "Percorsi Alternativi",
+      "alternativeDesc": "Durante la navigazione, l'app controlla ogni 5 minuti percorsi più veloci. Quando viene trovata un'opzione più veloce, appare un banner verde che mostra il risparmio di tempo. Tocca \"Cambia Percorso\" per accettare."
+    },
+    "voiceCommands": {
+      "title": "Comandi Vocali",
+      "reporting": "Segnalazione Incidenti",
+      "reportingDesc": "Durante la navigazione, tocca il pulsante microfono sul lato sinistro. Di' comandi come \"segnala traffico\", \"segnala incidente\", \"pericolo stradale\", \"polizia avanti\" o \"autovelox\" per avvisare altri conducenti."
+    },
+    "alertSounds": {
+      "title": "Suoni di Avviso Personalizzabili",
+      "settings": "Impostazioni Suono",
+      "settingsDesc": "Accedi tramite Menu → Impostazioni → Suoni di Avviso. Scegli suoni diversi per avvisi di velocità, avvisi di traffico e promemoria di pausa. Regola il volume per ogni tipo di avviso indipendentemente."
+    },
+    "hapticFeedback": {
+      "title": "Feedback Aptico",
+      "vibration": "Avvisi Vibrazione",
+      "vibrationDesc": "Il tuo dispositivo vibra quando premi i pulsanti e durante gli eventi di navigazione. Pattern diversi indicano azioni diverse: tocco leggero per i pulsanti, pulsazione forte per gli avvisi e pattern di successo all'arrivo."
+    },
+    "3dBuildings": {
+      "title": "Edifici 3D",
+      "viewing": "Visualizzare Edifici 3D",
+      "viewingDesc": "Attiva la modalità 3D e zoom al livello 14 o più vicino. Gli edifici appaiono come estrusioni 3D con variazioni di altezza. Gli edifici più alti appaiono più scuri. Aiuta a visualizzare le aree urbane e localizzare i punti di riferimento."
+    },
+    "arOverlay": {
+      "title": "Sovrapposizione Navigazione AR",
+      "camera": "Vista Fotocamera",
+      "cameraDesc": "Accedi alla sovrapposizione AR durante la navigazione per una vista basata sulla fotocamera con sovrapposizioni di navigazione. Mostra la tua velocità attuale, limite di velocità, prossima manovra e ETA sul flusso della fotocamera dal vivo. Richiede permesso fotocamera."
+    },
+    "dashboardWidgets": {
+      "title": "Widget Dashboard",
+      "customizing": "Personalizzare la Dashboard",
+      "customizingDesc": "Tocca l'icona impostazioni nella barra widget per personalizzare quali dati appaiono. Widget disponibili: velocità, ETA, distanza rimanente, direzione bussola, altitudine, stima carburante, meteo e ritardo traffico."
+    },
+    "entertainment": {
+      "title": "Sistema Intrattenimento",
+      "radio": "Radio Internet",
+      "radioDesc": "Accedi tramite il pulsante radio durante la navigazione. Trasmetti stazioni radio per camionisti. Controlla la riproduzione con il mini player nella parte inferiore dello schermo."
+    },
+    "facilities": {
+      "title": "Ricerca Strutture",
+      "finding": "Trovare Aree di Sosta",
+      "findingDesc": "Usa la ricerca POI nel menu per trovare aree di sosta, stazioni di servizio, parcheggi, ristoranti e aree di riposo nelle vicinanze. I risultati sono filtrati per posizioni accessibili ai camion."
+    },
+    "fleetManagement": {
+      "title": "Gestione Flotta (Desktop)",
+      "access": "Accedere agli Strumenti Flotta",
+      "accessDesc": "La gestione flotta è disponibile solo su desktop. Accedi tramite la barra di navigazione superiore. Gestisci veicoli, autisti, registri di servizio, registri carburante, monitoraggio conformità e fatturazione clienti."
+    },
+    "pwa": {
+      "title": "Installazione App Mobile",
+      "installing": "Installare sul Dispositivo",
+      "installingDesc": "Su iOS: Tocca Condividi → Aggiungi a Schermata Home. Su Android: Tocca il menu → Installa App. Questo crea un'esperienza app a schermo intero con supporto offline per i percorsi in cache."
+    },
+    "settings": {
+      "title": "Impostazioni e Preferenze",
+      "language": "Impostazioni Lingua",
+      "languageDesc": "Accedi tramite Menu → Impostazioni. Scegli la tua lingua preferita. L'intera interfaccia dell'app, la guida vocale e questa guida utente si aggiorneranno nella lingua selezionata.",
+      "units": "Preferenze Unità",
+      "unitsDesc": "Passa tra misure metriche (chilometri, metri) e imperiali (miglia, piedi). I limiti di velocità e le distanze verranno visualizzati nelle tue unità preferite."
     }
   }
 }

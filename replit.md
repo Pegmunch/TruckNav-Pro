@@ -24,7 +24,9 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Address Autocomplete & POI Search**: Uses TomTom Search API for worldwide address autocomplete and truck-specific POI search with fuzzy matching. Features a bulletproof geocoding system with priority-based lookups.
 - **Mobile Menu**: Full-screen UI with a tabbed interface for route planning, recent destinations, vehicle selection, theme settings, and tools.
 - **Mobile Compatibility & PWA**: Progressive Web App with offline support, iOS enhancements, automatic update detection, and offline features for cached routes, restrictions, and facilities.
-- **Voice Commands for Incident Reporting**: Hands-free voice command system using Web Speech API for reporting traffic incidents during navigation.
+- **Voice Commands for Incident Reporting**: Hands-free voice command system using Web Speech API for reporting traffic incidents during navigation. Supports dynamic language switching based on user's selected i18n language.
+- **Multilingual Voice System**: All voice features (dictation, navigation voice, TTS) dynamically use the user's selected language from i18n settings, with support for 40+ language codes including regional variants (en-US, en-GB, en-CA, en-AU, es-ES, es-MX, fr-FR, fr-CA, de-DE, it-IT, pt-BR, pt-PT, nl-NL, pl-PL, ro-RO, ru-RU, tr-TR, ar-SA, hi-IN, zh-CN, zh-TW, ja-JP, ko-KR, and more).
+- **User Guide**: Comprehensive in-app documentation accessible from map interface, translated into 17 languages with detailed feature explanations for all app capabilities.
 - **Customizable Alert Sounds**: Personalized audio alerts using Web Audio API for speed limit warnings, traffic incidents, and fatigue/break reminders, with configurable sound options, volume control, and toggles.
 - **Haptic Feedback System**: Vibration API integration for tactile feedback on button presses and navigation events with multiple patterns and user preferences.
 - **3D Buildings Layer**: Interactive 3D building extrusions using Protomaps vector tiles, visible at zoom level 14+ when 3D mode is active.

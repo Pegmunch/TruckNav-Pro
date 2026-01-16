@@ -57,7 +57,8 @@
     "accept": "Accept Acești Termeni",
     "decline": "Nu Accept",
     "terms_of_service": "Termeni și Condiții",
-    "privacy_policy": "Politica de Confidențialitate"
+    "privacy_policy": "Politica de Confidențialitate",
+    "termsTitle": "TruckNav Pro - Termeni Legali și Protecții"
   },
   "subscription": {
     "plans": "Planuri de Abonament",
@@ -86,7 +87,9 @@
     "close": "Închidere",
     "search": "Căutare",
     "filter": "Filtrare",
-    "language": "Limbă"
+    "language": "Limbă",
+    "guide": "Ghid",
+    "legal": "Legal"
   },
   "amazon": {
     "fire_tv": "Optimizat pentru Fire TV",
@@ -454,6 +457,109 @@
       "hours": "ore",
       "miles": "mile",
       "km": "km"
+    }
+  },
+  "userGuide": {
+    "title": "Ghid Utilizator TruckNav Pro",
+    "subtitle": "Ghid complet pentru toate funcțiile și cum să le utilizați",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Primii Pași",
+      "planMode": "Mod Planificare",
+      "planModeDesc": "Atingeți butonul meniu (☰) în colțul din stânga sus pentru a deschide planificatorul de rută. Introduceți destinația folosind bara de căutare. Aplicația va găsi rute sigure pentru camioane, evitând podurile joase și restricțiile de greutate.",
+      "previewMode": "Mod Previzualizare",
+      "previewModeDesc": "După planificare, revizuiți ruta pe hartă. Iconițele galbene de avertizare arată restricțiile de-a lungul rutei. Atingeți orice restricție pentru a vedea detalii despre limitele de înălțime, greutate sau lățime.",
+      "navigateMode": "Mod Navigare",
+      "navigateModeDesc": "Atingeți \"Începe Navigația\" pentru a porni ghidarea pas cu pas. Harta urmărește automat poziția dvs. și arată manevrele viitoare."
+    },
+    "vehicleSetup": {
+      "title": "Configurare Vehicul",
+      "profiles": "Profile Vehicule",
+      "profilesDesc": "Accesați prin Meniu → fila Vehicul. Creați profiluri pentru fiecare vehicul cu dimensiuni (înălțime, lățime, lungime), greutate și număr de osii. Aplicația folosește acestea pentru a evita rutele necorespunzătoare.",
+      "hazmat": "Setări Materiale Periculoase",
+      "hazmatDesc": "Activați opțiunile pentru materiale periculoase pentru rutare conformă ADR. Aplicația va evita tunelurile și rutele interzise pentru mărfuri periculoase."
+    },
+    "mapControls": {
+      "title": "Comenzi Hartă",
+      "compass": "Buton Busolă",
+      "compassDesc": "Situat în partea dreaptă a hărții. Atingeți pentru a reseta rotația hărții spre nord. În timpul navigării, harta se rotește pentru a corespunde direcției dvs.",
+      "recenter": "Buton Recentrare",
+      "recenterDesc": "Atingeți pentru a readuce harta la poziția GPS curentă. Iconița de blocare GPS indică când urmărirea poziției este activă.",
+      "3dMode": "Mod 3D",
+      "3dModeDesc": "Atingeți butonul 3D pentru a înclina harta pentru o vedere în perspectivă. La nivel de zoom 14+, clădirile apar în 3D. Ideal pentru navigarea urbană.",
+      "satellite": "Vedere Satelit",
+      "satelliteDesc": "Comutați între harta rutieră și imaginile satelitare. Util pentru identificarea parcărilor pentru camioane și zonelor de parcare din vedere aeriană.",
+      "traffic": "Strat Trafic",
+      "trafficDesc": "Activați vizualizarea traficului în timp real. Drumurile sunt codificate color: verde (fluent), galben (lent), roșu (aglomerat). Actualizat în timp real."
+    },
+    "restrictions": {
+      "title": "Avertismente Restricții",
+      "panel": "Panou Restricții",
+      "panelDesc": "În modul previzualizare, un panou arată toate restricțiile pe ruta dvs. Încălcările critice (roșu) trebuie evitate. Înalte (portocaliu) și medii (galben) necesită atenție.",
+      "markers": "Marcaje Hartă",
+      "markersDesc": "Iconițele triunghiulare galbene pe hartă arată locațiile restricțiilor. Atingeți orice marcaj pentru a vedea detalii, inclusiv dimensiunea specifică care încalcă profilul vehiculului."
+    },
+    "dynamicRoutes": {
+      "title": "Sugestii Rute Dinamice",
+      "alternative": "Rute Alternative",
+      "alternativeDesc": "În timpul navigării, aplicația verifică la fiecare 5 minute dacă există rute mai rapide. Când este găsită o opțiune mai rapidă, apare un banner verde care arată economisirea de timp. Atingeți \"Schimbă Ruta\" pentru a accepta."
+    },
+    "voiceCommands": {
+      "title": "Comenzi Vocale",
+      "reporting": "Raportare Incidente",
+      "reportingDesc": "În timpul navigării, atingeți butonul microfonului din partea stângă. Spuneți comenzi precum \"raportează trafic\", \"raportează accident\", \"pericol pe drum\", \"poliție înainte\" sau \"radar\" pentru a alerta alți șoferi."
+    },
+    "alertSounds": {
+      "title": "Sunete Alertă Personalizabile",
+      "settings": "Setări Sunet",
+      "settingsDesc": "Accesați prin Meniu → Setări → Sunete Alertă. Alegeți sunete diferite pentru avertismente de viteză, alerte de trafic și mementouri de pauză. Ajustați volumul pentru fiecare tip de alertă independent."
+    },
+    "hapticFeedback": {
+      "title": "Feedback Haptic",
+      "vibration": "Alerte Vibrații",
+      "vibrationDesc": "Dispozitivul vibrează când apăsați butoane și în timpul evenimentelor de navigare. Diferite modele indică diferite acțiuni: atingere ușoară pentru butoane, puls puternic pentru avertismente și model de succes la sosire."
+    },
+    "3dBuildings": {
+      "title": "Clădiri 3D",
+      "viewing": "Vizualizare Clădiri 3D",
+      "viewingDesc": "Activați modul 3D și măriți la nivelul 14 sau mai aproape. Clădirile apar ca extruziuni 3D cu variații de înălțime. Clădirile mai înalte apar mai închise. Ajută la vizualizarea zonelor urbane și localizarea punctelor de reper."
+    },
+    "arOverlay": {
+      "title": "Suprapunere Navigare AR",
+      "camera": "Vedere Cameră",
+      "cameraDesc": "Accesați suprapunerea AR în timpul navigării pentru o vedere bazată pe cameră cu suprapuneri de navigare. Arată viteza curentă, limita de viteză, următoarea manevră și ETA peste fluxul camerei live. Necesită permisiune cameră."
+    },
+    "dashboardWidgets": {
+      "title": "Widgeturi Tablou",
+      "customizing": "Personalizarea Tabloului",
+      "customizingDesc": "Atingeți iconița setări în bara de widgeturi pentru a personaliza ce date apar. Widgeturi disponibile: viteză, ETA, distanță rămasă, direcție busolă, altitudine, estimare combustibil, vreme și întârziere trafic."
+    },
+    "entertainment": {
+      "title": "Sistem Divertisment",
+      "radio": "Radio Internet",
+      "radioDesc": "Accesați prin butonul radio în timpul navigării. Transmiteți stații radio prietenoase pentru camioane. Controlați redarea cu mini playerul din partea de jos a ecranului."
+    },
+    "facilities": {
+      "title": "Căutare Facilități",
+      "finding": "Găsirea Parcărilor pentru Camioane",
+      "findingDesc": "Utilizați căutarea POI în meniu pentru a găsi parcări pentru camioane, benzinării, parcări, restaurante și zone de odihnă din apropiere. Rezultatele sunt filtrate pentru locații accesibile camioanelor."
+    },
+    "fleetManagement": {
+      "title": "Management Flotă (Desktop)",
+      "access": "Accesare Instrumente Flotă",
+      "accessDesc": "Managementul flotei este disponibil doar pe desktop. Accesați prin bara de navigare superioară. Gestionați vehicule, șoferi, înregistrări service, jurnale combustibil, urmărire conformitate și facturare clienți."
+    },
+    "pwa": {
+      "title": "Instalare Aplicație Mobilă",
+      "installing": "Instalare pe Dispozitiv",
+      "installingDesc": "Pe iOS: Atingeți Partajare → Adaugă la Ecran Principal. Pe Android: Atingeți meniul → Instalează Aplicația. Aceasta creează o experiență de aplicație pe tot ecranul cu suport offline pentru rutele salvate."
+    },
+    "settings": {
+      "title": "Setări și Preferințe",
+      "language": "Setări Limbă",
+      "languageDesc": "Accesați prin Meniu → Setări. Alegeți limba preferată. Întreaga interfață a aplicației, ghidarea vocală și acest ghid de utilizator se vor actualiza în limba selectată.",
+      "units": "Preferințe Unități",
+      "unitsDesc": "Comutați între măsuri metrice (kilometri, metri) și imperiale (mile, picioare). Limitele de viteză și distanțele vor fi afișate în unitățile preferate."
     }
   }
 }

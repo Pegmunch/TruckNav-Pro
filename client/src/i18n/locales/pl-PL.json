@@ -57,7 +57,8 @@
     "accept": "Akceptuję te warunki",
     "decline": "Nie akceptuję",
     "terms_of_service": "Warunki korzystania z usługi",
-    "privacy_policy": "Polityka prywatności"
+    "privacy_policy": "Polityka prywatności",
+    "termsTitle": "TruckNav Pro - Warunki Prawne i Ochrona"
   },
   "subscription": {
     "plans": "Plany subskrypcji",
@@ -86,7 +87,9 @@
     "close": "Zamknij",
     "search": "Szukaj",
     "filter": "Filtr",
-    "language": "Język"
+    "language": "Język",
+    "guide": "Przewodnik",
+    "legal": "Prawne"
   },
   "amazon": {
     "fire_tv": "Zoptymalizowane dla Fire TV",
@@ -454,6 +457,109 @@
       "hours": "godzin",
       "miles": "mil",
       "km": "km"
+    }
+  },
+  "userGuide": {
+    "title": "Przewodnik Użytkownika TruckNav Pro",
+    "subtitle": "Kompletny przewodnik po wszystkich funkcjach i sposobie ich użycia",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Pierwsze Kroki",
+      "planMode": "Tryb Planowania",
+      "planModeDesc": "Dotknij przycisku menu (☰) w lewym górnym rogu, aby otworzyć planowanie trasy. Wprowadź cel podróży za pomocą paska wyszukiwania. Aplikacja znajdzie bezpieczne trasy dla ciężarówek, omijając niskie mosty i ograniczenia wagowe.",
+      "previewMode": "Tryb Podglądu",
+      "previewModeDesc": "Po zaplanowaniu przejrzyj trasę na mapie. Żółte ikony ostrzeżeń pokazują ograniczenia na trasie. Dotknij dowolnego ograniczenia, aby zobaczyć szczegóły dotyczące limitów wysokości, wagi lub szerokości.",
+      "navigateMode": "Tryb Nawigacji",
+      "navigateModeDesc": "Dotknij \"Rozpocznij Nawigację\", aby rozpocząć prowadzenie zakręt po zakręcie. Mapa automatycznie podąża za Twoją pozycją i pokazuje nadchodzące manewry."
+    },
+    "vehicleSetup": {
+      "title": "Konfiguracja Pojazdu",
+      "profiles": "Profile Pojazdów",
+      "profilesDesc": "Dostęp przez Menu → zakładka Pojazd. Twórz profile dla każdego pojazdu z wymiarami (wysokość, szerokość, długość), wagą i liczbą osi. Aplikacja używa tych danych do unikania nieodpowiednich tras.",
+      "hazmat": "Ustawienia Materiałów Niebezpiecznych",
+      "hazmatDesc": "Włącz opcje materiałów niebezpiecznych dla tras zgodnych z ADR. Aplikacja będzie omijać tunele i trasy zabronione dla towarów niebezpiecznych."
+    },
+    "mapControls": {
+      "title": "Sterowanie Mapą",
+      "compass": "Przycisk Kompasu",
+      "compassDesc": "Znajduje się po prawej stronie mapy. Dotknij, aby zresetować obrót mapy na północ. Podczas nawigacji mapa obraca się zgodnie z kierunkiem jazdy.",
+      "recenter": "Przycisk Wyśrodkowania",
+      "recenterDesc": "Dotknij, aby przywrócić mapę do aktualnej pozycji GPS. Ikona blokady GPS wskazuje, gdy śledzenie pozycji jest aktywne.",
+      "3dMode": "Tryb 3D",
+      "3dModeDesc": "Dotknij przycisku 3D, aby przechylić mapę dla widoku perspektywicznego. Przy poziomie powiększenia 14+ budynki pojawiają się w 3D. Idealne do nawigacji miejskiej.",
+      "satellite": "Widok Satelitarny",
+      "satelliteDesc": "Przełączaj między mapą drogową a obrazami satelitarnymi. Przydatne do identyfikacji parkingów dla ciężarówek i miejsc postojowych z widoku lotniczego.",
+      "traffic": "Warstwa Ruchu",
+      "trafficDesc": "Włącz wizualizację ruchu na żywo. Drogi są oznaczone kolorami: zielony (płynny), żółty (wolny), czerwony (zator). Aktualizowane w czasie rzeczywistym."
+    },
+    "restrictions": {
+      "title": "Ostrzeżenia o Ograniczeniach",
+      "panel": "Panel Ograniczeń",
+      "panelDesc": "W trybie podglądu panel pokazuje wszystkie ograniczenia na trasie. Krytyczne naruszenia (czerwone) muszą być unikane. Wysokie (pomarańczowe) i średnie (żółte) wymagają uwagi.",
+      "markers": "Znaczniki na Mapie",
+      "markersDesc": "Żółte trójkątne ikony na mapie pokazują lokalizacje ograniczeń. Dotknij dowolnego znacznika, aby zobaczyć szczegóły, w tym konkretny wymiar naruszający profil pojazdu."
+    },
+    "dynamicRoutes": {
+      "title": "Dynamiczne Sugestie Tras",
+      "alternative": "Trasy Alternatywne",
+      "alternativeDesc": "Podczas nawigacji aplikacja sprawdza co 5 minut szybsze trasy. Gdy znajdzie szybszą opcję, pojawia się zielony baner pokazujący oszczędność czasu. Dotknij \"Zmień Trasę\", aby zaakceptować."
+    },
+    "voiceCommands": {
+      "title": "Polecenia Głosowe",
+      "reporting": "Zgłaszanie Zdarzeń",
+      "reportingDesc": "Podczas nawigacji dotknij przycisku mikrofonu po lewej stronie. Wypowiadaj polecenia takie jak \"zgłoś korek\", \"zgłoś wypadek\", \"zagrożenie na drodze\", \"policja przed nami\" lub \"fotoradar\", aby ostrzec innych kierowców."
+    },
+    "alertSounds": {
+      "title": "Konfigurowalne Dźwięki Alertów",
+      "settings": "Ustawienia Dźwięku",
+      "settingsDesc": "Dostęp przez Menu → Ustawienia → Dźwięki Alertów. Wybierz różne dźwięki dla ostrzeżeń o prędkości, alertów o ruchu i przypomnień o przerwach. Dostosuj głośność dla każdego typu alertu niezależnie."
+    },
+    "hapticFeedback": {
+      "title": "Sprzężenie Dotykowe",
+      "vibration": "Alerty Wibracyjne",
+      "vibrationDesc": "Urządzenie wibruje przy naciskaniu przycisków i podczas zdarzeń nawigacyjnych. Różne wzorce oznaczają różne akcje: lekkie dotknięcie dla przycisków, silny puls dla ostrzeżeń i wzorzec sukcesu po dotarciu."
+    },
+    "3dBuildings": {
+      "title": "Budynki 3D",
+      "viewing": "Wyświetlanie Budynków 3D",
+      "viewingDesc": "Włącz tryb 3D i powiększ do poziomu 14 lub bliżej. Budynki pojawiają się jako ekstrudowane 3D z wariacjami wysokości. Wyższe budynki są ciemniejsze. Pomaga wizualizować obszary miejskie i lokalizować punkty orientacyjne."
+    },
+    "arOverlay": {
+      "title": "Nakładka Nawigacji AR",
+      "camera": "Widok Kamery",
+      "cameraDesc": "Uzyskaj dostęp do nakładki AR podczas nawigacji dla widoku opartego na kamerze z nakładkami nawigacyjnymi. Pokazuje aktualną prędkość, limit prędkości, następny manewr i ETA nałożone na obraz z kamery na żywo. Wymaga pozwolenia na kamerę."
+    },
+    "dashboardWidgets": {
+      "title": "Widżety Pulpitu",
+      "customizing": "Dostosowywanie Pulpitu",
+      "customizingDesc": "Dotknij ikony ustawień na pasku widżetów, aby dostosować wyświetlane dane. Dostępne widżety: prędkość, ETA, pozostała odległość, kierunek kompasu, wysokość, szacunek paliwa, pogoda i opóźnienie w ruchu."
+    },
+    "entertainment": {
+      "title": "System Rozrywki",
+      "radio": "Radio Internetowe",
+      "radioDesc": "Dostęp przez przycisk radia podczas nawigacji. Strumieniuj przyjazne kierowcom stacje radiowe. Steruj odtwarzaniem za pomocą miniodtwarzacza na dole ekranu."
+    },
+    "facilities": {
+      "title": "Wyszukiwanie Obiektów",
+      "finding": "Znajdowanie Parkingów dla Ciężarówek",
+      "findingDesc": "Użyj wyszukiwania POI w menu, aby znaleźć pobliskie parkingi dla ciężarówek, stacje paliw, parkingi, restauracje i miejsca odpoczynku. Wyniki są filtrowane pod kątem lokalizacji dostępnych dla ciężarówek."
+    },
+    "fleetManagement": {
+      "title": "Zarządzanie Flotą (Desktop)",
+      "access": "Dostęp do Narzędzi Floty",
+      "accessDesc": "Zarządzanie flotą jest dostępne tylko na komputerze. Dostęp przez górny pasek nawigacji. Zarządzaj pojazdami, kierowcami, rekordami serwisowymi, dziennikami paliwa, śledzeniem zgodności i fakturowaniem klientów."
+    },
+    "pwa": {
+      "title": "Instalacja Aplikacji Mobilnej",
+      "installing": "Instalacja na Urządzeniu",
+      "installingDesc": "Na iOS: Dotknij Udostępnij → Dodaj do ekranu głównego. Na Android: Dotknij menu → Zainstaluj aplikację. Tworzy to pełnoekranowe doświadczenie aplikacji z obsługą offline dla zapisanych tras."
+    },
+    "settings": {
+      "title": "Ustawienia i Preferencje",
+      "language": "Ustawienia Języka",
+      "languageDesc": "Dostęp przez Menu → Ustawienia. Wybierz preferowany język. Cały interfejs aplikacji, prowadzenie głosowe i ten przewodnik użytkownika zostaną zaktualizowane do wybranego języka.",
+      "units": "Preferencje Jednostek",
+      "unitsDesc": "Przełączaj między miarami metrycznymi (kilometry, metry) a imperialnymi (mile, stopy). Limity prędkości i odległości będą wyświetlane w preferowanych jednostkach."
     }
   }
 }

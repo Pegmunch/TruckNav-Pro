@@ -57,7 +57,8 @@
     "accept": "Bu Koşulları Kabul Ediyorum",
     "decline": "Kabul Etmiyorum",
     "terms_of_service": "Hizmet Koşulları",
-    "privacy_policy": "Gizlilik Politikası"
+    "privacy_policy": "Gizlilik Politikası",
+    "termsTitle": "TruckNav Pro - Yasal Şartlar ve Korumalar"
   },
   "subscription": {
     "plans": "Abonelik Planları",
@@ -86,7 +87,9 @@
     "close": "Kapat",
     "search": "Ara",
     "filter": "Filtrele",
-    "language": "Dil"
+    "language": "Dil",
+    "guide": "Kılavuz",
+    "legal": "Yasal"
   },
   "amazon": {
     "fire_tv": "Fire TV için optimize edildi",
@@ -94,5 +97,108 @@
     "silk_browser": "Silk Browser için geliştirildi",
     "voice_support": "Sesli navigasyon desteklenir",
     "remote_navigation": "Uzaktan kumanda navigasyonu"
+  },
+  "userGuide": {
+    "title": "TruckNav Pro Kullanım Kılavuzu",
+    "subtitle": "Tüm özelliklerin ve nasıl kullanılacağının tam kılavuzu",
+    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "gettingStarted": {
+      "title": "Başlarken",
+      "planMode": "Planlama Modu",
+      "planModeDesc": "Rota planlayıcıyı açmak için sol üst köşedeki menü düğmesine (☰) dokunun. Arama çubuğunu kullanarak hedefinizi girin. Uygulama, alçak köprülerden ve ağırlık kısıtlamalarından kaçınarak kamyon için güvenli rotalar bulacaktır.",
+      "previewMode": "Önizleme Modu",
+      "previewModeDesc": "Planlamadan sonra rotanızı haritada gözden geçirin. Sarı uyarı simgeleri rotanız boyunca kısıtlamaları gösterir. Yükseklik, ağırlık veya genişlik sınırları hakkında detayları görmek için herhangi bir kısıtlamaya dokunun.",
+      "navigateMode": "Navigasyon Modu",
+      "navigateModeDesc": "Adım adım rehberliği başlatmak için \"Navigasyonu Başlat\"a dokunun. Harita otomatik olarak konumunuzu takip eder ve yaklaşan manevraları gösterir."
+    },
+    "vehicleSetup": {
+      "title": "Araç Kurulumu",
+      "profiles": "Araç Profilleri",
+      "profilesDesc": "Menü → Araç sekmesi üzerinden erişin. Her araç için boyutlar (yükseklik, genişlik, uzunluk), ağırlık ve aks sayısı ile profiller oluşturun. Uygulama, uygun olmayan rotalardan kaçınmak için bunları kullanır.",
+      "hazmat": "Tehlikeli Madde Ayarları",
+      "hazmatDesc": "ADR uyumlu rotalama için tehlikeli madde seçeneklerini etkinleştirin. Uygulama, tehlikeli maddeler için yasak olan tünellerden ve rotalardan kaçınacaktır."
+    },
+    "mapControls": {
+      "title": "Harita Kontrolleri",
+      "compass": "Pusula Düğmesi",
+      "compassDesc": "Haritanın sağ tarafında bulunur. Harita dönüşünü kuzeye sıfırlamak için dokunun. Navigasyon sırasında harita yönünüze göre döner.",
+      "recenter": "Yeniden Ortala Düğmesi",
+      "recenterDesc": "Haritayı mevcut GPS konumunuza geri getirmek için dokunun. GPS kilit simgesi, konum takibinin aktif olduğunu gösterir.",
+      "3dMode": "3D Modu",
+      "3dModeDesc": "Perspektif görünümü için haritayı eğmek üzere 3D düğmesine dokunun. Yakınlaştırma seviyesi 14+ olduğunda binalar 3D olarak görünür. Şehir içi navigasyon için idealdir.",
+      "satellite": "Uydu Görünümü",
+      "satelliteDesc": "Yol haritası ve uydu görüntüleri arasında geçiş yapın. Tır parkları ve park alanlarını havadan görünümden tanımlamak için kullanışlıdır.",
+      "traffic": "Trafik Katmanı",
+      "trafficDesc": "Canlı trafik görselleştirmesini etkinleştirin. Yollar renk kodludur: yeşil (akıcı), sarı (yavaş), kırmızı (tıkalı). Gerçek zamanlı güncellenir."
+    },
+    "restrictions": {
+      "title": "Kısıtlama Uyarıları",
+      "panel": "Kısıtlama Paneli",
+      "panelDesc": "Önizleme modunda, bir panel rotanızdaki tüm kısıtlamaları gösterir. Kritik ihlaller (kırmızı) kaçınılmalıdır. Yüksek (turuncu) ve orta (sarı) dikkat gerektirir.",
+      "markers": "Harita İşaretleri",
+      "markersDesc": "Haritadaki sarı üçgen simgeler kısıtlama konumlarını gösterir. Araç profilinizi ihlal eden belirli boyut dahil detayları görmek için herhangi bir işarete dokunun."
+    },
+    "dynamicRoutes": {
+      "title": "Dinamik Rota Önerileri",
+      "alternative": "Alternatif Rotalar",
+      "alternativeDesc": "Navigasyon sırasında uygulama her 5 dakikada bir daha hızlı rotalar olup olmadığını kontrol eder. Daha hızlı bir seçenek bulunduğunda, zaman tasarrufunu gösteren yeşil bir afiş görünür. Kabul etmek için \"Rota Değiştir\"e dokunun."
+    },
+    "voiceCommands": {
+      "title": "Sesli Komutlar",
+      "reporting": "Olay Bildirimi",
+      "reportingDesc": "Navigasyon sırasında sol taraftaki mikrofon düğmesine dokunun. Diğer sürücüleri uyarmak için \"trafik bildir\", \"kaza bildir\", \"yol tehlikesi\", \"ileride polis\" veya \"radar\" gibi komutlar söyleyin."
+    },
+    "alertSounds": {
+      "title": "Özelleştirilebilir Uyarı Sesleri",
+      "settings": "Ses Ayarları",
+      "settingsDesc": "Menü → Ayarlar → Uyarı Sesleri üzerinden erişin. Hız uyarıları, trafik uyarıları ve mola hatırlatıcıları için farklı sesler seçin. Her uyarı türü için sesi bağımsız olarak ayarlayın."
+    },
+    "hapticFeedback": {
+      "title": "Dokunsal Geri Bildirim",
+      "vibration": "Titreşim Uyarıları",
+      "vibrationDesc": "Cihazınız düğmelere basarken ve navigasyon olayları sırasında titrer. Farklı desenler farklı eylemleri gösterir: düğmeler için hafif dokunuş, uyarılar için güçlü darbe ve varışta başarı deseni."
+    },
+    "3dBuildings": {
+      "title": "3D Binalar",
+      "viewing": "3D Binaları Görüntüleme",
+      "viewingDesc": "3D modunu etkinleştirin ve seviye 14 veya daha yakına yakınlaştırın. Binalar yükseklik varyasyonlarıyla 3D ekstrüzyonlar olarak görünür. Daha yüksek binalar daha koyu görünür. Şehir alanlarını görselleştirmeye ve yer işaretlerini bulmaya yardımcı olur."
+    },
+    "arOverlay": {
+      "title": "AR Navigasyon Yerleşimi",
+      "camera": "Kamera Görünümü",
+      "cameraDesc": "Navigasyon yerleşimleri ile kamera tabanlı görünüm için navigasyon sırasında AR yerleşimine erişin. Mevcut hızınızı, hız sınırını, sonraki manevrayı ve ETA'yı canlı kamera akışı üzerinde gösterir. Kamera izni gerektirir."
+    },
+    "dashboardWidgets": {
+      "title": "Gösterge Paneli Widget'ları",
+      "customizing": "Gösterge Panelinizi Özelleştirme",
+      "customizingDesc": "Hangi verilerin görüneceğini özelleştirmek için widget çubuğundaki ayarlar simgesine dokunun. Kullanılabilir widget'lar: hız, ETA, kalan mesafe, pusula yönü, yükseklik, yakıt tahmini, hava durumu ve trafik gecikmesi."
+    },
+    "entertainment": {
+      "title": "Eğlence Sistemi",
+      "radio": "İnternet Radyosu",
+      "radioDesc": "Navigasyon sırasında radyo düğmesi üzerinden erişin. Kamyonculara uygun radyo istasyonlarını yayınlayın. Ekranın altındaki mini oynatıcı ile oynatmayı kontrol edin."
+    },
+    "facilities": {
+      "title": "Tesis Arama",
+      "finding": "Tır Parkları Bulma",
+      "findingDesc": "Yakındaki tır parklarını, benzin istasyonlarını, otoparkları, restoranları ve dinlenme alanlarını bulmak için menüdeki POI aramasını kullanın. Sonuçlar kamyon erişimli konumlar için filtrelenir."
+    },
+    "fleetManagement": {
+      "title": "Filo Yönetimi (Masaüstü)",
+      "access": "Filo Araçlarına Erişim",
+      "accessDesc": "Filo yönetimi yalnızca masaüstünde kullanılabilir. Üst gezinme çubuğu üzerinden erişin. Araçları, sürücüleri, servis kayıtlarını, yakıt günlüklerini, uyumluluk takibini ve müşteri faturalandırmasını yönetin."
+    },
+    "pwa": {
+      "title": "Mobil Uygulama Kurulumu",
+      "installing": "Cihazınıza Kurulum",
+      "installingDesc": "iOS'ta: Paylaş → Ana Ekrana Ekle'ye dokunun. Android'de: Menü → Uygulamayı Yükle'ye dokunun. Bu, önbelleğe alınmış rotalar için çevrimdışı destekle tam ekran uygulama deneyimi oluşturur."
+    },
+    "settings": {
+      "title": "Ayarlar ve Tercihler",
+      "language": "Dil Ayarları",
+      "languageDesc": "Menü → Ayarlar üzerinden erişin. Tercih ettiğiniz dili seçin. Tüm uygulama arayüzü, sesli rehberlik ve bu kullanıcı kılavuzu seçtiğiniz dile güncellenecektir.",
+      "units": "Birim Tercihleri",
+      "unitsDesc": "Metrik (kilometre, metre) ve emperyal (mil, feet) ölçümler arasında geçiş yapın. Hız sınırları ve mesafeler tercih ettiğiniz birimlerde görüntülenecektir."
+    }
   }
 }

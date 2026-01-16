@@ -85,6 +85,9 @@ import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { useDestinationHistory } from "@/hooks/use-destination-history";
 import { Tabs as RouteTabs, TabsList as RouteTabsList, TabsTrigger as RouteTabsTrigger } from "@/components/ui/tabs";
 import { useAddressDictation } from "@/hooks/use-address-dictation";
+import { useTranslation } from 'react-i18next';
+import { NavigationVoice } from "@/lib/navigation-voice";
+import { getVoiceCommandSystem } from "@/lib/voice-commands";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -135,6 +138,7 @@ function ComprehensiveMobileMenu({
   const gps = useGPS();
   const { resetTour } = useOnboarding();
   const { destinations: previousDestinations, removeDestination } = useDestinationHistory();
+  const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("plan");
   
   // Local state for route planning inputs - Always start empty for new route planning
@@ -174,6 +178,20 @@ function ComprehensiveMobileMenu({
     }
   }, [open]);
   
+  // Sync voice systems with current i18n language
+  useEffect(() => {
+    const currentLang = i18n.language || 'en-US';
+    try {
+      // Update NavigationVoice singleton
+      NavigationVoice.getInstance().setLanguage(currentLang);
+      // Update VoiceCommandSystem singleton  
+      getVoiceCommandSystem().setLanguage(currentLang);
+      console.log('[VOICE-LANG] Synced voice systems to language:', currentLang);
+    } catch (error) {
+      console.warn('[VOICE-LANG] Failed to sync voice language:', error);
+    }
+  }, [i18n.language]);
+  
   // Temporary function to clear old route data
   const handleClearOldRoute = () => {
     localStorage.removeItem('activeJourneyId');
@@ -210,7 +228,7 @@ function ComprehensiveMobileMenu({
     startListening: startVoiceDictation,
     stopListening: stopVoiceDictation 
   } = useAddressDictation({
-    lang: 'en-GB',
+    lang: i18n.language || 'en-US',
     timeout: 10000,
     onFinalResult: (transcript) => {
       const field = activeDictationFieldRef.current;
