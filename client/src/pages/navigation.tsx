@@ -4046,11 +4046,14 @@ function NavigationPageContent() {
 
       
       {/* Settings Modal - rendered at page level to persist independently of sidebar state */}
-      <SettingsModal
-        open={showVehicleSettings}
-        onOpenChange={setShowVehicleSettings}
-        onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
-      />
+      {/* CRITICAL: Conditional wrapper for iOS Safari overlay fix */}
+      {showVehicleSettings && (
+        <SettingsModal
+          open={showVehicleSettings}
+          onOpenChange={setShowVehicleSettings}
+          onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
+        />
+      )}
 
 
       {/* Lane Guidance Popup - Can be triggered manually or during navigation */}
@@ -4060,12 +4063,14 @@ function NavigationPageContent() {
         forceVisible={showLaneGuidance}
       />
 
-      {/* Incident Report Dialog */}
-      <IncidentReportDialog
-        open={showIncidentReportDialog}
-        onOpenChange={setShowIncidentReportDialog}
-        currentLocation={currentGPSLocation}
-      />
+      {/* Incident Report Dialog - CRITICAL: Conditional wrapper for iOS Safari overlay fix */}
+      {showIncidentReportDialog && (
+        <IncidentReportDialog
+          open={showIncidentReportDialog}
+          onOpenChange={setShowIncidentReportDialog}
+          currentLocation={currentGPSLocation}
+        />
+      )}
 
       {/* Incident Feed Popup - Shows nearby incidents */}
       <IncidentFeedPopup
@@ -4080,51 +4085,56 @@ function NavigationPageContent() {
         }}
       />
 
-      {/* Comprehensive Mobile Menu */}
-      <ComprehensiveMobileMenu
-        open={showComprehensiveMenu}
-        onOpenChange={setShowComprehensiveMenu}
-        onFromLocationChange={setFromLocation}
-        onToLocationChange={setToLocation}
-        onPlanRoute={handlePlanRoute}
-        onStartNavigation={handleStartNavigation}
-        onStopNavigation={handleStopNavigation}
-        currentRoute={currentRoute}
-        isCalculating={calculateRouteMutation.isPending}
-        isNavigating={isNavigating}
-        resetTrigger={menuResetTrigger}
-        onRequestAutoNavigation={() => {
-          console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
-          setShouldAutoNavigateOnMobile(true);
-          // Show navigation controls immediately
-          setShowNavControls(true);
-          // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
-          // DON'T set isLocalNavActive yet - let user choose to start navigation
-          setIsShowingPreview(true);
-          localStorage.setItem('navigation_mode', 'route_ready');
-          localStorage.setItem('navigation_timestamp', Date.now().toString());
-        }}
-        selectedProfile={selectedProfile}
-        onProfileSelect={(profile) => {
-          setSelectedProfile(profile);
-          setActiveProfile(profile);
-          queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
-        }}
-        coordinates={currentGPSLocation}
-        hideTabsInInputMode={showComprehensiveMenu}
-      />
+      {/* Comprehensive Mobile Menu - CRITICAL: Conditional wrapper for iOS Safari overlay fix */}
+      {showComprehensiveMenu && (
+        <ComprehensiveMobileMenu
+          open={showComprehensiveMenu}
+          onOpenChange={setShowComprehensiveMenu}
+          onFromLocationChange={setFromLocation}
+          onToLocationChange={setToLocation}
+          onPlanRoute={handlePlanRoute}
+          onStartNavigation={handleStartNavigation}
+          onStopNavigation={handleStopNavigation}
+          currentRoute={currentRoute}
+          isCalculating={calculateRouteMutation.isPending}
+          isNavigating={isNavigating}
+          resetTrigger={menuResetTrigger}
+          onRequestAutoNavigation={() => {
+            console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
+            setShouldAutoNavigateOnMobile(true);
+            // Show navigation controls immediately
+            setShowNavControls(true);
+            // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
+            // DON'T set isLocalNavActive yet - let user choose to start navigation
+            setIsShowingPreview(true);
+            localStorage.setItem('navigation_mode', 'route_ready');
+            localStorage.setItem('navigation_timestamp', Date.now().toString());
+          }}
+          selectedProfile={selectedProfile}
+          onProfileSelect={(profile) => {
+            setSelectedProfile(profile);
+            setActiveProfile(profile);
+            queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+          }}
+          coordinates={currentGPSLocation}
+          hideTabsInInputMode={showComprehensiveMenu}
+        />
+      )}
 
       {/* Quick Settings Panel - Green gear button opens this */}
-      <QuickSettingsPanel
-        open={showQuickSettings}
-        onOpenChange={setShowQuickSettings}
-        selectedProfile={selectedProfile}
-        onProfileSelect={(profile) => {
-          setSelectedProfile(profile);
-          setActiveProfile(profile);
-          queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
-        }}
-      />
+      {/* CRITICAL: Conditional wrapper for iOS Safari overlay fix */}
+      {showQuickSettings && (
+        <QuickSettingsPanel
+          open={showQuickSettings}
+          onOpenChange={setShowQuickSettings}
+          selectedProfile={selectedProfile}
+          onProfileSelect={(profile) => {
+            setSelectedProfile(profile);
+            setActiveProfile(profile);
+            queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+          }}
+        />
+      )}
 
       {/* Destination Reached Dialog - Early return pattern to unmount when closed (iOS Safari overlay fix) */}
       {showDestinationReached && (
