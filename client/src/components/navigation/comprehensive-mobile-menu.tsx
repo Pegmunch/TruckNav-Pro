@@ -772,6 +772,38 @@ function ComprehensiveMobileMenu({
                       </RouteTabsList>
                     </RouteTabs>
 
+                    {/* Recent Destinations - Quick Access in Plan Tab */}
+                    {previousDestinations.length > 0 && (
+                      <div className="space-y-2 pt-2">
+                        <Separator />
+                        <Label className="text-sm font-medium flex items-center gap-2 px-1">
+                          <History className="h-4 w-4 text-purple-500" />
+                          Recent Destinations
+                        </Label>
+                        <div className="space-y-1 px-1 max-h-[120px] overflow-y-auto">
+                          {previousDestinations.slice(0, 3).map((dest) => (
+                            <div
+                              key={dest.id}
+                              className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all active:scale-[0.98]"
+                              onClick={() => {
+                                setToInput(dest.formattedAddress);
+                                onToLocationChange(dest.formattedAddress);
+                                setToCoordinates(dest.coordinates);
+                              }}
+                              data-testid={`recent-dest-${dest.id}`}
+                            >
+                              <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">{dest.label}</div>
+                                <div className="text-xs text-muted-foreground truncate">{dest.formattedAddress}</div>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Quick POI Search - Integrated into Plan Tab */}
                     <div className="space-y-3 pt-2">
                       <Separator />

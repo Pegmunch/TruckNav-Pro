@@ -4123,7 +4123,7 @@ function NavigationPageContent() {
           queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
         }}
         coordinates={currentGPSLocation}
-        hideTabsInInputMode={false}
+        hideTabsInInputMode={showComprehensiveMenu}
       />
 
       {/* Quick Settings Panel - Green gear button opens this */}
