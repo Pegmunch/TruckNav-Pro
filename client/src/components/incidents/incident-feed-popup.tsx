@@ -60,7 +60,7 @@ const IncidentFeedPopup = memo(function IncidentFeedPopup({
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ 
     x: typeof window !== 'undefined' ? (window.innerWidth / 2 - 125) : 100,
-    y: typeof window !== 'undefined' ? (window.innerHeight / 2 - 150) : 100
+    y: typeof window !== 'undefined' ? (window.innerHeight * 0.6 - 100) : 200
   });
   const dragRef = useRef<HTMLDivElement>(null);
   
