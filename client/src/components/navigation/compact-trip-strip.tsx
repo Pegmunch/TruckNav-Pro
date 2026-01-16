@@ -223,7 +223,7 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStart}
                 disabled={isPreviewActive}
-                className="h-3 px-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[7px] active:scale-95 transition-all disabled:opacity-40 rounded-l-full shadow-sm flex items-center justify-center"
+                className="h-2 px-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[6px] active:scale-95 transition-all disabled:opacity-40 rounded-l-full shadow-sm flex items-center justify-center leading-none"
                 style={{ touchAction: 'manipulation', minWidth: '42px' }}
                 data-testid="button-preview-start"
               >
@@ -232,7 +232,7 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStop}
                 disabled={!isPreviewActive}
-                className="h-3 px-1.5 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[7px] active:scale-95 transition-all disabled:opacity-40 rounded-r-full shadow-sm flex items-center justify-center"
+                className="h-2 px-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[6px] active:scale-95 transition-all disabled:opacity-40 rounded-r-full shadow-sm flex items-center justify-center leading-none"
                 style={{ touchAction: 'manipulation', minWidth: '32px' }}
                 data-testid="button-preview-stop"
               >
