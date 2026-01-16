@@ -495,43 +495,49 @@ function ComprehensiveMobileMenu({
     setPoiSearchEnabled(true);
   }, [fromCoordinates, gpsCoordinates, gps]);
 
-  // CRITICAL FIX: Fully unmount the Dialog when closed to remove Radix overlay from DOM
-  // This prevents the "glass overlay" blocking issue on iOS Safari where the invisible
-  // overlay remains mounted and captures all touch events after navigation stops
-  // CRITICAL: Early return when closed to ensure complete unmounting
-  // This prevents Radix dialog overlay from blocking touch events on iOS Safari
-  if (!open) return null;
+  // CRITICAL FIX: Use simple fixed div instead of Radix Dialog to avoid iOS Safari portal issues
+  // The Radix Dialog portal can cause invisible overlays that block touch events
+  if (!open) {
+    console.log('[MOBILE-MENU] Menu closed - returning null for complete unmount');
+    return null;
+  }
+
+  console.log('[MOBILE-MENU] 🟢 Menu is OPEN - rendering full-screen menu');
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="max-w-full w-full h-[100vh] p-0 gap-0 bg-white dark:bg-gray-950 flex flex-col !z-[200000] pointer-events-auto" 
-        data-testid="comprehensive-mobile-menu"
-        overlayZIndex={199999}
-        onInteractOutside={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
-      >
-          {/* Header */}
-          <DialogHeader className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0 relative z-10">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-lg font-semibold">Menu</DialogTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="h-8 w-8"
-                aria-label="Close menu"
-                data-testid="button-close-menu"
-              >
-                <X className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">Close menu</span>
-              </Button>
-            </div>
-            <DialogDescription className="sr-only">
-              Comprehensive menu for route planning, destinations, vehicle profiles, theme settings, and tools
-            </DialogDescription>
-          </DialogHeader>
+    {/* Full-screen fixed menu - bypasses Radix Dialog portal issues on iOS Safari */}
+    <div 
+      className="fixed inset-0 z-[200000] bg-white dark:bg-gray-950 flex flex-col pointer-events-auto"
+      style={{ 
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)'
+      }}
+      data-testid="comprehensive-mobile-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-menu-title"
+    >
+      {/* Header */}
+      <div className="px-4 py-3 border-b bg-white dark:bg-gray-950 flex-shrink-0 relative z-10">
+        <div className="flex items-center justify-between">
+          <h2 id="mobile-menu-title" className="text-lg font-semibold">Menu</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              console.log('[MOBILE-MENU] Close button clicked');
+              onOpenChange(false);
+            }}
+            className="h-8 w-8"
+            aria-label="Close menu"
+            data-testid="button-close-menu"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Close menu</span>
+          </Button>
+        </div>
+      </div>
 
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
@@ -1531,8 +1537,7 @@ function ComprehensiveMobileMenu({
               </TabsContent>
             </ScrollArea>
           </Tabs>
-        </DialogContent>
-      </Dialog>
+    </div>
 
       {/* Sub-Modals */}
       {showVehicleSetup && (

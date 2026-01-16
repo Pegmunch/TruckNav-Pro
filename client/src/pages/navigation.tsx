@@ -4085,41 +4085,39 @@ function NavigationPageContent() {
         }}
       />
 
-      {/* Comprehensive Mobile Menu - CRITICAL: Conditional wrapper for iOS Safari overlay fix */}
-      {showComprehensiveMenu && (
-        <ComprehensiveMobileMenu
-          open={showComprehensiveMenu}
-          onOpenChange={setShowComprehensiveMenu}
-          onFromLocationChange={setFromLocation}
-          onToLocationChange={setToLocation}
-          onPlanRoute={handlePlanRoute}
-          onStartNavigation={handleStartNavigation}
-          onStopNavigation={handleStopNavigation}
-          currentRoute={currentRoute}
-          isCalculating={calculateRouteMutation.isPending}
-          isNavigating={isNavigating}
-          resetTrigger={menuResetTrigger}
-          onRequestAutoNavigation={() => {
-            console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
-            setShouldAutoNavigateOnMobile(true);
-            // Show navigation controls immediately
-            setShowNavControls(true);
-            // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
-            // DON'T set isLocalNavActive yet - let user choose to start navigation
-            setIsShowingPreview(true);
-            localStorage.setItem('navigation_mode', 'route_ready');
-            localStorage.setItem('navigation_timestamp', Date.now().toString());
-          }}
-          selectedProfile={selectedProfile}
-          onProfileSelect={(profile) => {
-            setSelectedProfile(profile);
-            setActiveProfile(profile);
-            queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
-          }}
-          coordinates={currentGPSLocation}
-          hideTabsInInputMode={showComprehensiveMenu}
-        />
-      )}
+      {/* Comprehensive Mobile Menu - Uses internal early return for iOS Safari fix */}
+      <ComprehensiveMobileMenu
+        open={showComprehensiveMenu}
+        onOpenChange={setShowComprehensiveMenu}
+        onFromLocationChange={setFromLocation}
+        onToLocationChange={setToLocation}
+        onPlanRoute={handlePlanRoute}
+        onStartNavigation={handleStartNavigation}
+        onStopNavigation={handleStopNavigation}
+        currentRoute={currentRoute}
+        isCalculating={calculateRouteMutation.isPending}
+        isNavigating={isNavigating}
+        resetTrigger={menuResetTrigger}
+        onRequestAutoNavigation={() => {
+          console.log('[GO-BUTTON] Mobile GO pressed - showing route ready state with Preview/Start buttons');
+          setShouldAutoNavigateOnMobile(true);
+          // Show navigation controls immediately
+          setShowNavControls(true);
+          // Show Preview mode so user can choose Preview (flyby) or Start (navigation)
+          // DON'T set isLocalNavActive yet - let user choose to start navigation
+          setIsShowingPreview(true);
+          localStorage.setItem('navigation_mode', 'route_ready');
+          localStorage.setItem('navigation_timestamp', Date.now().toString());
+        }}
+        selectedProfile={selectedProfile}
+        onProfileSelect={(profile) => {
+          setSelectedProfile(profile);
+          setActiveProfile(profile);
+          queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+        }}
+        coordinates={currentGPSLocation}
+        hideTabsInInputMode={showComprehensiveMenu}
+      />
 
       {/* Quick Settings Panel - Green gear button opens this */}
       {/* CRITICAL: Conditional wrapper for iOS Safari overlay fix */}
