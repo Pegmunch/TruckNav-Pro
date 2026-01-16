@@ -48,7 +48,6 @@ import {
   Store,
   ShoppingCart,
   Users,
-  Crosshair,
   Download,
   HelpCircle
 } from "lucide-react";
@@ -85,6 +84,7 @@ import { useOnboarding } from "@/components/onboarding/onboarding-provider";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { useDestinationHistory } from "@/hooks/use-destination-history";
 import { Tabs as RouteTabs, TabsList as RouteTabsList, TabsTrigger as RouteTabsTrigger } from "@/components/ui/tabs";
+import { useAddressDictation } from "@/hooks/use-address-dictation";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -187,112 +187,56 @@ function ComprehensiveMobileMenu({
     window.location.reload();
   };
   
-  // GPS location fill state
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  // State to force open the From dropdown after GPS location is obtained
+  // State to force open the From dropdown after voice dictation
   const [forceOpenFromDropdown, setForceOpenFromDropdown] = useState(false);
   
-  // Dropdown positioning is handled by Radix Popover which automatically
-  // handles scroll/resize and portal rendering
-  
-  // Handler to get current GPS location and fill the "From" field via TomTom reverse geocode
-  const handleFillCurrentLocation = useCallback(async () => {
-    if (isGettingLocation) return;
-    
-    setIsGettingLocation(true);
-    
-    try {
-      // Get current GPS position with proper error handling
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('GPS not available on this device'));
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          resolve, 
-          (error: GeolocationPositionError) => {
-            // Convert GeolocationPositionError to Error with meaningful message
-            let message = 'Could not get location';
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                message = 'Location permission denied. Please enable location access in your device settings.';
-                break;
-              case error.POSITION_UNAVAILABLE:
-                message = 'Location unavailable. Please ensure location services are enabled.';
-                break;
-              case error.TIMEOUT:
-                message = 'Location request timed out. Please try again or type an address manually.';
-                break;
-            }
-            reject(new Error(message));
-          }, 
-          {
-            enableHighAccuracy: false, // Use network-based location for faster response
-            timeout: 10000,
-            maximumAge: 300000 // Allow 5-minute old positions for faster response
-          }
-        );
-      });
-      
-      const { latitude, longitude } = position.coords;
-      
-      // Use TomTom reverse geocode API
-      const apiKey = import.meta.env.VITE_TOMTOM_API_KEY;
-      if (!apiKey) {
-        throw new Error('Location service not configured');
+  // Voice dictation for address input
+  const [activeDictationField, setActiveDictationField] = useState<'from' | 'to' | null>(null);
+  const { 
+    isSupported: voiceSupported,
+    isListening,
+    interimTranscript,
+    startListening: startVoiceDictation,
+    stopListening: stopVoiceDictation 
+  } = useAddressDictation({
+    lang: 'en-GB',
+    timeout: 8000,
+    onFinalResult: (transcript) => {
+      console.log('[VOICE-DICTATION] Final result for field:', activeDictationField, 'transcript:', transcript);
+      if (activeDictationField === 'from') {
+        setFromInput(transcript);
+        onFromLocationChange(transcript);
+        // Force open the dropdown to show autocomplete suggestions
+        setForceOpenFromDropdown(true);
+      } else if (activeDictationField === 'to') {
+        setToInput(transcript);
+        onToLocationChange(transcript);
       }
-      
-      // Safely encode coordinates for URL
-      const lat = encodeURIComponent(latitude.toFixed(6));
-      const lon = encodeURIComponent(longitude.toFixed(6));
-      
-      const response = await fetch(
-        `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lon}.json?key=${encodeURIComponent(apiKey)}&radius=100`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to find address for location');
+      setActiveDictationField(null);
+    },
+    onError: (error) => {
+      console.error('[VOICE-DICTATION] Error:', error);
+      setActiveDictationField(null);
+    },
+    onStateChange: (state) => {
+      console.log('[VOICE-DICTATION] State changed to:', state);
+      if (state === 'idle' || state === 'error') {
+        setActiveDictationField(null);
       }
-      
-      const data = await response.json();
-      
-      if (data.addresses && data.addresses.length > 0) {
-        const address = data.addresses[0].address;
-        // Prefer postcode + municipality for UK addresses, or freeformAddress
-        let displayAddress = '';
-        
-        if (address.postalCode) {
-          displayAddress = address.postalCode;
-          if (address.municipality) {
-            displayAddress += `, ${address.municipality}`;
-          }
-        } else if (address.freeformAddress) {
-          displayAddress = address.freeformAddress;
-        } else if (address.municipality) {
-          displayAddress = address.municipality;
-        }
-        
-        if (displayAddress) {
-          // Store coordinates FIRST for location-biased search
-          setFromCoordinates({ lat: latitude, lng: longitude });
-          // Use just the postcode as search term to trigger autocomplete choices
-          // This mimics typing a postcode - shows multiple address options
-          const searchTerm = address.postalCode || displayAddress;
-          setFromInput(searchTerm);
-          // Force open the dropdown to show address choices from this location
-          setForceOpenFromDropdown(true);
-        } else {
-          throw new Error('Could not determine address');
-        }
-      } else {
-        throw new Error('No address found for this location');
-      }
-    } catch (error) {
-      console.error('GPS location error:', error);
-    } finally {
-      setIsGettingLocation(false);
     }
-  }, [isGettingLocation, onFromLocationChange]);
+  });
+  
+  // Handle voice dictation button click
+  const handleVoiceDictation = useCallback(() => {
+    if (isListening) {
+      stopVoiceDictation();
+      setActiveDictationField(null);
+    } else {
+      console.log('[VOICE-DICTATION] Starting dictation for From field');
+      setActiveDictationField('from');
+      startVoiceDictation();
+    }
+  }, [isListening, startVoiceDictation, stopVoiceDictation]);
   
   // Get GPS coordinates for location-biased search
   const gpsCoordinates = gps?.position ? {
@@ -627,21 +571,33 @@ function ComprehensiveMobileMenu({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={handleFillCurrentLocation}
-                        disabled={isGettingLocation}
-                        className="h-8 w-8 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
-                        data-testid="button-gps-fill-location"
-                        title="Use current location"
+                        onClick={handleVoiceDictation}
+                        disabled={!voiceSupported}
+                        className={cn(
+                          "h-8 w-8 rounded-full transition-colors",
+                          isListening 
+                            ? "bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 animate-pulse" 
+                            : "bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700"
+                        )}
+                        data-testid="button-voice-dictation"
+                        title={isListening ? "Listening... tap to stop" : "Speak your address"}
                       >
-                        {isGettingLocation ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                        {isListening ? (
+                          <Mic className="h-4 w-4" />
                         ) : (
-                          <Crosshair className="h-4 w-4" />
+                          <Mic className="h-4 w-4" />
                         )}
                       </Button>
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Enter your start and destination
+                      {isListening && activeDictationField === 'from' ? (
+                        <span className="text-red-600 font-medium">
+                          Listening... speak your starting address
+                          {interimTranscript && <span className="block text-gray-500 italic mt-1">"{interimTranscript}"</span>}
+                        </span>
+                      ) : (
+                        "Enter your start and destination"
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
