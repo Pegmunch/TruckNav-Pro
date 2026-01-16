@@ -922,15 +922,15 @@ function ComprehensiveMobileMenu({
 
               {/* DESTINATIONS TAB */}
               <TabsContent value="destinations" className="p-4 space-y-4 mt-0">
-                {/* POI Suggestions at Top */}
+                {/* Recent Destinations & POI Search */}
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-purple-500" />
-                      Quick POI Search
+                      <History className="h-4 w-4 text-purple-500" />
+                      Recent Destinations
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Find nearby truck-friendly locations
+                      Your saved destinations and nearby POI search
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
