@@ -697,7 +697,7 @@ function NavigationPageContent() {
       console.log('[NAV-OVERLAY] 🧹 Closing overlays via event');
       setShowComprehensiveMenu(false);
       setShowQuickSettings(false);
-      setShowSettingsModal(false);
+      setShowVehicleSettings(false);
       setShowIncidentFeed(false);
       setIsAlternativeRoutesOpen(false);
     };
@@ -1809,6 +1809,17 @@ function NavigationPageContent() {
     },
     onSuccess: (journey) => {
       // Journey starts as 'planned', will be activated by the navigation flow
+      
+      // CRITICAL: Increment session counter ONLY when journey successfully starts
+      // This is the definitive moment when a new navigation session begins
+      // Any pending completion callbacks from previous sessions will now be stale
+      navigationSessionRef.current++;
+      console.log('[NAV-SESSION] New session started:', navigationSessionRef.current, 'for journey:', journey?.id);
+      
+      // Update journey ID ref synchronously
+      if (journey?.id) {
+        currentJourneyIdRef.current = journey.id;
+      }
     },
     onError: (error) => {
       console.error('Failed to start journey:', error);
@@ -2679,10 +2690,8 @@ function NavigationPageContent() {
         return;
       }
       
-      // CRITICAL: Increment session counter ONLY AFTER route is ready
-      // This ensures valid completions still work if route acquisition fails
-      navigationSessionRef.current++;
-      console.log('[NAV-GO] New session after route ready:', navigationSessionRef.current);
+      // NOTE: Session counter is incremented in startJourneyMutation.onSuccess
+      // This ensures session only changes when journey actually starts successfully
       
       // CRITICAL: Persist route to state so component receives valid route
       setCurrentRoute(route);
