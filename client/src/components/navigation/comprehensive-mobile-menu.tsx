@@ -560,7 +560,7 @@ function ComprehensiveMobileMenu({
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
             {!hideTabsInInputMode && (
-              <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0">
+              <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0" tabIndex={-1}>
                 <TabsTrigger 
                   value="plan" 
                   className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
