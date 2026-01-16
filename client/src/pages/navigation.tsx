@@ -2434,14 +2434,14 @@ function NavigationPageContent() {
       return;
     }
     
-    console.log('[PREVIEW] Starting fly-by route preview at 20x speed');
+    console.log('[PREVIEW] Starting fly-by route preview at 40x speed');
     setIsShowingPreview(true);
     setIsFlyByInProgress(true);
     
     // Trigger fly-by animation via map ref
     if (mapRef.current) {
       mapRef.current.flyByRoute(currentRoute.routePath!, {
-        speedMultiplier: 20,
+        speedMultiplier: 40,
         onComplete: () => {
           console.log('[PREVIEW] Fly-by animation complete - zooming to full route bounds');
           setIsFlyByInProgress(false);
