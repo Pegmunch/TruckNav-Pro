@@ -219,12 +219,12 @@ export function CompactTripStrip({
             </Button>
           )}
           {!isNavigating && (
-            <div className="flex flex-row gap-2 items-center">
+            <div className="flex flex-row items-center gap-0.5">
               <button
                 onClick={onPreviewStart}
                 disabled={isPreviewActive}
-                className="h-5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-full shadow-sm flex items-center justify-center"
-                style={{ touchAction: 'manipulation', minWidth: '52px' }}
+                className="h-6 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] active:scale-95 transition-all disabled:opacity-40 rounded-l-full shadow-sm flex items-center justify-center"
+                style={{ touchAction: 'manipulation', minWidth: '56px' }}
                 data-testid="button-preview-start"
               >
                 Preview
@@ -232,8 +232,8 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStop}
                 disabled={!isPreviewActive}
-                className="h-5 px-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-full shadow-sm flex items-center justify-center"
-                style={{ touchAction: 'manipulation', minWidth: '40px' }}
+                className="h-6 px-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[11px] active:scale-95 transition-all disabled:opacity-40 rounded-r-full shadow-sm flex items-center justify-center"
+                style={{ touchAction: 'manipulation', minWidth: '44px' }}
                 data-testid="button-preview-stop"
               >
                 Stop
