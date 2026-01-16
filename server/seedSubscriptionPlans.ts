@@ -72,10 +72,10 @@ async function seedSubscriptionPlans() {
       isActive: true,
     },
     {
-      name: "Small Fleet Annual",
-      stripePriceId: "price_fleet_small_annual_test",
-      priceGBP: "2000.00",
-      durationMonths: 12,
+      name: "Small Fleet Monthly",
+      stripePriceId: "price_fleet_small_monthly_test",
+      priceGBP: "250.00",
+      durationMonths: 1,
       isLifetime: false,
       category: "fleet_management",
       features: [
@@ -91,10 +91,10 @@ async function seedSubscriptionPlans() {
       isActive: true,
     },
     {
-      name: "Large Fleet Annual",
-      stripePriceId: "price_fleet_large_annual_test",
-      priceGBP: "3500.00",
-      durationMonths: 12,
+      name: "Large Fleet Monthly",
+      stripePriceId: "price_fleet_large_monthly_test",
+      priceGBP: "350.00",
+      durationMonths: 1,
       isLifetime: false,
       category: "fleet_management",
       features: [
@@ -149,8 +149,8 @@ async function seedSubscriptionPlans() {
     console.log(`   - 12 Months: £99.00`);
     console.log(`   - Lifetime: £200.00`);
     console.log("\n📊 Fleet Management Summary:");
-    console.log(`   - Small Fleet Annual (up to 30 lorries): £2000.00/year`);
-    console.log(`   - Large Fleet Annual (30+ lorries): £3500.00/year`);
+    console.log(`   - Small Fleet Monthly (up to 30 lorries): £250.00/month`);
+    console.log(`   - Large Fleet Monthly (30+ lorries): £350.00/month`);
     console.log(`   - Lifetime: £10000.00`);
 
     const allPlans = await db.select().from(subscriptionPlans);
