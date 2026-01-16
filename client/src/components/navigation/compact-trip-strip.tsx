@@ -154,7 +154,6 @@ export function CompactTripStrip({
         'border-b-2 border-blue-500 shadow-md',
         'flex flex-col gap-1',
         'pointer-events-auto',
-        'lg:hidden',
         className
       )}
       style={{ 
