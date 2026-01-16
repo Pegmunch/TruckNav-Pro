@@ -191,7 +191,9 @@ function ComprehensiveMobileMenu({
   const [forceOpenFromDropdown, setForceOpenFromDropdown] = useState(false);
   
   // Voice dictation for address input
+  // Flow: Press mic button → tap input field → speak → text fills that field
   const [activeDictationField, setActiveDictationField] = useState<'from' | 'to' | null>(null);
+  const [isVoiceModeActive, setIsVoiceModeActive] = useState(false); // Mic button pressed, waiting for field selection
   const { 
     isSupported: voiceSupported,
     isListening,
@@ -200,7 +202,7 @@ function ComprehensiveMobileMenu({
     stopListening: stopVoiceDictation 
   } = useAddressDictation({
     lang: 'en-GB',
-    timeout: 8000,
+    timeout: 10000,
     onFinalResult: (transcript) => {
       console.log('[VOICE-DICTATION] Final result for field:', activeDictationField, 'transcript:', transcript);
       if (activeDictationField === 'from') {
@@ -212,31 +214,52 @@ function ComprehensiveMobileMenu({
         setToInput(transcript);
         onToLocationChange(transcript);
       }
+      // Reset voice mode after successful dictation
       setActiveDictationField(null);
+      setIsVoiceModeActive(false);
     },
     onError: (error) => {
       console.error('[VOICE-DICTATION] Error:', error);
       setActiveDictationField(null);
+      setIsVoiceModeActive(false);
     },
     onStateChange: (state) => {
       console.log('[VOICE-DICTATION] State changed to:', state);
       if (state === 'idle' || state === 'error') {
-        setActiveDictationField(null);
+        // Only reset field selection, keep voice mode active if user hasn't spoken yet
+        if (activeDictationField) {
+          setActiveDictationField(null);
+        }
       }
     }
   });
   
-  // Handle voice dictation button click
+  // Handle voice dictation button click - toggles voice input mode
   const handleVoiceDictation = useCallback(() => {
     if (isListening) {
+      // Stop current dictation
       stopVoiceDictation();
       setActiveDictationField(null);
+      setIsVoiceModeActive(false);
+    } else if (isVoiceModeActive) {
+      // Cancel voice mode
+      setIsVoiceModeActive(false);
+      setActiveDictationField(null);
     } else {
-      console.log('[VOICE-DICTATION] Starting dictation for From field');
-      setActiveDictationField('from');
+      // Activate voice mode - waiting for user to tap a field
+      console.log('[VOICE-DICTATION] Voice mode activated - tap an input field');
+      setIsVoiceModeActive(true);
+    }
+  }, [isListening, isVoiceModeActive, stopVoiceDictation]);
+  
+  // Handle input field tap when voice mode is active
+  const handleFieldTapForVoice = useCallback((field: 'from' | 'to') => {
+    if (isVoiceModeActive && !isListening) {
+      console.log('[VOICE-DICTATION] Starting dictation for field:', field);
+      setActiveDictationField(field);
       startVoiceDictation();
     }
-  }, [isListening, startVoiceDictation, stopVoiceDictation]);
+  }, [isVoiceModeActive, isListening, startVoiceDictation]);
   
   // Get GPS coordinates for location-biased search
   const gpsCoordinates = gps?.position ? {
@@ -577,23 +600,25 @@ function ComprehensiveMobileMenu({
                           "h-8 w-8 rounded-full transition-colors",
                           isListening 
                             ? "bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 animate-pulse" 
+                            : isVoiceModeActive
+                            ? "bg-orange-100 hover:bg-orange-200 text-orange-600 hover:text-orange-700 animate-pulse"
                             : "bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700"
                         )}
                         data-testid="button-voice-dictation"
-                        title={isListening ? "Listening... tap to stop" : "Speak your address"}
+                        title={isListening ? "Listening... tap to stop" : isVoiceModeActive ? "Tap an input field" : "Voice input"}
                       >
-                        {isListening ? (
-                          <Mic className="h-4 w-4" />
-                        ) : (
-                          <Mic className="h-4 w-4" />
-                        )}
+                        <Mic className="h-4 w-4" />
                       </Button>
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      {isListening && activeDictationField === 'from' ? (
+                      {isListening ? (
                         <span className="text-red-600 font-medium">
-                          Listening... speak your starting address
+                          Listening... speak your {activeDictationField === 'from' ? 'starting' : 'destination'} address
                           {interimTranscript && <span className="block text-gray-500 italic mt-1">"{interimTranscript}"</span>}
+                        </span>
+                      ) : isVoiceModeActive ? (
+                        <span className="text-orange-600 font-medium">
+                          Tap the From or To box to speak
                         </span>
                       ) : (
                         "Enter your start and destination"
@@ -602,8 +627,19 @@ function ComprehensiveMobileMenu({
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* From Location with AddressAutocomplete - Simple input without search options */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">From</Label>
+                    <div 
+                      className={cn(
+                        "space-y-2 rounded-lg p-2 -m-2 transition-all",
+                        isVoiceModeActive && !isListening && "ring-2 ring-orange-400 ring-offset-2 cursor-pointer bg-orange-50/50",
+                        activeDictationField === 'from' && isListening && "ring-2 ring-red-400 ring-offset-2 bg-red-50/50"
+                      )}
+                      onClick={() => handleFieldTapForVoice('from')}
+                    >
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        From
+                        {isVoiceModeActive && !isListening && <span className="text-orange-600 text-xs">(tap to speak)</span>}
+                        {activeDictationField === 'from' && isListening && <Mic className="h-3 w-3 text-red-600 animate-pulse" />}
+                      </Label>
                       <AddressAutocomplete
                         id="from-input-menu"
                         value={fromInput}
@@ -620,15 +656,27 @@ function ComprehensiveMobileMenu({
                         placeholder="Search for address, postcode, or POI..."
                         testId="input-from-location"
                         showSearchTypeToggles={false}
+                        hideGPSButton={true}
                         forceOpen={forceOpenFromDropdown}
                         onForceOpenConsumed={() => setForceOpenFromDropdown(false)}
                       />
                     </div>
 
                     {/* To Location with AddressAutocomplete */}
-                    <div className="space-y-2">
+                    <div 
+                      className={cn(
+                        "space-y-2 rounded-lg p-2 -m-2 transition-all",
+                        isVoiceModeActive && !isListening && "ring-2 ring-orange-400 ring-offset-2 cursor-pointer bg-orange-50/50",
+                        activeDictationField === 'to' && isListening && "ring-2 ring-red-400 ring-offset-2 bg-red-50/50"
+                      )}
+                      onClick={() => handleFieldTapForVoice('to')}
+                    >
                       <Label className="text-sm font-medium flex items-center justify-between">
-                        <span>To</span>
+                        <span className="flex items-center gap-2">
+                          To
+                          {isVoiceModeActive && !isListening && <span className="text-orange-600 text-xs">(tap to speak)</span>}
+                          {activeDictationField === 'to' && isListening && <Mic className="h-3 w-3 text-red-600 animate-pulse" />}
+                        </span>
                         <Button
                           variant="default"
                           size="sm"
