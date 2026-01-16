@@ -204,13 +204,13 @@ export function CompactTripStrip({
         )}
         
         {/* Right: Action buttons - positioned slightly left */}
-        <div className="flex items-center gap-1 flex-shrink-0 mr-2">
+        <div className="flex items-center gap-1 flex-shrink-0 mr-4">
           {isNavigating && onCancelNavigation && (
             <Button
               onClick={onCancelNavigation}
               size="sm"
               disabled={isCancellingNavigation}
-              className="h-6 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
+              className="h-5 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[9px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
               style={{ touchAction: 'manipulation' }}
               data-testid="button-cancel-navigation"
             >
@@ -223,8 +223,8 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStart}
                 disabled={isPreviewActive}
-                className="h-6 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] active:scale-95 transition-all disabled:opacity-40 rounded-l-full shadow-sm flex items-center justify-center"
-                style={{ touchAction: 'manipulation', minWidth: '56px' }}
+                className="h-5 px-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[9px] active:scale-95 transition-all disabled:opacity-40 rounded-l-full shadow-sm flex items-center justify-center"
+                style={{ touchAction: 'manipulation', minWidth: '48px' }}
                 data-testid="button-preview-start"
               >
                 Preview
@@ -232,8 +232,8 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStop}
                 disabled={!isPreviewActive}
-                className="h-6 px-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[11px] active:scale-95 transition-all disabled:opacity-40 rounded-r-full shadow-sm flex items-center justify-center"
-                style={{ touchAction: 'manipulation', minWidth: '44px' }}
+                className="h-5 px-2 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[9px] active:scale-95 transition-all disabled:opacity-40 rounded-r-full shadow-sm flex items-center justify-center"
+                style={{ touchAction: 'manipulation', minWidth: '36px' }}
                 data-testid="button-preview-stop"
               >
                 Stop
