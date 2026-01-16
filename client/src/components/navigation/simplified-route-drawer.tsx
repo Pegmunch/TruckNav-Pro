@@ -1,4 +1,4 @@
-import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin, Clock, X } from 'lucide-react';
+import { Crosshair, CheckCircle, AlertCircle, Loader2, Navigation, ShoppingCart, UtensilsCrossed, Fuel, Store, MapPin, Clock, X, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -339,11 +339,11 @@ export function SimplifiedRouteDrawer({
           size="lg"
           {...createTouchHandler(onPlanRoute, 'GO-ROUTE-FOOTER')}
           disabled={!fromLocation || !toLocation || !activeProfileId}
-          className="w-full h-14 bg-green-600 hover:bg-green-700 active:bg-green-800 active:scale-95 text-white text-lg font-bold shadow-lg flex items-center justify-center gap-3 select-none touch-manipulation"
+          className="w-full h-14 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white text-lg font-bold shadow-lg flex items-center justify-center gap-3 select-none touch-manipulation"
           style={{ touchAction: 'manipulation' }}
         >
-          <Navigation className="w-6 h-6" />
-          GO
+          <Map className="w-6 h-6" />
+          Preview
         </Button>
       </div>
     </div>

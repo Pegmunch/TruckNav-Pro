@@ -702,7 +702,7 @@ function ComprehensiveMobileMenu({
                           variant="default"
                           size="sm"
                           onClick={() => {
-                            console.log('[GO-BUTTON] Clicked - closing menu and starting route calculation');
+                            console.log('[PREVIEW-BUTTON] Clicked - closing menu and starting route calculation');
                             // Request auto-navigation on mobile after route calculation
                             onRequestAutoNavigation?.();
                             // Close menu immediately so user sees the map
@@ -711,11 +711,11 @@ function ComprehensiveMobileMenu({
                             onPlanRoute();
                           }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
-                          className="h-8 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold"
-                          data-testid="button-go-route"
+                          className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                          data-testid="button-preview-route"
                         >
-                          <Navigation className="h-4 w-4 mr-1" />
-                          GO
+                          <Map className="h-4 w-4 mr-1" />
+                          Preview
                         </Button>
                       </Label>
                       <AddressAutocomplete
@@ -842,7 +842,7 @@ function ComprehensiveMobileMenu({
                       </div>
                     )}
 
-                    {/* Find Route Button - Shows when locations entered but route not calculated */}
+                    {/* Preview Route Button - Shows when locations entered but route not calculated */}
                     {!currentRoute && fromInput && toInput && selectedProfile && (
                       <Button
                         onClick={async () => {
@@ -851,8 +851,8 @@ function ComprehensiveMobileMenu({
                           await onPlanRoute();
                         }}
                         disabled={isCalculating}
-                        className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
-                        data-testid="button-find-route"
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                        data-testid="button-preview-route-bottom"
                       >
                         {isCalculating ? (
                           <>
@@ -861,8 +861,8 @@ function ComprehensiveMobileMenu({
                           </>
                         ) : (
                           <>
-                            <Navigation className="h-5 w-5 mr-2" />
-                            Find Route
+                            <Map className="h-5 w-5 mr-2" />
+                            Preview
                           </>
                         )}
                       </Button>
