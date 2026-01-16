@@ -3663,7 +3663,12 @@ function NavigationPageContent() {
                       isVisible={showNavControls}
                       hideIncidents={false}
                       hideCompass={true}
-                      hide3D={true}
+                      hide3D={false}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      is3DMode={mapControlState.is3DMode}
                     />
                   }
                   bottomBar={
