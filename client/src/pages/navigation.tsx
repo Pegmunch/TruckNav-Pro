@@ -4271,7 +4271,7 @@ function NavigationPageContent() {
       {/* Voice Navigation Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showVoiceNavTool && (
       <Dialog open={showVoiceNavTool} onOpenChange={setShowVoiceNavTool}>
-        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white text-gray-900 top-[60%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white text-gray-900 top-[70%] translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Voice Navigation</DialogTitle>
           </DialogHeader>
@@ -4285,7 +4285,7 @@ function NavigationPageContent() {
       {/* Fuel Prices Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showFuelPricesTool && (
       <Dialog open={showFuelPricesTool} onOpenChange={setShowFuelPricesTool}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto bg-white text-gray-900 top-[60%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto bg-white text-gray-900 top-[70%] translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Fuel Price Comparison</DialogTitle>
           </DialogHeader>
@@ -4299,7 +4299,7 @@ function NavigationPageContent() {
       {/* Driver Fatigue Monitor Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showFatigueMonitorTool && (
       <Dialog open={showFatigueMonitorTool} onOpenChange={setShowFatigueMonitorTool}>
-        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white text-gray-900 top-[60%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white text-gray-900 top-[70%] translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Driver Fatigue Monitor</DialogTitle>
           </DialogHeader>
@@ -4313,7 +4313,7 @@ function NavigationPageContent() {
       {/* Region Settings Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showRegionSettingsTool && (
       <Dialog open={showRegionSettingsTool} onOpenChange={setShowRegionSettingsTool}>
-        <DialogContent className="sm:max-w-md bg-white text-gray-900 top-[60%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-md bg-white text-gray-900 top-[70%] translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Region & Speed Limit Sign</DialogTitle>
             <DialogDescription className="text-gray-600">
@@ -4331,7 +4331,7 @@ function NavigationPageContent() {
       {/* Language Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showLanguageTool && (
       <Dialog open={showLanguageTool} onOpenChange={setShowLanguageTool}>
-        <DialogContent className="sm:max-w-md bg-white text-gray-900 top-[60%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-md bg-white text-gray-900 top-[70%] translate-y-[-50%]">
           <DialogHeader>
             <DialogTitle className="text-gray-900">Language / Idioma / Sprache</DialogTitle>
             <DialogDescription className="text-gray-600">
