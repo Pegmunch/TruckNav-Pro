@@ -1,4 +1,4 @@
-import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX, ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, ChevronRight, X, Gauge } from 'lucide-react';
+import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX, ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, ChevronRight, X, Gauge, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { Button } from '@/components/ui/button';
@@ -219,27 +219,28 @@ export function CompactTripStrip({
             </Button>
           )}
           {!isNavigating && (
-            <div className="flex flex-row rounded overflow-hidden shadow-sm">
-              <Button
+            <div className="flex flex-row gap-1">
+              <button
                 onClick={onPreviewStart}
-                size="sm"
                 disabled={isPreviewActive}
-                className="h-5 px-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[9px] active:scale-95 transition-transform disabled:opacity-50 rounded-l rounded-r-none border-r border-white/30"
+                className="h-5 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] active:scale-95 transition-all disabled:opacity-50 rounded-full shadow-sm flex items-center gap-0.5"
                 style={{ touchAction: 'manipulation' }}
                 data-testid="button-preview-start"
               >
+                <Eye className="w-3 h-3" />
                 Preview
-              </Button>
-              <Button
-                onClick={onPreviewStop}
-                size="sm"
-                disabled={!isPreviewActive}
-                className="h-5 px-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[9px] active:scale-95 transition-transform disabled:opacity-50 rounded-r rounded-l-none"
-                style={{ touchAction: 'manipulation' }}
-                data-testid="button-preview-stop"
-              >
-                Stop
-              </Button>
+              </button>
+              {isPreviewActive && (
+                <button
+                  onClick={onPreviewStop}
+                  className="h-5 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] active:scale-95 transition-all rounded-full shadow-sm flex items-center gap-0.5"
+                  style={{ touchAction: 'manipulation' }}
+                  data-testid="button-preview-stop"
+                >
+                  <X className="w-3 h-3" />
+                  Stop
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -2434,14 +2434,14 @@ function NavigationPageContent() {
       return;
     }
     
-    console.log('[PREVIEW] Starting fly-by route preview at 10x speed');
+    console.log('[PREVIEW] Starting fly-by route preview at 20x speed');
     setIsShowingPreview(true);
     setIsFlyByInProgress(true);
     
     // Trigger fly-by animation via map ref
     if (mapRef.current) {
       mapRef.current.flyByRoute(currentRoute.routePath!, {
-        speedMultiplier: 10,
+        speedMultiplier: 20,
         onComplete: () => {
           console.log('[PREVIEW] Fly-by animation complete - zooming to full route bounds');
           setIsFlyByInProgress(false);
@@ -2675,6 +2675,14 @@ function NavigationPageContent() {
     }
     
     try {
+      // CRITICAL: Cancel any active fly-by animation to prevent camera conflicts
+      if (mapRef.current) {
+        mapRef.current.cancelFlyBy();
+        console.log('[NAV-ACTIVATION] ✅ Cancelled any active fly-by animation');
+      }
+      setIsFlyByInProgress(false);
+      setIsShowingPreview(false);
+      
       performance.mark('route-ready-check-start');
       console.log('[NAV-ACTIVATION] Step 1: Ensure route exists');
       // Use centralized route acquisition to ensure route exists atomically
@@ -2700,23 +2708,9 @@ function NavigationPageContent() {
       // NOTE: Navigation state will be automatically derived by navSession hook
       // after journey is created/activated - no need to manually set states
       
-      // Force zoom to navigation level regardless of GPS status
-      if (mapRef.current && (fromCoordinates || toCoordinates)) {
-        const zoomTarget = fromCoordinates || toCoordinates;
-        if (zoomTarget) {
-          console.log('[NAV-ACTIVATION] 🎯 Forcing navigation zoom to:', zoomTarget);
-          // Use zoomToUserLocation with fallback coordinates for consistent API
-          // Navigation view: TomTom GO style with 70° pitch, zoom 18, vehicle at bottom
-          mapRef.current.zoomToUserLocation({
-            zoom: 18, // Close zoom for TomTom GO immersive style
-            pitch: isMapLibre ? 70 : 0, // Steep pitch matching TomTom GO
-            bearing: 0,
-            duration: 2000,
-            fallbackCoordinates: { lat: zoomTarget.lat, lng: zoomTarget.lng },
-            forceStreetMode: true
-          });
-        }
-      }
+      // NOTE: Camera setup for 3D navigation view is handled by the GPS heading effect
+      // in maplibre-map.tsx to prevent conflicting camera animations
+      console.log('[NAV-ACTIVATION] 🎯 Camera will be set by GPS heading effect (60° pitch, 16.5 zoom)');
       
       console.log('[NAV-ACTIVATION] Step 2: Set navigation active state for CSS styling');
       // Set navigation active state for CSS styling
