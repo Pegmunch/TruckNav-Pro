@@ -620,17 +620,17 @@ export function GeofencingTab() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-lg bg-white dark:bg-gray-900 border-none shadow-2xl">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
         <DialogHeader>
           <DialogTitle>
             {editingGeofence ? t('fleet.geofencing.editGeofence') : t('fleet.geofencing.createGeofence')}
           </DialogTitle>
-            <DialogDescription>
-              {editingGeofence 
-                ? t('fleet.geofencing.updateDetails') 
-                : t('fleet.geofencing.defineNewZone')}
-            </DialogDescription>
-          </DialogHeader>
+          <DialogDescription>
+            {editingGeofence 
+              ? t('fleet.geofencing.updateDetails') 
+              : t('fleet.geofencing.defineNewZone')}
+          </DialogDescription>
+        </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

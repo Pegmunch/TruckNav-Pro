@@ -63,11 +63,11 @@ export function AddIncidentDialog({ isOpen, onOpenChange }: AddIncidentDialogPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-none shadow-2xl">
-        <DialogHeader>
-          <DialogTitle>Log Incident</DialogTitle>
-          <DialogDescription>Record a new safety incident or accident</DialogDescription>
-        </DialogHeader>
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
+      <DialogHeader>
+        <DialogTitle>Log Incident</DialogTitle>
+        <DialogDescription>Record a new safety incident or accident</DialogDescription>
+      </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="vehicle">Vehicle ID *</Label>

@@ -65,11 +65,11 @@ export function AddComplianceDialog({ isOpen, onOpenChange }: AddComplianceDialo
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-none shadow-2xl">
-        <DialogHeader>
-          <DialogTitle>Add Compliance Record</DialogTitle>
-          <DialogDescription>Track regulatory compliance status</DialogDescription>
-        </DialogHeader>
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
+      <DialogHeader>
+        <DialogTitle>Add Compliance Record</DialogTitle>
+        <DialogDescription>Track regulatory compliance status</DialogDescription>
+      </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="vehicle">Vehicle ID *</Label>
