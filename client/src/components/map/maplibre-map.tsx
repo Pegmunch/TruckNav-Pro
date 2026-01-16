@@ -1292,8 +1292,61 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           });
         }
 
+        // Add 3D buildings vector source (OpenMapTiles with building heights)
+        if (!mapInstance.getSource('openmaptiles')) {
+          mapInstance.addSource('openmaptiles', {
+            type: 'vector',
+            tiles: [
+              'https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=get_your_own_OpIi9ZULNHzrESv6T2vL'
+            ],
+            minzoom: 0,
+            maxzoom: 14
+          });
+        }
+
+        // Add 3D buildings fill-extrusion layer (initially hidden, shown in 3D mode)
+        if (!mapInstance.getLayer('3d-buildings')) {
+          mapInstance.addLayer({
+            id: '3d-buildings',
+            source: 'openmaptiles',
+            'source-layer': 'building',
+            type: 'fill-extrusion',
+            minzoom: 14,
+            paint: {
+              'fill-extrusion-color': [
+                'interpolate',
+                ['linear'],
+                ['get', 'render_height'],
+                0, '#e8e8e8',
+                50, '#d4d4d4',
+                100, '#c0c0c0',
+                200, '#a8a8a8'
+              ],
+              'fill-extrusion-height': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                14, 0,
+                15.5, ['coalesce', ['get', 'render_height'], ['get', 'height'], 10]
+              ],
+              'fill-extrusion-base': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                14, 0,
+                15.5, ['coalesce', ['get', 'render_min_height'], 0]
+              ],
+              'fill-extrusion-opacity': 0.75
+            },
+            layout: {
+              visibility: 'none' // Initially hidden, shown when 3D mode is active
+            }
+          });
+          console.log('[3D-BUILDINGS] Added 3D buildings layer');
+        }
+
         setIsLoaded(true);
-        console.log('✅ MapLibre GL loaded - satellite sources and labels overlay added for map view toggle');
+        console.log('✅ MapLibre GL loaded - satellite sources, labels overlay, and 3D buildings added');
       });
 
       map.current.on('error', (e) => {
@@ -1862,20 +1915,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         paint: {
           'line-color': [
             'case',
-            ['<', ['get', 'speed_ratio'], 0.3], '#DC2626', // Red: heavy traffic/congestion
-            ['<', ['get', 'speed_ratio'], 0.6], '#F59E0B', // Orange: moderate traffic
-            ['<', ['get', 'speed_ratio'], 0.8], '#FDE047', // Yellow: light traffic
-            '#22C55E' // Green: free flow
+            ['==', ['typeof', ['get', 'speed_ratio']], 'number'],
+            [
+              'case',
+              ['<', ['get', 'speed_ratio'], 0.3], '#DC2626', // Red: heavy traffic/congestion
+              ['<', ['get', 'speed_ratio'], 0.6], '#F59E0B', // Orange: moderate traffic
+              ['<', ['get', 'speed_ratio'], 0.8], '#FDE047', // Yellow: light traffic
+              '#22C55E' // Green: free flow
+            ],
+            '#22C55E' // Default to green if speed_ratio is missing/invalid
           ],
           'line-width': [
             'interpolate',
             ['linear'],
             ['zoom'],
             10, 3,  // 3px at zoom 10
-            18, 10   // 10px at zoom 18 - wider to cover black road outlines
+            18, 10   // 10px at zoom 18
           ],
-          'line-opacity': 0.9,
-          'line-blur': 1 // Slight blur to soften edges
+          'line-opacity': 0.85,
+          'line-blur': 0.5
         }
       });
       // Mark layer as ready after adding
@@ -2818,6 +2876,28 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
     previousNavigationStateRef.current = isNavigating;
   }, [isNavigating, is3DMode]);
+
+  // Toggle 3D buildings visibility based on is3DMode state
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    if (!map.current.isStyleLoaded()) return;
+    
+    const mapInstance = map.current;
+    const buildingLayerId = '3d-buildings';
+    
+    // Only show 3D buildings when in 3D mode AND at zoom level 14+
+    const currentZoom = mapInstance.getZoom();
+    const shouldShow = is3DMode && currentZoom >= 14;
+    
+    if (mapInstance.getLayer(buildingLayerId)) {
+      mapInstance.setLayoutProperty(
+        buildingLayerId, 
+        'visibility', 
+        shouldShow ? 'visible' : 'none'
+      );
+      console.log(`[3D-BUILDINGS] Visibility set to: ${shouldShow ? 'visible' : 'none'} (3D mode: ${is3DMode}, zoom: ${currentZoom.toFixed(1)})`);
+    }
+  }, [is3DMode, isLoaded, currentZoom]);
 
   const handleCompassClick = () => {
     if (!map.current) return;
