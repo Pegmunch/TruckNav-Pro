@@ -82,12 +82,13 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Right navigation controls stack - Positioned from bottom, below instrumentation bar */}
+      {/* Right navigation controls stack - Positioned from bottom, above instrumentation bar */}
+      {/* CRITICAL: Higher position (100px/80px) to avoid overlap with SpeedometerHUD GO/STOP buttons */}
       {rightStackVisible && (
         <div 
           className="fixed right-4 z-[99999]"
           style={{ 
-            bottom: shouldShowUI ? 'calc(60px + var(--safe-area-bottom, 0px))' : 'calc(40px + var(--safe-area-bottom, 0px))',
+            bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}

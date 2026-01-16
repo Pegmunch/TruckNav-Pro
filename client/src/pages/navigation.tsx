@@ -2021,9 +2021,10 @@ function NavigationPageContent() {
       // Route calculated - check if auto-navigation is requested (mobile GO button flow)
       console.log('[ROUTE-CALC] Route calculated - checking auto-navigation flag:', shouldAutoNavigateOnMobile);
       
-      // On mobile: close menu and trigger auto-navigation if flag is set
-      if (isMobile) {
-        // Always close the menu after successful route calculation on mobile
+      // On mobile: only close menu and switch to preview if GO button was pressed
+      // CRITICAL FIX: Do NOT auto-close menu after route calculation - user must press GO
+      if (isMobile && shouldAutoNavigateOnMobile) {
+        // Only close the menu if GO button was pressed (shouldAutoNavigateOnMobile flag)
         setShowComprehensiveMenu(false);
         
         // Collapse sidebar to show the route on the map
