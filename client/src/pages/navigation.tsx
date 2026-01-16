@@ -3165,8 +3165,8 @@ function NavigationPageContent() {
                 </MapShell>
               </div>
               
-              {/* ETA GLASS BAR - ALWAYS VISIBLE when route exists (plan, preview, navigate modes) */}
-              {currentRoute && (
+              {/* ETA GLASS BAR - Visible when route exists AND input screen is closed (preview/navigate modes only) */}
+              {currentRoute && !showComprehensiveMenu && (
                 <CompactTripStrip
                   eta={currentRoute.duration || 0}
                   distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}

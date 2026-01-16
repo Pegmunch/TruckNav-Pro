@@ -363,7 +363,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             disabled={isNavigating}
             className={cn(
               'absolute inset-0 w-full h-full',
-              'text-white font-bold text-lg tracking-wide',
+              'text-white font-bold text-base sm:text-lg tracking-wide',
               'flex items-center justify-center',
               'select-none',
               isNavigating && 'opacity-40 cursor-not-allowed'
@@ -372,7 +372,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               touchAction: 'manipulation',
               background: 'transparent',
               textShadow: '0 1px 3px rgba(0,0,0,0.4)',
-              WebkitTapHighlightColor: 'transparent'
+              WebkitTapHighlightColor: 'transparent',
+              lineHeight: 1,
+              paddingRight: '8px'
             }}
             data-testid="button-go-speedometer"
           >
@@ -690,7 +692,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             disabled={!isNavigating}
             className={cn(
               'absolute inset-0 w-full h-full',
-              'text-white font-bold text-lg tracking-wide',
+              'text-white font-bold text-base sm:text-lg tracking-wide',
               'flex items-center justify-center',
               'select-none',
               !isNavigating && 'opacity-40 cursor-not-allowed'
@@ -699,7 +701,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               touchAction: 'manipulation',
               background: 'transparent',
               textShadow: '0 1px 3px rgba(0,0,0,0.4)',
-              WebkitTapHighlightColor: 'transparent'
+              WebkitTapHighlightColor: 'transparent',
+              lineHeight: 1,
+              paddingLeft: '8px'
             }}
             data-testid="button-stop-speedometer"
           >
