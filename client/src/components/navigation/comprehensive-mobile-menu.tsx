@@ -702,12 +702,11 @@ function ComprehensiveMobileMenu({
                           variant="default"
                           size="sm"
                           onClick={() => {
-                            console.log('[PREVIEW-BUTTON] Clicked - closing menu and starting route calculation');
-                            // Request auto-navigation on mobile after route calculation
-                            onRequestAutoNavigation?.();
+                            console.log('[PREVIEW-BUTTON] Clicked - closing menu and calculating route (no auto-navigation)');
                             // Close menu immediately so user sees the map
                             onOpenChange(false);
                             // Fire route calculation (don't await - it runs in background)
+                            // NOTE: No onRequestAutoNavigation - user must manually start navigation
                             onPlanRoute();
                           }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
@@ -846,8 +845,10 @@ function ComprehensiveMobileMenu({
                     {!currentRoute && fromInput && toInput && selectedProfile && (
                       <Button
                         onClick={async () => {
-                          // Request auto-navigation on mobile after route calculation
-                          onRequestAutoNavigation?.();
+                          console.log('[PREVIEW-BUTTON-BOTTOM] Clicked - calculating route only (no auto-navigation)');
+                          // Close menu immediately so user sees the map
+                          onOpenChange(false);
+                          // Just calculate and display route - user must manually start navigation
                           await onPlanRoute();
                         }}
                         disabled={isCalculating}
