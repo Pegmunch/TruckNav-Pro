@@ -80,7 +80,7 @@ export function AddTripDialog({ isOpen, onOpenChange }: AddTripDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
         <DialogHeader>
           <DialogTitle>Record Trip</DialogTitle>
           <DialogDescription>Log a new trip with planned and actual metrics</DialogDescription>

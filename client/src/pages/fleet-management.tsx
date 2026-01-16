@@ -347,7 +347,7 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
       <DialogHeader>
         <DialogTitle>Add New Vehicle</DialogTitle>
         <DialogDescription>Enter the vehicle details below</DialogDescription>
@@ -666,7 +666,7 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-2xl bg-white dark:bg-gray-900">
       <DialogHeader>
         <DialogTitle>Upload Vehicle Document</DialogTitle>
         <DialogDescription>Upload registration, MOT, insurance, or maintenance documents</DialogDescription>
@@ -868,7 +868,7 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
       <DialogHeader>
         <DialogTitle>Add New Operator</DialogTitle>
         <DialogDescription>Enter the operator/driver details below</DialogDescription>
@@ -1061,7 +1061,7 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <DialogContent data-testid="dialog-add-service">
+    <DialogContent data-testid="dialog-add-service" className="bg-white dark:bg-gray-900 border-none shadow-2xl">
       <DialogHeader>
         <DialogTitle>Add Service Record</DialogTitle>
       </DialogHeader>
@@ -1150,7 +1150,7 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
   });
 
   return (
-    <DialogContent data-testid="dialog-add-fuel">
+    <DialogContent data-testid="dialog-add-fuel" className="bg-white dark:bg-gray-900 border-none shadow-2xl">
       <DialogHeader>
         <DialogTitle>Add Fuel Log</DialogTitle>
       </DialogHeader>
