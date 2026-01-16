@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Shield, Copyright, FileText, ExternalLink } from "lucide-react";
+import { Shield, Copyright, FileText, ExternalLink, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 import TermsOfService from "./terms-of-service";
+import UserGuide from "@/components/guide/user-guide";
 
 interface MapLegalOwnershipProps {
   /** Additional CSS classes for the component */
@@ -32,6 +34,7 @@ export default function MapLegalOwnership({
   className,
   compact = true
 }: MapLegalOwnershipProps) {
+  const { t } = useTranslation();
   
   return (
     <div 
@@ -62,8 +65,29 @@ export default function MapLegalOwnership({
             </span>
           </div>
           
-          {/* Legal Button */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* User Guide Button */}
+          <div className="flex items-center gap-1 shrink-0">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 px-2 text-xs hover:bg-accent automotive-touch-target pointer-events-auto"
+                  data-testid="button-view-user-guide"
+                >
+                  <HelpCircle className="w-3 h-3 mr-1" />
+                  {t('common.guide', 'Guide')}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh]">
+                <DialogHeader>
+                  <DialogTitle>{t('userGuide.title', 'TruckNav Pro User Guide')}</DialogTitle>
+                </DialogHeader>
+                <UserGuide />
+              </DialogContent>
+            </Dialog>
+            
+            {/* Legal Button */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button 
@@ -73,12 +97,12 @@ export default function MapLegalOwnership({
                   data-testid="button-view-legal-terms"
                 >
                   <ExternalLink className="w-3 h-3 mr-1" />
-                  Legal
+                  {t('common.legal', 'Legal')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[90vh]">
                 <DialogHeader>
-                  <DialogTitle>TruckNav Pro - Legal Terms & Protections</DialogTitle>
+                  <DialogTitle>{t('legal.termsTitle', 'TruckNav Pro - Legal Terms & Protections')}</DialogTitle>
                 </DialogHeader>
                 <div className="max-h-[80vh] overflow-y-auto">
                   <TermsOfService />
