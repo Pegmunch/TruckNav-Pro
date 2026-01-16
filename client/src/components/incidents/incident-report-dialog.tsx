@@ -82,6 +82,9 @@ export function IncidentReportDialog({
         .map(([type, config]) => ({ type: type as IncidentTypeKey, ...config }))
     : [];
 
+  // CRITICAL FIX: Early return when dialog is closed to prevent invisible Radix overlay from blocking iOS Safari
+  if (!open) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900">

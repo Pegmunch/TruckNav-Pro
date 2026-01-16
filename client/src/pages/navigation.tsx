@@ -2308,10 +2308,12 @@ function NavigationPageContent() {
   // Clear current route when locations change to ensure fresh planning
   // GUARD: Do NOT clear route during active navigation or when preparing to navigate
   useEffect(() => {
-    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile) {
+    // CRITICAL FIX: Also check isLocalNavActive to prevent race condition when GO button is pressed
+    // The route was disappearing because isNavigating (backend state) hadn't updated yet
+    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile && !isLocalNavActive) {
       setCurrentRoute(null);
     }
-  }, [fromLocation, toLocation, isNavigating, shouldAutoNavigateOnMobile]);
+  }, [fromLocation, toLocation, isNavigating, shouldAutoNavigateOnMobile, isLocalNavActive]);
 
   // Auto-plan route when both locations are set (with 3-second debounce)
   // Also triggers when coordinates change (e.g., from AddressAutocomplete)
@@ -4124,7 +4126,8 @@ function NavigationPageContent() {
         }}
       />
 
-      {/* Destination Reached Dialog */}
+      {/* Destination Reached Dialog - Early return pattern to unmount when closed (iOS Safari overlay fix) */}
+      {showDestinationReached && (
       <AlertDialog open={showDestinationReached} onOpenChange={setShowDestinationReached}>
         <AlertDialogContent className="max-w-md" data-testid="dialog-destination-reached">
           <AlertDialogHeader>
@@ -4178,8 +4181,10 @@ function NavigationPageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      )}
 
-      {/* Manual Location Dialog */}
+      {/* Manual Location Dialog - Early return pattern to unmount when closed (iOS Safari overlay fix) */}
+      {showManualLocationDialog && (
       <Dialog open={showManualLocationDialog} onOpenChange={setShowManualLocationDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -4235,6 +4240,7 @@ function NavigationPageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      )}
 
       {/* Weather Tool - Component has its own modal */}
       <WeatherWidget 
@@ -4248,7 +4254,8 @@ function NavigationPageContent() {
         onClose={() => setShowEntertainmentTool(false)} 
       />
 
-      {/* Voice Navigation Tool Dialog */}
+      {/* Voice Navigation Tool Dialog - Conditional render for iOS Safari overlay fix */}
+      {showVoiceNavTool && (
       <Dialog open={showVoiceNavTool} onOpenChange={setShowVoiceNavTool}>
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -4257,8 +4264,10 @@ function NavigationPageContent() {
           <VoiceNavigationPanel />
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* Fuel Prices Tool Dialog */}
+      {/* Fuel Prices Tool Dialog - Conditional render for iOS Safari overlay fix */}
+      {showFuelPricesTool && (
       <Dialog open={showFuelPricesTool} onOpenChange={setShowFuelPricesTool}>
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -4267,8 +4276,10 @@ function NavigationPageContent() {
           <FuelPriceComparison />
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* Driver Fatigue Monitor Tool Dialog */}
+      {/* Driver Fatigue Monitor Tool Dialog - Conditional render for iOS Safari overlay fix */}
+      {showFatigueMonitorTool && (
       <Dialog open={showFatigueMonitorTool} onOpenChange={setShowFatigueMonitorTool}>
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -4277,8 +4288,10 @@ function NavigationPageContent() {
           <DriverFatigueAlert />
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* Region Settings Tool Dialog */}
+      {/* Region Settings Tool Dialog - Conditional render for iOS Safari overlay fix */}
+      {showRegionSettingsTool && (
       <Dialog open={showRegionSettingsTool} onOpenChange={setShowRegionSettingsTool}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -4293,8 +4306,10 @@ function NavigationPageContent() {
           </div>
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* Language Tool Dialog */}
+      {/* Language Tool Dialog - Conditional render for iOS Safari overlay fix */}
+      {showLanguageTool && (
       <Dialog open={showLanguageTool} onOpenChange={setShowLanguageTool}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -4308,6 +4323,7 @@ function NavigationPageContent() {
           </div>
         </DialogContent>
       </Dialog>
+      )}
 
       {/* Map Settings Tool - Opens the main settings modal */}
       {showMapSettingsTool && (
