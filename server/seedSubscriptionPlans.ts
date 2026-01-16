@@ -72,14 +72,14 @@ async function seedSubscriptionPlans() {
       isActive: true,
     },
     {
-      name: "Fleet Management Annual",
-      stripePriceId: "price_fleet_annual_test",
-      priceGBP: "5000.00",
-      durationMonths: 12,
+      name: "Small Fleet Monthly",
+      stripePriceId: "price_fleet_monthly_test",
+      priceGBP: "2000.00",
+      durationMonths: 1,
       isLifetime: false,
       category: "fleet_management",
       features: [
-        "Unlimited fleet vehicles",
+        "Up to 30 fleet vehicles",
         "Driver/operator management",
         "Service records tracking",
         "Fuel consumption logs",
@@ -129,7 +129,7 @@ async function seedSubscriptionPlans() {
     console.log(`   - 12 Months: £99.00`);
     console.log(`   - Lifetime: £200.00`);
     console.log("\n📊 Fleet Management Summary:");
-    console.log(`   - Annual (12 Months): £5000.00`);
+    console.log(`   - Small Fleet Monthly (up to 30 lorries): £2000.00/month`);
     console.log(`   - Lifetime: £10000.00`);
 
     const allPlans = await db.select().from(subscriptionPlans);
