@@ -316,7 +316,7 @@ export default function EntertainmentPanel({
   if (!isOpen) return null;
 
   return (
-    <Card className={cn("automotive-card", className)} data-testid="entertainment-panel">
+    <Card className={cn("automotive-card bg-white text-gray-900", className)} data-testid="entertainment-panel">
       {renderHeader()}
       {renderCurrentPlayback()}
 

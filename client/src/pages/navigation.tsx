@@ -4271,11 +4271,13 @@ function NavigationPageContent() {
       {/* Voice Navigation Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showVoiceNavTool && (
       <Dialog open={showVoiceNavTool} onOpenChange={setShowVoiceNavTool}>
-        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle>Voice Navigation</DialogTitle>
+            <DialogTitle className="text-gray-900">Voice Navigation</DialogTitle>
           </DialogHeader>
-          <VoiceNavigationPanel />
+          <div className="bg-white">
+            <VoiceNavigationPanel />
+          </div>
         </DialogContent>
       </Dialog>
       )}
@@ -4283,11 +4285,13 @@ function NavigationPageContent() {
       {/* Fuel Prices Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showFuelPricesTool && (
       <Dialog open={showFuelPricesTool} onOpenChange={setShowFuelPricesTool}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle>Fuel Price Comparison</DialogTitle>
+            <DialogTitle className="text-gray-900">Fuel Price Comparison</DialogTitle>
           </DialogHeader>
-          <FuelPriceComparison />
+          <div className="bg-white">
+            <FuelPriceComparison />
+          </div>
         </DialogContent>
       </Dialog>
       )}
@@ -4295,11 +4299,13 @@ function NavigationPageContent() {
       {/* Driver Fatigue Monitor Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showFatigueMonitorTool && (
       <Dialog open={showFatigueMonitorTool} onOpenChange={setShowFatigueMonitorTool}>
-        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle>Driver Fatigue Monitor</DialogTitle>
+            <DialogTitle className="text-gray-900">Driver Fatigue Monitor</DialogTitle>
           </DialogHeader>
-          <DriverFatigueAlert />
+          <div className="bg-white">
+            <DriverFatigueAlert />
+          </div>
         </DialogContent>
       </Dialog>
       )}
@@ -4307,14 +4313,14 @@ function NavigationPageContent() {
       {/* Region Settings Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showRegionSettingsTool && (
       <Dialog open={showRegionSettingsTool} onOpenChange={setShowRegionSettingsTool}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle>Region & Speed Limit Sign</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gray-900">Region & Speed Limit Sign</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Select your region to use local speed limit signs and units
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 bg-white">
             <RegionSelector />
             <MeasurementSelector />
           </div>
@@ -4325,14 +4331,14 @@ function NavigationPageContent() {
       {/* Language Tool Dialog - Conditional render for iOS Safari overlay fix */}
       {showLanguageTool && (
       <Dialog open={showLanguageTool} onOpenChange={setShowLanguageTool}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white text-gray-900">
           <DialogHeader>
-            <DialogTitle>Language / Idioma / Sprache</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gray-900">Language / Idioma / Sprache</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Change app and voice navigation language
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 bg-white">
             <LanguageSelector />
           </div>
         </DialogContent>
