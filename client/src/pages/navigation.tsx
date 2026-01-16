@@ -3919,8 +3919,9 @@ function NavigationPageContent() {
                       
                       {/* ETA HEADER moved to mobile layout top level - always visible when route exists */}
                       
-                      {/* NAVIGATE MODE OVERLAYS - Mobile & Desktop */}
-                      {isNavUIActive && (
+                      {/* NAVIGATE MODE OVERLAYS - Desktop ONLY when ACTIVELY NAVIGATING */}
+                      {/* CRITICAL: Use isNavigating instead of isNavUIActive to prevent HUD showing during preview mode */}
+                      {isNavigating && (
                   <>
                     {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}
                     {nextTurn && (
