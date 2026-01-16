@@ -223,24 +223,21 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStart}
                 disabled={isPreviewActive}
-                className="h-5 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] active:scale-95 transition-all disabled:opacity-50 rounded-full shadow-sm flex items-center gap-0.5"
+                className="h-4 px-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[9px] active:scale-95 transition-all disabled:opacity-50 rounded-full shadow-sm flex items-center"
                 style={{ touchAction: 'manipulation' }}
                 data-testid="button-preview-start"
               >
-                <Eye className="w-3 h-3" />
                 Preview
               </button>
-              {isPreviewActive && (
-                <button
-                  onClick={onPreviewStop}
-                  className="h-5 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] active:scale-95 transition-all rounded-full shadow-sm flex items-center gap-0.5"
-                  style={{ touchAction: 'manipulation' }}
-                  data-testid="button-preview-stop"
-                >
-                  <X className="w-3 h-3" />
-                  Stop
-                </button>
-              )}
+              <button
+                onClick={onPreviewStop}
+                disabled={!isPreviewActive}
+                className="h-4 px-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[9px] active:scale-95 transition-all disabled:opacity-40 rounded-full shadow-sm flex items-center"
+                style={{ touchAction: 'manipulation' }}
+                data-testid="button-preview-stop"
+              >
+                Stop
+              </button>
             </div>
           )}
         </div>

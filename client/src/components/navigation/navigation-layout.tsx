@@ -73,7 +73,7 @@ export function NavigationLayout({
         <div 
           className="fixed right-4 z-[99999] flex flex-col gap-3"
           style={{ 
-            top: 'calc(140px + var(--safe-area-top, 0px))',
+            top: 'calc(170px + var(--safe-area-top, 0px))',
             pointerEvents: 'auto',
             userSelect: 'none'
           }}
