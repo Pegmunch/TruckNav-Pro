@@ -22,6 +22,7 @@ interface SimplifiedRouteDrawerProps {
   onRoutePreferenceChange: (value: 'fastest' | 'eco' | 'avoid_tolls') => void;
   onUseCurrentLocation?: () => void;
   onPlanRoute?: () => void;
+  onPreviewRoute?: () => void;
   activeProfileId?: string | null;
 }
 
@@ -38,6 +39,7 @@ export function SimplifiedRouteDrawer({
   onRoutePreferenceChange,
   onUseCurrentLocation,
   onPlanRoute,
+  onPreviewRoute,
   activeProfileId
 }: SimplifiedRouteDrawerProps) {
   const gps = useGPS();
@@ -337,7 +339,14 @@ export function SimplifiedRouteDrawer({
         <Button
           variant="default"
           size="lg"
-          {...createTouchHandler(onPlanRoute, 'GO-ROUTE-FOOTER')}
+          {...createTouchHandler(() => {
+            console.log('[PREVIEW-DRAWER] Preview button clicked - calculating route then entering preview');
+            onPlanRoute?.();
+            // Trigger preview mode after route calculation
+            setTimeout(() => {
+              onPreviewRoute?.();
+            }, 500);
+          }, 'GO-ROUTE-FOOTER')}
           disabled={!fromLocation || !toLocation || !activeProfileId}
           className="w-full h-14 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white text-lg font-bold shadow-lg flex items-center justify-center gap-3 select-none touch-manipulation"
           style={{ touchAction: 'manipulation' }}
