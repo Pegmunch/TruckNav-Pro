@@ -357,7 +357,8 @@ export function GeofencingTab() {
     );
   };
 
-  const formatTimestamp = (timestamp: Date | string) => {
+  const formatTimestamp = (timestamp: Date | string | null) => {
+    if (!timestamp) return t('fleet.common.na');
     const date = new Date(timestamp);
     return format(date, 'MMM d, yyyy HH:mm');
   };
