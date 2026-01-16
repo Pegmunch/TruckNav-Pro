@@ -1831,19 +1831,42 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current || !isLoaded) return;
     if (!map.current.isStyleLoaded()) return;
     
-    // When navigation starts, ensure route layers exist
-    if (isNavigating && cachedRouteGeoJsonRef.current) {
-      console.log('[ROUTE-NAV-STATE] Navigation state changed to:', isNavigating);
-      console.log('[ROUTE-NAV-STATE] Ensuring route layers are visible');
+    // When navigation starts, ensure route layers exist AND re-render the route
+    if (isNavigating && currentRoute?.routePath) {
+      console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
+      console.log('[ROUTE-NAV-STATE] Route has', currentRoute.routePath.length, 'coordinates');
       
-      // Small delay to let other state updates settle
+      // Small delay to let other state updates settle, then FORCE render the route
       setTimeout(() => {
         if (map.current && map.current.isStyleLoaded()) {
+          // First ensure layers exist
           ensureRouteLayers();
+          
+          // CRITICAL: Always call renderRouteLayers to guarantee the blue line appears
+          // This fixes the bug where route disappears when pressing GO
+          setTimeout(() => {
+            if (map.current && map.current.isStyleLoaded()) {
+              console.log('[ROUTE-NAV-STATE] Force rendering route layers after navigation start');
+              renderRouteLayers();
+              
+              // Move route layers to top to ensure visibility
+              try {
+                if (map.current.getLayer('route-outline')) {
+                  map.current.moveLayer('route-outline');
+                }
+                if (map.current.getLayer('route-line')) {
+                  map.current.moveLayer('route-line');
+                }
+                console.log('[ROUTE-NAV-STATE] ✅ Route layers moved to top');
+              } catch (e) {
+                // Layers might already be on top
+              }
+            }
+          }, 150);
         }
       }, 100);
     }
-  }, [isNavigating, isLoaded, ensureRouteLayers]);
+  }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
   // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
   // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
