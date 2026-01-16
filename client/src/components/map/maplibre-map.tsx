@@ -179,6 +179,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const previousNavigationStateRef = useRef(isNavigating);
   const previousPitchRef = useRef(0);
   const previousBearingRef = useRef(0);
+  const initialNavViewSetupRef = useRef(false); // Track if initial 3D nav view has been set up
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
@@ -485,8 +486,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomToUserLocation: (options) => {
       const {
         forceStreetMode = true,
-        zoom = 15.5, // TomTom GO style - zoomed out to show more route
-        pitch = 55, // Moderate 3D tilt for good route visibility
+        zoom = 16.5, // TomTom GO style street-level navigation zoom
+        pitch = 60, // TomTom GO style steep 3D tilt
         bearing: optionsBearing,
         duration = 2000,
         fallbackCoordinates,
@@ -511,7 +512,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         saveMapPreferences(newPrefs);
       }
 
-      // Zoom helper - uses TomTom GO style padding (60% top, 60 bottom)
+      // Zoom helper - uses TomTom GO style padding (55% top, 80 bottom)
       const performZoom = (lat: number, lng: number, bearing: number = 0) => {
         try {
           const containerHeight = mapInstance.getContainer().clientHeight || 800;
@@ -521,8 +522,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             pitch,
             bearing,
             padding: {
-              top: Math.round(containerHeight * 0.60), // TomTom GO style
-              bottom: 60,
+              top: Math.round(containerHeight * 0.55), // TomTom GO style - vehicle at lower 45%
+              bottom: 80, // Space for speedometer
               left: 0,
               right: 0
             },
@@ -802,57 +803,33 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   }, [currentZoom]);
 
   // Effect to update map rotation and position in navigation mode
+  // NOTE: This is a secondary GPS update effect - the primary GPS heading rotation effect handles continuous updates
+  // This effect is kept for backwards compatibility but uses consistent 60° pitch settings
   useEffect(() => {
     if (!map.current || !isNavigating || !gpsPosition || !isLoaded) return;
 
-    const { latitude, longitude, heading } = gpsPosition;
-    const containerHeight = map.current.getContainer().clientHeight || 800;
-
-    map.current.easeTo({
-      center: [longitude, latitude],
-      bearing: heading || 0,
-      pitch: 55, // Moderate 3D tilt for good route visibility (TomTom GO style)
-      zoom: 15.5, // Zoomed out to show more route ahead
-      padding: {
-        top: Math.round(containerHeight * 0.60),
-        bottom: 60,
-        left: 0,
-        right: 0
-      },
-      duration: 1000,
-      easing: (t) => t
-    });
+    // Skip this effect - let the GPS heading rotation effect handle continuous updates
+    // This prevents conflicting camera animations
+    return;
   }, [isNavigating, gpsPosition, isLoaded]);
 
   // Enhanced 3D Navigation Mode: Auto-activate when navigation starts, smooth exit when it ends
+  // NOTE: The actual 3D view setup is handled by the GPS heading rotation effect's setupInitialNavigationView()
+  // This effect only handles 3D mode state and exit transitions
   useEffect(() => {
     if (!map.current || !isLoaded) return;
 
     const wasNavigating = previousNavigationStateRef.current;
     const isNowNavigating = isNavigating;
 
-    // Navigation started - activate 3D mode and set optimal view angle/zoom
+    // Navigation started - store previous state and set 3D mode flag
+    // NOTE: Actual camera setup is done by GPS heading rotation effect's setupInitialNavigationView()
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - setting TomTom GO style 3D view (55° pitch, zoom 15.5)');
+      console.log('[NAV-3D] Navigation started - 3D mode enabled (60° pitch, zoom 16.5)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
-      
-      // Target the TomTom GO navigation style: moderate pitch, zoomed out, bottom-centered vehicle
-      const containerHeight = map.current.getContainer().clientHeight || 800;
-      map.current.easeTo({
-        pitch: 55, // Moderate 3D tilt for good route visibility
-        zoom: 15.5, // Zoomed out to show more route ahead
-        padding: {
-          top: Math.round(containerHeight * 0.60),
-          bottom: 60,
-          left: 0,
-          right: 0
-        },
-        duration: 2000,
-        easing: (t) => t * (2 - t)
-      });
-      
       setIs3DMode(true);
+      // Don't set camera here - let GPS heading rotation effect handle it for consistency
     }
     
     // Navigation ended - smooth transition back to previous state
@@ -863,6 +840,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         pitch: previousPitchRef.current,
         bearing: 0,
         zoom: Math.min(map.current.getZoom(), 16),
+        padding: { top: 0, bottom: 0, left: 0, right: 0 }, // Reset padding
         duration: 1000,
         easing: (t) => t * (2 - t)
       });
@@ -2414,6 +2392,66 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     let lastBearing = 0;
     let routeProgressIndex = 0;
     
+    // INITIAL 3D NAVIGATION VIEW: Set up TomTom GO style immediately when navigation starts
+    // This ensures tilted view activates even before GPS updates arrive
+    const setupInitialNavigationView = () => {
+      if (!currentRoute?.routePath || currentRoute.routePath.length < 2) {
+        console.log('[3D-NAV] No route path available for initial view');
+        return;
+      }
+      
+      const path = currentRoute.routePath;
+      const startPoint = path[0];
+      const secondPoint = path[1];
+      
+      // Calculate initial bearing from route direction
+      const dLon = (secondPoint.lng - startPoint.lng) * Math.PI / 180;
+      const y = Math.sin(dLon) * Math.cos(secondPoint.lat * Math.PI / 180);
+      const x = Math.cos(startPoint.lat * Math.PI / 180) * Math.sin(secondPoint.lat * Math.PI / 180) -
+                Math.sin(startPoint.lat * Math.PI / 180) * Math.cos(secondPoint.lat * Math.PI / 180) * Math.cos(dLon);
+      const initialBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+      
+      // Use GPS position if available, otherwise use route start
+      const centerLat = gpsPosition?.latitude ?? startPoint.lat;
+      const centerLng = gpsPosition?.longitude ?? startPoint.lng;
+      const useBearing = gpsPosition?.heading ?? initialBearing;
+      
+      const containerHeight = mapInstance.getContainer().clientHeight || 800;
+      
+      console.log('[3D-NAV] ==========================================');
+      console.log('[3D-NAV] 🚀 INITIAL 3D NAVIGATION VIEW ACTIVATED');
+      console.log(`[3D-NAV] Center: ${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}`);
+      console.log(`[3D-NAV] Initial bearing: ${useBearing.toFixed(1)}°`);
+      console.log(`[3D-NAV] Pitch: 60° (TomTom GO style)`);
+      console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.55)}px`);
+      console.log('[3D-NAV] ==========================================');
+      
+      // Apply TomTom GO style 3D navigation view
+      mapInstance.easeTo({
+        center: [centerLng, centerLat],
+        zoom: 16.5, // Street-level zoom for navigation
+        pitch: 60, // TomTom GO style steep 3D tilt
+        bearing: useBearing, // Heading-up rotation
+        padding: {
+          top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
+          bottom: 80, // Space for speedometer
+          left: 0,
+          right: 0
+        },
+        duration: 1200,
+        easing: (t) => 1 - Math.pow(1 - t, 3), // Ease-out cubic
+        essential: true
+      });
+      
+      lastBearing = useBearing;
+      initialNavViewSetupRef.current = true; // Mark as set up
+    };
+    
+    // Run initial setup ONCE per navigation session
+    if (!initialNavViewSetupRef.current) {
+      setupInitialNavigationView();
+    }
+    
     // Helper: Calculate distance between two points (Haversine formula)
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
       const R = 6371; // Earth radius in km
@@ -2563,22 +2601,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           // Only skip update if absolutely no change (prevents unnecessary renders)
           if (Math.abs(bearingDelta) > 0.05 || centerDelta > 0.0000001) {
             // TomTom GO style navigation view:
-            // - Vehicle marker at bottom 20% of screen
+            // - Vehicle marker at bottom 45% of screen (centered above speedometer)
             // - Route line extends straight up toward horizon
-            // - Steep 3D perspective for immersive driving feel
+            // - Steep 60° 3D perspective for immersive driving feel
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
             mapInstance.easeTo({
               center: [longitude, latitude],
-              zoom: 15.5, // Zoomed out to show more route ahead (matches TomTom GO overview)
-              pitch: 55, // Moderate 3D tilt for good visibility of route ahead
+              zoom: 16.5, // Street-level zoom for navigation (matches initial view)
+              pitch: 60, // TomTom GO style steep 3D tilt
               bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
               padding: { 
                 // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
                 // This makes the route line extend upward from the speedometer area
-                // Matching the visual style from TomTom GO reference (IMG_0145)
-                top: Math.round(containerHeight * 0.60), // Push center point to lower 40% of screen
-                bottom: 60, // Small bottom padding for speedometer
+                top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
+                bottom: 80, // Space for speedometer
                 left: 0, 
                 right: 0 
               },
@@ -2605,12 +2642,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     console.log('[GPS-HEADING] ==========================================');
     updateGPSHeading();
     
-    // Cleanup animation frame on unmount
+    // Cleanup animation frame on unmount or when navigation stops
     return () => {
       if (animationFrame !== null) {
         cancelAnimationFrame(animationFrame);
         console.log('[GPS-HEADING] ✓ GPS heading rotation stopped');
       }
+      // Reset initial view flag when navigation ends so next session sets it up fresh
+      initialNavViewSetupRef.current = false;
     };
   }, [isNavigating, isLoaded, gpsPosition, currentRoute]);
 
