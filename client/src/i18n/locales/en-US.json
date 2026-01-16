@@ -642,72 +642,162 @@
       "profiles": "Vehicle Profiles",
       "profilesDesc": "Access via Menu → Vehicle tab. Create profiles for each vehicle with dimensions (height, width, length), weight, and axle count. The app uses these to avoid unsuitable routes.",
       "hazmat": "Hazmat Settings",
-      "hazmatDesc": "Toggle hazmat options for ADR-compliant routing. The app will avoid tunnels and routes prohibited for dangerous goods."
+      "hazmatDesc": "Toggle hazmat options for ADR-compliant routing. The app will avoid tunnels and routes prohibited for dangerous goods.",
+      "trailerType": "Trailer Type",
+      "trailerTypeDesc": "Select your trailer configuration (single, double, or no trailer). Routes are optimized based on total vehicle length and turning radius requirements."
     },
-    "mapControls": {
-      "title": "Map Controls",
-      "compass": "Compass Button",
-      "compassDesc": "Located on the right side of the map. Tap to reset map rotation to north. During navigation, the map rotates to match your heading.",
-      "recenter": "Recenter Button",
-      "recenterDesc": "Tap to snap the map back to your current GPS position. The GPS lock icon indicates when position tracking is active.",
-      "3dMode": "3D Mode",
-      "3dModeDesc": "Tap the 3D button to tilt the map for a perspective view. At zoom level 14+, buildings appear in 3D. Best for urban navigation.",
-      "satellite": "Satellite View",
-      "satelliteDesc": "Switch between road map and satellite imagery. Useful for identifying truck stops and parking areas from aerial view.",
-      "traffic": "Traffic Layer",
-      "trafficDesc": "Toggle live traffic visualization. Roads are color-coded: green (flowing), yellow (slow), red (congested). Updated in real-time."
+    "previewFlyby": {
+      "title": "Preview & Flyby Mode",
+      "routePreview": "Route Preview",
+      "routePreviewDesc": "After planning a route, view the complete path on the map before starting navigation. Zoom and pan to examine any section of your route.",
+      "flybyAnimation": "Flyby Animation",
+      "flybyAnimationDesc": "Tap the play button to watch an animated flyby of your entire route. The camera follows the road showing turns, restrictions, and landmarks.",
+      "etaDisplay": "ETA Display",
+      "etaDisplayDesc": "The preview shows estimated arrival time, total distance, and expected driving duration based on current traffic conditions.",
+      "noAutoStart": "Manual Start",
+      "noAutoStartDesc": "Navigation does not start automatically. Review your route thoroughly, then tap 'Start Navigation' when ready to begin your journey."
+    },
+    "etaInfo": {
+      "title": "ETA & Trip Information",
+      "arrivalTime": "Arrival Time",
+      "arrivalTimeDesc": "The estimated time of arrival updates continuously based on your speed, traffic conditions, and remaining distance.",
+      "remainingDistance": "Remaining Distance",
+      "remainingDistanceDesc": "Shows the total distance left to your destination, displayed in your preferred units (miles or kilometers).",
+      "remainingTime": "Remaining Time",
+      "remainingTimeDesc": "Displays the estimated driving time remaining, accounting for current and predicted traffic delays.",
+      "tripStrip": "Trip Strip",
+      "tripStripDesc": "The compact strip at the bottom shows key trip info: next maneuver, distance to turn, ETA, and total remaining distance."
+    },
+    "controlButtons": {
+      "title": "Map Control Buttons",
+      "compass": "Compass",
+      "compassDesc": "Tap to reset map orientation to north-up. The arrow indicates your current heading direction.",
+      "recenter": "Recenter",
+      "recenterDesc": "Tap to snap the map back to your current GPS position with automatic zoom level.",
+      "3dButton": "3D View",
+      "3dButtonDesc": "Toggle between 2D flat view and 3D tilted perspective for better spatial awareness.",
+      "satellite": "Satellite",
+      "satelliteDesc": "Switch between road map and satellite imagery to see real-world terrain and landmarks.",
+      "traffic": "Traffic",
+      "trafficDesc": "Toggle live traffic overlay showing congestion levels with color-coded roads.",
+      "zoomIn": "Zoom In",
+      "zoomInDesc": "Tap or pinch to zoom in for more detail on streets and intersections.",
+      "zoomOut": "Zoom Out",
+      "zoomOutDesc": "Tap or pinch to zoom out for a wider overview of your route.",
+      "layers": "Layers",
+      "layersDesc": "Access additional map layers including truck stops, fuel stations, rest areas, and weigh stations."
+    },
+    "3dMap": {
+      "title": "3D Map & Terrain",
+      "tiltedView": "Tilted View",
+      "tiltedViewDesc": "The 3D perspective shows the road ahead with depth, making it easier to anticipate upcoming turns and landmarks.",
+      "buildings": "3D Buildings",
+      "buildingsDesc": "At zoom level 14+, buildings appear as 3D structures. Taller buildings appear darker, helping identify city centers and landmarks.",
+      "hillShading": "Hill Shading",
+      "hillShadingDesc": "Terrain elevation is shown with shading, helping visualize hills, mountains, and valleys along your route.",
+      "rotation": "Map Rotation",
+      "rotationDesc": "The map rotates to match your heading direction, keeping the road ahead always at the top of the screen."
     },
     "restrictions": {
       "title": "Restriction Warnings",
       "panel": "Restriction Panel",
       "panelDesc": "During preview mode, a panel shows all restrictions on your route. Critical violations (red) must be avoided. High (orange) and medium (yellow) require attention.",
       "markers": "Map Markers",
-      "markersDesc": "Yellow triangle icons on the map show restriction locations. Tap any marker to see details including the specific dimension that violates your vehicle profile."
+      "markersDesc": "Yellow triangle icons on the map show restriction locations. Tap any marker to see details including the specific dimension that violates your vehicle profile.",
+      "heightLimit": "Height Limit",
+      "heightLimitDesc": "Bridges and tunnels with height restrictions are marked. The app warns if your vehicle height exceeds the clearance.",
+      "weightLimit": "Weight Limit",
+      "weightLimitDesc": "Roads with weight restrictions are flagged. Routes are calculated to avoid roads that cannot support your vehicle's gross weight."
     },
     "dynamicRoutes": {
       "title": "Dynamic Route Suggestions",
       "alternative": "Alternative Routes",
-      "alternativeDesc": "During navigation, the app checks every 5 minutes for faster routes. When a quicker option is found, a green banner appears showing time savings. Tap \"Switch Route\" to accept."
+      "alternativeDesc": "During navigation, the app checks every 5 minutes for faster routes. When a quicker option is found, a green banner appears showing time savings. Tap \"Switch Route\" to accept.",
+      "oneTouch": "One-Touch Reroute",
+      "oneTouchDesc": "When an alternative route is suggested, tap once to accept it immediately. The app automatically recalculates and guides you on the new path."
     },
-    "voiceCommands": {
-      "title": "Voice Commands",
-      "reporting": "Incident Reporting",
-      "reportingDesc": "During navigation, tap the microphone button on the left side. Say commands like \"report traffic\", \"report accident\", \"road hazard\", \"police ahead\", or \"speed camera\" to alert other drivers."
+    "incidentReporting": {
+      "title": "Incident Reporting",
+      "voiceReport": "Voice Reporting",
+      "voiceReportDesc": "Tap the microphone button and speak to report incidents hands-free. Say what you see and the app will categorize it automatically.",
+      "trafficJam": "Traffic Jam",
+      "trafficJamDesc": "Report heavy traffic or standstill conditions. Other drivers will see this and can choose alternative routes.",
+      "accident": "Accident",
+      "accidentDesc": "Report accidents on the road. Include lane information if possible by saying 'accident left lane' or 'accident blocking road'.",
+      "roadHazard": "Road Hazard",
+      "roadHazardDesc": "Report obstacles, debris, potholes, or dangerous conditions. Be specific: 'debris in right lane' or 'large pothole'.",
+      "policeSpeedCamera": "Police / Speed Camera",
+      "policeSpeedCameraDesc": "Report police presence or speed cameras. Say 'police ahead' or 'speed camera' to alert other drivers.",
+      "roadClosure": "Road Closure",
+      "roadClosureDesc": "Report closed roads or blocked routes. The app will suggest alternatives and warn other drivers."
     },
-    "alertSounds": {
-      "title": "Customizable Alert Sounds",
-      "settings": "Sound Settings",
-      "settingsDesc": "Access via Menu → Settings → Alert Sounds. Choose different sounds for speed warnings, traffic alerts, and break reminders. Adjust volume for each alert type independently."
+    "voiceFeatures": {
+      "title": "Voice Features",
+      "guidance": "Voice Guidance",
+      "guidanceDesc": "Turn-by-turn voice instructions guide you through each maneuver. Volume adjusts automatically when using phone calls or music.",
+      "dictation": "Voice Dictation",
+      "dictationDesc": "Speak your destination instead of typing. Tap the microphone in the search bar and say the address or place name.",
+      "commands": "Voice Commands",
+      "commandsDesc": "Control the app hands-free with commands like 'mute guidance', 'show traffic', 'find fuel station', or 'cancel navigation'.",
+      "languageSync": "Language Sync",
+      "languageSyncDesc": "Voice guidance language matches your app language setting. Change languages in Settings to hear instructions in your preferred language."
     },
-    "hapticFeedback": {
-      "title": "Haptic Feedback",
-      "vibration": "Vibration Alerts",
-      "vibrationDesc": "Your device vibrates when pressing buttons and during navigation events. Different patterns indicate different actions: light tap for buttons, strong pulse for warnings, and success pattern when arriving."
+    "alertsHaptics": {
+      "title": "Alerts & Haptic Feedback",
+      "speedWarning": "Speed Warning",
+      "speedWarningDesc": "Visual and audio alerts when exceeding the speed limit. The speedometer turns red and a warning sound plays.",
+      "hapticFeedback": "Haptic Feedback",
+      "hapticFeedbackDesc": "Your device vibrates for important events: button presses, turn warnings, speed alerts, and arrival notifications.",
+      "fatigueAlert": "Fatigue Alert",
+      "fatigueAlertDesc": "After extended driving, the app reminds you to take a break. Shows nearby rest areas and truck stops for safe stopping."
     },
-    "3dBuildings": {
-      "title": "3D Buildings",
-      "viewing": "Viewing 3D Buildings",
-      "viewingDesc": "Enable 3D mode and zoom to level 14 or closer. Buildings appear as 3D extrusions with height variations. Taller buildings appear darker. Helps visualize urban areas and locate landmarks."
-    },
-    "arOverlay": {
+    "arNavigation": {
       "title": "AR Navigation Overlay",
-      "camera": "Camera View",
-      "cameraDesc": "Access the AR overlay during navigation for a camera-based view with navigation overlays. Shows your current speed, speed limit, next maneuver, and ETA overlaid on the live camera feed. Requires camera permission."
+      "cameraView": "Camera View",
+      "cameraViewDesc": "Point your phone at the road ahead. The AR overlay shows navigation arrows and turn indicators on the live camera view.",
+      "maneuverOverlay": "Maneuver Overlay",
+      "maneuverOverlayDesc": "Upcoming turns are displayed as arrows overlaid on the real road, making it easy to see exactly where to turn.",
+      "speedDisplay": "Speed Display",
+      "speedDisplayDesc": "Your current speed, the speed limit, and distance to next turn appear at the top of the AR view for quick reference."
     },
-    "dashboardWidgets": {
+    "widgets": {
       "title": "Dashboard Widgets",
-      "customizing": "Customizing Your Dashboard",
-      "customizingDesc": "Tap the settings icon in the widget bar to customize which data appears. Available widgets include speed, ETA, distance remaining, compass heading, altitude, fuel estimate, weather, and traffic delay."
-    },
-    "entertainment": {
-      "title": "Entertainment System",
-      "radio": "Internet Radio",
-      "radioDesc": "Access via the radio button during navigation. Stream trucker-friendly radio stations. Control playback with the mini player at the bottom of the screen."
+      "speed": "Speed Widget",
+      "speedDesc": "Shows your current speed with color coding: green (under limit), yellow (near limit), red (over limit).",
+      "eta": "ETA Widget",
+      "etaDesc": "Displays your estimated arrival time, updating in real-time based on traffic and your current speed.",
+      "distance": "Distance Widget",
+      "distanceDesc": "Shows remaining distance to your destination in your preferred units.",
+      "compass": "Compass Widget",
+      "compassDesc": "Displays your current heading direction (N, NE, E, SE, S, SW, W, NW).",
+      "customize": "Customize Widgets",
+      "customizeDesc": "Tap and hold any widget to rearrange or remove it. Tap the + button to add new widgets to your dashboard."
     },
     "facilities": {
       "title": "Facility Search",
       "finding": "Finding Truck Stops",
-      "findingDesc": "Use the POI search in the menu to find nearby truck stops, fuel stations, parking, restaurants, and rest areas. Results are filtered for truck-accessible locations."
+      "findingDesc": "Use the POI search in the menu to find nearby truck stops, fuel stations, parking, restaurants, and rest areas. Results are filtered for truck-accessible locations.",
+      "truckStops": "Truck Stops",
+      "truckStopsDesc": "Find full-service truck stops with fuel, parking, showers, restaurants, and repair services. See amenities and reviews before stopping.",
+      "fuel": "Fuel Stations",
+      "fuelDesc": "Locate truck-friendly fuel stations with diesel, DEF, and high-flow pumps. Compare prices and filter by brand.",
+      "parking": "Truck Parking",
+      "parkingDesc": "Find safe overnight parking at truck stops, rest areas, and designated parking lots. See availability and amenities.",
+      "restaurants": "Restaurants",
+      "restaurantsDesc": "Discover truck-friendly restaurants with truck parking available. Filter by cuisine type and operating hours."
+    },
+    "fleet": {
+      "title": "Fleet Management",
+      "vehicles": "Vehicle Management",
+      "vehiclesDesc": "Track all vehicles in your fleet with real-time GPS positions, status updates, and maintenance schedules.",
+      "drivers": "Driver Management",
+      "driversDesc": "Manage driver profiles, licenses, certifications, and assign drivers to vehicles for accurate tracking.",
+      "service": "Service Records",
+      "serviceDesc": "Log maintenance and service activities. Set reminders for MOT, inspections, tachograph calibration, and routine services.",
+      "fuel": "Fuel Logs",
+      "fuelDesc": "Track fuel purchases, calculate efficiency, and monitor fuel costs across your entire fleet.",
+      "compliance": "Compliance Tracking",
+      "complianceDesc": "Monitor driver hours, rest periods, and regulatory compliance. Receive alerts before certifications expire."
     },
     "fleetManagement": {
       "title": "Fleet Management (Desktop)",
@@ -716,15 +806,26 @@
     },
     "pwa": {
       "title": "Mobile App Installation",
-      "installing": "Installing on Your Device",
-      "installingDesc": "On iOS: Tap Share → Add to Home Screen. On Android: Tap the menu → Install App. This creates a full-screen app experience with offline support for cached routes."
+      "ios": "iOS Installation",
+      "iosDesc": "On iPhone or iPad: Tap the Share button → scroll down and tap 'Add to Home Screen' → tap 'Add' to install.",
+      "android": "Android Installation",
+      "androidDesc": "On Android: Tap the menu (three dots) → tap 'Install App' or 'Add to Home Screen' → confirm installation.",
+      "offline": "Offline Mode",
+      "offlineDesc": "Once installed, the app works offline with cached maps and routes. Download areas in advance for navigation without internet."
     },
     "settings": {
       "title": "Settings & Preferences",
       "language": "Language Settings",
       "languageDesc": "Access via Menu → Settings. Choose your preferred language. The entire app interface, voice guidance, and this user guide will update to your selected language.",
       "units": "Unit Preferences",
-      "unitsDesc": "Toggle between metric (kilometers, meters) and imperial (miles, feet) measurements. Speed limits and distances will display in your preferred units."
+      "unitsDesc": "Toggle between metric (kilometers, meters) and imperial (miles, feet) measurements. Speed limits and distances will display in your preferred units.",
+      "theme": "Theme Settings",
+      "themeDesc": "Choose between Light, Dark, or Auto theme. Auto mode switches based on time of day or your device settings."
+    },
+    "entertainment": {
+      "title": "Entertainment System",
+      "radio": "Internet Radio",
+      "radioDesc": "Access via the radio button during navigation. Stream trucker-friendly radio stations. Control playback with the mini player at the bottom of the screen."
     }
   }
 }

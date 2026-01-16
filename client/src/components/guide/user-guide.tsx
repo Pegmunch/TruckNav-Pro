@@ -1,12 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Truck, Map, Navigation2, Volume2, Vibrate, Camera, Gauge, 
-  Route, Building, Zap, Mic, Radio, Bell, Shield, Users,
-  Fuel, FileText, MapPin, Compass, Clock, Settings, Menu,
-  Eye, Layers, AlertTriangle, Car, Smartphone
-} from 'lucide-react';
 
 export default function UserGuide() {
   const { t } = useTranslation();
@@ -16,284 +10,229 @@ export default function UserGuide() {
       <div className="space-y-6 p-4 text-sm bg-white text-gray-900">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-blue-600 mb-2">{t('userGuide.title', 'TruckNav Pro User Guide')}</h2>
-          <p className="text-gray-600">{t('userGuide.subtitle', 'Complete guide to all features and how to use them')}</p>
+          <p className="text-gray-600">{t('userGuide.subtitle', 'Complete guide to all features')}</p>
         </div>
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Navigation2 className="h-5 w-5" />
-            {t('userGuide.gettingStarted.title', 'Getting Started')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.gettingStarted.planMode', 'Plan Mode')}</p>
-              <p className="text-gray-600">{t('userGuide.gettingStarted.planModeDesc', 'Tap the menu button (☰) in the top-left corner to open the route planner. Enter your destination using the search bar. The app will find truck-safe routes avoiding low bridges and weight restrictions.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.gettingStarted.previewMode', 'Preview Mode')}</p>
-              <p className="text-gray-600">{t('userGuide.gettingStarted.previewModeDesc', 'After planning, review your route on the map. Yellow warning icons show restrictions along your route. Tap any restriction to see details about height, weight, or width limits.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.gettingStarted.navigateMode', 'Navigate Mode')}</p>
-              <p className="text-gray-600">{t('userGuide.gettingStarted.navigateModeDesc', 'Tap "Start Navigation" to begin turn-by-turn guidance. The map automatically follows your position and shows upcoming maneuvers.')}</p>
-            </div>
-          </div>
+        {/* Getting Started */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.gettingStarted.title', 'Getting Started')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.gettingStarted.planMode', 'Plan Mode')}</span> - {t('userGuide.gettingStarted.planModeDesc', 'Tap menu (☰) to open route planner. Enter destination to find truck-safe routes.')}</li>
+            <li><span className="font-bold">{t('userGuide.gettingStarted.previewMode', 'Preview Mode')}</span> - {t('userGuide.gettingStarted.previewModeDesc', 'Review your route before starting. Yellow icons show restrictions.')}</li>
+            <li><span className="font-bold">{t('userGuide.gettingStarted.navigateMode', 'Navigate Mode')}</span> - {t('userGuide.gettingStarted.navigateModeDesc', 'Tap "Start Navigation" for turn-by-turn guidance.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Truck className="h-5 w-5" />
-            {t('userGuide.vehicleSetup.title', 'Vehicle Setup')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.vehicleSetup.profiles', 'Vehicle Profiles')}</p>
-              <p className="text-gray-600">{t('userGuide.vehicleSetup.profilesDesc', 'Access via Menu → Vehicle tab. Create profiles for each vehicle with dimensions (height, width, length), weight, and axle count. The app uses these to avoid unsuitable routes.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.vehicleSetup.hazmat', 'Hazmat Settings')}</p>
-              <p className="text-gray-600">{t('userGuide.vehicleSetup.hazmatDesc', 'Toggle hazmat options for ADR-compliant routing. The app will avoid tunnels and routes prohibited for dangerous goods.')}</p>
-            </div>
-          </div>
+        {/* Preview & Flyby */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.previewFlyby.title', 'Preview & Flyby Mode')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.previewFlyby.routePreview', 'Route Preview')}</span> - {t('userGuide.previewFlyby.routePreviewDesc', 'After planning, view entire route on map with all waypoints and restrictions visible.')}</li>
+            <li><span className="font-bold">{t('userGuide.previewFlyby.flybyAnimation', 'Flyby Animation')}</span> - {t('userGuide.previewFlyby.flybyAnimationDesc', 'Animated camera follows your planned route from start to destination in 3D view.')}</li>
+            <li><span className="font-bold">{t('userGuide.previewFlyby.etaDisplay', 'ETA Display')}</span> - {t('userGuide.previewFlyby.etaDisplayDesc', 'Shows estimated arrival time, total distance, and expected travel duration.')}</li>
+            <li><span className="font-bold">{t('userGuide.previewFlyby.noAutoStart', 'Manual Start Only')}</span> - {t('userGuide.previewFlyby.noAutoStartDesc', 'Navigation never starts automatically. You must tap Start Navigation when ready.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Map className="h-5 w-5" />
-            {t('userGuide.mapControls.title', 'Map Controls')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.mapControls.compass', 'Compass Button')}</p>
-              <p className="text-gray-600">{t('userGuide.mapControls.compassDesc', 'Located on the right side of the map. Tap to reset map rotation to north. During navigation, the map rotates to match your heading.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.mapControls.recenter', 'Recenter Button')}</p>
-              <p className="text-gray-600">{t('userGuide.mapControls.recenterDesc', 'Tap to snap the map back to your current GPS position. The GPS lock icon indicates when position tracking is active.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.mapControls.3dMode', '3D Mode')}</p>
-              <p className="text-gray-600">{t('userGuide.mapControls.3dModeDesc', 'Tap the 3D button to tilt the map for a perspective view. At zoom level 14+, buildings appear in 3D. Best for urban navigation.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.mapControls.satellite', 'Satellite View')}</p>
-              <p className="text-gray-600">{t('userGuide.mapControls.satelliteDesc', 'Switch between road map and satellite imagery. Useful for identifying truck stops and parking areas from aerial view.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.mapControls.traffic', 'Traffic Layer')}</p>
-              <p className="text-gray-600">{t('userGuide.mapControls.trafficDesc', 'Toggle live traffic visualization. Roads are color-coded: green (flowing), yellow (slow), red (congested). Updated in real-time.')}</p>
-            </div>
-          </div>
+        {/* ETA & Trip Information */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.etaInfo.title', 'ETA & Trip Information')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.etaInfo.arrivalTime', 'Arrival Time')}</span> - {t('userGuide.etaInfo.arrivalTimeDesc', 'Shows expected arrival time based on current traffic and route conditions.')}</li>
+            <li><span className="font-bold">{t('userGuide.etaInfo.remainingDistance', 'Remaining Distance')}</span> - {t('userGuide.etaInfo.remainingDistanceDesc', 'Distance left to destination in your preferred units (km or miles).')}</li>
+            <li><span className="font-bold">{t('userGuide.etaInfo.remainingTime', 'Remaining Time')}</span> - {t('userGuide.etaInfo.remainingTimeDesc', 'Estimated driving time left, updated in real-time based on traffic.')}</li>
+            <li><span className="font-bold">{t('userGuide.etaInfo.tripStrip', 'Trip Strip')}</span> - {t('userGuide.etaInfo.tripStripDesc', 'Compact bar at bottom shows ETA, distance, and time at a glance.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <AlertTriangle className="h-5 w-5" />
-            {t('userGuide.restrictions.title', 'Restriction Warnings')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.restrictions.panel', 'Restriction Panel')}</p>
-              <p className="text-gray-600">{t('userGuide.restrictions.panelDesc', 'During preview mode, a panel shows all restrictions on your route. Critical violations (red) must be avoided. High (orange) and medium (yellow) require attention.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.restrictions.markers', 'Map Markers')}</p>
-              <p className="text-gray-600">{t('userGuide.restrictions.markersDesc', 'Yellow triangle icons on the map show restriction locations. Tap any marker to see details including the specific dimension that violates your vehicle profile.')}</p>
-            </div>
-          </div>
+        {/* Control Buttons */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.controlButtons.title', 'Map Control Buttons')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.controlButtons.compass', 'Compass')}</span> - {t('userGuide.controlButtons.compassDesc', 'Reset map rotation to north. Shows current heading during navigation.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.recenter', 'Recenter/GPS Lock')}</span> - {t('userGuide.controlButtons.recenterDesc', 'Snap map to current GPS position. Blue glow indicates GPS lock active.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.3dButton', '3D Mode Button')}</span> - {t('userGuide.controlButtons.3dButtonDesc', 'Toggle between flat 2D and tilted 3D perspective view.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.satellite', 'Satellite Toggle')}</span> - {t('userGuide.controlButtons.satelliteDesc', 'Switch between road map and satellite/aerial imagery.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.traffic', 'Traffic Toggle')}</span> - {t('userGuide.controlButtons.trafficDesc', 'Show/hide live traffic flow. Green=clear, Yellow=slow, Red=congested.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.zoomIn', 'Zoom In (+)')}</span> - {t('userGuide.controlButtons.zoomInDesc', 'Zoom into map for more detail. Buildings appear at zoom 14+.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.zoomOut', 'Zoom Out (-)')}</span> - {t('userGuide.controlButtons.zoomOutDesc', 'Zoom out to see wider area and full route overview.')}</li>
+            <li><span className="font-bold">{t('userGuide.controlButtons.layers', 'Map Layers')}</span> - {t('userGuide.controlButtons.layersDesc', 'Access different map styles: Roads, Satellite, Terrain, Dark mode.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Zap className="h-5 w-5" />
-            {t('userGuide.dynamicRoutes.title', 'Dynamic Route Suggestions')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.dynamicRoutes.alternative', 'Alternative Routes')}</p>
-              <p className="text-gray-600">{t('userGuide.dynamicRoutes.alternativeDesc', 'During navigation, the app checks every 5 minutes for faster routes. When a quicker option is found, a green banner appears showing time savings. Tap "Switch Route" to accept.')}</p>
-            </div>
-          </div>
+        {/* 3D Map & Hills */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.3dMap.title', '3D Map & Terrain')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.3dMap.tiltedView', 'Tilted 3D View')}</span> - {t('userGuide.3dMap.tiltedViewDesc', 'Perspective view shows road ahead. Better spatial awareness for navigation.')}</li>
+            <li><span className="font-bold">{t('userGuide.3dMap.buildings', '3D Buildings')}</span> - {t('userGuide.3dMap.buildingsDesc', 'Buildings appear as 3D shapes at zoom level 14+. Helps identify landmarks.')}</li>
+            <li><span className="font-bold">{t('userGuide.3dMap.hillShading', 'Hill Shading')}</span> - {t('userGuide.3dMap.hillShadingDesc', 'Terrain elevation shown with shading. Helps visualize steep hills and valleys.')}</li>
+            <li><span className="font-bold">{t('userGuide.3dMap.rotation', 'Map Rotation')}</span> - {t('userGuide.3dMap.rotationDesc', 'Map rotates to match your heading during navigation. North-up when stopped.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Mic className="h-5 w-5" />
-            {t('userGuide.voiceCommands.title', 'Voice Commands')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.voiceCommands.reporting', 'Incident Reporting')}</p>
-              <p className="text-gray-600">{t('userGuide.voiceCommands.reportingDesc', 'During navigation, tap the microphone button on the left side. Say commands like "report traffic", "report accident", "road hazard", "police ahead", or "speed camera" to alert other drivers.')}</p>
-            </div>
-          </div>
+        {/* Incident Reporting */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.incidentReporting.title', 'Incident Reporting')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.incidentReporting.voiceReport', 'Voice Reporting')}</span> - {t('userGuide.incidentReporting.voiceReportDesc', 'Tap microphone and speak: "report traffic", "report accident", "road hazard".')}</li>
+            <li><span className="font-bold">{t('userGuide.incidentReporting.trafficJam', 'Traffic Jam')}</span> - {t('userGuide.incidentReporting.trafficJamDesc', 'Report heavy traffic or standstill. Helps other drivers find alternate routes.')}</li>
+            <li><span className="font-bold">{t('userGuide.incidentReporting.accident', 'Accident Report')}</span> - {t('userGuide.incidentReporting.accidentDesc', 'Report accidents ahead. Critical for safety and route recalculation.')}</li>
+            <li><span className="font-bold">{t('userGuide.incidentReporting.roadHazard', 'Road Hazard')}</span> - {t('userGuide.incidentReporting.roadHazardDesc', 'Report debris, potholes, or objects on road. Warns following drivers.')}</li>
+            <li><span className="font-bold">{t('userGuide.incidentReporting.policeSpeedCamera', 'Police/Speed Camera')}</span> - {t('userGuide.incidentReporting.policeSpeedCameraDesc', 'Report police or speed cameras. Helps drivers maintain safe speeds.')}</li>
+            <li><span className="font-bold">{t('userGuide.incidentReporting.roadClosure', 'Road Closure')}</span> - {t('userGuide.incidentReporting.roadClosureDesc', 'Report closed roads or diversions. Prevents drivers from heading that way.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Volume2 className="h-5 w-5" />
-            {t('userGuide.alertSounds.title', 'Customizable Alert Sounds')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.alertSounds.settings', 'Sound Settings')}</p>
-              <p className="text-gray-600">{t('userGuide.alertSounds.settingsDesc', 'Access via Menu → Settings → Alert Sounds. Choose different sounds for speed warnings, traffic alerts, and break reminders. Adjust volume for each alert type independently.')}</p>
-            </div>
-          </div>
+        {/* Vehicle Setup */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.vehicleSetup.title', 'Vehicle Setup')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.vehicleSetup.profiles', 'Vehicle Profiles')}</span> - {t('userGuide.vehicleSetup.profilesDesc', 'Create profiles with height, width, length, weight, and axle count.')}</li>
+            <li><span className="font-bold">{t('userGuide.vehicleSetup.hazmat', 'Hazmat Settings')}</span> - {t('userGuide.vehicleSetup.hazmatDesc', 'Enable for ADR routing. Avoids prohibited tunnels and restricted zones.')}</li>
+            <li><span className="font-bold">{t('userGuide.vehicleSetup.trailerType', 'Trailer Type')}</span> - {t('userGuide.vehicleSetup.trailerTypeDesc', 'Set trailer configuration for accurate turning radius calculations.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Vibrate className="h-5 w-5" />
-            {t('userGuide.hapticFeedback.title', 'Haptic Feedback')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.hapticFeedback.vibration', 'Vibration Alerts')}</p>
-              <p className="text-gray-600">{t('userGuide.hapticFeedback.vibrationDesc', 'Your device vibrates when pressing buttons and during navigation events. Different patterns indicate different actions: light tap for buttons, strong pulse for warnings, and success pattern when arriving.')}</p>
-            </div>
-          </div>
+        {/* Restriction Warnings */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.restrictions.title', 'Restriction Warnings')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.restrictions.panel', 'Restriction Panel')}</span> - {t('userGuide.restrictions.panelDesc', 'Shows all restrictions on route. Red=critical, Orange=high, Yellow=caution.')}</li>
+            <li><span className="font-bold">{t('userGuide.restrictions.markers', 'Map Markers')}</span> - {t('userGuide.restrictions.markersDesc', 'Yellow triangles show restriction locations. Tap for details.')}</li>
+            <li><span className="font-bold">{t('userGuide.restrictions.heightLimit', 'Height Limits')}</span> - {t('userGuide.restrictions.heightLimitDesc', 'Low bridges and tunnels flagged based on your vehicle height.')}</li>
+            <li><span className="font-bold">{t('userGuide.restrictions.weightLimit', 'Weight Limits')}</span> - {t('userGuide.restrictions.weightLimitDesc', 'Bridge weight limits and road restrictions shown for your gross weight.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Building className="h-5 w-5" />
-            {t('userGuide.3dBuildings.title', '3D Buildings')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.3dBuildings.viewing', 'Viewing 3D Buildings')}</p>
-              <p className="text-gray-600">{t('userGuide.3dBuildings.viewingDesc', 'Enable 3D mode and zoom to level 14 or closer. Buildings appear as 3D extrusions with height variations. Taller buildings appear darker. Helps visualize urban areas and locate landmarks.')}</p>
-            </div>
-          </div>
+        {/* Dynamic Routes */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.dynamicRoutes.title', 'Dynamic Route Suggestions')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.dynamicRoutes.alternative', 'Alternative Routes')}</span> - {t('userGuide.dynamicRoutes.alternativeDesc', 'App checks for faster routes every 5 minutes. Green banner shows time savings.')}</li>
+            <li><span className="font-bold">{t('userGuide.dynamicRoutes.oneTouch', 'One-Touch Switch')}</span> - {t('userGuide.dynamicRoutes.oneTouchDesc', 'Tap "Switch Route" to accept the faster alternative immediately.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Camera className="h-5 w-5" />
-            {t('userGuide.arOverlay.title', 'AR Navigation Overlay')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.arOverlay.camera', 'Camera View')}</p>
-              <p className="text-gray-600">{t('userGuide.arOverlay.cameraDesc', 'Access the AR overlay during navigation for a camera-based view with navigation overlays. Shows your current speed, speed limit, next maneuver, and ETA overlaid on the live camera feed. Requires camera permission.')}</p>
-            </div>
-          </div>
+        {/* Voice Features */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.voiceFeatures.title', 'Voice Features')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.voiceFeatures.guidance', 'Voice Guidance')}</span> - {t('userGuide.voiceFeatures.guidanceDesc', 'Turn-by-turn voice instructions in your selected language.')}</li>
+            <li><span className="font-bold">{t('userGuide.voiceFeatures.dictation', 'Address Dictation')}</span> - {t('userGuide.voiceFeatures.dictationDesc', 'Tap microphone in search to speak your destination.')}</li>
+            <li><span className="font-bold">{t('userGuide.voiceFeatures.commands', 'Voice Commands')}</span> - {t('userGuide.voiceFeatures.commandsDesc', 'Hands-free commands during navigation. Works in 40+ languages.')}</li>
+            <li><span className="font-bold">{t('userGuide.voiceFeatures.languageSync', 'Language Sync')}</span> - {t('userGuide.voiceFeatures.languageSyncDesc', 'Voice features automatically match your app language setting.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Gauge className="h-5 w-5" />
-            {t('userGuide.dashboardWidgets.title', 'Dashboard Widgets')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.dashboardWidgets.customizing', 'Customizing Your Dashboard')}</p>
-              <p className="text-gray-600">{t('userGuide.dashboardWidgets.customizingDesc', 'Tap the settings icon in the widget bar to customize which data appears. Available widgets include speed, ETA, distance remaining, compass heading, altitude, fuel estimate, weather, and traffic delay.')}</p>
-            </div>
-          </div>
+        {/* Alert Sounds & Haptics */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.alertsHaptics.title', 'Alerts & Haptic Feedback')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.alertsHaptics.speedWarning', 'Speed Warning')}</span> - {t('userGuide.alertsHaptics.speedWarningDesc', 'Audio alert when exceeding speed limit. Configurable sounds.')}</li>
+            <li><span className="font-bold">{t('userGuide.alertsHaptics.hapticFeedback', 'Haptic Feedback')}</span> - {t('userGuide.alertsHaptics.hapticFeedbackDesc', 'Vibration on button press and navigation events.')}</li>
+            <li><span className="font-bold">{t('userGuide.alertsHaptics.fatigueAlert', 'Fatigue Alerts')}</span> - {t('userGuide.alertsHaptics.fatigueAlertDesc', 'Break reminders after long driving periods.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Radio className="h-5 w-5" />
-            {t('userGuide.entertainment.title', 'Entertainment System')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.entertainment.radio', 'Internet Radio')}</p>
-              <p className="text-gray-600">{t('userGuide.entertainment.radioDesc', 'Access via the radio button during navigation. Stream trucker-friendly radio stations. Control playback with the mini player at the bottom of the screen.')}</p>
-            </div>
-          </div>
+        {/* AR Navigation */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.arNavigation.title', 'AR Navigation Overlay')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.arNavigation.cameraView', 'Camera View')}</span> - {t('userGuide.arNavigation.cameraViewDesc', 'Live camera with navigation overlay. Shows speed, limit, and next turn.')}</li>
+            <li><span className="font-bold">{t('userGuide.arNavigation.maneuverOverlay', 'Maneuver Overlay')}</span> - {t('userGuide.arNavigation.maneuverOverlayDesc', 'Arrows and instructions overlaid on camera view.')}</li>
+            <li><span className="font-bold">{t('userGuide.arNavigation.speedDisplay', 'Speed Display')}</span> - {t('userGuide.arNavigation.speedDisplayDesc', 'Current speed and speed limit shown prominently in AR view.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <MapPin className="h-5 w-5" />
-            {t('userGuide.facilities.title', 'Facility Search')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.facilities.finding', 'Finding Truck Stops')}</p>
-              <p className="text-gray-600">{t('userGuide.facilities.findingDesc', 'Use the POI search in the menu to find nearby truck stops, fuel stations, parking, restaurants, and rest areas. Results are filtered for truck-accessible locations.')}</p>
-            </div>
-          </div>
+        {/* Dashboard Widgets */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.widgets.title', 'Dashboard Widgets')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.widgets.speed', 'Speed Widget')}</span> - {t('userGuide.widgets.speedDesc', 'Shows current speed and speed limit side by side.')}</li>
+            <li><span className="font-bold">{t('userGuide.widgets.eta', 'ETA Widget')}</span> - {t('userGuide.widgets.etaDesc', 'Arrival time with real-time traffic updates.')}</li>
+            <li><span className="font-bold">{t('userGuide.widgets.distance', 'Distance Widget')}</span> - {t('userGuide.widgets.distanceDesc', 'Remaining distance to destination.')}</li>
+            <li><span className="font-bold">{t('userGuide.widgets.compass', 'Compass Widget')}</span> - {t('userGuide.widgets.compassDesc', 'Current heading in degrees and cardinal direction.')}</li>
+            <li><span className="font-bold">{t('userGuide.widgets.customize', 'Customize')}</span> - {t('userGuide.widgets.customizeDesc', 'Tap settings icon to choose which widgets to display.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Users className="h-5 w-5" />
-            {t('userGuide.fleetManagement.title', 'Fleet Management (Desktop)')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.fleetManagement.access', 'Accessing Fleet Tools')}</p>
-              <p className="text-gray-600">{t('userGuide.fleetManagement.accessDesc', 'Fleet management is available on desktop only. Access via the top navigation bar. Manage vehicles, drivers, service records, fuel logs, compliance tracking, and customer billing.')}</p>
-            </div>
-          </div>
+        {/* Facility Search */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.facilities.title', 'Facility Search')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.facilities.truckStops', 'Truck Stops')}</span> - {t('userGuide.facilities.truckStopsDesc', 'Find truck stops with parking, showers, and services.')}</li>
+            <li><span className="font-bold">{t('userGuide.facilities.fuel', 'Fuel Stations')}</span> - {t('userGuide.facilities.fuelDesc', 'Diesel stations with truck access and HGV lanes.')}</li>
+            <li><span className="font-bold">{t('userGuide.facilities.parking', 'Truck Parking')}</span> - {t('userGuide.facilities.parkingDesc', 'Secure overnight parking and rest areas.')}</li>
+            <li><span className="font-bold">{t('userGuide.facilities.restaurants', 'Restaurants')}</span> - {t('userGuide.facilities.restaurantsDesc', 'Truck-accessible restaurants and diners.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Smartphone className="h-5 w-5" />
-            {t('userGuide.pwa.title', 'Mobile App Installation')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.pwa.installing', 'Installing on Your Device')}</p>
-              <p className="text-gray-600">{t('userGuide.pwa.installingDesc', 'On iOS: Tap Share → Add to Home Screen. On Android: Tap the menu → Install App. This creates a full-screen app experience with offline support for cached routes.')}</p>
-            </div>
-          </div>
+        {/* Settings */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.settings.title', 'Settings & Preferences')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.settings.language', 'Language')}</span> - {t('userGuide.settings.languageDesc', 'Choose from 17+ languages. Updates interface and voice.')}</li>
+            <li><span className="font-bold">{t('userGuide.settings.units', 'Units')}</span> - {t('userGuide.settings.unitsDesc', 'Toggle between metric (km) and imperial (miles).')}</li>
+            <li><span className="font-bold">{t('userGuide.settings.theme', 'Theme')}</span> - {t('userGuide.settings.themeDesc', 'Light, dark, or automatic based on time of day.')}</li>
+          </ul>
         </section>
 
         <Separator />
 
-        <section className="space-y-4">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-blue-600">
-            <Settings className="h-5 w-5" />
-            {t('userGuide.settings.title', 'Settings & Preferences')}
-          </h3>
-          <div className="space-y-3 pl-4">
-            <div>
-              <p className="font-bold">{t('userGuide.settings.language', 'Language Settings')}</p>
-              <p className="text-gray-600">{t('userGuide.settings.languageDesc', 'Access via Menu → Settings. Choose your preferred language. The entire app interface, voice guidance, and this user guide will update to your selected language.')}</p>
-            </div>
-            <div>
-              <p className="font-bold">{t('userGuide.settings.units', 'Unit Preferences')}</p>
-              <p className="text-gray-600">{t('userGuide.settings.unitsDesc', 'Toggle between metric (kilometers, meters) and imperial (miles, feet) measurements. Speed limits and distances will display in your preferred units.')}</p>
-            </div>
-          </div>
+        {/* PWA Installation */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.pwa.title', 'Install as App')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.pwa.ios', 'iOS')}</span> - {t('userGuide.pwa.iosDesc', 'Tap Share → Add to Home Screen for full-screen app.')}</li>
+            <li><span className="font-bold">{t('userGuide.pwa.android', 'Android')}</span> - {t('userGuide.pwa.androidDesc', 'Tap Menu → Install App or Add to Home Screen.')}</li>
+            <li><span className="font-bold">{t('userGuide.pwa.offline', 'Offline Support')}</span> - {t('userGuide.pwa.offlineDesc', 'Cached routes work without internet connection.')}</li>
+          </ul>
         </section>
 
-        <div className="mt-8 p-4 bg-muted rounded-lg text-center">
+        <Separator />
+
+        {/* Fleet Management */}
+        <section className="space-y-3">
+          <h3 className="text-lg font-bold text-blue-600">{t('userGuide.fleet.title', 'Fleet Management (Desktop)')}</h3>
+          <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.fleet.vehicles', 'Vehicle Registry')}</span> - {t('userGuide.fleet.vehiclesDesc', 'Manage all fleet vehicles with details and documents.')}</li>
+            <li><span className="font-bold">{t('userGuide.fleet.drivers', 'Driver Management')}</span> - {t('userGuide.fleet.driversDesc', 'Track drivers, licenses, and assignments.')}</li>
+            <li><span className="font-bold">{t('userGuide.fleet.service', 'Service Records')}</span> - {t('userGuide.fleet.serviceDesc', 'Log maintenance, repairs, and inspections.')}</li>
+            <li><span className="font-bold">{t('userGuide.fleet.fuel', 'Fuel Tracking')}</span> - {t('userGuide.fleet.fuelDesc', 'Monitor fuel consumption and costs per vehicle.')}</li>
+            <li><span className="font-bold">{t('userGuide.fleet.compliance', 'Compliance')}</span> - {t('userGuide.fleet.complianceDesc', 'Track regulatory requirements and HoS compliance.')}</li>
+          </ul>
+        </section>
+
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg text-center">
           <p className="text-xs text-gray-600">
             {t('userGuide.footer', '© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro')}
           </p>

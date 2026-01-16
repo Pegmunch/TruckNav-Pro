@@ -477,72 +477,162 @@
       "profiles": "Fahrzeugprofile",
       "profilesDesc": "Zugang über Menü → Fahrzeug-Tab. Erstellen Sie Profile für jedes Fahrzeug mit Abmessungen (Höhe, Breite, Länge), Gewicht und Achsenzahl. Die App verwendet diese, um ungeeignete Routen zu vermeiden.",
       "hazmat": "Gefahrgut-Einstellungen",
-      "hazmatDesc": "Aktivieren Sie Gefahrgut-Optionen für ADR-konforme Routenführung. Die App vermeidet Tunnel und Routen, die für Gefahrgut verboten sind."
+      "hazmatDesc": "Aktivieren Sie Gefahrgut-Optionen für ADR-konforme Routenführung. Die App vermeidet Tunnel und Routen, die für Gefahrgut verboten sind.",
+      "trailerType": "Anhängertyp",
+      "trailerTypeDesc": "Wählen Sie Ihre Anhängerkonfiguration (Einzelanhänger, Doppelanhänger oder kein Anhänger). Routen werden basierend auf Gesamtfahrzeuglänge und Wenderadius optimiert."
     },
-    "mapControls": {
-      "title": "Kartensteuerung",
-      "compass": "Kompass-Taste",
-      "compassDesc": "Befindet sich auf der rechten Seite der Karte. Tippen Sie, um die Kartenausrichtung nach Norden zurückzusetzen. Während der Navigation dreht sich die Karte entsprechend Ihrer Fahrtrichtung.",
+    "previewFlyby": {
+      "title": "Vorschau & Überflugmodus",
+      "routePreview": "Routenvorschau",
+      "routePreviewDesc": "Nach der Routenplanung sehen Sie den vollständigen Weg auf der Karte, bevor Sie die Navigation starten. Zoomen und schwenken Sie, um jeden Abschnitt Ihrer Route zu untersuchen.",
+      "flybyAnimation": "Überflug-Animation",
+      "flybyAnimationDesc": "Tippen Sie auf die Wiedergabetaste, um einen animierten Überflug Ihrer gesamten Route zu sehen. Die Kamera folgt der Straße und zeigt Kurven, Beschränkungen und Orientierungspunkte.",
+      "etaDisplay": "ETA-Anzeige",
+      "etaDisplayDesc": "Die Vorschau zeigt geschätzte Ankunftszeit, Gesamtentfernung und erwartete Fahrdauer basierend auf aktuellen Verkehrsbedingungen.",
+      "noAutoStart": "Manueller Start",
+      "noAutoStartDesc": "Die Navigation startet nicht automatisch. Überprüfen Sie Ihre Route gründlich und tippen Sie dann auf 'Navigation starten', wenn Sie bereit sind."
+    },
+    "etaInfo": {
+      "title": "ETA & Reiseinformationen",
+      "arrivalTime": "Ankunftszeit",
+      "arrivalTimeDesc": "Die geschätzte Ankunftszeit wird kontinuierlich basierend auf Ihrer Geschwindigkeit, Verkehrsbedingungen und verbleibender Entfernung aktualisiert.",
+      "remainingDistance": "Restentfernung",
+      "remainingDistanceDesc": "Zeigt die verbleibende Gesamtentfernung zu Ihrem Ziel in Ihren bevorzugten Einheiten (Meilen oder Kilometer).",
+      "remainingTime": "Restfahrzeit",
+      "remainingTimeDesc": "Zeigt die geschätzte verbleibende Fahrzeit unter Berücksichtigung aktueller und prognostizierter Verkehrsverzögerungen.",
+      "tripStrip": "Reisestreifen",
+      "tripStripDesc": "Der kompakte Streifen am unteren Rand zeigt wichtige Reiseinformationen: nächstes Manöver, Entfernung zur Abzweigung, ETA und Gesamtrestentfernung."
+    },
+    "controlButtons": {
+      "title": "Kartensteuerungstasten",
+      "compass": "Kompass",
+      "compassDesc": "Tippen Sie, um die Kartenausrichtung nach Norden zurückzusetzen. Der Pfeil zeigt Ihre aktuelle Fahrtrichtung.",
       "recenter": "Neu zentrieren",
-      "recenterDesc": "Tippen Sie, um die Karte wieder auf Ihre aktuelle GPS-Position zu zentrieren. Das GPS-Sperrsymbol zeigt an, wenn die Positionsverfolgung aktiv ist.",
-      "3dMode": "3D-Modus",
-      "3dModeDesc": "Tippen Sie auf die 3D-Taste, um die Karte für eine perspektivische Ansicht zu neigen. Ab Zoomstufe 14+ erscheinen Gebäude in 3D. Ideal für die Stadtnavigation.",
-      "satellite": "Satellitenansicht",
-      "satelliteDesc": "Wechseln Sie zwischen Straßenkarte und Satellitenbildern. Nützlich zur Identifizierung von Autohöfen und Parkplätzen aus der Luftansicht.",
-      "traffic": "Verkehrsebene",
-      "trafficDesc": "Aktivieren Sie die Live-Verkehrsvisualisierung. Straßen sind farbcodiert: grün (fließend), gelb (langsam), rot (Stau). Wird in Echtzeit aktualisiert."
+      "recenterDesc": "Tippen Sie, um die Karte auf Ihre aktuelle GPS-Position mit automatischer Zoomstufe zurückzusetzen.",
+      "3dButton": "3D-Ansicht",
+      "3dButtonDesc": "Wechseln Sie zwischen 2D-Flachansicht und 3D-Perspektive für bessere räumliche Wahrnehmung.",
+      "satellite": "Satellit",
+      "satelliteDesc": "Wechseln Sie zwischen Straßenkarte und Satellitenbildern, um reales Gelände und Orientierungspunkte zu sehen.",
+      "traffic": "Verkehr",
+      "trafficDesc": "Aktivieren Sie die Live-Verkehrsüberlagerung mit farbcodierten Straßen zur Anzeige von Staugraden.",
+      "zoomIn": "Vergrößern",
+      "zoomInDesc": "Tippen oder ziehen Sie, um für mehr Details bei Straßen und Kreuzungen zu vergrößern.",
+      "zoomOut": "Verkleinern",
+      "zoomOutDesc": "Tippen oder ziehen Sie, um für einen breiteren Überblick über Ihre Route zu verkleinern.",
+      "layers": "Ebenen",
+      "layersDesc": "Greifen Sie auf zusätzliche Kartenebenen zu, einschließlich Autohöfe, Tankstellen, Rastplätze und Wiegestationen."
+    },
+    "3dMap": {
+      "title": "3D-Karte & Gelände",
+      "tiltedView": "Geneigte Ansicht",
+      "tiltedViewDesc": "Die 3D-Perspektive zeigt die Straße voraus mit Tiefe, was es einfacher macht, bevorstehende Kurven und Orientierungspunkte zu antizipieren.",
+      "buildings": "3D-Gebäude",
+      "buildingsDesc": "Ab Zoomstufe 14+ erscheinen Gebäude als 3D-Strukturen. Höhere Gebäude erscheinen dunkler, was bei der Identifizierung von Stadtzentren und Orientierungspunkten hilft.",
+      "hillShading": "Höhenschattierung",
+      "hillShadingDesc": "Geländehöhen werden mit Schattierung dargestellt, um Hügel, Berge und Täler entlang Ihrer Route zu visualisieren.",
+      "rotation": "Kartendrehung",
+      "rotationDesc": "Die Karte dreht sich entsprechend Ihrer Fahrtrichtung, sodass die Straße voraus immer oben auf dem Bildschirm ist."
     },
     "restrictions": {
       "title": "Beschränkungswarnungen",
       "panel": "Beschränkungsfeld",
       "panelDesc": "Im Vorschaumodus zeigt ein Feld alle Beschränkungen auf Ihrer Route. Kritische Verstöße (rot) müssen vermieden werden. Hohe (orange) und mittlere (gelb) erfordern Aufmerksamkeit.",
       "markers": "Kartenmarkierungen",
-      "markersDesc": "Gelbe Dreiecksymbole auf der Karte zeigen Beschränkungsstandorte. Tippen Sie auf eine Markierung, um Details zu sehen, einschließlich der spezifischen Dimension, die gegen Ihr Fahrzeugprofil verstößt."
+      "markersDesc": "Gelbe Dreiecksymbole auf der Karte zeigen Beschränkungsstandorte. Tippen Sie auf eine Markierung, um Details zu sehen, einschließlich der spezifischen Dimension, die gegen Ihr Fahrzeugprofil verstößt.",
+      "heightLimit": "Höhenbeschränkung",
+      "heightLimitDesc": "Brücken und Tunnel mit Höhenbeschränkungen sind markiert. Die App warnt, wenn Ihre Fahrzeughöhe die Durchfahrtshöhe überschreitet.",
+      "weightLimit": "Gewichtsbeschränkung",
+      "weightLimitDesc": "Straßen mit Gewichtsbeschränkungen sind gekennzeichnet. Routen werden berechnet, um Straßen zu vermeiden, die das Gesamtgewicht Ihres Fahrzeugs nicht tragen können."
     },
     "dynamicRoutes": {
       "title": "Dynamische Routenvorschläge",
       "alternative": "Alternative Routen",
-      "alternativeDesc": "Während der Navigation prüft die App alle 5 Minuten auf schnellere Routen. Wenn eine schnellere Option gefunden wird, erscheint ein grünes Banner mit der Zeitersparnis. Tippen Sie auf \"Route wechseln\", um zu akzeptieren."
+      "alternativeDesc": "Während der Navigation prüft die App alle 5 Minuten auf schnellere Routen. Wenn eine schnellere Option gefunden wird, erscheint ein grünes Banner mit der Zeitersparnis. Tippen Sie auf \"Route wechseln\", um zu akzeptieren.",
+      "oneTouch": "Ein-Tipp-Umleitung",
+      "oneTouchDesc": "Wenn eine alternative Route vorgeschlagen wird, tippen Sie einmal, um sie sofort zu akzeptieren. Die App berechnet automatisch neu und führt Sie auf dem neuen Weg."
     },
-    "voiceCommands": {
-      "title": "Sprachbefehle",
-      "reporting": "Vorfallmeldung",
-      "reportingDesc": "Tippen Sie während der Navigation auf die Mikrofontaste auf der linken Seite. Sagen Sie Befehle wie \"Stau melden\", \"Unfall melden\", \"Straßengefahr\", \"Polizei voraus\" oder \"Blitzer\", um andere Fahrer zu warnen."
+    "incidentReporting": {
+      "title": "Vorfallmeldung",
+      "voiceReport": "Sprachmeldung",
+      "voiceReportDesc": "Tippen Sie auf die Mikrofontaste und sprechen Sie, um Vorfälle freihändig zu melden. Sagen Sie, was Sie sehen, und die App kategorisiert es automatisch.",
+      "trafficJam": "Stau",
+      "trafficJamDesc": "Melden Sie starken Verkehr oder Stillstand. Andere Fahrer sehen dies und können alternative Routen wählen.",
+      "accident": "Unfall",
+      "accidentDesc": "Melden Sie Unfälle auf der Straße. Geben Sie wenn möglich Spurinformationen an, z.B. 'Unfall linke Spur' oder 'Unfall blockiert Straße'.",
+      "roadHazard": "Straßengefahr",
+      "roadHazardDesc": "Melden Sie Hindernisse, Trümmer, Schlaglöcher oder gefährliche Zustände. Seien Sie spezifisch: 'Trümmer auf rechter Spur' oder 'großes Schlagloch'.",
+      "policeSpeedCamera": "Polizei / Blitzer",
+      "policeSpeedCameraDesc": "Melden Sie Polizeipräsenz oder Blitzer. Sagen Sie 'Polizei voraus' oder 'Blitzer', um andere Fahrer zu warnen.",
+      "roadClosure": "Straßensperrung",
+      "roadClosureDesc": "Melden Sie gesperrte Straßen oder blockierte Routen. Die App schlägt Alternativen vor und warnt andere Fahrer."
     },
-    "alertSounds": {
-      "title": "Anpassbare Warntöne",
-      "settings": "Toneinstellungen",
-      "settingsDesc": "Zugang über Menü → Einstellungen → Warntöne. Wählen Sie verschiedene Töne für Geschwindigkeitswarnungen, Verkehrsmeldungen und Pausenerinnerungen. Passen Sie die Lautstärke für jeden Warnungstyp unabhängig an."
+    "voiceFeatures": {
+      "title": "Sprachfunktionen",
+      "guidance": "Sprachführung",
+      "guidanceDesc": "Abbiegehinweise führen Sie durch jedes Manöver. Die Lautstärke passt sich automatisch an, wenn Sie telefonieren oder Musik hören.",
+      "dictation": "Spracheingabe",
+      "dictationDesc": "Sprechen Sie Ihr Ziel statt zu tippen. Tippen Sie auf das Mikrofon in der Suchleiste und sagen Sie die Adresse oder den Ortsnamen.",
+      "commands": "Sprachbefehle",
+      "commandsDesc": "Steuern Sie die App freihändig mit Befehlen wie 'Führung stumm', 'Verkehr anzeigen', 'Tankstelle finden' oder 'Navigation abbrechen'.",
+      "languageSync": "Sprachsynchronisierung",
+      "languageSyncDesc": "Die Sprache der Sprachführung entspricht Ihrer App-Spracheinstellung. Ändern Sie die Sprache in den Einstellungen, um Anweisungen in Ihrer bevorzugten Sprache zu hören."
     },
-    "hapticFeedback": {
-      "title": "Haptisches Feedback",
-      "vibration": "Vibrationsalarme",
-      "vibrationDesc": "Ihr Gerät vibriert beim Drücken von Tasten und bei Navigationsereignissen. Verschiedene Muster zeigen verschiedene Aktionen an: leichtes Tippen für Tasten, starker Puls für Warnungen und Erfolgsmuster bei Ankunft."
+    "alertsHaptics": {
+      "title": "Warnungen & Haptisches Feedback",
+      "speedWarning": "Geschwindigkeitswarnung",
+      "speedWarningDesc": "Visuelle und akustische Warnungen bei Überschreitung des Tempolimits. Der Tachometer wird rot und ein Warnton ertönt.",
+      "hapticFeedback": "Haptisches Feedback",
+      "hapticFeedbackDesc": "Ihr Gerät vibriert bei wichtigen Ereignissen: Tastendruck, Abbiegewarnungen, Geschwindigkeitswarnungen und Ankunftsbenachrichtigungen.",
+      "fatigueAlert": "Müdigkeitswarnung",
+      "fatigueAlertDesc": "Nach längerer Fahrt erinnert die App Sie an eine Pause. Zeigt nahegelegene Rastplätze und Autohöfe für sicheres Anhalten."
     },
-    "3dBuildings": {
-      "title": "3D-Gebäude",
-      "viewing": "3D-Gebäude anzeigen",
-      "viewingDesc": "Aktivieren Sie den 3D-Modus und zoomen Sie auf Stufe 14 oder näher. Gebäude erscheinen als 3D-Extrusionen mit Höhenvariationen. Höhere Gebäude erscheinen dunkler. Hilft bei der Visualisierung städtischer Gebiete und beim Auffinden von Orientierungspunkten."
-    },
-    "arOverlay": {
+    "arNavigation": {
       "title": "AR-Navigations-Overlay",
-      "camera": "Kameraansicht",
-      "cameraDesc": "Greifen Sie während der Navigation auf das AR-Overlay zu für eine kamerabasierte Ansicht mit Navigations-Overlays. Zeigt Ihre aktuelle Geschwindigkeit, Geschwindigkeitsbegrenzung, nächstes Manöver und ETA über dem Live-Kamerabild. Erfordert Kameraberechtigung."
+      "cameraView": "Kameraansicht",
+      "cameraViewDesc": "Richten Sie Ihr Telefon auf die Straße voraus. Das AR-Overlay zeigt Navigationspfeile und Abbiegeanzeigen auf dem Live-Kamerabild.",
+      "maneuverOverlay": "Manöver-Overlay",
+      "maneuverOverlayDesc": "Bevorstehende Abbiegungen werden als Pfeile über der realen Straße angezeigt, sodass Sie genau sehen, wo Sie abbiegen müssen.",
+      "speedDisplay": "Geschwindigkeitsanzeige",
+      "speedDisplayDesc": "Ihre aktuelle Geschwindigkeit, das Tempolimit und die Entfernung zur nächsten Abbiegung erscheinen oben in der AR-Ansicht zur schnellen Referenz."
     },
-    "dashboardWidgets": {
+    "widgets": {
       "title": "Dashboard-Widgets",
-      "customizing": "Dashboard anpassen",
-      "customizingDesc": "Tippen Sie auf das Einstellungssymbol in der Widget-Leiste, um anzupassen, welche Daten angezeigt werden. Verfügbare Widgets: Geschwindigkeit, ETA, Restentfernung, Kompassrichtung, Höhe, Kraftstoffschätzung, Wetter und Verkehrsverzögerung."
-    },
-    "entertainment": {
-      "title": "Unterhaltungssystem",
-      "radio": "Internetradio",
-      "radioDesc": "Zugang über die Radiotaste während der Navigation. Streamen Sie Trucker-freundliche Radiosender. Steuern Sie die Wiedergabe mit dem Mini-Player am unteren Bildschirmrand."
+      "speed": "Geschwindigkeits-Widget",
+      "speedDesc": "Zeigt Ihre aktuelle Geschwindigkeit mit Farbcodierung: grün (unter Limit), gelb (nahe Limit), rot (über Limit).",
+      "eta": "ETA-Widget",
+      "etaDesc": "Zeigt Ihre geschätzte Ankunftszeit, wird in Echtzeit basierend auf Verkehr und Ihrer aktuellen Geschwindigkeit aktualisiert.",
+      "distance": "Entfernungs-Widget",
+      "distanceDesc": "Zeigt die verbleibende Entfernung zu Ihrem Ziel in Ihren bevorzugten Einheiten.",
+      "compass": "Kompass-Widget",
+      "compassDesc": "Zeigt Ihre aktuelle Fahrtrichtung (N, NO, O, SO, S, SW, W, NW).",
+      "customize": "Widgets anpassen",
+      "customizeDesc": "Tippen und halten Sie ein Widget, um es neu anzuordnen oder zu entfernen. Tippen Sie auf die + Taste, um neue Widgets zu Ihrem Dashboard hinzuzufügen."
     },
     "facilities": {
       "title": "Einrichtungssuche",
       "finding": "Autohöfe finden",
-      "findingDesc": "Verwenden Sie die POI-Suche im Menü, um nahegelegene Autohöfe, Tankstellen, Parkplätze, Restaurants und Rastplätze zu finden. Die Ergebnisse werden nach LKW-zugänglichen Standorten gefiltert."
+      "findingDesc": "Verwenden Sie die POI-Suche im Menü, um nahegelegene Autohöfe, Tankstellen, Parkplätze, Restaurants und Rastplätze zu finden. Die Ergebnisse werden nach LKW-zugänglichen Standorten gefiltert.",
+      "truckStops": "Autohöfe",
+      "truckStopsDesc": "Finden Sie Autohöfe mit Kraftstoff, Parkplätzen, Duschen, Restaurants und Reparaturservices. Sehen Sie Ausstattung und Bewertungen vor dem Stopp.",
+      "fuel": "Tankstellen",
+      "fuelDesc": "Finden Sie LKW-freundliche Tankstellen mit Diesel, AdBlue und Hochleistungspumpen. Vergleichen Sie Preise und filtern Sie nach Marke.",
+      "parking": "LKW-Parkplätze",
+      "parkingDesc": "Finden Sie sichere Übernachtungsparkplätze an Autohöfen, Rastplätzen und ausgewiesenen Parkflächen. Sehen Sie Verfügbarkeit und Ausstattung.",
+      "restaurants": "Restaurants",
+      "restaurantsDesc": "Entdecken Sie LKW-freundliche Restaurants mit LKW-Parkplätzen. Filtern Sie nach Küche und Öffnungszeiten."
+    },
+    "fleet": {
+      "title": "Flottenmanagement",
+      "vehicles": "Fahrzeugverwaltung",
+      "vehiclesDesc": "Verfolgen Sie alle Fahrzeuge Ihrer Flotte mit Echtzeit-GPS-Positionen, Statusaktualisierungen und Wartungsplänen.",
+      "drivers": "Fahrerverwaltung",
+      "driversDesc": "Verwalten Sie Fahrerprofile, Führerscheine, Zertifizierungen und weisen Sie Fahrer Fahrzeugen für genaue Verfolgung zu.",
+      "service": "Serviceaufzeichnungen",
+      "serviceDesc": "Protokollieren Sie Wartungs- und Serviceaktivitäten. Setzen Sie Erinnerungen für TÜV, Inspektionen, Tachographen-Kalibrierung und Routinewartungen.",
+      "fuel": "Tankprotokolle",
+      "fuelDesc": "Verfolgen Sie Kraftstoffkäufe, berechnen Sie Effizienz und überwachen Sie Kraftstoffkosten über Ihre gesamte Flotte.",
+      "compliance": "Compliance-Tracking",
+      "complianceDesc": "Überwachen Sie Fahrerzeiten, Ruhezeiten und regulatorische Compliance. Erhalten Sie Warnungen vor Ablauf von Zertifizierungen."
     },
     "fleetManagement": {
       "title": "Flottenmanagement (Desktop)",
@@ -551,15 +641,26 @@
     },
     "pwa": {
       "title": "Mobile App-Installation",
-      "installing": "Installation auf Ihrem Gerät",
-      "installingDesc": "Auf iOS: Tippen Sie auf Teilen → Zum Home-Bildschirm hinzufügen. Auf Android: Tippen Sie auf das Menü → App installieren. Dies erstellt ein Vollbild-App-Erlebnis mit Offline-Unterstützung für gecachte Routen."
+      "ios": "iOS-Installation",
+      "iosDesc": "Auf iPhone oder iPad: Tippen Sie auf die Teilen-Taste → scrollen Sie nach unten und tippen Sie auf 'Zum Home-Bildschirm' → tippen Sie auf 'Hinzufügen' zum Installieren.",
+      "android": "Android-Installation",
+      "androidDesc": "Auf Android: Tippen Sie auf das Menü (drei Punkte) → tippen Sie auf 'App installieren' oder 'Zum Startbildschirm hinzufügen' → Installation bestätigen.",
+      "offline": "Offline-Modus",
+      "offlineDesc": "Nach der Installation funktioniert die App offline mit gecachten Karten und Routen. Laden Sie Bereiche im Voraus für Navigation ohne Internet herunter."
     },
     "settings": {
       "title": "Einstellungen & Präferenzen",
       "language": "Spracheinstellungen",
       "languageDesc": "Zugang über Menü → Einstellungen. Wählen Sie Ihre bevorzugte Sprache. Die gesamte App-Oberfläche, Sprachführung und dieses Benutzerhandbuch werden in Ihrer gewählten Sprache aktualisiert.",
       "units": "Einheitenpräferenzen",
-      "unitsDesc": "Wechseln Sie zwischen metrischen (Kilometer, Meter) und imperialen (Meilen, Fuß) Messungen. Geschwindigkeitsbegrenzungen und Entfernungen werden in Ihren bevorzugten Einheiten angezeigt."
+      "unitsDesc": "Wechseln Sie zwischen metrischen (Kilometer, Meter) und imperialen (Meilen, Fuß) Messungen. Geschwindigkeitsbegrenzungen und Entfernungen werden in Ihren bevorzugten Einheiten angezeigt.",
+      "theme": "Design-Einstellungen",
+      "themeDesc": "Wählen Sie zwischen hellem, dunklem oder automatischem Design. Der Auto-Modus wechselt basierend auf Tageszeit oder Ihren Geräteeinstellungen."
+    },
+    "entertainment": {
+      "title": "Unterhaltungssystem",
+      "radio": "Internetradio",
+      "radioDesc": "Zugang über die Radiotaste während der Navigation. Streamen Sie Trucker-freundliche Radiosender. Steuern Sie die Wiedergabe mit dem Mini-Player am unteren Bildschirmrand."
     }
   }
 }

@@ -477,72 +477,162 @@
       "profiles": "Profile Vehicule",
       "profilesDesc": "Accesați prin Meniu → fila Vehicul. Creați profiluri pentru fiecare vehicul cu dimensiuni (înălțime, lățime, lungime), greutate și număr de osii. Aplicația folosește acestea pentru a evita rutele necorespunzătoare.",
       "hazmat": "Setări Materiale Periculoase",
-      "hazmatDesc": "Activați opțiunile pentru materiale periculoase pentru rutare conformă ADR. Aplicația va evita tunelurile și rutele interzise pentru mărfuri periculoase."
+      "hazmatDesc": "Activați opțiunile pentru materiale periculoase pentru rutare conformă ADR. Aplicația va evita tunelurile și rutele interzise pentru mărfuri periculoase.",
+      "trailerType": "Tip Remorcă",
+      "trailerTypeDesc": "Selectați configurația remorcii (simplă, dublă sau fără remorcă). Rutele sunt optimizate pe baza lungimii totale a vehiculului și a cerințelor razei de virare."
     },
-    "mapControls": {
-      "title": "Comenzi Hartă",
-      "compass": "Buton Busolă",
-      "compassDesc": "Situat în partea dreaptă a hărții. Atingeți pentru a reseta rotația hărții spre nord. În timpul navigării, harta se rotește pentru a corespunde direcției dvs.",
-      "recenter": "Buton Recentrare",
-      "recenterDesc": "Atingeți pentru a readuce harta la poziția GPS curentă. Iconița de blocare GPS indică când urmărirea poziției este activă.",
-      "3dMode": "Mod 3D",
-      "3dModeDesc": "Atingeți butonul 3D pentru a înclina harta pentru o vedere în perspectivă. La nivel de zoom 14+, clădirile apar în 3D. Ideal pentru navigarea urbană.",
-      "satellite": "Vedere Satelit",
-      "satelliteDesc": "Comutați între harta rutieră și imaginile satelitare. Util pentru identificarea parcărilor pentru camioane și zonelor de parcare din vedere aeriană.",
-      "traffic": "Strat Trafic",
-      "trafficDesc": "Activați vizualizarea traficului în timp real. Drumurile sunt codificate color: verde (fluent), galben (lent), roșu (aglomerat). Actualizat în timp real."
+    "previewFlyby": {
+      "title": "Previzualizare și Mod Survol",
+      "routePreview": "Previzualizare Rută",
+      "routePreviewDesc": "După planificarea unei rute, vizualizați întregul traseu pe hartă înainte de a începe navigarea. Măriți și deplasați pentru a examina orice parte a rutei.",
+      "flybyAnimation": "Animație Survol",
+      "flybyAnimationDesc": "Atingeți butonul de redare pentru a viziona un survol animat al întregii rute. Camera urmărește drumul, arătând curbele, restricțiile și punctele de reper.",
+      "etaDisplay": "Afișare ETA",
+      "etaDisplayDesc": "Previzualizarea arată timpul estimat de sosire, distanța totală și durata așteptată a călătoriei pe baza condițiilor actuale de trafic.",
+      "noAutoStart": "Start Manual",
+      "noAutoStartDesc": "Navigarea nu pornește automat. Examinați ruta cu atenție, apoi atingeți 'Începe Navigația' când sunteți gata să porniți."
+    },
+    "etaInfo": {
+      "title": "ETA și Informații Călătorie",
+      "arrivalTime": "Ora de Sosire",
+      "arrivalTimeDesc": "Timpul estimat de sosire este actualizat continuu pe baza vitezei, condițiilor de trafic și distanței rămase.",
+      "remainingDistance": "Distanță Rămasă",
+      "remainingDistanceDesc": "Arată distanța totală rămasă până la destinație, afișată în unitățile preferate (mile sau kilometri).",
+      "remainingTime": "Timp Rămas",
+      "remainingTimeDesc": "Afișează timpul de condus rămas estimat, ținând cont de întârzierile actuale și anticipate ale traficului.",
+      "tripStrip": "Bandă Călătorie",
+      "tripStripDesc": "Banda compactă din partea de jos arată informații cheie: următoarea manevră, distanța până la virare, ETA și distanța totală rămasă."
+    },
+    "controlButtons": {
+      "title": "Butoane Control Hartă",
+      "compass": "Busolă",
+      "compassDesc": "Atingeți pentru a reseta orientarea hărții la nord în sus. Săgeata indică direcția curentă.",
+      "recenter": "Recentrare",
+      "recenterDesc": "Atingeți pentru a readuce harta la poziția GPS curentă cu nivel de zoom automat.",
+      "3dButton": "Vedere 3D",
+      "3dButtonDesc": "Comutați între vederea plată 2D și perspectiva înclinată 3D pentru o mai bună percepție spațială.",
+      "satellite": "Satelit",
+      "satelliteDesc": "Comutați între harta rutieră și imaginile satelitare pentru a vedea terenul real și punctele de reper.",
+      "traffic": "Trafic",
+      "trafficDesc": "Activați suprapunerea traficului în timp real cu drumuri codificate color pentru nivelurile de aglomerare.",
+      "zoomIn": "Mărire",
+      "zoomInDesc": "Atingeți sau ciupiți pentru a mări și a vedea mai multe detalii pe străzi și intersecții.",
+      "zoomOut": "Micșorare",
+      "zoomOutDesc": "Atingeți sau întindeți pentru a micșora și a obține o vedere mai largă a rutei.",
+      "layers": "Straturi",
+      "layersDesc": "Accesați straturi suplimentare de hartă, inclusiv parcări pentru camioane, benzinării, zone de odihnă și stații de cântărire."
+    },
+    "3dMap": {
+      "title": "Hartă 3D și Teren",
+      "tiltedView": "Vedere Înclinată",
+      "tiltedViewDesc": "Perspectiva 3D arată drumul din față cu adâncime, facilitând anticiparea curbelor și punctelor de reper viitoare.",
+      "buildings": "Clădiri 3D",
+      "buildingsDesc": "La nivelul de zoom 14+, clădirile apar ca structuri 3D. Clădirile mai înalte apar mai închise, ajutând la identificarea centrelor urbane și punctelor de reper.",
+      "hillShading": "Umbrire Relief",
+      "hillShadingDesc": "Altitudinea terenului este afișată cu umbrire, ajutând la vizualizarea dealurilor, munților și văilor de-a lungul rutei.",
+      "rotation": "Rotire Hartă",
+      "rotationDesc": "Harta se rotește pentru a se potrivi cu direcția dvs., menținând drumul din față întotdeauna în partea de sus a ecranului."
     },
     "restrictions": {
       "title": "Avertismente Restricții",
       "panel": "Panou Restricții",
       "panelDesc": "În modul previzualizare, un panou arată toate restricțiile pe ruta dvs. Încălcările critice (roșu) trebuie evitate. Înalte (portocaliu) și medii (galben) necesită atenție.",
       "markers": "Marcaje Hartă",
-      "markersDesc": "Iconițele triunghiulare galbene pe hartă arată locațiile restricțiilor. Atingeți orice marcaj pentru a vedea detalii, inclusiv dimensiunea specifică care încalcă profilul vehiculului."
+      "markersDesc": "Iconițele triunghiulare galbene pe hartă arată locațiile restricțiilor. Atingeți orice marcaj pentru a vedea detalii, inclusiv dimensiunea specifică care încalcă profilul vehiculului.",
+      "heightLimit": "Limită Înălțime",
+      "heightLimitDesc": "Podurile și tunelurile cu restricții de înălțime sunt marcate. Aplicația avertizează dacă înălțimea vehiculului depășește spațiul liber.",
+      "weightLimit": "Limită Greutate",
+      "weightLimitDesc": "Drumurile cu restricții de greutate sunt marcate. Rutele sunt calculate evitând drumurile care nu pot suporta greutatea totală a vehiculului."
     },
     "dynamicRoutes": {
       "title": "Sugestii Rute Dinamice",
       "alternative": "Rute Alternative",
-      "alternativeDesc": "În timpul navigării, aplicația verifică la fiecare 5 minute dacă există rute mai rapide. Când este găsită o opțiune mai rapidă, apare un banner verde care arată economisirea de timp. Atingeți \"Schimbă Ruta\" pentru a accepta."
+      "alternativeDesc": "În timpul navigării, aplicația verifică la fiecare 5 minute dacă există rute mai rapide. Când este găsită o opțiune mai rapidă, apare un banner verde care arată economisirea de timp. Atingeți \"Schimbă Ruta\" pentru a accepta.",
+      "oneTouch": "Redirecționare cu o Singură Atingere",
+      "oneTouchDesc": "Când este sugerată o rută alternativă, atingeți o dată pentru a o accepta imediat. Aplicația va recalcula automat și vă va ghida pe noua cale."
     },
-    "voiceCommands": {
-      "title": "Comenzi Vocale",
-      "reporting": "Raportare Incidente",
-      "reportingDesc": "În timpul navigării, atingeți butonul microfonului din partea stângă. Spuneți comenzi precum \"raportează trafic\", \"raportează accident\", \"pericol pe drum\", \"poliție înainte\" sau \"radar\" pentru a alerta alți șoferi."
+    "incidentReporting": {
+      "title": "Raportare Incidente",
+      "voiceReport": "Raport Vocal",
+      "voiceReportDesc": "Atingeți butonul microfonului și vorbiți pentru a raporta incidente fără mâini. Spuneți ce vedeți și aplicația va categoriza automat.",
+      "trafficJam": "Ambuteiaj",
+      "trafficJamDesc": "Raportați trafic greu sau staționare. Alți șoferi vor vedea aceasta și pot alege rute alternative.",
+      "accident": "Accident",
+      "accidentDesc": "Raportați accidente pe drum. Includeți informații despre bandă dacă este posibil, spunând 'accident pe banda din stânga' sau 'accident blochează drumul'.",
+      "roadHazard": "Pericol pe Drum",
+      "roadHazardDesc": "Raportați obstacole, resturi, gropi sau condiții periculoase. Fiți specific: 'resturi pe banda din dreapta' sau 'groapă mare'.",
+      "policeSpeedCamera": "Poliție / Radar",
+      "policeSpeedCameraDesc": "Raportați prezența poliției sau radarele. Spuneți 'poliție înainte' sau 'radar' pentru a alerta alți șoferi.",
+      "roadClosure": "Drum Închis",
+      "roadClosureDesc": "Raportați drumuri închise sau rute blocate. Aplicația va sugera alternative și va alerta alți șoferi."
     },
-    "alertSounds": {
-      "title": "Sunete Alertă Personalizabile",
-      "settings": "Setări Sunet",
-      "settingsDesc": "Accesați prin Meniu → Setări → Sunete Alertă. Alegeți sunete diferite pentru avertismente de viteză, alerte de trafic și mementouri de pauză. Ajustați volumul pentru fiecare tip de alertă independent."
+    "voiceFeatures": {
+      "title": "Funcții Vocale",
+      "guidance": "Ghidare Vocală",
+      "guidanceDesc": "Instrucțiunile vocale pas cu pas vă ghidează prin fiecare manevră. Volumul se ajustează automat în timpul apelurilor telefonice sau muzicii.",
+      "dictation": "Dictare Vocală",
+      "dictationDesc": "Spuneți destinația în loc să tastați. Atingeți microfonul în bara de căutare și spuneți adresa sau numele locației.",
+      "commands": "Comenzi Vocale",
+      "commandsDesc": "Controlați aplicația fără mâini cu comenzi precum 'oprește ghidarea', 'arată traficul', 'găsește benzinărie' sau 'anulează navigarea'.",
+      "languageSync": "Sincronizare Limbă",
+      "languageSyncDesc": "Limba ghidării vocale se potrivește cu setarea limbii aplicației. Schimbați limbile în Setări pentru a auzi instrucțiunile în limba preferată."
     },
-    "hapticFeedback": {
-      "title": "Feedback Haptic",
-      "vibration": "Alerte Vibrații",
-      "vibrationDesc": "Dispozitivul vibrează când apăsați butoane și în timpul evenimentelor de navigare. Diferite modele indică diferite acțiuni: atingere ușoară pentru butoane, puls puternic pentru avertismente și model de succes la sosire."
+    "alertsHaptics": {
+      "title": "Alerte și Feedback Haptic",
+      "speedWarning": "Avertizare Viteză",
+      "speedWarningDesc": "Avertismente vizuale și audio la depășirea limitei de viteză. Vitezometrul devine roșu și se aude un sunet de avertizare.",
+      "hapticFeedback": "Feedback Haptic",
+      "hapticFeedbackDesc": "Dispozitivul vibrează pentru evenimente importante: apăsări de butoane, avertismente de virare, avertismente de viteză și notificări de sosire.",
+      "fatigueAlert": "Alertă Oboseală",
+      "fatigueAlertDesc": "După condus prelungit, aplicația vă reamintește să luați o pauză. Arată zone de odihnă și parcări din apropiere pentru oprire sigură."
     },
-    "3dBuildings": {
-      "title": "Clădiri 3D",
-      "viewing": "Vizualizare Clădiri 3D",
-      "viewingDesc": "Activați modul 3D și măriți la nivelul 14 sau mai aproape. Clădirile apar ca extruziuni 3D cu variații de înălțime. Clădirile mai înalte apar mai închise. Ajută la vizualizarea zonelor urbane și localizarea punctelor de reper."
-    },
-    "arOverlay": {
+    "arNavigation": {
       "title": "Suprapunere Navigare AR",
-      "camera": "Vedere Cameră",
-      "cameraDesc": "Accesați suprapunerea AR în timpul navigării pentru o vedere bazată pe cameră cu suprapuneri de navigare. Arată viteza curentă, limita de viteză, următoarea manevră și ETA peste fluxul camerei live. Necesită permisiune cameră."
+      "cameraView": "Vedere Cameră",
+      "cameraViewDesc": "Îndreptați telefonul spre drumul din față. Suprapunerea AR arată săgeți de navigare și indicații de virare pe vederea live a camerei.",
+      "maneuverOverlay": "Suprapunere Manevră",
+      "maneuverOverlayDesc": "Virajele viitoare sunt afișate ca săgeți suprapuse pe drumul real, făcând ușor să vedeți exact unde să virați.",
+      "speedDisplay": "Afișaj Viteză",
+      "speedDisplayDesc": "Viteza curentă, limita de viteză și distanța până la următorul viraj apar în partea de sus a vederii AR pentru referință rapidă."
     },
-    "dashboardWidgets": {
+    "widgets": {
       "title": "Widgeturi Tablou",
-      "customizing": "Personalizarea Tabloului",
-      "customizingDesc": "Atingeți iconița setări în bara de widgeturi pentru a personaliza ce date apar. Widgeturi disponibile: viteză, ETA, distanță rămasă, direcție busolă, altitudine, estimare combustibil, vreme și întârziere trafic."
-    },
-    "entertainment": {
-      "title": "Sistem Divertisment",
-      "radio": "Radio Internet",
-      "radioDesc": "Accesați prin butonul radio în timpul navigării. Transmiteți stații radio prietenoase pentru camioane. Controlați redarea cu mini playerul din partea de jos a ecranului."
+      "speed": "Widget Viteză",
+      "speedDesc": "Arată viteza curentă cu codare color: verde (sub limită), galben (aproape de limită), roșu (peste limită).",
+      "eta": "Widget ETA",
+      "etaDesc": "Afișează timpul estimat de sosire, actualizat în timp real pe baza traficului și vitezei curente.",
+      "distance": "Widget Distanță",
+      "distanceDesc": "Arată distanța rămasă până la destinație în unitățile preferate.",
+      "compass": "Widget Busolă",
+      "compassDesc": "Afișează direcția curentă de călătorie (N, NE, E, SE, S, SV, V, NV).",
+      "customize": "Personalizare Widgeturi",
+      "customizeDesc": "Atingeți și țineți apăsat un widget pentru a rearanja sau elimina. Atingeți butonul + pentru a adăuga noi widgeturi pe tablou."
     },
     "facilities": {
       "title": "Căutare Facilități",
       "finding": "Găsirea Parcărilor pentru Camioane",
-      "findingDesc": "Utilizați căutarea POI în meniu pentru a găsi parcări pentru camioane, benzinării, parcări, restaurante și zone de odihnă din apropiere. Rezultatele sunt filtrate pentru locații accesibile camioanelor."
+      "findingDesc": "Utilizați căutarea POI în meniu pentru a găsi parcări pentru camioane, benzinării, parcări, restaurante și zone de odihnă din apropiere. Rezultatele sunt filtrate pentru locații accesibile camioanelor.",
+      "truckStops": "Parcări pentru Camioane",
+      "truckStopsDesc": "Găsiți parcări complet echipate cu combustibil, parcare, dușuri, restaurante și servicii de reparații. Vizualizați facilitățile și recenziile înainte de oprire.",
+      "fuel": "Benzinării",
+      "fuelDesc": "Găsiți benzinării pentru camioane cu motorină, AdBlue și pompe de mare capacitate. Comparați prețurile și filtrați după marcă.",
+      "parking": "Parcare Camioane",
+      "parkingDesc": "Găsiți parcare sigură pentru noapte la parcări, zone de odihnă și locuri de parcare desemnate. Vizualizați disponibilitatea și facilitățile.",
+      "restaurants": "Restaurante",
+      "restaurantsDesc": "Descoperiți restaurante prietenoase pentru camioane cu parcare pentru vehicule mari. Filtrați după tipul de bucătărie și orele de funcționare."
+    },
+    "fleet": {
+      "title": "Management Flotă",
+      "vehicles": "Gestionare Vehicule",
+      "vehiclesDesc": "Urmăriți toate vehiculele din flotă cu poziții GPS în timp real, actualizări de stare și programe de întreținere.",
+      "drivers": "Gestionare Șoferi",
+      "driversDesc": "Gestionați profilurile șoferilor, permisele, certificările și atribuiți șoferi la vehicule pentru urmărire precisă.",
+      "service": "Înregistrări Service",
+      "serviceDesc": "Înregistrați activitățile de întreținere și service. Setați mementouri pentru ITP, inspecții, calibrarea tahografului și service de rutină.",
+      "fuel": "Jurnale Combustibil",
+      "fuelDesc": "Urmăriți achizițiile de combustibil, calculați eficiența și monitorizați costurile combustibilului în întreaga flotă.",
+      "compliance": "Urmărire Conformitate",
+      "complianceDesc": "Monitorizați orele șoferilor, perioadele de odihnă și conformitatea cu reglementările. Primiți alerte înainte de expirarea certificărilor."
     },
     "fleetManagement": {
       "title": "Management Flotă (Desktop)",
@@ -551,15 +641,26 @@
     },
     "pwa": {
       "title": "Instalare Aplicație Mobilă",
-      "installing": "Instalare pe Dispozitiv",
-      "installingDesc": "Pe iOS: Atingeți Partajare → Adaugă la Ecran Principal. Pe Android: Atingeți meniul → Instalează Aplicația. Aceasta creează o experiență de aplicație pe tot ecranul cu suport offline pentru rutele salvate."
+      "ios": "Instalare iOS",
+      "iosDesc": "Pe iPhone sau iPad: Atingeți butonul Partajare → derulați în jos și atingeți 'Adaugă la Ecran Principal' → atingeți 'Adaugă' pentru a instala.",
+      "android": "Instalare Android",
+      "androidDesc": "Pe Android: Atingeți meniul (trei puncte) → atingeți 'Instalează Aplicația' sau 'Adaugă la Ecran Principal' → confirmați instalarea.",
+      "offline": "Mod Offline",
+      "offlineDesc": "Odată instalată, aplicația funcționează offline cu hărți și rute din cache. Descărcați zone în avans pentru navigare fără internet."
     },
     "settings": {
       "title": "Setări și Preferințe",
       "language": "Setări Limbă",
       "languageDesc": "Accesați prin Meniu → Setări. Alegeți limba preferată. Întreaga interfață a aplicației, ghidarea vocală și acest ghid de utilizator se vor actualiza în limba selectată.",
       "units": "Preferințe Unități",
-      "unitsDesc": "Comutați între măsuri metrice (kilometri, metri) și imperiale (mile, picioare). Limitele de viteză și distanțele vor fi afișate în unitățile preferate."
+      "unitsDesc": "Comutați între măsuri metrice (kilometri, metri) și imperiale (mile, picioare). Limitele de viteză și distanțele vor fi afișate în unitățile preferate.",
+      "theme": "Setări Temă",
+      "themeDesc": "Alegeți între tema Luminoasă, Întunecată sau Automată. Modul automat comută în funcție de ora zilei sau de setările dispozitivului."
+    },
+    "entertainment": {
+      "title": "Sistem Divertisment",
+      "radio": "Radio Internet",
+      "radioDesc": "Accesați prin butonul radio în timpul navigării. Transmiteți stații radio prietenoase pentru camioane. Controlați redarea cu mini playerul din partea de jos a ecranului."
     }
   }
 }

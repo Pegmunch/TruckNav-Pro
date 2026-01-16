@@ -475,91 +475,194 @@
     "vehicleSetup": {
       "title": "车辆设置",
       "profiles": "车辆配置文件",
-      "profilesDesc": "通过菜单 → 车辆选项卡访问。为每辆车创建包含尺寸(高度、宽度、长度)、重量和轴数的配置文件。应用程序使用这些信息来避开不合适的路线。",
+      "profilesDesc": "通过菜单 → 车辆选项卡访问。为每辆车创建包含尺寸(高度、宽度、长度)、重量和轴数的配置文件。",
       "hazmat": "危险品设置",
-      "hazmatDesc": "启用危险品选项以进行符合ADR规定的路线规划。应用程序将避开隧道和禁止危险货物通行的路线。"
+      "hazmatDesc": "启用危险品选项以进行符合ADR规定的路线规划。应用程序将避开隧道和禁止危险货物通行的路线。",
+      "trailerType": "拖车类型",
+      "trailerTypeDesc": "选择您的拖车配置（单拖车、双拖车或无拖车）。根据总车辆长度和转弯半径要求优化路线。"
     },
-    "mapControls": {
-      "title": "地图控制",
-      "compass": "指南针按钮",
-      "compassDesc": "位于地图右侧。点击可将地图旋转重置为朝北。导航期间，地图会根据您的行驶方向旋转。",
-      "recenter": "重新居中按钮",
-      "recenterDesc": "点击可将地图返回到当前GPS位置。GPS锁定图标表示位置跟踪处于活动状态。",
-      "3dMode": "3D模式",
-      "3dModeDesc": "点击3D按钮可倾斜地图以获得透视图。在缩放级别14+时，建筑物以3D形式显示。最适合城市导航。",
-      "satellite": "卫星视图",
-      "satelliteDesc": "在道路地图和卫星图像之间切换。从空中视图识别卡车停靠站和停车区域时很有用。",
-      "traffic": "交通图层",
-      "trafficDesc": "启用实时交通可视化。道路按颜色编码：绿色(畅通)、黄色(缓慢)、红色(拥堵)。实时更新。"
+    "previewFlyby": {
+      "title": "预览与飞越模式",
+      "routePreview": "路线预览",
+      "routePreviewDesc": "规划路线后，在开始导航前在地图上查看完整路径。缩放和平移以检查路线的任何部分。",
+      "flybyAnimation": "飞越动画",
+      "flybyAnimationDesc": "点击播放按钮观看整个路线的动画飞越。摄像机沿着道路显示转弯、限制和地标。",
+      "etaDisplay": "预计到达时间显示",
+      "etaDisplayDesc": "预览显示基于当前交通状况的预计到达时间、总距离和预期行驶时间。",
+      "noAutoStart": "手动启动",
+      "noAutoStartDesc": "导航不会自动开始。准备好后点击\"开始导航\"，让您有时间先查看路线。"
+    },
+    "etaInfo": {
+      "title": "预计到达时间和行程信息",
+      "arrivalTime": "到达时间",
+      "arrivalTimeDesc": "预计到达时间根据您的速度、交通状况和剩余距离持续更新。",
+      "remainingDistance": "剩余距离",
+      "remainingDistanceDesc": "到目的地的剩余距离，以您偏好的单位（英里或公里）显示。",
+      "remainingTime": "剩余时间",
+      "remainingTimeDesc": "根据当前交通状况到达目的地的预计行驶时间。",
+      "tripStrip": "行程条",
+      "tripStripDesc": "屏幕底部的可视化进度条，显示您的行程进度、即将到来的转弯和航点。"
+    },
+    "controlButtons": {
+      "title": "地图控制按钮",
+      "compass": "指南针",
+      "compassDesc": "点击可将地图方向重置为朝北。导航期间显示当前行驶方向。",
+      "recenter": "重新居中",
+      "recenterDesc": "当您平移离开时，点击可将地图重新居中到当前位置。",
+      "3dButton": "3D按钮",
+      "3dButtonDesc": "在倾斜的3D透视图和传统的俯视2D视图之间切换。",
+      "satellite": "卫星",
+      "satelliteDesc": "在卫星图像和标准地图视图之间切换。",
+      "traffic": "交通",
+      "trafficDesc": "启用或禁用实时交通图层，在道路上显示交通流量颜色（绿色、黄色、红色）。",
+      "zoomIn": "放大",
+      "zoomInDesc": "放大地图以查看更多细节。",
+      "zoomOut": "缩小",
+      "zoomOutDesc": "缩小地图以查看更大范围的路线。",
+      "layers": "图层",
+      "layersDesc": "控制地图图层，包括POI、卡车限制和交通。"
+    },
+    "3dMap": {
+      "title": "3D地图与地形",
+      "tiltedView": "倾斜视图",
+      "tiltedViewDesc": "倾斜地图以获得3D透视效果，更清楚地显示前方道路。",
+      "buildings": "3D建筑",
+      "buildingsDesc": "城市区域的建筑物以其实际高度以3D形式显示。",
+      "hillShading": "山体阴影",
+      "hillShadingDesc": "地形可视化显示山丘和坡度，对卡车司机很有帮助。",
+      "rotation": "地图旋转",
+      "rotationDesc": "地图随您的行驶方向旋转，或者您可以用指南针按钮锁定为北向上。"
     },
     "restrictions": {
       "title": "限制警告",
       "panel": "限制面板",
       "panelDesc": "在预览模式下，面板显示路线上的所有限制。必须避开严重违规(红色)。高级(橙色)和中级(黄色)需要注意。",
       "markers": "地图标记",
-      "markersDesc": "地图上的黄色三角形图标显示限制位置。点击任何标记可查看详细信息，包括违反您车辆配置文件的具体尺寸。"
+      "markersDesc": "地图上的黄色三角形图标显示限制位置。点击任何标记可查看详细信息。",
+      "heightLimit": "高度限制",
+      "heightLimitDesc": "低矮桥梁和立交桥的警告。应用程序将净空高度与您的车辆高度进行比较。",
+      "weightLimit": "重量限制",
+      "weightLimitDesc": "桥梁和道路的重量限制。应用程序确保路线能够承受您的车辆重量。"
     },
     "dynamicRoutes": {
-      "title": "动态路线建议",
+      "title": "动态路线",
       "alternative": "备选路线",
-      "alternativeDesc": "导航期间，应用程序每5分钟检查一次是否有更快的路线。当发现更快的选项时，会出现显示节省时间的绿色横幅。点击\"切换路线\"接受。"
+      "alternativeDesc": "导航期间，应用程序每5分钟检查一次是否有更快的路线。当发现更快选项时会显示绿色横幅。",
+      "oneTouch": "一键切换",
+      "oneTouchDesc": "当有更快的路线可用时，点击绿色栏即可立即切换到新路线。"
     },
-    "voiceCommands": {
-      "title": "语音命令",
-      "reporting": "事件报告",
-      "reportingDesc": "导航期间，点击左侧的麦克风按钮。说出\"报告交通\"、\"报告事故\"、\"道路危险\"、\"前方有警察\"或\"测速摄像头\"等命令来提醒其他司机。"
+    "incidentReporting": {
+      "title": "事件报告",
+      "voiceReport": "语音报告",
+      "voiceReportDesc": "使用语音命令安全地报告事件。点击麦克风按钮并说出您看到的情况。",
+      "trafficJam": "交通拥堵",
+      "trafficJamDesc": "报告严重交通或停滞状况。其他司机将收到警报。",
+      "accident": "事故",
+      "accidentDesc": "报告道路事故以警告司机并更新交通数据。",
+      "roadHazard": "道路危险",
+      "roadHazardDesc": "报告碎片、坑洼或其他道路危险。",
+      "policeSpeedCamera": "警察/测速摄像头",
+      "policeSpeedCameraDesc": "报告警察存在或测速摄像头位置。",
+      "roadClosure": "道路封闭",
+      "roadClosureDesc": "报告封闭的道路，以便司机可以选择替代路线。"
     },
-    "alertSounds": {
-      "title": "可自定义的警报声音",
-      "settings": "声音设置",
-      "settingsDesc": "通过菜单 → 设置 → 警报声音访问。为超速警告、交通警报和休息提醒选择不同的声音。独立调整每种警报类型的音量。"
+    "voiceFeatures": {
+      "title": "语音功能",
+      "guidance": "语音导航",
+      "guidanceDesc": "清晰的语音逐向指导，包含街道名称和距离。",
+      "dictation": "语音输入",
+      "dictationDesc": "通过语音而不是打字来搜索目的地。",
+      "commands": "语音命令",
+      "commandsDesc": "说出命令如\"报告交通\"、\"查找卡车停靠站\"或\"静音\"。",
+      "languageSync": "语言同步",
+      "languageSyncDesc": "语音导航自动匹配您选择的应用语言。"
     },
-    "hapticFeedback": {
-      "title": "触觉反馈",
-      "vibration": "振动警报",
-      "vibrationDesc": "按下按钮和导航事件期间设备会振动。不同的模式表示不同的操作：按钮轻触、警告强脉冲、到达时的成功模式。"
+    "alertsHaptics": {
+      "title": "警报与触觉",
+      "speedWarning": "超速警告",
+      "speedWarningDesc": "当您超过速度限制时发出音频和视觉警报。",
+      "hapticFeedback": "触觉反馈",
+      "hapticFeedbackDesc": "按钮按下和导航事件的振动反馈。",
+      "fatigueAlert": "疲劳警报",
+      "fatigueAlertDesc": "长时间驾驶后提醒您休息。"
     },
-    "3dBuildings": {
-      "title": "3D建筑",
-      "viewing": "查看3D建筑",
-      "viewingDesc": "启用3D模式并放大到级别14或更近。建筑物以具有高度变化的3D挤压形式显示。较高的建筑物显示得较暗。有助于可视化城市区域和定位地标。"
+    "arNavigation": {
+      "title": "AR导航",
+      "cameraView": "摄像头视图",
+      "cameraViewDesc": "使用您的摄像头在真实世界上叠加导航信息。",
+      "maneuverOverlay": "操作叠加",
+      "maneuverOverlayDesc": "即将到来的转弯和方向显示在摄像头视图上。",
+      "speedDisplay": "速度显示",
+      "speedDisplayDesc": "当前速度和限速叠加在AR视图上。"
     },
-    "arOverlay": {
-      "title": "AR导航叠加",
-      "camera": "相机视图",
-      "cameraDesc": "导航期间访问AR叠加以获得带有导航叠加的基于相机的视图。在实时相机画面上显示当前速度、速度限制、下一个操作和预计到达时间。需要相机权限。"
-    },
-    "dashboardWidgets": {
+    "widgets": {
       "title": "仪表板小部件",
-      "customizing": "自定义您的仪表板",
-      "customizingDesc": "点击小部件栏中的设置图标可自定义显示的数据。可用小部件：速度、预计到达时间、剩余距离、指南针方向、海拔、燃油估算、天气和交通延误。"
-    },
-    "entertainment": {
-      "title": "娱乐系统",
-      "radio": "网络电台",
-      "radioDesc": "导航期间通过电台按钮访问。播放适合卡车司机的电台。使用屏幕底部的迷你播放器控制播放。"
+      "speed": "速度小部件",
+      "speedDesc": "突出显示您的当前速度。",
+      "eta": "预计到达时间小部件",
+      "etaDesc": "预计到达时间，实时更新。",
+      "distance": "距离小部件",
+      "distanceDesc": "到目的地的剩余距离。",
+      "compass": "指南针小部件",
+      "compassDesc": "显示您当前的行驶方向。",
+      "customize": "自定义小部件",
+      "customizeDesc": "点击设置图标添加、删除或重新排列小部件。"
     },
     "facilities": {
       "title": "设施搜索",
       "finding": "查找卡车停靠站",
-      "findingDesc": "使用菜单中的POI搜索查找附近的卡车停靠站、加油站、停车场、餐厅和休息区。结果按卡车可进入的位置过滤。"
+      "findingDesc": "使用菜单中的POI搜索查找附近的卡车停靠站、加油站、停车场、餐厅和休息区。",
+      "truckStops": "卡车停靠站",
+      "truckStopsDesc": "查找附近的卡车停靠站，提供燃料、停车和设施。",
+      "fuel": "加油站",
+      "fuelDesc": "查找提供卡车用柴油的加油站。",
+      "parking": "卡车停车场",
+      "parkingDesc": "查找安全的卡车停车区和休息站。",
+      "restaurants": "餐厅",
+      "restaurantsDesc": "有卡车停车位的卡车司机友好餐饮选择。"
+    },
+    "fleet": {
+      "title": "车队管理",
+      "vehicles": "车辆追踪",
+      "vehiclesDesc": "在地图上查看所有车队车辆的实时GPS位置。",
+      "drivers": "驾驶员管理",
+      "driversDesc": "管理驾驶员档案、驾照和分配。",
+      "service": "维修记录",
+      "serviceDesc": "跟踪车辆维护历史和计划。",
+      "fuel": "燃油管理",
+      "fuelDesc": "监控燃油支出和效率。",
+      "compliance": "合规追踪",
+      "complianceDesc": "跟踪车辆检查和法规要求。"
     },
     "fleetManagement": {
       "title": "车队管理(桌面版)",
       "access": "访问车队工具",
-      "accessDesc": "车队管理仅在桌面版上可用。通过顶部导航栏访问。管理车辆、司机、服务记录、加油记录、合规跟踪和客户计费。"
+      "accessDesc": "车队管理仅在桌面版上可用。通过顶部导航栏访问。"
     },
     "pwa": {
-      "title": "移动应用安装",
+      "title": "应用安装",
       "installing": "在您的设备上安装",
-      "installingDesc": "在iOS上：点击分享 → 添加到主屏幕。在Android上：点击菜单 → 安装应用。这将创建具有离线支持的全屏应用体验，用于缓存的路线。"
+      "installingDesc": "在iOS上：点击分享 → 添加到主屏幕。在Android上：点击菜单 → 安装应用。",
+      "ios": "iOS安装",
+      "iosDesc": "在Safari中打开，点击分享按钮，选择\"添加到主屏幕\"。",
+      "android": "Android安装",
+      "androidDesc": "在Chrome中打开，点击菜单，选择\"安装应用\"。",
+      "offline": "离线支持",
+      "offlineDesc": "下载区域以便在没有互联网连接的情况下使用地图和路线。"
     },
     "settings": {
       "title": "设置和偏好",
       "language": "语言设置",
-      "languageDesc": "通过菜单 → 设置访问。选择您的首选语言。整个应用界面、语音导航和本用户指南将更新为您选择的语言。",
+      "languageDesc": "通过菜单 → 设置访问。选择您的首选语言。",
       "units": "单位偏好",
-      "unitsDesc": "在公制(公里、米)和英制(英里、英尺)测量之间切换。速度限制和距离将以您首选的单位显示。"
+      "unitsDesc": "在公制(公里、米)和英制(英里、英尺)测量之间切换。",
+      "theme": "主题",
+      "themeDesc": "在浅色、深色或系统自动主题之间选择。"
+    },
+    "entertainment": {
+      "title": "娱乐系统",
+      "radio": "网络电台",
+      "radioDesc": "导航期间通过电台按钮访问。播放适合卡车司机的电台。"
     }
   }
 }

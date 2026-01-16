@@ -116,72 +116,162 @@
       "profiles": "Araç Profilleri",
       "profilesDesc": "Menü → Araç sekmesi üzerinden erişin. Her araç için boyutlar (yükseklik, genişlik, uzunluk), ağırlık ve aks sayısı ile profiller oluşturun. Uygulama, uygun olmayan rotalardan kaçınmak için bunları kullanır.",
       "hazmat": "Tehlikeli Madde Ayarları",
-      "hazmatDesc": "ADR uyumlu rotalama için tehlikeli madde seçeneklerini etkinleştirin. Uygulama, tehlikeli maddeler için yasak olan tünellerden ve rotalardan kaçınacaktır."
+      "hazmatDesc": "ADR uyumlu rotalama için tehlikeli madde seçeneklerini etkinleştirin. Uygulama, tehlikeli maddeler için yasak olan tünellerden ve rotalardan kaçınacaktır.",
+      "trailerType": "Römork Tipi",
+      "trailerTypeDesc": "Römork konfigürasyonunuzu seçin (tekli, çiftli veya römorksuz). Rotalar, toplam araç uzunluğuna ve dönüş yarıçapı gereksinimlerine göre optimize edilir."
     },
-    "mapControls": {
-      "title": "Harita Kontrolleri",
-      "compass": "Pusula Düğmesi",
-      "compassDesc": "Haritanın sağ tarafında bulunur. Harita dönüşünü kuzeye sıfırlamak için dokunun. Navigasyon sırasında harita yönünüze göre döner.",
-      "recenter": "Yeniden Ortala Düğmesi",
-      "recenterDesc": "Haritayı mevcut GPS konumunuza geri getirmek için dokunun. GPS kilit simgesi, konum takibinin aktif olduğunu gösterir.",
-      "3dMode": "3D Modu",
-      "3dModeDesc": "Perspektif görünümü için haritayı eğmek üzere 3D düğmesine dokunun. Yakınlaştırma seviyesi 14+ olduğunda binalar 3D olarak görünür. Şehir içi navigasyon için idealdir.",
-      "satellite": "Uydu Görünümü",
-      "satelliteDesc": "Yol haritası ve uydu görüntüleri arasında geçiş yapın. Tır parkları ve park alanlarını havadan görünümden tanımlamak için kullanışlıdır.",
-      "traffic": "Trafik Katmanı",
-      "trafficDesc": "Canlı trafik görselleştirmesini etkinleştirin. Yollar renk kodludur: yeşil (akıcı), sarı (yavaş), kırmızı (tıkalı). Gerçek zamanlı güncellenir."
+    "previewFlyby": {
+      "title": "Önizleme ve Uçuş Modu",
+      "routePreview": "Rota Önizlemesi",
+      "routePreviewDesc": "Bir rota planladıktan sonra, navigasyonu başlatmadan önce haritada tüm yolu görüntüleyin. Rotanızın herhangi bir bölümünü incelemek için yakınlaştırın ve kaydırın.",
+      "flybyAnimation": "Uçuş Animasyonu",
+      "flybyAnimationDesc": "Tüm rotanızın animasyonlu bir uçuşunu izlemek için oynat düğmesine dokunun. Kamera yolu takip ederek dönüşleri, kısıtlamaları ve yer işaretlerini gösterir.",
+      "etaDisplay": "ETA Gösterimi",
+      "etaDisplayDesc": "Önizleme, mevcut trafik koşullarına dayalı tahmini varış saatini, toplam mesafeyi ve beklenen seyahat süresini gösterir.",
+      "noAutoStart": "Manuel Başlatma",
+      "noAutoStartDesc": "Navigasyon otomatik olarak başlamaz. Rotanızı iyice gözden geçirin, ardından hazır olduğunuzda 'Navigasyonu Başlat'a dokunun."
+    },
+    "etaInfo": {
+      "title": "ETA ve Yolculuk Bilgisi",
+      "arrivalTime": "Varış Saati",
+      "arrivalTimeDesc": "Tahmini varış saati, hızınıza, trafik koşullarına ve kalan mesafeye göre sürekli güncellenir.",
+      "remainingDistance": "Kalan Mesafe",
+      "remainingDistanceDesc": "Hedefinize olan toplam kalan mesafeyi tercih ettiğiniz birimlerde (mil veya kilometre) gösterir.",
+      "remainingTime": "Kalan Süre",
+      "remainingTimeDesc": "Mevcut ve beklenen trafik gecikmelerini hesaba katarak tahmini kalan sürüş süresini gösterir.",
+      "tripStrip": "Yolculuk Şeridi",
+      "tripStripDesc": "Alttaki kompakt şerit, temel bilgileri gösterir: sonraki manevra, dönüşe olan mesafe, ETA ve toplam kalan mesafe."
+    },
+    "controlButtons": {
+      "title": "Harita Kontrol Düğmeleri",
+      "compass": "Pusula",
+      "compassDesc": "Harita yönünü kuzey yukarı olarak sıfırlamak için dokunun. Ok, mevcut seyahat yönünüzü gösterir.",
+      "recenter": "Yeniden Ortala",
+      "recenterDesc": "Otomatik yakınlaştırma seviyesiyle mevcut GPS konumunuza haritayı geri getirmek için dokunun.",
+      "3dButton": "3D Görünüm",
+      "3dButtonDesc": "Daha iyi mekansal algı için 2D düz görünüm ile 3D eğik perspektif arasında geçiş yapın.",
+      "satellite": "Uydu",
+      "satelliteDesc": "Gerçek araziyi ve yer işaretlerini görmek için yol haritası ile uydu görüntüleri arasında geçiş yapın.",
+      "traffic": "Trafik",
+      "trafficDesc": "Tıkanıklık seviyeleri için renk kodlu yollarla canlı trafik katmanını etkinleştirin.",
+      "zoomIn": "Yakınlaştır",
+      "zoomInDesc": "Sokaklar ve kavşaklar hakkında daha fazla detay görmek için dokunun veya kıstırın.",
+      "zoomOut": "Uzaklaştır",
+      "zoomOutDesc": "Rotanızın daha geniş bir görünümünü elde etmek için dokunun veya açın.",
+      "layers": "Katmanlar",
+      "layersDesc": "Tır parkları, benzin istasyonları, dinlenme alanları ve kantarlar dahil ek harita katmanlarına erişin."
+    },
+    "3dMap": {
+      "title": "3D Harita ve Arazi",
+      "tiltedView": "Eğik Görünüm",
+      "tiltedViewDesc": "3D perspektif, önünüzdeki yolu derinlikle göstererek yaklaşan dönüşleri ve yer işaretlerini öngörmeyi kolaylaştırır.",
+      "buildings": "3D Binalar",
+      "buildingsDesc": "Yakınlaştırma seviyesi 14+ olduğunda, binalar 3D yapılar olarak görünür. Daha yüksek binalar daha koyu görünür, şehir merkezlerini ve yer işaretlerini tanımlamaya yardımcı olur.",
+      "hillShading": "Tepe Gölgeleme",
+      "hillShadingDesc": "Arazi yüksekliği gölgeleme ile gösterilir, rotanız boyunca tepeleri, dağları ve vadileri görselleştirmeye yardımcı olur.",
+      "rotation": "Harita Döndürme",
+      "rotationDesc": "Harita, seyahat yönünüze uyacak şekilde döner, önünüzdeki yolu her zaman ekranın üst kısmında tutar."
     },
     "restrictions": {
       "title": "Kısıtlama Uyarıları",
       "panel": "Kısıtlama Paneli",
       "panelDesc": "Önizleme modunda, bir panel rotanızdaki tüm kısıtlamaları gösterir. Kritik ihlaller (kırmızı) kaçınılmalıdır. Yüksek (turuncu) ve orta (sarı) dikkat gerektirir.",
       "markers": "Harita İşaretleri",
-      "markersDesc": "Haritadaki sarı üçgen simgeler kısıtlama konumlarını gösterir. Araç profilinizi ihlal eden belirli boyut dahil detayları görmek için herhangi bir işarete dokunun."
+      "markersDesc": "Haritadaki sarı üçgen simgeler kısıtlama konumlarını gösterir. Araç profilinizi ihlal eden belirli boyut dahil detayları görmek için herhangi bir işarete dokunun.",
+      "heightLimit": "Yükseklik Sınırı",
+      "heightLimitDesc": "Yükseklik kısıtlamalı köprüler ve tüneller işaretlenir. Uygulama, araç yüksekliğiniz açıklığı aşarsa uyarır.",
+      "weightLimit": "Ağırlık Sınırı",
+      "weightLimitDesc": "Ağırlık kısıtlamalı yollar işaretlenir. Rotalar, aracınızın tam ağırlığını taşıyamayan yollardan kaçınarak hesaplanır."
     },
     "dynamicRoutes": {
       "title": "Dinamik Rota Önerileri",
       "alternative": "Alternatif Rotalar",
-      "alternativeDesc": "Navigasyon sırasında uygulama her 5 dakikada bir daha hızlı rotalar olup olmadığını kontrol eder. Daha hızlı bir seçenek bulunduğunda, zaman tasarrufunu gösteren yeşil bir afiş görünür. Kabul etmek için \"Rota Değiştir\"e dokunun."
+      "alternativeDesc": "Navigasyon sırasında uygulama her 5 dakikada bir daha hızlı rotalar olup olmadığını kontrol eder. Daha hızlı bir seçenek bulunduğunda, zaman tasarrufunu gösteren yeşil bir afiş görünür. Kabul etmek için \"Rota Değiştir\"e dokunun.",
+      "oneTouch": "Tek Dokunuşla Yönlendirme",
+      "oneTouchDesc": "Alternatif bir rota önerildiğinde, hemen kabul etmek için bir kez dokunun. Uygulama otomatik olarak yeniden hesaplayacak ve sizi yeni yolda yönlendirecektir."
     },
-    "voiceCommands": {
-      "title": "Sesli Komutlar",
-      "reporting": "Olay Bildirimi",
-      "reportingDesc": "Navigasyon sırasında sol taraftaki mikrofon düğmesine dokunun. Diğer sürücüleri uyarmak için \"trafik bildir\", \"kaza bildir\", \"yol tehlikesi\", \"ileride polis\" veya \"radar\" gibi komutlar söyleyin."
+    "incidentReporting": {
+      "title": "Olay Bildirimi",
+      "voiceReport": "Sesli Bildirim",
+      "voiceReportDesc": "Mikrofon düğmesine dokunun ve eller serbest olay bildirmek için konuşun. Ne gördüğünüzü söyleyin, uygulama otomatik olarak kategorize edecektir.",
+      "trafficJam": "Trafik Sıkışıklığı",
+      "trafficJamDesc": "Yoğun trafik veya durma bildirin. Diğer sürücüler bunu görecek ve alternatif rotalar seçebilecek.",
+      "accident": "Kaza",
+      "accidentDesc": "Yoldaki kazaları bildirin. Mümkünse şerit bilgisini ekleyin, 'sol şeritte kaza' veya 'kaza yolu kapatıyor' diyerek.",
+      "roadHazard": "Yol Tehlikesi",
+      "roadHazardDesc": "Engelleri, döküntüleri, çukurları veya tehlikeli koşulları bildirin. Özel olun: 'sağ şeritte döküntü' veya 'büyük çukur'.",
+      "policeSpeedCamera": "Polis / Radar",
+      "policeSpeedCameraDesc": "Polis varlığını veya hız radarlarını bildirin. Diğer sürücüleri uyarmak için 'ileride polis' veya 'radar' deyin.",
+      "roadClosure": "Yol Kapatma",
+      "roadClosureDesc": "Kapalı yolları veya engellenmiş rotaları bildirin. Uygulama alternatifler önerecek ve diğer sürücüleri uyaracaktır."
     },
-    "alertSounds": {
-      "title": "Özelleştirilebilir Uyarı Sesleri",
-      "settings": "Ses Ayarları",
-      "settingsDesc": "Menü → Ayarlar → Uyarı Sesleri üzerinden erişin. Hız uyarıları, trafik uyarıları ve mola hatırlatıcıları için farklı sesler seçin. Her uyarı türü için sesi bağımsız olarak ayarlayın."
+    "voiceFeatures": {
+      "title": "Ses Özellikleri",
+      "guidance": "Sesli Rehberlik",
+      "guidanceDesc": "Adım adım sesli talimatlar her manevradan geçirmenizi sağlar. Ses, telefon görüşmeleri veya müzik sırasında otomatik olarak ayarlanır.",
+      "dictation": "Sesli Dikte",
+      "dictationDesc": "Yazmak yerine hedefinizi söyleyin. Arama çubuğundaki mikrofona dokunun ve adresi veya konum adını söyleyin.",
+      "commands": "Sesli Komutlar",
+      "commandsDesc": "'Rehberliği sustur', 'trafiği göster', 'benzin istasyonu bul' veya 'navigasyonu iptal et' gibi komutlarla uygulamayı eller serbest kontrol edin.",
+      "languageSync": "Dil Senkronizasyonu",
+      "languageSyncDesc": "Sesli rehberlik dili, uygulama dil ayarınızla eşleşir. Talimatları tercih ettiğiniz dilde duymak için Ayarlar'da dilleri değiştirin."
     },
-    "hapticFeedback": {
-      "title": "Dokunsal Geri Bildirim",
-      "vibration": "Titreşim Uyarıları",
-      "vibrationDesc": "Cihazınız düğmelere basarken ve navigasyon olayları sırasında titrer. Farklı desenler farklı eylemleri gösterir: düğmeler için hafif dokunuş, uyarılar için güçlü darbe ve varışta başarı deseni."
+    "alertsHaptics": {
+      "title": "Uyarılar ve Dokunsal Geri Bildirim",
+      "speedWarning": "Hız Uyarısı",
+      "speedWarningDesc": "Hız sınırını aştığınızda görsel ve sesli uyarılar. Hız göstergesi kırmızıya döner ve bir uyarı sesi çalar.",
+      "hapticFeedback": "Dokunsal Geri Bildirim",
+      "hapticFeedbackDesc": "Cihazınız önemli olaylar için titrer: düğme basışları, dönüş uyarıları, hız uyarıları ve varış bildirimleri.",
+      "fatigueAlert": "Yorgunluk Uyarısı",
+      "fatigueAlertDesc": "Uzun süreli sürüşten sonra uygulama size mola vermenizi hatırlatır. Güvenli durmak için yakındaki dinlenme alanlarını ve tır parklarını gösterir."
     },
-    "3dBuildings": {
-      "title": "3D Binalar",
-      "viewing": "3D Binaları Görüntüleme",
-      "viewingDesc": "3D modunu etkinleştirin ve seviye 14 veya daha yakına yakınlaştırın. Binalar yükseklik varyasyonlarıyla 3D ekstrüzyonlar olarak görünür. Daha yüksek binalar daha koyu görünür. Şehir alanlarını görselleştirmeye ve yer işaretlerini bulmaya yardımcı olur."
-    },
-    "arOverlay": {
+    "arNavigation": {
       "title": "AR Navigasyon Yerleşimi",
-      "camera": "Kamera Görünümü",
-      "cameraDesc": "Navigasyon yerleşimleri ile kamera tabanlı görünüm için navigasyon sırasında AR yerleşimine erişin. Mevcut hızınızı, hız sınırını, sonraki manevrayı ve ETA'yı canlı kamera akışı üzerinde gösterir. Kamera izni gerektirir."
+      "cameraView": "Kamera Görünümü",
+      "cameraViewDesc": "Telefonunuzu önünüzdeki yola doğrultun. AR yerleşimi, canlı kamera görünümünde navigasyon oklarını ve dönüş göstergelerini gösterir.",
+      "maneuverOverlay": "Manevra Yerleşimi",
+      "maneuverOverlayDesc": "Yaklaşan dönüşler, gerçek yol üzerinde oklar olarak görüntülenir, tam olarak nerede döneceğinizi görmeyi kolaylaştırır.",
+      "speedDisplay": "Hız Gösterimi",
+      "speedDisplayDesc": "Mevcut hızınız, hız sınırı ve sonraki dönüşe olan mesafe, hızlı referans için AR görünümünün üst kısmında görünür."
     },
-    "dashboardWidgets": {
+    "widgets": {
       "title": "Gösterge Paneli Widget'ları",
-      "customizing": "Gösterge Panelinizi Özelleştirme",
-      "customizingDesc": "Hangi verilerin görüneceğini özelleştirmek için widget çubuğundaki ayarlar simgesine dokunun. Kullanılabilir widget'lar: hız, ETA, kalan mesafe, pusula yönü, yükseklik, yakıt tahmini, hava durumu ve trafik gecikmesi."
-    },
-    "entertainment": {
-      "title": "Eğlence Sistemi",
-      "radio": "İnternet Radyosu",
-      "radioDesc": "Navigasyon sırasında radyo düğmesi üzerinden erişin. Kamyonculara uygun radyo istasyonlarını yayınlayın. Ekranın altındaki mini oynatıcı ile oynatmayı kontrol edin."
+      "speed": "Hız Widget'ı",
+      "speedDesc": "Mevcut hızınızı renk koduyla gösterir: yeşil (sınırın altında), sarı (sınıra yakın), kırmızı (sınırın üzerinde).",
+      "eta": "ETA Widget'ı",
+      "etaDesc": "Trafik ve mevcut hızınıza göre gerçek zamanlı olarak güncellenen tahmini varış saatinizi gösterir.",
+      "distance": "Mesafe Widget'ı",
+      "distanceDesc": "Tercih ettiğiniz birimlerde hedefinize kalan mesafeyi gösterir.",
+      "compass": "Pusula Widget'ı",
+      "compassDesc": "Mevcut seyahat yönünüzü gösterir (K, KD, D, GD, G, GB, B, KB).",
+      "customize": "Widget'ları Özelleştir",
+      "customizeDesc": "Yeniden düzenlemek veya kaldırmak için bir widget'a uzun basın. Gösterge panelinize yeni widget'lar eklemek için + düğmesine dokunun."
     },
     "facilities": {
       "title": "Tesis Arama",
       "finding": "Tır Parkları Bulma",
-      "findingDesc": "Yakındaki tır parklarını, benzin istasyonlarını, otoparkları, restoranları ve dinlenme alanlarını bulmak için menüdeki POI aramasını kullanın. Sonuçlar kamyon erişimli konumlar için filtrelenir."
+      "findingDesc": "Yakındaki tır parklarını, benzin istasyonlarını, otoparkları, restoranları ve dinlenme alanlarını bulmak için menüdeki POI aramasını kullanın. Sonuçlar kamyon erişimli konumlar için filtrelenir.",
+      "truckStops": "Tır Parkları",
+      "truckStopsDesc": "Yakıt, park, duş, restoran ve tamir hizmetleri sunan tam donanımlı tır parklarını bulun. Durmadan önce olanakları ve yorumları görüntüleyin.",
+      "fuel": "Benzin İstasyonları",
+      "fuelDesc": "Dizel, AdBlue ve yüksek akışlı pompalarla kamyon dostu benzin istasyonları bulun. Fiyatları karşılaştırın ve markaya göre filtreleyin.",
+      "parking": "Kamyon Parkı",
+      "parkingDesc": "Tır parklarında, dinlenme alanlarında ve belirlenmiş alanlarda güvenli gecelik park yeri bulun. Müsaitliği ve olanakları görüntüleyin.",
+      "restaurants": "Restoranlar",
+      "restaurantsDesc": "Kamyon parkı olan kamyon dostu restoranları keşfedin. Mutfak türüne ve çalışma saatlerine göre filtreleyin."
+    },
+    "fleet": {
+      "title": "Filo Yönetimi",
+      "vehicles": "Araç Yönetimi",
+      "vehiclesDesc": "Gerçek zamanlı GPS konumları, durum güncellemeleri ve bakım programlarıyla filonuzdaki tüm araçları takip edin.",
+      "drivers": "Sürücü Yönetimi",
+      "driversDesc": "Sürücü profillerini, ehliyetleri, sertifikaları yönetin ve doğru takip için sürücüleri araçlara atayın.",
+      "service": "Servis Kayıtları",
+      "serviceDesc": "Bakım ve servis faaliyetlerini kaydedin. Muayene, denetimler, takograf kalibrasyonu ve rutin bakım için hatırlatıcılar ayarlayın.",
+      "fuel": "Yakıt Günlükleri",
+      "fuelDesc": "Yakıt alımlarını takip edin, verimliliği hesaplayın ve tüm filo genelinde yakıt maliyetlerini izleyin.",
+      "compliance": "Uyumluluk Takibi",
+      "complianceDesc": "Sürücü saatlerini, dinlenme sürelerini ve düzenleyici uyumu izleyin. Sertifikalar sona ermeden önce uyarılar alın."
     },
     "fleetManagement": {
       "title": "Filo Yönetimi (Masaüstü)",
@@ -190,15 +280,26 @@
     },
     "pwa": {
       "title": "Mobil Uygulama Kurulumu",
-      "installing": "Cihazınıza Kurulum",
-      "installingDesc": "iOS'ta: Paylaş → Ana Ekrana Ekle'ye dokunun. Android'de: Menü → Uygulamayı Yükle'ye dokunun. Bu, önbelleğe alınmış rotalar için çevrimdışı destekle tam ekran uygulama deneyimi oluşturur."
+      "ios": "iOS Kurulumu",
+      "iosDesc": "iPhone veya iPad'de: Paylaş düğmesine dokunun → aşağı kaydırın ve 'Ana Ekrana Ekle'ye dokunun → kurulum için 'Ekle'ye dokunun.",
+      "android": "Android Kurulumu",
+      "androidDesc": "Android'de: Menüye (üç nokta) dokunun → 'Uygulamayı Yükle' veya 'Ana Ekrana Ekle'ye dokunun → kurulumu onaylayın.",
+      "offline": "Çevrimdışı Mod",
+      "offlineDesc": "Kurulduktan sonra uygulama, önbelleğe alınmış haritalar ve rotalarla çevrimdışı çalışır. İnternetsiz navigasyon için alanları önceden indirin."
     },
     "settings": {
       "title": "Ayarlar ve Tercihler",
       "language": "Dil Ayarları",
       "languageDesc": "Menü → Ayarlar üzerinden erişin. Tercih ettiğiniz dili seçin. Tüm uygulama arayüzü, sesli rehberlik ve bu kullanıcı kılavuzu seçtiğiniz dile güncellenecektir.",
       "units": "Birim Tercihleri",
-      "unitsDesc": "Metrik (kilometre, metre) ve emperyal (mil, feet) ölçümler arasında geçiş yapın. Hız sınırları ve mesafeler tercih ettiğiniz birimlerde görüntülenecektir."
+      "unitsDesc": "Metrik (kilometre, metre) ve emperyal (mil, feet) ölçümler arasında geçiş yapın. Hız sınırları ve mesafeler tercih ettiğiniz birimlerde görüntülenecektir.",
+      "theme": "Tema Ayarları",
+      "themeDesc": "Açık, Koyu veya Otomatik tema arasında seçim yapın. Otomatik mod, günün saatine veya cihaz ayarlarınıza göre geçiş yapar."
+    },
+    "entertainment": {
+      "title": "Eğlence Sistemi",
+      "radio": "İnternet Radyosu",
+      "radioDesc": "Navigasyon sırasında radyo düğmesi üzerinden erişin. Kamyonculara uygun radyo istasyonlarını yayınlayın. Ekranın altındaki mini oynatıcı ile oynatmayı kontrol edin."
     }
   }
 }
