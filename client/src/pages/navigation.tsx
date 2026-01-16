@@ -3171,8 +3171,28 @@ function NavigationPageContent() {
                   gpsStatus={gpsData?.status || 'unavailable'}
                   onPreviewStart={handlePreviewRoute}
                   onPreviewStop={() => {
-                    console.log('[FLYBY] Stop requested');
+                    console.log('[FLYBY] Stop requested - resetting to initial state');
+                    // Cancel the fly-by animation
+                    if (mapRef.current) {
+                      mapRef.current.cancelFlyBy();
+                    }
+                    // Reset all preview states to return to initial view
                     setIsFlyByInProgress(false);
+                    setIsShowingPreview(false);
+                    // Zoom back to show full route
+                    if (currentRoute?.routePath && mapRef.current) {
+                      const lats = currentRoute.routePath.map((p: any) => p.lat);
+                      const lngs = currentRoute.routePath.map((p: any) => p.lng);
+                      const bounds = {
+                        north: Math.max(...lats),
+                        south: Math.min(...lats),
+                        east: Math.max(...lngs),
+                        west: Math.min(...lngs)
+                      };
+                      window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
+                        detail: { bounds, padding: 50 }
+                      }));
+                    }
                   }}
                   onSetLocation={() => setShowManualLocationDialog(true)}
                   isPreviewActive={isFlyByInProgress}
@@ -3457,8 +3477,22 @@ function NavigationPageContent() {
                         gpsStatus={gpsData?.status || 'unavailable'}
                         onPreviewStart={handlePreviewRoute}
                         onPreviewStop={() => {
-                          console.log('[FLYBY] Stop requested');
+                          console.log('[FLYBY] Stop requested - resetting to initial state');
+                          if (mapRef.current) {
+                            mapRef.current.cancelFlyBy();
+                          }
                           setIsFlyByInProgress(false);
+                          setIsShowingPreview(false);
+                          if (currentRoute?.routePath) {
+                            const lats = currentRoute.routePath.map((p: any) => p.lat);
+                            const lngs = currentRoute.routePath.map((p: any) => p.lng);
+                            window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
+                              detail: {
+                                bounds: { north: Math.max(...lats), south: Math.min(...lats), east: Math.max(...lngs), west: Math.min(...lngs) },
+                                padding: 50
+                              }
+                            }));
+                          }
                         }}
                         onSetLocation={() => setShowManualLocationDialog(true)}
                         isPreviewActive={isFlyByInProgress}

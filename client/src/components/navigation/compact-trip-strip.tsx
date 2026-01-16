@@ -203,8 +203,8 @@ export function CompactTripStrip({
           </div>
         )}
         
-        {/* Right: Action buttons */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        {/* Right: Action buttons - positioned slightly left */}
+        <div className="flex items-center gap-1 flex-shrink-0 mr-2">
           {isNavigating && onCancelNavigation && (
             <Button
               onClick={onCancelNavigation}
@@ -219,12 +219,12 @@ export function CompactTripStrip({
             </Button>
           )}
           {!isNavigating && (
-            <div className="flex flex-row gap-1">
+            <div className="flex flex-row gap-2 items-center">
               <button
                 onClick={onPreviewStart}
                 disabled={isPreviewActive}
-                className="h-4 px-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[9px] active:scale-95 transition-all disabled:opacity-50 rounded-full shadow-sm flex items-center"
-                style={{ touchAction: 'manipulation' }}
+                className="h-5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-full shadow-sm flex items-center justify-center"
+                style={{ touchAction: 'manipulation', minWidth: '52px' }}
                 data-testid="button-preview-start"
               >
                 Preview
@@ -232,8 +232,8 @@ export function CompactTripStrip({
               <button
                 onClick={onPreviewStop}
                 disabled={!isPreviewActive}
-                className="h-4 px-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[9px] active:scale-95 transition-all disabled:opacity-40 rounded-full shadow-sm flex items-center"
-                style={{ touchAction: 'manipulation' }}
+                className="h-5 px-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-full shadow-sm flex items-center justify-center"
+                style={{ touchAction: 'manipulation', minWidth: '40px' }}
                 data-testid="button-preview-stop"
               >
                 Stop
