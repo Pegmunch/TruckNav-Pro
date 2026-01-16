@@ -1625,15 +1625,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Add destination flag marker at the end of the route (ONLY in preview mode, hide during navigation)
     // During active navigation, the flag clutters the view - driver knows destination
-    if (mapInstance && mapInstance.isStyleLoaded()) {
+    if (map.current && map.current.isStyleLoaded()) {
       try {
-        const layers = mapInstance.getStyle().layers;
-        layers.forEach(layer => {
+        const layers = map.current.getStyle().layers;
+        layers.forEach((layer: any) => {
           if (layer.id.includes('road') || layer.id.includes('tunnel') || layer.id.includes('bridge')) {
             if (layer.type === 'line') {
               // Ensure road lines are not black in road mode (fix for black line issue)
               if (preferences.mapViewMode === 'roads') {
-                mapInstance.setPaintProperty(layer.id, 'line-color', '#ffffff');
+                map.current?.setPaintProperty(layer.id, 'line-color', '#ffffff');
               }
             }
           }
