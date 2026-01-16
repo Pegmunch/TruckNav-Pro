@@ -18,30 +18,20 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Subscription System**: Stripe-powered subscription management with access control.
 - **Data Storage**: PostgreSQL with Neon serverless driver, Drizzle Kit for schema migrations, and PostgreSQL for session storage.
 - **Core Data Models**: Users, Subscriptions, Vehicle Profiles, Restrictions, Facilities, Routes, Region Preferences, Fleet Vehicles, Operators, Service Records, Fuel Logs, and Vehicle Assignments.
-- **Smart Route Planning**: Utilizes TomTom Truck Routing API as the primary engine with GraphHopper as a fallback. It includes intelligent restriction avoidance, spatial validation (Turf.js), critical violation detection, and dimensional checking. Features automatic off-route rerouting via `useAutoReroute` hook that monitors GPS position vs route polyline (50m lateral threshold, 2 consecutive fixes required, 15s debounce), automatically recalculating routes through TomTom API when driver deviates from planned route. Route polyline displayed in TomTom blue (#0067FF) with white outline for visibility. Features a comprehensive restriction warning system with RestrictionsWarningPanel displaying color-coded violations (critical/high/medium severity) with dimensional comparisons, and interactive map markers (AlertTriangle icons) showing restriction locations during preview mode. Uses dual refs (restrictionViolationsRef, isNavigatingRef) with stable useCallback to prevent stale closures, ensuring markers render correctly across map style changes (roads ⇄ satellite/3D) via styledata event listener. Warnings and markers automatically hide when navigation starts for clean navigation interface.
+- **Smart Route Planning**: Utilizes TomTom Truck Routing API as the primary engine with GraphHopper as a fallback. It includes intelligent restriction avoidance, spatial validation (Turf.js), critical violation detection, and dimensional checking. Features automatic off-route rerouting, a comprehensive restriction warning system with interactive map markers, and warnings that hide during navigation.
 - **Facility Discovery**: Allows searching for truck-friendly facilities by type and location.
-- **Interactive Mapping**: Uses MapLibre GL JS (primary, GPU-accelerated, 3D) and Leaflet (fallback). Features persistent tile sources with lazy initialization to prevent duplicate source/layer registration. A professional navigation HUD with an enhanced speed limit system (OpenStreetMap Overpass API, region-specific signs), and an enhanced 3D navigation mode with dynamic segment tracking and dual-mode bearing. Includes a turn-by-turn indicator, CompactTripStrip (fixed positioning, z-index 1700) displaying ETA/distance/next maneuver at top during navigation, 8-button navigation control stack on right side (compass, recenter, zoom, 3D, traffic, satellite, incidents) with scrollable container for small viewports, real-time traffic visualization (TomTom Traffic Flow API), TomTom Traffic Incidents API, and crowdsourced incident reporting. Automatic GPS position lock, real-time bearing rotation, and vehicle-specific GPS markers are also implemented. Navigation controls only render during navigate mode (not preview) for clean interface.
-- **Address Autocomplete & POI Search**: Uses TomTom Search API for worldwide address autocomplete and truck-specific POI search with fuzzy matching. Features bulletproof geocoding system with priority-based lookups (direct coordinates, cached, postcodes.io, TomTom Search API).
-- **Mobile Menu**: Full-screen UI with a tabbed interface for route planning, recent destinations, vehicle selection, theme settings, and tools. Route planning includes live autocomplete with TomTom-powered dropdowns.
+- **Interactive Mapping**: Uses MapLibre GL JS (primary, GPU-accelerated, 3D) and Leaflet (fallback). Features persistent tile sources, a professional navigation HUD with an enhanced speed limit system, 3D navigation mode, turn-by-turn indicator, CompactTripStrip, 8-button navigation control stack, real-time traffic visualization, and crowdsourced incident reporting. Automatic GPS position lock, real-time bearing rotation, and vehicle-specific GPS markers are also implemented.
+- **Address Autocomplete & POI Search**: Uses TomTom Search API for worldwide address autocomplete and truck-specific POI search with fuzzy matching. Features a bulletproof geocoding system with priority-based lookups.
+- **Mobile Menu**: Full-screen UI with a tabbed interface for route planning, recent destinations, vehicle selection, theme settings, and tools.
 - **Mobile Compatibility & PWA**: Progressive Web App with offline support, iOS enhancements, automatic update detection, and offline features for cached routes, restrictions, and facilities.
-- **Voice Commands for Incident Reporting**: Hands-free voice command system using Web Speech API for reporting traffic incidents during navigation. Supports commands like "report traffic", "report accident", "road hazard", "road closed", "police ahead", "speed camera", "construction", "bad weather". Voice commands auto-enable during active navigation with microphone button in left action stack. Reports include GPS coordinates and severity levels.
-- **Customizable Alert Sounds**: Personalized audio alerts using Web Audio API for speed limit warnings, traffic incidents, and fatigue/break reminders. Features include multiple sound options per alert type (beep, chime, alert, notification, gentle, alarm), per-alert volume control, master volume slider, enable/disable toggles, and sound preview functionality. Settings accessible via Settings Modal → Alert Sounds tab. Integrates with SpeedometerHUD (speed limit violations), DriverFatigueAlert (break reminders), and TrafficAlertBanner (traffic incidents). Uses cooldown timers to prevent alert fatigue.
-- **Fleet Management System (Desktop-Only)**: Enterprise-grade comprehensive fleet management system for office/back-end use, accessible only on desktop devices. Features 14 integrated tabs with advanced analytics, compliance tracking, and enterprise capabilities:
-  - **Vehicle Registry**: Track vehicles with registration numbers, trailer numbers, make/model, year, VIN, vehicle type, fuel type, tank capacity, mileage, and status (active/maintenance/decommissioned).
-  - **Operator Management**: Manage drivers with personal details, license information (number, type, expiry), Driver CPC expiry, tachograph card details, employee ID, and status.
-  - **Service Records**: Comprehensive maintenance tracking including service type (routine, MOT, repair, inspection, tachograph calibration), service dates, next due dates, mileage at service, costs, service providers, parts replaced, and automatic monitoring for upcoming services.
-  - **Fuel Consumption**: Log fuel fill-ups with odometer readings, liters added, costs, location, fuel type, MPG calculations, and automatic fuel efficiency tracking per vehicle.
-  - **Document Management**: Store and manage official vehicle documents (registration, MOT, insurance, maintenance) with cloud storage integration.
-  - **Cost Analytics Dashboard**: Professional financial analysis with pie charts (cost breakdown by type), bar charts (costs per vehicle), and monthly trend lines. Includes total cost tracking, average cost per vehicle, and category analysis.
-  - **Incident Logging**: Track accidents, damage, violations, breakdowns, and near-misses with severity levels (critical/high/medium/low), root cause analysis, preventative measures, and insurance claim tracking.
-  - **Trip Tracking & Profitability Analysis**: Monitor trips with planned vs. actual metrics (distance, duration, cost, revenue), profit margin calculations, route efficiency tracking, and fleet-wide trip analytics dashboard.
-  - **Compliance & Regulatory Tracking**: Track regulatory compliance (DVLA checks, emission standards, hazmat certifications, tachograph inspections, working hours) with non-compliant record alerts.
-  - **Real-Time Fleet Tracking**: Live GPS tracking dashboard with interactive Leaflet map showing all fleet vehicles. Features status indicators (Moving/Stopped/Offline), vehicle list panel with last update times, click-to-center functionality, and automatic 30-second refresh.
-  - **Geofencing System**: Create and manage virtual zones with circular geofence boundaries. Includes color-coded zone types (warehouse/customer/restricted/checkpoint), entry/exit alerts, click-on-map zone creation, and event history tracking.
-  - **Driver Behavior Analytics**: Safety scoring system with fleet-wide metrics. Features driver leaderboards, behavior breakdown charts (speeding, harsh braking, acceleration, cornering), date range filtering, and high-risk driver identification.
-  - **Hours of Service (HoS) Compliance**: EU/UK driving regulations tracking with violation detection. Displays daily/weekly driving hours, remaining time, duty status indicators (Driving/On-Duty/Off-Duty/Sleeper), and automatic violation alerts.
-  - **Customer Billing Portal**: Enterprise customer management with contract tracking, rate management (per mile/hour), trip billing, revenue analytics, and profitability analysis per customer.
-  - **Desktop Navigation**: Clean desktop-only header navigation for switching between Navigation and Fleet Management interfaces.
+- **Voice Commands for Incident Reporting**: Hands-free voice command system using Web Speech API for reporting traffic incidents during navigation.
+- **Customizable Alert Sounds**: Personalized audio alerts using Web Audio API for speed limit warnings, traffic incidents, and fatigue/break reminders, with configurable sound options, volume control, and toggles.
+- **Haptic Feedback System**: Vibration API integration for tactile feedback on button presses and navigation events with multiple patterns and user preferences.
+- **3D Buildings Layer**: Interactive 3D building extrusions using Protomaps vector tiles, visible at zoom level 14+ when 3D mode is active.
+- **Dynamic Route Suggestions**: Intelligent alternative route detection during navigation using TomTom Truck Routing API, displaying time savings and allowing one-tap route switching.
+- **AR Navigation Overlay**: Camera-based augmented reality navigation view using device camera and DeviceOrientationEvent, featuring real-time speed, speed limit warnings, maneuver overlays, and ETA/distance display.
+- **Customizable Dashboard Widgets**: Modular widget system showing real-time navigation data with drag-and-drop configuration and persistent settings.
+- **Fleet Management System (Desktop-Only)**: Enterprise-grade comprehensive fleet management system for office/back-end use with 14 integrated tabs for advanced analytics, compliance tracking, and enterprise capabilities, including: Vehicle Registry, Operator Management, Service Records, Fuel Consumption, Document Management, Cost Analytics Dashboard, Incident Logging, Trip Tracking & Profitability Analysis, Compliance & Regulatory Tracking, Real-Time Fleet Tracking, Geofencing System, Driver Behavior Analytics, Hours of Service (HoS) Compliance, and Customer Billing Portal. Includes a dedicated desktop navigation for switching between interfaces.
 
 # External Dependencies
 
@@ -77,28 +67,3 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 
 ## State Management
 - **TanStack React Query**: Server state management.
-
-# Robustness & Reliability (99% Target)
-
-## Performance Monitoring
-- **Server Performance Metrics**: Real-time tracking of request counts, response times (avg/min/max), success rates, requests per second, and endpoint-specific analytics via `/api/metrics/performance`.
-- **Error Tracking System**: Comprehensive error categorization (validation, authentication, authorization, rate_limit, server_error, database, external_api, timeout), error breakdown by status code and endpoint, crash-free rate calculation via `/api/metrics/errors`.
-- **Health Monitoring**: System health reports with recommendations via `/api/metrics/health`, uptime tracking, memory usage monitoring.
-
-## Client-Side Reliability
-- **Crash-Free Monitor**: Client-side error tracking for JavaScript errors, unhandled promise rejections, and component errors with session metrics stored in localStorage.
-- **Data Validation**: Comprehensive Zod schemas for coordinates, vehicle profiles, routes, facilities, and traffic incidents with sanitization utilities.
-
-## Rate Limiting (99% Protection)
-- **Tiered Rate Limits**: General (100/15min), Auth (5/15min), API (60/min), Route Planning (20/min), File Upload (10/5min), External API (30/min).
-- **Enhanced Rate Limiters**: Configurable via `server/middleware/rate-limit-config.ts` with proper error responses and retry-after headers.
-
-## Load Testing
-- **Load Test Script**: `scripts/load-test.ts` for measuring endpoint performance under concurrent load with configurable concurrency and duration.
-
-## Monitoring Endpoints
-- `GET /api/health` - System health check
-- `GET /api/metrics/performance` - Performance analytics
-- `GET /api/metrics/errors` - Error statistics
-- `GET /api/metrics/health` - Health report with recommendations
-- `GET /api/metrics/reliability` - 99% reliability target status

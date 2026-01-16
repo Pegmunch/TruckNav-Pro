@@ -2,6 +2,7 @@ import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from '
 import { useRef, type PointerEvent, type MouseEvent, type TouchEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
 interface RightActionStackProps {
   onZoomIn?: () => void;
@@ -56,15 +57,16 @@ export function RightActionStack({
       e.preventDefault();
       e.stopPropagation();
       handledByPointerRef.current[label] = true;
+      hapticButtonPress();
       console.log(`[RIGHT-BTN-${label}] ✅ Pressed via pointerDown`);
       callback?.();
       setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
     },
     onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
-      // Ensure touch events are captured even if pointer events fail
       e.stopPropagation();
       if (!handledByPointerRef.current[label]) {
         handledByPointerRef.current[label] = true;
+        hapticButtonPress();
         console.log(`[RIGHT-BTN-${label}] ✅ Pressed via touchStart`);
         callback?.();
         setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
@@ -74,6 +76,7 @@ export function RightActionStack({
       e.preventDefault();
       e.stopPropagation();
       if (!handledByPointerRef.current[label]) {
+        hapticButtonPress();
         console.log(`[RIGHT-BTN-${label}] ✅ Pressed via onClick`);
         callback?.();
       }

@@ -2,6 +2,7 @@ import { AlertCircle, Menu, Navigation, X, Mic, MicOff } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, type PointerEvent, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType } from '@/lib/voice-commands';
+import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
 interface LeftActionStackProps {
   onNavigate?: () => void;
@@ -67,18 +68,17 @@ export function LeftActionStack({
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      // Mark this specific button as handled by pointer
       handledByPointerRef.current[label] = true;
+      hapticButtonPress();
       console.log(`[LEFT-BTN-${label}] ✅ Pressed via pointerDown (${e.pointerType})`);
       callback?.();
-      // Reset this specific button's guard after a short delay
       setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
     },
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      // Only fire if not already handled by pointer for this specific button
       if (!handledByPointerRef.current[label]) {
+        hapticButtonPress();
         console.log(`[LEFT-BTN-${label}] ✅ Pressed via onClick (keyboard)`);
         callback?.();
       }

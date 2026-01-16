@@ -1292,15 +1292,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           });
         }
 
-        // Add 3D buildings vector source (OpenMapTiles with building heights)
-        if (!mapInstance.getSource('openmaptiles')) {
-          mapInstance.addSource('openmaptiles', {
+        // Add 3D buildings vector source using free Protomaps tiles
+        if (!mapInstance.getSource('protomaps-buildings')) {
+          mapInstance.addSource('protomaps-buildings', {
             type: 'vector',
             tiles: [
-              'https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=get_your_own_OpIi9ZULNHzrESv6T2vL'
+              'https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=1003762824b9687f'
             ],
             minzoom: 0,
-            maxzoom: 14
+            maxzoom: 15
           });
         }
 
@@ -1308,41 +1308,42 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         if (!mapInstance.getLayer('3d-buildings')) {
           mapInstance.addLayer({
             id: '3d-buildings',
-            source: 'openmaptiles',
-            'source-layer': 'building',
+            source: 'protomaps-buildings',
+            'source-layer': 'buildings',
             type: 'fill-extrusion',
             minzoom: 14,
             paint: {
               'fill-extrusion-color': [
                 'interpolate',
                 ['linear'],
-                ['get', 'render_height'],
-                0, '#e8e8e8',
-                50, '#d4d4d4',
+                ['coalesce', ['get', 'height'], 10],
+                0, '#f0f0f0',
+                20, '#e0e0e0',
+                50, '#d0d0d0',
                 100, '#c0c0c0',
-                200, '#a8a8a8'
+                200, '#b0b0b0'
               ],
               'fill-extrusion-height': [
                 'interpolate',
                 ['linear'],
                 ['zoom'],
                 14, 0,
-                15.5, ['coalesce', ['get', 'render_height'], ['get', 'height'], 10]
+                15, ['coalesce', ['get', 'height'], 10]
               ],
               'fill-extrusion-base': [
                 'interpolate',
                 ['linear'],
                 ['zoom'],
                 14, 0,
-                15.5, ['coalesce', ['get', 'render_min_height'], 0]
+                15, ['coalesce', ['get', 'min_height'], 0]
               ],
-              'fill-extrusion-opacity': 0.75
+              'fill-extrusion-opacity': 0.7
             },
             layout: {
-              visibility: 'none' // Initially hidden, shown when 3D mode is active
+              visibility: 'none'
             }
           });
-          console.log('[3D-BUILDINGS] Added 3D buildings layer');
+          console.log('[3D-BUILDINGS] Added 3D buildings layer with Protomaps source');
         }
 
         setIsLoaded(true);
