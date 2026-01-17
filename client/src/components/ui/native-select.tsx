@@ -7,11 +7,13 @@ import { Check, ChevronDown } from "lucide-react"
 function isIOSDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isIOS = /iPad|iPhone|iPod/i.test(ua);
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const isMobileSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+  const isMobileSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua) && !/CriOS/i.test(ua);
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  return isIOS || isIPadOS || (isMobileSafari && isTouchDevice);
+  const result = isIOS || isIPadOS || (isMobileSafari && isTouchDevice);
+  console.warn('[NATIVE-SELECT] iOS Detection:', { isIOS, isIPadOS, isMobileSafari, isTouchDevice, result });
+  return result;
 }
 
 interface NativeSelectProps {
@@ -79,7 +81,10 @@ const IOSRadioGroup: React.FC<NativeSelectProps> = ({
 const NativeSelect: React.FC<NativeSelectProps> = (props) => {
   const [isIOS] = React.useState(() => isIOSDevice());
   
+  console.warn('[NATIVE-SELECT] Rendering, isIOS:', isIOS);
+  
   if (isIOS) {
+    console.warn('[NATIVE-SELECT] Using iOS RADIO BUTTONS');
     return <IOSRadioGroup {...props} />;
   }
   
