@@ -65,7 +65,7 @@ export function AddComplianceDialog({ isOpen, onOpenChange }: AddComplianceDialo
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
+    <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
       <DialogHeader>
         <DialogTitle>Add Compliance Record</DialogTitle>
         <DialogDescription>Track regulatory compliance status</DialogDescription>
