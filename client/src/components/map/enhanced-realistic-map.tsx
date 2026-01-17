@@ -604,11 +604,11 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         }
         
         .leaflet-popup-content-wrapper {
-          background: rgba(17, 24, 39, 0.95);
+          background: rgba(17, 24, 39, 0.98);
           color: white;
           border-radius: 8px;
           border: 1px solid rgba(75, 85, 99, 0.5);
-          backdrop-filter: blur(8px);
+          /* backdrop-filter removed - causes transform context issues on iPad Safari */
         }
         
         .leaflet-popup-tip {
