@@ -449,13 +449,13 @@ function AddCustomerDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent className="max-w-md max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Add New Customer</DialogTitle>
         <DialogDescription>Enter customer billing information</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-4 py-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="space-y-2">
             <Label htmlFor="name">Company Name *</Label>
             <Input
@@ -543,11 +543,11 @@ function AddCustomerDialog({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+          <Button type="button" variant="outline" onClick={onClose} className="min-h-[44px]">
             Cancel
           </Button>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-customer">
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-customer" className="min-h-[44px]">
             {createMutation.isPending ? 'Adding...' : 'Add Customer'}
           </Button>
         </DialogFooter>

@@ -363,12 +363,13 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent data-testid="dialog-add-vehicle" className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent data-testid="dialog-add-vehicle" className="max-w-2xl max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Add New Vehicle</DialogTitle>
         <DialogDescription>Enter the vehicle details below</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="registration">Registration *</Label>
@@ -489,8 +490,9 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-vehicle">
+        </div>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-vehicle" className="min-h-[44px]">
             {createMutation.isPending ? 'Adding...' : 'Add Vehicle'}
           </Button>
         </DialogFooter>
@@ -695,12 +697,13 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent className="max-w-2xl max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Upload Vehicle Document</DialogTitle>
         <DialogDescription>Upload registration, MOT, insurance, or maintenance documents</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="vehicleId">Vehicle *</Label>
@@ -754,8 +757,9 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending || !file} data-testid="button-submit-document">
+        </div>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+          <Button type="submit" disabled={createMutation.isPending || !file} data-testid="button-submit-document" className="min-h-[44px]">
             {createMutation.isPending ? 'Uploading...' : 'Upload Document'}
           </Button>
         </DialogFooter>
@@ -913,12 +917,13 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent className="max-w-2xl max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Add New Operator</DialogTitle>
         <DialogDescription>Enter the operator/driver details below</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name *</Label>
@@ -1023,8 +1028,9 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-operator">
+        </div>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-operator" className="min-h-[44px]">
             {createMutation.isPending ? 'Adding...' : 'Add Operator'}
           </Button>
         </DialogFooter>
@@ -1133,12 +1139,13 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent data-testid="dialog-add-service" className="max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent data-testid="dialog-add-service" className="max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Add Service Record</DialogTitle>
         <DialogDescription>Record maintenance and service history</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="space-y-2">
           <Label htmlFor="vehicle">Vehicle *</Label>
           <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
@@ -1200,8 +1207,9 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
             data-testid="input-service-cost"
           />
         </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service">
+        </div>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service" className="min-h-[44px]">
             {createMutation.isPending ? 'Adding...' : 'Add Record'}
           </Button>
         </DialogFooter>
@@ -1293,12 +1301,13 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent data-testid="dialog-add-fuel" className="max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent data-testid="dialog-add-fuel" className="max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Add Fuel Log</DialogTitle>
         <DialogDescription>Record fuel purchases for tracking</DialogDescription>
       </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="space-y-2">
           <Label htmlFor="vehicle">Vehicle *</Label>
           <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
@@ -1371,8 +1380,9 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
             data-testid="input-station"
           />
         </div>
-        <DialogFooter>
-          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel">
+        </div>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+          <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel" className="min-h-[44px]">
             {createMutation.isPending ? 'Adding...' : 'Add Fuel Log'}
           </Button>
         </DialogFooter>

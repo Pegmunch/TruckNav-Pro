@@ -621,8 +621,8 @@ export function GeofencingTab() {
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+        <DialogHeader className="p-6 pb-0 flex-shrink-0">
           <DialogTitle>
             {editingGeofence ? t('fleet.geofencing.editGeofence') : t('fleet.geofencing.createGeofence')}
           </DialogTitle>
@@ -633,7 +633,8 @@ export function GeofencingTab() {
           </DialogDescription>
         </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
               <FormField
                 control={form.control}
                 name="name"
@@ -818,13 +819,15 @@ export function GeofencingTab() {
                   )}
                 />
               </div>
+              </div>
 
-              <DialogFooter>
+              <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={handleDialogClose}
                   data-testid="button-cancel-geofence"
+                  className="min-h-[44px]"
                 >
                   {t('fleet.common.cancel')}
                 </Button>
@@ -832,6 +835,7 @@ export function GeofencingTab() {
                   type="submit" 
                   disabled={createMutation.isPending || updateMutation.isPending}
                   data-testid="button-submit-geofence"
+                  className="min-h-[44px]"
                 >
                   {(createMutation.isPending || updateMutation.isPending) 
                     ? t('fleet.common.saving') 

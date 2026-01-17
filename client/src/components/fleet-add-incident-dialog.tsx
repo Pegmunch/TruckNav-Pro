@@ -63,12 +63,13 @@ export function AddIncidentDialog({ isOpen, onOpenChange }: AddIncidentDialogPro
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent className="max-w-md max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Log Incident</DialogTitle>
         <DialogDescription>Record a new safety incident or accident</DialogDescription>
       </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="space-y-2">
             <Label htmlFor="vehicle">Vehicle ID *</Label>
             <Input
@@ -138,8 +139,9 @@ export function AddIncidentDialog({ isOpen, onOpenChange }: AddIncidentDialogPro
               data-testid="input-incident-date"
             />
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-incident">
+          </div>
+          <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-incident" className="min-h-[44px]">
               {createMutation.isPending ? 'Logging...' : 'Log Incident'}
             </Button>
           </DialogFooter>

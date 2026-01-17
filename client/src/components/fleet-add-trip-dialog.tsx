@@ -80,12 +80,13 @@ export function AddTripDialog({ isOpen, onOpenChange }: AddTripDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl pb-6">
-      <DialogHeader>
+    <DialogContent className="max-w-md max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
+      <DialogHeader className="p-6 pb-0 flex-shrink-0">
         <DialogTitle>Record Trip</DialogTitle>
         <DialogDescription>Log a new trip with planned and actual metrics</DialogDescription>
       </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="space-y-2">
             <Label htmlFor="vehicle">Vehicle ID *</Label>
             <Input
@@ -202,8 +203,9 @@ export function AddTripDialog({ isOpen, onOpenChange }: AddTripDialogProps) {
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
-            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-trip">
+          </div>
+          <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-trip" className="min-h-[44px]">
               {createMutation.isPending ? 'Recording...' : 'Record Trip'}
             </Button>
           </DialogFooter>
