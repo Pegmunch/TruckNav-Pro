@@ -26,6 +26,24 @@
   left: auto !important;
 }
 
+/* iPad-specific dialog container - completely isolated from all transforms */
+#ipad-dialog-container,
+#ipad-dialog-container *,
+#ipad-dialog-container > div,
+#ipad-dialog-container > div > div {
+  transform: none !important;
+  -webkit-transform: none !important;
+  will-change: auto !important;
+  perspective: none !important;
+  -webkit-perspective: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  animation: none !important;
+  -webkit-animation: none !important;
+}
+
 /* Hide Replit development banner in PWA/standalone mode */
 /* IMPORTANT: Only target specific Replit elements, NOT all fixed position elements */
 @media (display-mode: standalone) {
