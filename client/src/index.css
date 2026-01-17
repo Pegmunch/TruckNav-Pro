@@ -26,11 +26,11 @@
   left: auto !important;
 }
 
-/* iPad-specific dialog container - completely isolated from all transforms */
-#ipad-dialog-container,
-#ipad-dialog-container *,
-#ipad-dialog-container > div,
-#ipad-dialog-container > div > div {
+/* iPad-specific dialog container - static HTML element outside React to avoid transform inheritance */
+#ipad-dialog-root,
+#ipad-dialog-root *,
+#ipad-dialog-root > div,
+#ipad-dialog-root > div > div {
   transform: none !important;
   -webkit-transform: none !important;
   will-change: auto !important;

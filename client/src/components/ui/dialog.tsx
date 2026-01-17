@@ -23,15 +23,10 @@ function isIPadSafari(): boolean {
   return isIOS || isIPadOS;
 }
 
-function getOrCreateIPadDialogContainer(): HTMLElement {
-  let container = document.getElementById('ipad-dialog-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'ipad-dialog-container';
-    container.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:9999;transform:none!important;-webkit-transform:none!important;';
-    document.body.appendChild(container);
-  }
-  return container;
+function getIPadDialogContainer(): HTMLElement | null {
+  // Use the static container from index.html - it's a sibling of #root, 
+  // so it can't inherit transforms from React components
+  return document.getElementById('ipad-dialog-root');
 }
 
 const DialogOverlay = React.forwardRef<
@@ -88,7 +83,7 @@ const DialogContent = React.forwardRef<
   
   React.useEffect(() => {
     if (isIPad && typeof document !== 'undefined') {
-      setContainer(getOrCreateIPadDialogContainer());
+      setContainer(getIPadDialogContainer());
     }
   }, [isIPad]);
   
