@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Activity, AlertTriangle, Award, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -115,31 +115,20 @@ export function DriverBehaviorTab() {
           {t('fleet.behavior.title')}
         </h2>
         <div className="flex gap-3">
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[140px]" data-testid="select-date-range">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1d">{t('fleet.common.today')}</SelectItem>
-              <SelectItem value="7d">{t('fleet.common.last7Days')}</SelectItem>
-              <SelectItem value="30d">{t('fleet.common.last30Days')}</SelectItem>
-              <SelectItem value="90d">{t('fleet.common.last90Days')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={selectedOperator} onValueChange={setSelectedOperator}>
-            <SelectTrigger className="w-[160px]" data-testid="select-operator-filter">
-              <SelectValue placeholder={t('fleet.behavior.allOperators')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('fleet.behavior.allOperators')}</SelectItem>
-              {behaviorData?.drivers.map(driver => (
-                <SelectItem key={driver.operatorId} value={driver.operatorId}>
-                  {driver.operatorName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <NativeSelect value={dateRange} onValueChange={setDateRange} className="w-[140px]" data-testid="select-date-range">
+            <NativeSelectItem value="1d">{t('fleet.common.today')}</NativeSelectItem>
+            <NativeSelectItem value="7d">{t('fleet.common.last7Days')}</NativeSelectItem>
+            <NativeSelectItem value="30d">{t('fleet.common.last30Days')}</NativeSelectItem>
+            <NativeSelectItem value="90d">{t('fleet.common.last90Days')}</NativeSelectItem>
+          </NativeSelect>
+          <NativeSelect value={selectedOperator} onValueChange={setSelectedOperator} className="w-[160px]" placeholder={t('fleet.behavior.allOperators')} data-testid="select-operator-filter">
+            <NativeSelectItem value="all">{t('fleet.behavior.allOperators')}</NativeSelectItem>
+            {behaviorData?.drivers.map(driver => (
+              <NativeSelectItem key={driver.operatorId} value={driver.operatorId}>
+                {driver.operatorName}
+              </NativeSelectItem>
+            ))}
+          </NativeSelect>
         </div>
       </div>
 

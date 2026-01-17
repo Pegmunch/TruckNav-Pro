@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { MapPinned, Plus, Edit, Trash2, RefreshCw, LogIn, LogOut, Target, Bell, AlertCircle } from 'lucide-react';
@@ -720,19 +720,19 @@ export function GeofencingTab() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('fleet.geofencing.type')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-geofence-type">
-                            <SelectValue placeholder={t('fleet.geofencing.selectType')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="warehouse">{t('fleet.geofencing.warehouse')}</SelectItem>
-                          <SelectItem value="customer">{t('fleet.geofencing.customer')}</SelectItem>
-                          <SelectItem value="restricted">{t('fleet.geofencing.restricted')}</SelectItem>
-                          <SelectItem value="checkpoint">{t('fleet.geofencing.checkpoint')}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <NativeSelect 
+                          value={field.value} 
+                          onValueChange={field.onChange}
+                          placeholder={t('fleet.geofencing.selectType')}
+                          data-testid="select-geofence-type"
+                        >
+                          <NativeSelectItem value="warehouse">{t('fleet.geofencing.warehouse')}</NativeSelectItem>
+                          <NativeSelectItem value="customer">{t('fleet.geofencing.customer')}</NativeSelectItem>
+                          <NativeSelectItem value="restricted">{t('fleet.geofencing.restricted')}</NativeSelectItem>
+                          <NativeSelectItem value="checkpoint">{t('fleet.geofencing.checkpoint')}</NativeSelectItem>
+                        </NativeSelect>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

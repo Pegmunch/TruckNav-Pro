@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { CreditCard, Plus, Search, TrendingUp, DollarSign, Users, BarChart3, AlertCircle } from 'lucide-react';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -279,17 +279,12 @@ export function CustomerBillingTab() {
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]" data-testid="select-status-filter">
-                <SelectValue placeholder={t('fleet.billing.filterStatus')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('fleet.billing.allStatus')}</SelectItem>
-                <SelectItem value="active">{t('fleet.common.active')}</SelectItem>
-                <SelectItem value="inactive">{t('fleet.common.inactive')}</SelectItem>
-                <SelectItem value="pending">{t('fleet.common.pending')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <NativeSelect value={statusFilter} onValueChange={setStatusFilter} className="w-[150px]" placeholder={t('fleet.billing.filterStatus')} data-testid="select-status-filter">
+              <NativeSelectItem value="all">{t('fleet.billing.allStatus')}</NativeSelectItem>
+              <NativeSelectItem value="active">{t('fleet.common.active')}</NativeSelectItem>
+              <NativeSelectItem value="inactive">{t('fleet.common.inactive')}</NativeSelectItem>
+              <NativeSelectItem value="pending">{t('fleet.common.pending')}</NativeSelectItem>
+            </NativeSelect>
           </div>
 
           {isLoadingCustomers ? (
@@ -488,20 +483,16 @@ function AddCustomerDialog({ onClose }: { onClose: () => void }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="contractType">Contract Type *</Label>
-            <Select 
+            <NativeSelect 
               value={formData.contractType} 
-              onValueChange={(value: Customer['contractType']) => setFormData({ ...formData, contractType: value })}
+              onValueChange={(value) => setFormData({ ...formData, contractType: value as Customer['contractType'] })}
+              data-testid="select-contract-type"
             >
-              <SelectTrigger data-testid="select-contract-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="per_mile">Per Mile</SelectItem>
-                <SelectItem value="per_hour">Per Hour</SelectItem>
-                <SelectItem value="fixed">Fixed Rate</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
+              <NativeSelectItem value="per_mile">Per Mile</NativeSelectItem>
+              <NativeSelectItem value="per_hour">Per Hour</NativeSelectItem>
+              <NativeSelectItem value="fixed">Fixed Rate</NativeSelectItem>
+              <NativeSelectItem value="hybrid">Hybrid</NativeSelectItem>
+            </NativeSelect>
           </div>
           {(formData.contractType === 'per_mile' || formData.contractType === 'hybrid') && (
             <div className="space-y-2">
