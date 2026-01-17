@@ -223,7 +223,10 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
       performance.mark('fleet-vehicle-delete-start');
       console.log('[PERF-FLEET] 🗑️ Deleting vehicle:', id);
       const response = await fetch(`/api/fleet/vehicles/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete vehicle');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete vehicle');
+      }
       const result = await response.json();
       performance.mark('fleet-vehicle-delete-end');
       performance.measure('fleet-vehicle-delete', 'fleet-vehicle-delete-start', 'fleet-vehicle-delete-end');
@@ -234,6 +237,9 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/fleet/vehicles'] });
       toast({ title: 'Vehicle deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to delete vehicle', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -521,7 +527,10 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
       performance.mark('fleet-document-delete-start');
       console.log('[PERF-FLEET] 🗑️ Deleting document:', attachmentId);
       const response = await fetch(`/api/fleet/documents/${attachmentId}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete document');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete document');
+      }
       const result = await response.json();
       performance.mark('fleet-document-delete-end');
       performance.measure('fleet-document-delete', 'fleet-document-delete-start', 'fleet-document-delete-end');
@@ -532,6 +541,9 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/fleet/documents', selectedVehicleId] });
       toast({ title: 'Document deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to delete document', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -668,10 +680,17 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
       toast({ title: 'Document uploaded successfully' });
       onClose();
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to upload document', description: error.message, variant: 'destructive' });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!file || !formData.vehicleId) {
+      toast({ title: 'Please select a vehicle and file', variant: 'destructive' });
+      return;
+    }
     createMutation.mutate();
   };
 
@@ -754,12 +773,18 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/fleet/operators/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete operator');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete operator');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/fleet/operators'] });
       toast({ title: 'Operator deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to delete operator', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -862,7 +887,10 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
           driverCQCExpiry: data.driverCQCExpiry ? new Date(data.driverCQCExpiry) : undefined,
         })
       });
-      if (!response.ok) throw new Error('Failed to create operator');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create operator');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -870,10 +898,17 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
       toast({ title: 'Operator added successfully' });
       onClose();
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to add operator', description: error.message, variant: 'destructive' });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.licenseNumber) {
+      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+      return;
+    }
     createMutation.mutate(formData);
   };
 
@@ -1007,12 +1042,18 @@ function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; se
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/fleet/service-records/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete service record');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete service record');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/fleet/service-records'] });
       toast({ title: 'Service record deleted successfully' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to delete service record', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -1048,9 +1089,15 @@ function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; se
 
 function AddServiceDialog({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
+  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
+    queryKey: ['/api/fleet/vehicles'],
+  });
   const [formData, setFormData] = useState({
     vehicleId: '',
     serviceType: 'routine' as const,
+    description: '',
+    cost: '',
+    serviceDate: new Date().toISOString().split('T')[0],
   });
 
   const createMutation = useMutation({
@@ -1060,7 +1107,10 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      if (!response.ok) throw new Error('Failed to add service record');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add service record');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -1068,30 +1118,91 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
       toast({ title: 'Service record added successfully' });
       onClose();
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to add service record', description: error.message, variant: 'destructive' });
+    },
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.vehicleId) {
+      toast({ title: 'Please select a vehicle', variant: 'destructive' });
+      return;
+    }
+    createMutation.mutate();
+  };
 
   return (
     <DialogContent data-testid="dialog-add-service" className="max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
       <DialogHeader>
         <DialogTitle>Add Service Record</DialogTitle>
+        <DialogDescription>Record maintenance and service history</DialogDescription>
       </DialogHeader>
-      <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="serviceType">Service Type</Label>
+          <Label htmlFor="vehicle">Vehicle *</Label>
+          <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
+            <SelectTrigger data-testid="select-service-vehicle">
+              <SelectValue placeholder="Select vehicle" />
+            </SelectTrigger>
+            <SelectContent>
+              {vehicles.map((vehicle) => (
+                <SelectItem key={vehicle.id} value={vehicle.id}>
+                  {vehicle.registration} - {vehicle.make} {vehicle.model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="serviceType">Service Type *</Label>
           <Select value={formData.serviceType} onValueChange={(value: any) => setFormData({ ...formData, serviceType: value })}>
             <SelectTrigger data-testid="select-service-type">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="routine">Routine</SelectItem>
+              <SelectItem value="routine">Routine Maintenance</SelectItem>
               <SelectItem value="mot">MOT</SelectItem>
               <SelectItem value="repair">Repair</SelectItem>
+              <SelectItem value="inspection">Inspection</SelectItem>
+              <SelectItem value="tyre">Tyre Change</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="serviceDate">Service Date *</Label>
+          <Input
+            id="serviceDate"
+            type="date"
+            value={formData.serviceDate}
+            onChange={(e) => setFormData({ ...formData, serviceDate: e.target.value })}
+            data-testid="input-service-date"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Input
+            id="description"
+            placeholder="e.g., Oil change, brake pads replaced"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            data-testid="input-service-description"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cost">Cost (£)</Label>
+          <Input
+            id="cost"
+            type="number"
+            placeholder="0.00"
+            value={formData.cost}
+            onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+            data-testid="input-service-cost"
+          />
+        </div>
         <DialogFooter>
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service">
-            Add Record
+            {createMutation.isPending ? 'Adding...' : 'Add Record'}
           </Button>
         </DialogFooter>
       </form>
@@ -1137,9 +1248,16 @@ function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
 
 function AddFuelDialog({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
+  const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
+    queryKey: ['/api/fleet/vehicles'],
+  });
   const [formData, setFormData] = useState({
     vehicleId: '',
     liters: '',
+    cost: '',
+    odometer: '',
+    fuelDate: new Date().toISOString().split('T')[0],
+    station: '',
   });
 
   const createMutation = useMutation({
@@ -1149,7 +1267,10 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      if (!response.ok) throw new Error('Failed to add fuel log');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to add fuel log');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -1157,27 +1278,102 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
       toast({ title: 'Fuel log added successfully' });
       onClose();
     },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to add fuel log', description: error.message, variant: 'destructive' });
+    },
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.vehicleId || !formData.liters) {
+      toast({ title: 'Please fill in required fields', variant: 'destructive' });
+      return;
+    }
+    createMutation.mutate();
+  };
 
   return (
     <DialogContent data-testid="dialog-add-fuel" className="max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
       <DialogHeader>
         <DialogTitle>Add Fuel Log</DialogTitle>
+        <DialogDescription>Record fuel purchases for tracking</DialogDescription>
       </DialogHeader>
-      <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="liters">Liters</Label>
+          <Label htmlFor="vehicle">Vehicle *</Label>
+          <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
+            <SelectTrigger data-testid="select-fuel-vehicle">
+              <SelectValue placeholder="Select vehicle" />
+            </SelectTrigger>
+            <SelectContent>
+              {vehicles.map((vehicle) => (
+                <SelectItem key={vehicle.id} value={vehicle.id}>
+                  {vehicle.registration} - {vehicle.make} {vehicle.model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="liters">Litres *</Label>
+            <Input
+              id="liters"
+              type="number"
+              placeholder="0.00"
+              value={formData.liters}
+              onChange={(e) => setFormData({ ...formData, liters: e.target.value })}
+              data-testid="input-liters"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cost">Total Cost (£)</Label>
+            <Input
+              id="cost"
+              type="number"
+              placeholder="0.00"
+              value={formData.cost}
+              onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+              data-testid="input-fuel-cost"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="odometer">Odometer Reading</Label>
+            <Input
+              id="odometer"
+              type="number"
+              placeholder="Current mileage"
+              value={formData.odometer}
+              onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
+              data-testid="input-odometer"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="fuelDate">Date *</Label>
+            <Input
+              id="fuelDate"
+              type="date"
+              value={formData.fuelDate}
+              onChange={(e) => setFormData({ ...formData, fuelDate: e.target.value })}
+              data-testid="input-fuel-date"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="station">Fuel Station</Label>
           <Input
-            id="liters"
-            type="number"
-            value={formData.liters}
-            onChange={(e) => setFormData({ ...formData, liters: e.target.value })}
-            data-testid="input-liters"
+            id="station"
+            placeholder="e.g., BP, Shell, Esso"
+            value={formData.station}
+            onChange={(e) => setFormData({ ...formData, station: e.target.value })}
+            data-testid="input-station"
           />
         </div>
         <DialogFooter>
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel">
-            Add Log
+            {createMutation.isPending ? 'Adding...' : 'Add Fuel Log'}
           </Button>
         </DialogFooter>
       </form>
