@@ -59,7 +59,14 @@ function MobileRestrictionScreen() {
 }
 
 export default function FleetManagement() {
+  const { toast } = useToast();
   const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState('vehicles');
+  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [isAddOperatorOpen, setIsAddOperatorOpen] = useState(false);
+  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [isAddFuelLogOpen, setIsAddFuelLogOpen] = useState(false);
+  const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
   
   useEffect(() => {
     const checkMobile = () => {
@@ -73,13 +80,6 @@ export default function FleetManagement() {
   if (isMobile) {
     return <MobileRestrictionScreen />;
   }
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('vehicles');
-  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
-  const [isAddOperatorOpen, setIsAddOperatorOpen] = useState(false);
-  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
-  const [isAddFuelLogOpen, setIsAddFuelLogOpen] = useState(false);
-  const [isAddDocumentOpen, setIsAddDocumentOpen] = useState(false);
 
   return (
     <OnboardingProvider isReady={true} isFleetPage={true}>
