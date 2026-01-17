@@ -9,11 +9,12 @@ import { cn } from "@/lib/utils"
 function isIOSSafari(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isIOS = /iPad|iPhone|iPod/i.test(ua);
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
-  const result = (isIOS || isIPadOS) && isSafari;
-  console.warn('[DIALOG] iOS Detection:', { isIOS, isIPadOS, isSafari, result, ua: ua.substring(0, 80) });
+  const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua) && !/CriOS/i.test(ua);
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const result = isIOS || isIPadOS || (isSafari && isTouchDevice);
+  console.warn('[DIALOG] iOS Detection:', { isIOS, isIPadOS, isSafari, isTouchDevice, result, ua: ua.substring(0, 100), platform: navigator.platform, maxTouch: navigator.maxTouchPoints });
   return result;
 }
 
