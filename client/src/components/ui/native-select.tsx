@@ -10,7 +10,10 @@ function isIPadSafari(): boolean {
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua);
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  return isIOS || isIPadOS;
+  const isMobileSafari = /Safari/.test(ua) && /Mobile/.test(ua);
+  const result = isIOS || isIPadOS || isMobileSafari;
+  console.log('[NATIVE-SELECT] Detection:', { ua: ua.substring(0, 80), isIOS, isIPadOS, isMobileSafari, result });
+  return result;
 }
 
 interface NativeSelectProps {
@@ -64,11 +67,13 @@ const IPadCustomDropdown: React.FC<NativeSelectProps> = ({
   const handleOpen = () => {
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
+      const pos = {
         top: rect.bottom + 4,
         left: rect.left,
         width: rect.width
-      });
+      };
+      console.log('[NATIVE-SELECT] Custom dropdown opening at:', pos);
+      setPosition(pos);
       setIsOpen(true);
     }
   };
