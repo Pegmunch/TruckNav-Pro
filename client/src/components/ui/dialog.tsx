@@ -12,7 +12,9 @@ function isIOSSafari(): boolean {
   const isIOS = /iPad|iPhone|iPod/.test(ua);
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
-  return (isIOS || isIPadOS) && isSafari;
+  const result = (isIOS || isIPadOS) && isSafari;
+  console.warn('[DIALOG] iOS Detection:', { isIOS, isIPadOS, isSafari, result, ua: ua.substring(0, 80) });
+  return result;
 }
 
 const Dialog = DialogPrimitive.Root
@@ -44,7 +46,10 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const [isIOS] = React.useState(() => isIOSSafari());
   
+  console.warn('[DIALOG] DialogContent rendering, isIOS:', isIOS);
+  
   if (isIOS) {
+    console.warn('[DIALOG] Using BOTTOM SHEET layout for iOS');
     return (
       <DialogPortal>
         <DialogOverlay />
