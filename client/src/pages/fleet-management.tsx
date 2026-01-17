@@ -331,13 +331,23 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!response.ok) throw new Error('Failed to create vehicle');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create vehicle');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/fleet/vehicles'] });
       toast({ title: 'Vehicle added successfully' });
       onClose();
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: 'Failed to add vehicle', 
+        description: error.message,
+        variant: 'destructive'
+      });
     },
   });
 
