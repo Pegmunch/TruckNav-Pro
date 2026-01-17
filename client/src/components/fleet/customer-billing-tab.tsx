@@ -152,7 +152,7 @@ export function CustomerBillingTab() {
   return (
     <div className="space-y-6 bg-white dark:bg-gray-900 p-6 rounded-lg">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white dark:bg-gray-900">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-green-600" />
@@ -166,7 +166,7 @@ export function CustomerBillingTab() {
             <p className="text-xs text-muted-foreground">{t('fleet.billing.thisPeriod')}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-gray-900">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-orange-600" />
@@ -180,7 +180,7 @@ export function CustomerBillingTab() {
             <p className="text-xs text-muted-foreground">{t('fleet.billing.pendingPayments')}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-gray-900">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-blue-600" />
@@ -194,7 +194,7 @@ export function CustomerBillingTab() {
             <p className="text-xs text-muted-foreground">{t('fleet.billing.acrossAllCustomers')}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-gray-900">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Users className="w-4 h-4 text-purple-600" />
@@ -211,7 +211,7 @@ export function CustomerBillingTab() {
       </div>
 
       {analytics?.topCustomers && analytics.topCustomers.length > 0 && (
-        <Card>
+        <Card className="bg-white dark:bg-gray-900">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
@@ -246,7 +246,7 @@ export function CustomerBillingTab() {
         </Card>
       )}
 
-      <Card>
+      <Card className="bg-white dark:bg-gray-900">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
