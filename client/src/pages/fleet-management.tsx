@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned, Monitor } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
@@ -27,8 +27,52 @@ import { HoursOfServiceTab } from '@/components/fleet/hos-tab';
 import { CustomerBillingTab } from '@/components/fleet/customer-billing-tab';
 import { GeofencingTab } from '@/components/fleet/geofencing-tab';
 import { UserGuideTab } from '@/components/fleet/user-guide-tab';
+import { Link } from 'wouter';
+
+function MobileRestrictionScreen() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-6">
+      <Card className="max-w-md w-full text-center">
+        <CardHeader>
+          <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+            <Monitor className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <CardTitle className="text-xl">Desktop Only</CardTitle>
+          <CardDescription className="text-base mt-2">
+            Fleet Management is designed for desktop use only. Please access this feature from a computer or tablet with a larger screen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            The Fleet Management System requires a larger display to properly view vehicle data, analytics, and manage your fleet operations.
+          </p>
+          <Link href="/">
+            <Button className="w-full">
+              <Truck className="w-4 h-4 mr-2" />
+              Return to Navigation
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function FleetManagement() {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  if (isMobile) {
+    return <MobileRestrictionScreen />;
+  }
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('vehicles');
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
