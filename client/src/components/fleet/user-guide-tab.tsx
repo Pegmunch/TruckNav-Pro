@@ -196,6 +196,62 @@ export function UserGuideTab() {
             </CardContent>
           </Card>
 
+          <Card className="border-blue-200 dark:border-blue-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                Operator Data Sync
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>When you add operators in the <strong>Operators</strong> tab, they become available for assignment:</p>
+              <div className="grid gap-2">
+                <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span><strong>Vehicle Assignments:</strong> Assign drivers to specific vehicles</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span><strong>Trip Records:</strong> Link operators to completed trips</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span><strong>Incident Logging:</strong> Record which operator was involved in incidents</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-200 dark:border-orange-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-500" />
+                Form Validation & Error Handling
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>All forms in Fleet Management include built-in validation:</p>
+              <div className="grid gap-2">
+                <div className="flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5" />
+                  <span><strong>Required Fields:</strong> Forms check all required fields before submission</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5" />
+                  <span><strong>Error Messages:</strong> Clear notifications explain what went wrong</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5" />
+                  <span><strong>Automatic Refresh:</strong> Data updates instantly after successful save</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5" />
+                  <span><strong>Chart Tooltips:</strong> Hover over charts to see exact values (£XX.XX format)</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-purple-200 dark:border-purple-800">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
