@@ -1,11 +1,19 @@
 "use client"
 
 import * as React from "react"
-import * as ReactDOM from "react-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+
+function isIOSSafari(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
+  return (isIOS || isIPadOS) && isSafari;
+}
 
 const Dialog = DialogPrimitive.Root
 
@@ -15,157 +23,75 @@ const DialogPortal = DialogPrimitive.Portal
 
 const DialogClose = DialogPrimitive.Close
 
-function isIPadSafari(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent.toLowerCase();
-  const isIOS = /iphone|ipad|ipod/.test(ua);
-  const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  return isIOS || isIPadOS;
-}
-
-function getIPadDialogContainer(): HTMLElement | null {
-  // Use the static container from index.html - it's a sibling of #root, 
-  // so it can't inherit transforms from React components
-  return document.getElementById('ipad-dialog-root');
-}
-
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> & { zIndex?: number }
->(({ className, zIndex, style, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 flex items-start md:items-center justify-center pt-[5vh] md:pt-0",
+      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
-    style={{ 
-      ...style,
-      transform: 'none',
-      ...(zIndex ? { zIndex } : {})
-    }}
     {...props}
   />
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
-const InlineDialogOverlay = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { zIndex?: number }
->(({ className, zIndex, style, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80 flex items-start md:items-center justify-center pt-[5vh] md:pt-0",
-      className
-    )}
-    style={{ 
-      ...style,
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      transform: 'none',
-      ...(zIndex ? { zIndex } : {})
-    }}
-    {...props}
-  />
-))
-InlineDialogOverlay.displayName = "InlineDialogOverlay"
-
 const DialogContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { overlayZIndex?: number }
->(({ className, children, overlayZIndex, ...props }, ref) => {
-  const [isIPad] = React.useState(() => isIPadSafari());
-  const [container, setContainer] = React.useState<HTMLElement | null>(null);
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => {
+  const [isIOS] = React.useState(() => isIOSSafari());
   
-  React.useEffect(() => {
-    if (isIPad && typeof document !== 'undefined') {
-      setContainer(getIPadDialogContainer());
-    }
-  }, [isIPad]);
-  
-  if (isIPad && container) {
-    return ReactDOM.createPortal(
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: overlayZIndex || 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          pointerEvents: 'auto',
-          transform: 'none',
-          WebkitTransform: 'none',
-        }}
-      >
-        <DialogPrimitive.Content asChild forceMount>
-          <div
-            ref={ref}
-            className={cn(
-              "grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
-              "max-h-[90vh] overflow-y-auto",
-              "touch-pan-y overscroll-contain",
-              className
-            )}
-            style={{ 
-              position: 'static',
-              transform: 'none',
-              WebkitTransform: 'none',
-              WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-y'
-            }}
-            {...props}
-          >
-            {children}
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground min-w-[44px] min-h-[44px] flex items-center justify-center">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
-          </div>
+  if (isIOS) {
+    return (
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(
+            "fixed z-50 w-full bg-background shadow-lg",
+            "inset-x-0 bottom-0 rounded-t-2xl",
+            "max-h-[90vh] overflow-y-auto",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+            "data-[state=closed]:duration-300 data-[state=open]:duration-300",
+            "border-t p-6 pt-8",
+            className
+          )}
+          {...props}
+        >
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+          {children}
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground min-w-[44px] min-h-[44px] flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
         </DialogPrimitive.Content>
-      </div>,
-      container
+      </DialogPortal>
     );
-  }
-  
-  if (isIPad && !container) {
-    return null;
   }
   
   return (
     <DialogPortal>
-      <DialogOverlay zIndex={overlayZIndex} />
-      <DialogPrimitive.Content asChild>
-        <div
-          ref={ref}
-          className={cn(
-            "z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
-            "max-h-[90vh]",
-            "touch-pan-y overscroll-contain",
-            className
-          )}
-          style={{ 
-            position: 'relative',
-            transform: 'none',
-            WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y'
-          }}
-          {...props}
-        >
-          {children}
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground min-w-[44px] min-h-[44px] flex items-center justify-center">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        </div>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
-  );
+  )
 })
 DialogContent.displayName = DialogPrimitive.Content.displayName
 

@@ -2,48 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CRITICAL FIX: iPad Safari dropdown positioning bug (WebKit #208854)
-   Force Radix Dialog Portal and all children to have NO transforms so native select popovers anchor correctly.
-   This must use !important to override Radix's inline styles and Tailwind's animate utilities. */
-[data-radix-dialog-portal],
-[data-radix-dialog-portal] > *,
-[data-radix-dialog-overlay],
-[data-radix-dialog-content] {
-  transform: none !important;
-  -webkit-transform: none !important;
-  will-change: auto !important;
-  perspective: none !important;
-  -webkit-perspective: none !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-[data-radix-dialog-content] {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-}
-
-/* iPad-specific dialog container - static HTML element outside React to avoid transform inheritance */
-#ipad-dialog-root,
-#ipad-dialog-root *,
-#ipad-dialog-root > div,
-#ipad-dialog-root > div > div {
-  transform: none !important;
-  -webkit-transform: none !important;
-  will-change: auto !important;
-  perspective: none !important;
-  -webkit-perspective: none !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  animation: none !important;
-  -webkit-animation: none !important;
-}
-
 /* Hide Replit development banner in PWA/standalone mode */
 /* IMPORTANT: Only target specific Replit elements, NOT all fixed position elements */
 @media (display-mode: standalone) {
