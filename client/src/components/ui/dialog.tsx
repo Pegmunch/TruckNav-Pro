@@ -39,12 +39,16 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+        "z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 sm:rounded-lg",
         "max-h-[90vh]",
         "touch-pan-y overscroll-contain",
         className
       )}
       style={{ 
+        position: 'relative',
+        top: 'unset',
+        left: 'unset',
+        transform: 'none',
         WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-y'
       }}
