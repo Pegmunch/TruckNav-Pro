@@ -1,20 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
-import { ChevronDown, Check } from "lucide-react"
+import { Check, ChevronDown } from "lucide-react"
 
-function isIPadSafari(): boolean {
+function isIOSDevice(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua);
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const isMobileSafari = /Safari/.test(ua) && /Mobile/.test(ua);
+  const isMobileSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  const result = isIOS || isIPadOS || isMobileSafari || isTouchDevice;
-  console.warn('[NATIVE-SELECT] *** DETECTION ***', { isIOS, isIPadOS, isMobileSafari, isTouchDevice, result, ua: ua.substring(0, 100) });
-  return result;
+  return isIOS || isIPadOS || (isMobileSafari && isTouchDevice);
 }
 
 interface NativeSelectProps {
@@ -35,13 +32,7 @@ const NativeSelectItem: React.FC<NativeSelectItemProps> = ({ value, children }) 
   return <option value={value}>{children}</option>
 }
 
-interface DropdownPosition {
-  top: number
-  left: number
-  width: number
-}
-
-const IPadCustomDropdown: React.FC<NativeSelectProps> = ({
+const IOSRadioGroup: React.FC<NativeSelectProps> = ({
   value,
   onValueChange,
   placeholder,
@@ -49,10 +40,6 @@ const IPadCustomDropdown: React.FC<NativeSelectProps> = ({
   children,
   "data-testid": dataTestId,
 }) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [position, setPosition] = React.useState<DropdownPosition | null>(null);
-  const triggerRef = React.useRef<HTMLButtonElement>(null);
-  
   const items: { value: string; label: string }[] = [];
   React.Children.forEach(children, (child) => {
     if (React.isValidElement(child) && child.props.value) {
@@ -63,118 +50,38 @@ const IPadCustomDropdown: React.FC<NativeSelectProps> = ({
     }
   });
 
-  const selectedLabel = items.find(item => item.value === value)?.label || placeholder || 'Select...';
-
-  const handleOpen = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const pos = {
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width
-      };
-      console.log('[NATIVE-SELECT] Custom dropdown opening at:', pos);
-      setPosition(pos);
-      setIsOpen(true);
-    }
-  };
-
-  const handleSelect = (itemValue: string) => {
-    onValueChange(itemValue);
-    setIsOpen(false);
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
-  };
-
-  React.useEffect(() => {
-    if (isOpen) {
-      const handleClickOutside = (e: MouseEvent) => {
-        if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
-          handleClose();
-        }
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside as any);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        document.removeEventListener('touchstart', handleClickOutside as any);
-      };
-    }
-  }, [isOpen]);
-
   return (
-    <>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={handleOpen}
-        data-testid={dataTestId}
-        className={cn(
-          "flex w-full items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 px-3 py-2 ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          "min-h-[44px] text-base",
-          "text-gray-900 dark:text-gray-100",
-          className
-        )}
-      >
-        <span className={!value ? "text-muted-foreground" : ""}>{selectedLabel}</span>
-        <ChevronDown className="h-4 w-4 opacity-50" />
-      </button>
-      
-      {isOpen && position && createPortal(
-        <>
-          <div 
-            className="fixed inset-0 z-[99998]" 
-            onClick={handleClose}
-            onTouchStart={handleClose}
-            style={{ backgroundColor: 'transparent' }}
-          />
-          <div
-            className="fixed z-[99999] overflow-hidden rounded-md border bg-white dark:bg-slate-900 shadow-lg"
-            style={{
-              top: position.top,
-              left: position.left,
-              width: position.width,
-              maxHeight: '300px',
-              overflowY: 'auto'
-            }}
-          >
-            {items.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => handleSelect(item.value)}
-                className={cn(
-                  "flex w-full items-center justify-between px-3 py-3 text-base hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer",
-                  item.value === value && "bg-blue-50 dark:bg-blue-900/30"
-                )}
-              >
-                <span>{item.label}</span>
-                {item.value === value && <Check className="h-4 w-4 text-blue-600" />}
-              </button>
-            ))}
-          </div>
-        </>,
-        document.body
-      )}
-    </>
+    <div 
+      className={cn("flex flex-col gap-1", className)}
+      data-testid={dataTestId}
+    >
+      {items.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          onClick={() => onValueChange(item.value)}
+          className={cn(
+            "flex items-center justify-between px-3 py-2.5 rounded-md border text-left transition-colors",
+            "min-h-[44px] text-base",
+            item.value === value
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+          )}
+        >
+          <span>{item.label}</span>
+          {item.value === value && <Check className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />}
+        </button>
+      ))}
+    </div>
   );
 };
 
 const NativeSelect: React.FC<NativeSelectProps> = (props) => {
-  // TEMPORARY: Force custom dropdown for ALL devices to test positioning fix
-  const forceCustomDropdown = true;
-  const [isIPad] = React.useState(() => isIPadSafari());
+  const [isIOS] = React.useState(() => isIOSDevice());
   
-  console.warn('[NATIVE-SELECT] Rendering - forceCustom:', forceCustomDropdown, 'isIPad:', isIPad);
-  
-  if (forceCustomDropdown || isIPad) {
-    console.warn('[NATIVE-SELECT] Using CUSTOM dropdown');
-    return <IPadCustomDropdown {...props} />;
+  if (isIOS) {
+    return <IOSRadioGroup {...props} />;
   }
-  
-  console.warn('[NATIVE-SELECT] Using NATIVE select element');
   
   const {
     value,
@@ -186,30 +93,27 @@ const NativeSelect: React.FC<NativeSelectProps> = (props) => {
   } = props;
   
   return (
-    <select
-      value={value}
-      onChange={(e) => onValueChange(e.target.value)}
-      data-testid={dataTestId}
-      style={{
-        WebkitAppearance: 'menulist',
-        MozAppearance: 'menulist',
-        appearance: 'menulist',
-      }}
-      className={cn(
-        "flex w-full items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 px-3 py-2 ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
-        "h-10 text-sm",
-        "min-h-[44px] text-base",
-        "text-gray-900 dark:text-gray-100",
-        className
-      )}
-    >
-      {placeholder && (
-        <option value="" disabled>
-          {placeholder}
-        </option>
-      )}
-      {children}
-    </select>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        data-testid={dataTestId}
+        className={cn(
+          "flex w-full items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 px-3 py-2 pr-8 ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer appearance-none",
+          "min-h-[44px] text-base",
+          "text-gray-900 dark:text-gray-100",
+          className
+        )}
+      >
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
+        {children}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none" />
+    </div>
   )
 }
 
