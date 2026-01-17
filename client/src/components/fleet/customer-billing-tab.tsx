@@ -449,7 +449,7 @@ function AddCustomerDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <DialogContent className="max-w-md">
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 border-none shadow-2xl">
       <DialogHeader>
         <DialogTitle>Add New Customer</DialogTitle>
         <DialogDescription>Enter customer billing information</DialogDescription>
