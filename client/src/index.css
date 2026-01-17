@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CRITICAL FIX: iPad Safari dropdown positioning bug (WebKit #208854)
+   Force Radix Dialog to have NO transforms so native select popovers anchor correctly.
+   This must use !important to override Radix's inline styles and Tailwind's animate utilities. */
+[data-radix-dialog-content] {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
 /* Hide Replit development banner in PWA/standalone mode */
 /* IMPORTANT: Only target specific Replit elements, NOT all fixed position elements */
 @media (display-mode: standalone) {
