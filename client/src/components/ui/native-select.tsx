@@ -11,8 +11,9 @@ function isIPadSafari(): boolean {
   const isIOS = /iPad|iPhone|iPod/.test(ua);
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const isMobileSafari = /Safari/.test(ua) && /Mobile/.test(ua);
-  const result = isIOS || isIPadOS || isMobileSafari;
-  console.log('[NATIVE-SELECT] Detection:', { ua: ua.substring(0, 80), isIOS, isIPadOS, isMobileSafari, result });
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const result = isIOS || isIPadOS || isMobileSafari || isTouchDevice;
+  console.warn('[NATIVE-SELECT] *** DETECTION ***', { isIOS, isIPadOS, isMobileSafari, isTouchDevice, result, ua: ua.substring(0, 100) });
   return result;
 }
 
@@ -162,11 +163,18 @@ const IPadCustomDropdown: React.FC<NativeSelectProps> = ({
 };
 
 const NativeSelect: React.FC<NativeSelectProps> = (props) => {
+  // TEMPORARY: Force custom dropdown for ALL devices to test positioning fix
+  const forceCustomDropdown = true;
   const [isIPad] = React.useState(() => isIPadSafari());
   
-  if (isIPad) {
+  console.warn('[NATIVE-SELECT] Rendering - forceCustom:', forceCustomDropdown, 'isIPad:', isIPad);
+  
+  if (forceCustomDropdown || isIPad) {
+    console.warn('[NATIVE-SELECT] Using CUSTOM dropdown');
     return <IPadCustomDropdown {...props} />;
   }
+  
+  console.warn('[NATIVE-SELECT] Using NATIVE select element');
   
   const {
     value,
