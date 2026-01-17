@@ -133,7 +133,7 @@ export function CostAnalyticsDashboard() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `£${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value) => `£${Number(value).toFixed(2)}`} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -157,7 +157,7 @@ export function CostAnalyticsDashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="vehicle" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip formatter={(value) => `£${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value) => `£${Number(value).toFixed(2)}`} />
                   <Bar dataKey="amount" fill="#3b82f6" />
                 </BarChart>
               </ResponsiveContainer>
@@ -183,7 +183,7 @@ export function CostAnalyticsDashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => `£${value.toFixed(2)}`} />
+                <Tooltip formatter={(value) => `£${Number(value).toFixed(2)}`} />
                 <Legend />
                 <Line type="monotone" dataKey="total" stroke="#3b82f6" name="Total Cost" />
               </LineChart>

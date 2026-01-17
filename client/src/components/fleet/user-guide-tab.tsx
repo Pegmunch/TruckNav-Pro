@@ -110,6 +110,164 @@ export function UserGuideTab() {
       )
     },
     {
+      id: 'data-sync',
+      title: 'Data Sync & Calculations',
+      icon: <Zap className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Zap className="w-6 h-6 text-yellow-600" />
+            Data Sync & Automatic Calculations
+          </h2>
+          
+          <Card className="border-green-200 dark:border-green-800">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                How Your Data Connects
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>When you add a vehicle in the <strong>Vehicles</strong> tab, it automatically becomes available across all connected tabs:</p>
+              <div className="grid gap-2">
+                <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Service Records:</strong> Select your vehicle when logging maintenance</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Fuel Logs:</strong> Track fuel consumption per vehicle</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Documents:</strong> Upload MOT, insurance, and registration documents</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Cost Analytics:</strong> See costs broken down by vehicle</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Trip Tracking:</strong> Link trips to specific vehicles for profitability analysis</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                Automatic Calculations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+              <p>The system automatically calculates key metrics as you enter data:</p>
+              
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <p className="font-medium text-blue-700 dark:text-blue-300">Cost Analytics Dashboard</p>
+                  <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                    <li><strong>Total Costs:</strong> Sum of all service, fuel, and maintenance costs</li>
+                    <li><strong>Average Cost Per Vehicle:</strong> Total costs ÷ number of vehicles</li>
+                    <li><strong>Cost Breakdown by Type:</strong> Pie chart showing fuel vs maintenance vs repairs</li>
+                    <li><strong>Monthly Trends:</strong> Line chart showing spending over time</li>
+                  </ul>
+                </div>
+                
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="font-medium text-green-700 dark:text-green-300">Fuel Efficiency</p>
+                  <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                    <li><strong>MPG Calculation:</strong> (Current Odometer - Previous Odometer) ÷ Litres × 4.546</li>
+                    <li><strong>Cost Per Mile:</strong> Total fuel cost ÷ miles travelled</li>
+                    <li>Requires 2+ fuel entries with odometer readings for accurate calculation</li>
+                  </ul>
+                </div>
+                
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                  <p className="font-medium text-yellow-700 dark:text-yellow-300">Trip Profitability</p>
+                  <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-1">
+                    <li><strong>Profit:</strong> Revenue - (Fuel + Driver + Vehicle Costs + Tolls)</li>
+                    <li><strong>Profit Margin:</strong> (Profit ÷ Revenue) × 100%</li>
+                    <li><strong>Efficiency:</strong> Actual Distance ÷ Planned Distance</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-purple-200 dark:border-purple-800">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Lock className="w-5 h-5 text-purple-500" />
+                Enterprise Features (Fleet Subscription)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>The following features require an active Fleet subscription and GPS hardware integration:</p>
+              <div className="grid gap-2">
+                <div className="flex items-start gap-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                  <Radio className="w-4 h-4 text-purple-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium">Real-Time Tracking:</span>
+                    <span className="text-muted-foreground"> Live GPS positions of all vehicles on the map</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                  <MapPinned className="w-4 h-4 text-purple-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium">Geofencing:</span>
+                    <span className="text-muted-foreground"> Automatic alerts when vehicles enter/exit defined zones</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
+                  <Activity className="w-4 h-4 text-purple-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium">Driver Behavior:</span>
+                    <span className="text-muted-foreground"> Safety scores based on speeding, harsh braking, and cornering</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Note: Without GPS integration, these tabs display demonstration data to preview functionality.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Quick Reference: Which Tabs Share Data</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2">Tab</th>
+                      <th className="text-center py-2 px-2">Uses Vehicles</th>
+                      <th className="text-center py-2 px-2">Uses Operators</th>
+                      <th className="text-center py-2 px-2">Auto Calculations</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    <tr><td className="py-2 px-2">Vehicles</td><td className="text-center">-</td><td className="text-center">-</td><td className="text-center">-</td></tr>
+                    <tr><td className="py-2 px-2">Operators</td><td className="text-center">-</td><td className="text-center">-</td><td className="text-center">Expiry Alerts</td></tr>
+                    <tr><td className="py-2 px-2">Service</td><td className="text-center">✓</td><td className="text-center">-</td><td className="text-center">Next Service Due</td></tr>
+                    <tr><td className="py-2 px-2">Fuel</td><td className="text-center">✓</td><td className="text-center">-</td><td className="text-center">MPG, Cost/Mile</td></tr>
+                    <tr><td className="py-2 px-2">Documents</td><td className="text-center">✓</td><td className="text-center">-</td><td className="text-center">Expiry Alerts</td></tr>
+                    <tr><td className="py-2 px-2">Analytics</td><td className="text-center">✓</td><td className="text-center">-</td><td className="text-center">All Costs & Trends</td></tr>
+                    <tr><td className="py-2 px-2">Trips</td><td className="text-center">✓</td><td className="text-center">✓</td><td className="text-center">Profit & Margins</td></tr>
+                    <tr><td className="py-2 px-2">Incidents</td><td className="text-center">✓</td><td className="text-center">✓</td><td className="text-center">-</td></tr>
+                    <tr><td className="py-2 px-2">Compliance</td><td className="text-center">✓</td><td className="text-center">-</td><td className="text-center">Status Alerts</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    },
+    {
       id: 'navigation',
       title: 'Navigation System',
       icon: <Navigation className="w-5 h-5" />,
