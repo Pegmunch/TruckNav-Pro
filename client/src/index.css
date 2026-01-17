@@ -2866,3 +2866,31 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
     opacity: 1 !important;
   }
 }
+
+/* ============================================ */
+/* CRITICAL FIX: Radix Select Dropdown Positioning */
+/* Forces Select dropdowns to appear properly positioned */
+/* ============================================ */
+
+/* Target Radix Select Content when rendered via Portal */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Ensure Select content is positioned correctly */
+[data-radix-select-content] {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Force Select viewport to have proper dimensions */
+[data-radix-select-viewport] {
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+}
+
+/* Dialog-specific Select fix - ensure dropdowns inside dialogs are visible */
+[data-state="open"][role="dialog"] [data-radix-popper-content-wrapper],
+.dialog-content [data-radix-popper-content-wrapper] {
+  z-index: 10000 !important;
+}
