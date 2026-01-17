@@ -34,6 +34,13 @@ const SelectTrigger = React.forwardRef<
 ))
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
+const MaybePortal = ({ children, usePortal = true }: { children: React.ReactNode; usePortal?: boolean }) => {
+  if (usePortal) {
+    return <SelectPrimitive.Portal>{children}</SelectPrimitive.Portal>
+  }
+  return <>{children}</>
+}
+
 const SelectScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
@@ -71,9 +78,9 @@ SelectScrollDownButton.displayName =
 
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "item-aligned", ...props }, ref) => (
-  <SelectPrimitive.Portal>
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & { modal?: boolean }
+>(({ className, children, position = "item-aligned", modal = true, ...props }, ref) => (
+  <MaybePortal usePortal={modal}>
     <SelectPrimitive.Content
       ref={ref}
       position={position}
@@ -81,6 +88,7 @@ const SelectContent = React.forwardRef<
         "relative z-[9999] max-h-[280px] min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        !modal && "absolute left-0 top-full mt-1",
         className
       )}
       {...props}
@@ -97,7 +105,7 @@ const SelectContent = React.forwardRef<
       </SelectPrimitive.Viewport>
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
+  </MaybePortal>
 ))
 SelectContent.displayName = SelectPrimitive.Content.displayName
 

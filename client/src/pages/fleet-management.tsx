@@ -478,31 +478,35 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="vehicleType">Vehicle Type *</Label>
-            <Select value={formData.vehicleType} onValueChange={(value) => setFormData({ ...formData, vehicleType: value })}>
-              <SelectTrigger data-testid="select-vehicle-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="truck">Truck</SelectItem>
-                <SelectItem value="van">Van</SelectItem>
-                <SelectItem value="lorry">Lorry</SelectItem>
-                <SelectItem value="trailer">Trailer</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={formData.vehicleType} onValueChange={(value) => setFormData({ ...formData, vehicleType: value })}>
+                <SelectTrigger data-testid="select-vehicle-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  <SelectItem value="truck">Truck</SelectItem>
+                  <SelectItem value="van">Van</SelectItem>
+                  <SelectItem value="lorry">Lorry</SelectItem>
+                  <SelectItem value="trailer">Trailer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="fuelType">Fuel Type *</Label>
-            <Select value={formData.fuelType} onValueChange={(value) => setFormData({ ...formData, fuelType: value })}>
-              <SelectTrigger data-testid="select-fuel-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="diesel">Diesel</SelectItem>
-                <SelectItem value="petrol">Petrol</SelectItem>
-                <SelectItem value="electric">Electric</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={formData.fuelType} onValueChange={(value) => setFormData({ ...formData, fuelType: value })}>
+                <SelectTrigger data-testid="select-fuel-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  <SelectItem value="diesel">Diesel</SelectItem>
+                  <SelectItem value="petrol">Petrol</SelectItem>
+                  <SelectItem value="electric">Electric</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="tankCapacity">Tank Capacity (L)</Label>
@@ -614,18 +618,20 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
         <div className="space-y-4">
           <div>
             <Label htmlFor="vehicle-select">Select Vehicle</Label>
-            <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
-              <SelectTrigger id="vehicle-select" data-testid="select-document-vehicle">
-                <SelectValue placeholder="Select a vehicle to view documents" />
-              </SelectTrigger>
-              <SelectContent>
-                {vehicles.map((vehicle) => (
-                  <SelectItem key={vehicle.id} value={vehicle.id}>
-                    {vehicle.registration} - {vehicle.make} {vehicle.model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={selectedVehicleId} onValueChange={setSelectedVehicleId}>
+                <SelectTrigger id="vehicle-select" data-testid="select-document-vehicle">
+                  <SelectValue placeholder="Select a vehicle to view documents" />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  {vehicles.map((vehicle) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id}>
+                      {vehicle.registration} - {vehicle.make} {vehicle.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {selectedVehicleId && (
@@ -751,33 +757,37 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
         <div className="grid grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="vehicleId">Vehicle *</Label>
-            <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
-              <SelectTrigger data-testid="select-upload-vehicle">
-                <SelectValue placeholder="Select vehicle" />
-              </SelectTrigger>
-              <SelectContent>
-                {vehicles.map((vehicle) => (
-                  <SelectItem key={vehicle.id} value={vehicle.id}>
-                    {vehicle.registration} - {vehicle.make} {vehicle.model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
+                <SelectTrigger data-testid="select-upload-vehicle">
+                  <SelectValue placeholder="Select vehicle" />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  {vehicles.map((vehicle) => (
+                    <SelectItem key={vehicle.id} value={vehicle.id}>
+                      {vehicle.registration} - {vehicle.make} {vehicle.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="fileType">Document Type *</Label>
-            <Select value={formData.fileType} onValueChange={(value: any) => setFormData({ ...formData, fileType: value })}>
-              <SelectTrigger data-testid="select-file-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="registration">Registration</SelectItem>
-                <SelectItem value="mot">MOT</SelectItem>
-                <SelectItem value="insurance">Insurance</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={formData.fileType} onValueChange={(value: any) => setFormData({ ...formData, fileType: value })}>
+                <SelectTrigger data-testid="select-file-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  <SelectItem value="registration">Registration</SelectItem>
+                  <SelectItem value="mot">MOT</SelectItem>
+                  <SelectItem value="insurance">Insurance</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="col-span-2 space-y-2">
             <Label htmlFor="file">File *</Label>
@@ -1020,17 +1030,19 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="licenseType">License Type *</Label>
-            <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
-              <SelectTrigger data-testid="select-license-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="C">C (Rigid Vehicle)</SelectItem>
-                <SelectItem value="C+E">C+E (Articulated Vehicle)</SelectItem>
-                <SelectItem value="C1">C1 (Light Rigid)</SelectItem>
-                <SelectItem value="C1+E">C1+E (Light Articulated)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <Select value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })}>
+                <SelectTrigger data-testid="select-license-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent modal={false}>
+                  <SelectItem value="C">C (Rigid Vehicle)</SelectItem>
+                  <SelectItem value="C+E">C+E (Articulated Vehicle)</SelectItem>
+                  <SelectItem value="C1">C1 (Light Rigid)</SelectItem>
+                  <SelectItem value="C1+E">C1+E (Light Articulated)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="licenseExpiry">License Expiry *</Label>
@@ -1192,33 +1204,37 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="space-y-2">
           <Label htmlFor="vehicle">Vehicle *</Label>
-          <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
-            <SelectTrigger data-testid="select-service-vehicle">
-              <SelectValue placeholder="Select vehicle" />
-            </SelectTrigger>
-            <SelectContent>
-              {vehicles.map((vehicle) => (
-                <SelectItem key={vehicle.id} value={vehicle.id}>
-                  {vehicle.registration} - {vehicle.make} {vehicle.model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
+              <SelectTrigger data-testid="select-service-vehicle">
+                <SelectValue placeholder="Select vehicle" />
+              </SelectTrigger>
+              <SelectContent modal={false}>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.registration} - {vehicle.make} {vehicle.model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="serviceType">Service Type *</Label>
-          <Select value={formData.serviceType} onValueChange={(value: any) => setFormData({ ...formData, serviceType: value })}>
-            <SelectTrigger data-testid="select-service-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="routine">Routine Maintenance</SelectItem>
-              <SelectItem value="mot">MOT</SelectItem>
-              <SelectItem value="repair">Repair</SelectItem>
-              <SelectItem value="inspection">Inspection</SelectItem>
-              <SelectItem value="tyre">Tyre Change</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <Select value={formData.serviceType} onValueChange={(value: any) => setFormData({ ...formData, serviceType: value })}>
+              <SelectTrigger data-testid="select-service-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent modal={false}>
+                <SelectItem value="routine">Routine Maintenance</SelectItem>
+                <SelectItem value="mot">MOT</SelectItem>
+                <SelectItem value="repair">Repair</SelectItem>
+                <SelectItem value="inspection">Inspection</SelectItem>
+                <SelectItem value="tyre">Tyre Change</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="serviceDate">Service Date *</Label>
@@ -1354,18 +1370,20 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="space-y-2">
           <Label htmlFor="vehicle">Vehicle *</Label>
-          <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
-            <SelectTrigger data-testid="select-fuel-vehicle">
-              <SelectValue placeholder="Select vehicle" />
-            </SelectTrigger>
-            <SelectContent>
-              {vehicles.map((vehicle) => (
-                <SelectItem key={vehicle.id} value={vehicle.id}>
-                  {vehicle.registration} - {vehicle.make} {vehicle.model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <Select value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })}>
+              <SelectTrigger data-testid="select-fuel-vehicle">
+                <SelectValue placeholder="Select vehicle" />
+              </SelectTrigger>
+              <SelectContent modal={false}>
+                {vehicles.map((vehicle) => (
+                  <SelectItem key={vehicle.id} value={vehicle.id}>
+                    {vehicle.registration} - {vehicle.make} {vehicle.model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
