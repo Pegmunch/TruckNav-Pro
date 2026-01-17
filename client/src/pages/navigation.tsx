@@ -3338,11 +3338,13 @@ function NavigationPageContent() {
                       }}
                       onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                       onToggleMapView={() => {
+                        console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
                         mapRef.current?.toggleMapView();
-                        setMapControlState(prev => ({ 
-                          ...prev, 
-                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                        }));
+                        setMapControlState(prev => {
+                          const newSatelliteState = !prev.isSatelliteView;
+                          console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
+                          return { ...prev, isSatelliteView: newSatelliteState };
+                        });
                       }}
                       onCompassClick={() => {
                         mapRef.current?.resetBearing();
@@ -3650,11 +3652,13 @@ function NavigationPageContent() {
                       onZoomOut={() => mapRef.current?.zoomOut()}
                       onRecenter={() => mapRef.current?.zoomToUserLocation()}
                       onToggleMapView={() => {
+                        console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
                         mapRef.current?.toggleMapView();
-                        setMapControlState(prev => ({ 
-                          ...prev, 
-                          isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite'
-                        }));
+                        setMapControlState(prev => {
+                          const newSatelliteState = !prev.isSatelliteView;
+                          console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
+                          return { ...prev, isSatelliteView: newSatelliteState };
+                        });
                       }}
                       onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                       onViewIncidents={() => setShowIncidentFeed(true)}
