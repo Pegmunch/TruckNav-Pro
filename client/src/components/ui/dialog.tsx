@@ -50,20 +50,33 @@ const DialogContent = React.forwardRef<
   console.warn('[DIALOG] DialogContent rendering, isIOS:', isIOS);
   
   if (isIOS) {
-    console.warn('[DIALOG] Using BOTTOM SHEET layout for iOS');
+    console.warn('[DIALOG] Using BOTTOM SHEET layout for iOS with INLINE STYLES');
+    const bottomSheetStyle: React.CSSProperties = {
+      position: 'fixed',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      top: 'auto',
+      transform: 'none',
+      WebkitTransform: 'none',
+      width: '100%',
+      maxWidth: '100%',
+      maxHeight: '90vh',
+      margin: 0,
+      zIndex: 9999,
+      borderRadius: '16px 16px 0 0',
+      overflowY: 'auto',
+      padding: '24px',
+      paddingTop: '32px',
+    };
     return (
       <DialogPortal>
         <DialogOverlay />
         <DialogPrimitive.Content
           ref={ref}
+          style={bottomSheetStyle}
           className={cn(
-            "fixed z-50 w-full bg-background shadow-lg",
-            "inset-x-0 bottom-0 rounded-t-2xl",
-            "max-h-[90vh] overflow-y-auto",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-            "data-[state=closed]:duration-300 data-[state=open]:duration-300",
-            "border-t p-6 pt-8",
+            "bg-background shadow-lg border-t",
             className
           )}
           {...props}
