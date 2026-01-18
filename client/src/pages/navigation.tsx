@@ -793,20 +793,13 @@ function NavigationPageContent() {
         const firstSegment = currentRoute.laneGuidance[0];
         let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
         
-        switch (firstSegment.maneuverType) {
-          case 'turn-left':
-            direction = 'left';
-            break;
-          case 'turn-right':
-            direction = 'right';
-            break;
-          case 'straight':
-          case 'merge':
-          case 'depart':
-            direction = 'straight';
-            break;
-          default:
-            direction = 'straight';
+        const maneuverType = firstSegment.maneuverType;
+        if (maneuverType === 'turn-left') {
+          direction = 'left';
+        } else if (maneuverType === 'turn-right') {
+          direction = 'right';
+        } else {
+          direction = 'straight';
         }
         
         setNextTurn({
@@ -3226,59 +3219,7 @@ function NavigationPageContent() {
                 </MapShell>
               </div>
               
-              {/* ETA GLASS BAR - Visible when route exists AND input screen is closed (preview/navigate modes only) */}
-              {currentRoute && !showComprehensiveMenu && (
-                <CompactTripStrip
-                  eta={currentRoute.duration || 0}
-                  distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
-                  isOnline={navigator.onLine}
-                  gpsStatus={gpsData?.status || 'unavailable'}
-                  onPreviewStart={handlePreviewRoute}
-                  onPreviewStop={() => {
-                    console.log('[FLYBY] Stop requested - resetting to initial state');
-                    // Cancel the fly-by animation
-                    if (mapRef.current) {
-                      mapRef.current.cancelFlyBy();
-                    }
-                    // Reset all preview states to return to initial view
-                    setIsFlyByInProgress(false);
-                    setIsShowingPreview(false);
-                    // Zoom back to show full route
-                    if (currentRoute?.routePath && mapRef.current) {
-                      const lats = currentRoute.routePath.map((p: any) => p.lat);
-                      const lngs = currentRoute.routePath.map((p: any) => p.lng);
-                      const bounds = {
-                        north: Math.max(...lats),
-                        south: Math.min(...lats),
-                        east: Math.max(...lngs),
-                        west: Math.min(...lngs)
-                      };
-                      window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
-                        detail: { bounds, padding: 50 }
-                      }));
-                    }
-                  }}
-                  onSetLocation={() => setShowManualLocationDialog(true)}
-                  isPreviewActive={isFlyByInProgress}
-                  voiceEnabled={professionalVoiceEnabled}
-                  onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
-                  roadInfo={roadInfo ? {
-                    roadRef: roadInfo.roadRef,
-                    junction: roadInfo.junction,
-                    destination: roadInfo.destination
-                  } : null}
-                  turnInfo={nextTurn ? {
-                    direction: nextTurn.direction,
-                    distance: nextTurn.distance,
-                    roadName: nextTurn.roadName
-                  } : null}
-                  currentSpeed={gpsData?.position?.speed || 0}
-                  speedLimit={currentSpeedLimit || undefined}
-                  isNavigating={isNavigating}
-                  onCancelNavigation={handleStopNavigation}
-                  isCancellingNavigation={completeJourneyMutation.isPending}
-                />
-              )}
+              {/* ETA GLASS BAR - Moved to NavigationLayout's topStrip to prevent duplicate rendering */}
 
               {/* GPS Permission Button removed - moved to route planning panel */}
               {/* GPS Loading Indicator - HIDDEN IN PWA STANDALONE MODE */}
