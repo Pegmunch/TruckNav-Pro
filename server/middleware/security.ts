@@ -60,22 +60,22 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
   });
 };
 
-// Different rate limits for different endpoints
+// Different rate limits for different endpoints - increased for navigation app heavy usage
 export const generalRateLimit = createRateLimiter(
   15 * 60 * 1000, // 15 minutes
-  process.env.NODE_ENV === 'development' ? 1000 : 100, // Higher limit for development
+  process.env.NODE_ENV === 'development' ? 10000 : 10000, // High limit for real-time navigation
   'Too many requests from this IP, please try again later.'
 );
 
 export const authRateLimit = createRateLimiter(
   15 * 60 * 1000, // 15 minutes
-  5, // limit each IP to 5 auth attempts per windowMs
+  100, // limit each IP to 100 auth attempts per windowMs
   'Too many authentication attempts, please try again later.'
 );
 
 export const apiRateLimit = createRateLimiter(
   1 * 60 * 1000, // 1 minute
-  process.env.NODE_ENV === 'development' ? 10000 : 50, // Much higher limit for development
+  process.env.NODE_ENV === 'development' ? 10000 : 5000, // High limit for real-time navigation
   'API rate limit exceeded. Please slow down your requests.'
 );
 
