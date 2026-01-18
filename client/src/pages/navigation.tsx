@@ -708,11 +708,37 @@ function NavigationPageContent() {
     };
   }, []);
   
+  // Fallback: Derive road info from route lane guidance when GPS is unavailable
+  useEffect(() => {
+    // Only use fallback when GPS is unavailable AND we have a route
+    if (gpsData?.position || !currentRoute) {
+      return; // GPS working or no route - don't use fallback
+    }
+    
+    // Try to get road name from first lane guidance segment
+    if (currentRoute.laneGuidance && currentRoute.laneGuidance.length > 0) {
+      const firstSegment = currentRoute.laneGuidance[0];
+      if (firstSegment.roadName) {
+        setRoadInfo({
+          confidence: 'low',
+          roadRef: firstSegment.roadName,
+          junction: null,
+          destination: null
+        });
+        console.log(`[ROAD-INFO-FALLBACK] Using route data: ${firstSegment.roadName}`);
+        return;
+      }
+    }
+    
+    // Clear if no fallback available
+    setRoadInfo(null);
+  }, [gpsData?.position, currentRoute]);
+  
   // Fetch enhanced speed limit and road info when GPS position changes
   useEffect(() => {
     if (!gpsData?.position) {
       setCurrentSpeedLimit(null);
-      setRoadInfo(null);
+      // Don't clear roadInfo here - let fallback effect handle it
       return;
     }
     
@@ -756,8 +782,43 @@ function NavigationPageContent() {
   
   // Calculate next turn from route and GPS position
   useEffect(() => {
-    if (!isNavigating || !currentRoute || !gpsData?.position) {
+    if (!isNavigating || !currentRoute) {
       setNextTurn(null);
+      return;
+    }
+    
+    // Fallback: If no GPS, use first lane guidance instruction
+    if (!gpsData?.position) {
+      if (currentRoute.laneGuidance && currentRoute.laneGuidance.length > 0) {
+        const firstSegment = currentRoute.laneGuidance[0];
+        let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
+        
+        switch (firstSegment.maneuverType) {
+          case 'turn-left':
+            direction = 'left';
+            break;
+          case 'turn-right':
+            direction = 'right';
+            break;
+          case 'straight':
+          case 'merge':
+          case 'depart':
+            direction = 'straight';
+            break;
+          default:
+            direction = 'straight';
+        }
+        
+        setNextTurn({
+          direction,
+          distance: (firstSegment.distance || 0) * 1609.34, // Convert miles to meters
+          roadName: firstSegment.roadName
+        });
+        console.log(`[TURN-INFO-FALLBACK] Using route data: ${direction} onto ${firstSegment.roadName || 'unknown road'}`);
+      } else {
+        // No lane guidance available - clear any stale turn info
+        setNextTurn(null);
+      }
       return;
     }
 
