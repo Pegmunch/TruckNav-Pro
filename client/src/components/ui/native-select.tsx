@@ -2,19 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Check, ChevronDown } from "lucide-react"
-
-function isIOSDevice(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/i.test(ua);
-  const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const isMobileSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua) && !/CriOS/i.test(ua);
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  const result = isIOS || isIPadOS || (isMobileSafari && isTouchDevice);
-  console.warn('[NATIVE-SELECT] iOS Detection:', { isIOS, isIPadOS, isMobileSafari, isTouchDevice, result });
-  return result;
-}
+import { ChevronDown } from "lucide-react"
 
 interface NativeSelectProps {
   value: string
@@ -34,7 +22,7 @@ const NativeSelectItem: React.FC<NativeSelectItemProps> = ({ value, children }) 
   return <option value={value}>{children}</option>
 }
 
-const IOSRadioGroup: React.FC<NativeSelectProps> = ({
+const NativeSelect: React.FC<NativeSelectProps> = ({
   value,
   onValueChange,
   placeholder,
@@ -42,61 +30,6 @@ const IOSRadioGroup: React.FC<NativeSelectProps> = ({
   children,
   "data-testid": dataTestId,
 }) => {
-  const items: { value: string; label: string }[] = [];
-  React.Children.forEach(children, (child) => {
-    if (React.isValidElement(child) && child.props.value) {
-      items.push({
-        value: child.props.value,
-        label: typeof child.props.children === 'string' ? child.props.children : String(child.props.children)
-      });
-    }
-  });
-
-  return (
-    <div 
-      className={cn("flex flex-col gap-1", className)}
-      data-testid={dataTestId}
-    >
-      {items.map((item) => (
-        <button
-          key={item.value}
-          type="button"
-          onClick={() => onValueChange(item.value)}
-          className={cn(
-            "flex items-center justify-between px-3 py-2.5 rounded-md border text-left transition-colors",
-            "min-h-[44px] text-base",
-            item.value === value
-              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
-          )}
-        >
-          <span>{item.label}</span>
-          {item.value === value && <Check className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />}
-        </button>
-      ))}
-    </div>
-  );
-};
-
-const NativeSelect: React.FC<NativeSelectProps> = (props) => {
-  const [isIOS] = React.useState(() => isIOSDevice());
-  
-  console.warn('[NATIVE-SELECT] Rendering, isIOS:', isIOS);
-  
-  if (isIOS) {
-    console.warn('[NATIVE-SELECT] Using iOS RADIO BUTTONS');
-    return <IOSRadioGroup {...props} />;
-  }
-  
-  const {
-    value,
-    onValueChange,
-    placeholder,
-    className,
-    children,
-    "data-testid": dataTestId,
-  } = props;
-  
   return (
     <div className="relative">
       <select
