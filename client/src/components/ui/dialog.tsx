@@ -50,90 +50,9 @@ const DialogContent = React.forwardRef<
   
   console.warn('[DIALOG] DialogContent rendering, isIOS:', isIOS);
   
-  if (isIOS) {
-    console.warn('[DIALOG] Using CUSTOM BOTTOM SHEET with React.createPortal - BYPASSING RADIX');
-    
-    const overlayStyle: React.CSSProperties = {
-      position: 'fixed',
-      inset: 0,
-      zIndex: 9998,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    };
-    
-    const bottomSheetStyle: React.CSSProperties = {
-      position: 'fixed',
-      left: '0px',
-      right: '0px',
-      bottom: '0px',
-      top: 'auto',
-      transform: 'translateY(0)',
-      WebkitTransform: 'translateY(0)',
-      width: '100vw',
-      maxWidth: '100vw',
-      maxHeight: '90vh',
-      margin: '0',
-      zIndex: 9999,
-      borderTopLeftRadius: '16px',
-      borderTopRightRadius: '16px',
-      borderBottomLeftRadius: '0',
-      borderBottomRightRadius: '0',
-      overflowY: 'auto',
-      padding: '24px',
-      paddingTop: '32px',
-      backgroundColor: 'white',
-      boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
-    };
-    
-    const portalContent = (
-      <>
-        <div style={overlayStyle} onClick={() => {}} />
-        <div
-          ref={ref as any}
-          role="dialog"
-          aria-modal="true"
-          style={bottomSheetStyle}
-          className={cn("dark:bg-gray-900", className)}
-          {...props}
-        >
-          <div 
-            style={{
-              position: 'absolute',
-              top: '12px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '48px',
-              height: '6px',
-              borderRadius: '3px',
-              backgroundColor: '#d1d5db',
-            }}
-          />
-          {children}
-          <DialogPrimitive.Close 
-            style={{
-              position: 'absolute',
-              right: '16px',
-              top: '16px',
-              minWidth: '44px',
-              minHeight: '44px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '50%',
-              backgroundColor: '#f3f4f6',
-            }}
-          >
-            <X style={{ height: '20px', width: '20px' }} />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        </div>
-      </>
-    );
-    
-    if (typeof document !== 'undefined') {
-      return ReactDOM.createPortal(portalContent, document.body);
-    }
-    return null;
-  }
+  // TEMPORARILY DISABLED iOS-specific code for debugging
+  // The standard centered dialog will be used for all devices
+  console.warn('[DIALOG] iOS detection result:', isIOS, '- Using STANDARD centered dialog for all devices');
   
   return (
     <DialogPortal>
