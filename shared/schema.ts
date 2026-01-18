@@ -544,6 +544,126 @@ export const trafficSettingsSchema = z.object({
 
 export type TrafficSettings = z.infer<typeof trafficSettingsSchema>;
 
+// ===== PREDICTIVE TRAFFIC ANALYSIS SCHEMAS =====
+
+// Historical traffic data table - stores aggregated traffic patterns
+export const historicalTrafficData = pgTable("historical_traffic_data", {
+  id: serial("id").primaryKey(),
+  roadSegmentId: text("road_segment_id").notNull(), // Unique identifier for road segment (e.g., lat-lng hash)
+  roadName: text("road_name"), // Human-readable road name
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday, 1=Monday, ... 6=Saturday
+  hourOfDay: integer("hour_of_day").notNull(), // 0-23
+  averageSpeed: doublePrecision("average_speed").notNull(), // km/h
+  freeFlowSpeed: doublePrecision("free_flow_speed").notNull(), // km/h (no traffic)
+  congestionLevel: doublePrecision("congestion_level").notNull(), // 0-1 (0=free flow, 1=standstill)
+  sampleCount: integer("sample_count").notNull().default(1), // Number of observations
+  averageDelayMinutes: doublePrecision("average_delay_minutes").default(0),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Traffic observation for real-time data collection
+export const trafficObservations = pgTable("traffic_observations", {
+  id: serial("id").primaryKey(),
+  roadSegmentId: text("road_segment_id").notNull(),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  observedSpeed: doublePrecision("observed_speed").notNull(), // km/h
+  freeFlowSpeed: doublePrecision("free_flow_speed"), // km/h
+  congestionLevel: doublePrecision("congestion_level"), // 0-1
+  timestamp: timestamp("timestamp").defaultNow(),
+  source: text("source").default('user'), // 'user', 'tomtom', 'system'
+  journeyId: integer("journey_id"), // Link to journey if from user travel
+});
+
+// Traffic prediction cache table
+export const trafficPredictions = pgTable("traffic_predictions", {
+  id: serial("id").primaryKey(),
+  routeId: varchar("route_id").notNull(),
+  predictionTime: timestamp("prediction_time").notNull(), // When prediction is for
+  predictedDuration: integer("predicted_duration").notNull(), // minutes
+  baselineDuration: integer("baseline_duration").notNull(), // minutes without traffic
+  predictedDelay: integer("predicted_delay").notNull(), // minutes of expected delay
+  congestionScore: doublePrecision("congestion_score").notNull(), // 0-1 overall route congestion
+  confidence: doublePrecision("confidence").notNull(), // 0-1 prediction confidence
+  segmentPredictions: jsonb("segment_predictions").$type<TrafficSegmentPrediction[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+// Traffic segment prediction schema
+export const trafficSegmentPredictionSchema = z.object({
+  roadSegmentId: z.string(),
+  roadName: z.string().nullable(),
+  latitude: z.number(),
+  longitude: z.number(),
+  predictedSpeed: z.number(), // km/h
+  freeFlowSpeed: z.number(), // km/h
+  congestionLevel: z.number(), // 0-1
+  predictedDelay: z.number(), // minutes
+  confidence: z.number(), // 0-1
+});
+
+export type TrafficSegmentPrediction = z.infer<typeof trafficSegmentPredictionSchema>;
+
+// Insert schemas
+export const insertHistoricalTrafficDataSchema = createInsertSchema(historicalTrafficData).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTrafficObservationSchema = createInsertSchema(trafficObservations).omit({
+  id: true,
+});
+
+export const insertTrafficPredictionSchema = createInsertSchema(trafficPredictions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Type exports
+export type HistoricalTrafficData = typeof historicalTrafficData.$inferSelect;
+export type InsertHistoricalTrafficData = z.infer<typeof insertHistoricalTrafficDataSchema>;
+
+export type TrafficObservation = typeof trafficObservations.$inferSelect;
+export type InsertTrafficObservation = z.infer<typeof insertTrafficObservationSchema>;
+
+export type TrafficPrediction = typeof trafficPredictions.$inferSelect;
+export type InsertTrafficPrediction = z.infer<typeof insertTrafficPredictionSchema>;
+
+// Predictive analysis request/response schemas
+export const trafficPredictionRequestSchema = z.object({
+  routeId: z.string(),
+  departureTime: z.string().datetime().optional(), // ISO datetime, defaults to now
+  routePath: z.array(z.object({
+    lat: z.number(),
+    lng: z.number(),
+  })).optional(),
+});
+
+export const trafficPredictionResponseSchema = z.object({
+  routeId: z.string(),
+  departureTime: z.string(),
+  predictedDuration: z.number(), // minutes
+  baselineDuration: z.number(), // minutes without traffic
+  predictedDelay: z.number(), // minutes
+  congestionScore: z.number(), // 0-1
+  confidence: z.number(), // 0-1
+  bestDepartureTime: z.string().nullable(), // ISO datetime of optimal departure
+  alternativeTimes: z.array(z.object({
+    time: z.string(),
+    predictedDuration: z.number(),
+    predictedDelay: z.number(),
+    congestionScore: z.number(),
+  })),
+  segmentAnalysis: z.array(trafficSegmentPredictionSchema),
+  dataQuality: z.enum(['high', 'medium', 'low', 'insufficient']),
+});
+
+export type TrafficPredictionRequest = z.infer<typeof trafficPredictionRequestSchema>;
+export type TrafficPredictionResponse = z.infer<typeof trafficPredictionResponseSchema>;
 
 // ===== ENTERTAINMENT SCHEMAS =====
 
