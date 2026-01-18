@@ -1,4 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
+// Detect iOS/iPadOS Safari (including PWA)
+function useIsIOSSafari() {
+  return useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/i.test(ua);
+    const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua) && !/CriOS/i.test(ua);
+    return (isIOS || isIPadOS) && isSafari;
+  }, []);
+}
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -7,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
 import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -298,9 +311,16 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
           <Plus className="w-4 h-4 mr-2" />
           Add Vehicle
         </Button>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <AddVehicleDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
+        {/* Use Sheet on iOS to avoid Radix Dialog double-render bug */}
+        {useIsIOSSafari() ? (
+          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddVehicleDialog onClose={() => setIsAddOpen(false)} isIOS={true} />
+          </Sheet>
+        ) : (
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddVehicleDialog onClose={() => setIsAddOpen(false)} isIOS={false} />
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -355,7 +375,7 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
   );
 }
 
-function AddVehicleDialog({ onClose }: { onClose: () => void }) {
+function AddVehicleDialog({ onClose, isIOS }: { onClose: () => void; isIOS: boolean }) {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     registration: '',
@@ -404,6 +424,86 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
     createMutation.mutate(formData);
   };
 
+  const formContent = (
+    <div className="grid grid-cols-2 gap-4 py-4">
+      <div className="space-y-2">
+        <Label htmlFor="registration">Registration *</Label>
+        <Input id="registration" required value={formData.registration} onChange={(e) => setFormData({ ...formData, registration: e.target.value })} data-testid="input-registration" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="trailerNumber">Trailer Number</Label>
+        <Input id="trailerNumber" value={formData.trailerNumber} onChange={(e) => setFormData({ ...formData, trailerNumber: e.target.value })} data-testid="input-trailer-number" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="make">Make *</Label>
+        <Input id="make" required value={formData.make} onChange={(e) => setFormData({ ...formData, make: e.target.value })} placeholder="e.g., Volvo" data-testid="input-make" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="model">Model *</Label>
+        <Input id="model" required value={formData.model} onChange={(e) => setFormData({ ...formData, model: e.target.value })} placeholder="e.g., FH16" data-testid="input-model" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="year">Year *</Label>
+        <Input id="year" type="number" required value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} data-testid="input-year" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="vin">VIN</Label>
+        <Input id="vin" value={formData.vin} onChange={(e) => setFormData({ ...formData, vin: e.target.value })} data-testid="input-vin" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="vehicleType">Vehicle Type *</Label>
+        <NativeSelect value={formData.vehicleType} onValueChange={(value) => setFormData({ ...formData, vehicleType: value })} data-testid="select-vehicle-type">
+          <NativeSelectItem value="truck">Truck</NativeSelectItem>
+          <NativeSelectItem value="van">Van</NativeSelectItem>
+          <NativeSelectItem value="lorry">Lorry</NativeSelectItem>
+          <NativeSelectItem value="trailer">Trailer</NativeSelectItem>
+        </NativeSelect>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="fuelType">Fuel Type *</Label>
+        <NativeSelect value={formData.fuelType} onValueChange={(value) => setFormData({ ...formData, fuelType: value })} data-testid="select-fuel-type">
+          <NativeSelectItem value="diesel">Diesel</NativeSelectItem>
+          <NativeSelectItem value="petrol">Petrol</NativeSelectItem>
+          <NativeSelectItem value="electric">Electric</NativeSelectItem>
+          <NativeSelectItem value="hybrid">Hybrid</NativeSelectItem>
+        </NativeSelect>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="tankCapacity">Tank Capacity (L)</Label>
+        <Input id="tankCapacity" type="number" value={formData.tankCapacity} onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) })} data-testid="input-tank-capacity" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="currentMileage">Current Mileage</Label>
+        <Input id="currentMileage" type="number" value={formData.currentMileage} onChange={(e) => setFormData({ ...formData, currentMileage: parseFloat(e.target.value) })} data-testid="input-mileage" />
+      </div>
+      <div className="col-span-2 space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Input id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} data-testid="input-notes" />
+      </div>
+    </div>
+  );
+
+  if (isIOS) {
+    return (
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-xl bg-white dark:bg-gray-900 flex flex-col p-0">
+        <SheetHeader className="p-6 pb-0 flex-shrink-0">
+          <SheetTitle>Add New Vehicle</SheetTitle>
+          <SheetDescription>Enter the vehicle details below</SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {formContent}
+          </div>
+          <SheetFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-vehicle" className="min-h-[44px] w-full">
+              {createMutation.isPending ? 'Adding...' : 'Add Vehicle'}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    );
+  }
+
   return (
     <DialogContent data-testid="dialog-add-vehicle" className="max-w-2xl max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
       <DialogHeader className="p-6 pb-0 flex-shrink-0">
@@ -412,116 +512,7 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="registration">Registration *</Label>
-            <Input
-              id="registration"
-              required
-              value={formData.registration}
-              onChange={(e) => setFormData({ ...formData, registration: e.target.value })}
-              data-testid="input-registration"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="trailerNumber">Trailer Number</Label>
-            <Input
-              id="trailerNumber"
-              value={formData.trailerNumber}
-              onChange={(e) => setFormData({ ...formData, trailerNumber: e.target.value })}
-              data-testid="input-trailer-number"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="make">Make *</Label>
-            <Input
-              id="make"
-              required
-              value={formData.make}
-              onChange={(e) => setFormData({ ...formData, make: e.target.value })}
-              placeholder="e.g., Volvo"
-              data-testid="input-make"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="model">Model *</Label>
-            <Input
-              id="model"
-              required
-              value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              placeholder="e.g., FH16"
-              data-testid="input-model"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="year">Year *</Label>
-            <Input
-              id="year"
-              type="number"
-              required
-              value={formData.year}
-              onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-              data-testid="input-year"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vin">VIN</Label>
-            <Input
-              id="vin"
-              value={formData.vin}
-              onChange={(e) => setFormData({ ...formData, vin: e.target.value })}
-              data-testid="input-vin"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vehicleType">Vehicle Type *</Label>
-            <NativeSelect value={formData.vehicleType} onValueChange={(value) => setFormData({ ...formData, vehicleType: value })} data-testid="select-vehicle-type">
-              <NativeSelectItem value="truck">Truck</NativeSelectItem>
-              <NativeSelectItem value="van">Van</NativeSelectItem>
-              <NativeSelectItem value="lorry">Lorry</NativeSelectItem>
-              <NativeSelectItem value="trailer">Trailer</NativeSelectItem>
-            </NativeSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fuelType">Fuel Type *</Label>
-            <NativeSelect value={formData.fuelType} onValueChange={(value) => setFormData({ ...formData, fuelType: value })} data-testid="select-fuel-type">
-              <NativeSelectItem value="diesel">Diesel</NativeSelectItem>
-              <NativeSelectItem value="petrol">Petrol</NativeSelectItem>
-              <NativeSelectItem value="electric">Electric</NativeSelectItem>
-              <NativeSelectItem value="hybrid">Hybrid</NativeSelectItem>
-            </NativeSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tankCapacity">Tank Capacity (L)</Label>
-            <Input
-              id="tankCapacity"
-              type="number"
-              value={formData.tankCapacity}
-              onChange={(e) => setFormData({ ...formData, tankCapacity: parseFloat(e.target.value) })}
-              data-testid="input-tank-capacity"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="currentMileage">Current Mileage</Label>
-            <Input
-              id="currentMileage"
-              type="number"
-              value={formData.currentMileage}
-              onChange={(e) => setFormData({ ...formData, currentMileage: parseFloat(e.target.value) })}
-              data-testid="input-mileage"
-            />
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              data-testid="input-notes"
-            />
-          </div>
-        </div>
+          {formContent}
         </div>
         <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-vehicle" className="min-h-[44px]">
@@ -592,9 +583,15 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
           <Plus className="w-4 h-4 mr-2" />
           Upload Document
         </Button>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <AddDocumentDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
+        {useIsIOSSafari() ? (
+          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddDocumentDialog onClose={() => setIsAddOpen(false)} isIOS={true} />
+          </Sheet>
+        ) : (
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddDocumentDialog onClose={() => setIsAddOpen(false)} isIOS={false} />
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -664,7 +661,7 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
   );
 }
 
-function AddDocumentDialog({ onClose }: { onClose: () => void }) {
+function AddDocumentDialog({ onClose, isIOS }: { onClose: () => void; isIOS: boolean }) {
   const { toast } = useToast();
   const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
     queryKey: ['/api/fleet/vehicles'],
@@ -721,6 +718,62 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
     createMutation.mutate();
   };
 
+  const formContent = (
+    <>
+      <div className="grid grid-cols-2 gap-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="vehicleId">Vehicle *</Label>
+          <NativeSelect value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })} placeholder="Select vehicle" data-testid="select-upload-vehicle">
+            {vehicles.map((vehicle) => (
+              <NativeSelectItem key={vehicle.id} value={vehicle.id}>
+                {vehicle.registration} - {vehicle.make} {vehicle.model}
+              </NativeSelectItem>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="fileType">Document Type *</Label>
+          <NativeSelect value={formData.fileType} onValueChange={(value: any) => setFormData({ ...formData, fileType: value })} data-testid="select-file-type">
+            <NativeSelectItem value="registration">Registration</NativeSelectItem>
+            <NativeSelectItem value="mot">MOT</NativeSelectItem>
+            <NativeSelectItem value="insurance">Insurance</NativeSelectItem>
+            <NativeSelectItem value="maintenance">Maintenance</NativeSelectItem>
+            <NativeSelectItem value="other">Other</NativeSelectItem>
+          </NativeSelect>
+        </div>
+        <div className="col-span-2 space-y-2">
+          <Label htmlFor="file">File *</Label>
+          <Input id="file" type="file" required onChange={(e) => setFile(e.target.files?.[0] || null)} data-testid="input-document-file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+        </div>
+        <div className="col-span-2 space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="e.g., 2024 MOT Certificate" data-testid="input-document-description" />
+        </div>
+      </div>
+    </>
+  );
+
+  if (isIOS) {
+    return (
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-xl bg-white dark:bg-gray-900 flex flex-col p-0">
+        <SheetHeader className="p-6 pb-0 flex-shrink-0">
+          <SheetTitle>Upload Vehicle Document</SheetTitle>
+          <SheetDescription>Upload registration, MOT, insurance, or maintenance documents</SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {formContent}
+          </div>
+          <SheetFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending || !file} data-testid="button-submit-document" className="min-h-[44px] w-full">
+              {createMutation.isPending ? 'Uploading...' : 'Upload Document'}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    );
+  }
+
   return (
     <DialogContent className="max-w-2xl max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
       <DialogHeader className="p-6 pb-0 flex-shrink-0">
@@ -729,49 +782,7 @@ function AddDocumentDialog({ onClose }: { onClose: () => void }) {
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="vehicleId">Vehicle *</Label>
-            <NativeSelect value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })} placeholder="Select vehicle" data-testid="select-upload-vehicle">
-              {vehicles.map((vehicle) => (
-                <NativeSelectItem key={vehicle.id} value={vehicle.id}>
-                  {vehicle.registration} - {vehicle.make} {vehicle.model}
-                </NativeSelectItem>
-              ))}
-            </NativeSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fileType">Document Type *</Label>
-            <NativeSelect value={formData.fileType} onValueChange={(value: any) => setFormData({ ...formData, fileType: value })} data-testid="select-file-type">
-              <NativeSelectItem value="registration">Registration</NativeSelectItem>
-              <NativeSelectItem value="mot">MOT</NativeSelectItem>
-              <NativeSelectItem value="insurance">Insurance</NativeSelectItem>
-              <NativeSelectItem value="maintenance">Maintenance</NativeSelectItem>
-              <NativeSelectItem value="other">Other</NativeSelectItem>
-            </NativeSelect>
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="file">File *</Label>
-            <Input
-              id="file"
-              type="file"
-              required
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              data-testid="input-document-file"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-            />
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="e.g., 2024 MOT Certificate"
-              data-testid="input-document-description"
-            />
-          </div>
-        </div>
+          {formContent}
         </div>
         <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button type="submit" disabled={createMutation.isPending || !file} data-testid="button-submit-document" className="min-h-[44px]">
@@ -818,9 +829,15 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
           <Plus className="w-4 h-4 mr-2" />
           Add Operator
         </Button>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <AddOperatorDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
+        {useIsIOSSafari() ? (
+          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddOperatorDialog onClose={() => setIsAddOpen(false)} isIOS={true} />
+          </Sheet>
+        ) : (
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddOperatorDialog onClose={() => setIsAddOpen(false)} isIOS={false} />
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -877,7 +894,7 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
   );
 }
 
-function AddOperatorDialog({ onClose }: { onClose: () => void }) {
+function AddOperatorDialog({ onClose, isIOS }: { onClose: () => void; isIOS: boolean }) {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -929,6 +946,77 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
     createMutation.mutate(formData);
   };
 
+  const formContent = (
+    <div className="grid grid-cols-2 gap-4 py-4">
+      <div className="space-y-2">
+        <Label htmlFor="firstName">First Name *</Label>
+        <Input id="firstName" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} data-testid="input-first-name" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName">Last Name *</Label>
+        <Input id="lastName" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} data-testid="input-last-name" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} data-testid="input-email" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone</Label>
+        <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} data-testid="input-phone" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="licenseNumber">License Number *</Label>
+        <Input id="licenseNumber" required value={formData.licenseNumber} onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })} data-testid="input-license-number" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="licenseType">License Type *</Label>
+        <NativeSelect value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })} data-testid="select-license-type">
+          <NativeSelectItem value="C">C (Rigid Vehicle)</NativeSelectItem>
+          <NativeSelectItem value="C+E">C+E (Articulated Vehicle)</NativeSelectItem>
+          <NativeSelectItem value="C1">C1 (Light Rigid)</NativeSelectItem>
+          <NativeSelectItem value="C1+E">C1+E (Light Articulated)</NativeSelectItem>
+        </NativeSelect>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="licenseExpiry">License Expiry *</Label>
+        <Input id="licenseExpiry" type="date" required value={formData.licenseExpiry} onChange={(e) => setFormData({ ...formData, licenseExpiry: e.target.value })} data-testid="input-license-expiry" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="driverCQCExpiry">Driver CPC Expiry</Label>
+        <Input id="driverCQCExpiry" type="date" value={formData.driverCQCExpiry} onChange={(e) => setFormData({ ...formData, driverCQCExpiry: e.target.value })} data-testid="input-cqc-expiry" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="employeeId">Employee ID</Label>
+        <Input id="employeeId" value={formData.employeeId} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} data-testid="input-employee-id" />
+      </div>
+      <div className="col-span-2 space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Input id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} data-testid="input-operator-notes" />
+      </div>
+    </div>
+  );
+
+  if (isIOS) {
+    return (
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-xl bg-white dark:bg-gray-900 flex flex-col p-0">
+        <SheetHeader className="p-6 pb-0 flex-shrink-0">
+          <SheetTitle>Add New Operator</SheetTitle>
+          <SheetDescription>Enter the operator/driver details below</SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {formContent}
+          </div>
+          <SheetFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-operator" className="min-h-[44px] w-full">
+              {createMutation.isPending ? 'Adding...' : 'Add Operator'}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    );
+  }
+
   return (
     <DialogContent className="max-w-2xl max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
       <DialogHeader className="p-6 pb-0 flex-shrink-0">
@@ -937,105 +1025,7 @@ function AddOperatorDialog({ onClose }: { onClose: () => void }) {
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-6 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name *</Label>
-            <Input
-              id="firstName"
-              required
-              value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              data-testid="input-first-name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name *</Label>
-            <Input
-              id="lastName"
-              required
-              value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              data-testid="input-last-name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              data-testid="input-email"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              data-testid="input-phone"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="licenseNumber">License Number *</Label>
-            <Input
-              id="licenseNumber"
-              required
-              value={formData.licenseNumber}
-              onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-              data-testid="input-license-number"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="licenseType">License Type *</Label>
-            <NativeSelect value={formData.licenseType} onValueChange={(value) => setFormData({ ...formData, licenseType: value })} data-testid="select-license-type">
-              <NativeSelectItem value="C">C (Rigid Vehicle)</NativeSelectItem>
-              <NativeSelectItem value="C+E">C+E (Articulated Vehicle)</NativeSelectItem>
-              <NativeSelectItem value="C1">C1 (Light Rigid)</NativeSelectItem>
-              <NativeSelectItem value="C1+E">C1+E (Light Articulated)</NativeSelectItem>
-            </NativeSelect>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="licenseExpiry">License Expiry *</Label>
-            <Input
-              id="licenseExpiry"
-              type="date"
-              required
-              value={formData.licenseExpiry}
-              onChange={(e) => setFormData({ ...formData, licenseExpiry: e.target.value })}
-              data-testid="input-license-expiry"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="driverCQCExpiry">Driver CPC Expiry</Label>
-            <Input
-              id="driverCQCExpiry"
-              type="date"
-              value={formData.driverCQCExpiry}
-              onChange={(e) => setFormData({ ...formData, driverCQCExpiry: e.target.value })}
-              data-testid="input-cqc-expiry"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="employeeId">Employee ID</Label>
-            <Input
-              id="employeeId"
-              value={formData.employeeId}
-              onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-              data-testid="input-employee-id"
-            />
-          </div>
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              data-testid="input-operator-notes"
-            />
-          </div>
-        </div>
+          {formContent}
         </div>
         <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-operator" className="min-h-[44px]">
@@ -1082,9 +1072,15 @@ function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; se
           <Plus className="w-4 h-4 mr-2" />
           Add Service Record
         </Button>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <AddServiceDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
+        {useIsIOSSafari() ? (
+          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddServiceDialog onClose={() => setIsAddOpen(false)} isIOS={true} />
+          </Sheet>
+        ) : (
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddServiceDialog onClose={() => setIsAddOpen(false)} isIOS={false} />
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -1099,7 +1095,7 @@ function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; se
   );
 }
 
-function AddServiceDialog({ onClose }: { onClose: () => void }) {
+function AddServiceDialog({ onClose, isIOS }: { onClose: () => void; isIOS: boolean }) {
   const { toast } = useToast();
   const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
     queryKey: ['/api/fleet/vehicles'],
@@ -1144,6 +1140,64 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
     createMutation.mutate();
   };
 
+  const formContent = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="vehicle">Vehicle *</Label>
+        <NativeSelect value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })} placeholder="Select vehicle" data-testid="select-service-vehicle">
+          {vehicles.map((vehicle) => (
+            <NativeSelectItem key={vehicle.id} value={vehicle.id}>
+              {vehicle.registration} - {vehicle.make} {vehicle.model}
+            </NativeSelectItem>
+          ))}
+        </NativeSelect>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="serviceType">Service Type *</Label>
+        <NativeSelect value={formData.serviceType} onValueChange={(value: any) => setFormData({ ...formData, serviceType: value })} data-testid="select-service-type">
+          <NativeSelectItem value="routine">Routine Maintenance</NativeSelectItem>
+          <NativeSelectItem value="mot">MOT</NativeSelectItem>
+          <NativeSelectItem value="repair">Repair</NativeSelectItem>
+          <NativeSelectItem value="inspection">Inspection</NativeSelectItem>
+          <NativeSelectItem value="tyre">Tyre Change</NativeSelectItem>
+        </NativeSelect>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="serviceDate">Service Date *</Label>
+        <Input id="serviceDate" type="date" value={formData.serviceDate} onChange={(e) => setFormData({ ...formData, serviceDate: e.target.value })} data-testid="input-service-date" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Input id="description" placeholder="e.g., Oil change, brake pads replaced" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} data-testid="input-service-description" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="cost">Cost (£)</Label>
+        <Input id="cost" type="number" placeholder="0.00" value={formData.cost} onChange={(e) => setFormData({ ...formData, cost: e.target.value })} data-testid="input-service-cost" />
+      </div>
+    </div>
+  );
+
+  if (isIOS) {
+    return (
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-xl bg-white dark:bg-gray-900 flex flex-col p-0">
+        <SheetHeader className="p-6 pb-0 flex-shrink-0">
+          <SheetTitle>Add Service Record</SheetTitle>
+          <SheetDescription>Record maintenance and service history</SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {formContent}
+          </div>
+          <SheetFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service" className="min-h-[44px] w-full">
+              {createMutation.isPending ? 'Adding...' : 'Add Record'}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    );
+  }
+
   return (
     <DialogContent data-testid="dialog-add-service" className="max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
       <DialogHeader className="p-6 pb-0 flex-shrink-0">
@@ -1151,58 +1205,8 @@ function AddServiceDialog({ onClose }: { onClose: () => void }) {
         <DialogDescription>Record maintenance and service history</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="space-y-2">
-          <Label htmlFor="vehicle">Vehicle *</Label>
-          <NativeSelect value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })} placeholder="Select vehicle" data-testid="select-service-vehicle">
-            {vehicles.map((vehicle) => (
-              <NativeSelectItem key={vehicle.id} value={vehicle.id}>
-                {vehicle.registration} - {vehicle.make} {vehicle.model}
-              </NativeSelectItem>
-            ))}
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="serviceType">Service Type *</Label>
-          <NativeSelect value={formData.serviceType} onValueChange={(value: any) => setFormData({ ...formData, serviceType: value })} data-testid="select-service-type">
-            <NativeSelectItem value="routine">Routine Maintenance</NativeSelectItem>
-            <NativeSelectItem value="mot">MOT</NativeSelectItem>
-            <NativeSelectItem value="repair">Repair</NativeSelectItem>
-            <NativeSelectItem value="inspection">Inspection</NativeSelectItem>
-            <NativeSelectItem value="tyre">Tyre Change</NativeSelectItem>
-          </NativeSelect>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="serviceDate">Service Date *</Label>
-          <Input
-            id="serviceDate"
-            type="date"
-            value={formData.serviceDate}
-            onChange={(e) => setFormData({ ...formData, serviceDate: e.target.value })}
-            data-testid="input-service-date"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Input
-            id="description"
-            placeholder="e.g., Oil change, brake pads replaced"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            data-testid="input-service-description"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cost">Cost (£)</Label>
-          <Input
-            id="cost"
-            type="number"
-            placeholder="0.00"
-            value={formData.cost}
-            onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-            data-testid="input-service-cost"
-          />
-        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {formContent}
         </div>
         <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-service" className="min-h-[44px]">
@@ -1231,9 +1235,15 @@ function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
           <Plus className="w-4 h-4 mr-2" />
           Add Fuel Log
         </Button>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <AddFuelDialog onClose={() => setIsAddOpen(false)} />
-        </Dialog>
+        {useIsIOSSafari() ? (
+          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddFuelDialog onClose={() => setIsAddOpen(false)} isIOS={true} />
+          </Sheet>
+        ) : (
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <AddFuelDialog onClose={() => setIsAddOpen(false)} isIOS={false} />
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -1248,7 +1258,7 @@ function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
   );
 }
 
-function AddFuelDialog({ onClose }: { onClose: () => void }) {
+function AddFuelDialog({ onClose, isIOS }: { onClose: () => void; isIOS: boolean }) {
   const { toast } = useToast();
   const { data: vehicles = [] } = useQuery<FleetVehicle[]>({
     queryKey: ['/api/fleet/vehicles'],
@@ -1294,6 +1304,66 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
     createMutation.mutate();
   };
 
+  const formContent = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="vehicle">Vehicle *</Label>
+        <NativeSelect value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })} placeholder="Select vehicle" data-testid="select-fuel-vehicle">
+          {vehicles.map((vehicle) => (
+            <NativeSelectItem key={vehicle.id} value={vehicle.id}>
+              {vehicle.registration} - {vehicle.make} {vehicle.model}
+            </NativeSelectItem>
+          ))}
+        </NativeSelect>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="liters">Litres *</Label>
+          <Input id="liters" type="number" placeholder="0.00" value={formData.liters} onChange={(e) => setFormData({ ...formData, liters: e.target.value })} data-testid="input-liters" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cost">Total Cost (£)</Label>
+          <Input id="cost" type="number" placeholder="0.00" value={formData.cost} onChange={(e) => setFormData({ ...formData, cost: e.target.value })} data-testid="input-fuel-cost" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="odometer">Odometer Reading</Label>
+          <Input id="odometer" type="number" placeholder="Current mileage" value={formData.odometer} onChange={(e) => setFormData({ ...formData, odometer: e.target.value })} data-testid="input-odometer" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="fuelDate">Date *</Label>
+          <Input id="fuelDate" type="date" value={formData.fuelDate} onChange={(e) => setFormData({ ...formData, fuelDate: e.target.value })} data-testid="input-fuel-date" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="station">Fuel Station</Label>
+        <Input id="station" placeholder="e.g., BP, Shell, Esso" value={formData.station} onChange={(e) => setFormData({ ...formData, station: e.target.value })} data-testid="input-station" />
+      </div>
+    </div>
+  );
+
+  if (isIOS) {
+    return (
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-xl bg-white dark:bg-gray-900 flex flex-col p-0">
+        <SheetHeader className="p-6 pb-0 flex-shrink-0">
+          <SheetTitle>Add Fuel Log</SheetTitle>
+          <SheetDescription>Record fuel purchases for tracking</SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-6 py-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {formContent}
+          </div>
+          <SheetFooter className="p-6 pt-4 flex-shrink-0 border-t">
+            <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel" className="min-h-[44px] w-full">
+              {createMutation.isPending ? 'Adding...' : 'Add Fuel Log'}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    );
+  }
+
   return (
     <DialogContent data-testid="dialog-add-fuel" className="max-h-[85vh] bg-white dark:bg-gray-900 border-none shadow-2xl flex flex-col p-0">
       <DialogHeader className="p-6 pb-0 flex-shrink-0">
@@ -1301,74 +1371,8 @@ function AddFuelDialog({ onClose }: { onClose: () => void }) {
         <DialogDescription>Record fuel purchases for tracking</DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <div className="space-y-2">
-          <Label htmlFor="vehicle">Vehicle *</Label>
-          <NativeSelect value={formData.vehicleId} onValueChange={(value) => setFormData({ ...formData, vehicleId: value })} placeholder="Select vehicle" data-testid="select-fuel-vehicle">
-            {vehicles.map((vehicle) => (
-              <NativeSelectItem key={vehicle.id} value={vehicle.id}>
-                {vehicle.registration} - {vehicle.make} {vehicle.model}
-              </NativeSelectItem>
-            ))}
-          </NativeSelect>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="liters">Litres *</Label>
-            <Input
-              id="liters"
-              type="number"
-              placeholder="0.00"
-              value={formData.liters}
-              onChange={(e) => setFormData({ ...formData, liters: e.target.value })}
-              data-testid="input-liters"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cost">Total Cost (£)</Label>
-            <Input
-              id="cost"
-              type="number"
-              placeholder="0.00"
-              value={formData.cost}
-              onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-              data-testid="input-fuel-cost"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="odometer">Odometer Reading</Label>
-            <Input
-              id="odometer"
-              type="number"
-              placeholder="Current mileage"
-              value={formData.odometer}
-              onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
-              data-testid="input-odometer"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fuelDate">Date *</Label>
-            <Input
-              id="fuelDate"
-              type="date"
-              value={formData.fuelDate}
-              onChange={(e) => setFormData({ ...formData, fuelDate: e.target.value })}
-              data-testid="input-fuel-date"
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="station">Fuel Station</Label>
-          <Input
-            id="station"
-            placeholder="e.g., BP, Shell, Esso"
-            value={formData.station}
-            onChange={(e) => setFormData({ ...formData, station: e.target.value })}
-            data-testid="input-station"
-          />
-        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4 touch-pan-y overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {formContent}
         </div>
         <DialogFooter className="p-6 pt-4 flex-shrink-0 border-t">
           <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-fuel" className="min-h-[44px]">
