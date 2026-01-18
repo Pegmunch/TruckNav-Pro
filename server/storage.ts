@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, type HistoricalTrafficData, type InsertHistoricalTrafficData, type TrafficObservation, type InsertTrafficObservation, type TrafficPrediction, type InsertTrafficPrediction, historicalTrafficData, trafficObservations, trafficPredictions, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
@@ -145,6 +145,17 @@ export interface IStorage {
     averageDelay: number;
   }>>;
   cleanupTrafficHistory(hoursToKeep: number): Promise<number>;
+
+  // Predictive Traffic Analysis
+  recordTrafficObservation(observation: InsertTrafficObservation): Promise<TrafficObservation>;
+  getTrafficObservations(roadSegmentId: string, limit?: number): Promise<TrafficObservation[]>;
+  aggregateHistoricalData(roadSegmentId: string, dayOfWeek: number, hourOfDay: number): Promise<HistoricalTrafficData | undefined>;
+  upsertHistoricalTrafficData(data: InsertHistoricalTrafficData): Promise<HistoricalTrafficData>;
+  getHistoricalTrafficPatterns(roadSegmentId: string): Promise<HistoricalTrafficData[]>;
+  getTrafficPrediction(routeId: string, predictionTime: Date): Promise<TrafficPrediction | undefined>;
+  cacheTrafficPrediction(prediction: InsertTrafficPrediction): Promise<TrafficPrediction>;
+  cleanupExpiredPredictions(): Promise<number>;
+  getHistoricalDataForTimeSlot(dayOfWeek: number, hourOfDay: number, bounds?: { north: number; south: number; east: number; west: number }): Promise<HistoricalTrafficData[]>;
 
   // Entertainment Stations
   getEntertainmentStation(id: string): Promise<EntertainmentStation | undefined>;
@@ -2398,6 +2409,151 @@ export class MemStorage implements IStorage {
     return cleanedCount;
   }
 
+  // ===== PREDICTIVE TRAFFIC ANALYSIS METHODS (In-Memory) =====
+  private historicalTrafficStore = new Map<string, HistoricalTrafficData>();
+  private trafficObservationsStore: TrafficObservation[] = [];
+  private trafficPredictionsStore = new Map<string, TrafficPrediction>();
+
+  async recordTrafficObservation(observation: InsertTrafficObservation): Promise<TrafficObservation> {
+    const newObs: TrafficObservation = {
+      id: this.trafficObservationsStore.length + 1,
+      ...observation,
+      timestamp: observation.timestamp || new Date(),
+      source: observation.source || 'user',
+      freeFlowSpeed: observation.freeFlowSpeed || null,
+      congestionLevel: observation.congestionLevel || null,
+      journeyId: observation.journeyId || null,
+    };
+    this.trafficObservationsStore.push(newObs);
+    
+    // Aggregate into historical data
+    const date = newObs.timestamp!;
+    const dayOfWeek = date.getDay();
+    const hourOfDay = date.getHours();
+    await this.aggregateIntoHistorical(observation.roadSegmentId, observation.latitude, observation.longitude, dayOfWeek, hourOfDay, observation.observedSpeed, observation.freeFlowSpeed || observation.observedSpeed * 1.2);
+    
+    return newObs;
+  }
+
+  private async aggregateIntoHistorical(roadSegmentId: string, lat: number, lng: number, dayOfWeek: number, hourOfDay: number, observedSpeed: number, freeFlowSpeed: number): Promise<void> {
+    const key = `${roadSegmentId}-${dayOfWeek}-${hourOfDay}`;
+    const existing = this.historicalTrafficStore.get(key);
+    
+    const congestionLevel = Math.max(0, Math.min(1, 1 - (observedSpeed / freeFlowSpeed)));
+    const delay = freeFlowSpeed > 0 ? Math.max(0, (freeFlowSpeed - observedSpeed) / freeFlowSpeed * 10) : 0;
+    
+    if (existing) {
+      const newSampleCount = existing.sampleCount + 1;
+      const newAvgSpeed = (existing.averageSpeed * existing.sampleCount + observedSpeed) / newSampleCount;
+      const newCongestion = (existing.congestionLevel * existing.sampleCount + congestionLevel) / newSampleCount;
+      const newDelay = ((existing.averageDelayMinutes || 0) * existing.sampleCount + delay) / newSampleCount;
+      
+      this.historicalTrafficStore.set(key, {
+        ...existing,
+        averageSpeed: newAvgSpeed,
+        congestionLevel: newCongestion,
+        sampleCount: newSampleCount,
+        averageDelayMinutes: newDelay,
+        lastUpdated: new Date(),
+      });
+    } else {
+      const newData: HistoricalTrafficData = {
+        id: this.historicalTrafficStore.size + 1,
+        roadSegmentId,
+        roadName: null,
+        latitude: lat,
+        longitude: lng,
+        dayOfWeek,
+        hourOfDay,
+        averageSpeed: observedSpeed,
+        freeFlowSpeed,
+        congestionLevel,
+        sampleCount: 1,
+        averageDelayMinutes: delay,
+        lastUpdated: new Date(),
+        createdAt: new Date(),
+      };
+      this.historicalTrafficStore.set(key, newData);
+    }
+  }
+
+  async getTrafficObservations(roadSegmentId: string, limit?: number): Promise<TrafficObservation[]> {
+    const filtered = this.trafficObservationsStore.filter(o => o.roadSegmentId === roadSegmentId);
+    return limit ? filtered.slice(-limit) : filtered;
+  }
+
+  async aggregateHistoricalData(roadSegmentId: string, dayOfWeek: number, hourOfDay: number): Promise<HistoricalTrafficData | undefined> {
+    const key = `${roadSegmentId}-${dayOfWeek}-${hourOfDay}`;
+    return this.historicalTrafficStore.get(key);
+  }
+
+  async upsertHistoricalTrafficData(data: InsertHistoricalTrafficData): Promise<HistoricalTrafficData> {
+    const key = `${data.roadSegmentId}-${data.dayOfWeek}-${data.hourOfDay}`;
+    const newData: HistoricalTrafficData = {
+      id: this.historicalTrafficStore.size + 1,
+      ...data,
+      roadName: data.roadName || null,
+      sampleCount: data.sampleCount || 1,
+      averageDelayMinutes: data.averageDelayMinutes || 0,
+      lastUpdated: new Date(),
+      createdAt: new Date(),
+    };
+    this.historicalTrafficStore.set(key, newData);
+    return newData;
+  }
+
+  async getHistoricalTrafficPatterns(roadSegmentId: string): Promise<HistoricalTrafficData[]> {
+    return Array.from(this.historicalTrafficStore.values()).filter(d => d.roadSegmentId === roadSegmentId);
+  }
+
+  async getTrafficPrediction(routeId: string, predictionTime: Date): Promise<TrafficPrediction | undefined> {
+    const key = `${routeId}-${predictionTime.toISOString().slice(0, 13)}`; // Hour precision
+    const cached = this.trafficPredictionsStore.get(key);
+    if (cached && cached.expiresAt > new Date()) {
+      return cached;
+    }
+    return undefined;
+  }
+
+  async cacheTrafficPrediction(prediction: InsertTrafficPrediction): Promise<TrafficPrediction> {
+    const key = `${prediction.routeId}-${prediction.predictionTime.toISOString().slice(0, 13)}`;
+    const newPrediction: TrafficPrediction = {
+      id: this.trafficPredictionsStore.size + 1,
+      ...prediction,
+      segmentPredictions: prediction.segmentPredictions || null,
+      createdAt: new Date(),
+    };
+    this.trafficPredictionsStore.set(key, newPrediction);
+    return newPrediction;
+  }
+
+  async cleanupExpiredPredictions(): Promise<number> {
+    const now = new Date();
+    let cleaned = 0;
+    for (const [key, pred] of this.trafficPredictionsStore.entries()) {
+      if (pred.expiresAt < now) {
+        this.trafficPredictionsStore.delete(key);
+        cleaned++;
+      }
+    }
+    return cleaned;
+  }
+
+  async getHistoricalDataForTimeSlot(dayOfWeek: number, hourOfDay: number, bounds?: { north: number; south: number; east: number; west: number }): Promise<HistoricalTrafficData[]> {
+    let results = Array.from(this.historicalTrafficStore.values()).filter(
+      d => d.dayOfWeek === dayOfWeek && d.hourOfDay === hourOfDay
+    );
+    
+    if (bounds) {
+      results = results.filter(d => 
+        d.latitude >= bounds.south && d.latitude <= bounds.north &&
+        d.longitude >= bounds.west && d.longitude <= bounds.east
+      );
+    }
+    
+    return results;
+  }
+
   // Utility method for distance calculations
   private haversineDistance(coord1: { lat: number; lng: number }, coord2: { lat: number; lng: number }): number {
     const R = 6371e3; // Earth's radius in meters
@@ -3662,6 +3818,137 @@ export class DatabaseStorage implements IStorage {
 
   async cleanupTrafficHistory(hoursToKeep: number): Promise<number> {
     return 0;
+  }
+
+  // ===== PREDICTIVE TRAFFIC ANALYSIS (Database) =====
+  async recordTrafficObservation(observation: InsertTrafficObservation): Promise<TrafficObservation> {
+    const [result] = await db.insert(trafficObservations).values(observation).returning();
+    
+    // Also aggregate into historical data
+    const timestamp = observation.timestamp || new Date();
+    const dayOfWeek = timestamp.getDay();
+    const hourOfDay = timestamp.getHours();
+    
+    await this.upsertHistoricalTrafficData({
+      roadSegmentId: observation.roadSegmentId,
+      latitude: observation.latitude,
+      longitude: observation.longitude,
+      dayOfWeek,
+      hourOfDay,
+      averageSpeed: observation.observedSpeed,
+      freeFlowSpeed: observation.freeFlowSpeed || observation.observedSpeed * 1.2,
+      congestionLevel: observation.congestionLevel || 0,
+      sampleCount: 1,
+    });
+    
+    return result;
+  }
+
+  async getTrafficObservations(roadSegmentId: string, limit?: number): Promise<TrafficObservation[]> {
+    const query = db.select().from(trafficObservations)
+      .where(eq(trafficObservations.roadSegmentId, roadSegmentId))
+      .orderBy(desc(trafficObservations.timestamp));
+    
+    if (limit) {
+      return await query.limit(limit);
+    }
+    return await query;
+  }
+
+  async aggregateHistoricalData(roadSegmentId: string, dayOfWeek: number, hourOfDay: number): Promise<HistoricalTrafficData | undefined> {
+    const [result] = await db.select().from(historicalTrafficData)
+      .where(and(
+        eq(historicalTrafficData.roadSegmentId, roadSegmentId),
+        eq(historicalTrafficData.dayOfWeek, dayOfWeek),
+        eq(historicalTrafficData.hourOfDay, hourOfDay)
+      ));
+    return result;
+  }
+
+  async upsertHistoricalTrafficData(data: InsertHistoricalTrafficData): Promise<HistoricalTrafficData> {
+    const existing = await this.aggregateHistoricalData(data.roadSegmentId, data.dayOfWeek, data.hourOfDay);
+    
+    if (existing) {
+      const newSampleCount = existing.sampleCount + (data.sampleCount || 1);
+      const newAvgSpeed = (existing.averageSpeed * existing.sampleCount + data.averageSpeed * (data.sampleCount || 1)) / newSampleCount;
+      const newCongestion = (existing.congestionLevel * existing.sampleCount + data.congestionLevel * (data.sampleCount || 1)) / newSampleCount;
+      const newDelay = ((existing.averageDelayMinutes || 0) * existing.sampleCount + (data.averageDelayMinutes || 0) * (data.sampleCount || 1)) / newSampleCount;
+      
+      const [updated] = await db.update(historicalTrafficData)
+        .set({
+          averageSpeed: newAvgSpeed,
+          congestionLevel: newCongestion,
+          sampleCount: newSampleCount,
+          averageDelayMinutes: newDelay,
+          lastUpdated: new Date(),
+        })
+        .where(eq(historicalTrafficData.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(historicalTrafficData).values({
+        ...data,
+        sampleCount: data.sampleCount || 1,
+      }).returning();
+      return created;
+    }
+  }
+
+  async getHistoricalTrafficPatterns(roadSegmentId: string): Promise<HistoricalTrafficData[]> {
+    return await db.select().from(historicalTrafficData)
+      .where(eq(historicalTrafficData.roadSegmentId, roadSegmentId))
+      .orderBy(asc(historicalTrafficData.dayOfWeek), asc(historicalTrafficData.hourOfDay));
+  }
+
+  async getTrafficPrediction(routeId: string, predictionTime: Date): Promise<TrafficPrediction | undefined> {
+    const hourStart = new Date(predictionTime);
+    hourStart.setMinutes(0, 0, 0);
+    const hourEnd = new Date(hourStart);
+    hourEnd.setHours(hourEnd.getHours() + 1);
+    
+    const [result] = await db.select().from(trafficPredictions)
+      .where(and(
+        eq(trafficPredictions.routeId, routeId),
+        gte(trafficPredictions.predictionTime, hourStart),
+        lte(trafficPredictions.predictionTime, hourEnd),
+        gte(trafficPredictions.expiresAt, new Date())
+      ))
+      .orderBy(desc(trafficPredictions.createdAt))
+      .limit(1);
+    return result;
+  }
+
+  async cacheTrafficPrediction(prediction: InsertTrafficPrediction): Promise<TrafficPrediction> {
+    const [result] = await db.insert(trafficPredictions).values(prediction).returning();
+    return result;
+  }
+
+  async cleanupExpiredPredictions(): Promise<number> {
+    const result = await db.delete(trafficPredictions)
+      .where(lte(trafficPredictions.expiresAt, new Date()));
+    return 0; // Drizzle doesn't return count easily
+  }
+
+  async getHistoricalDataForTimeSlot(dayOfWeek: number, hourOfDay: number, bounds?: { north: number; south: number; east: number; west: number }): Promise<HistoricalTrafficData[]> {
+    let query = db.select().from(historicalTrafficData)
+      .where(and(
+        eq(historicalTrafficData.dayOfWeek, dayOfWeek),
+        eq(historicalTrafficData.hourOfDay, hourOfDay)
+      ));
+    
+    if (bounds) {
+      query = db.select().from(historicalTrafficData)
+        .where(and(
+          eq(historicalTrafficData.dayOfWeek, dayOfWeek),
+          eq(historicalTrafficData.hourOfDay, hourOfDay),
+          gte(historicalTrafficData.latitude, bounds.south),
+          lte(historicalTrafficData.latitude, bounds.north),
+          gte(historicalTrafficData.longitude, bounds.west),
+          lte(historicalTrafficData.longitude, bounds.east)
+        ));
+    }
+    
+    return await query;
   }
 
   // Entertainment stubs (would be implemented later)
