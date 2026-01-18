@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import * as ReactDOM from "react-dom"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
@@ -50,46 +51,88 @@ const DialogContent = React.forwardRef<
   console.warn('[DIALOG] DialogContent rendering, isIOS:', isIOS);
   
   if (isIOS) {
-    console.warn('[DIALOG] Using BOTTOM SHEET layout for iOS with INLINE STYLES');
+    console.warn('[DIALOG] Using CUSTOM BOTTOM SHEET with React.createPortal - BYPASSING RADIX');
+    
+    const overlayStyle: React.CSSProperties = {
+      position: 'fixed',
+      inset: 0,
+      zIndex: 9998,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    };
+    
     const bottomSheetStyle: React.CSSProperties = {
       position: 'fixed',
-      left: 0,
-      right: 0,
-      bottom: 0,
+      left: '0px',
+      right: '0px',
+      bottom: '0px',
       top: 'auto',
-      transform: 'none',
-      WebkitTransform: 'none',
-      width: '100%',
-      maxWidth: '100%',
+      transform: 'translateY(0)',
+      WebkitTransform: 'translateY(0)',
+      width: '100vw',
+      maxWidth: '100vw',
       maxHeight: '90vh',
-      margin: 0,
+      margin: '0',
       zIndex: 9999,
-      borderRadius: '16px 16px 0 0',
+      borderTopLeftRadius: '16px',
+      borderTopRightRadius: '16px',
+      borderBottomLeftRadius: '0',
+      borderBottomRightRadius: '0',
       overflowY: 'auto',
       padding: '24px',
       paddingTop: '32px',
+      backgroundColor: 'white',
+      boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
     };
-    return (
-      <DialogPortal>
-        <DialogOverlay />
-        <DialogPrimitive.Content
-          ref={ref}
+    
+    const portalContent = (
+      <>
+        <div style={overlayStyle} onClick={() => {}} />
+        <div
+          ref={ref as any}
+          role="dialog"
+          aria-modal="true"
           style={bottomSheetStyle}
-          className={cn(
-            "bg-background shadow-lg border-t",
-            className
-          )}
+          className={cn("dark:bg-gray-900", className)}
           {...props}
         >
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+          <div 
+            style={{
+              position: 'absolute',
+              top: '12px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '48px',
+              height: '6px',
+              borderRadius: '3px',
+              backgroundColor: '#d1d5db',
+            }}
+          />
           {children}
-          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground min-w-[44px] min-h-[44px] flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-            <X className="h-5 w-5" />
+          <DialogPrimitive.Close 
+            style={{
+              position: 'absolute',
+              right: '16px',
+              top: '16px',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              backgroundColor: '#f3f4f6',
+            }}
+          >
+            <X style={{ height: '20px', width: '20px' }} />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
-        </DialogPrimitive.Content>
-      </DialogPortal>
+        </div>
+      </>
     );
+    
+    if (typeof document !== 'undefined') {
+      return ReactDOM.createPortal(portalContent, document.body);
+    }
+    return null;
   }
   
   return (
