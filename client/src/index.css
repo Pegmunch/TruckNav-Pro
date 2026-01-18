@@ -2894,3 +2894,75 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
 .dialog-content [data-radix-popper-content-wrapper] {
   z-index: 10000 !important;
 }
+
+/* ============================================ */
+/* CRITICAL FIX: Force Dialog positioning on touch devices */
+/* CSS-only solution that works regardless of cached JavaScript */
+/* ============================================ */
+
+/* Touch device detection via media query */
+@media (pointer: coarse), (hover: none) {
+  /* Force Radix Dialog Content to bottom sheet position */
+  [role="dialog"][data-state="open"] {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Also target the common dialog content class pattern */
+  [data-radix-dialog-content] {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* PWA standalone mode - additional forced positioning */
+@media (display-mode: standalone) {
+  [role="dialog"][data-state="open"],
+  [data-radix-dialog-content] {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+}
+
+/* iPad landscape specific - ensure dialog stays at bottom */
+@media (min-width: 768px) and (pointer: coarse) {
+  [role="dialog"][data-state="open"],
+  [data-radix-dialog-content] {
+    max-width: 100% !important;
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+}
