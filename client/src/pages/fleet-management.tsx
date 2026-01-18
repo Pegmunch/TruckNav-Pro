@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -294,13 +294,11 @@ function VehiclesTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
           <CardTitle>Fleet Vehicles</CardTitle>
           <CardDescription>Manage all vehicles in your fleet</CardDescription>
         </div>
+        <Button data-testid="button-add-vehicle" onClick={() => setIsAddOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Vehicle
+        </Button>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-vehicle">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Vehicle
-            </Button>
-          </DialogTrigger>
           <AddVehicleDialog onClose={() => setIsAddOpen(false)} />
         </Dialog>
       </CardHeader>
@@ -590,13 +588,11 @@ function DocumentsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
           <CardTitle>Vehicle Documents</CardTitle>
           <CardDescription>Manage vehicle registration, MOT, insurance, and maintenance documents</CardDescription>
         </div>
+        <Button data-testid="button-add-document" onClick={() => setIsAddOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Upload Document
+        </Button>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-document">
-              <Plus className="w-4 h-4 mr-2" />
-              Upload Document
-            </Button>
-          </DialogTrigger>
           <AddDocumentDialog onClose={() => setIsAddOpen(false)} />
         </Dialog>
       </CardHeader>
@@ -818,13 +814,11 @@ function OperatorsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAd
           <CardTitle>Operators</CardTitle>
           <CardDescription>Manage drivers and operators</CardDescription>
         </div>
+        <Button data-testid="button-add-operator" onClick={() => setIsAddOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Operator
+        </Button>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-operator">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Operator
-            </Button>
-          </DialogTrigger>
           <AddOperatorDialog onClose={() => setIsAddOpen(false)} />
         </Dialog>
       </CardHeader>
@@ -1084,13 +1078,11 @@ function ServiceRecordsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; se
           <CardTitle>Service Records</CardTitle>
           <CardDescription>Track maintenance and service history</CardDescription>
         </div>
+        <Button data-testid="button-add-service" onClick={() => setIsAddOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Service Record
+        </Button>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-service">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Service Record
-            </Button>
-          </DialogTrigger>
           <AddServiceDialog onClose={() => setIsAddOpen(false)} />
         </Dialog>
       </CardHeader>
@@ -1235,13 +1227,11 @@ function FuelLogsTab({ isAddOpen, setIsAddOpen }: { isAddOpen: boolean; setIsAdd
           <CardTitle>Fuel Logs</CardTitle>
           <CardDescription>Track fuel consumption and efficiency</CardDescription>
         </div>
+        <Button data-testid="button-add-fuel" onClick={() => setIsAddOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Fuel Log
+        </Button>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-fuel">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Fuel Log
-            </Button>
-          </DialogTrigger>
           <AddFuelDialog onClose={() => setIsAddOpen(false)} />
         </Dialog>
       </CardHeader>
