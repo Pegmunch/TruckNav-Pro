@@ -39,12 +39,12 @@ interface CompactTripStripProps {
   roadInfo?: RoadInfo | null;
   turnInfo?: TurnInfo | null;
   laneInfo?: LaneInfo | null;
-  // New props from ProfessionalNavHUD
   currentSpeed?: number; // in m/s
   speedLimit?: number; // in km/h
   isNavigating?: boolean;
   onCancelNavigation?: () => void;
   isCancellingNavigation?: boolean;
+  trafficDelayMinutes?: number; // Predicted traffic delay from historical data
 }
 
 export function CompactTripStrip({
@@ -66,7 +66,8 @@ export function CompactTripStrip({
   speedLimit,
   isNavigating = false,
   onCancelNavigation,
-  isCancellingNavigation = false
+  isCancellingNavigation = false,
+  trafficDelayMinutes = 0
 }: CompactTripStripProps) {
   const { formatDistance, system } = useMeasurement();
   const unit = system === 'imperial' ? 'mi' : 'km';
@@ -74,8 +75,10 @@ export function CompactTripStrip({
   const isGpsReady = gpsStatus === 'ready' || gpsStatus === 'manual';
   const isGpsAcquiring = gpsStatus === 'acquiring' || gpsStatus === 'initializing';
 
-  const arrivalTime = new Date(Date.now() + eta * 60000);
+  const adjustedEta = eta + trafficDelayMinutes;
+  const arrivalTime = new Date(Date.now() + adjustedEta * 60000);
   const arrivalTimeStr = arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const hasTrafficDelay = trafficDelayMinutes > 0;
 
   // Speed conversion
   const convertedSpeed = unit === 'mi' 
@@ -174,9 +177,13 @@ export function CompactTripStrip({
             <Route className="w-3.5 h-3.5" />
             <span className="text-[11px] font-bold whitespace-nowrap">{formatDistance(distanceRemaining, "miles")}</span>
           </div>
-          <div className="flex items-center gap-0.5 bg-purple-600 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0">
+          <div className={cn(
+            "flex items-center gap-0.5 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0",
+            hasTrafficDelay ? "bg-orange-600" : "bg-purple-600"
+          )}>
             <Timer className="w-3.5 h-3.5" />
             <span className="text-[11px] font-bold whitespace-nowrap">{arrivalTimeStr}</span>
+            {hasTrafficDelay && <span className="text-[9px] opacity-80">+{Math.round(trafficDelayMinutes)}m</span>}
           </div>
         </div>
         

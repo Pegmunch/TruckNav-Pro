@@ -143,6 +143,9 @@ function NavigationPageContent() {
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
   
+  // Traffic prediction for ETA adjustment
+  const [predictedTrafficDelay, setPredictedTrafficDelay] = useState<number>(0);
+  
   // CRITICAL: Memoize violations to prevent re-renders from new array references
   // Using useMemo ensures same empty array reference when there are no violations
   const restrictionViolations = useMemo(() => currentRoute?.violations || [], [currentRoute?.violations]);
@@ -341,6 +344,30 @@ function NavigationPageContent() {
       setDynamicDistanceRemaining(newRoute.distance);
     }
   }, []);
+
+  // Fetch traffic prediction when route changes
+  useEffect(() => {
+    if (!currentRoute?.id) {
+      setPredictedTrafficDelay(0);
+      return;
+    }
+    
+    const fetchTrafficPrediction = async () => {
+      try {
+        const response = await apiRequest('GET', `/api/traffic/predict/${currentRoute.id}`);
+        const prediction = await response.json();
+        if (prediction?.predictedDelayMinutes && prediction.dataQuality !== 'insufficient') {
+          setPredictedTrafficDelay(prediction.predictedDelayMinutes);
+        } else {
+          setPredictedTrafficDelay(0);
+        }
+      } catch (error) {
+        setPredictedTrafficDelay(0);
+      }
+    };
+    
+    fetchTrafficPrediction();
+  }, [currentRoute?.id]);
   
   // Auto-reroute hook - detects off-route and automatically recalculates via TomTom API
   const { isOffRoute, isRerouting, distanceFromRoute, resetRerouteState } = useAutoReroute(
@@ -3534,6 +3561,7 @@ function NavigationPageContent() {
                         isNavigating={isNavigating}
                         onCancelNavigation={handleStopNavigation}
                         isCancellingNavigation={completeJourneyMutation.isPending}
+                        trafficDelayMinutes={predictedTrafficDelay}
                       />
                     ) : null
                   }
