@@ -75,6 +75,7 @@ import { type IncidentType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
+import { TrafficPredictionPanel } from "@/components/navigation/traffic-prediction-panel";
 import { OnboardingProvider, useOnboarding } from "@/components/onboarding/onboarding-provider";
 import WeatherWidget from "@/components/weather/weather-widget";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -3409,6 +3410,19 @@ function NavigationPageContent() {
                       }}
                       isRouteAllowed={currentRoute.isRouteAllowed ?? true}
                     />
+                  )}
+
+                  {/* Traffic Prediction Panel - Shows during route preview, positioned below header */}
+                  {currentRoute?.id && mobileNavMode === 'preview' && (
+                    <div 
+                      className="absolute left-4 right-4 z-[90] max-w-sm"
+                      style={{ top: 'calc(60px + var(--safe-area-top, 0px))' }}
+                    >
+                      <TrafficPredictionPanel 
+                        routeId={currentRoute.id}
+                        compact={true}
+                      />
+                    </div>
                   )}
 
                   {/* ETA Glass Bar moved to top level - always visible when route exists */}
