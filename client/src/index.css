@@ -2966,3 +2966,63 @@ html.overlay-safe-mode [data-testid="nav-control-satellite"] {
     border-radius: 16px 16px 0 0 !important;
   }
 }
+
+/* ============================================ */
+/* NUCLEAR FIX: Target ALL dialog variations with maximum specificity */
+/* This overrides inline styles that Radix might apply */
+/* ============================================ */
+
+/* Target by test ID used in fleet management dialogs */
+[data-testid="dialog-add-service"],
+[data-testid="dialog-add-vehicle"],
+[data-testid="dialog-add-fuel"],
+[data-testid="dialog-upload-document"] {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: auto !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+
+/* Target any dialog content in touch mode */
+@media (pointer: coarse) {
+  /* More specific: div with role=dialog */
+  div[role="dialog"] {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  
+  /* Override any fixed+centered positioning */
+  .fixed.left-\[50\%\].top-\[50\%\] {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+  }
+  
+  /* Override translate classes */
+  .translate-x-\[-50\%\],
+  .translate-y-\[-50\%\],
+  .-translate-x-1\/2,
+  .-translate-y-1\/2 {
+    transform: none !important;
+    -webkit-transform: none !important;
+  }
+}
