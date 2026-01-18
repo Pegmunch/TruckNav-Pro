@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
+import { predictiveTrafficService } from "./services/predictive-traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth, requireFleetSubscription } from "./subscriptionMiddleware";
@@ -4334,6 +4335,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // =============================================================================
   // END TRAFFIC RE-ROUTING SYSTEM
+  // =============================================================================
+
+  // =============================================================================
+  // PREDICTIVE TRAFFIC ANALYSIS API ROUTES
+  // =============================================================================
+
+  // Get traffic prediction for a route
+  app.get("/api/traffic/predict/:routeId", async (req: Request, res: Response) => {
+    try {
+      const { routeId } = req.params;
+      const { departureTime } = req.query;
+      
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+
+      const routePath = route.routePath as Array<{ lat: number; lng: number }>;
+      const targetTime = departureTime ? new Date(departureTime as string) : new Date();
+      
+      const prediction = await predictiveTrafficService.predictTrafficForRoute(
+        routeId,
+        routePath,
+        targetTime,
+        route.duration ? route.duration / 60 : undefined
+      );
+
+      res.json({
+        routeId,
+        departureTime: targetTime.toISOString(),
+        ...prediction,
+      });
+    } catch (error) {
+      console.error('Error getting traffic prediction:', error);
+      res.status(500).json({ message: "Failed to get traffic prediction" });
+    }
+  });
+
+  // Record a traffic observation (from user navigation)
+  app.post("/api/traffic/observation", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { latitude, longitude, observedSpeed, freeFlowSpeed, source, journeyId } = req.body;
+      
+      if (!latitude || !longitude || !observedSpeed) {
+        return res.status(400).json({ message: "Missing required fields: latitude, longitude, observedSpeed" });
+      }
+
+      await predictiveTrafficService.recordObservation(
+        latitude,
+        longitude,
+        observedSpeed,
+        freeFlowSpeed,
+        source || 'user',
+        journeyId
+      );
+
+      res.json({ success: true, message: "Traffic observation recorded" });
+    } catch (error) {
+      console.error('Error recording traffic observation:', error);
+      res.status(500).json({ message: "Failed to record traffic observation" });
+    }
+  });
+
+  // Batch record traffic observations
+  app.post("/api/traffic/observations/batch", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { observations } = req.body;
+      
+      if (!Array.isArray(observations) || observations.length === 0) {
+        return res.status(400).json({ message: "observations must be a non-empty array" });
+      }
+
+      let recorded = 0;
+      for (const obs of observations) {
+        if (obs.latitude && obs.longitude && obs.observedSpeed) {
+          await predictiveTrafficService.recordObservation(
+            obs.latitude,
+            obs.longitude,
+            obs.observedSpeed,
+            obs.freeFlowSpeed,
+            obs.source || 'user',
+            obs.journeyId
+          );
+          recorded++;
+        }
+      }
+
+      res.json({ success: true, recorded, total: observations.length });
+    } catch (error) {
+      console.error('Error batch recording traffic observations:', error);
+      res.status(500).json({ message: "Failed to batch record traffic observations" });
+    }
+  });
+
+  // Get traffic pattern summary for an area
+  app.get("/api/traffic/patterns", async (req: Request, res: Response) => {
+    try {
+      const { north, south, east, west, dayOfWeek, hourOfDay } = req.query;
+      
+      if (!north || !south || !east || !west) {
+        return res.status(400).json({ message: "Missing bounds: north, south, east, west required" });
+      }
+
+      const bounds = {
+        north: parseFloat(north as string),
+        south: parseFloat(south as string),
+        east: parseFloat(east as string),
+        west: parseFloat(west as string),
+      };
+
+      const summary = await predictiveTrafficService.getTrafficPatternSummary(
+        bounds,
+        dayOfWeek ? parseInt(dayOfWeek as string) : undefined,
+        hourOfDay ? parseInt(hourOfDay as string) : undefined
+      );
+
+      res.json(summary);
+    } catch (error) {
+      console.error('Error getting traffic patterns:', error);
+      res.status(500).json({ message: "Failed to get traffic patterns" });
+    }
+  });
+
+  // Get best departure times for a route
+  app.get("/api/traffic/best-departure/:routeId", async (req: Request, res: Response) => {
+    try {
+      const { routeId } = req.params;
+      const { targetDate } = req.query;
+      
+      const route = await storage.getRoute(routeId);
+      if (!route) {
+        return res.status(404).json({ message: "Route not found" });
+      }
+
+      const routePath = route.routePath as Array<{ lat: number; lng: number }>;
+      const targetTime = targetDate ? new Date(targetDate as string) : new Date();
+      
+      const prediction = await predictiveTrafficService.predictTrafficForRoute(
+        routeId,
+        routePath,
+        targetTime,
+        route.duration ? route.duration / 60 : undefined
+      );
+
+      res.json({
+        routeId,
+        targetDate: targetTime.toISOString(),
+        currentPrediction: {
+          duration: prediction.predictedDuration,
+          delay: prediction.predictedDelay,
+          congestion: prediction.congestionScore,
+        },
+        bestDepartureTime: prediction.bestDepartureTime,
+        alternativeTimes: prediction.alternativeTimes,
+        dataQuality: prediction.dataQuality,
+      });
+    } catch (error) {
+      console.error('Error getting best departure times:', error);
+      res.status(500).json({ message: "Failed to get best departure times" });
+    }
+  });
+
+  // =============================================================================
+  // END PREDICTIVE TRAFFIC ANALYSIS
   // =============================================================================
 
   // =============================================================================
