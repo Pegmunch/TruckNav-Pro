@@ -3439,11 +3439,11 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* Traffic Prediction Panel - Shows during route preview, positioned below header */}
-                  {currentRoute?.id && mobileNavMode === 'preview' && (
+                  {/* Traffic Prediction Panel - Shows during route planning (not during active navigation) */}
+                  {currentRoute?.id && mobileNavMode === 'plan' && (
                     <div 
                       className="absolute left-4 right-4 z-[90] max-w-sm"
-                      style={{ top: 'calc(60px + var(--safe-area-top, 0px))' }}
+                      style={{ top: 'calc(140px + var(--safe-area-top, 0px))' }}
                     >
                       <TrafficPredictionPanel 
                         routeId={currentRoute.id}

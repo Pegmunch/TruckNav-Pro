@@ -161,7 +161,7 @@ export function CompactTripStrip({
       )}
       style={{ 
         top: 'calc(64px + max(env(safe-area-inset-top, 0px), 0px))',
-        zIndex: 99998,
+        zIndex: 6000,
       }}
       data-testid="compact-trip-strip"
     >
