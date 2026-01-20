@@ -701,7 +701,7 @@ export function AddressAutocomplete({
         </Button>
       )}
 
-      <div ref={inputWrapperRef} className="relative" style={{ position: 'relative', overflow: 'visible' }}>
+      <div ref={inputWrapperRef} className="relative w-full max-w-full" style={{ position: 'relative', overflow: 'visible' }}>
         <Input
           id={id}
           value={searchTerm}

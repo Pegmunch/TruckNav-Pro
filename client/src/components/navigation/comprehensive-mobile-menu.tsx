@@ -620,10 +620,10 @@ function ComprehensiveMobileMenu({
               </TabsList>
             )}
 
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-x-hidden">
               {/* PLAN TAB - Route Planning */}
-              <TabsContent value="plan" className="p-4 space-y-4 mt-0">
-                <Card>
+              <TabsContent value="plan" className="p-4 space-y-4 mt-0 overflow-hidden max-w-full">
+                <Card className="overflow-hidden">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -664,7 +664,7 @@ function ComprehensiveMobileMenu({
                       )}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 overflow-hidden">
                     {/* From Location with AddressAutocomplete - Simple input without search options */}
                     <div 
                       className={cn(
