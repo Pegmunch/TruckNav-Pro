@@ -2011,6 +2011,77 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
+  // CRITICAL: Track route changes (alternative routes, reroutes) and force re-render
+  // This ensures the blue line updates when user selects a different route
+  const previousRouteIdRef = useRef<string | number | null>(null);
+  const previousRoutePathLengthRef = useRef<number>(0);
+  
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    if (!currentRoute?.routePath) {
+      previousRouteIdRef.current = null;
+      previousRoutePathLengthRef.current = 0;
+      return;
+    }
+    
+    const currentRouteId = currentRoute.id || null;
+    const currentPathLength = currentRoute.routePath.length;
+    
+    // Detect route change: different ID or significantly different path length
+    const isRouteChanged = (
+      previousRouteIdRef.current !== currentRouteId ||
+      Math.abs(previousRoutePathLengthRef.current - currentPathLength) > 10
+    );
+    
+    if (isRouteChanged && map.current.isStyleLoaded()) {
+      console.log('[ROUTE-CHANGE] Route changed detected - forcing re-render');
+      console.log(`[ROUTE-CHANGE] Previous ID: ${previousRouteIdRef.current}, New ID: ${currentRouteId}`);
+      console.log(`[ROUTE-CHANGE] Previous length: ${previousRoutePathLengthRef.current}, New length: ${currentPathLength}`);
+      
+      // Update refs immediately
+      previousRouteIdRef.current = currentRouteId;
+      previousRoutePathLengthRef.current = currentPathLength;
+      
+      // Clear cached data to force fresh render
+      cachedRouteGeoJsonRef.current = null;
+      
+      // Force re-render with multiple attempts for reliability
+      const renderAttempts = [0, 100, 300];
+      renderAttempts.forEach((delay, index) => {
+        setTimeout(() => {
+          if (!map.current || !map.current.isStyleLoaded()) return;
+          
+          console.log(`[ROUTE-CHANGE] Render attempt ${index + 1}/${renderAttempts.length}`);
+          
+          // Remove existing route and re-add with new data
+          removeRouteLayers();
+          
+          setTimeout(() => {
+            if (map.current && map.current.isStyleLoaded()) {
+              renderRouteLayers();
+              
+              // Move to top
+              try {
+                if (map.current.getLayer('route-outline')) {
+                  map.current.moveLayer('route-outline');
+                }
+                if (map.current.getLayer('route-line')) {
+                  map.current.moveLayer('route-line');
+                }
+              } catch (e) {
+                // Ignore
+              }
+            }
+          }, 50);
+        }, delay);
+      });
+    } else if (!isRouteChanged) {
+      // Same route - just update refs
+      previousRouteIdRef.current = currentRouteId;
+      previousRoutePathLengthRef.current = currentPathLength;
+    }
+  }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers]);
+
   // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
   // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
   useEffect(() => {
