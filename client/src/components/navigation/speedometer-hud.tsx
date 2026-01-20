@@ -300,15 +300,20 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   const handleMotorwayClick = () => {
     if (roadInfo.junction) {
       setShowJunctionInfo(true);
-      // toast({
-      //   title: `${roadInfo.roadRef || 'Road'} Junction ${roadInfo.junction.ref}`,
-      //   description: roadInfo.junction.exitTo ? `Exit to: ${roadInfo.junction.exitTo}` : 
-      //                roadInfo.destination ? `Towards: ${roadInfo.destination}` : 
-      //                'Junction information',
-      // });
       setTimeout(() => setShowJunctionInfo(false), 3000);
     }
   };
+  
+  // Handle GPS blocked button click - show instructions and retry
+  const handleGPSBlockedClick = useCallback(() => {
+    toast({
+      title: "Location Access Blocked",
+      description: "Go to Safari Settings > Website Settings > Location, then enable for this site. Tap here to retry after enabling.",
+      duration: 6000,
+    });
+    // Still try to retry in case user has already enabled it
+    gps?.retryGPS();
+  }, [gps, toast]);
   
   return (
     <div
@@ -567,7 +572,15 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             {/* GPS status and Enable button */}
             {!gps?.position && (
               <div className="absolute -bottom-1 flex items-center gap-1.5">
-                {gps?.requiresUserGesture ? (
+                {gps?.errorType === 'PERMISSION_DENIED' ? (
+                  <button
+                    onClick={handleGPSBlockedClick}
+                    className="flex items-center gap-1 px-2 py-0.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full text-[10px] font-semibold shadow-sm transition-colors animate-pulse"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    GPS Blocked - Enable in Settings
+                  </button>
+                ) : gps?.requiresUserGesture ? (
                   <button
                     onClick={() => gps?.requestGPSPermission()}
                     className="flex items-center gap-1 px-2 py-0.5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full text-[10px] font-semibold shadow-sm transition-colors"
@@ -575,11 +588,19 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
                     <AlertCircle className="w-3 h-3" />
                     Enable GPS
                   </button>
-                ) : (
+                ) : gps?.status === 'acquiring' ? (
                   <>
-                    <AlertCircle className="w-3 h-3 text-amber-500" />
-                    <span className="text-[10px] text-amber-500 font-medium">NO GPS</span>
+                    <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-[10px] text-blue-500 font-medium">Finding GPS...</span>
                   </>
+                ) : (
+                  <button
+                    onClick={() => gps?.retryGPS()}
+                    className="flex items-center gap-1 px-2 py-0.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-full text-[10px] font-semibold shadow-sm transition-colors"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    GPS Unavailable - Retry
+                  </button>
                 )}
               </div>
             )}

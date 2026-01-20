@@ -965,11 +965,35 @@ export function GPSProvider({
         if (result.state === 'denied') {
           console.error('[GPS-PROVIDER] ⛔ Location permission is DENIED');
           console.error('[GPS-PROVIDER] User must manually enable location access in browser settings');
+          
+          // Set error state immediately when permission is detected as denied
+          setErrorType('PERMISSION_DENIED');
+          setErrorMessage('Location access denied. Please enable location in Safari Settings > Website Settings > Location.');
+          setStatus('error');
+          setError({ code: 1, message: 'Permission denied - enable in Safari Settings' });
         } else if (result.state === 'prompt') {
           console.log('[GPS-PROVIDER] 🔔 Location permission will be prompted');
         } else if (result.state === 'granted') {
           console.log('[GPS-PROVIDER] ✅ Location permission is GRANTED');
         }
+        
+        // Listen for permission changes (user grants permission in settings)
+        result.addEventListener('change', () => {
+          console.log('[GPS-PROVIDER] 🔄 Permission state changed to:', result.state);
+          if (result.state === 'granted') {
+            console.log('[GPS-PROVIDER] ✅ Permission recovered! Restarting GPS...');
+            setError(null);
+            setErrorType(null);
+            setErrorMessage(null);
+            setStatus('acquiring');
+            // Trigger a fresh GPS request
+            gpsReceivedRef.current = false;
+          } else if (result.state === 'denied') {
+            setErrorType('PERMISSION_DENIED');
+            setErrorMessage('Location access denied. Please enable location in Safari Settings.');
+            setStatus('error');
+          }
+        });
       }).catch((err) => {
         console.log('[GPS-PROVIDER] Could not check permission state:', err);
       });
