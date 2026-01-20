@@ -277,11 +277,9 @@ function NavigationPageContent() {
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [currentSpeedLimit, setCurrentSpeedLimit] = useState<number | null>(null);
   
-  // GPS Mode vs Cache Mode toggle state with localStorage persistence
-  const [gpsMode, setGpsMode] = useState<'gps' | 'cache'>(() => {
-    const stored = localStorage.getItem('trucknav_gps_mode');
-    return stored === 'cache' ? 'cache' : 'gps';
-  });
+  // GPS Mode with auto-switch to cache after 30 seconds of no signal
+  const [gpsMode, setGpsMode] = useState<'gps' | 'cache'>('gps');
+  const gpsLostTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Destination reached state
   const [showDestinationReached, setShowDestinationReached] = useState(false);
@@ -527,28 +525,47 @@ function NavigationPageContent() {
     setGpsMode(mode);
   }, []);
 
-  // AUTOMATIC GPS MODE SWITCHING - Switch based on GPS signal availability
-  // When GPS signal is lost or unavailable, automatically switch to Cache mode
-  // When GPS signal returns, automatically switch back to GPS mode
+  // Auto-switch to Cache mode after 30 seconds of no GPS signal
   useEffect(() => {
     if (!gpsData) return;
 
-    // Determine if GPS signal is available
     const isGpsSignalAvailable = gpsData.status === 'ready' && gpsData.position !== null;
     const isGpsSignalLost = gpsData.status === 'unavailable' || gpsData.status === 'error';
 
-    // Auto-switch to Cache mode when GPS signal is lost
-    if (isGpsSignalLost && gpsMode === 'gps') {
-      console.log('[GPS-MODE-AUTO] 🚨 GPS signal lost - auto-switching to Cache mode');
-      setGpsMode('cache');
-    }
-
-    // Auto-switch back to GPS mode when signal returns
+    // GPS signal recovered - switch back immediately and clear timer
     if (isGpsSignalAvailable && gpsMode === 'cache') {
-      console.log('[GPS-MODE-AUTO] ✅ GPS signal recovered - auto-switching to GPS mode');
+      console.log('[GPS-MODE-AUTO] ✅ GPS signal recovered - switching back to GPS mode');
+      if (gpsLostTimerRef.current) {
+        clearTimeout(gpsLostTimerRef.current);
+        gpsLostTimerRef.current = null;
+      }
       setGpsMode('gps');
     }
-  }, [gpsData?.status, gpsData?.position, gpsMode]);
+
+    // GPS signal lost - start 30 second timer before switching to Cache
+    if (isGpsSignalLost && gpsMode === 'gps' && !gpsLostTimerRef.current) {
+      console.log('[GPS-MODE-AUTO] ⏱️ GPS signal lost - starting 30s timer before Cache mode');
+      gpsLostTimerRef.current = setTimeout(() => {
+        console.log('[GPS-MODE-AUTO] 🚨 30 seconds elapsed - switching to Cache mode');
+        setGpsMode('cache');
+        gpsLostTimerRef.current = null;
+      }, 30000);
+    }
+
+    // GPS signal restored before timer expired - cancel timer
+    if (isGpsSignalAvailable && gpsLostTimerRef.current) {
+      console.log('[GPS-MODE-AUTO] ✅ GPS signal restored - cancelling Cache mode timer');
+      clearTimeout(gpsLostTimerRef.current);
+      gpsLostTimerRef.current = null;
+    }
+
+    return () => {
+      if (gpsLostTimerRef.current) {
+        clearTimeout(gpsLostTimerRef.current);
+        gpsLostTimerRef.current = null;
+      }
+    };
+  }, [gpsData?.status, gpsData?.position, gpsMode])
 
   // CRITICAL FIX: Always start in plan mode on app launch
   // This ensures PWA doesn't restore stale navigation state
@@ -3800,40 +3817,10 @@ function NavigationPageContent() {
                         <Box className="h-5 w-5" />
                       </Button>
                       
-                      {/* Recenter Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => mapRef.current?.zoomToUserLocation()}
-                        className="h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 text-black border-2 border-gray-400 shadow-lg"
-                        data-testid="button-recenter-mobile"
-                        aria-label="Recenter on location"
-                      >
-                        <Crosshair className="h-5 w-5" />
-                      </Button>
                     </>
                     ) : null
                   }
-                  topRightStack={
-                    /* GPS Mode Toggle - Only one button here to avoid overlap with right stack */
-                    <Button
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        handleGpsModeToggle(gpsMode === 'gps' ? 'cache' : 'gps');
-                      }}
-                      size="icon"
-                      className={cn(
-                        "h-9 w-9 rounded-full shadow-xl font-medium touch-none border-2 transition-all duration-300",
-                        gpsMode === 'cache'
-                          ? 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white border-amber-400 animate-pulse'
-                          : 'bg-white/95 hover:bg-white active:bg-gray-100 text-gray-700 border-gray-200'
-                      )}
-                      data-testid="button-gps-mode-toggle"
-                      aria-label="Toggle GPS/Cache Mode"
-                    >
-                      {gpsMode === 'gps' ? <Navigation2 className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
-                    </Button>
-                  }
+                  topRightStack={null}
                   rightStack={
                     <RightActionStack
                       onZoomIn={() => mapRef.current?.zoomIn()}
