@@ -1971,35 +1971,43 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
       console.log('[ROUTE-NAV-STATE] Route has', currentRoute.routePath.length, 'coordinates');
       
-      // Small delay to let other state updates settle, then FORCE render the route
-      setTimeout(() => {
-        if (map.current && map.current.isStyleLoaded()) {
-          // First ensure layers exist
-          ensureRouteLayers();
+      // BULLETPROOF ROUTE RENDERING: Multiple attempts with increasing delays
+      const renderAttempts = [50, 150, 300, 500, 1000];
+      
+      renderAttempts.forEach((delay, index) => {
+        setTimeout(() => {
+          if (!map.current || !map.current.isStyleLoaded()) return;
           
-          // CRITICAL: Always call renderRouteLayers to guarantee the blue line appears
-          // This fixes the bug where route disappears when pressing GO
-          setTimeout(() => {
-            if (map.current && map.current.isStyleLoaded()) {
-              console.log('[ROUTE-NAV-STATE] Force rendering route layers after navigation start');
-              renderRouteLayers();
-              
-              // Move route layers to top to ensure visibility
-              try {
-                if (map.current.getLayer('route-outline')) {
-                  map.current.moveLayer('route-outline');
-                }
-                if (map.current.getLayer('route-line')) {
-                  map.current.moveLayer('route-line');
-                }
-                console.log('[ROUTE-NAV-STATE] ✅ Route layers moved to top');
-              } catch (e) {
-                // Layers might already be on top
-              }
+          const hasRouteLayer = map.current.getLayer('route-line');
+          const hasRouteSource = map.current.getSource('route');
+          
+          // If route layer doesn't exist or source is missing, force render
+          if (!hasRouteLayer || !hasRouteSource) {
+            console.log(`[ROUTE-NAV-STATE] Attempt ${index + 1}/${renderAttempts.length}: Route layers missing - forcing render`);
+            ensureRouteLayers();
+            renderRouteLayers();
+          } else if (index === 0) {
+            // First attempt: always render to ensure data is fresh
+            console.log('[ROUTE-NAV-STATE] Force rendering route layers after navigation start');
+            renderRouteLayers();
+          }
+          
+          // Move route layers to top to ensure visibility
+          try {
+            if (map.current.getLayer('route-outline')) {
+              map.current.moveLayer('route-outline');
             }
-          }, 150);
-        }
-      }, 100);
+            if (map.current.getLayer('route-line')) {
+              map.current.moveLayer('route-line');
+            }
+            if (index === 0) {
+              console.log('[ROUTE-NAV-STATE] ✅ Route layers moved to top');
+            }
+          } catch (e) {
+            // Layers might already be on top
+          }
+        }, delay);
+      });
     }
   }, [isNavigating, isLoaded, currentRoute, ensureRouteLayers, renderRouteLayers]);
 
