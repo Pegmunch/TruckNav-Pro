@@ -2941,6 +2941,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // All possible route layer IDs to hide/show
       const routeLayerIds = [
         'route-line',
+        'route-outline',
         'route-line-background',
         'route-line-casing',
         'route-line-alt',
