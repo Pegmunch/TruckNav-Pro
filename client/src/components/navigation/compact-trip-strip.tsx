@@ -153,7 +153,7 @@ export function CompactTripStrip({
     <div 
       className={cn(
         'fixed left-0 right-0 px-2 py-1.5',
-        'bg-white/50 backdrop-blur-xl',
+        'bg-white',
         'border-b-2 border-blue-500 shadow-md',
         'flex flex-col gap-1',
         'pointer-events-auto',
