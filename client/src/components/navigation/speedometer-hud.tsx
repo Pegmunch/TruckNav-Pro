@@ -564,11 +564,23 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
               </button>
             </div>
             
-            {/* GPS status (only if no GPS) */}
+            {/* GPS status and Enable button */}
             {!gps?.position && (
-              <div className="absolute -bottom-1 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 text-amber-500" />
-                <span className="text-[10px] text-amber-500 font-medium">NO GPS</span>
+              <div className="absolute -bottom-1 flex items-center gap-1.5">
+                {gps?.requiresUserGesture ? (
+                  <button
+                    onClick={() => gps?.requestGPSPermission()}
+                    className="flex items-center gap-1 px-2 py-0.5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full text-[10px] font-semibold shadow-sm transition-colors"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    Enable GPS
+                  </button>
+                ) : (
+                  <>
+                    <AlertCircle className="w-3 h-3 text-amber-500" />
+                    <span className="text-[10px] text-amber-500 font-medium">NO GPS</span>
+                  </>
+                )}
               </div>
             )}
           </div>

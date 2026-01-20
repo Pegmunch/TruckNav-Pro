@@ -90,6 +90,9 @@ export interface GPSContextValue {
   // GPS tracking control
   startGPSTracking: () => void;
   stopGPSTracking: () => void;
+  // iOS Safari requires user gesture to request GPS
+  requiresUserGesture: boolean;
+  requestGPSPermission: () => void;
 }
 
 interface GPSProviderProps {
@@ -498,6 +501,28 @@ const canRetryGPSError = (errorType: GPSErrorType): boolean => {
 };
 
 /**
+ * Detect if running on iOS Safari (requires user gesture for GPS)
+ * iOS Safari auto-denies background geolocation requests - must be triggered by user tap
+ * SSR-safe: returns false if navigator is unavailable
+ */
+const isIOSSafari = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(ua);
+  return isIOS && isSafari;
+};
+
+/**
+ * Detect if running in Capacitor native app
+ * SSR-safe: returns false if window is unavailable
+ */
+const isCapacitorApp = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return typeof (window as unknown as { Capacitor?: unknown }).Capacitor !== 'undefined';
+};
+
+/**
  * GPS Provider Component
  * 
  * Wraps your app/page to provide GPS data to all child components
@@ -536,6 +561,17 @@ export function GPSProvider({
   // Manual location state
   const [manualLocation, setManualLocationState] = useState<ManualLocationData | null>(() => loadManualLocation());
   const [isUsingManualLocation, setIsUsingManualLocation] = useState(false);
+
+  // iOS Safari requires user gesture to request GPS - detect on mount
+  const [requiresUserGesture, setRequiresUserGesture] = useState<boolean>(() => {
+    // Check if iOS Safari and not in Capacitor (native app handles permissions differently)
+    const needsGesture = isIOSSafari() && !isCapacitorApp();
+    if (needsGesture) {
+      console.log('[GPS-PROVIDER] iOS Safari detected - GPS will require user tap to enable');
+    }
+    return needsGesture;
+  });
+  const [hasUserRequestedGPS, setHasUserRequestedGPS] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const smoothedHeadingRef = useRef<number | null>(null);
@@ -1196,6 +1232,25 @@ export function GPSProvider({
     smoothedHeadingRef.current = null;
   }, []);
 
+  /**
+   * Request GPS permission - MUST be called from a user gesture on iOS Safari
+   * This function should be called when user taps "Enable GPS" button
+   */
+  const requestGPSPermission = useCallback(() => {
+    console.log('[GPS-PROVIDER] 🔘 User requested GPS permission (user gesture triggered)');
+    setHasUserRequestedGPS(true);
+    setRequiresUserGesture(false); // User has now tapped, no longer needs gesture
+    
+    // Clear any previous error states
+    setError(null);
+    setErrorType(null);
+    setErrorMessage(null);
+    setStatus('acquiring');
+    
+    // Start GPS tracking - this time it's from a user gesture so iOS Safari will show the prompt
+    startGPSTracking();
+  }, [startGPSTracking]);
+  
   const retryGPS = useCallback(() => {
     console.log('[GPS-PROVIDER] Retrying GPS connection...');
     
@@ -1277,14 +1332,25 @@ export function GPSProvider({
       console.log('[GPS-PROVIDER] Cached position too old (>5 min), not offering to user');
     }
     
-    // Start acquiring fresh GPS
+    // On iOS Safari, DON'T auto-start GPS - wait for user gesture
+    // iOS Safari auto-denies background location requests
+    if (requiresUserGesture && !hasUserRequestedGPS) {
+      console.log('[GPS-PROVIDER] iOS Safari: Waiting for user gesture to request GPS');
+      console.log('[GPS-PROVIDER] User must tap "Enable GPS" button for location prompt to appear');
+      setStatus('initializing'); // Stay in initializing until user taps
+      return () => {
+        stopGPSTracking();
+      };
+    }
+    
+    // Start acquiring fresh GPS (non-iOS or after user gesture)
     startGPSTracking();
 
     // Cleanup: Stop GPS tracking when provider unmounts
     return () => {
       stopGPSTracking();
     };
-  }, [startGPSTracking, stopGPSTracking]);
+  }, [startGPSTracking, stopGPSTracking, requiresUserGesture, hasUserRequestedGPS]);
 
   const value: GPSContextValue = {
     position,
@@ -1311,7 +1377,10 @@ export function GPSProvider({
     clearManualLocation,
     // GPS tracking control
     startGPSTracking,
-    stopGPSTracking
+    stopGPSTracking,
+    // iOS Safari user gesture requirement
+    requiresUserGesture,
+    requestGPSPermission
   };
 
   return (
