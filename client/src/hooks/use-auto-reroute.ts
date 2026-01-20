@@ -62,6 +62,20 @@ export function useAutoReroute(
   const routeLineRef = useRef<ReturnType<typeof turf.lineString> | null>(null);
   const isReroutingRef = useRef(false);
   
+  // Helper to validate a single coordinate pair
+  const isValidCoordinate = useCallback((coord: unknown): coord is [number, number] => {
+    if (!Array.isArray(coord) || coord.length < 2) return false;
+    const [lng, lat] = coord;
+    return (
+      typeof lng === 'number' &&
+      typeof lat === 'number' &&
+      !isNaN(lng) &&
+      !isNaN(lat) &&
+      isFinite(lng) &&
+      isFinite(lat)
+    );
+  }, []);
+  
   useEffect(() => {
     if (!currentRoute?.geometry) {
       routeLineRef.current = null;
@@ -74,13 +88,21 @@ export function useAutoReroute(
         : currentRoute.geometry;
       
       if (geometry?.coordinates && Array.isArray(geometry.coordinates)) {
-        routeLineRef.current = turf.lineString(geometry.coordinates);
+        // Filter out invalid coordinates before creating lineString
+        const validCoords = geometry.coordinates.filter(isValidCoordinate);
+        
+        if (validCoords.length >= 2) {
+          routeLineRef.current = turf.lineString(validCoords);
+        } else {
+          console.warn('[AUTO-REROUTE] Not enough valid coordinates for route line');
+          routeLineRef.current = null;
+        }
       }
     } catch (e) {
       console.error('[AUTO-REROUTE] Failed to parse route geometry:', e);
       routeLineRef.current = null;
     }
-  }, [currentRoute?.geometry]);
+  }, [currentRoute?.geometry, isValidCoordinate]);
   
   // Helper to check if GPS has valid coordinates
   const hasValidGpsCoordinates = useCallback((gps: GPSContextValue | null): boolean => {
