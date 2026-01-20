@@ -126,12 +126,28 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
     try {
       const geometry = route.geometry as GeoJsonLineString;
       
+      // CRITICAL: Validate and filter coordinates before use
+      const validCoordinates = geometry.coordinates.filter(
+        (coord: number[]) => Array.isArray(coord) && 
+          coord.length >= 2 &&
+          typeof coord[0] === 'number' && !isNaN(coord[0]) && isFinite(coord[0]) &&
+          typeof coord[1] === 'number' && !isNaN(coord[1]) && isFinite(coord[1])
+      );
+      
+      if (validCoordinates.length < 2) {
+        setError('Insufficient valid coordinates for route preview');
+        return;
+      }
+      
+      // Use validated coordinates
+      const validatedGeometry = { ...geometry, coordinates: validCoordinates };
+      
       // Create Turf.js LineString for calculations
-      const routeLine = turf.lineString(geometry.coordinates);
+      const routeLine = turf.lineString(validCoordinates);
       routeLineRef.current = routeLine;
 
       // Pre-calculate cumulative lengths for efficient position lookup
-      const coordinates = geometry.coordinates;
+      const coordinates = validCoordinates;
       const cumulativeLengths: number[] = [0];
       
       for (let i = 1; i < coordinates.length; i++) {
@@ -146,13 +162,13 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
       cumulativeLengthsRef.current = cumulativeLengths;
       totalLengthRef.current = cumulativeLengths[cumulativeLengths.length - 1];
 
-      // Add route line to map
+      // Add route line to map (using validated geometry)
       map.addSource('route', {
         type: 'geojson',
         data: {
           type: 'Feature',
           properties: {},
-          geometry: geometry
+          geometry: validatedGeometry
         }
       });
 
@@ -179,7 +195,7 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
       const trafficOverlayData = {
         type: 'Feature' as const,
         properties: {},
-        geometry: geometry
+        geometry: validatedGeometry
       };
 
       map.addSource('route-traffic-preview', {
@@ -360,13 +376,23 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
     const positionData = getPositionAtProgress(progress);
     if (positionData && mapRef.current) {
       const { position, bearing } = positionData;
+      
+      // CRITICAL: Validate coordinates before passing to MapLibre
+      if (!position || 
+          !Array.isArray(position) || 
+          position.length < 2 ||
+          typeof position[0] !== 'number' || isNaN(position[0]) || !isFinite(position[0]) ||
+          typeof position[1] !== 'number' || isNaN(position[1]) || !isFinite(position[1])) {
+        console.warn('[ROUTE-PREVIEW] Invalid position coordinates, skipping update');
+        return;
+      }
 
       // Update truck marker
       const truckSource = mapRef.current.getSource('truck') as maplibregl.GeoJSONSource;
       if (truckSource) {
         truckSource.setData({
           type: 'Feature',
-          properties: { bearing: bearing },
+          properties: { bearing: bearing || 0 },
           geometry: {
             type: 'Point',
             coordinates: position
@@ -413,18 +439,30 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
     // Jump to end
     const endPosition = getPositionAtProgress(1);
     if (endPosition && mapRef.current) {
+      const { position, bearing } = endPosition;
+      
+      // CRITICAL: Validate coordinates before passing to MapLibre
+      if (!position || 
+          !Array.isArray(position) || 
+          position.length < 2 ||
+          typeof position[0] !== 'number' || isNaN(position[0]) || !isFinite(position[0]) ||
+          typeof position[1] !== 'number' || isNaN(position[1]) || !isFinite(position[1])) {
+        console.warn('[ROUTE-PREVIEW] Invalid end position coordinates, skipping update');
+        return;
+      }
+      
       const truckSource = mapRef.current.getSource('truck') as maplibregl.GeoJSONSource;
       if (truckSource) {
         truckSource.setData({
           type: 'Feature',
-          properties: { bearing: endPosition.bearing },
+          properties: { bearing: bearing || 0 },
           geometry: {
             type: 'Point',
-            coordinates: endPosition.position
+            coordinates: position
           }
         });
       }
-      updateCamera(endPosition.position, endPosition.bearing);
+      updateCamera(position, bearing || 0);
     }
 
     setIsAnimating(false);
