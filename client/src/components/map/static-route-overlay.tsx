@@ -35,6 +35,12 @@ export function StaticRouteOverlay({
       const screenPoints: Array<{ x: number; y: number }> = [];
       
       for (const coord of routeCoordinates) {
+        // CRITICAL FIX: Validate coordinates before projecting to prevent errors
+        if (!coord || 
+            typeof coord.lng !== 'number' || isNaN(coord.lng) || !isFinite(coord.lng) ||
+            typeof coord.lat !== 'number' || isNaN(coord.lat) || !isFinite(coord.lat)) {
+          continue; // Skip invalid coordinates
+        }
         const point = map.project([coord.lng, coord.lat]);
         screenPoints.push({ x: point.x, y: point.y });
       }

@@ -1568,10 +1568,30 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     console.log('[ROUTE-ENSURE] Rebuilding route from cache after style change');
     
     try {
+      // CRITICAL FIX: Validate cached coordinates before rebuilding
+      const cachedData = cachedRouteGeoJsonRef.current;
+      if (cachedData?.geometry?.coordinates) {
+        const validCoords = cachedData.geometry.coordinates.filter(
+          (coord: number[]) => Array.isArray(coord) && 
+            coord.length >= 2 &&
+            typeof coord[0] === 'number' && !isNaN(coord[0]) && isFinite(coord[0]) &&
+            typeof coord[1] === 'number' && !isNaN(coord[1]) && isFinite(coord[1])
+        );
+        
+        if (validCoords.length < 2) {
+          console.warn('[ROUTE-ENSURE] Cached route has insufficient valid coordinates:', validCoords.length);
+          cachedRouteGeoJsonRef.current = null;
+          return false;
+        }
+        
+        // Update cache with validated coordinates
+        cachedData.geometry.coordinates = validCoords;
+      }
+      
       // Recreate source from cached GeoJSON
       map.current.addSource('route', {
         type: 'geojson',
-        data: cachedRouteGeoJsonRef.current
+        data: cachedData
       });
 
       // Add route outline (white background for visibility)
@@ -1635,7 +1655,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current || !currentRoute?.routePath) return;
     
     console.log('[ROUTE-RENDER] Drawing route with', currentRoute.routePath.length, 'coordinates');
-    let routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
+    
+    // CRITICAL FIX: Validate all coordinates are valid numbers before passing to MapLibre
+    // This prevents "coordinates must contain numbers" errors during navigation
+    let routeCoordinates = currentRoute.routePath
+      .filter(coord => {
+        // Ensure coord exists and has valid numeric lat/lng
+        if (!coord) return false;
+        const hasValidLng = typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng);
+        const hasValidLat = typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat);
+        return hasValidLng && hasValidLat;
+      })
+      .map(coord => [coord.lng, coord.lat]);
+    
+    // Ensure we have at least 2 valid coordinates to form a line
+    if (routeCoordinates.length < 2) {
+      console.warn('[ROUTE-RENDER] Insufficient valid coordinates:', routeCoordinates.length, '- need at least 2');
+      return;
+    }
 
     // During navigation, show only remaining route from current GPS position
     // CRITICAL: Only clip route if GPS coordinates are valid (non-zero, non-NaN)
