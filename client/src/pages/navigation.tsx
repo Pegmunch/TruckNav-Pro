@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map, Speaker, VolumeX } from "lucide-react";
+import { Truck, X, Menu, MapPin, Settings, Search, Camera, Navigation, Navigation2, Car, AlertCircle, Compass, Box, Plus, Minus, Layers, Loader2, Crosshair, Hourglass, Map, Speaker, VolumeX, Clock, Eye, Route as RouteIcon } from "lucide-react";
 import { usePWAEnvironment } from "@/contexts/pwa-environment";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDeviceType } from "@/hooks/use-device-type";
@@ -2116,32 +2116,27 @@ function NavigationPageContent() {
         }
       }
       
-      // CRITICAL: If GO button was pressed (shouldAutoNavigateOnMobile flag), start navigation automatically
-      // This provides single-tap navigation: GO → route calculates → navigation starts immediately
+      // When GO button was pressed, show the preview screen (don't auto-start navigation)
+      // This allows user to see route details and choose when to start navigation
       if (shouldAutoNavigateOnMobile) {
-        console.log('[ROUTE-CALC] GO button flow - auto-starting navigation (single-tap GO experience)');
+        console.log('[ROUTE-CALC] GO button flow - showing preview screen with route ready');
         
         // CRITICAL: Reset any stale cancellation guard from previous navigation session
-        // This ensures Stop button is never stuck in disabled state
         isCancellingRouteRef.current = false;
         
-        // Reset auto-navigation flag FIRST to prevent re-entry
+        // Reset auto-navigation flag
         setShouldAutoNavigateOnMobile(false);
         
-        // Decrement counter before auto-navigation (won't reach the normal decrement below)
+        // Show the preview overlay with route info - user can choose to start navigation
+        setIsShowingPreview(true);
+        setShowNavControls(true);
+        
+        // Decrement counter
         routeCalculationCountRef.current = Math.max(0, routeCalculationCountRef.current - 1);
-        console.log('[ROUTE-CALC] Calculation complete (auto-nav path). Active calculations:', routeCalculationCountRef.current);
+        console.log('[ROUTE-CALC] Calculation complete (preview path). Active calculations:', routeCalculationCountRef.current);
         
-        // CRITICAL FIX: Trigger full handleStartNavigation to create journey on server
-        // This ensures backend is in sync with UI state
-        // Schedule for next tick to ensure route state is committed
-        setTimeout(() => {
-          console.log('[ROUTE-CALC] Auto-triggering handleStartNavigation for journey creation');
-          handleStartNavigation();
-        }, 0);
-        
-        // Don't set UI state here - handleStartNavigation will do it
-        return; // Exit early - handleStartNavigation handles everything
+        // Don't auto-start navigation - let user see the preview first
+        return;
       }
       
       // Reset auto-navigation flag now that route calculation is complete
@@ -3412,16 +3407,65 @@ function NavigationPageContent() {
                     </Button>
                   </div>
 
-                  {/* BOTTOM STACK CONTAINER - Responsive Flex Layout */}
+                  {/* BOTTOM STACK CONTAINER - Preview Mode Actions */}
                   <div 
-                    className="fixed left-0 right-0 flex flex-col-reverse items-center gap-4 pointer-events-none"
+                    className="fixed left-0 right-0 flex flex-col items-center gap-3 pointer-events-none px-4 z-[200]"
                     style={{ 
-                      bottom: 'var(--safe-area-bottom, 0px)',
-                      paddingBottom: '0px'
+                      bottom: 'calc(20px + var(--safe-area-bottom, 0px))'
                     }}
                   >
-                    {/* Legal Ownership - Bottom layer (z-[5]) */}
-                    <div className="w-full z-[5] pointer-events-auto">
+                    {/* Route Summary Card */}
+                    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg px-4 py-3 pointer-events-auto w-full max-w-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 bg-blue-600 text-white px-2 py-1 rounded">
+                            <Clock className="w-4 h-4" />
+                            <span className="font-bold text-sm">{Math.round((currentRoute.duration || 0))} min</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-emerald-600 text-white px-2 py-1 rounded">
+                            <RouteIcon className="w-4 h-4" />
+                            <span className="font-bold text-sm">{((currentRoute.distance || 0) / 1000).toFixed(1)} km</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setIsShowingPreview(false);
+                            handleCancelRoute();
+                          }}
+                          className="h-8 text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                      
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handlePreviewRoute}
+                          disabled={isFlyByInProgress}
+                          variant="outline"
+                          className="flex-1 h-11 font-semibold"
+                          data-testid="button-preview-route"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview
+                        </Button>
+                        <Button
+                          onClick={handleStartNavigation}
+                          className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                          data-testid="button-start-navigation"
+                        >
+                          <Navigation className="w-4 h-4 mr-2" />
+                          Start
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Legal Ownership */}
+                    <div className="w-full pointer-events-auto">
                       <MapLegalOwnership compact={true} className="sm:hidden" />
                     </div>
                   </div>
