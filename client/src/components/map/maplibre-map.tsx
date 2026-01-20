@@ -1067,6 +1067,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // CRITICAL: Always ensure route layers are on top after mode switch
       // This prevents the blue navigation line from being hidden behind other layers
       ensureRouteLayers();
+      
+      // SATELLITE FIX: Double-check route layers are on top after a delay
+      // This handles the case where labels overlay was just added and route needs to be above it
+      setTimeout(() => {
+        try {
+          if (mapInstance.getLayer('route-outline')) {
+            mapInstance.moveLayer('route-outline');
+          }
+          if (mapInstance.getLayer('route-line')) {
+            mapInstance.moveLayer('route-line');
+          }
+          console.log('[ROUTE-LAYERS] Delayed move - ensured route layers are on top of satellite/labels');
+        } catch (e) {
+          // Layers might not exist
+        }
+      }, 200);
     } catch (error) {
       console.warn('Failed to update layer visibility:', error);
     }

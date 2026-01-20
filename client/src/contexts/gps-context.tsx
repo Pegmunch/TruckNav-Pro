@@ -986,8 +986,38 @@ export function GPSProvider({
             setErrorType(null);
             setErrorMessage(null);
             setStatus('acquiring');
-            // Trigger a fresh GPS request
             gpsReceivedRef.current = false;
+            
+            // CRITICAL: Force restart GPS tracking when permission is granted
+            // Clear old watcher and request a fresh position
+            if (watchIdRef.current !== null) {
+              navigator.geolocation.clearWatch(watchIdRef.current);
+              watchIdRef.current = null;
+            }
+            
+            // Request fresh position to trigger GPS hardware
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                console.log('[GPS-PROVIDER] 📍 Fresh position after permission grant:', pos.coords.latitude, pos.coords.longitude);
+              },
+              (err) => {
+                console.warn('[GPS-PROVIDER] Fresh position request failed:', err.message);
+              },
+              { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+            
+            // CRITICAL: Clear existing watcher and restart GPS tracking without page reload
+            // This preserves navigation state while reinitializing the GPS system
+            if (watchIdRef.current !== null) {
+              navigator.geolocation.clearWatch(watchIdRef.current);
+              watchIdRef.current = null;
+            }
+            
+            // Small delay to let permission state settle, then restart GPS tracking
+            setTimeout(() => {
+              console.log('[GPS-PROVIDER] 🔄 Restarting GPS tracking after permission grant...');
+              startGPSTracking();
+            }, 200);
           } else if (result.state === 'denied') {
             setErrorType('PERMISSION_DENIED');
             setErrorMessage('Location access denied. Please enable location in Safari Settings.');
