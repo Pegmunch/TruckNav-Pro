@@ -469,18 +469,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       setIs3DMode(newMode);
       map.current.easeTo({
         pitch: newMode ? 60 : 0,
-        duration: 800
+        duration: 400
       });
     },
     is3DMode: () => is3DMode,
     zoomIn: () => {
       if (map.current) {
-        map.current.zoomIn({ duration: 300 });
+        map.current.zoomIn({ duration: 150 });
       }
     },
     zoomOut: () => {
       if (map.current) {
-        map.current.zoomOut({ duration: 300 });
+        map.current.zoomOut({ duration: 150 });
       }
     },
     zoomToUserLocation: (options) => {
@@ -1181,7 +1181,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             if (map.current) {
               e.preventDefault();
               e.stopPropagation();
-              map.current.zoomOut({ duration: 300 });
+              map.current.zoomOut({ duration: 150 });
               console.log('[MAP-GESTURE] ✅ Two-finger double-tap detected - zooming out');
             }
             lastTwoFingerTap = 0; // Reset to prevent triple-tap
@@ -1860,7 +1860,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!isNavigating) {
       const bounds = new maplibregl.LngLatBounds();
       routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-      map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+      map.current.fitBounds(bounds, { padding: 50, duration: 400 });
     }
   }, [currentRoute, isNavigating, gpsPosition]);
 
@@ -1949,7 +1949,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             renderRouteLayers();
           }
         }
-      }, 150); // Slightly longer delay to ensure style is fully loaded
+      }, 75); // Fast delay - style should be ready quickly
     };
 
     mapInstance.on('styledata', handleStyleChange);
@@ -1971,8 +1971,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
       console.log('[ROUTE-NAV-STATE] Route has', currentRoute.routePath.length, 'coordinates');
       
-      // BULLETPROOF ROUTE RENDERING: Multiple attempts with increasing delays
-      const renderAttempts = [50, 150, 300, 500, 1000];
+      // BULLETPROOF ROUTE RENDERING: Fast multiple attempts for quick rendering
+      const renderAttempts = [0, 50, 100, 200, 400];
       
       renderAttempts.forEach((delay, index) => {
         setTimeout(() => {
@@ -2045,8 +2045,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Clear cached data to force fresh render
       cachedRouteGeoJsonRef.current = null;
       
-      // Force re-render with multiple attempts for reliability
-      const renderAttempts = [0, 100, 300];
+      // Force re-render with fast multiple attempts for reliability
+      const renderAttempts = [0, 50, 150];
       renderAttempts.forEach((delay, index) => {
         setTimeout(() => {
           if (!map.current || !map.current.isStyleLoaded()) return;
@@ -3026,13 +3026,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   const handleZoomIn = () => {
     if (map.current) {
-      map.current.zoomIn({ duration: 300 });
+      map.current.zoomIn({ duration: 150 });
     }
   };
 
   const handleZoomOut = () => {
     if (map.current) {
-      map.current.zoomOut({ duration: 300 });
+      map.current.zoomOut({ duration: 150 });
     }
   };
 
@@ -3056,7 +3056,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
             const bounds = new maplibregl.LngLatBounds();
             routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-            map.current?.fitBounds(bounds, { padding: 50, duration: 1000 });
+            map.current?.fitBounds(bounds, { padding: 50, duration: 400 });
           }
           // Don't use any hardcoded default position - just stay where we are
         },
@@ -3068,7 +3068,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
         const bounds = new maplibregl.LngLatBounds();
         routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-        map.current.fitBounds(bounds, { padding: 50, duration: 1000 });
+        map.current.fitBounds(bounds, { padding: 50, duration: 400 });
       }
       // Don't use any hardcoded default position - just stay where we are
     }
