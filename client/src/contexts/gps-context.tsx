@@ -891,8 +891,17 @@ export function GPSProvider({
           setErrorMessage(getGPSErrorMessage(errType));
           setStatus('error'); // Status is error, NOT ready
           
-          // Don't proceed with watchPosition if permission is denied
-          return;
+          // iOS Safari workaround: Don't return early - still try watchPosition
+          // iOS Safari's permission API is unreliable and sometimes reports "denied" 
+          // even when permission is granted. Let watchPosition try anyway.
+          const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+                             !('MSStream' in window) &&
+                             /Safari/.test(navigator.userAgent);
+          if (!isIOSSafari) {
+            // Only return early on non-iOS platforms where permission API is reliable
+            return;
+          }
+          console.log('[GPS-PROVIDER] iOS Safari detected - continuing with watchPosition despite initial denial');
         }
         
         // For other errors, still try watchPosition
