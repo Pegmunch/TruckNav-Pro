@@ -76,7 +76,8 @@ export function AddressAutocomplete({
   // iOS STABILITY FIX: Track when dropdown was last opened to prevent immediate close
   // This prevents flashing caused by rapid focus/blur cycles on iOS Safari
   const openTimestampRef = useRef<number>(0);
-  const MINIMUM_OPEN_DURATION_MS = 300; // Dropdown must stay open for at least 300ms
+  const isClosingRef = useRef<boolean>(false); // Prevent multiple close attempts
+  const MINIMUM_OPEN_DURATION_MS = 500; // Dropdown must stay open for at least 500ms (increased for iOS stability)
   
   // GPS candidate state - holds geocoded location pending user confirmation
   const [gpsCandidate, setGpsCandidate] = useState<{
@@ -126,10 +127,32 @@ export function AddressAutocomplete({
     setOpen(newOpen);
   }, [open]);
   
+  // Stable close function that prevents rapid close/reopen cycles
+  const stableClose = useCallback(() => {
+    if (isClosingRef.current) return; // Already closing
+    
+    const elapsed = Date.now() - openTimestampRef.current;
+    if (elapsed < MINIMUM_OPEN_DURATION_MS) {
+      console.log('[AUTOCOMPLETE] Prevented premature close after', elapsed, 'ms');
+      return;
+    }
+    
+    isClosingRef.current = true;
+    setOpen(false);
+    
+    // Reset closing flag after a short delay
+    setTimeout(() => {
+      isClosingRef.current = false;
+    }, 100);
+  }, []);
+  
   // Close dropdown when clicking/tapping outside using document-level listener
   // This replaces blur-based closing which is unreliable on iOS
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      isClosingRef.current = false; // Reset when closed
+      return;
+    }
     
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
@@ -140,15 +163,8 @@ export function AddressAutocomplete({
       // Fallback: Check if target or any ancestor has our dropdown marker
       if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
       
-      // iOS STABILITY: Prevent close if dropdown just opened
-      const elapsed = Date.now() - openTimestampRef.current;
-      if (elapsed < MINIMUM_OPEN_DURATION_MS) {
-        console.log('[AUTOCOMPLETE] Ignored click-outside during stabilization period');
-        return;
-      }
-      
-      // Click was outside - close dropdown
-      setOpen(false);
+      // Use stable close which has its own timing checks
+      stableClose();
     };
     
     // Use mousedown/touchstart to close before onClick fires elsewhere
@@ -156,14 +172,14 @@ export function AddressAutocomplete({
     const timeoutId = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside, false);
       document.addEventListener('touchstart', handleClickOutside, false);
-    }, 50);
+    }, 100); // Increased delay for better iOS stability
     
     return () => {
       clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside, false);
       document.removeEventListener('touchstart', handleClickOutside, false);
     };
-  }, [open]);
+  }, [open, stableClose]);
 
   // Detect country from GPS coordinates
   const countryCode = useMemo(() => {
@@ -715,11 +731,13 @@ export function AddressAutocomplete({
           <div 
             ref={dropdownRef}
             data-autocomplete-dropdown="true"
-            className="absolute left-0 right-0 top-full mt-1 z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg animate-in fade-in zoom-in-95 duration-200"
+            className="absolute left-0 right-0 top-full mt-1 z-[9999] shadow-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 max-h-[350px] overflow-y-auto rounded-lg transition-all duration-300 ease-out"
             style={{ 
               touchAction: 'manipulation',
               WebkitTapHighlightColor: 'transparent',
               WebkitUserSelect: 'none',
+              opacity: 1,
+              transform: 'translateY(0)',
               userSelect: 'none'
             }}
           >
