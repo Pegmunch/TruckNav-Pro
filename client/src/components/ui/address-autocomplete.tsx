@@ -73,6 +73,11 @@ export function AddressAutocomplete({
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
+  // iOS STABILITY FIX: Track when dropdown was last opened to prevent immediate close
+  // This prevents flashing caused by rapid focus/blur cycles on iOS Safari
+  const openTimestampRef = useRef<number>(0);
+  const MINIMUM_OPEN_DURATION_MS = 300; // Dropdown must stay open for at least 300ms
+  
   // GPS candidate state - holds geocoded location pending user confirmation
   const [gpsCandidate, setGpsCandidate] = useState<{
     address: string;
@@ -95,6 +100,7 @@ export function AddressAutocomplete({
   useEffect(() => {
     if (forceOpen && !open) {
       console.log('[AUTOCOMPLETE] Force opening dropdown from parent');
+      openTimestampRef.current = Date.now(); // iOS STABILITY: Track open time
       setOpen(true);
       // Notify parent that forceOpen has been consumed
       onForceOpenConsumed?.();
@@ -103,6 +109,22 @@ export function AddressAutocomplete({
   
   const gps = useGPS();
   const isGPSReady = gps?.status === 'ready' && !gps?.isUsingCached;
+  
+  // iOS STABILITY: Wrapped setOpen to track open timestamp
+  const stableSetOpen = useCallback((newOpen: boolean) => {
+    if (newOpen && !open) {
+      // Opening - record timestamp
+      openTimestampRef.current = Date.now();
+    } else if (!newOpen && open) {
+      // Closing - check if minimum duration has passed
+      const elapsed = Date.now() - openTimestampRef.current;
+      if (elapsed < MINIMUM_OPEN_DURATION_MS) {
+        console.log('[AUTOCOMPLETE] Prevented premature close after', elapsed, 'ms');
+        return; // Prevent premature close
+      }
+    }
+    setOpen(newOpen);
+  }, [open]);
   
   // Close dropdown when clicking/tapping outside using document-level listener
   // This replaces blur-based closing which is unreliable on iOS
@@ -118,15 +140,26 @@ export function AddressAutocomplete({
       // Fallback: Check if target or any ancestor has our dropdown marker
       if (target.closest?.('[data-autocomplete-dropdown="true"]')) return;
       
+      // iOS STABILITY: Prevent close if dropdown just opened
+      const elapsed = Date.now() - openTimestampRef.current;
+      if (elapsed < MINIMUM_OPEN_DURATION_MS) {
+        console.log('[AUTOCOMPLETE] Ignored click-outside during stabilization period');
+        return;
+      }
+      
       // Click was outside - close dropdown
       setOpen(false);
     };
     
     // Use mousedown/touchstart to close before onClick fires elsewhere
-    document.addEventListener('mousedown', handleClickOutside, false);
-    document.addEventListener('touchstart', handleClickOutside, false);
+    // Add a small delay before attaching listeners to allow dropdown to stabilize
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside, false);
+      document.addEventListener('touchstart', handleClickOutside, false);
+    }, 50);
     
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('mousedown', handleClickOutside, false);
       document.removeEventListener('touchstart', handleClickOutside, false);
     };
@@ -294,10 +327,11 @@ export function AddressAutocomplete({
     onChange(newValue);
     
     // Always open dropdown if there's content (on all platforms)
-    if (newValue.length >= 2) {
+    if (newValue.length >= 2 && !open) {
+      openTimestampRef.current = Date.now(); // iOS STABILITY: Track open time
       setOpen(true);
     }
-  }, [onChange]);
+  }, [onChange, open]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && open) {
@@ -372,6 +406,8 @@ export function AddressAutocomplete({
   }, [onChange, onCoordinatesChange, createLocationMutation, id]);
 
   const handleInputFocus = useCallback(() => {
+    // iOS STABILITY: Use stable opener to track timestamp
+    openTimestampRef.current = Date.now();
     setOpen(true);
   }, []);
 
@@ -418,6 +454,7 @@ export function AddressAutocomplete({
   const handleUseGPSLocation = useCallback(async () => {
     setIsGettingLocation(true);
     setGpsCandidate(null); // Clear any previous candidate
+    openTimestampRef.current = Date.now(); // iOS STABILITY: Track open time
     setOpen(true); // Open dropdown immediately to show loading state
     console.log('[GPS-LOCATION] Button clicked - status:', gps?.status, 'position:', gps?.position ? 'available' : 'none');
     
