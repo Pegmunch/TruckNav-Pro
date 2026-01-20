@@ -1,7 +1,7 @@
 import { AlertCircle, Menu, Navigation, X, Mic, MicOff } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, type PointerEvent, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { getVoiceCommandSystem, type IncidentType } from '@/lib/voice-commands';
+import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } from '@/lib/voice-commands';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
 interface LeftActionStackProps {
@@ -12,6 +12,7 @@ interface LeftActionStackProps {
   isNavigating: boolean;
   currentLocation?: { lat: number; lng: number };
   onVoiceIncidentReport?: (type: IncidentType, severity: 'low' | 'medium' | 'high') => void;
+  onVoiceNavigationCommand?: (command: NavigationCommandType) => void;
   showMenuButton?: boolean;
 }
 
@@ -23,6 +24,7 @@ export function LeftActionStack({
   isNavigating,
   currentLocation,
   onVoiceIncidentReport,
+  onVoiceNavigationCommand,
   showMenuButton = true
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
@@ -35,11 +37,20 @@ export function LeftActionStack({
     }
   }, [onVoiceIncidentReport]);
 
+  const handleNavigationCommand = useCallback((command: NavigationCommandType) => {
+    if (onVoiceNavigationCommand) {
+      onVoiceNavigationCommand(command);
+    }
+  }, [onVoiceNavigationCommand]);
+
   useEffect(() => {
     if (isVoiceSupported && onVoiceIncidentReport) {
       voiceSystem.setIncidentReportCallback(handleVoiceReport);
     }
-  }, [isVoiceSupported, handleVoiceReport, voiceSystem, onVoiceIncidentReport]);
+    if (isVoiceSupported && onVoiceNavigationCommand) {
+      voiceSystem.setNavigationCommandCallback(handleNavigationCommand);
+    }
+  }, [isVoiceSupported, handleVoiceReport, handleNavigationCommand, voiceSystem, onVoiceIncidentReport, onVoiceNavigationCommand]);
 
   // Stop voice listening when navigation ends (cleanup only - no auto-start)
   // Voice commands now only start when user manually taps the microphone button

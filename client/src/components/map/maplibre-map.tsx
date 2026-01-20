@@ -1344,6 +1344,88 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             }
           });
           console.log('[3D-BUILDINGS] Added 3D buildings layer with Protomaps source');
+          
+          // Add click handler for interactive 3D buildings
+          mapInstance.on('click', '3d-buildings', (e) => {
+            if (!e.features || e.features.length === 0) return;
+            
+            const feature = e.features[0];
+            const properties = feature.properties || {};
+            
+            // Extract building information
+            const height = properties.height || properties.render_height || 10;
+            const name = properties.name || properties.building_name || null;
+            const buildingType = properties.building || properties.type || 'Building';
+            const levels = properties.levels || properties.building_levels || Math.round(height / 3);
+            const address = properties.addr_street || properties['addr:street'] || null;
+            const houseNumber = properties.addr_housenumber || properties['addr:housenumber'] || null;
+            
+            // Format building type nicely
+            const formatBuildingType = (type: string) => {
+              const typeMap: Record<string, string> = {
+                'yes': 'Building',
+                'residential': 'Residential',
+                'commercial': 'Commercial',
+                'industrial': 'Industrial',
+                'retail': 'Retail',
+                'office': 'Office Building',
+                'apartments': 'Apartments',
+                'house': 'House',
+                'warehouse': 'Warehouse',
+                'garage': 'Garage',
+                'hospital': 'Hospital',
+                'school': 'School',
+                'church': 'Church',
+                'hotel': 'Hotel',
+                'parking': 'Parking Structure',
+              };
+              return typeMap[type.toLowerCase()] || type.charAt(0).toUpperCase() + type.slice(1);
+            };
+            
+            // Build popup content
+            let popupContent = '<div class="building-popup" style="font-family: system-ui, sans-serif; padding: 4px 0;">';
+            
+            if (name) {
+              popupContent += `<div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${name}</div>`;
+            }
+            
+            popupContent += `<div style="font-size: 13px; color: #666;">${formatBuildingType(buildingType)}</div>`;
+            
+            if (address) {
+              const fullAddress = houseNumber ? `${houseNumber} ${address}` : address;
+              popupContent += `<div style="font-size: 12px; color: #888; margin-top: 2px;">${fullAddress}</div>`;
+            }
+            
+            popupContent += '<div style="display: flex; gap: 12px; margin-top: 6px; font-size: 12px;">';
+            popupContent += `<span style="color: #555;"><strong>${Math.round(height)}m</strong> tall</span>`;
+            popupContent += `<span style="color: #555;"><strong>${levels}</strong> floors</span>`;
+            popupContent += '</div>';
+            popupContent += '</div>';
+            
+            // Create and show popup
+            new maplibregl.Popup({
+              closeButton: true,
+              closeOnClick: true,
+              maxWidth: '220px',
+              offset: [0, -10]
+            })
+              .setLngLat(e.lngLat)
+              .setHTML(popupContent)
+              .addTo(mapInstance);
+            
+            console.log('[3D-BUILDINGS] Building clicked:', { name, buildingType, height, levels });
+          });
+          
+          // Change cursor on hover over 3D buildings
+          mapInstance.on('mouseenter', '3d-buildings', () => {
+            mapInstance.getCanvas().style.cursor = 'pointer';
+          });
+          
+          mapInstance.on('mouseleave', '3d-buildings', () => {
+            mapInstance.getCanvas().style.cursor = '';
+          });
+          
+          console.log('[3D-BUILDINGS] Interactive click handlers added');
         }
 
         setIsLoaded(true);

@@ -71,7 +71,7 @@ import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
-import { type IncidentType } from "@/lib/voice-commands";
+import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
@@ -3656,6 +3656,106 @@ function NavigationPageContent() {
                             description: 'GPS location is needed to report an incident.',
                             variant: 'destructive',
                           });
+                        }
+                      }}
+                      onVoiceNavigationCommand={(command: NavigationCommandType) => {
+                        console.log('[VOICE-NAV] Navigation command received:', command);
+                        switch (command) {
+                          case 'zoom_in':
+                            mapRef.current?.zoomIn();
+                            break;
+                          case 'zoom_out':
+                            mapRef.current?.zoomOut();
+                            break;
+                          case 'recenter':
+                            mapRef.current?.zoomToUserLocation();
+                            break;
+                          case 'start_navigation':
+                            if (currentRoute && !isNavUIActive) {
+                              handleStartNavigation();
+                            }
+                            break;
+                          case 'stop_navigation':
+                            if (isNavUIActive) {
+                              handleStopNavigation();
+                            }
+                            break;
+                          case 'toggle_3d':
+                            mapRef.current?.toggle3DMode();
+                            setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                            break;
+                          case 'toggle_satellite':
+                            mapRef.current?.toggleMapView();
+                            setMapControlState(prev => ({ ...prev, isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite' }));
+                            break;
+                          case 'mute':
+                            navigationVoice.setEnabled(false);
+                            toast({ title: 'Voice Muted', description: 'Voice guidance has been muted.' });
+                            break;
+                          case 'unmute':
+                            navigationVoice.setEnabled(true);
+                            toast({ title: 'Voice Unmuted', description: 'Voice guidance is now active.' });
+                            break;
+                          case 'show_overview':
+                            if (currentRoute?.geometry?.coordinates) {
+                              const map = mapRef.current?.getMap();
+                              if (map) {
+                                const coords = currentRoute.geometry.coordinates as Array<[number, number]>;
+                                if (coords.length > 0) {
+                                  let minLng = coords[0][0], maxLng = coords[0][0];
+                                  let minLat = coords[0][1], maxLat = coords[0][1];
+                                  coords.forEach(([lng, lat]) => {
+                                    if (lng < minLng) minLng = lng;
+                                    if (lng > maxLng) maxLng = lng;
+                                    if (lat < minLat) minLat = lat;
+                                    if (lat > maxLat) maxLat = lat;
+                                  });
+                                  map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 50 });
+                                }
+                              }
+                            }
+                            break;
+                          case 'next_turn':
+                            if (isNavUIActive && currentRoute) {
+                              const message = 'Continue on current route';
+                              navigationVoice.speak(message, 'normal');
+                              toast({ 
+                                title: 'Next Turn', 
+                                description: message 
+                              });
+                            } else {
+                              toast({ 
+                                title: 'No Navigation Active', 
+                                description: 'Start navigation to hear upcoming turns.' 
+                              });
+                            }
+                            break;
+                          case 'repeat_instruction':
+                            if (isNavUIActive) {
+                              const message = 'Continue following the current route';
+                              navigationVoice.speak(message, 'normal');
+                              toast({ 
+                                title: 'Instruction Repeated', 
+                                description: message 
+                              });
+                            } else {
+                              toast({ 
+                                title: 'No Navigation Active', 
+                                description: 'Start navigation to hear instructions.' 
+                              });
+                            }
+                            break;
+                          case 'find_fuel':
+                          case 'find_parking':
+                          case 'find_rest_area':
+                            setShowComprehensiveMenu(true);
+                            toast({ 
+                              title: 'Opening Menu', 
+                              description: 'Use the menu to search for nearby facilities.' 
+                            });
+                            break;
+                          default:
+                            console.log('[VOICE-NAV] Unhandled command:', command);
                         }
                       }}
                     />

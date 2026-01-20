@@ -51,6 +51,23 @@ type IncidentType =
   | 'construction'
   | 'weather_hazard';
 
+type NavigationCommandType =
+  | 'zoom_in'
+  | 'zoom_out'
+  | 'recenter'
+  | 'start_navigation'
+  | 'stop_navigation'
+  | 'toggle_3d'
+  | 'toggle_satellite'
+  | 'mute'
+  | 'unmute'
+  | 'next_turn'
+  | 'repeat_instruction'
+  | 'show_overview'
+  | 'find_fuel'
+  | 'find_parking'
+  | 'find_rest_area';
+
 interface VoiceCommand {
   patterns: string[];
   action: () => void;
@@ -61,19 +78,22 @@ interface VoiceCommandResult {
   success: boolean;
   command?: string;
   incidentType?: IncidentType;
+  navigationCommand?: NavigationCommandType;
   message: string;
 }
 
 type IncidentReportCallback = (type: IncidentType, severity: 'low' | 'medium' | 'high') => void;
+type NavigationCommandCallback = (command: NavigationCommandType) => void;
 
 class VoiceCommandSystem {
   private recognition: SpeechRecognitionInstance | null = null;
   private isListening: boolean = false;
   private isSupported: boolean = false;
   private onIncidentReport: IncidentReportCallback | null = null;
+  private onNavigationCommand: NavigationCommandCallback | null = null;
   private navigationVoice: NavigationVoice;
   private lastCommandTime: number = 0;
-  private commandCooldown: number = 3000;
+  private commandCooldown: number = 2000;
   private currentLanguage: string = 'en-US';
 
   private readonly INCIDENT_COMMANDS: Record<string, { type: IncidentType; severity: 'low' | 'medium' | 'high' }> = {
@@ -113,6 +133,108 @@ class VoiceCommandSystem {
     'fog ahead': { type: 'weather_hazard', severity: 'medium' },
     'icy road': { type: 'weather_hazard', severity: 'high' },
     'flooding': { type: 'weather_hazard', severity: 'high' },
+  };
+
+  private readonly NAVIGATION_COMMANDS: Record<string, NavigationCommandType> = {
+    // Zoom commands
+    'zoom in': 'zoom_in',
+    'closer': 'zoom_in',
+    'magnify': 'zoom_in',
+    'zoom out': 'zoom_out',
+    'further': 'zoom_out',
+    'show more': 'zoom_out',
+    
+    // Recenter commands
+    'recenter': 'recenter',
+    're-center': 'recenter',
+    'center map': 'recenter',
+    'find me': 'recenter',
+    'where am i': 'recenter',
+    'my location': 'recenter',
+    'go to my location': 'recenter',
+    
+    // Navigation control
+    'start navigation': 'start_navigation',
+    'begin navigation': 'start_navigation',
+    'start route': 'start_navigation',
+    'go': 'start_navigation',
+    'lets go': 'start_navigation',
+    'navigate': 'start_navigation',
+    
+    'stop navigation': 'stop_navigation',
+    'end navigation': 'stop_navigation',
+    'cancel navigation': 'stop_navigation',
+    'stop route': 'stop_navigation',
+    'exit navigation': 'stop_navigation',
+    
+    // View controls
+    '3d mode': 'toggle_3d',
+    'three d mode': 'toggle_3d',
+    'toggle 3d': 'toggle_3d',
+    '3d view': 'toggle_3d',
+    
+    'satellite': 'toggle_satellite',
+    'satellite view': 'toggle_satellite',
+    'aerial view': 'toggle_satellite',
+    
+    'show overview': 'show_overview',
+    'overview': 'show_overview',
+    'full route': 'show_overview',
+    
+    // Audio controls
+    'mute': 'mute',
+    'be quiet': 'mute',
+    'silence': 'mute',
+    'unmute': 'unmute',
+    'sound on': 'unmute',
+    'speak': 'unmute',
+    
+    // Navigation assistance
+    'next turn': 'next_turn',
+    'whats next': 'next_turn',
+    'upcoming turn': 'next_turn',
+    
+    'repeat': 'repeat_instruction',
+    'say again': 'repeat_instruction',
+    'repeat instruction': 'repeat_instruction',
+    
+    // POI search
+    'find fuel': 'find_fuel',
+    'find petrol': 'find_fuel',
+    'find gas': 'find_fuel',
+    'find diesel': 'find_fuel',
+    'fuel station': 'find_fuel',
+    'petrol station': 'find_fuel',
+    'gas station': 'find_fuel',
+    
+    'find parking': 'find_parking',
+    'truck parking': 'find_parking',
+    'lorry parking': 'find_parking',
+    'hgv parking': 'find_parking',
+    
+    'find rest': 'find_rest_area',
+    'rest area': 'find_rest_area',
+    'rest stop': 'find_rest_area',
+    'services': 'find_rest_area',
+    'truck stop': 'find_rest_area',
+  };
+
+  private readonly NAVIGATION_COMMAND_RESPONSES: Record<NavigationCommandType, string> = {
+    'zoom_in': 'Zooming in',
+    'zoom_out': 'Zooming out',
+    'recenter': 'Centering on your location',
+    'start_navigation': 'Starting navigation',
+    'stop_navigation': 'Navigation stopped',
+    'toggle_3d': 'Toggling 3D view',
+    'toggle_satellite': 'Toggling satellite view',
+    'mute': 'Voice muted',
+    'unmute': 'Voice unmuted',
+    'next_turn': 'Showing next turn',
+    'repeat_instruction': 'Repeating instruction',
+    'show_overview': 'Showing route overview',
+    'find_fuel': 'Searching for fuel stations',
+    'find_parking': 'Searching for truck parking',
+    'find_rest_area': 'Searching for rest areas',
   };
 
   constructor() {
@@ -157,7 +279,7 @@ class VoiceCommandSystem {
       }
     };
 
-    console.log('[VoiceCommands] Speech Recognition initialized');
+    console.log('[VoiceCommands] Speech Recognition initialized with navigation commands');
   }
 
   private handleSpeechResult(event: SpeechRecognitionEventResult): void {
@@ -174,10 +296,19 @@ class VoiceCommandSystem {
           const transcript = alternatives[j].transcript.toLowerCase().trim();
           console.log('[VoiceCommands] Heard:', transcript);
           
-          const result = this.matchCommand(transcript);
-          if (result.success) {
+          // Try navigation commands first
+          const navResult = this.matchNavigationCommand(transcript);
+          if (navResult.success) {
             this.lastCommandTime = now;
-            this.executeIncidentReport(result);
+            this.executeNavigationCommand(navResult);
+            return;
+          }
+          
+          // Then try incident commands
+          const incidentResult = this.matchIncidentCommand(transcript);
+          if (incidentResult.success) {
+            this.lastCommandTime = now;
+            this.executeIncidentReport(incidentResult);
             return;
           }
         }
@@ -185,7 +316,27 @@ class VoiceCommandSystem {
     }
   }
 
-  private matchCommand(transcript: string): VoiceCommandResult {
+  private matchNavigationCommand(transcript: string): VoiceCommandResult {
+    const normalizedTranscript = transcript.toLowerCase().replace(/[^\w\s]/g, '');
+    
+    for (const [pattern, commandType] of Object.entries(this.NAVIGATION_COMMANDS)) {
+      if (normalizedTranscript.includes(pattern)) {
+        return {
+          success: true,
+          command: pattern,
+          navigationCommand: commandType,
+          message: `Matched navigation command: ${pattern}`,
+        };
+      }
+    }
+
+    return {
+      success: false,
+      message: 'No matching navigation command found',
+    };
+  }
+
+  private matchIncidentCommand(transcript: string): VoiceCommandResult {
     const normalizedTranscript = transcript.toLowerCase().replace(/[^\w\s]/g, '');
     
     for (const [pattern, config] of Object.entries(this.INCIDENT_COMMANDS)) {
@@ -203,6 +354,23 @@ class VoiceCommandSystem {
       success: false,
       message: 'No matching command found',
     };
+  }
+
+  private executeNavigationCommand(result: VoiceCommandResult): void {
+    if (!result.navigationCommand) return;
+
+    const response = this.NAVIGATION_COMMAND_RESPONSES[result.navigationCommand];
+    
+    // Don't speak if muting
+    if (result.navigationCommand !== 'mute') {
+      this.navigationVoice.speak(response, 'normal', true);
+    }
+
+    if (this.onNavigationCommand) {
+      this.onNavigationCommand(result.navigationCommand);
+    }
+
+    console.log('[VoiceCommands] Navigation command executed:', result.navigationCommand);
   }
 
   private executeIncidentReport(result: VoiceCommandResult): void {
@@ -282,6 +450,10 @@ class VoiceCommandSystem {
     this.onIncidentReport = callback;
   }
 
+  public setNavigationCommandCallback(callback: NavigationCommandCallback): void {
+    this.onNavigationCommand = callback;
+  }
+
   public isActive(): boolean {
     return this.isListening;
   }
@@ -303,7 +475,36 @@ class VoiceCommandSystem {
   }
 
   public getAvailableCommands(): string[] {
-    return Object.keys(this.INCIDENT_COMMANDS);
+    return [
+      ...Object.keys(this.INCIDENT_COMMANDS),
+      ...Object.keys(this.NAVIGATION_COMMANDS)
+    ];
+  }
+
+  public getNavigationCommands(): { pattern: string; type: NavigationCommandType; description: string }[] {
+    const typeDescriptions: Record<NavigationCommandType, string> = {
+      'zoom_in': 'Zoom the map in',
+      'zoom_out': 'Zoom the map out',
+      'recenter': 'Center map on your location',
+      'start_navigation': 'Start turn-by-turn navigation',
+      'stop_navigation': 'Stop current navigation',
+      'toggle_3d': 'Toggle 3D building view',
+      'toggle_satellite': 'Toggle satellite view',
+      'mute': 'Mute voice guidance',
+      'unmute': 'Unmute voice guidance',
+      'next_turn': 'Show next turn information',
+      'repeat_instruction': 'Repeat last instruction',
+      'show_overview': 'Show full route overview',
+      'find_fuel': 'Search for nearby fuel stations',
+      'find_parking': 'Search for truck parking',
+      'find_rest_area': 'Search for rest areas',
+    };
+
+    return Object.entries(this.NAVIGATION_COMMANDS).map(([pattern, commandType]) => ({
+      pattern,
+      type: commandType,
+      description: typeDescriptions[commandType],
+    }));
   }
 
   public getSupportedIncidentTypes(): { pattern: string; type: IncidentType; description: string }[] {
@@ -336,4 +537,4 @@ export function getVoiceCommandSystem(): VoiceCommandSystem {
 }
 
 export { VoiceCommandSystem };
-export type { IncidentType, VoiceCommandResult, IncidentReportCallback };
+export type { IncidentType, NavigationCommandType, VoiceCommandResult, IncidentReportCallback, NavigationCommandCallback };
