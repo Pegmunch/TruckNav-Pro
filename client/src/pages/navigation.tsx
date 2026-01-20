@@ -3991,27 +3991,6 @@ function NavigationPageContent() {
                   />
                 )}
                 
-                      {/* Navigation Header - White banner with TruckNav Pro + green gear - ALWAYS VISIBLE */}
-                      {/* Green gear opens the quick settings panel (vehicle, language, theme) */}
-                      <NavigationHeader 
-                        onSettingsClick={() => setShowVehicleSettings(true)}
-                        onWeatherClick={() => setShowWeatherTool(true)}
-                        onEntertainmentClick={() => setShowEntertainmentTool(true)}
-                        onVoiceNavClick={() => setShowVoiceNavTool(true)}
-                        onFuelPricesClick={() => setShowFuelPricesTool(true)}
-                        onFatigueMonitorClick={() => setShowFatigueMonitorTool(true)}
-                        onRegionSettingsClick={() => setShowRegionSettingsTool(true)}
-                        onLanguageClick={() => setShowLanguageTool(true)}
-                        onMapSettingsClick={() => setShowMapSettingsTool(true)}
-                        onClearRouteClick={() => {
-                          setCurrentRoute(null);
-                          toast({ title: "Route cleared", description: "The map has been reset." });
-                        }}
-                        onReplayTourClick={() => resetTour()}
-                      />
-                      
-                      {/* ETA HEADER moved to mobile layout top level - always visible when route exists */}
-                      
                       {/* NAVIGATE MODE OVERLAYS - Desktop ONLY when ACTIVELY NAVIGATING */}
                       {/* CRITICAL: Use isNavigating instead of isNavUIActive to prevent HUD showing during preview mode */}
                       {isNavigating && (
