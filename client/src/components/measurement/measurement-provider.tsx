@@ -46,6 +46,27 @@ const getRegionFromCountry = (countryCode: string): Region => {
   return 'europe';
 };
 
+// Detect if user is likely in the UK based on browser settings
+const detectUKFromBrowser = (): boolean => {
+  try {
+    // Check browser language
+    const lang = navigator.language || (navigator as any).userLanguage || '';
+    if (lang.toLowerCase() === 'en-gb') {
+      return true;
+    }
+    
+    // Check timezone (Europe/London is UK)
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timezone === 'Europe/London') {
+      return true;
+    }
+    
+    return false;
+  } catch {
+    return false;
+  }
+};
+
 // Synchronous initialization function - runs before first render
 const getInitialState = (): { system: MeasurementSystem; region: Region } => {
   // Check if we're in browser environment
@@ -83,6 +104,16 @@ const getInitialState = (): { system: MeasurementSystem; region: Region } => {
         system = (savedRegion === "uk" || savedRegion === "usa") ? "imperial" : "metric";
       }
       return { system, region: savedRegion };
+    }
+    
+    // Auto-detect UK from browser settings (language/timezone)
+    if (detectUKFromBrowser()) {
+      console.log('[MEASUREMENT] Auto-detected UK from browser settings, defaulting to imperial/mph');
+      // Save the detection so it persists
+      localStorage.setItem("trucknav_country", "GB");
+      localStorage.setItem("measurement-region", "uk");
+      localStorage.setItem("measurement-system", "imperial");
+      return { system: 'imperial', region: 'uk' };
     }
     
     // Default to europe/metric (most common internationally)
