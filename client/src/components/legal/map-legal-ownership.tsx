@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Shield, Copyright, FileText, ExternalLink, HelpCircle } from "lucide-react";
+import { Shield, Copyright, FileText, ExternalLink, HelpCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from 'react-i18next';
 import TermsOfService from "./terms-of-service";
@@ -35,6 +36,8 @@ export default function MapLegalOwnership({
   compact = true
 }: MapLegalOwnershipProps) {
   const { t } = useTranslation();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
   
   return (
     <div 
@@ -67,44 +70,60 @@ export default function MapLegalOwnership({
           
           {/* User Guide Button */}
           <div className="flex items-center gap-1 shrink-0">
-            <Dialog>
+            <Dialog open={guideOpen} onOpenChange={setGuideOpen}>
               <DialogTrigger asChild>
                 <Button 
-                  variant="ghost" 
+                  variant="outline" 
                   size="sm" 
-                  className="h-6 px-2 text-xs hover:bg-accent automotive-touch-target pointer-events-auto"
+                  className="h-6 px-2 text-xs bg-white hover:bg-gray-100 border border-gray-300 shadow-sm automotive-touch-target pointer-events-auto"
                   data-testid="button-view-user-guide"
                 >
                   <HelpCircle className="w-3 h-3 mr-1" />
                   {t('common.guide', 'Guide')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh]">
-                <DialogHeader>
+              <DialogContent className="max-w-4xl max-h-[90vh] bg-white">
+                <DialogHeader className="flex flex-row items-center justify-between">
                   <DialogTitle>{t('userGuide.title', 'TruckNav Pro User Guide')}</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setGuideOpen(false)}
+                    className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </DialogHeader>
                 <UserGuide />
               </DialogContent>
             </Dialog>
             
             {/* Legal Button */}
-            <Dialog>
+            <Dialog open={legalOpen} onOpenChange={setLegalOpen}>
               <DialogTrigger asChild>
                 <Button 
-                  variant="ghost" 
+                  variant="outline" 
                   size="sm" 
-                  className="h-6 px-2 text-xs hover:bg-accent automotive-touch-target pointer-events-auto"
+                  className="h-6 px-2 text-xs bg-white hover:bg-gray-100 border border-gray-300 shadow-sm automotive-touch-target pointer-events-auto"
                   data-testid="button-view-legal-terms"
                 >
                   <ExternalLink className="w-3 h-3 mr-1" />
                   {t('common.legal', 'Legal')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-6xl max-h-[90vh]">
-                <DialogHeader>
+              <DialogContent className="max-w-6xl max-h-[90vh] bg-white">
+                <DialogHeader className="flex flex-row items-center justify-between">
                   <DialogTitle>{t('legal.termsTitle', 'TruckNav Pro - Legal Terms & Protections')}</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLegalOpen(false)}
+                    className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </DialogHeader>
-                <div className="max-h-[80vh] overflow-y-auto">
+                <div className="max-h-[80vh] overflow-y-auto bg-white">
                   <TermsOfService />
                 </div>
               </DialogContent>
