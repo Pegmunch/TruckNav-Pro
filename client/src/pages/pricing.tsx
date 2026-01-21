@@ -44,20 +44,20 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-8 sm:py-12 px-3 sm:px-6 lg:px-8 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+        <div className="text-center mb-8 sm:mb-12 px-2">
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
             Choose Your Plan
           </h1>
-          <p className="mt-4 text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-3 sm:mt-4 text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Get access to premium truck navigation features with TruckNav Pro
           </p>
         </div>
 
         {/* Pricing Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 px-1 sm:px-0">
           {plans?.map((plan) => {
             const isBestValue = plan.name === "12 Months";
             const isCurrentUserPlan = isCurrentPlan(plan.id);
@@ -69,7 +69,7 @@ export default function PricingPage() {
                 data-testid={`card-plan-${plan.id}`}
                 className={`relative flex flex-col ${
                   isBestValue
-                    ? "border-primary shadow-xl scale-105 lg:scale-110"
+                    ? "border-primary shadow-xl md:scale-105 lg:scale-110"
                     : "border-border"
                 }`}
               >
@@ -91,35 +91,35 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <CardHeader className="text-center pb-8 pt-6">
-                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                  <CardDescription className="mt-2">
+                <CardHeader className="text-center pb-6 sm:pb-8 pt-5 sm:pt-6 px-3 sm:px-6">
+                  <CardTitle className="text-xl sm:text-2xl font-bold">{plan.name}</CardTitle>
+                  <CardDescription className="mt-1 sm:mt-2 text-xs sm:text-sm">
                     {plan.isLifetime ? "One-time payment" : `${plan.durationMonths} month${plan.durationMonths !== 1 ? 's' : ''} access`}
                   </CardDescription>
-                  <div className="mt-4">
-                    <span className="text-5xl font-extrabold text-foreground">
+                  <div className="mt-3 sm:mt-4">
+                    <span className="text-3xl sm:text-5xl font-extrabold text-foreground">
                       £{parseFloat(plan.priceGBP).toFixed(2)}
                     </span>
                     {!plan.isLifetime && (
-                      <span className="text-muted-foreground ml-2">
+                      <span className="text-muted-foreground ml-1 sm:ml-2 text-xs sm:text-sm block sm:inline mt-1 sm:mt-0">
                         /£{(parseFloat(plan.priceGBP) / (plan.durationMonths || 1)).toFixed(2)} per month
                       </span>
                     )}
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex-grow">
-                  <ul className="space-y-3">
+                <CardContent className="flex-grow px-3 sm:px-6">
+                  <ul className="space-y-2 sm:space-y-3">
                     {features.map((feature, index) => (
                       <li key={index} className="flex items-start">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0 mr-3 mt-0.5" />
-                        <span className="text-sm text-muted-foreground">{feature}</span>
+                        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0 mr-2 sm:mr-3 mt-0.5" />
+                        <span className="text-xs sm:text-sm text-muted-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </CardContent>
 
-                <CardFooter className="pt-6">
+                <CardFooter className="pt-4 sm:pt-6 px-3 sm:px-6">
                   <Button
                     data-testid={`button-subscribe-${plan.id}`}
                     onClick={() => handleSubscribe(plan.id)}
