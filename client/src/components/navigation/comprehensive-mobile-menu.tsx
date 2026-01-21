@@ -719,20 +719,44 @@ function ComprehensiveMobileMenu({
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => {
-                            console.log('[PREVIEW-BUTTON] Clicked - closing menu and calculating route (no auto-navigation)');
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const isDisabled = !fromInput || !toInput || !selectedProfile || isCalculating;
+                            console.log('[PREVIEW-BUTTON] Clicked - disabled:', isDisabled, 'fromInput:', !!fromInput, 'toInput:', !!toInput, 'selectedProfile:', !!selectedProfile);
+                            if (isDisabled) {
+                              console.log('[PREVIEW-BUTTON] Button is disabled - cannot proceed');
+                              return;
+                            }
+                            console.log('[PREVIEW-BUTTON] Proceeding - closing menu and calculating route');
                             // Close menu immediately so user sees the map
                             onOpenChange(false);
                             // Fire route calculation (don't await - it runs in background)
                             // NOTE: No onRequestAutoNavigation - user must manually start navigation
                             onPlanRoute();
                           }}
+                          onTouchEnd={(e) => {
+                            // iOS Safari touch fix - trigger click on touch end
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const isDisabled = !fromInput || !toInput || !selectedProfile || isCalculating;
+                            console.log('[PREVIEW-BUTTON] TouchEnd - disabled:', isDisabled);
+                            if (isDisabled) return;
+                            console.log('[PREVIEW-BUTTON] TouchEnd proceeding - closing menu and calculating route');
+                            onOpenChange(false);
+                            onPlanRoute();
+                          }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
-                          className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                          className={`h-8 px-4 font-semibold ${
+                            !fromInput || !toInput || !selectedProfile || isCalculating
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                          style={{ touchAction: 'manipulation' }}
                           data-testid="button-preview-route"
                         >
                           <Map className="h-4 w-4 mr-1" />
-                          Preview
+                          {isCalculating ? 'Calculating...' : (!fromInput || !toInput ? 'Enter locations' : (!selectedProfile ? 'Select vehicle' : 'Preview'))}
                         </Button>
                       </Label>
                       <AddressAutocomplete
@@ -894,15 +918,32 @@ function ComprehensiveMobileMenu({
                     {/* Preview Route Button - Shows when locations entered but route not calculated */}
                     {!currentRoute && fromInput && toInput && selectedProfile && (
                       <Button
-                        onClick={async () => {
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           console.log('[PREVIEW-BUTTON-BOTTOM] Clicked - calculating route only (no auto-navigation)');
+                          if (isCalculating) {
+                            console.log('[PREVIEW-BUTTON-BOTTOM] Already calculating - skipping');
+                            return;
+                          }
                           // Close menu immediately so user sees the map
                           onOpenChange(false);
                           // Just calculate and display route - user must manually start navigation
                           await onPlanRoute();
                         }}
+                        onTouchEnd={async (e) => {
+                          // iOS Safari touch fix
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('[PREVIEW-BUTTON-BOTTOM] TouchEnd triggered');
+                          if (isCalculating) return;
+                          console.log('[PREVIEW-BUTTON-BOTTOM] TouchEnd proceeding with route calculation');
+                          onOpenChange(false);
+                          await onPlanRoute();
+                        }}
                         disabled={isCalculating}
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                        style={{ touchAction: 'manipulation' }}
                         data-testid="button-preview-route-bottom"
                       >
                         {isCalculating ? (
@@ -913,7 +954,7 @@ function ComprehensiveMobileMenu({
                         ) : (
                           <>
                             <Map className="h-5 w-5 mr-2" />
-                            Preview
+                            Preview Route
                           </>
                         )}
                       </Button>
