@@ -885,6 +885,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Reset 3D mode state to match previous pitch
       const was3D = previousPitchRef.current > 30;
       setIs3DMode(was3D);
+      
+      // CRITICAL: Force map resize after navigation ends to fix container sizing
+      setTimeout(() => {
+        if (map.current) {
+          try {
+            map.current.resize();
+            console.log('[NAV-3D] Map resized after navigation ended');
+          } catch (e) {
+            console.warn('[NAV-3D] Map resize failed:', e);
+          }
+        }
+      }, 100);
     }
 
     previousNavigationStateRef.current = isNavigating;
@@ -2072,7 +2084,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     );
     
     if (isRouteChanged && map.current.isStyleLoaded()) {
-      console.log('[ROUTE-CHANGE] Route changed detected - forcing re-render');
+      console.log('[ROUTE-CHANGE] Route changed detected - updating route seamlessly');
       console.log(`[ROUTE-CHANGE] Previous ID: ${previousRouteIdRef.current}, New ID: ${currentRouteId}`);
       console.log(`[ROUTE-CHANGE] Previous length: ${previousRoutePathLengthRef.current}, New length: ${currentPathLength}`);
       
@@ -2083,36 +2095,67 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Clear cached data to force fresh render
       cachedRouteGeoJsonRef.current = null;
       
-      // Force re-render with fast multiple attempts for reliability
-      const renderAttempts = [0, 50, 150];
-      renderAttempts.forEach((delay, index) => {
-        setTimeout(() => {
-          if (!map.current || !map.current.isStyleLoaded()) return;
+      // CRITICAL FIX: Update route data seamlessly without removing layers (prevents flickering)
+      // Try to update the source data directly first, only remove/re-add if source doesn't exist
+      const updateRouteData = () => {
+        if (!map.current || !map.current.isStyleLoaded() || !currentRoute?.routePath) return;
+        
+        // Validate coordinates
+        const validCoords = currentRoute.routePath
+          .filter(coord => coord && 
+            typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng) &&
+            typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat))
+          .map(coord => [coord.lng, coord.lat]);
+        
+        if (validCoords.length < 2) {
+          console.warn('[ROUTE-CHANGE] Insufficient valid coordinates');
+          return;
+        }
+        
+        const geoJsonData = {
+          type: 'Feature' as const,
+          properties: {},
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: validCoords
+          }
+        };
+        
+        const routeSource = map.current.getSource('route') as maplibregl.GeoJSONSource;
+        
+        if (routeSource) {
+          // Source exists - just update the data (no flicker!)
+          console.log('[ROUTE-CHANGE] Updating existing route source data');
+          routeSource.setData(geoJsonData);
+          cachedRouteGeoJsonRef.current = geoJsonData;
           
-          console.log(`[ROUTE-CHANGE] Render attempt ${index + 1}/${renderAttempts.length}`);
-          
-          // Remove existing route and re-add with new data
-          removeRouteLayers();
-          
-          setTimeout(() => {
-            if (map.current && map.current.isStyleLoaded()) {
-              renderRouteLayers();
-              
-              // Move to top
-              try {
-                if (map.current.getLayer('route-outline')) {
-                  map.current.moveLayer('route-outline');
-                }
-                if (map.current.getLayer('route-line')) {
-                  map.current.moveLayer('route-line');
-                }
-              } catch (e) {
-                // Ignore
-              }
+          // Ensure layers are on top
+          try {
+            if (map.current.getLayer('route-outline')) {
+              map.current.moveLayer('route-outline');
             }
-          }, 50);
-        }, delay);
-      });
+            if (map.current.getLayer('route-line')) {
+              map.current.moveLayer('route-line');
+            }
+          } catch (e) {
+            // Ignore
+          }
+        } else {
+          // Source doesn't exist - use full render
+          console.log('[ROUTE-CHANGE] No existing source - full render');
+          renderRouteLayers();
+        }
+      };
+      
+      // Immediate update
+      updateRouteData();
+      
+      // Backup render attempt after short delay
+      setTimeout(() => {
+        if (map.current && map.current.isStyleLoaded()) {
+          updateRouteData();
+        }
+      }, 100);
     } else if (!isRouteChanged) {
       // Same route - just update refs
       previousRouteIdRef.current = currentRouteId;
