@@ -3300,9 +3300,9 @@ function NavigationPageContent() {
                     hideControls={false}
                     hideCompass={false}
                     onMapClick={handleMapClick}
-                    isNavigating={isNavigating}
+                    isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
-                    useStaticRoute={isNavigating}
+                    useStaticRoute={isNavigating || isLocalNavActive}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                     onViewIncidents={() => setShowIncidentFeed(true)}
@@ -4095,9 +4095,9 @@ function NavigationPageContent() {
                     hideControls={false}
                     hideCompass={false}
                     onMapClick={handleMapClick}
-                    isNavigating={isNavigating}
+                    isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
-                    useStaticRoute={isNavigating}
+                    useStaticRoute={isNavigating || isLocalNavActive}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                     onViewIncidents={() => setShowIncidentFeed(true)}

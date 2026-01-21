@@ -175,7 +175,7 @@ export function CompactTripStrip({
           </div>
           <div className="flex items-center gap-0.5 bg-emerald-600 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0">
             <Route className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-bold whitespace-nowrap">{formatDistance(distanceRemaining, "miles")}</span>
+            <span className="text-[11px] font-bold whitespace-nowrap">{formatDistance(distanceRemaining, "meters")}</span>
           </div>
           <div className={cn(
             "flex items-center gap-0.5 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0",
@@ -209,21 +209,8 @@ export function CompactTripStrip({
           </div>
         )}
         
-        {/* Right: Action buttons - moved to prevent overlap with right stack */}
+        {/* Right: Action buttons - Preview/Stop only (End button removed - use Stop on speedometer) */}
         <div className="flex items-center gap-1 flex-shrink-0 pr-1">
-          {isNavigating && onCancelNavigation && (
-            <Button
-              onClick={onCancelNavigation}
-              size="sm"
-              disabled={isCancellingNavigation}
-              className="h-7 px-2 bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] active:scale-95 transition-transform disabled:opacity-50 rounded shadow-sm flex items-center gap-0.5"
-              style={{ touchAction: 'manipulation' }}
-              data-testid="button-cancel-navigation"
-            >
-              <X className="w-3.5 h-3.5" />
-              End
-            </Button>
-          )}
           {!isNavigating && (
             <div className="flex flex-row items-center gap-0.5">
               <button
