@@ -173,10 +173,6 @@ export function CompactTripStrip({
             <Clock className="w-3.5 h-3.5" />
             <span className="text-[11px] font-bold whitespace-nowrap">{eta}m</span>
           </div>
-          <div className="flex items-center gap-0.5 bg-emerald-600 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0">
-            <Route className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-bold whitespace-nowrap">{formatDistance(distanceRemaining, "meters")}</span>
-          </div>
           <div className={cn(
             "flex items-center gap-0.5 text-white px-1.5 py-1 rounded shadow-sm flex-shrink-0",
             hasTrafficDelay ? "bg-orange-600" : "bg-purple-600"
