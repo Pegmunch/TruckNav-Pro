@@ -229,6 +229,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // This ensures the route persists across map view toggles (roads ⇄ satellite)
   const cachedRouteGeoJsonRef = useRef<GeoJSON.Feature<GeoJSON.LineString> | null>(null);
   
+  // HEALTH & SAFETY: Persistent navigation route cache - NEVER cleared during navigation
+  // This ensures the blue route line is ALWAYS visible during navigation including reroutes
+  const persistentNavRouteRef = useRef<{lat: number; lng: number}[] | null>(null);
+  const wasNavigatingRef = useRef(false);
+  
   const gps = useGPS();
   const gpsPosition = gps?.position ?? null;
   const gpsStatus = gps?.status ?? 'acquiring';
@@ -1594,9 +1599,33 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current || !map.current.isStyleLoaded()) return false;
     
     // Check if we have cached data to restore
+    // HEALTH & SAFETY: Use persistent navigation cache as fallback
     if (!cachedRouteGeoJsonRef.current) {
-      console.log('[ROUTE-ENSURE] No cached route data to restore');
-      return false;
+      if (persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2) {
+        console.log('[ROUTE-ENSURE] No GeoJSON cache - rebuilding from persistent navigation cache');
+        const validCoords = persistentNavRouteRef.current
+          .filter(coord => coord && 
+            typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng) &&
+            typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat))
+          .map(coord => [coord.lng, coord.lat]);
+        
+        if (validCoords.length >= 2) {
+          cachedRouteGeoJsonRef.current = {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: validCoords
+            }
+          };
+        } else {
+          console.log('[ROUTE-ENSURE] Persistent cache has insufficient valid coordinates');
+          return false;
+        }
+      } else {
+        console.log('[ROUTE-ENSURE] No cached route data to restore');
+        return false;
+      }
     }
     
     // If source already exists, just ensure layers are on top
@@ -1701,13 +1730,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   // Helper: Render route layers
   const renderRouteLayers = useCallback(() => {
-    if (!map.current || !currentRoute?.routePath) return;
+    if (!map.current) return;
     
-    console.log('[ROUTE-RENDER] Drawing route with', currentRoute.routePath.length, 'coordinates');
+    // HEALTH & SAFETY: Use persistent cache if currentRoute is temporarily unavailable during navigation
+    let sourceCoords = currentRoute?.routePath;
+    if (!sourceCoords || sourceCoords.length < 2) {
+      if (isNavigating && persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2) {
+        console.log('[ROUTE-RENDER] Using persistent navigation cache -', persistentNavRouteRef.current.length, 'coordinates');
+        sourceCoords = persistentNavRouteRef.current;
+      } else {
+        console.log('[ROUTE-RENDER] No route data available');
+        return;
+      }
+    }
+    
+    console.log('[ROUTE-RENDER] Drawing route with', sourceCoords.length, 'coordinates');
     
     // CRITICAL FIX: Validate all coordinates are valid numbers before passing to MapLibre
     // This prevents "coordinates must contain numbers" errors during navigation
-    let routeCoordinates = currentRoute.routePath
+    let routeCoordinates = sourceCoords
       .filter(coord => {
         // Ensure coord exists and has valid numeric lat/lng
         if (!coord) return false;
@@ -1926,16 +1967,47 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       pendingStyleListenerRef.current = null;
     }
 
-    console.log('[ROUTE-RENDER] Route manager - currentRoute:', !!currentRoute, 'styleLoaded:', mapInstance.isStyleLoaded());
+    console.log('[ROUTE-RENDER] Route manager - currentRoute:', !!currentRoute, 'isNavigating:', isNavigating, 'styleLoaded:', mapInstance.isStyleLoaded());
 
-    // Remove route visualization if currentRoute is null
-    if (!currentRoute?.routePath) {
-      console.log('[ROUTE-RENDER] No route data - removing route layers and clearing cache');
-      cachedRouteGeoJsonRef.current = null; // Clear cache when no route
-      if (mapInstance.isStyleLoaded()) {
-        removeRouteLayers();
+    // HEALTH & SAFETY: Cache route coordinates when available for navigation
+    // This ensures we NEVER lose the route during reroutes or state transitions
+    if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+      persistentNavRouteRef.current = [...currentRoute.routePath];
+      console.log('[ROUTE-RENDER] ✅ Cached', currentRoute.routePath.length, 'coordinates for persistent navigation');
+    }
+    
+    // Track navigation state transitions
+    wasNavigatingRef.current = isNavigating;
+
+    // HEALTH & SAFETY: Check if routePath is missing OR has less than 2 points (covers empty arrays during reroute transitions)
+    const hasValidRoutePath = currentRoute?.routePath && currentRoute.routePath.length >= 2;
+    
+    // Remove route visualization if no valid route - BUT NEVER DURING NAVIGATION
+    if (!hasValidRoutePath) {
+      // CRITICAL SAFETY CHECK: During navigation, NEVER remove the route
+      // Use persistent cache instead to maintain visibility
+      if (isNavigating && persistentNavRouteRef.current && persistentNavRouteRef.current.length >= 2) {
+        console.log('[ROUTE-RENDER] ⚠️ Route data missing/empty during navigation - using persistent cache with', persistentNavRouteRef.current.length, 'coords');
+        // Force re-render using cached data - ensures blue line stays visible
+        if (mapInstance.isStyleLoaded()) {
+          const hasRouteLayer = mapInstance.getLayer('route-line');
+          if (!hasRouteLayer) {
+            ensureRouteLayers();
+          }
+          // CRITICAL: Always force render from cache to ensure line is visible
+          renderRouteLayers();
+        }
+        // DO NOT return - allow the styledata listener to be set up
+      } else {
+        // Not navigating - safe to remove route
+        console.log('[ROUTE-RENDER] No route data - removing route layers and clearing cache');
+        cachedRouteGeoJsonRef.current = null;
+        persistentNavRouteRef.current = null; // Only clear when NOT navigating
+        if (mapInstance.isStyleLoaded()) {
+          removeRouteLayers();
+        }
+        return;
       }
-      return;
     }
 
     // Render route immediately if style is loaded
@@ -1994,7 +2066,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           
           // CRITICAL: Always re-render to apply latest GPS-based route shortening during navigation
           // This ensures the visible line matches the current route segment
-          if (currentRoute?.routePath) {
+          // HEALTH & SAFETY: Use persistent cache if currentRoute is temporarily null
+          if (currentRoute?.routePath || (isNavigating && persistentNavRouteRef.current)) {
             console.log('[ROUTE-STYLE] Re-rendering route with latest data after style change');
             renderRouteLayers();
           }
@@ -2008,7 +2081,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     return () => {
       mapInstance.off('styledata', handleStyleChange);
     };
-  }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers, ensureRouteLayers]);
+  }, [currentRoute, isNavigating, isLoaded, removeRouteLayers, renderRouteLayers, ensureRouteLayers]);
 
   // CRITICAL: Restore route layers when navigation state changes
   // This ensures the blue polyline stays visible when switching to/from navigation mode
@@ -2016,10 +2089,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current || !isLoaded) return;
     if (!map.current.isStyleLoaded()) return;
     
+    // HEALTH & SAFETY: Get route coordinates from current route OR persistent cache
+    const routeCoords = currentRoute?.routePath || persistentNavRouteRef.current;
+    const hasRouteData = routeCoords && routeCoords.length >= 2;
+    
     // When navigation starts, ensure route layers exist AND re-render the route
-    if (isNavigating && currentRoute?.routePath) {
+    if (isNavigating && hasRouteData) {
       console.log('[ROUTE-NAV-STATE] Navigation started - ensuring blue route line is visible');
-      console.log('[ROUTE-NAV-STATE] Route has', currentRoute.routePath.length, 'coordinates');
+      console.log('[ROUTE-NAV-STATE] Route has', routeCoords!.length, 'coordinates (from', currentRoute?.routePath ? 'currentRoute' : 'persistentCache', ')');
       
       // BULLETPROOF ROUTE RENDERING: Fast multiple attempts for quick rendering
       const renderAttempts = [0, 50, 100, 200, 400];
@@ -2069,9 +2146,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   useEffect(() => {
     if (!map.current || !isLoaded) return;
     if (!currentRoute?.routePath) {
-      previousRouteIdRef.current = null;
-      previousRoutePathLengthRef.current = 0;
+      // HEALTH & SAFETY: During navigation, keep previous route ID to detect reroute completion
+      if (!isNavigating) {
+        previousRouteIdRef.current = null;
+        previousRoutePathLengthRef.current = 0;
+      }
       return;
+    }
+    
+    // HEALTH & SAFETY: Immediately cache new route for persistent navigation
+    if (currentRoute.routePath.length >= 2) {
+      persistentNavRouteRef.current = [...currentRoute.routePath];
+      console.log('[ROUTE-CHANGE] ✅ Updated persistent navigation cache with', currentRoute.routePath.length, 'coordinates');
     }
     
     const currentRouteId = currentRoute.id || null;
