@@ -2421,14 +2421,15 @@ function NavigationPageContent() {
   };
 
   // Clear current route when locations change to ensure fresh planning
-  // GUARD: Do NOT clear route during active navigation or when preparing to navigate
+  // GUARD: Do NOT clear route during active navigation, preview mode, or when preparing to navigate
   useEffect(() => {
-    // CRITICAL FIX: Also check isLocalNavActive to prevent race condition when GO button is pressed
+    // CRITICAL FIX: Also check isLocalNavActive and isShowingPreview to prevent race conditions
     // The route was disappearing because isNavigating (backend state) hadn't updated yet
-    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile && !isLocalNavActive) {
+    // Also guard against clearing route during preview mode (after Preview button pressed)
+    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile && !isLocalNavActive && !isShowingPreview) {
       setCurrentRoute(null);
     }
-  }, [fromLocation, toLocation, isNavigating, shouldAutoNavigateOnMobile, isLocalNavActive]);
+  }, [fromLocation, toLocation, isNavigating, shouldAutoNavigateOnMobile, isLocalNavActive, isShowingPreview]);
 
   // Auto-plan route when both locations are set (with 3-second debounce)
   // Also triggers when coordinates change (e.g., from AddressAutocomplete)
