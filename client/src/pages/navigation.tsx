@@ -291,6 +291,10 @@ function NavigationPageContent() {
   // Route cancellation guard to prevent race condition
   const isCancellingRouteRef = useRef(false);
   
+  // CRITICAL: Store route before navigation starts - prevents loss during journey sync
+  // This ref NEVER clears during navigation and serves as the authoritative source
+  const lastCalculatedRouteRef = useRef<RouteWithViolations | null>(null);
+  
   // Route calculation counter - tracks number of active route calculations
   // Uses counter instead of boolean to handle overlapping requests safely
   // Watchdog only fires when counter is 0 (no active calculations)
@@ -1724,12 +1728,18 @@ function NavigationPageContent() {
       if (!isLocalNavActive) {
         console.log('[JOURNEY-LOAD] No journey - clearing route data');
         setCurrentRoute(null);
+        lastCalculatedRouteRef.current = null; // Only clear ref when NOT navigating
       } else {
         console.log('[JOURNEY-LOAD] No journey but navigation active - preserving currentRoute');
+        // CRITICAL: If currentRoute is null but we have a saved route, restore it immediately
+        if (!currentRoute && lastCalculatedRouteRef.current) {
+          console.log('[JOURNEY-LOAD] ⚠️ Restoring route from lastCalculatedRouteRef during navigation');
+          setCurrentRoute(lastCalculatedRouteRef.current);
+        }
       }
       // NOTE: Navigation state is automatically derived by useNavigationSession
     }
-  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive]);
+  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive, currentRoute]);
 
   // Handle page refresh - restore journey if it exists
   // NOTE: Navigation state is automatically derived by useNavigationSession hook
@@ -2060,6 +2070,8 @@ function NavigationPageContent() {
       setShowDestinationReached(false);
       
       setCurrentRoute(route);
+      // SAFETY: Also store in persistent ref for navigation start resilience
+      lastCalculatedRouteRef.current = route;
       // Update route ID ref SYNCHRONOUSLY before any callbacks can fire
       currentRouteIdRef.current = route.id || null;
       // Update window sync with new route
@@ -2346,6 +2358,8 @@ function NavigationPageContent() {
       
       const newRoute = await response.json();
       setCurrentRoute(newRoute);
+      // SAFETY: Store in persistent ref for navigation resilience
+      lastCalculatedRouteRef.current = newRoute;
       
       // Clear preview and close panel
       setPreviewRoute(null);
@@ -2800,7 +2814,9 @@ function NavigationPageContent() {
       
       // CRITICAL: Persist route to state so component receives valid route
       setCurrentRoute(route);
-      console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state, proceeding with journey activation');
+      // SAFETY: Store in persistent ref BEFORE navigation starts - this survives journey sync effects
+      lastCalculatedRouteRef.current = route;
+      console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state + ref, proceeding with journey activation');
 
       // NOTE: Navigation state will be automatically derived by navSession hook
       // after journey is created/activated - no need to manually set states
