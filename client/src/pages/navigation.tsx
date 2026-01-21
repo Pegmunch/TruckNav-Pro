@@ -3484,7 +3484,7 @@ function NavigationPageContent() {
                   >
                     {/* Route Summary Card */}
                     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg px-4 py-3 pointer-events-auto w-full max-w-sm">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-center mb-3">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1.5 bg-blue-600 text-white px-2 py-1 rounded">
                             <Clock className="w-4 h-4" />
@@ -3495,18 +3495,6 @@ function NavigationPageContent() {
                             <span className="font-bold text-sm">{((currentRoute.distance || 0) / 1000).toFixed(1)} km</span>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setIsShowingPreview(false);
-                            handleCancelRoute();
-                          }}
-                          className="h-8 text-gray-500 hover:text-gray-700"
-                        >
-                          <X className="w-4 h-4 mr-1" />
-                          Cancel
-                        </Button>
                       </div>
                       
                       {/* Action Buttons */}
@@ -4200,29 +4188,7 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Cancel Route Button - Compact square X button at bottom-left (half size) */}
-                    <Button
-                      onClick={handleStopNavigation}
-                      size="icon"
-                      variant="destructive"
-                      disabled={completeJourneyMutation.isPending || isCancellingRouteRef.current}
-                      className={cn(
-                        "fixed z-[170] h-7 w-7 rounded-lg shadow-lg pointer-events-auto bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border border-white/30 transition-all duration-200 hover:scale-105 active:scale-95",
-                        completeJourneyMutation.isPending && "opacity-50 cursor-not-allowed"
-                      )}
-                      style={{
-                        bottom: 'calc(16px + var(--safe-area-bottom, 0px))',
-                        left: 'calc(16px + var(--safe-area-left, 0px))'
-                      }}
-                      data-testid="button-cancel-route"
-                      aria-label="Cancel route and return to start"
-                    >
-                      {completeJourneyMutation.isPending ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <X className="w-3.5 h-3.5" />
-                      )}
-                    </Button>
+                    {/* Cancel button removed - users use STOP button on speedometer */}
 
                     {/* Legal Ownership - Bottom of screen during navigation */}
                     <MapLegalOwnership compact={true} className="!z-[200]" />
