@@ -170,9 +170,11 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(), // "3 Months", "6 Months", "12 Months", "Lifetime", "Fleet Management Annual", "Fleet Management Lifetime"
   stripePriceId: text("stripe_price_id").notNull().unique(),
+  appleProductId: text("apple_product_id"), // App Store in-app purchase product ID (e.g. uk.co.bespokemarketingai.trucknavpro.monthly)
   priceGBP: decimal("price_gbp", { precision: 10, scale: 2 }).notNull(), // £25.99, £49.99, £99.00, £200.00, £5000.00, £10000.00
   durationMonths: integer("duration_months"), // 3, 6, 12, null for lifetime
   isLifetime: boolean("is_lifetime").default(false),
+  isRecurring: boolean("is_recurring").default(false), // true for auto-renewing subscriptions (monthly PAYG)
   category: text("category").default('navigation'), // 'navigation', 'fleet_management'
   features: jsonb("features").$type<string[]>(), // array of feature names
   isActive: boolean("is_active").default(true),
