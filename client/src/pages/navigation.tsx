@@ -3490,10 +3490,6 @@ function NavigationPageContent() {
                             <Clock className="w-4 h-4" />
                             <span className="font-bold text-sm">{Math.round((currentRoute.duration || 0))} min</span>
                           </div>
-                          <div className="flex items-center gap-1.5 bg-emerald-600 text-white px-2 py-1 rounded">
-                            <RouteIcon className="w-4 h-4" />
-                            <span className="font-bold text-sm">{((currentRoute.distance || 0) / 1000).toFixed(1)} km</span>
-                          </div>
                         </div>
                       </div>
                       
