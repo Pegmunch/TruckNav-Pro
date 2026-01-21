@@ -643,11 +643,17 @@ function NavigationPageContent() {
     // Only reset if route data has settled AND there's no route AND local nav is active
     // GUARD: Skip reset if GO button flow is active OR any route calculation is in progress
     // Using counter ref to handle overlapping requests (counter > 0 means at least one calculation active)
-    if (routeDataSettled && currentRoute === null && isLocalNavActive && !shouldAutoNavigateOnMobile && routeCalculationCountRef.current === 0) {
-      console.log('[NAV-STATE] Auto-resetting isLocalNavActive - no route exists after data settled');
+    // CRITICAL: Also check lastCalculatedRouteRef - if we have a saved route, DO NOT reset
+    const hasSavedRoute = lastCalculatedRouteRef.current !== null;
+    if (routeDataSettled && currentRoute === null && !hasSavedRoute && isLocalNavActive && !shouldAutoNavigateOnMobile && routeCalculationCountRef.current === 0) {
+      console.log('[NAV-STATE] Auto-resetting isLocalNavActive - no route exists after data settled and no saved route');
       setIsLocalNavActive(false);
       localStorage.removeItem('navigation_ui_active');
       localStorage.removeItem('navigation_mode');
+    } else if (routeDataSettled && currentRoute === null && hasSavedRoute && isLocalNavActive) {
+      // Route is null but we have a saved route - restore it instead of resetting
+      console.log('[NAV-STATE] Restoring route from lastCalculatedRouteRef instead of resetting');
+      setCurrentRoute(lastCalculatedRouteRef.current);
     }
   }, [currentRoute, isLocalNavActive, routeDataSettled, shouldAutoNavigateOnMobile]);
   
@@ -2951,6 +2957,8 @@ function NavigationPageContent() {
       // CRITICAL: Revert isLocalNavActive since journey creation failed
       // This prevents stuck "navigating" state when backend never entered navigation
       setIsLocalNavActive(false);
+      // Note: Don't clear lastCalculatedRouteRef on error - user may want to retry
+      // The route is still valid, only the journey creation failed
       localStorage.removeItem('navigation_ui_active');
       localStorage.removeItem('navigation_mode');
       localStorage.removeItem('navigation_timestamp');
@@ -3017,6 +3025,8 @@ function NavigationPageContent() {
     setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
     setSidebarState(isMobile ? 'closed' : 'open'); // CRITICAL: Reset sidebar to prevent full-screen overlay blocking map
     resetRerouteState(); // Reset auto-reroute state for next navigation session
+    // CRITICAL: Clear the persistent route ref on explicit stop to prevent restoration
+    lastCalculatedRouteRef.current = null;
     // CRITICAL FIX: Clear currentRoute immediately to prevent NavigationLayout from blocking
     // This ensures the hamburger menu button becomes visible immediately
     setCurrentRoute(null);
