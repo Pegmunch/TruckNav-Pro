@@ -631,38 +631,38 @@ export function AddressAutocomplete({
             <ToggleGroupItem 
               value="" 
               aria-label="Search addresses"
-              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-blue-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-blue-500/50 hover:scale-105"
+              className="h-8 px-3 text-xs font-medium rounded-md transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-blue-600 data-[state=on]:to-blue-500 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-blue-500/50 hover:scale-105"
               data-testid="poi-category-addresses"
             >
-              <MapPin className="h-4 w-4 mr-2" />
+              <MapPin className="h-3 w-3 mr-1" />
               Addresses
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="7315" 
               aria-label="Truck stops"
-              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-emerald-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-emerald-500/50 hover:scale-105"
+              className="h-8 px-3 text-xs font-medium rounded-md transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-emerald-500 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/50 hover:scale-105"
               data-testid="poi-category-truck-stops"
             >
-              <Store className="h-4 w-4 mr-2" />
+              <Store className="h-3 w-3 mr-1" />
               Truck Stops
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="7311" 
               aria-label="Gas stations"
-              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-orange-600 data-[state=on]:to-orange-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-orange-500/50 hover:scale-105"
+              className="h-8 px-3 text-xs font-medium rounded-md transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-orange-600 data-[state=on]:to-orange-500 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-orange-500/50 hover:scale-105"
               data-testid="poi-category-gas-stations"
             >
-              <Fuel className="h-4 w-4 mr-2" />
-              Gas Stations
+              <Fuel className="h-3 w-3 mr-1" />
+              Gas
             </ToggleGroupItem>
             <ToggleGroupItem 
               value="9920" 
               aria-label="Rest areas"
-              className="h-10 px-4 text-sm font-medium rounded-lg transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-purple-600 data-[state=on]:to-purple-500 data-[state=on]:text-white data-[state=on]:shadow-lg data-[state=on]:shadow-purple-500/50 hover:scale-105"
+              className="h-8 px-3 text-xs font-medium rounded-md transition-all data-[state=on]:bg-gradient-to-r data-[state=on]:from-purple-600 data-[state=on]:to-purple-500 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-purple-500/50 hover:scale-105"
               data-testid="poi-category-rest-areas"
             >
-              <UtensilsCrossed className="h-4 w-4 mr-2" />
-              Rest Areas
+              <UtensilsCrossed className="h-3 w-3 mr-1" />
+              Rest
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -674,7 +674,7 @@ export function AddressAutocomplete({
             onClick={handleUseGPSLocation}
             disabled={isGettingLocation}
             variant="default"
-            className="w-full h-14 text-base font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-touch-target"
+            className="w-full h-10 text-sm font-bold bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 hover:from-blue-600 hover:to-indigo-600 active:from-blue-700 active:to-indigo-700 shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="button-use-gps-location"
           >
             {isGettingLocation ? (
@@ -710,7 +710,7 @@ export function AddressAutocomplete({
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           placeholder={dynamicPlaceholder}
-          className={cn("relative h-14 text-base pr-12 pl-4 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-white dark:bg-slate-900", className)}
+          className={cn("relative h-11 text-sm pr-10 pl-3 rounded-lg border-2 focus:border-blue-500 dark:focus:border-blue-400 transition-all bg-white dark:bg-slate-900", className)}
           data-testid={testId}
           autoComplete="off"
           autoCorrect="off"
