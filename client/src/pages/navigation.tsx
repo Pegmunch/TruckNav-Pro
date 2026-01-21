@@ -1728,15 +1728,16 @@ function NavigationPageContent() {
       });
     } else {
       // No journey - clear route data
-      // CRITICAL GUARD: Do NOT clear route during active navigation (isLocalNavActive)
+      // CRITICAL GUARD: Do NOT clear route during active navigation (isLocalNavActive) or preview mode (isShowingPreview)
       // This prevents the route from disappearing during navigation start transitions
       // when currentJourney is briefly null before the journey is created/activated
-      if (!isLocalNavActive) {
+      // Also prevents route clearing when Preview button is pressed (plan view → preview mode)
+      if (!isLocalNavActive && !isShowingPreview) {
         console.log('[JOURNEY-LOAD] No journey - clearing route data');
         setCurrentRoute(null);
         lastCalculatedRouteRef.current = null; // Only clear ref when NOT navigating
       } else {
-        console.log('[JOURNEY-LOAD] No journey but navigation active - preserving currentRoute');
+        console.log('[JOURNEY-LOAD] No journey but navigation/preview active - preserving currentRoute');
         // CRITICAL: If currentRoute is null but we have a saved route, restore it immediately
         if (!currentRoute && lastCalculatedRouteRef.current) {
           console.log('[JOURNEY-LOAD] ⚠️ Restoring route from lastCalculatedRouteRef during navigation');
@@ -1745,7 +1746,7 @@ function NavigationPageContent() {
       }
       // NOTE: Navigation state is automatically derived by useNavigationSession
     }
-  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive, currentRoute]);
+  }, [currentJourney, navState, shouldShowHUD, isLocalNavActive, currentRoute, isShowingPreview]);
 
   // Handle page refresh - restore journey if it exists
   // NOTE: Navigation state is automatically derived by useNavigationSession hook
