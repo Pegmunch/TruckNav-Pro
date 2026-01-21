@@ -3382,20 +3382,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await overpassResponse.json();
       
       // Helper function to estimate speed limits based on road type
+      // Values in km/h - UK speeds: motorway=70mph(113), dual=70mph(113), single=60mph(97), town=30mph(48)
       const estimateSpeedLimit = (roadType: string): number | null => {
         const speedEstimates: Record<string, number> = {
-          'motorway': 120,
-          'motorway_link': 80,
-          'trunk': 100,
-          'trunk_link': 70,
-          'primary': 80,
-          'primary_link': 60,
-          'secondary': 60,
-          'tertiary': 50,
-          'residential': 30,
-          'living_street': 20,
-          'service': 20,
-          'unclassified': 50
+          'motorway': 113,       // UK: 70 mph
+          'motorway_link': 64,   // UK: 40 mph slip road
+          'trunk': 113,          // UK: 70 mph (dual carriageway A-roads)
+          'trunk_link': 64,      // UK: 40 mph
+          'primary': 97,         // UK: 60 mph (single carriageway A-roads)
+          'primary_link': 48,    // UK: 30 mph
+          'secondary': 97,       // UK: 60 mph (B-roads)
+          'tertiary': 48,        // UK: 30 mph
+          'residential': 48,     // UK: 30 mph
+          'living_street': 32,   // UK: 20 mph
+          'service': 32,         // UK: 20 mph
+          'unclassified': 97     // UK: 60 mph (national speed limit)
         };
         return speedEstimates[roadType] || null;
       };
