@@ -295,6 +295,11 @@ function NavigationPageContent() {
   // This ref NEVER clears during navigation and serves as the authoritative source
   const lastCalculatedRouteRef = useRef<RouteWithViolations | null>(null);
   
+  // CRITICAL: Navigation transition guard - prevents route clearing during GO button flow
+  // This ref is set TRUE when GO is pressed and cleared when journey activation completes
+  // It guards against React state batching causing route-clearing effects to run prematurely
+  const isStartingNavigationRef = useRef(false);
+  
   // Route calculation counter - tracks number of active route calculations
   // Uses counter instead of boolean to handle overlapping requests safely
   // Watchdog only fires when counter is 0 (no active calculations)
@@ -1728,16 +1733,16 @@ function NavigationPageContent() {
       });
     } else {
       // No journey - clear route data
-      // CRITICAL GUARD: Do NOT clear route during active navigation (isLocalNavActive) or preview mode (isShowingPreview)
-      // This prevents the route from disappearing during navigation start transitions
+      // CRITICAL GUARD: Do NOT clear route during active navigation (isLocalNavActive), preview mode (isShowingPreview),
+      // or navigation transition (isStartingNavigationRef) - prevents route disappearing during GO button flow
       // when currentJourney is briefly null before the journey is created/activated
       // Also prevents route clearing when Preview button is pressed (plan view → preview mode)
-      if (!isLocalNavActive && !isShowingPreview) {
+      if (!isLocalNavActive && !isShowingPreview && !isStartingNavigationRef.current) {
         console.log('[JOURNEY-LOAD] No journey - clearing route data');
         setCurrentRoute(null);
         lastCalculatedRouteRef.current = null; // Only clear ref when NOT navigating
       } else {
-        console.log('[JOURNEY-LOAD] No journey but navigation/preview active - preserving currentRoute');
+        console.log('[JOURNEY-LOAD] No journey but navigation/preview/transition active - preserving currentRoute');
         // CRITICAL: If currentRoute is null but we have a saved route, restore it immediately
         if (!currentRoute && lastCalculatedRouteRef.current) {
           console.log('[JOURNEY-LOAD] ⚠️ Restoring route from lastCalculatedRouteRef during navigation');
@@ -1936,11 +1941,19 @@ function NavigationPageContent() {
       if (journey?.id) {
         currentJourneyIdRef.current = journey.id;
       }
+      
+      // CRITICAL: Clear navigation transition guard - journey created successfully
+      // Route clearing effects can now run normally (but isLocalNavActive will be true)
+      isStartingNavigationRef.current = false;
+      console.log('[NAV-ACTIVATION] 🔓 Navigation transition guard CLEARED - journey started');
     },
     onError: (error) => {
       console.error('Failed to start journey:', error);
       // Comprehensive UI recovery on journey creation failure
       recoverUIOnError();
+      // CRITICAL: Clear navigation transition guard on error
+      isStartingNavigationRef.current = false;
+      console.log('[NAV-ACTIVATION] 🔓 Navigation transition guard CLEARED (error)');
       // Show user-friendly error message
       // REMOVED TOAST: No popups per user request
     },
@@ -2422,12 +2435,13 @@ function NavigationPageContent() {
   };
 
   // Clear current route when locations change to ensure fresh planning
-  // GUARD: Do NOT clear route during active navigation, preview mode, or when preparing to navigate
+  // GUARD: Do NOT clear route during active navigation, preview mode, transition, or when preparing to navigate
   useEffect(() => {
-    // CRITICAL FIX: Also check isLocalNavActive and isShowingPreview to prevent race conditions
+    // CRITICAL FIX: Also check isLocalNavActive, isShowingPreview, and isStartingNavigationRef to prevent race conditions
     // The route was disappearing because isNavigating (backend state) hadn't updated yet
     // Also guard against clearing route during preview mode (after Preview button pressed)
-    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile && !isLocalNavActive && !isShowingPreview) {
+    // Also guard against clearing route during GO button transition (isStartingNavigationRef)
+    if (currentRoute && (fromLocation || toLocation) && !isNavigating && !shouldAutoNavigateOnMobile && !isLocalNavActive && !isShowingPreview && !isStartingNavigationRef.current) {
       setCurrentRoute(null);
     }
   }, [fromLocation, toLocation, isNavigating, shouldAutoNavigateOnMobile, isLocalNavActive, isShowingPreview]);
@@ -2793,6 +2807,11 @@ function NavigationPageContent() {
       return; // Prevent double-clicks/race conditions
     }
     
+    // CRITICAL: Set navigation transition guard AFTER validation but BEFORE any state changes
+    // This must be set BEFORE setIsShowingPreview(false) which could trigger route-clearing effects
+    isStartingNavigationRef.current = true;
+    console.log('[NAV-ACTIVATION] 🔒 Navigation transition guard SET - route clearing blocked');
+    
     try {
       // CRITICAL: Cancel any active fly-by animation to prevent camera conflicts
       if (mapRef.current) {
@@ -2955,6 +2974,10 @@ function NavigationPageContent() {
 
     } catch (error) {
       console.error('Navigation start failed:', error);
+      
+      // CRITICAL: Clear navigation transition guard on error
+      isStartingNavigationRef.current = false;
+      console.log('[NAV-ACTIVATION] 🔓 Navigation transition guard CLEARED (catch error)');
       
       // CRITICAL: Revert isLocalNavActive since journey creation failed
       // This prevents stuck "navigating" state when backend never entered navigation
