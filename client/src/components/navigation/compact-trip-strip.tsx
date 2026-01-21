@@ -228,18 +228,26 @@ export function CompactTripStrip({
             <div className="flex flex-row items-center gap-0.5">
               <button
                 onClick={onPreviewStart}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (!isPreviewActive && onPreviewStart) onPreviewStart();
+                }}
                 disabled={isPreviewActive}
-                className="h-7 px-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-l shadow-sm flex items-center justify-center leading-none"
-                style={{ touchAction: 'manipulation', minWidth: '42px' }}
+                className="h-11 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs active:scale-95 active:bg-blue-800 transition-all disabled:opacity-40 rounded-l shadow-md flex items-center justify-center leading-none select-none"
+                style={{ touchAction: 'manipulation', minWidth: '54px', WebkitTapHighlightColor: 'transparent' }}
                 data-testid="button-preview-start"
               >
                 Preview
               </button>
               <button
                 onClick={onPreviewStop}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (isPreviewActive && onPreviewStop) onPreviewStop();
+                }}
                 disabled={!isPreviewActive}
-                className="h-7 px-2 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[10px] active:scale-95 transition-all disabled:opacity-40 rounded-r shadow-sm flex items-center justify-center leading-none"
-                style={{ touchAction: 'manipulation', minWidth: '32px' }}
+                className="h-11 px-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs active:scale-95 active:bg-rose-700 transition-all disabled:opacity-40 rounded-r shadow-md flex items-center justify-center leading-none select-none"
+                style={{ touchAction: 'manipulation', minWidth: '44px', WebkitTapHighlightColor: 'transparent' }}
                 data-testid="button-preview-stop"
               >
                 Stop
