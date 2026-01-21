@@ -3717,8 +3717,14 @@ function NavigationPageContent() {
                             if (currentRoute?.geometry?.coordinates) {
                               const map = mapRef.current?.getMap();
                               if (map) {
-                                const coords = currentRoute.geometry.coordinates as Array<[number, number]>;
-                                if (coords.length > 0) {
+                                const rawCoords = currentRoute.geometry.coordinates as Array<[number, number]>;
+                                // CRITICAL: Validate all coordinates before use
+                                const coords = rawCoords.filter(coord => 
+                                  Array.isArray(coord) && coord.length >= 2 &&
+                                  typeof coord[0] === 'number' && !isNaN(coord[0]) && isFinite(coord[0]) &&
+                                  typeof coord[1] === 'number' && !isNaN(coord[1]) && isFinite(coord[1])
+                                );
+                                if (coords.length >= 2) {
                                   let minLng = coords[0][0], maxLng = coords[0][0];
                                   let minLat = coords[0][1], maxLat = coords[0][1];
                                   coords.forEach(([lng, lat]) => {
@@ -3727,7 +3733,11 @@ function NavigationPageContent() {
                                     if (lat < minLat) minLat = lat;
                                     if (lat > maxLat) maxLat = lat;
                                   });
-                                  map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 50 });
+                                  try {
+                                    map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 50 });
+                                  } catch (e) {
+                                    console.warn('[VOICE-CMD] Failed to fit bounds:', e);
+                                  }
                                 }
                               }
                             }

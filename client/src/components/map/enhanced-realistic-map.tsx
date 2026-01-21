@@ -290,10 +290,18 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
             if (!isNavigating && currentRoute?.routePath && currentRoute.routePath.length > 0 && 
                 typeof map.fitBounds === 'function') {
               try {
-                const bounds = L.latLngBounds(
-                  currentRoute.routePath.map(coord => [coord.lat, coord.lng])
+                // CRITICAL: Filter out invalid coordinates before creating bounds
+                const validCoords = currentRoute.routePath.filter(coord => 
+                  coord && 
+                  typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat) &&
+                  typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng)
                 );
-                map.fitBounds(bounds, { padding: [50, 50] });
+                if (validCoords.length >= 2) {
+                  const bounds = L.latLngBounds(
+                    validCoords.map(coord => [coord.lat, coord.lng])
+                  );
+                  map.fitBounds(bounds, { padding: [50, 50] });
+                }
               } catch (boundsError) {
                 console.warn('Failed to fit route bounds:', boundsError);
               }
@@ -324,10 +332,18 @@ const EnhancedRealisticMap = memo(function EnhancedRealisticMap({
         
         if (map && container && container.offsetWidth > 0 && container.offsetHeight > 0 && 
             typeof map.fitBounds === 'function') {
-          const bounds = L.latLngBounds(
-            currentRoute.routePath.map(coord => [coord.lat, coord.lng])
+          // CRITICAL: Filter out invalid coordinates before creating bounds
+          const validCoords = currentRoute.routePath.filter(coord => 
+            coord && 
+            typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat) &&
+            typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng)
           );
-          map.fitBounds(bounds, { padding: [50, 50] });
+          if (validCoords.length >= 2) {
+            const bounds = L.latLngBounds(
+              validCoords.map(coord => [coord.lat, coord.lng])
+            );
+            map.fitBounds(bounds, { padding: [50, 50] });
+          }
         } else {
           console.warn('Map not ready for route centering - container or state invalid');
         }

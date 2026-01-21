@@ -3259,8 +3259,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, [useStaticRoute, isLoaded]);
 
-  // Prepare route coordinates for static overlay
-  const routeCoordinatesForOverlay = currentRoute?.routePath || [];
+  // Prepare route coordinates for static overlay - with validation (keeping lat/lng object format)
+  const routeCoordinatesForOverlay = currentRoute?.routePath 
+    ? currentRoute.routePath.filter(coord => 
+        coord && 
+        typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat) &&
+        typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng)
+      ) as Array<{ lat: number; lng: number }>
+    : [];
 
   return (
     <div className={cn("relative w-full h-full overflow-hidden", className)} data-testid="maplibre-container">

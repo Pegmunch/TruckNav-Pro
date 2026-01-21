@@ -182,16 +182,38 @@ async function callGraphHopperAPI(
 
     const path = data.paths[0];
     
+    // Helper to validate coordinate values
+    const isValidCoord = (val: unknown): val is number => 
+      typeof val === 'number' && !isNaN(val) && isFinite(val);
+    
+    // Filter and validate coordinates from GraphHopper response
+    const validCoordinates: Array<{ lat: number; lng: number }> = [];
+    const validGeomCoords: number[][] = [];
+    
+    if (path.points?.coordinates && Array.isArray(path.points.coordinates)) {
+      for (const coord of path.points.coordinates) {
+        if (Array.isArray(coord) && coord.length >= 2 && isValidCoord(coord[0]) && isValidCoord(coord[1])) {
+          validCoordinates.push({ lat: coord[1], lng: coord[0] });
+          validGeomCoords.push(coord);
+        } else {
+          console.warn('[GRAPHHOPPER] Skipping invalid coordinate:', coord);
+        }
+      }
+    }
+    
+    // Ensure we have at least 2 valid coordinates
+    if (validCoordinates.length < 2) {
+      console.error('[GRAPHHOPPER] Not enough valid coordinates in route:', validCoordinates.length);
+      return null;
+    }
+    
     return {
       distance: Math.round(path.distance / 1609.34 * 100) / 100, // meters to miles
       duration: Math.round(path.time / 60000), // milliseconds to minutes
-      coordinates: path.points.coordinates.map((coord: number[]) => ({ 
-        lat: coord[1], 
-        lng: coord[0] 
-      })),
+      coordinates: validCoordinates,
       geometry: {
         type: "LineString" as const,
-        coordinates: path.points.coordinates
+        coordinates: validGeomCoords
       },
       instructions: path.instructions?.map((inst: any) => ({
         text: inst.text,
@@ -345,18 +367,33 @@ async function callTomTomRoutingAPI(
     const summary = route.summary;
     const legs = route.legs || [];
     
-    // Extract coordinates from route geometry
+    // Extract coordinates from route geometry with validation
     const coordinates: Array<{ lat: number; lng: number }> = [];
+    
+    // Helper to validate coordinate values
+    const isValidCoord = (val: unknown): val is number => 
+      typeof val === 'number' && !isNaN(val) && isFinite(val);
     
     for (const leg of legs) {
       if (leg.points && Array.isArray(leg.points)) {
         for (const point of leg.points) {
-          coordinates.push({
-            lat: point.latitude,
-            lng: point.longitude
-          });
+          // CRITICAL: Validate each coordinate before adding
+          if (isValidCoord(point.latitude) && isValidCoord(point.longitude)) {
+            coordinates.push({
+              lat: point.latitude,
+              lng: point.longitude
+            });
+          } else {
+            console.warn('[TOMTOM-ROUTING] Skipping invalid point:', point);
+          }
         }
       }
+    }
+    
+    // Ensure we have at least 2 valid coordinates for a route
+    if (coordinates.length < 2) {
+      console.error('[TOMTOM-ROUTING] Not enough valid coordinates in route:', coordinates.length);
+      return null;
     }
     
     // Build GeoJSON geometry
@@ -473,7 +510,28 @@ async function calculateStrictVehicleClassRoute(
     // Now perform spatial validation with actual route geometry
     const violations: Array<{ restriction: Restriction; severity: string; bypassable: boolean }> = [];
     const restrictionsAvoided: string[] = [];
-    const routeLine = turf.lineString(routeResult.geometry.coordinates);
+    
+    // Helper to validate coordinate values
+    const isValidCoordVal = (val: unknown): val is number => 
+      typeof val === 'number' && !isNaN(val) && isFinite(val);
+    
+    // Filter route coordinates to ensure validity before creating turf lineString
+    const filteredRouteCoords = routeResult.geometry.coordinates.filter((coord: unknown) => 
+      Array.isArray(coord) && coord.length >= 2 && isValidCoordVal(coord[0]) && isValidCoordVal(coord[1])
+    );
+    
+    if (filteredRouteCoords.length < 2) {
+      console.error('[ROUTING] Not enough valid coordinates for spatial validation');
+      return null;
+    }
+    
+    let routeLine: ReturnType<typeof turf.lineString>;
+    try {
+      routeLine = turf.lineString(filteredRouteCoords);
+    } catch (turfError) {
+      console.error('[ROUTING] Failed to create turf lineString:', turfError);
+      return null;
+    }
 
     // Check each restriction for spatial intersection with the actual route
     for (const restriction of restrictions) {
