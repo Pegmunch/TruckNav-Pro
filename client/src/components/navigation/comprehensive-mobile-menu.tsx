@@ -720,11 +720,14 @@ function ComprehensiveMobileMenu({
                           variant="default"
                           size="sm"
                           onClick={() => {
-                            console.log('[PREVIEW-BUTTON] Clicked - closing menu and calculating route');
+                            console.log('[PREVIEW-BUTTON] Clicked - triggering auto-navigation flow');
                             // Close menu immediately so user sees the map
                             onOpenChange(false);
-                            // Fire route calculation (don't await - it runs in background)
-                            // NOTE: No onRequestAutoNavigation - user must manually start navigation
+                            // Trigger auto-navigation flow (sets up preview mode, then auto-starts navigation)
+                            if (onRequestAutoNavigation) {
+                              onRequestAutoNavigation();
+                            }
+                            // Fire route calculation
                             onPlanRoute();
                           }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
@@ -895,10 +898,14 @@ function ComprehensiveMobileMenu({
                     {!currentRoute && fromInput && toInput && selectedProfile && (
                       <Button
                         onClick={async () => {
-                          console.log('[PREVIEW-BUTTON-BOTTOM] Clicked - calculating route only (no auto-navigation)');
+                          console.log('[PREVIEW-BUTTON-BOTTOM] Clicked - triggering auto-navigation flow');
                           // Close menu immediately so user sees the map
                           onOpenChange(false);
-                          // Just calculate and display route - user must manually start navigation
+                          // Trigger auto-navigation flow (sets up preview mode, then auto-transitions to nav view)
+                          if (onRequestAutoNavigation) {
+                            onRequestAutoNavigation();
+                          }
+                          // Calculate and display route
                           await onPlanRoute();
                         }}
                         disabled={isCalculating}
