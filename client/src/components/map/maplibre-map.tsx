@@ -13,6 +13,41 @@ import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
 import { useGPS } from "@/contexts/gps-context";
 import { StaticRouteOverlay } from "@/components/map/static-route-overlay";
 
+/**
+ * BULLETPROOF COORDINATE VALIDATION
+ * Prevents "coordinates must contain numbers" errors that crash MapLibre
+ */
+const isValidCoord = (val: unknown): val is number => 
+  typeof val === 'number' && !isNaN(val) && isFinite(val);
+
+const isValidLatLng = (coord: { lat?: unknown; lng?: unknown } | null | undefined): coord is { lat: number; lng: number } =>
+  coord !== null && coord !== undefined && isValidCoord(coord.lat) && isValidCoord(coord.lng);
+
+const isValidLngLatArray = (coord: unknown[] | null | undefined): coord is [number, number] =>
+  Array.isArray(coord) && coord.length >= 2 && isValidCoord(coord[0]) && isValidCoord(coord[1]);
+
+const filterValidRouteCoords = (routePath: Array<{ lat?: unknown; lng?: unknown }> | null | undefined): [number, number][] => {
+  if (!routePath || !Array.isArray(routePath)) return [];
+  return routePath
+    .filter(isValidLatLng)
+    .map(coord => [coord.lng, coord.lat] as [number, number]);
+};
+
+const safeExtendBounds = (bounds: maplibregl.LngLatBounds, coords: [number, number][]): boolean => {
+  let extended = false;
+  for (const coord of coords) {
+    if (isValidLngLatArray(coord)) {
+      try {
+        bounds.extend(coord);
+        extended = true;
+      } catch (e) {
+        console.warn('[BOUNDS] Failed to extend with coord:', coord, e);
+      }
+    }
+  }
+  return extended;
+};
+
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
   getBearing: () => number;
@@ -631,8 +666,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     flyByRoute: (routeCoordinates, options = {}) => {
       const { speedMultiplier = 10, onComplete, onCancel } = options;
       
-      if (!map.current || !isLoaded || routeCoordinates.length < 2) {
-        console.warn('[FLY-BY] Cannot start - map not ready or invalid route');
+      // Validate all coordinates before starting fly-by
+      const validCoords = routeCoordinates.filter(isValidLatLng);
+      if (!map.current || !isLoaded || validCoords.length < 2) {
+        console.warn('[FLY-BY] Cannot start - map not ready or invalid route (valid coords:', validCoords.length, ')');
         return;
       }
       
@@ -649,7 +686,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[FLY-BY] Starting route fly-by animation at', speedMultiplier, 'x speed');
       
       const mapInstance = map.current;
-      const coords = routeCoordinates.map(c => [c.lng, c.lat] as [number, number]);
+      const coords = validCoords.map(c => [c.lng, c.lat] as [number, number]);
       
       // Calculate total route distance in kilometers for timing
       let totalDistanceKm = 0;
@@ -1857,10 +1894,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
 
     // Only auto-fit bounds when not navigating (during planning)
-    if (!isNavigating) {
+    if (!isNavigating && routeCoordinates.length >= 2) {
       const bounds = new maplibregl.LngLatBounds();
-      routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-      map.current.fitBounds(bounds, { padding: 50, duration: 400 });
+      if (safeExtendBounds(bounds, routeCoordinates as [number, number][])) {
+        map.current.fitBounds(bounds, { padding: 50, duration: 400 });
+      }
     }
   }, [currentRoute, isNavigating, gpsPosition]);
 
@@ -2764,6 +2802,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       const containerHeight = mapInstance.getContainer().clientHeight || 800;
       
+      // BULLETPROOF: Validate coordinates before calling easeTo
+      if (!isValidCoord(centerLat) || !isValidCoord(centerLng) || !isValidCoord(useBearing)) {
+        console.warn('[3D-NAV] Invalid coordinates for initial view - skipping:', { centerLat, centerLng, useBearing });
+        return;
+      }
+      
       console.log('[3D-NAV] ==========================================');
       console.log('[3D-NAV] 🚀 INITIAL 3D NAVIGATION VIEW ACTIVATED');
       console.log(`[3D-NAV] Center: ${centerLat.toFixed(4)}, ${centerLng.toFixed(4)}`);
@@ -2773,21 +2817,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[3D-NAV] ==========================================');
       
       // Apply TomTom GO style 3D navigation view
-      mapInstance.easeTo({
-        center: [centerLng, centerLat],
-        zoom: 16.5, // Street-level zoom for navigation
-        pitch: 60, // TomTom GO style steep 3D tilt
-        bearing: useBearing, // Heading-up rotation
-        padding: {
-          top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
-          bottom: 80, // Space for speedometer
-          left: 0,
-          right: 0
-        },
-        duration: 1200,
-        easing: (t) => 1 - Math.pow(1 - t, 3), // Ease-out cubic
-        essential: true
-      });
+      try {
+        mapInstance.easeTo({
+          center: [centerLng, centerLat],
+          zoom: 16.5, // Street-level zoom for navigation
+          pitch: 60, // TomTom GO style steep 3D tilt
+          bearing: useBearing, // Heading-up rotation
+          padding: {
+            top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
+            bottom: 80, // Space for speedometer
+            left: 0,
+            right: 0
+          },
+          duration: 1200,
+          easing: (t) => 1 - Math.pow(1 - t, 3), // Ease-out cubic
+          essential: true
+        });
+      } catch (e) {
+        console.warn('[3D-NAV] easeTo failed:', e);
+      }
       
       lastBearing = useBearing;
       initialNavViewSetupRef.current = true; // Mark as set up
@@ -2946,29 +2994,39 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           // This ensures continuous smooth rotation even during gradual curves
           // Only skip update if absolutely no change (prevents unnecessary renders)
           if (Math.abs(bearingDelta) > 0.05 || centerDelta > 0.0000001) {
+            // BULLETPROOF: Validate coordinates before calling easeTo
+            if (!isValidCoord(latitude) || !isValidCoord(longitude) || !isValidCoord(bearing)) {
+              console.warn('[GPS-HEADING] Invalid coordinates - skipping easeTo:', { latitude, longitude, bearing });
+              return;
+            }
+            
             // TomTom GO style navigation view:
             // - Vehicle marker at bottom 45% of screen (centered above speedometer)
             // - Route line extends straight up toward horizon
             // - Steep 60° 3D perspective for immersive driving feel
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
-            mapInstance.easeTo({
-              center: [longitude, latitude],
-              zoom: 16.5, // Street-level zoom for navigation (matches initial view)
-              pitch: 60, // TomTom GO style steep 3D tilt
-              bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
-              padding: { 
-                // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
-                // This makes the route line extend upward from the speedometer area
-                top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
-                bottom: 80, // Space for speedometer
-                left: 0, 
-                right: 0 
-              },
-              duration: 200, // Short duration for responsive feel
-              easing: (t) => t, // Linear easing prevents acceleration artifacts during rotation
-              essential: true // Ensure animation isn't interrupted by user gestures
-            });
+            try {
+              mapInstance.easeTo({
+                center: [longitude, latitude],
+                zoom: 16.5, // Street-level zoom for navigation (matches initial view)
+                pitch: 60, // TomTom GO style steep 3D tilt
+                bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
+                padding: { 
+                  // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
+                  // This makes the route line extend upward from the speedometer area
+                  top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
+                  bottom: 80, // Space for speedometer
+                  left: 0, 
+                  right: 0 
+                },
+                duration: 200, // Short duration for responsive feel
+                easing: (t) => t, // Linear easing prevents acceleration artifacts during rotation
+                essential: true // Ensure animation isn't interrupted by user gestures
+              });
+            } catch (e) {
+              console.warn('[GPS-HEADING] easeTo failed:', e);
+            }
           }
         }
         
@@ -3006,15 +3064,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
       const { position } = event.detail;
 
-      // Fly to GPS position with street-level view
-      map.current.flyTo({
-        center: [position.lng, position.lat],
-        zoom: position.zoom || 17.5,
-        pitch: position.pitch || 45,
-        bearing: position.bearing || 0,
-        duration: 2000,
-        essential: true
-      });
+      // Fly to GPS position with street-level view - validate coordinates first
+      if (!isValidCoord(position.lng) || !isValidCoord(position.lat)) {
+        console.warn('[AUTO-ZOOM] Invalid GPS position - skipping flyTo:', position);
+        return;
+      }
+      
+      try {
+        map.current.flyTo({
+          center: [position.lng, position.lat],
+          zoom: position.zoom || 17.5,
+          pitch: position.pitch || 45,
+          bearing: position.bearing || 0,
+          duration: 2000,
+          essential: true
+        });
+      } catch (e) {
+        console.warn('[AUTO-ZOOM] flyTo failed:', e);
+      }
     };
 
     window.addEventListener('auto_zoom_gps', handleAutoZoom as EventListener);
@@ -3053,10 +3120,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         () => {
           // Fallback: center on route if available
           if (currentRoute?.routePath) {
-            const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
-            const bounds = new maplibregl.LngLatBounds();
-            routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-            map.current?.fitBounds(bounds, { padding: 50, duration: 400 });
+            const routeCoordinates = filterValidRouteCoords(currentRoute.routePath);
+            if (routeCoordinates.length >= 2) {
+              const bounds = new maplibregl.LngLatBounds();
+              if (safeExtendBounds(bounds, routeCoordinates)) {
+                map.current?.fitBounds(bounds, { padding: 50, duration: 400 });
+              }
+            }
           }
           // Don't use any hardcoded default position - just stay where we are
         },
@@ -3065,10 +3135,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     } else {
       // Geolocation not available, fallback to route only
       if (currentRoute?.routePath) {
-        const routeCoordinates = currentRoute.routePath.map(coord => [coord.lng, coord.lat]);
-        const bounds = new maplibregl.LngLatBounds();
-        routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-        map.current.fitBounds(bounds, { padding: 50, duration: 400 });
+        const routeCoordinates = filterValidRouteCoords(currentRoute.routePath);
+        if (routeCoordinates.length >= 2) {
+          const bounds = new maplibregl.LngLatBounds();
+          if (safeExtendBounds(bounds, routeCoordinates)) {
+            map.current.fitBounds(bounds, { padding: 50, duration: 400 });
+          }
+        }
       }
       // Don't use any hardcoded default position - just stay where we are
     }
