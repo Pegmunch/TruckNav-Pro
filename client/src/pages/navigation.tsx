@@ -36,6 +36,7 @@ import { DNDControls } from "@/components/notifications/dnd-controls";
 import { useTrafficState } from "@/hooks/use-traffic";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 import { useDestinationHistory } from "@/hooks/use-destination-history";
+import { useOriginHistory } from "@/hooks/use-origin-history";
 import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import { useNavigationSession } from "@/hooks/use-navigation-session";
 import { useAutoReroute } from "@/hooks/use-auto-reroute";
@@ -121,6 +122,7 @@ function NavigationPageContent() {
   
   // Destination history for storing previous destinations (ordered by travel)
   const { addDestination } = useDestinationHistory();
+  const { addOrigin } = useOriginHistory();
   
   // Manual location dialog hook
   const { 
@@ -2164,6 +2166,24 @@ function NavigationPageContent() {
           console.log('[RECENT-LOCATIONS] Saved destination:', route.endLocation);
         } catch (error) {
           console.error('[RECENT-LOCATIONS] Failed to save destination:', error);
+        }
+      }
+      
+      // Save origin (from) location to recent origins for quick access
+      if (route && route.startLocation && route.routePath && route.routePath.length > 0) {
+        try {
+          const startPoint = route.routePath[0];
+          // Don't save "Current Location" as origin - only save actual addresses
+          if (!route.startLocation.toLowerCase().includes('current location')) {
+            addOrigin(
+              route.startLocation.split(',')[0],
+              route.startLocation,
+              { lat: startPoint.lat, lng: startPoint.lng }
+            );
+            console.log('[RECENT-ORIGINS] Saved origin:', route.startLocation);
+          }
+        } catch (error) {
+          console.error('[RECENT-ORIGINS] Failed to save origin:', error);
         }
       }
       

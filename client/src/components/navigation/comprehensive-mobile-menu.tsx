@@ -83,6 +83,7 @@ import { LanguageSelector } from "@/components/settings/language-selector";
 import { useOnboarding } from "@/components/onboarding/onboarding-provider";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { useDestinationHistory } from "@/hooks/use-destination-history";
+import { useOriginHistory } from "@/hooks/use-origin-history";
 import { Tabs as RouteTabs, TabsList as RouteTabsList, TabsTrigger as RouteTabsTrigger } from "@/components/ui/tabs";
 import { useAddressDictation } from "@/hooks/use-address-dictation";
 import { useTranslation } from 'react-i18next';
@@ -138,8 +139,12 @@ function ComprehensiveMobileMenu({
   const gps = useGPS();
   const { resetTour } = useOnboarding();
   const { destinations: previousDestinations, removeDestination } = useDestinationHistory();
+  const { origins: previousOrigins, removeOrigin } = useOriginHistory();
   const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("plan");
+  
+  // Track if we've auto-filled "from" with GPS to avoid re-triggering
+  const hasAutoFilledFromGPS = useRef(false);
   
   // Local state for route planning inputs - Always start empty for new route planning
   const [fromInput, setFromInput] = useState("");
@@ -177,6 +182,29 @@ function ComprehensiveMobileMenu({
       setPoiSearchEnabled(false);
     }
   }, [open]);
+  
+  // Auto-fill "from" with GPS location when destination is entered first
+  useEffect(() => {
+    // Only trigger if: destination has text, from is empty, GPS is available, and we haven't auto-filled yet
+    if (toInput && toInput.length > 3 && !fromInput && gps?.position && !hasAutoFilledFromGPS.current) {
+      hasAutoFilledFromGPS.current = true;
+      const lat = gps.position.latitude;
+      const lng = gps.position.longitude;
+      const gpsLabel = 'Current Location';
+      
+      console.log('[AUTO-GPS] Auto-filling "from" with current GPS location:', lat, lng);
+      setFromInput(gpsLabel);
+      setFromCoordinates({ lat, lng });
+      onFromLocationChange(gpsLabel);
+    }
+  }, [toInput, fromInput, gps?.position, onFromLocationChange]);
+  
+  // Reset auto-fill flag when inputs are cleared
+  useEffect(() => {
+    if (!fromInput && !toInput) {
+      hasAutoFilledFromGPS.current = false;
+    }
+  }, [fromInput, toInput]);
   
   // Sync voice systems with current i18n language
   useEffect(() => {
@@ -699,6 +727,48 @@ function ComprehensiveMobileMenu({
                         forceOpen={forceOpenFromDropdown}
                         onForceOpenConsumed={() => setForceOpenFromDropdown(false)}
                       />
+                    </div>
+                    
+                    {/* Use Current Location Button + Recent Origins */}
+                    <div className="flex items-center gap-2 -mt-1">
+                      {gps?.position && !fromInput && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const lat = gps.position!.latitude;
+                            const lng = gps.position!.longitude;
+                            console.log('[GPS-BUTTON] Using current location:', lat, lng);
+                            setFromInput('Current Location');
+                            setFromCoordinates({ lat, lng });
+                            onFromLocationChange('Current Location');
+                          }}
+                          className="h-8 text-xs flex items-center gap-1 border-blue-300 text-blue-600 hover:bg-blue-50"
+                        >
+                          <Navigation className="h-3 w-3" />
+                          Use Current Location
+                        </Button>
+                      )}
+                      {previousOrigins.length > 0 && !fromInput && (
+                        <div className="flex items-center gap-1 overflow-x-auto">
+                          {previousOrigins.slice(0, 2).map((origin) => (
+                            <Button
+                              key={origin.id}
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setFromInput(origin.formattedAddress);
+                                setFromCoordinates(origin.coordinates);
+                                onFromLocationChange(origin.formattedAddress);
+                              }}
+                              className="h-7 text-xs px-2 bg-muted/30 hover:bg-muted/50 whitespace-nowrap max-w-[120px] truncate"
+                            >
+                              <MapPinned className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{origin.label}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* To Location with AddressAutocomplete */}
