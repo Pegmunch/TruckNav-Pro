@@ -150,13 +150,27 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
       const coordinates = validCoordinates;
       const cumulativeLengths: number[] = [0];
       
-      for (let i = 1; i < coordinates.length; i++) {
-        const segmentLength = turf.distance(
-          turf.point(coordinates[i - 1]),
-          turf.point(coordinates[i]),
-          { units: 'kilometers' }
-        );
-        cumulativeLengths.push(cumulativeLengths[i - 1] + segmentLength);
+      try {
+        for (let i = 1; i < coordinates.length; i++) {
+          // Double-check coordinates are valid numbers
+          const prev = coordinates[i - 1];
+          const curr = coordinates[i];
+          if (!Array.isArray(prev) || !Array.isArray(curr) ||
+              prev.length < 2 || curr.length < 2 ||
+              typeof prev[0] !== 'number' || typeof prev[1] !== 'number' ||
+              typeof curr[0] !== 'number' || typeof curr[1] !== 'number' ||
+              isNaN(prev[0]) || isNaN(prev[1]) || isNaN(curr[0]) || isNaN(curr[1])) {
+            continue;
+          }
+          const segmentLength = turf.distance(
+            turf.point(prev),
+            turf.point(curr),
+            { units: 'kilometers' }
+          );
+          cumulativeLengths.push(cumulativeLengths[cumulativeLengths.length - 1] + segmentLength);
+        }
+      } catch (e) {
+        console.warn('[ROUTE-PREVIEW] Error calculating cumulative lengths:', e);
       }
 
       cumulativeLengthsRef.current = cumulativeLengths;

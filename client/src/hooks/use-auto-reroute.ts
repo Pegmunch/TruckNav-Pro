@@ -136,13 +136,19 @@ export function useAutoReroute(
       const nearestIndex = nearestOnLine.properties.index || 0;
       
       if (nearestIndex < routeCoords.length - 1) {
-        const segmentStart = turf.point(routeCoords[nearestIndex]);
-        const segmentEnd = turf.point(routeCoords[nearestIndex + 1]);
-        const routeBearing = turf.bearing(segmentStart, segmentEnd);
+        const startCoord = routeCoords[nearestIndex];
+        const endCoord = routeCoords[nearestIndex + 1];
         
-        headingDeviation = Math.abs(heading - routeBearing);
-        if (headingDeviation > 180) {
-          headingDeviation = 360 - headingDeviation;
+        // Validate coordinates before using in turf.point
+        if (isValidCoordinate(startCoord) && isValidCoordinate(endCoord)) {
+          const segmentStart = turf.point(startCoord);
+          const segmentEnd = turf.point(endCoord);
+          const routeBearing = turf.bearing(segmentStart, segmentEnd);
+          
+          headingDeviation = Math.abs(heading - routeBearing);
+          if (headingDeviation > 180) {
+            headingDeviation = 360 - headingDeviation;
+          }
         }
       }
     }
