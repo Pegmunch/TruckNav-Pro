@@ -3344,7 +3344,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     map.current.easeTo({ bearing: 0, pitch: 0, duration: 500 });
   };
 
-  // Toggle native route layer visibility when using static route overlay
+  // CRITICAL FIX: Keep native route layers ALWAYS visible during navigation
+  // The StaticRouteOverlay is an enhancement, not a replacement - route visibility must be bulletproof
+  // Previously hiding native layers when useStaticRoute=true caused route to disappear if overlay failed
   useEffect(() => {
     if (!map.current || !isLoaded) return;
     const mapInstance = map.current;
@@ -3352,9 +3354,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const setRouteVisibility = () => {
       if (!mapInstance.isStyleLoaded()) return;
       
-      const visibility = useStaticRoute ? 'none' : 'visible';
+      // SAFETY: During navigation (isNavigating=true), ALWAYS keep route visible
+      // Only hide native layers if NOT navigating AND useStaticRoute is true (preview mode optimization)
+      const visibility = (isNavigating || !useStaticRoute) ? 'visible' : 'none';
       
-      // All possible route layer IDs to hide/show
+      // All possible route layer IDs
       const routeLayerIds = [
         'route-line',
         'route-outline',
@@ -3373,6 +3377,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
           }
         }
+        console.log('[ROUTE-VIS] Route layers visibility set to:', visibility, 'isNavigating:', isNavigating);
       } catch (err) {
         console.warn('[ROUTE-VIS] Failed to toggle route visibility:', err);
       }
@@ -3386,11 +3391,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       mapInstance.off('styledata', setRouteVisibility);
       mapInstance.off('load', setRouteVisibility);
     };
-  }, [useStaticRoute, isLoaded]);
+  }, [useStaticRoute, isLoaded, isNavigating]);
 
   // Prepare route coordinates for static overlay - with validation (keeping lat/lng object format)
-  const routeCoordinatesForOverlay = currentRoute?.routePath 
-    ? currentRoute.routePath.filter(coord => 
+  // CRITICAL: Use persistent cache during navigation to prevent route disappearing
+  const routeSourceForOverlay = currentRoute?.routePath || (isNavigating ? persistentNavRouteRef.current : null);
+  const routeCoordinatesForOverlay = routeSourceForOverlay 
+    ? routeSourceForOverlay.filter(coord => 
         coord && 
         typeof coord.lat === 'number' && !isNaN(coord.lat) && isFinite(coord.lat) &&
         typeof coord.lng === 'number' && !isNaN(coord.lng) && isFinite(coord.lng)

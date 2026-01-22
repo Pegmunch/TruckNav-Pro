@@ -847,7 +847,49 @@ function NavigationPageContent() {
       return;
     }
     
-    // Fallback: If no GPS, use first lane guidance instruction
+    // Helper: Map TomTom sign value to direction string
+    // TomTom sign codes: -2 = left, 2 = right, -7 = bear left, 7 = bear right, -3 = sharp left, 3 = sharp right, 0 = straight
+    const mapSignToDirection = (sign: number): 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' => {
+      if (sign === 2) return 'right';
+      if (sign === -2) return 'left';
+      if (sign === 7) return 'slight_right';
+      if (sign === -7) return 'slight_left';
+      if (sign === 3) return 'sharp_right';
+      if (sign === -3) return 'sharp_left';
+      return 'straight';
+    };
+
+    // PRIORITY 1: Use actual TomTom instructions (most accurate turn data)
+    // These contain real maneuver data from the routing API
+    if ((currentRoute as any).instructions && Array.isArray((currentRoute as any).instructions) && (currentRoute as any).instructions.length > 0) {
+      const instructions = (currentRoute as any).instructions as Array<{ text: string; distance: number; time: number; sign: number }>;
+      
+      // Find next instruction (skip first "depart" instruction)
+      for (let i = 1; i < instructions.length; i++) {
+        const instruction = instructions[i];
+        const distanceMeters = instruction.distance * 1609.34; // Convert miles to meters
+        
+        // Skip very close instructions or arrival instructions
+        if (distanceMeters < 10 || instruction.sign === 4) continue;
+        
+        const direction = mapSignToDirection(instruction.sign);
+        
+        // Extract road name from instruction text
+        const roadMatch = instruction.text.match(/onto\s+(.+?)(?:\s*$|,)/i) || 
+                         instruction.text.match(/on\s+(.+?)(?:\s*$|,)/i);
+        const roadName = roadMatch ? roadMatch[1] : undefined;
+        
+        setNextTurn({
+          direction,
+          distance: distanceMeters,
+          roadName
+        });
+        console.log(`[TURN-INFO] Using TomTom instruction: ${direction} (sign=${instruction.sign}) in ${distanceMeters.toFixed(0)}m - ${instruction.text}`);
+        return;
+      }
+    }
+
+    // FALLBACK: If no GPS, try lane guidance (less reliable as it may be mock data)
     if (!gpsData?.position) {
       if (currentRoute.laneGuidance && currentRoute.laneGuidance.length > 0) {
         const firstSegment = currentRoute.laneGuidance[0];
@@ -867,9 +909,9 @@ function NavigationPageContent() {
           distance: (firstSegment.distance || 0) * 1609.34, // Convert miles to meters
           roadName: firstSegment.roadName
         });
-        console.log(`[TURN-INFO-FALLBACK] Using route data: ${direction} onto ${firstSegment.roadName || 'unknown road'}`);
+        console.log(`[TURN-INFO-FALLBACK] Using lane guidance: ${direction} onto ${firstSegment.roadName || 'unknown road'}`);
       } else {
-        // No lane guidance available - clear any stale turn info
+        // No guidance available - clear any stale turn info
         setNextTurn(null);
       }
       return;
