@@ -142,8 +142,17 @@ const RoutePreviewOverlay = memo(function RoutePreviewOverlay({
       // Use validated coordinates
       const validatedGeometry = { ...geometry, coordinates: validCoordinates };
       
-      // Create Turf.js LineString for calculations
-      const routeLine = turf.lineString(validCoordinates);
+      // Create Turf.js LineString for calculations - with extra protection
+      let routeLine;
+      try {
+        // Force coordinates to be clean number arrays
+        const cleanCoords = validCoordinates.map(c => [Number(c[0]), Number(c[1])] as [number, number]);
+        routeLine = turf.lineString(cleanCoords);
+      } catch (lineErr) {
+        console.error('[ROUTE-PREVIEW] Failed to create lineString:', lineErr);
+        setError('Failed to process route coordinates');
+        return;
+      }
       routeLineRef.current = routeLine;
 
       // Pre-calculate cumulative lengths for efficient position lookup

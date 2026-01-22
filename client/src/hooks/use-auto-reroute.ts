@@ -113,7 +113,14 @@ export function useAutoReroute(
           .filter((coord: [number, number] | null): coord is [number, number] => coord !== null);
         
         if (transformedCoords.length >= 2) {
-          routeLineRef.current = turf.lineString(transformedCoords);
+          try {
+            // Extra safety: ensure all coords are clean number pairs
+            const cleanCoords = transformedCoords.map((c: [number, number]) => [Number(c[0]), Number(c[1])] as [number, number]);
+            routeLineRef.current = turf.lineString(cleanCoords);
+          } catch (lineErr) {
+            console.error('[AUTO-REROUTE] Failed to create lineString:', lineErr);
+            routeLineRef.current = null;
+          }
         } else {
           console.warn('[AUTO-REROUTE] Not enough valid coordinates for route line');
           routeLineRef.current = null;
