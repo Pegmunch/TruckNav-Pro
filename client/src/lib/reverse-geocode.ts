@@ -143,14 +143,16 @@ function checkCache(lat: number, lng: number): ReverseGeocodeResult | null {
   const now = Date.now();
 
   // Clean expired entries during lookup
-  for (const [key, entry] of geocodeCache.entries()) {
+  Array.from(geocodeCache.entries()).forEach(([key, entry]) => {
     if (now - entry.timestamp > CACHE_TTL_MS) {
       geocodeCache.delete(key);
     }
-  }
+  });
 
   // Check for nearby cached results
-  for (const entry of geocodeCache.values()) {
+  const values = Array.from(geocodeCache.values());
+  for (let i = 0; i < values.length; i++) {
+    const entry = values[i];
     if (now - entry.timestamp <= CACHE_TTL_MS) {
       const distance = haversineDistance(lat, lng, entry.lat, entry.lng);
       if (distance <= CACHE_PROXIMITY_METERS) {

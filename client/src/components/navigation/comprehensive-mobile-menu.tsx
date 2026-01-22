@@ -89,6 +89,7 @@ import { useAddressDictation } from "@/hooks/use-address-dictation";
 import { useTranslation } from 'react-i18next';
 import { NavigationVoice } from "@/lib/navigation-voice";
 import { getVoiceCommandSystem } from "@/lib/voice-commands";
+import { reverseGeocode } from "@/lib/reverse-geocode";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -157,6 +158,9 @@ function ComprehensiveMobileMenu({
   // Route preference state (Fastest, Eco, No Tolls)
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
   
+  // Loading state for reverse geocoding when using current location
+  const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
+  
   // POI search state
   const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
   const [poiSearchEnabled, setPoiSearchEnabled] = useState(false);
@@ -190,12 +194,30 @@ function ComprehensiveMobileMenu({
       hasAutoFilledFromGPS.current = true;
       const lat = gps.position.latitude;
       const lng = gps.position.longitude;
-      const gpsLabel = 'Current Location';
       
-      console.log('[AUTO-GPS] Auto-filling "from" with current GPS location:', lat, lng);
-      setFromInput(gpsLabel);
+      console.log('[AUTO-GPS] Auto-filling "from" with current GPS location - reverse geocoding:', lat, lng);
       setFromCoordinates({ lat, lng });
-      onFromLocationChange(gpsLabel);
+      
+      // Perform reverse geocoding to get actual address
+      reverseGeocode(lat, lng).then(result => {
+        if (result.success) {
+          console.log('[AUTO-GPS] Reverse geocode success:', result.address);
+          setFromInput(result.address);
+          onFromLocationChange(result.address);
+        } else {
+          // Fallback to coordinates if reverse geocoding fails
+          const fallbackAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          console.log('[AUTO-GPS] Reverse geocode failed, using coordinates:', fallbackAddress);
+          setFromInput(fallbackAddress);
+          onFromLocationChange(fallbackAddress);
+        }
+      }).catch(error => {
+        // Fallback to coordinates on error
+        const fallbackAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        console.error('[AUTO-GPS] Reverse geocode error:', error);
+        setFromInput(fallbackAddress);
+        onFromLocationChange(fallbackAddress);
+      });
     }
   }, [toInput, fromInput, gps?.position, onFromLocationChange]);
   
@@ -735,18 +757,49 @@ function ComprehensiveMobileMenu({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
+                          disabled={isGeocodingLocation}
+                          onClick={async () => {
                             const lat = gps.position!.latitude;
                             const lng = gps.position!.longitude;
-                            console.log('[GPS-BUTTON] Using current location:', lat, lng);
-                            setFromInput('Current Location');
+                            console.log('[GPS-BUTTON] Using current location - starting reverse geocode:', lat, lng);
+                            
+                            // Set loading state and coordinates immediately
+                            setIsGeocodingLocation(true);
                             setFromCoordinates({ lat, lng });
-                            onFromLocationChange('Current Location');
+                            
+                            try {
+                              // Perform reverse geocoding to get actual address
+                              const result = await reverseGeocode(lat, lng);
+                              
+                              if (result.success) {
+                                console.log('[GPS-BUTTON] Reverse geocode success:', result.address);
+                                setFromInput(result.address);
+                                onFromLocationChange(result.address);
+                              } else {
+                                // Fallback to coordinates if reverse geocoding fails
+                                const fallbackAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                                console.log('[GPS-BUTTON] Reverse geocode failed, using coordinates:', fallbackAddress);
+                                setFromInput(fallbackAddress);
+                                onFromLocationChange(fallbackAddress);
+                              }
+                            } catch (error) {
+                              // Fallback to coordinates on error
+                              const fallbackAddress = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                              console.error('[GPS-BUTTON] Reverse geocode error:', error);
+                              setFromInput(fallbackAddress);
+                              onFromLocationChange(fallbackAddress);
+                            } finally {
+                              setIsGeocodingLocation(false);
+                            }
                           }}
                           className="h-8 text-xs flex items-center gap-1 border-blue-300 text-blue-600 hover:bg-blue-50"
                         >
-                          <Navigation className="h-3 w-3" />
-                          Use Current Location
+                          {isGeocodingLocation ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Navigation className="h-3 w-3" />
+                          )}
+                          {isGeocodingLocation ? 'Finding Address...' : 'Use Current Location'}
                         </Button>
                       )}
                       {previousOrigins.length > 0 && !fromInput && (
