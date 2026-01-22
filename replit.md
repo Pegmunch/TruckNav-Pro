@@ -69,3 +69,17 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 
 ## State Management
 - **TanStack React Query**: Server state management.
+
+# Version Checkpoints
+
+## STABLE RELEASE: TruckNav Pro v3.4.25
+- **Date**: January 22, 2026
+- **Git Commit**: fc039a23ef66b5554ce061cb3c41de0ac0990635
+- **Status**: PUBLISHED - Stable Production Release
+- **Key Features**: 
+  - Bulletproof coordinate validation for all Turf.js operations
+  - Recent origins and destinations saving
+  - Auto-GPS "from" field population
+  - Fixed turn direction using TomTom sign codes
+  - Blue route line always visible during navigation
+- **Rollback Note**: Use this checkpoint to restore a known working version of TruckNav Pro
