@@ -124,12 +124,19 @@ export function useSpeedLimit() {
 
       } catch (error) {
         // Silently handle errors - speed limit data is not critical
-        
+        // IMPORTANT: Preserve road name/ref on error to prevent flashing
         setSpeedLimitData(prev => ({
           ...prev,
-          speedLimit: null,
-          speedLimitDisplay: null,
-          confidence: 'none',
+          // Keep speed limit and road info from previous state
+          speedLimit: prev.speedLimit,
+          speedLimitDisplay: prev.speedLimitDisplay,
+          roadName: prev.roadName,
+          roadRef: prev.roadRef,
+          roadType: prev.roadType,
+          junction: prev.junction,
+          destination: prev.destination,
+          destinationRef: prev.destinationRef,
+          confidence: prev.confidence !== 'none' ? prev.confidence : 'none',
           source: 'error',
           isLoading: false,
           lastUpdated: Date.now()
