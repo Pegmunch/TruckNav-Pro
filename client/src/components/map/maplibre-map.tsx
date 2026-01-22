@@ -3377,9 +3377,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             mapInstance.setLayoutProperty(layerId, 'visibility', visibility);
           }
         }
-        console.log('[ROUTE-VIS] Route layers visibility set to:', visibility, 'isNavigating:', isNavigating);
       } catch (err) {
-        console.warn('[ROUTE-VIS] Failed to toggle route visibility:', err);
+        // Silently handle visibility toggle errors - layers may not exist yet
       }
     };
     
