@@ -241,7 +241,14 @@ export function useAutoReroute(
   }, [toCoordinates, gpsData?.position, activeProfileId, state.lastRerouteAt, mergedConfig.minSecondsBetweenReroutes, onRerouteSuccess, toast]);
   
   useEffect(() => {
-    if (!isNavigating || !gpsData?.position || !routeLineRef.current || isReroutingRef.current) {
+    // Skip rerouting if not navigating, no valid GPS, no route, or already rerouting
+    if (!isNavigating || !routeLineRef.current || isReroutingRef.current) {
+      return;
+    }
+    
+    // CRITICAL: Only attempt rerouting with valid GPS coordinates
+    if (!gpsData || !hasValidGpsCoordinates(gpsData)) {
+      console.log('[AUTO-REROUTE] Skipping - no valid GPS coordinates available');
       return;
     }
     
@@ -270,7 +277,7 @@ export function useAutoReroute(
       consecutiveOffRouteFixesRef.current = 0;
       setState(prev => ({ ...prev, isOffRoute: false }));
     }
-  }, [gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired]);
+  }, [gpsData, gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired, hasValidGpsCoordinates]);
   
   const resetRerouteState = useCallback(() => {
     setState({
