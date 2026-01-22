@@ -86,7 +86,11 @@ export function useSpeedLimit() {
 
       try {
         isFetchingRef.current = true;
-        setSpeedLimitData(prev => ({ ...prev, isLoading: true }));
+        // Only show loading if we don't have any existing data (prevents flashing)
+        setSpeedLimitData(prev => ({ 
+          ...prev, 
+          isLoading: !prev.roadName && !prev.roadRef 
+        }));
 
         const response = await fetch(`/api/speed-limit?lat=${latitude}&lng=${longitude}`);
         
@@ -104,21 +108,24 @@ export function useSpeedLimit() {
             : data.speedLimit;
         }
 
-        setSpeedLimitData({
+        // IMPORTANT: Preserve previous road info if new data doesn't have it
+        // This prevents flashing when GPS moves to areas without road data
+        setSpeedLimitData(prev => ({
           speedLimit: data.speedLimit,
           speedLimitDisplay: displaySpeed,
           unit,
           confidence: data.confidence || 'none',
           source: data.source || 'not_found',
-          roadType: data.roadType,
-          roadName: data.roadName,
-          roadRef: data.roadRef,
-          junction: data.junction || null,
-          destination: data.destination || null,
-          destinationRef: data.destinationRef || null,
+          // Preserve previous road info if new data is empty
+          roadType: data.roadType || prev.roadType,
+          roadName: data.roadName || prev.roadName,
+          roadRef: data.roadRef || prev.roadRef,
+          junction: data.junction || prev.junction || null,
+          destination: data.destination || prev.destination || null,
+          destinationRef: data.destinationRef || prev.destinationRef || null,
           isLoading: false,
           lastUpdated: now
-        });
+        }));
 
         lastFetchRef.current = now;
 
