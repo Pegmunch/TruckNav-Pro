@@ -88,21 +88,44 @@ export function useAutoReroute(
         : currentRoute.geometry;
       
       if (geometry?.coordinates && Array.isArray(geometry.coordinates)) {
-        // Filter out invalid coordinates before creating lineString
-        const validCoords = geometry.coordinates.filter(isValidCoordinate);
+        // Transform and filter coordinates - handle various formats
+        const transformedCoords = geometry.coordinates
+          .map((coord: unknown) => {
+            // Handle array format [lng, lat]
+            if (Array.isArray(coord) && coord.length >= 2) {
+              const lng = Number(coord[0]);
+              const lat = Number(coord[1]);
+              if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+                return [lng, lat] as [number, number];
+              }
+            }
+            // Handle object format {lng, lat} or {longitude, latitude}
+            if (coord && typeof coord === 'object') {
+              const obj = coord as Record<string, unknown>;
+              const lng = Number(obj.lng ?? obj.longitude ?? obj.lon);
+              const lat = Number(obj.lat ?? obj.latitude);
+              if (!isNaN(lng) && !isNaN(lat) && isFinite(lng) && isFinite(lat)) {
+                return [lng, lat] as [number, number];
+              }
+            }
+            return null;
+          })
+          .filter((coord: [number, number] | null): coord is [number, number] => coord !== null);
         
-        if (validCoords.length >= 2) {
-          routeLineRef.current = turf.lineString(validCoords);
+        if (transformedCoords.length >= 2) {
+          routeLineRef.current = turf.lineString(transformedCoords);
         } else {
           console.warn('[AUTO-REROUTE] Not enough valid coordinates for route line');
           routeLineRef.current = null;
         }
+      } else {
+        routeLineRef.current = null;
       }
     } catch (e) {
       console.error('[AUTO-REROUTE] Failed to parse route geometry:', e);
       routeLineRef.current = null;
     }
-  }, [currentRoute?.geometry, isValidCoordinate]);
+  }, [currentRoute?.geometry]);
   
   // Helper to check if GPS has valid coordinates
   const hasValidGpsCoordinates = useCallback((gps: GPSContextValue | null): boolean => {
@@ -123,8 +146,18 @@ export function useAutoReroute(
       return { isOff: false, distance: 0, bearing: 0 };
     }
     
-    const currentPoint = turf.point([gps.position!.longitude, gps.position!.latitude]);
-    const nearestOnLine = turf.nearestPointOnLine(routeLineRef.current, currentPoint);
+    try {
+      const lng = gps.position!.longitude;
+      const lat = gps.position!.latitude;
+      
+      // Final validation before creating point
+      if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
+        console.warn('[AUTO-REROUTE] Invalid GPS coordinates:', { lng, lat });
+        return { isOff: false, distance: 0, bearing: 0 };
+      }
+      
+      const currentPoint = turf.point([lng, lat]);
+      const nearestOnLine = turf.nearestPointOnLine(routeLineRef.current, currentPoint);
     
     const distanceKm = turf.distance(currentPoint, nearestOnLine, { units: 'kilometers' });
     const distanceMeters = distanceKm * 1000;
@@ -161,7 +194,11 @@ export function useAutoReroute(
       distance: distanceMeters,
       bearing: headingDeviation,
     };
-  }, [mergedConfig.lateralThresholdMeters, mergedConfig.headingDeviationDegrees, hasValidGpsCoordinates]);
+    } catch (e) {
+      console.warn('[AUTO-REROUTE] Error checking off-route status:', e);
+      return { isOff: false, distance: 0, bearing: 0 };
+    }
+  }, [mergedConfig.lateralThresholdMeters, mergedConfig.headingDeviationDegrees, hasValidGpsCoordinates, isValidCoordinate]);
   
   const triggerReroute = useCallback(async () => {
     if (isReroutingRef.current || !toCoordinates || !hasValidGpsCoordinates(gpsData)) {

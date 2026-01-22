@@ -1,0 +1,23 @@
+Error Details
+Error #109:09:06
+coordinates must contain numbers
+point@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@turf_turf.js:9030:20
+@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@turf_turf.js:12673:30
+@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@turf_turf.js:9777:21
+geomEach@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@turf_turf.js:9719:23
+flattenEach@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@turf_turf.js:9770:11
+nearestPointOnLine@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@turf_turf.js:12646:14
+@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/src/hooks/use-auto-reroute.ts:63:50
+@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/src/hooks/use-auto-reroute.ts:169:46
+commitHookEffectListMount@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:16915:40
+commitPassiveMountOnFiber@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18156:44
+commitPassiveMountEffects_complete@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18129:42
+commitPassiveMountEffects_begin@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18119:49
+commitPassiveMountEffects@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18109:42
+flushPassiveEffectsImpl@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19490:36
+flushPassiveEffects@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19447:45
+commitRootImpl@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19416:32
+commitRoot@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:19277:27
+performSyncWorkOnRoot@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18895:21
+flushSyncCallbacks@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:9119:38
+@https://98bbc228-2083-4dde-a3a3-59e090b14676-00-ga94bsl41ha7.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js:18627:39
