@@ -180,7 +180,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   selectedProfile,
   onMapClick,
   className,
-  showTraffic = false,
+  showTraffic = true,
   showIncidents = false,
   hideControls = false,
   hideCompass = false,

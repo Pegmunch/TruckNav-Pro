@@ -348,6 +348,8 @@ function NavigationPageContent() {
   const handleRerouteSuccess = useCallback((newRoute: RouteWithViolations) => {
     console.log('[AUTO-REROUTE] Updating route with new TomTom route');
     setCurrentRoute(newRoute);
+    // Reset route progress tracking for new route
+    routeProgressRef.current = 0;
     // Reset distance remaining with new route distance
     if (newRoute.distance) {
       setDynamicDistanceRemaining(newRoute.distance);
@@ -454,6 +456,9 @@ function NavigationPageContent() {
     distance: number; // in meters
     roadName?: string;
   } | null>(null);
+  
+  // Route progress tracking - prevents snapping backwards to earlier segments
+  const routeProgressRef = useRef<number>(0);
   
   // Helper: Check if turn indicator should be visible based on distance thresholds
   // Imperial: Show at 1000ft (305m), 500ft (152m), 100ft (30m) - within these thresholds
@@ -991,71 +996,180 @@ function NavigationPageContent() {
       }
     }
 
-    // Fallback: Calculate next turn from route waypoints
-    if (currentRoute.routePath && currentRoute.routePath.length > 1) {
-      let closestWaypointIndex = -1;
-      let minDistance = Infinity;
+    // Fallback: Calculate next turn from route path segments (matches blue route line)
+    // Uses true perpendicular projection, route progress tracking, and GPS heading validation
+    if (currentRoute.routePath && currentRoute.routePath.length > 2) {
+      const routePath = currentRoute.routePath;
+      
+      // Calculate bearing between two points (normalized to [0, 360])
+      const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+        const toRadians = (deg: number) => deg * (Math.PI / 180);
+        const toDegrees = (rad: number) => rad * (180 / Math.PI);
+        
+        const dLng = toRadians(lng2 - lng1);
+        const y = Math.sin(dLng) * Math.cos(toRadians(lat2));
+        const x = Math.cos(toRadians(lat1)) * Math.sin(toRadians(lat2)) -
+                  Math.sin(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.cos(dLng);
+        
+        return (toDegrees(Math.atan2(y, x)) + 360) % 360;
+      };
 
-      // Find closest waypoint ahead
-      currentRoute.routePath.forEach((waypoint, index) => {
-        const distance = calculateDistance(latitude, longitude, waypoint.lat, waypoint.lng);
-        if (distance < minDistance && distance > 10) { // Must be ahead (>10m)
-          minDistance = distance;
-          closestWaypointIndex = index;
+      // Precompute cumulative distances along route for O(1) distance lookups
+      const cumulativeDistances: number[] = [0];
+      for (let i = 0; i < routePath.length - 1; i++) {
+        const d = calculateDistance(routePath[i].lat, routePath[i].lng, routePath[i+1].lat, routePath[i+1].lng);
+        cumulativeDistances.push(cumulativeDistances[i] + d);
+      }
+      const totalRouteLength = cumulativeDistances[cumulativeDistances.length - 1];
+
+      // Get vehicle heading from GPS (use smoothedHeading for stability)
+      const vehicleHeading = gpsData?.position?.smoothedHeading ?? gpsData?.position?.heading;
+      
+      // Search window: only look from current progress forward (never backwards)
+      // This prevents snapping to earlier segments in hairpins/parallel roads
+      const searchStartIndex = Math.max(0, routeProgressRef.current - 2); // Allow small backwards movement for GPS jitter
+      const searchEndIndex = Math.min(routeProgressRef.current + 20, routePath.length - 1); // Look up to 20 segments ahead
+      
+      // True perpendicular projection within search window
+      let bestSegmentIndex = searchStartIndex;
+      let bestProjectionT = 0;
+      let bestDistance = Infinity;
+      let bestHeadingMatch = false;
+      
+      for (let i = searchStartIndex; i < searchEndIndex; i++) {
+        const p1 = routePath[i];
+        const p2 = routePath[i + 1];
+        
+        // Convert to approximate Cartesian for projection
+        const cosLat = Math.cos((latitude * Math.PI) / 180);
+        const ax = p1.lng * cosLat;
+        const ay = p1.lat;
+        const bx = p2.lng * cosLat;
+        const by = p2.lat;
+        const px = longitude * cosLat;
+        const py = latitude;
+        
+        // Vector projection
+        const abx = bx - ax;
+        const aby = by - ay;
+        const abLenSq = abx * abx + aby * aby;
+        const apx = px - ax;
+        const apy = py - ay;
+        
+        let t = abLenSq > 0 ? (apx * abx + apy * aby) / abLenSq : 0;
+        t = Math.max(0, Math.min(1, t));
+        
+        const closestX = ax + t * abx;
+        const closestY = ay + t * aby;
+        const dx = px - closestX;
+        const dy = py - closestY;
+        const distSq = dx * dx + dy * dy;
+        
+        // Check heading alignment if available
+        const segmentBearing = calculateBearing(p1.lat, p1.lng, p2.lat, p2.lng);
+        let headingMatch = true;
+        if (vehicleHeading != null && !isNaN(vehicleHeading)) {
+          let headingDiff = Math.abs(vehicleHeading - segmentBearing);
+          if (headingDiff > 180) headingDiff = 360 - headingDiff;
+          headingMatch = headingDiff < 90; // Vehicle facing roughly same direction as segment
         }
-      });
-
-      // If we found a waypoint ahead, calculate turn direction
-      if (closestWaypointIndex >= 0 && closestWaypointIndex < currentRoute.routePath.length - 1) {
-        const currentWaypoint = currentRoute.routePath[closestWaypointIndex];
-        const nextWaypoint = currentRoute.routePath[closestWaypointIndex + 1];
         
-        // Calculate bearing change to determine turn direction
-        const calculateBearing = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-          const toRadians = (deg: number) => deg * (Math.PI / 180);
-          const toDegrees = (rad: number) => rad * (180 / Math.PI);
-          
-          const dLng = toRadians(lng2 - lng1);
-          const y = Math.sin(dLng) * Math.cos(toRadians(lat2));
-          const x = Math.cos(toRadians(lat1)) * Math.sin(toRadians(lat2)) -
-                    Math.sin(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.cos(dLng);
-          
-          return toDegrees(Math.atan2(y, x));
-        };
-
-        const currentBearing = calculateBearing(latitude, longitude, currentWaypoint.lat, currentWaypoint.lng);
-        const nextBearing = calculateBearing(currentWaypoint.lat, currentWaypoint.lng, nextWaypoint.lat, nextWaypoint.lng);
+        // Prefer segments that match heading; within those, prefer closest
+        const isBetterMatch = 
+          (headingMatch && !bestHeadingMatch) || // Heading match wins over non-match
+          (headingMatch === bestHeadingMatch && distSq < bestDistance); // Same heading status, prefer closer
         
-        let turnAngle = nextBearing - currentBearing;
+        if (isBetterMatch) {
+          bestDistance = distSq;
+          bestSegmentIndex = i;
+          bestProjectionT = t;
+          bestHeadingMatch = headingMatch;
+        }
+      }
+      
+      // Update route progress (only move forward, never backwards by more than 2)
+      if (bestSegmentIndex >= routeProgressRef.current) {
+        routeProgressRef.current = bestSegmentIndex;
+      }
+
+      // Calculate distance along route to projected point
+      const segmentLength = cumulativeDistances[bestSegmentIndex + 1] - cumulativeDistances[bestSegmentIndex];
+      const projectedDistanceAlongRoute = cumulativeDistances[bestSegmentIndex] + segmentLength * bestProjectionT;
+
+      // Scan ahead from projected position to find the next significant turn (>25° angle change)
+      const TURN_THRESHOLD = 25;
+      const startSearchIndex = bestSegmentIndex + 1;
+      const LOOK_AHEAD_LIMIT = Math.min(startSearchIndex + 100, routePath.length - 2);
+      
+      let nextTurnIndex = -1;
+      let turnAngleAtPoint = 0;
+      
+      for (let i = Math.max(1, startSearchIndex); i < LOOK_AHEAD_LIMIT; i++) {
+        const prevPoint = routePath[i - 1];
+        const currPoint = routePath[i];
+        const nextPoint = routePath[i + 1];
+        
+        // Calculate bearing change at this vertex (using route segments only)
+        const incomingBearing = calculateBearing(prevPoint.lat, prevPoint.lng, currPoint.lat, currPoint.lng);
+        const outgoingBearing = calculateBearing(currPoint.lat, currPoint.lng, nextPoint.lat, nextPoint.lng);
+        
+        // Calculate turn angle (signed: positive = right, negative = left)
+        let turnAngle = outgoingBearing - incomingBearing;
         // Normalize to [-180, 180]
-        while (turnAngle > 180) turnAngle -= 360;
-        while (turnAngle < -180) turnAngle += 360;
-
+        if (turnAngle > 180) turnAngle -= 360;
+        if (turnAngle < -180) turnAngle += 360;
+        
+        // Check if this is a significant turn
+        if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
+          nextTurnIndex = i;
+          turnAngleAtPoint = turnAngle;
+          break;
+        }
+      }
+      
+      // If we found a turn ahead, set the turn indicator
+      if (nextTurnIndex > 0) {
+        // Distance from projected position to turn vertex using precomputed cumulative distances
+        const turnDistanceAlongRoute = cumulativeDistances[nextTurnIndex];
+        let distanceToTurn = turnDistanceAlongRoute - projectedDistanceAlongRoute;
+        
+        // Ensure distance is positive and at least 10m
+        distanceToTurn = Math.max(10, distanceToTurn);
+        
+        // Map turn angle to direction (matches blue route line direction)
         let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
         
-        // Turn angle thresholds (standard navigation convention):
-        // 0-15°: straight, 15-45°: slight turn, 45-90°: regular turn, >90°: sharp turn
-        // Negative angles = left turns, Positive angles = right turns
-        if (Math.abs(turnAngle) < 15) {
+        // Turn angle thresholds: 25-50° slight, 50-115° regular, >115° sharp
+        // Positive = right turn, Negative = left turn
+        if (Math.abs(turnAngleAtPoint) < 25) {
           direction = 'straight';
-        } else if (turnAngle <= -90) {
+        } else if (turnAngleAtPoint <= -115) {
           direction = 'sharp_left';
-        } else if (turnAngle <= -45) {
+        } else if (turnAngleAtPoint <= -50) {
           direction = 'left';
-        } else if (turnAngle < -15) {
+        } else if (turnAngleAtPoint < -25) {
           direction = 'slight_left';
-        } else if (turnAngle >= 90) {
+        } else if (turnAngleAtPoint >= 115) {
           direction = 'sharp_right';
-        } else if (turnAngle >= 45) {
+        } else if (turnAngleAtPoint >= 50) {
           direction = 'right';
-        } else if (turnAngle > 15) {
+        } else if (turnAngleAtPoint > 25) {
           direction = 'slight_right';
         }
 
         setNextTurn({
           direction,
-          distance: minDistance,
-          roadName: undefined // No road name from waypoints
+          distance: distanceToTurn,
+          roadName: undefined
+        });
+        console.log(`[TURN-CALC] Route turn: ${direction} at ${turnAngleAtPoint.toFixed(1)}° in ${distanceToTurn.toFixed(0)}m (vertex ${nextTurnIndex})`);
+      } else {
+        // No significant turn found ahead - continue straight
+        const remainingDistance = totalRouteLength - projectedDistanceAlongRoute;
+        setNextTurn({
+          direction: 'straight',
+          distance: Math.max(100, remainingDistance),
+          roadName: undefined
         });
       }
     }
@@ -1772,6 +1886,8 @@ function NavigationPageContent() {
             
             console.log('[JOURNEY-LOAD] ✅ Successfully loaded route from journey');
             setCurrentRoute(route);
+            // Reset route progress tracking for new route
+            routeProgressRef.current = 0;
             
             // Populate location fields from route data
             if (route.startLocation) {
@@ -2158,6 +2274,8 @@ function NavigationPageContent() {
       setShowDestinationReached(false);
       
       setCurrentRoute(route);
+      // Reset route progress tracking for new route
+      routeProgressRef.current = 0;
       // SAFETY: Also store in persistent ref for navigation start resilience
       lastCalculatedRouteRef.current = route;
       // Update route ID ref SYNCHRONOUSLY before any callbacks can fire
@@ -2464,6 +2582,8 @@ function NavigationPageContent() {
       
       const newRoute = await response.json();
       setCurrentRoute(newRoute);
+      // Reset route progress tracking for new route
+      routeProgressRef.current = 0;
       // SAFETY: Store in persistent ref for navigation resilience
       lastCalculatedRouteRef.current = newRoute;
       
@@ -2927,6 +3047,8 @@ function NavigationPageContent() {
       
       // CRITICAL: Persist route to state so component receives valid route
       setCurrentRoute(route);
+      // Reset route progress tracking for new route
+      routeProgressRef.current = 0;
       // SAFETY: Store in persistent ref BEFORE navigation starts - this survives journey sync effects
       lastCalculatedRouteRef.current = route;
       console.log('[NAV-ACTIVATION] ✅ Route ready and persisted to state + ref, proceeding with journey activation');

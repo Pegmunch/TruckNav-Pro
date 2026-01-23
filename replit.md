@@ -136,3 +136,30 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Type Safety**: All tabs use shared schema types from @shared/schema with display interfaces
 - **Status**: UI components complete with demo data for development testing
 - **Production Note**: Backend storage CRUD implementation pending for production deployment
+
+# Turn Indicator System (v3.4.36)
+
+## Core Algorithm
+The turn indicator analyzes the route path geometry to detect upcoming turns and displays direction arrows consistent with the blue route line.
+
+## Key Features
+- **True Perpendicular Projection**: Uses vector math (dot product) to find closest point on any route segment
+- **Route Progress Tracking**: Maintains progress ref to prevent backwards snapping in hairpins/parallel roads
+- **GPS Heading Validation**: Uses smoothedHeading from GPS to validate segment selection and prefer travel-aligned segments
+- **Cumulative Distance**: Precomputes distances along route for O(1) distance lookups
+- **Constrained Search Window**: Only searches from (progress - 2) to (progress + 20) segments ahead
+
+## Turn Detection Logic
+1. Find closest segment using perpendicular projection within search window
+2. Validate segment alignment with GPS heading (prefer heading-aligned segments)
+3. Update route progress (only moves forward, never backwards by >2)
+4. Scan ahead for next significant turn (>25° angle change)
+5. Calculate distance to turn using cumulative route distances
+6. Map turn angle to direction: 25-50° = slight, 50-115° = regular, >115° = sharp
+
+## Progress Reset Points
+- Route recalculation (reroute)
+- Journey load from storage
+- New route calculation
+- Alternative route selection
+- Navigation activation
