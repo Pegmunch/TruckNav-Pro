@@ -94,7 +94,7 @@ export function CompactTripStrip({
 
   // Get turn icon
   const getTurnIcon = (direction: string) => {
-    const iconProps = { className: "w-6 h-6 stroke-[2.5px]" };
+    const iconProps = { className: "w-8 h-8 stroke-[2.5px]" };
     switch (direction) {
       case 'straight': return <ArrowUp {...iconProps} />;
       case 'right':
