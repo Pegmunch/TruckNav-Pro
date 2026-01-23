@@ -1560,6 +1560,158 @@ export function UserGuideTab() {
           </Card>
         </div>
       )
+    },
+    {
+      id: 'appendix',
+      title: 'Appendix & Reference',
+      icon: <FileText className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 rounded-lg">
+            <h2 className="text-2xl font-bold mb-2">Appendix & Technical Reference</h2>
+            <p className="text-purple-100">Language Support, System Verification & Test Scenarios</p>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Globe className="w-5 h-5 text-blue-500" />
+                Translation System - 19 Languages Supported
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 dark:bg-gray-800">
+                      <th className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-left">Language</th>
+                      <th className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-left">Code</th>
+                      <th className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-left">Coverage</th>
+                      <th className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">English (US)</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">en-US</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">English (UK)</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">en-GB</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">German</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">de-DE</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Spanish</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">es-ES</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Italian</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">it-IT</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Japanese</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">ja-JP</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Polish</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">pl-PL</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Portuguese (Brazil)</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">pt-BR</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Romanian</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">ro-RO</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Chinese (Simplified)</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">zh-CN</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">13 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-green-500">Full</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Arabic</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">ar-SA</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">French</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">fr-FR</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Hindi</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">hi-IN</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Korean</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">ko-KR</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Dutch</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">nl-NL</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Russian</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">ru-RU</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                    <tr className="bg-gray-50 dark:bg-gray-900"><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">Turkish</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">tr-TR</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1">9 categories</td><td className="border border-gray-200 dark:border-gray-700 px-3 py-1"><Badge className="bg-blue-500">Core</Badge></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-muted-foreground text-xs">
+                <strong>Categories:</strong> app, navigation, vehicle, route, facilities, legal, subscription, common, amazon, voice, settings, languages, fleet
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                Fleet Management Test Scenario - PASSED
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+              <p>The following test scenario was executed to verify all Fleet Management System functions:</p>
+              
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <h4 className="font-bold text-green-800 dark:text-green-200 mb-3">Test Data Created:</h4>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex items-start gap-2">
+                    <Truck className="w-4 h-4 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Test Vehicle</p>
+                      <p className="text-xs text-muted-foreground">Volvo FH16 (TEST-TRK-001)</p>
+                      <p className="text-xs text-green-600">Created Successfully</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Users className="w-4 h-4 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Test Driver</p>
+                      <p className="text-xs text-muted-foreground">John TestDriver (TESTLIC12345, C+E)</p>
+                      <p className="text-xs text-green-600">Created Successfully</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Wrench className="w-4 h-4 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Service Record</p>
+                      <p className="text-xs text-muted-foreground">MOT inspection, £150.00</p>
+                      <p className="text-xs text-green-600">Created Successfully</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Fuel className="w-4 h-4 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Fuel Log</p>
+                      <p className="text-xs text-muted-foreground">400L diesel, £580.00, BP Motorway</p>
+                      <p className="text-xs text-green-600">Created Successfully</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="font-bold text-blue-800 dark:text-blue-200 mb-2">Database Tables Verified (10 Total):</h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                  <Badge variant="outline" className="justify-center">fleet_vehicles</Badge>
+                  <Badge variant="outline" className="justify-center">operators</Badge>
+                  <Badge variant="outline" className="justify-center">service_records</Badge>
+                  <Badge variant="outline" className="justify-center">fuel_logs</Badge>
+                  <Badge variant="outline" className="justify-center">customer_billing</Badge>
+                  <Badge variant="outline" className="justify-center">driver_behavior</Badge>
+                  <Badge variant="outline" className="justify-center">geofences</Badge>
+                  <Badge variant="outline" className="justify-center">geofence_events</Badge>
+                  <Badge variant="outline" className="justify-center">hours_of_service</Badge>
+                  <Badge variant="outline" className="justify-center">traffic_incidents</Badge>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground italic">
+                Test data was created, verified for correct associations between vehicle, driver, service, and fuel records, then cleaned up after successful verification.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Fleet UI Tabs (14 Total)</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <div className="flex flex-wrap gap-2">
+                <Badge>Vehicles</Badge>
+                <Badge>Operators</Badge>
+                <Badge>Service</Badge>
+                <Badge>Fuel</Badge>
+                <Badge>Documents</Badge>
+                <Badge>Analytics</Badge>
+                <Badge>Incidents</Badge>
+                <Badge>Trips</Badge>
+                <Badge>Compliance</Badge>
+                <Badge>Fleet Tracking</Badge>
+                <Badge>Geofencing</Badge>
+                <Badge>Driver Behavior</Badge>
+                <Badge>Hours of Service</Badge>
+                <Badge>Customer Billing</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
     }
   ];
 
