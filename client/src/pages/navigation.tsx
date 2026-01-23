@@ -3878,7 +3878,10 @@ function NavigationPageContent() {
                     <LeftActionStack
                       onNavigate={() => mapRef.current?.zoomToUserLocation()}
                       onCancel={handleStopNavigation}
-                      onReportIncident={() => setShowIncidentReportDialog(true)}
+                      onReportIncident={() => {
+                        console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening incident dialog');
+                        setShowIncidentReportDialog(true);
+                      }}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
                       isNavigating={isNavUIActive}
                       currentLocation={currentGPSLocation}

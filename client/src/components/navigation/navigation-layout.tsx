@@ -54,14 +54,17 @@ export function NavigationLayout({
       )}
 
       {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
-      {/* FIXED: Changed to pointer-events-auto to allow button touches */}
+      {/* FIXED: Changed to pointer-events-auto with explicit stacking context to prevent touch interception */}
       {leftStack && (
         <div 
           className="fixed left-4 flex flex-col gap-3 pointer-events-auto touch-manipulation"
           style={{ 
             bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-            zIndex: 99999,
-            touchAction: 'manipulation'
+            zIndex: 200000,
+            touchAction: 'manipulation',
+            isolation: 'isolate',
+            contain: 'layout paint',
+            willChange: 'transform'
           }}
         >
           {leftStack}

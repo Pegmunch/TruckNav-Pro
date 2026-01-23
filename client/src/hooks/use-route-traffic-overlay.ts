@@ -68,10 +68,9 @@ export function useRouteTrafficOverlay(
     }
 
     const TOMTOM_API_KEY = import.meta.env.VITE_TOMTOM_API_KEY;
+    console.log('[ROUTE-TRAFFIC] TomTom API key present:', !!TOMTOM_API_KEY);
     if (!TOMTOM_API_KEY) {
-      console.warn('[ROUTE-TRAFFIC] No TomTom API key found');
-      setError('Traffic API key not configured');
-      return;
+      console.warn('[ROUTE-TRAFFIC] No TomTom API key found - trying HERE fallback only');
     }
 
     if (abortControllerRef.current) {
@@ -213,17 +212,26 @@ export function useRouteTrafficOverlay(
   }, []);
 
   useEffect(() => {
+    console.log('[ROUTE-TRAFFIC-HOOK] Effect triggered:', { 
+      enabled, 
+      routePathLength: routePath?.length || 0,
+      hasValidPath: routePath && routePath.length >= 2
+    });
+    
     if (!enabled || !routePath || routePath.length < 2) {
+      console.log('[ROUTE-TRAFFIC-HOOK] Early exit - disabled or no valid path');
       setSegments([]);
       return;
     }
 
     const routeHash = hashRoute(routePath);
     if (routeHash === lastRouteHashRef.current && segments.length > 0) {
+      console.log('[ROUTE-TRAFFIC-HOOK] Route hash unchanged, using cached segments');
       return;
     }
     lastRouteHashRef.current = routeHash;
 
+    console.log('[ROUTE-TRAFFIC-HOOK] ✅ Fetching traffic for route with', routePath.length, 'points');
     fetchTrafficForRoute(routePath);
 
     if (intervalRef.current) {

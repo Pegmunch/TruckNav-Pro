@@ -120,6 +120,8 @@ export function LeftActionStack({
   // This prevents an empty container from blocking touch events
   const hasVisibleButtons = isNavigating || showMenuButton;
   
+  console.log('[LEFT-STACK-RENDER]', { isNavigating, showMenuButton, hasVisibleButtons, hasOnReportIncident: !!onReportIncident });
+  
   if (!hasVisibleButtons) {
     return null;
   }
@@ -175,7 +177,12 @@ export function LeftActionStack({
           size="icon"
           {...createHandler(onReportIncident, 'INCIDENT')}
           className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
-          style={{ touchAction: 'manipulation' }}
+          style={{ 
+            touchAction: 'manipulation',
+            position: 'relative',
+            zIndex: 100000,
+            isolation: 'isolate'
+          }}
           data-testid="button-report-incident"
           data-tour-id="incident-button"
         >

@@ -839,9 +839,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   });
   
   // Route-specific traffic overlay (Layer 2)
+  // Debug: Log the conditions for traffic overlay activation
+  const trafficOverlayEnabled = showTraffic && isNavigating && !!currentRoute?.routePath;
+  console.log('[TRAFFIC-OVERLAY-ACTIVATION]', {
+    showTraffic,
+    isNavigating,
+    hasRoutePath: !!currentRoute?.routePath,
+    routePathLength: currentRoute?.routePath?.length || 0,
+    enabled: trafficOverlayEnabled
+  });
+  
   const routeTrafficData = useRouteTrafficOverlay(
     currentRoute?.routePath,
-    showTraffic && isNavigating && !!currentRoute?.routePath,
+    trafficOverlayEnabled,
     2 * 60 * 1000 // 2 minute refresh
   );
   
