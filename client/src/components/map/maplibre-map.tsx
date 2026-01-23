@@ -14,6 +14,7 @@ import { useGPS } from "@/contexts/gps-context";
 import { StaticRouteOverlay } from "@/components/map/static-route-overlay";
 import { useRouteTrafficOverlay, type TrafficSegment } from "@/hooks/use-route-traffic-overlay";
 import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
+import { TrafficStatusIndicator, TrafficLegend, type TrafficStatus } from "@/components/navigation/traffic-status-indicator";
 
 /**
  * BULLETPROOF COORDINATE VALIDATION
@@ -3726,6 +3727,36 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       )}
       
       {/* GPS/Cache selection moved to Settings modal - Online/Offline tab */}
+      
+      {/* Traffic Status Indicator - Shows during navigation */}
+      {isNavigating && showTraffic && (
+        <div 
+          className="absolute top-4 right-4 z-40 pointer-events-auto"
+          data-testid="traffic-status-indicator"
+        >
+          <TrafficStatusIndicator
+            status={
+              routeTrafficData.isLoading ? 'loading' :
+              routeTrafficData.error ? 'error' :
+              routeTrafficData.segments.length > 0 ? 'available' : 'unavailable'
+            }
+            segmentCount={routeTrafficData.segments.length}
+            unknownSegmentCount={routeTrafficData.segments.filter(s => s.flowLevel === 'unknown').length}
+            lastUpdated={routeTrafficData.lastUpdated}
+            compact={false}
+          />
+        </div>
+      )}
+      
+      {/* Traffic Legend - Shows when traffic overlay is active with data */}
+      {isNavigating && showTraffic && routeTrafficData.segments.length > 0 && (
+        <div 
+          className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto"
+          data-testid="traffic-legend"
+        >
+          <TrafficLegend />
+        </div>
+      )}
       </div>
     </div>
   );

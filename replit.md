@@ -96,3 +96,12 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
   - Neutral gray color for segments with unknown traffic data (API errors)
   - Voice-activated incident reporting with purple microphone button
   - iOS-friendly touch handling for orange incident button
+  - Traffic status indicator and legend during navigation
+  - Graceful error handling with gray/unknown color for API failures
+
+## Alternative Traffic Data Sources (for reference)
+If TomTom Traffic Flow API is not available in your subscription tier, consider these alternatives:
+- **HERE Traffic API**: 250,000 queries/month free tier, best alternative option
+- **Azure Maps Traffic API**: Free tier with Azure account
+- **Netherlands NDW Open Data**: Free government data for Europe (Datex-II format)
+- **TomTom Truck Routing API**: Works with current key (includes traffic delay estimates in route calculation)
