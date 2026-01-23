@@ -221,11 +221,8 @@ export function useAutoReroute(
     isReroutingRef.current = true;
     setState(prev => ({ ...prev, isRerouting: true }));
     
-    toast({
-      title: "Recalculating route...",
-      description: "Finding the best route from your current position",
-      duration: 3000,
-    });
+    // REMOVED: Toast notification disabled per user request - no popups
+    console.log('[AUTO-REROUTE] Recalculating route from current position...');
     
     try {
       const currentLat = gpsData!.position!.latitude;
@@ -256,11 +253,7 @@ export function useAutoReroute(
       
       console.log('[AUTO-REROUTE] Successfully calculated new route');
       
-      toast({
-        title: "Route updated",
-        description: "Following new route to destination",
-        duration: 2000,
-      });
+      // REMOVED: Toast notification disabled per user request - no popups
       
       onRerouteSuccess(newRoute);
       
@@ -277,12 +270,7 @@ export function useAutoReroute(
     } catch (error) {
       console.error('[AUTO-REROUTE] Reroute failed:', error);
       
-      toast({
-        title: "Reroute failed",
-        description: "Continuing on current route",
-        variant: "destructive",
-        duration: 3000,
-      });
+      // REMOVED: Toast notification disabled per user request - no popups
       
       setState(prev => ({ ...prev, isRerouting: false }));
     } finally {
