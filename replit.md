@@ -73,3 +73,48 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 
 ## Traffic API Fallback
 - **HERE Traffic API**: For traffic flow data when TomTom Traffic Flow fails.
+
+# Fleet Shift Management System (v3.4.32)
+
+## Database Tables
+- shift_checkins, shift_handovers, driver_performance_scores, vehicle_health_scores
+
+## Fleet Data Tracking Logic
+
+| Data Type | Follows Vehicle | Follows Driver |
+|-----------|-----------------|----------------|
+| Service Records | ✅ | ❌ |
+| Fuel Logs | ✅ | ✅ (who filled up) |
+| Trips | ✅ | ✅ |
+| Driver Behavior | ❌ | ✅ |
+| Hours of Service | ❌ | ✅ |
+| Incidents | ✅ | ✅ (optional) |
+| Compliance | ✅ or ✅ | (supports both) |
+
+## Fleet Shift Management Features
+
+### 1. Daily Check-In/Check-Out Tab
+- Start of shift: Select vehicle, odometer reading, pre-trip inspection
+- End of shift: Odometer reading, fuel level, any issues noted
+
+### 2. Assignment History View
+- Quick view of "Who drove this vehicle?" for any date range
+- Quick view of "What vehicles did this driver use?" for any date range
+
+### 3. Split Analytics Formulas
+- **Driver Performance Score**: Based on behavior data, HoS compliance, incidents - follows the DRIVER
+  - Categories: Safety (25%), Efficiency (20%), Compliance (20%), Punctuality (20%), Vehicle Care (15%)
+- **Vehicle Health Score**: Based on service history, fuel efficiency, age, mileage - follows the VEHICLE
+  - Categories: Mechanical (25%), Safety Systems (25%), Tires (20%), Fluids (15%), Body (15%)
+- **Combined Trip Metrics**: Links both for profitability analysis
+
+### 4. Shift Handover Notes
+- When one driver ends and another starts the same vehicle, capture handover notes about vehicle condition
+- Vehicle condition assessment (excellent/good/fair/poor/critical)
+- Urgent issues and recommended actions
+- Acknowledgment tracking for incoming drivers
+
+## Implementation Status
+- **Type Safety**: All tabs use shared schema types from @shared/schema with display interfaces
+- **Status**: UI components complete with demo data for development testing
+- **Production Note**: Backend storage CRUD implementation pending for production deployment
