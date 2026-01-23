@@ -455,6 +455,19 @@ function NavigationPageContent() {
     roadName?: string;
   } | null>(null);
   
+  // Helper: Check if turn indicator should be visible based on distance thresholds
+  // Imperial: Show at 1000ft (305m), 500ft (152m), 100ft (30m) - within these thresholds
+  // Metric: Show at 300m, 150m, 30m
+  const shouldShowTurnIndicator = (distanceMeters: number, isImperial: boolean): boolean => {
+    if (isImperial) {
+      // Show when distance is within 1000ft (305m) threshold
+      return distanceMeters <= 305 && distanceMeters >= 0;
+    } else {
+      // Show when distance is within 300m threshold
+      return distanceMeters <= 300 && distanceMeters >= 0;
+    }
+  };
+  
   // Get real GPS location from singleton GPS provider (no more duplicate watchers!)
   const currentGPSLocation = gpsData?.position ? {
     lat: gpsData.position.latitude,
@@ -849,13 +862,17 @@ function NavigationPageContent() {
       return;
     }
     
-    // Helper: Map TomTom sign value to direction string
-    // TomTom sign codes: -2 = left, 2 = right, -7 = bear left, 7 = bear right, -3 = sharp left, 3 = sharp right, 0 = straight
+    // Helper: Map routing API sign value to direction string
+    // GraphHopper/routing sign codes: 
+    // -3 = sharp left, -2 = left, -1 = slight left/keep left
+    // 0 = straight/continue
+    // 1 = slight right/keep right, 2 = right, 3 = sharp right
+    // 4 = arrive, 5 = via reached, 6 = roundabout
     const mapSignToDirection = (sign: number): 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' => {
       if (sign === 2) return 'right';
       if (sign === -2) return 'left';
-      if (sign === 7) return 'slight_right';
-      if (sign === -7) return 'slight_left';
+      if (sign === 1) return 'slight_right';
+      if (sign === -1) return 'slight_left';
       if (sign === 3) return 'sharp_right';
       if (sign === -3) return 'sharp_left';
       return 'straight';
@@ -1016,14 +1033,21 @@ function NavigationPageContent() {
 
         let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
         
+        // Turn angle thresholds (standard navigation convention):
+        // 0-15°: straight, 15-45°: slight turn, 45-90°: regular turn, >90°: sharp turn
+        // Negative angles = left turns, Positive angles = right turns
         if (Math.abs(turnAngle) < 15) {
           direction = 'straight';
-        } else if (turnAngle < -60) {
+        } else if (turnAngle <= -90) {
           direction = 'sharp_left';
+        } else if (turnAngle <= -45) {
+          direction = 'left';
         } else if (turnAngle < -15) {
           direction = 'slight_left';
-        } else if (turnAngle > 60) {
+        } else if (turnAngle >= 90) {
           direction = 'sharp_right';
+        } else if (turnAngle >= 45) {
+          direction = 'right';
         } else if (turnAngle > 15) {
           direction = 'slight_right';
         }
@@ -3648,7 +3672,8 @@ function NavigationPageContent() {
                       )}
                       
                       {/* Turn Indicator - Large bubble at top center */}
-                      {nextTurn && (
+                      {/* Only show when distance is within thresholds: 1000ft/500ft/100ft (imperial) or 300m/150m/30m (metric) */}
+                      {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
                         <TurnIndicator
                           direction={nextTurn.direction}
                           distance={nextTurn.distance}
@@ -4193,8 +4218,8 @@ function NavigationPageContent() {
                       {/* CRITICAL: Use isNavigating instead of isNavUIActive to prevent HUD showing during preview mode */}
                       {isNavigating && (
                   <>
-                    {/* 3. Turn Indicator - 365 FT notification - Below CompactTripStrip */}
-                    {nextTurn && (
+                    {/* 3. Turn Indicator - Only show at 1000ft/500ft/100ft thresholds */}
+                    {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
                       <div 
                         className="fixed left-0 right-0 z-[190]"
                         style={{ top: 'calc(112px + var(--safe-area-top, 0px))' }}

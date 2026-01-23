@@ -27,23 +27,30 @@ const TurnIndicator = memo(function TurnIndicator({
   className
 }: TurnIndicatorProps) {
   
-  // Convert distance to appropriate unit
+  // Convert distance to snapped threshold values
+  // Imperial: 1000ft, 500ft, 100ft | Metric: 300m, 150m, 30m
   const convertDistance = (distanceM: number): { value: string; unit: string } => {
     if (unit === 'mi') {
-      const miles = distanceM / 1609.34;
-      if (miles < 0.1) {
-        // Show in feet for very short distances
-        const feet = Math.round(distanceM * 3.28084);
-        return { value: feet.toString(), unit: 'ft' };
+      // Convert meters to feet
+      const feet = distanceM * 3.28084;
+      
+      // Snap to threshold distances: 1000ft, 500ft, 100ft
+      if (feet > 750) {
+        return { value: '1000', unit: 'ft' };
+      } else if (feet > 300) {
+        return { value: '500', unit: 'ft' };
+      } else {
+        return { value: '100', unit: 'ft' };
       }
-      return { value: miles.toFixed(1), unit: 'mi' };
     } else {
-      const km = distanceM / 1000;
-      if (km < 0.1) {
-        // Show in meters for very short distances
-        return { value: Math.round(distanceM).toString(), unit: 'm' };
+      // Metric: Snap to 300m, 150m, 30m thresholds
+      if (distanceM > 225) {
+        return { value: '300', unit: 'm' };
+      } else if (distanceM > 90) {
+        return { value: '150', unit: 'm' };
+      } else {
+        return { value: '30', unit: 'm' };
       }
-      return { value: km.toFixed(1), unit: 'km' };
     }
   };
   
