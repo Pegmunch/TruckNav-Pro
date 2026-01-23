@@ -23,7 +23,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFo
 import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned, Monitor } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned, Monitor, ClipboardCheck, Award, HeartPulse } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
@@ -40,6 +40,9 @@ import { HoursOfServiceTab } from '@/components/fleet/hos-tab';
 import { CustomerBillingTab } from '@/components/fleet/customer-billing-tab';
 import { GeofencingTab } from '@/components/fleet/geofencing-tab';
 import { UserGuideTab } from '@/components/fleet/user-guide-tab';
+import { ShiftManagementTab } from '@/components/fleet/shift-management-tab';
+import { DriverPerformanceTab } from '@/components/fleet/driver-performance-tab';
+import { VehicleHealthTab } from '@/components/fleet/vehicle-health-tab';
 import { Link } from 'wouter';
 
 function MobileRestrictionScreen() {
@@ -181,6 +184,21 @@ export default function FleetManagement() {
               <span className="hidden sm:inline">Geofencing</span>
               <span className="sm:hidden">G</span>
             </TabsTrigger>
+            <TabsTrigger value="shifts" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-shifts">
+              <ClipboardCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Shifts</span>
+              <span className="sm:hidden">SH</span>
+            </TabsTrigger>
+            <TabsTrigger value="driver-performance" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-driver-performance">
+              <Award className="w-4 h-4" />
+              <span className="hidden sm:inline">Driver Score</span>
+              <span className="sm:hidden">DS</span>
+            </TabsTrigger>
+            <TabsTrigger value="vehicle-health" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-vehicle-health">
+              <HeartPulse className="w-4 h-4" />
+              <span className="hidden sm:inline">Vehicle Health</span>
+              <span className="sm:hidden">VH</span>
+            </TabsTrigger>
             <TabsTrigger value="guide" className="flex items-center gap-2 text-xs sm:text-sm bg-blue-100 dark:bg-blue-900/30" data-testid="tab-guide">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">User Guide</span>
@@ -242,6 +260,18 @@ export default function FleetManagement() {
 
           <TabsContent value="geofencing">
             <GeofencingTab />
+          </TabsContent>
+
+          <TabsContent value="shifts">
+            <ShiftManagementTab />
+          </TabsContent>
+
+          <TabsContent value="driver-performance">
+            <DriverPerformanceTab />
+          </TabsContent>
+
+          <TabsContent value="vehicle-health">
+            <VehicleHealthTab />
           </TabsContent>
 
           <TabsContent value="guide">

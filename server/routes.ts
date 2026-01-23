@@ -8,7 +8,7 @@ import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth, requireFleetSubscription } from "./subscriptionMiddleware";
 import { sendPaymentFailedNotification, resetNotificationsForRenewedSubscription, stopNotificationsForExpiredSubscription, getBrandedEmailTemplate } from "./services/subscription-notifications";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, type VehicleProfile, type Restriction } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, insertShiftCheckinSchema, insertShiftHandoverSchema, insertDriverPerformanceScoreSchema, insertVehicleHealthScoreSchema, type VehicleProfile, type Restriction, type ShiftCheckin, type ShiftHandover, type DriverPerformanceScore, type VehicleHealthScore } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest } from "./middleware/security";
@@ -5689,6 +5689,325 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching incidents:', error);
       res.status(500).json({ message: "Failed to fetch incidents" });
+    }
+  });
+
+  // Shift Management API - Daily Check-Ins/Check-Outs
+  app.get("/api/fleet/shift-checkins", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      // Return demo data for development - real implementation would query the database
+      const demoCheckins: ShiftCheckin[] = [
+        {
+          id: 'c1',
+          userId,
+          vehicleId: 'v1',
+          operatorId: 'op1',
+          checkInTime: new Date(Date.now() - 4 * 3600000),
+          checkInOdometer: 245678,
+          checkInFuelLevel: 85,
+          preTripInspection: true,
+          tiresOk: true,
+          lightsOk: true,
+          brakesOk: true,
+          fluidsOk: true,
+          mirrorsOk: true,
+          hornOk: true,
+          wipersOk: true,
+          safetyEquipmentOk: true,
+          vehicleClean: true,
+          defectsNoted: null,
+          checkOutTime: null,
+          checkOutOdometer: null,
+          checkOutFuelLevel: null,
+          milesDriven: null,
+          fuelUsed: null,
+          postTripNotes: null,
+          issuesReported: null,
+          status: 'checked_in',
+          createdAt: new Date(Date.now() - 4 * 3600000),
+        },
+      ];
+      res.json(demoCheckins);
+    } catch (error) {
+      console.error('Error fetching shift check-ins:', error);
+      res.status(500).json({ message: "Failed to fetch shift check-ins" });
+    }
+  });
+
+  app.post("/api/fleet/shift-checkins", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const checkinData = { ...req.body, userId };
+      // TODO: Store in database - for now return the data with generated ID
+      const checkin = {
+        id: `c${Date.now()}`,
+        ...checkinData,
+        checkInTime: new Date(),
+        preTripInspection: true,
+        status: 'checked_in',
+        createdAt: new Date(),
+      };
+      res.json(checkin);
+    } catch (error) {
+      console.error('Error creating shift check-in:', error);
+      res.status(500).json({ message: "Failed to create shift check-in" });
+    }
+  });
+
+  app.put("/api/fleet/shift-checkins/:id/checkout", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      // TODO: Update in database - for now return success
+      const checkout = {
+        id: req.params.id,
+        checkOutTime: new Date(),
+        checkOutOdometer: req.body.odometer,
+        checkOutFuelLevel: req.body.fuelLevel,
+        postTripNotes: req.body.postTripNotes,
+        issuesReported: req.body.issuesReported,
+        status: 'checked_out',
+      };
+      res.json(checkout);
+    } catch (error) {
+      console.error('Error processing check-out:', error);
+      res.status(500).json({ message: "Failed to process check-out" });
+    }
+  });
+
+  // Shift Handovers API
+  app.get("/api/fleet/shift-handovers", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      // Return demo data for development
+      const demoHandovers: ShiftHandover[] = [
+        {
+          id: 'h1',
+          userId,
+          vehicleId: 'v3',
+          outgoingOperatorId: 'op3',
+          outgoingCheckinId: 'c3',
+          incomingOperatorId: 'op4',
+          incomingCheckinId: null,
+          handoverTime: new Date(Date.now() - 1 * 3600000),
+          vehicleCondition: 'good',
+          fuelLevel: 65,
+          currentOdometer: 312789,
+          handoverNotes: 'Vehicle running well, AC needs checking',
+          urgentIssues: null,
+          recommendedActions: 'Schedule AC service this week',
+          acknowledged: true,
+          acknowledgedAt: new Date(Date.now() - 0.5 * 3600000),
+          acknowledgedBy: 'op4',
+          createdAt: new Date(Date.now() - 1 * 3600000),
+        },
+      ];
+      res.json(demoHandovers);
+    } catch (error) {
+      console.error('Error fetching shift handovers:', error);
+      res.status(500).json({ message: "Failed to fetch shift handovers" });
+    }
+  });
+
+  app.post("/api/fleet/shift-handovers", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const handoverData = { ...req.body, userId };
+      const handover = {
+        id: `h${Date.now()}`,
+        ...handoverData,
+        handoverTime: new Date(),
+        acknowledged: false,
+        createdAt: new Date(),
+      };
+      res.json(handover);
+    } catch (error) {
+      console.error('Error creating shift handover:', error);
+      res.status(500).json({ message: "Failed to create shift handover" });
+    }
+  });
+
+  app.put("/api/fleet/shift-handovers/:id/acknowledge", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const acknowledgment = {
+        id: req.params.id,
+        acknowledged: true,
+        acknowledgedAt: new Date(),
+        acknowledgedBy: userId,
+      };
+      res.json(acknowledgment);
+    } catch (error) {
+      console.error('Error acknowledging handover:', error);
+      res.status(500).json({ message: "Failed to acknowledge handover" });
+    }
+  });
+
+  // Driver Performance Scores API
+  app.get("/api/fleet/driver-performance", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const period = req.query.period || 'weekly';
+      // Return demo data for development
+      const demoScores: DriverPerformanceScore[] = [
+        {
+          id: 'dp1',
+          userId,
+          operatorId: 'op1',
+          periodStart: new Date(Date.now() - 7 * 24 * 3600000),
+          periodEnd: new Date(),
+          periodType: 'weekly',
+          overallScore: 92,
+          safetyScore: 95,
+          efficiencyScore: 88,
+          complianceScore: 94,
+          punctualityScore: 91,
+          vehicleCareScore: 90,
+          totalMilesDriven: 2450,
+          totalHoursDriven: 42,
+          totalTrips: 18,
+          incidentCount: 0,
+          harshBrakingEvents: 2,
+          speedingEvents: 1,
+          hosViolations: 0,
+          lateDeliveries: 1,
+          missedInspections: 0,
+          scoreTrend: 'improving',
+          previousScore: 88,
+          notes: 'Excellent week, only 1 late delivery due to traffic',
+          createdAt: new Date(),
+        },
+        {
+          id: 'dp2',
+          userId,
+          operatorId: 'op2',
+          periodStart: new Date(Date.now() - 7 * 24 * 3600000),
+          periodEnd: new Date(),
+          periodType: 'weekly',
+          overallScore: 85,
+          safetyScore: 82,
+          efficiencyScore: 90,
+          complianceScore: 80,
+          punctualityScore: 88,
+          vehicleCareScore: 85,
+          totalMilesDriven: 2890,
+          totalHoursDriven: 48,
+          totalTrips: 22,
+          incidentCount: 1,
+          harshBrakingEvents: 5,
+          speedingEvents: 3,
+          hosViolations: 1,
+          lateDeliveries: 2,
+          missedInspections: 0,
+          scoreTrend: 'declining',
+          previousScore: 89,
+          notes: 'HoS violation needs to be addressed',
+          createdAt: new Date(),
+        },
+      ];
+      res.json(demoScores);
+    } catch (error) {
+      console.error('Error fetching driver performance:', error);
+      res.status(500).json({ message: "Failed to fetch driver performance" });
+    }
+  });
+
+  // Vehicle Health Scores API
+  app.get("/api/fleet/vehicle-health", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const period = req.query.period || 'weekly';
+      // Return demo data for development
+      const demoScores: VehicleHealthScore[] = [
+        {
+          id: 'vh1',
+          userId,
+          vehicleId: 'v1',
+          periodStart: new Date(Date.now() - 7 * 24 * 3600000),
+          periodEnd: new Date(),
+          periodType: 'weekly',
+          overallScore: 94,
+          mechanicalScore: 96,
+          safetySystemsScore: 95,
+          tiresScore: 92,
+          fluidsScore: 94,
+          bodyScore: 93,
+          totalMiles: 3200,
+          fuelEfficiency: 7.8,
+          averageFuelEfficiency: 7.5,
+          serviceOverdue: false,
+          daysSinceService: 12,
+          defectsReported: 1,
+          defectsResolved: 1,
+          vehicleAgeYears: 2.5,
+          totalOdometer: 245890,
+          expectedLifespanPercent: 25,
+          scoreTrend: 'stable',
+          previousScore: 93,
+          recommendedActions: 'Schedule tire rotation next week',
+          urgentIssues: null,
+          notes: 'Well maintained vehicle, no concerns',
+          createdAt: new Date(),
+        },
+        {
+          id: 'vh2',
+          userId,
+          vehicleId: 'v2',
+          periodStart: new Date(Date.now() - 7 * 24 * 3600000),
+          periodEnd: new Date(),
+          periodType: 'weekly',
+          overallScore: 68,
+          mechanicalScore: 65,
+          safetySystemsScore: 70,
+          tiresScore: 72,
+          fluidsScore: 68,
+          bodyScore: 65,
+          totalMiles: 1800,
+          fuelEfficiency: 6.5,
+          averageFuelEfficiency: 7.5,
+          serviceOverdue: true,
+          daysSinceService: 95,
+          defectsReported: 5,
+          defectsResolved: 2,
+          vehicleAgeYears: 6.0,
+          totalOdometer: 512789,
+          expectedLifespanPercent: 68,
+          scoreTrend: 'declining',
+          previousScore: 74,
+          recommendedActions: 'Urgent service required, engine diagnostics needed',
+          urgentIssues: 'Service overdue by 35 days, 3 unresolved defects',
+          notes: 'Vehicle requires immediate maintenance attention',
+          createdAt: new Date(),
+        },
+      ];
+      res.json(demoScores);
+    } catch (error) {
+      console.error('Error fetching vehicle health:', error);
+      res.status(500).json({ message: "Failed to fetch vehicle health" });
     }
   });
 
