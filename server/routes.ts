@@ -2921,6 +2921,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // HERE Traffic Flow API - Fallback for real-time traffic data
+  // In-memory cache for HERE Traffic data - reduces API calls significantly
+  const hereTrafficCache = new Map<string, { data: any; timestamp: number }>();
+  const HERE_CACHE_TTL_MS = 120000; // 2 minutes cache TTL
+  const HERE_CACHE_MAX_ENTRIES = 500; // Maximum cache entries to prevent memory bloat
+  
+  // Generate cache key from lat/lng (rounded to 3 decimal places for spatial grouping)
+  const getHereCacheKey = (lat: number, lng: number): string => {
+    return `${lat.toFixed(3)},${lng.toFixed(3)}`;
+  };
+  
+  // Cleanup expired cache entries periodically
+  const cleanupHereCache = () => {
+    const now = Date.now();
+    let expired = 0;
+    const entries = Array.from(hereTrafficCache.entries());
+    for (const [key, entry] of entries) {
+      if (now - entry.timestamp > HERE_CACHE_TTL_MS) {
+        hereTrafficCache.delete(key);
+        expired++;
+      }
+    }
+    if (expired > 0) {
+      console.log(`[HERE-CACHE] Cleaned up ${expired} expired entries, ${hereTrafficCache.size} remaining`);
+    }
+  };
+  
+  // Run cache cleanup every 5 minutes
+  setInterval(cleanupHereCache, 300000);
+  
   app.get("/api/here/traffic-flow", async (req, res) => {
     try {
       const { lat, lng } = req.query;
@@ -2936,12 +2965,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid lat or lng values" });
       }
       
+      // Check cache first
+      const cacheKey = getHereCacheKey(latitude, longitude);
+      const cachedEntry = hereTrafficCache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cachedEntry && (now - cachedEntry.timestamp) < HERE_CACHE_TTL_MS) {
+        console.log(`[HERE-CACHE] HIT for ${cacheKey} (age: ${Math.round((now - cachedEntry.timestamp) / 1000)}s)`);
+        return res.json({
+          ...cachedEntry.data,
+          cached: true,
+          cacheAge: Math.round((now - cachedEntry.timestamp) / 1000),
+        });
+      }
+      
       const HERE_API_KEY = process.env.HERE_API_KEY;
       
       if (!HERE_API_KEY) {
         console.warn('[HERE-TRAFFIC] API key not found');
         return res.status(503).json({ message: "HERE API key not configured" });
       }
+      
+      console.log(`[HERE-CACHE] MISS for ${cacheKey} - fetching from API`);
       
       // HERE Traffic Flow API v7
       // https://developer.here.com/documentation/traffic-api/dev_guide/topics/getting-traffic.html
@@ -2992,13 +3037,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json({
+      const responseData = {
         flowSegmentData: {
           currentSpeed: Math.round(currentSpeed * 2.237), // m/s to mph
           freeFlowSpeed: Math.round(freeFlowSpeed * 2.237),
           speedRatio,
         },
         source: 'here',
+      };
+      
+      // Store in cache (with size limit check)
+      if (hereTrafficCache.size >= HERE_CACHE_MAX_ENTRIES) {
+        // Remove oldest entry if cache is full
+        const oldestKey = hereTrafficCache.keys().next().value;
+        if (oldestKey) {
+          hereTrafficCache.delete(oldestKey);
+        }
+      }
+      hereTrafficCache.set(cacheKey, { data: responseData, timestamp: now });
+      console.log(`[HERE-CACHE] Stored ${cacheKey} (cache size: ${hereTrafficCache.size})`);
+      
+      res.json({
+        ...responseData,
+        cached: false,
+        cacheAge: 0,
       });
       
     } catch (error: any) {
@@ -3008,6 +3070,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[HERE-TRAFFIC] Error:', error);
       res.status(500).json({ message: "Failed to fetch traffic data from HERE" });
     }
+  });
+  
+  // Cache statistics endpoint for monitoring
+  app.get("/api/here/cache-stats", (req, res) => {
+    const now = Date.now();
+    let validEntries = 0;
+    let expiredEntries = 0;
+    
+    const entries = Array.from(hereTrafficCache.entries());
+    for (const [, entry] of entries) {
+      if (now - entry.timestamp < HERE_CACHE_TTL_MS) {
+        validEntries++;
+      } else {
+        expiredEntries++;
+      }
+    }
+    
+    res.json({
+      totalEntries: hereTrafficCache.size,
+      validEntries,
+      expiredEntries,
+      maxEntries: HERE_CACHE_MAX_ENTRIES,
+      ttlSeconds: HERE_CACHE_TTL_MS / 1000,
+    });
   });
 
   // User-Reported Traffic Incidents API

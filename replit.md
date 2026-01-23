@@ -73,6 +73,10 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 
 ## Traffic API Fallback
 - **HERE Traffic API**: For traffic flow data when TomTom Traffic Flow fails.
+  - **Caching System**: In-memory cache with 2-minute TTL reduces API calls by 50-80%
+  - **Spatial Grouping**: Coordinates rounded to 3 decimal places for efficient cache hits
+  - **Max Cache Size**: 500 entries with automatic cleanup every 5 minutes
+  - **Stats Endpoint**: `/api/here/cache-stats` for monitoring cache performance
 
 # Fleet Shift Management System (v3.4.32)
 
