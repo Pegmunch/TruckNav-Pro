@@ -1369,6 +1369,184 @@ export const customerBilling = pgTable("customer_billing", {
   customerIdx: index("customer_billing_customer_idx").on(table.customerId),
 }));
 
+// Daily Shift Check-In/Check-Out - Track driver vehicle usage per shift
+export const shiftCheckins = pgTable("shift_checkins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  operatorId: varchar("operator_id").notNull(), // References operators
+  
+  // Check-in details
+  checkInTime: timestamp("check_in_time").notNull().defaultNow(),
+  checkInOdometer: real("check_in_odometer").notNull(), // Starting odometer
+  checkInFuelLevel: real("check_in_fuel_level"), // Fuel level 0-100%
+  
+  // Pre-trip inspection
+  preTripInspection: boolean("pre_trip_inspection").default(false),
+  tiresOk: boolean("tires_ok").default(true),
+  lightsOk: boolean("lights_ok").default(true),
+  brakesOk: boolean("brakes_ok").default(true),
+  fluidsOk: boolean("fluids_ok").default(true),
+  mirrorsOk: boolean("mirrors_ok").default(true),
+  hornOk: boolean("horn_ok").default(true),
+  wipersOk: boolean("wiper_ok").default(true),
+  safetyEquipmentOk: boolean("safety_equipment_ok").default(true),
+  vehicleClean: boolean("vehicle_clean").default(true),
+  defectsNoted: text("defects_noted"),
+  
+  // Check-out details (filled when shift ends)
+  checkOutTime: timestamp("check_out_time"),
+  checkOutOdometer: real("check_out_odometer"),
+  checkOutFuelLevel: real("check_out_fuel_level"),
+  milesDriven: real("miles_driven"),
+  fuelUsed: real("fuel_used"),
+  
+  // Post-trip notes
+  postTripNotes: text("post_trip_notes"),
+  issuesReported: text("issues_reported"),
+  
+  status: text("status").default('checked_in'), // 'checked_in', 'checked_out', 'cancelled'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("shift_checkin_user_idx").on(table.userId),
+  vehicleIdx: index("shift_checkin_vehicle_idx").on(table.vehicleId),
+  operatorIdx: index("shift_checkin_operator_idx").on(table.operatorId),
+  dateIdx: index("shift_checkin_date_idx").on(table.checkInTime),
+}));
+
+// Shift Handover Notes - Notes passed between drivers
+export const shiftHandovers = pgTable("shift_handovers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  
+  // Outgoing driver (ending shift)
+  outgoingOperatorId: varchar("outgoing_operator_id").notNull(), // References operators
+  outgoingCheckinId: varchar("outgoing_checkin_id"), // References shift_checkins
+  
+  // Incoming driver (starting shift)
+  incomingOperatorId: varchar("incoming_operator_id"), // References operators (may be null if no one assigned yet)
+  incomingCheckinId: varchar("incoming_checkin_id"), // References shift_checkins
+  
+  // Handover details
+  handoverTime: timestamp("handover_time").notNull().defaultNow(),
+  vehicleCondition: text("vehicle_condition").notNull().default('good'), // 'excellent', 'good', 'fair', 'needs_attention', 'unsafe'
+  fuelLevel: real("fuel_level"), // 0-100%
+  currentOdometer: real("current_odometer"),
+  
+  // Notes
+  handoverNotes: text("handover_notes"), // General notes for next driver
+  urgentIssues: text("urgent_issues"), // Critical issues that need attention
+  recommendedActions: text("recommended_actions"), // Suggested actions for next driver
+  
+  // Acknowledgement
+  acknowledged: boolean("acknowledged").default(false),
+  acknowledgedAt: timestamp("acknowledged_at"),
+  acknowledgedBy: varchar("acknowledged_by"), // operatorId who acknowledged
+  
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("shift_handover_user_idx").on(table.userId),
+  vehicleIdx: index("shift_handover_vehicle_idx").on(table.vehicleId),
+  outgoingIdx: index("shift_handover_outgoing_idx").on(table.outgoingOperatorId),
+  dateIdx: index("shift_handover_date_idx").on(table.handoverTime),
+}));
+
+// Driver Performance Scores - Track driver performance over time
+export const driverPerformanceScores = pgTable("driver_performance_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  operatorId: varchar("operator_id").notNull(), // References operators
+  
+  // Scoring period
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  periodType: text("period_type").notNull().default('weekly'), // 'daily', 'weekly', 'monthly', 'quarterly'
+  
+  // Overall score (0-100)
+  overallScore: real("overall_score").notNull().default(100),
+  
+  // Component scores (0-100 each)
+  safetyScore: real("safety_score").default(100), // Based on incidents, harsh braking, speeding
+  efficiencyScore: real("efficiency_score").default(100), // Fuel efficiency, route adherence
+  complianceScore: real("compliance_score").default(100), // HoS compliance, inspections
+  punctualityScore: real("punctuality_score").default(100), // On-time deliveries
+  vehicleCareScore: real("vehicle_care_score").default(100), // Pre-trip inspections, cleanliness
+  
+  // Metrics used in calculation
+  totalMilesDriven: real("total_miles_driven").default(0),
+  totalHoursDriven: real("total_hours_driven").default(0),
+  totalTrips: integer("total_trips").default(0),
+  incidentCount: integer("incident_count").default(0),
+  harshBrakingEvents: integer("harsh_braking_events").default(0),
+  speedingEvents: integer("speeding_events").default(0),
+  hosViolations: integer("hos_violations").default(0),
+  lateDeliveries: integer("late_deliveries").default(0),
+  missedInspections: integer("missed_inspections").default(0),
+  
+  // Trend
+  scoreTrend: text("score_trend").default('stable'), // 'improving', 'stable', 'declining'
+  previousScore: real("previous_score"),
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("driver_score_user_idx").on(table.userId),
+  operatorIdx: index("driver_score_operator_idx").on(table.operatorId),
+  periodIdx: index("driver_score_period_idx").on(table.periodStart),
+}));
+
+// Vehicle Health Scores - Track vehicle condition over time
+export const vehicleHealthScores = pgTable("vehicle_health_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  vehicleId: varchar("vehicle_id").notNull(), // References fleet_vehicles
+  
+  // Scoring period
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  periodType: text("period_type").notNull().default('weekly'), // 'daily', 'weekly', 'monthly'
+  
+  // Overall score (0-100)
+  overallScore: real("overall_score").notNull().default(100),
+  
+  // Component scores (0-100 each)
+  mechanicalScore: real("mechanical_score").default(100), // Engine, brakes, transmission
+  safetySystemsScore: real("safety_systems_score").default(100), // Lights, wipers, mirrors
+  tiresScore: real("tires_score").default(100), // Tire condition, tread depth
+  fluidsScore: real("fluids_score").default(100), // Oil, coolant, brake fluid
+  bodyScore: real("body_score").default(100), // Body condition, cleanliness
+  
+  // Metrics
+  totalMiles: real("total_miles").default(0),
+  fuelEfficiency: real("fuel_efficiency"), // MPG
+  averageFuelEfficiency: real("average_fuel_efficiency"), // Historical average MPG
+  serviceOverdue: boolean("service_overdue").default(false),
+  daysSinceService: integer("days_since_service"),
+  defectsReported: integer("defects_reported").default(0),
+  defectsResolved: integer("defects_resolved").default(0),
+  
+  // Age/wear factors
+  vehicleAgeYears: real("vehicle_age_years"),
+  totalOdometer: real("total_odometer"),
+  expectedLifespanPercent: real("expected_lifespan_percent"), // How much of expected life used
+  
+  // Trend
+  scoreTrend: text("score_trend").default('stable'), // 'improving', 'stable', 'declining'
+  previousScore: real("previous_score"),
+  
+  // Recommendations
+  recommendedActions: text("recommended_actions"),
+  urgentIssues: text("urgent_issues"),
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("vehicle_score_user_idx").on(table.userId),
+  vehicleIdx: index("vehicle_score_vehicle_idx").on(table.vehicleId),
+  periodIdx: index("vehicle_score_period_idx").on(table.periodStart),
+}));
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1392,6 +1570,12 @@ export const insertGeofenceEventSchema = createInsertSchema(geofenceEvents).omit
 export const insertDriverBehaviorSchema = createInsertSchema(driverBehavior).omit({ id: true, createdAt: true });
 export const insertHoursOfServiceSchema = createInsertSchema(hoursOfService).omit({ id: true, createdAt: true });
 export const insertCustomerBillingSchema = createInsertSchema(customerBilling).omit({ id: true, createdAt: true });
+
+// Zod schemas for shift management
+export const insertShiftCheckinSchema = createInsertSchema(shiftCheckins).omit({ id: true, createdAt: true });
+export const insertShiftHandoverSchema = createInsertSchema(shiftHandovers).omit({ id: true, createdAt: true });
+export const insertDriverPerformanceScoreSchema = createInsertSchema(driverPerformanceScores).omit({ id: true, createdAt: true });
+export const insertVehicleHealthScoreSchema = createInsertSchema(vehicleHealthScores).omit({ id: true, createdAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -1477,4 +1661,17 @@ export type InsertHoursOfService = z.infer<typeof insertHoursOfServiceSchema>;
 
 export type CustomerBilling = typeof customerBilling.$inferSelect;
 export type InsertCustomerBilling = z.infer<typeof insertCustomerBillingSchema>;
+
+// Type exports for shift management
+export type ShiftCheckin = typeof shiftCheckins.$inferSelect;
+export type InsertShiftCheckin = z.infer<typeof insertShiftCheckinSchema>;
+
+export type ShiftHandover = typeof shiftHandovers.$inferSelect;
+export type InsertShiftHandover = z.infer<typeof insertShiftHandoverSchema>;
+
+export type DriverPerformanceScore = typeof driverPerformanceScores.$inferSelect;
+export type InsertDriverPerformanceScore = z.infer<typeof insertDriverPerformanceScoreSchema>;
+
+export type VehicleHealthScore = typeof vehicleHealthScores.$inferSelect;
+export type InsertVehicleHealthScore = z.infer<typeof insertVehicleHealthScoreSchema>;
 
