@@ -70,7 +70,8 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **MapLibre GL JS**: Primary vector map engine.
 - **Leaflet**: Fallback map rendering library.
 - **React-Leaflet**: React bindings for Leaflet.
-- **Tile Sources**: Google Maps, OpenStreetMap, Esri satellite imagery.
+- **Tile Sources**: Google Maps (4 CDN servers), OpenStreetMap, Esri satellite imagery (2 CDN servers).
+- **Satellite Performance Optimization (v3.4.34)**: Multi-CDN tile sources for faster satellite imagery loading with fallback redundancy.
 
 ## Form and Data Validation
 - **Zod**: Runtime type validation and schema definition.
@@ -85,6 +86,11 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
   - **Spatial Grouping**: Coordinates rounded to 3 decimal places for efficient cache hits
   - **Max Cache Size**: 500 entries with automatic cleanup every 5 minutes
   - **Stats Endpoint**: `/api/here/cache-stats` for monitoring cache performance
+
+## Route Traffic Overlay (v3.4.34)
+- **Visibility**: Route-specific traffic overlay remains visible in satellite mode (only generic flow layer is hidden)
+- **Layer Ordering**: Traffic overlay automatically moved to top after satellite/label layer changes
+- **Fallback Architecture**: TomTom Traffic Flow API primary, HERE Traffic API fallback
 
 # Fleet Shift Management System (v3.4.32)
 

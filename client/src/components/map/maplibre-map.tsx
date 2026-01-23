@@ -1153,6 +1153,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           if (mapInstance.getLayer('route-line')) {
             mapInstance.moveLayer('route-line');
           }
+          // TRAFFIC FIX: Ensure route traffic overlay is on top in ALL view modes
+          if (mapInstance.getLayer('route-traffic-overlay-layer')) {
+            mapInstance.moveLayer('route-traffic-overlay-layer');
+          }
           console.log('[ROUTE-LAYERS] Delayed move - ensured route layers are on top of satellite/labels');
         } catch (e) {
           // Layers might not exist
@@ -1311,20 +1315,29 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const mapInstance = map.current;
         if (!mapInstance) return;
 
-        // Add satellite sources for map view toggle
+        // Add satellite sources for map view toggle with optimized caching
         if (!mapInstance.getSource('satellite-2d')) {
           mapInstance.addSource('satellite-2d', {
             type: 'raster',
-            tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
             tileSize: 256,
-            maxzoom: 19
+            maxzoom: 19,
+            attribution: '&copy; Esri'
           });
         }
 
         if (!mapInstance.getSource('satellite-3d')) {
           mapInstance.addSource('satellite-3d', {
             type: 'raster',
-            tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
+            tiles: [
+              'https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+              'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+              'https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+              'https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+            ],
             tileSize: 256,
             maxzoom: 20
           });
