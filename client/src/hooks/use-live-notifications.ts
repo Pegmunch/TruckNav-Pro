@@ -205,12 +205,15 @@ export function useLiveNotifications({
   }, [generateLiveNotification, showLiveNotification]);
 
   // Effect to manage notification lifecycle
+  // DISABLED: Mock random notifications should not auto-start in production
+  // Real notifications come from traffic incidents API and route updates, not fake random data
   useEffect(() => {
-    if (enabled && (isNavigating || currentRoute)) {
-      startLiveNotifications();
-    } else {
-      stopLiveNotifications();
-    }
+    // Don't auto-start mock notifications - they're only for testing/demo
+    // if (enabled && (isNavigating || currentRoute)) {
+    //   startLiveNotifications();
+    // } else {
+    //   stopLiveNotifications();
+    // }
 
     // Cleanup on unmount
     return () => {
