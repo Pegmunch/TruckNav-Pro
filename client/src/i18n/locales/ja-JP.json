@@ -115,18 +115,28 @@
     },
     "distances": {
       "now": "今すぐ{{direction}}",
+      "in_100_feet": "30メートル先で{{direction}}",
       "in_200_feet": "60メートル先で{{direction}}",
       "in_500_feet": "150メートル先、{{direction}}",
       "in_800_feet": "250メートル先、{{direction}}",
+      "in_1000_feet": "300メートル先、{{direction}}",
+      "in_30_meters": "30メートル先で{{direction}}",
       "in_50_meters": "50メートル先で{{direction}}",
       "in_150_meters": "150メートル先、{{direction}}",
-      "in_250_meters": "250メートル先、{{direction}}"
+      "in_250_meters": "250メートル先、{{direction}}",
+      "in_300_meters": "300メートル先、{{direction}}"
     },
     "onto_road": "{{roadName}}へ",
     "announcements": {
       "recalculating": "ルートを再計算中",
       "arrived": "目的地に到着しました",
       "use_lanes": "{{lanes}}を使用してください",
+      "use_lanes_in_100_feet": "30メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_500_feet": "150メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_1000_feet": "300メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_30_meters": "30メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_150_meters": "150メートル先、{{lanes}}を使用してください",
+      "use_lanes_in_300_meters": "300メートル先、{{lanes}}を使用してください",
       "voice_ready": "音声ナビゲーションの準備ができました"
     },
     "warnings": {

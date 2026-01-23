@@ -115,18 +115,28 @@
     },
     "distances": {
       "now": "现在{{direction}}",
+      "in_100_feet": "30米后{{direction}}",
       "in_200_feet": "60米后{{direction}}",
       "in_500_feet": "150米后，{{direction}}",
       "in_800_feet": "250米后，{{direction}}",
+      "in_1000_feet": "300米后，{{direction}}",
+      "in_30_meters": "30米后{{direction}}",
       "in_50_meters": "50米后{{direction}}",
       "in_150_meters": "150米后，{{direction}}",
-      "in_250_meters": "250米后，{{direction}}"
+      "in_250_meters": "250米后，{{direction}}",
+      "in_300_meters": "300米后，{{direction}}"
     },
     "onto_road": "进入{{roadName}}",
     "announcements": {
       "recalculating": "正在重新规划路线",
       "arrived": "您已到达目的地",
       "use_lanes": "请使用{{lanes}}",
+      "use_lanes_in_100_feet": "30米后，请使用{{lanes}}",
+      "use_lanes_in_500_feet": "150米后，请使用{{lanes}}",
+      "use_lanes_in_1000_feet": "300米后，请使用{{lanes}}",
+      "use_lanes_in_30_meters": "30米后，请使用{{lanes}}",
+      "use_lanes_in_150_meters": "150米后，请使用{{lanes}}",
+      "use_lanes_in_300_meters": "300米后，请使用{{lanes}}",
       "voice_ready": "语音导航已准备就绪"
     },
     "warnings": {

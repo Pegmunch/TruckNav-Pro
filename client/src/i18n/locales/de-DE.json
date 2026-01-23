@@ -115,18 +115,28 @@
     },
     "distances": {
       "now": "{{direction}} jetzt",
+      "in_100_feet": "{{direction}} in 30 Metern",
       "in_200_feet": "{{direction}} in 60 Metern",
       "in_500_feet": "In 150 Metern, {{direction}}",
       "in_800_feet": "In 250 Metern, {{direction}}",
+      "in_1000_feet": "In 300 Metern, {{direction}}",
+      "in_30_meters": "{{direction}} in 30 Metern",
       "in_50_meters": "{{direction}} in 50 Metern",
       "in_150_meters": "In 150 Metern, {{direction}}",
-      "in_250_meters": "In 250 Metern, {{direction}}"
+      "in_250_meters": "In 250 Metern, {{direction}}",
+      "in_300_meters": "In 300 Metern, {{direction}}"
     },
     "onto_road": "auf {{roadName}}",
     "announcements": {
       "recalculating": "Route wird neu berechnet",
       "arrived": "Sie haben Ihr Ziel erreicht",
       "use_lanes": "Nutzen Sie {{lanes}}",
+      "use_lanes_in_100_feet": "In 30 Metern, nutzen Sie {{lanes}}",
+      "use_lanes_in_500_feet": "In 150 Metern, nutzen Sie {{lanes}}",
+      "use_lanes_in_1000_feet": "In 300 Metern, nutzen Sie {{lanes}}",
+      "use_lanes_in_30_meters": "In 30 Metern, nutzen Sie {{lanes}}",
+      "use_lanes_in_150_meters": "In 150 Metern, nutzen Sie {{lanes}}",
+      "use_lanes_in_300_meters": "In 300 Metern, nutzen Sie {{lanes}}",
       "voice_ready": "Sprachführung ist bereit für die Navigation"
     },
     "warnings": {

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { X, Volume2, VolumeX, AlertTriangle, Info, Navigation, Clock, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from 'react-i18next';
+import { navigationVoice } from '@/lib/navigation-voice';
 
 // Notification Classification System
 export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
@@ -405,7 +406,7 @@ export function useMobileNotificationSystem({
       return;
     }
 
-    // Only announce high-priority notifications to avoid noise
+    // Only announce high-priority notifications (traffic/safety alerts)
     if (notification.priority !== 'critical' && notification.priority !== 'high') {
       if (import.meta.env.DEV) {
         console.log(`[MobileNotifications] TTS skipped - priority too low: ${notification.priority}`);
@@ -422,98 +423,54 @@ export function useMobileNotificationSystem({
       return;
     }
     
-    if (!('speechSynthesis' in window)) {
-      if (import.meta.env.DEV) {
-        console.warn('[MobileNotifications] Speech synthesis not supported');
-      }
-      return;
-    }
-
+    // Use unified NavigationVoice system for all announcements
+    // This ensures single voice, proper filtering, and no conflicts
     try {
-      // Cancel any existing speech
-      if (currentUtteranceRef.current) {
-        speechSynthesis.cancel();
-        currentUtteranceRef.current = null;
-        if (import.meta.env.DEV) {
-          console.log(`[MobileNotifications] Cancelled previous TTS`);
-        }
+      lastTTSRef.current = now;
+      
+      // Route through unified voice system as traffic emergency (always speaks)
+      // This bypasses motorway-only filtering for critical safety notifications
+      if (notification.category === 'traffic' || notification.category === 'safety') {
+        navigationVoice.announceIncident(
+          notification.voiceAnnouncement || notification.title
+        );
+      } else {
+        // For other notifications, use general speak which respects motorway-only mode
+        navigationVoice.speak(
+          notification.voiceAnnouncement || notification.title,
+          notification.priority === 'critical' ? 'emergency' : 'urgent',
+          false,
+          'general'
+        );
       }
       
-      const utterance = new SpeechSynthesisUtterance(notification.voiceAnnouncement);
-      utterance.rate = 0.85; // Slightly slower for navigation
-      utterance.pitch = 1;
-      utterance.volume = 0.9; // Higher volume for navigation
-      utterance.lang = i18n.language || 'en-US';
-      
-      // Enhanced error handling
-      utterance.onerror = (event) => {
-        if (import.meta.env.DEV) {
-          console.error(`[MobileNotifications] TTS error for "${notification.title}": ${event.error}`);
-        }
-        currentUtteranceRef.current = null;
-        // Try to recover by clearing synthesis
-        try {
-          speechSynthesis.cancel();
-        } catch (e) {
-          if (import.meta.env.DEV) {
-            console.error('[MobileNotifications] Failed to cancel speech after error:', e);
-          }
-        }
-      };
-      
-      utterance.onstart = () => {
-        if (import.meta.env.DEV) {
-          console.log(`[MobileNotifications] TTS started: "${notification.voiceAnnouncement}"`);
-        }
-        lastTTSRef.current = now;
-      };
-      
-      utterance.onend = () => {
-        if (import.meta.env.DEV) {
-          console.log(`[MobileNotifications] TTS completed: ${notification.title}`);
-        }
-        currentUtteranceRef.current = null;
-        // Process next item in queue if any
-        processNextTTS();
-      };
-      
-      currentUtteranceRef.current = utterance;
-      speechSynthesis.speak(utterance);
-      
       if (import.meta.env.DEV) {
-        console.log(`[MobileNotifications] TTS queued announcement: "${notification.voiceAnnouncement}"`);
+        console.log(`[MobileNotifications] Routed to unified voice: "${notification.voiceAnnouncement}"`);
       }
     } catch (error) {
       if (import.meta.env.DEV) {
-        console.error(`[MobileNotifications] TTS failed for "${notification.title}":`, error);
+        console.error(`[MobileNotifications] Unified voice failed for "${notification.title}":`, error);
       }
-      currentUtteranceRef.current = null;
     }
   }, [voiceEnabled, shouldShowNotification]);
 
-  // Process next TTS in queue
+  // Process next TTS in queue - now handled by NavigationVoice
   const processNextTTS = useCallback(() => {
-    if (ttsQueueRef.current.length > 0 && !currentUtteranceRef.current) {
-      const next = ttsQueueRef.current.shift();
-      if (next) {
-        announceNotification(next);
-      }
-    }
-  }, [announceNotification]);
+    // NavigationVoice handles its own queue - no action needed here
+  }, []);
 
   // Cancel all TTS when voice is disabled
   useEffect(() => {
-    if (!voiceEnabled && currentUtteranceRef.current) {
+    if (!voiceEnabled) {
       try {
-        speechSynthesis.cancel();
-        currentUtteranceRef.current = null;
-        ttsQueueRef.current = [];
+        navigationVoice.cancelCurrent();
+        navigationVoice.clearQueue();
         if (import.meta.env.DEV) {
-          console.log('[MobileNotifications] TTS cancelled - voice disabled');
+          console.log('[MobileNotifications] Unified voice cancelled - voice disabled');
         }
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.error('[MobileNotifications] Failed to cancel TTS:', error);
+          console.error('[MobileNotifications] Failed to cancel unified voice:', error);
         }
       }
     }

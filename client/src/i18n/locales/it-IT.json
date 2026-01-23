@@ -115,18 +115,28 @@
     },
     "distances": {
       "now": "{{direction}} adesso",
+      "in_100_feet": "{{direction}} tra 30 metri",
       "in_200_feet": "{{direction}} tra 60 metri",
       "in_500_feet": "Tra 150 metri, {{direction}}",
       "in_800_feet": "Tra 250 metri, {{direction}}",
+      "in_1000_feet": "Tra 300 metri, {{direction}}",
+      "in_30_meters": "{{direction}} tra 30 metri",
       "in_50_meters": "{{direction}} tra 50 metri",
       "in_150_meters": "Tra 150 metri, {{direction}}",
-      "in_250_meters": "Tra 250 metri, {{direction}}"
+      "in_250_meters": "Tra 250 metri, {{direction}}",
+      "in_300_meters": "Tra 300 metri, {{direction}}"
     },
     "onto_road": "su {{roadName}}",
     "announcements": {
       "recalculating": "Ricalcolo percorso",
       "arrived": "Sei arrivato a destinazione",
       "use_lanes": "Usa {{lanes}}",
+      "use_lanes_in_100_feet": "Tra 30 metri, usa {{lanes}}",
+      "use_lanes_in_500_feet": "Tra 150 metri, usa {{lanes}}",
+      "use_lanes_in_1000_feet": "Tra 300 metri, usa {{lanes}}",
+      "use_lanes_in_30_meters": "Tra 30 metri, usa {{lanes}}",
+      "use_lanes_in_150_meters": "Tra 150 metri, usa {{lanes}}",
+      "use_lanes_in_300_meters": "Tra 300 metri, usa {{lanes}}",
       "voice_ready": "La guida vocale è pronta per la navigazione"
     },
     "warnings": {

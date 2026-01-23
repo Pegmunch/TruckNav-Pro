@@ -115,18 +115,28 @@
     },
     "distances": {
       "now": "{{direction}} acum",
+      "in_100_feet": "{{direction}} în 30 metri",
       "in_200_feet": "{{direction}} în 60 metri",
       "in_500_feet": "În 150 metri, {{direction}}",
       "in_800_feet": "În 250 metri, {{direction}}",
+      "in_1000_feet": "În 300 metri, {{direction}}",
+      "in_30_meters": "{{direction}} în 30 metri",
       "in_50_meters": "{{direction}} în 50 metri",
       "in_150_meters": "În 150 metri, {{direction}}",
-      "in_250_meters": "În 250 metri, {{direction}}"
+      "in_250_meters": "În 250 metri, {{direction}}",
+      "in_300_meters": "În 300 metri, {{direction}}"
     },
     "onto_road": "pe {{roadName}}",
     "announcements": {
       "recalculating": "Recalculare rută",
       "arrived": "Ați ajuns la destinație",
       "use_lanes": "Folosiți {{lanes}}",
+      "use_lanes_in_100_feet": "În 30 metri, folosiți {{lanes}}",
+      "use_lanes_in_500_feet": "În 150 metri, folosiți {{lanes}}",
+      "use_lanes_in_1000_feet": "În 300 metri, folosiți {{lanes}}",
+      "use_lanes_in_30_meters": "În 30 metri, folosiți {{lanes}}",
+      "use_lanes_in_150_meters": "În 150 metri, folosiți {{lanes}}",
+      "use_lanes_in_300_meters": "În 300 metri, folosiți {{lanes}}",
       "voice_ready": "Ghidarea vocală este pregătită pentru navigație"
     },
     "warnings": {

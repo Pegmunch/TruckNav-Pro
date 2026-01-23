@@ -15,6 +15,7 @@ import {
 import { useVoiceIntents, type IntentHandlers } from "@/hooks/use-voice-intents";
 import { cn } from "@/lib/utils";
 import { useTranslation } from 'react-i18next';
+import { navigationVoice } from '@/lib/navigation-voice';
 
 interface VoiceNavigationPanelProps {
   isNavigating?: boolean;
@@ -165,24 +166,13 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
     };
   }, [isNavigating, speechEnabled, voiceIntents, onDestinationVoice, onNavigationCommand, i18n.language]);
 
-  // Text-to-speech function
+  // Text-to-speech function - uses unified NavigationVoice system
   const speak = useCallback((text: string) => {
     if (!speechEnabled) return;
     
-    const synthesis = getTextToSpeech();
-    if (!synthesis) return;
-
-    // Cancel any ongoing speech
-    synthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 0.8;
-    utterance.lang = i18n.language || 'en-US';
-    
-    synthesis.speak(utterance);
-  }, [speechEnabled, i18n.language]);
+    // Route through unified voice system (respects motorway-only mode)
+    navigationVoice.speak(text, 'normal', false, 'general');
+  }, [speechEnabled]);
 
   // Start/stop listening
   const toggleListening = useCallback(() => {

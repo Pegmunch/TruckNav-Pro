@@ -26,6 +26,14 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Mobile Menu**: Full-screen UI with a tabbed interface for route planning, recent destinations, vehicle selection, theme settings, and tools.
 - **Mobile Compatibility & PWA**: Progressive Web App with offline support, iOS enhancements, automatic update detection, and offline features for cached routes, restrictions, and facilities.
 - **Voice Commands for Incident Reporting**: Hands-free voice command system using Web Speech API for reporting traffic incidents during navigation, with dynamic language switching.
+- **Unified Voice Navigation System v2.0**: Single consolidated voice system for all navigation announcements.
+  - **Motorway-Only Mode**: Voice announcements only active on motorways/trunk roads
+  - **Junction & Lane Guidance Only**: On motorways, only announces junction exits and lane choices
+  - **Emergency Traffic Notifications**: Traffic incidents and delays ALWAYS announced regardless of road type
+  - **Female Voice Preference**: Automatically selects female voice in user's language at 0.8 speech rate
+  - **Language Support**: Native female voices for all 17 supported languages
+  - **Consolidated Architecture**: All voice sources (notifications, navigation, alerts) route through single NavigationVoice singleton
+  - **Road Type Detection**: setRoadType() method for filtering based on current road classification
 - **Multilingual Voice System**: All voice features dynamically use the user's selected language from i18n settings, supporting 40+ language codes.
 - **User Guide**: Comprehensive in-app documentation translated into 17 languages.
 - **Customizable Alert Sounds**: Personalized audio alerts using Web Audio API for speed limit warnings, traffic incidents, and fatigue/break reminders.

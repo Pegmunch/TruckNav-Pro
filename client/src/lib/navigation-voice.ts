@@ -1,27 +1,35 @@
 /**
- * Navigation Voice Guidance System
+ * Unified Navigation Voice Guidance System v2.0
  * 
- * Uses Web Speech API to provide turn-by-turn voice navigation for truck drivers.
- * Handles upcoming maneuvers, urgent instructions, and interruptions.
- * Supports multiple languages via i18next integration.
+ * MOTORWAY-ONLY MODE: Voice announcements only on motorways
+ * - Junction exits and lane guidance only
+ * - Emergency traffic notifications always enabled
+ * - All other announcements muted
+ * 
+ * Uses Web Speech API with female voice preference at 0.8 rate
+ * Supports 17+ languages with native female voices
  */
 
 import i18n from '@/i18n/config';
 
-export type VoiceGuidanceLevel = 'normal' | 'urgent' | 'critical';
-export type DistanceThreshold = 500 | 200 | 50; // Distance in feet for announcements
+export type VoiceGuidanceLevel = 'normal' | 'urgent' | 'critical' | 'emergency';
+export type DistanceThreshold = 1000 | 500 | 100 | 50; // Distance in feet for announcements
+export type AnnouncementType = 'junction' | 'lane_guidance' | 'traffic_emergency' | 'reroute' | 'arrival' | 'speed_warning' | 'general';
+export type RoadType = 'motorway' | 'trunk' | 'primary' | 'secondary' | 'residential' | 'unknown';
 
 interface VoiceSettings {
   enabled: boolean;
-  voice: string | null; // Voice name or null for default
-  rate: number; // Speech rate (0.5 - 2)
-  pitch: number; // Voice pitch (0 - 2)
-  volume: number; // Volume (0 - 1)
+  voice: string | null;
+  rate: number; // Default 0.8 for clearer navigation
+  pitch: number;
+  volume: number;
   announceDistances: boolean;
   announceRoadNames: boolean;
   announceSpeed: boolean;
   announceLaneGuidance: boolean;
-  language: string; // BCP-47 language code (e.g., 'en-US', 'es-ES')
+  language: string;
+  motorwayOnlyMode: boolean; // NEW: Only announce on motorways
+  preferFemaleVoice: boolean; // NEW: Prefer female voices
 }
 
 interface QueuedInstruction {
@@ -29,6 +37,7 @@ interface QueuedInstruction {
   level: VoiceGuidanceLevel;
   id: string;
   timestamp: number;
+  type: AnnouncementType; // NEW: Track announcement type for filtering
 }
 
 export class NavigationVoice {
@@ -45,21 +54,34 @@ export class NavigationVoice {
   private lastAnnouncedDistance: number | null = null;
   private voiceLoadRetries: number = 0;
   private maxVoiceLoadRetries: number = 10;
+  private currentRoadType: RoadType = 'unknown'; // Track current road type
   
   // Distance thresholds for announcements (in feet)
   private readonly DISTANCE_THRESHOLDS = {
-    FAR: 800,     // "In 800 feet..."
-    MEDIUM: 500,  // "In 500 feet..."
-    NEAR: 200,    // "In 200 feet..."
-    IMMEDIATE: 50 // "Turn now"
+    FAR: 1000,      // "In 1000 feet..."
+    MEDIUM: 500,    // "In 500 feet..."
+    NEAR: 100,      // "In 100 feet, turn..."
+    IMMEDIATE: 50   // "Turn now"
   };
   
-  // Speech rate settings based on urgency
+  // Speech rate - slower for clarity (base rate, not urgency multipliers)
   private readonly SPEECH_RATES = {
     normal: 1.0,
-    urgent: 1.2,
-    critical: 1.3
+    urgent: 1.0,
+    critical: 1.0,
+    emergency: 1.0
   };
+  
+  // Female voice name patterns for voice selection
+  private readonly FEMALE_VOICE_PATTERNS = [
+    'female', 'samantha', 'kate', 'karen', 'moira', 'tessa', 'fiona', 'victoria',
+    'zira', 'susan', 'hazel', 'helena', 'linda', 'alice', 'amelie', 'anna',
+    'ava', 'catarina', 'ioana', 'joana', 'kanya', 'kyoko', 'laura', 'lekha',
+    'luciana', 'mariska', 'mei-jia', 'melina', 'milena', 'monica', 'nora',
+    'paulina', 'sara', 'satu', 'sin-ji', 'ting-ting', 'yuna', 'zosia',
+    'google uk english female', 'google us english female', 'google female',
+    'microsoft zira', 'microsoft hazel', 'microsoft helena', 'microsoft sabina'
+  ];
   
   // Supported language voice codes mapping - comprehensive for all countries
   private readonly LANGUAGE_VOICE_MAP: { [key: string]: string[] } = {
@@ -106,18 +128,20 @@ export class NavigationVoice {
     'sl-SI': ['sl-SI', 'sl_SI', 'sl'],
   };
 
-  // Default settings
+  // Default settings - female voice at 0.8 rate, motorway-only mode
   private readonly DEFAULT_SETTINGS: VoiceSettings = {
     enabled: true,
     voice: null,
-    rate: 1.0,
+    rate: 0.8, // Slower for clearer navigation
     pitch: 1.0,
     volume: 0.9,
     announceDistances: true,
     announceRoadNames: true,
     announceSpeed: false,
     announceLaneGuidance: true,
-    language: 'en-US'
+    language: 'en-GB', // Default to British English
+    motorwayOnlyMode: true, // Only announce on motorways
+    preferFemaleVoice: true // Prefer female voices
   };
   
   private constructor() {
@@ -187,7 +211,8 @@ export class NavigationVoice {
   }
   
   /**
-   * Select a voice that matches the given language
+   * Select a female voice that matches the given language
+   * Priority: Female voice in target language > Any voice in target language > Female English > Any
    */
   private selectVoiceForLanguage(langCode: string): void {
     if (this.voices.length === 0) {
@@ -207,18 +232,39 @@ export class NavigationVoice {
     }
     
     if (matchingVoices.length > 0) {
-      // Prefer a female voice as they're often clearer in navigation systems
-      this.selectedVoice = matchingVoices.find(v => v.name.toLowerCase().includes('female')) ||
-                          matchingVoices.find(v => v.name.toLowerCase().includes('samantha')) ||
-                          matchingVoices.find(v => v.name.toLowerCase().includes('kate')) ||
-                          matchingVoices.find(v => v.name.toLowerCase().includes('zira')) ||
-                          matchingVoices.find(v => v.name.toLowerCase().includes('google')) ||
-                          matchingVoices[0];
+      // ALWAYS prefer female voice - check all female patterns
+      if (this.settings.preferFemaleVoice) {
+        for (const pattern of this.FEMALE_VOICE_PATTERNS) {
+          const femaleVoice = matchingVoices.find(v => 
+            v.name.toLowerCase().includes(pattern.toLowerCase())
+          );
+          if (femaleVoice) {
+            this.selectedVoice = femaleVoice;
+            console.log(`[NavigationVoice] Selected female voice for ${langCode}:`, this.selectedVoice?.name);
+            return;
+          }
+        }
+      }
+      // No female found, use first matching voice
+      this.selectedVoice = matchingVoices[0];
       console.log(`[NavigationVoice] Selected voice for ${langCode}:`, this.selectedVoice?.name);
     } else {
-      // Fallback to English if no matching voice found
+      // Fallback to British English female voice if no matching language found
       console.warn(`[NavigationVoice] No voice found for ${langCode}, falling back to English`);
-      const englishVoices = this.voices.filter(v => v.lang.startsWith('en'));
+      const englishVoices = this.voices.filter(v => v.lang.startsWith('en-GB') || v.lang.startsWith('en'));
+      
+      // Try to find female English voice
+      if (this.settings.preferFemaleVoice) {
+        for (const pattern of this.FEMALE_VOICE_PATTERNS) {
+          const femaleVoice = englishVoices.find(v => 
+            v.name.toLowerCase().includes(pattern.toLowerCase())
+          );
+          if (femaleVoice) {
+            this.selectedVoice = femaleVoice;
+            return;
+          }
+        }
+      }
       this.selectedVoice = englishVoices[0] || this.voices[0];
     }
   }
@@ -307,10 +353,56 @@ export class NavigationVoice {
   }
   
   /**
-   * Speak a navigation instruction
+   * Set current road type for motorway-only filtering
    */
-  public speak(text: string, level: VoiceGuidanceLevel = 'normal', interrupt: boolean = false): void {
+  public setRoadType(roadType: RoadType): void {
+    this.currentRoadType = roadType;
+  }
+  
+  /**
+   * Get current road type
+   */
+  public getRoadType(): RoadType {
+    return this.currentRoadType;
+  }
+  
+  /**
+   * Check if announcement should be spoken based on motorway-only mode
+   */
+  private shouldAnnounce(type: AnnouncementType): boolean {
+    // Emergency traffic notifications ALWAYS get through
+    if (type === 'traffic_emergency') {
+      return true;
+    }
+    
+    // If motorway-only mode is disabled, allow all announcements
+    if (!this.settings.motorwayOnlyMode) {
+      return true;
+    }
+    
+    // In motorway-only mode, only allow specific types on motorways/trunk roads
+    const isMotorway = this.currentRoadType === 'motorway' || this.currentRoadType === 'trunk';
+    
+    if (isMotorway) {
+      // On motorways: only junction exits and lane guidance
+      return type === 'junction' || type === 'lane_guidance' || type === 'arrival';
+    }
+    
+    // On other roads: mute all except traffic emergencies (already handled above)
+    return false;
+  }
+  
+  /**
+   * Speak a navigation instruction with type filtering
+   */
+  public speak(text: string, level: VoiceGuidanceLevel = 'normal', interrupt: boolean = false, type: AnnouncementType = 'general'): void {
     if (!this.isEnabled()) {
+      return;
+    }
+    
+    // Check if this announcement should be spoken based on motorway-only mode
+    if (!this.shouldAnnounce(type)) {
+      console.log(`[NavigationVoice] Muted ${type} announcement (motorway-only mode, road: ${this.currentRoadType})`);
       return;
     }
     
@@ -318,11 +410,12 @@ export class NavigationVoice {
       text,
       level,
       id: `${Date.now()}-${Math.random()}`,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      type
     };
     
-    if (interrupt) {
-      // Cancel current speech and clear queue for urgent messages
+    if (interrupt || level === 'emergency') {
+      // Cancel current speech and clear queue for urgent/emergency messages
       this.cancelCurrent();
       this.clearQueue();
       this.processInstruction(instruction);
@@ -439,33 +532,41 @@ export class NavigationVoice {
     const formattedDirection = this.formatDirection(direction);
     
     // Check if we should announce based on distance thresholds
+    // Imperial: 1000ft, 500ft, 100ft, now
+    // Metric: 300m, 150m, 30m, now
     if (unit === 'mi') {
       if (distanceInFeet <= this.DISTANCE_THRESHOLDS.IMMEDIATE) {
         announcement = this.t('voice.distances.now', { direction: formattedDirection });
         level = 'critical';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.NEAR) {
-        announcement = this.t('voice.distances.in_200_feet', { direction: formattedDirection });
+        // 100 feet - urgent turn warning
+        announcement = this.t('voice.distances.in_100_feet', { direction: formattedDirection });
         level = 'urgent';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.MEDIUM) {
+        // 500 feet - prepare
         announcement = this.t('voice.distances.in_500_feet', { direction: formattedDirection });
         level = 'normal';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.FAR) {
-        announcement = this.t('voice.distances.in_800_feet', { direction: formattedDirection });
+        // 1000 feet - advance notice
+        announcement = this.t('voice.distances.in_1000_feet', { direction: formattedDirection });
         level = 'normal';
       }
     } else {
-      // Metric system
+      // Metric system: 300m, 150m, 30m, now
       if (distanceInMeters <= 15) {
         announcement = this.t('voice.distances.now', { direction: formattedDirection });
         level = 'critical';
-      } else if (distanceInMeters <= 60) {
-        announcement = this.t('voice.distances.in_50_meters', { direction: formattedDirection });
+      } else if (distanceInMeters <= 30) {
+        // 30 meters - urgent
+        announcement = this.t('voice.distances.in_30_meters', { direction: formattedDirection });
         level = 'urgent';
       } else if (distanceInMeters <= 150) {
+        // 150 meters - prepare
         announcement = this.t('voice.distances.in_150_meters', { direction: formattedDirection });
         level = 'normal';
-      } else if (distanceInMeters <= 250) {
-        announcement = this.t('voice.distances.in_250_meters', { direction: formattedDirection });
+      } else if (distanceInMeters <= 300) {
+        // 300 meters - advance notice
+        announcement = this.t('voice.distances.in_300_meters', { direction: formattedDirection });
         level = 'normal';
       }
     }
@@ -479,7 +580,8 @@ export class NavigationVoice {
     const turnKey = `${direction}-${Math.floor(distance / 50)}`;
     if (announcement && turnKey !== this.lastAnnouncedTurn) {
       this.lastAnnouncedTurn = turnKey;
-      this.speak(announcement, level, level === 'critical');
+      // Use 'junction' type for motorway junction exits
+      this.speak(announcement, level, level === 'critical', 'junction');
     }
   }
   
@@ -501,7 +603,7 @@ export class NavigationVoice {
   }
   
   /**
-   * Announce rerouting
+   * Announce rerouting - treated as traffic emergency to always announce
    */
   public announceReroute(reason?: string): void {
     if (!this.isEnabled()) {
@@ -513,18 +615,19 @@ export class NavigationVoice {
       message += `. ${reason}`;
     }
     
-    this.speak(message, 'urgent', true);
+    // Rerouting is important enough to announce
+    this.speak(message, 'urgent', true, 'traffic_emergency');
   }
   
   /**
-   * Announce arrival at destination
+   * Announce arrival at destination - always announces
    */
   public announceArrival(): void {
     if (!this.isEnabled()) {
       return;
     }
     
-    this.speak(this.t('voice.announcements.arrived'), 'normal', true);
+    this.speak(this.t('voice.announcements.arrived'), 'normal', true, 'arrival');
   }
   
   /**
@@ -537,7 +640,7 @@ export class NavigationVoice {
   }
   
   /**
-   * Announce traffic incident
+   * Announce traffic incident - ALWAYS speaks (emergency)
    */
   public announceIncident(type: string, distance?: number, useMetric?: boolean): void {
     if (!this.isEnabled()) {
@@ -563,11 +666,29 @@ export class NavigationVoice {
       }
     }
     
-    this.speak(message, 'urgent', false);
+    // Traffic incidents are emergency - always announce
+    this.speak(message, 'emergency', true, 'traffic_emergency');
   }
   
   /**
-   * Announce speed warning
+   * Announce traffic delay/congestion - ALWAYS speaks (emergency)
+   */
+  public announceTrafficDelay(severity: string, delayMinutes?: number): void {
+    if (!this.isEnabled()) {
+      return;
+    }
+    
+    let message = this.t('voice.warnings.traffic_delay', { severity });
+    if (delayMinutes && delayMinutes > 0) {
+      message += ' ' + this.t('voice.warnings.delay_time', { minutes: Math.round(delayMinutes) });
+    }
+    
+    // Traffic delays are emergency - always announce
+    this.speak(message, 'emergency', true, 'traffic_emergency');
+  }
+  
+  /**
+   * Announce speed warning - uses speed_warning type (muted in motorway-only mode)
    */
   public announceSpeedWarning(currentSpeed: number, limit: number, unit: 'mph' | 'kmh' = 'mph'): void {
     if (!this.isEnabled() || !this.settings.announceSpeed) {
@@ -582,19 +703,79 @@ export class NavigationVoice {
       limit 
     });
     
-    this.speak(message, 'urgent', false);
+    // Speed warnings are muted in motorway-only mode (uses general type)
+    this.speak(message, 'urgent', false, 'speed_warning');
   }
   
   /**
-   * Announce lane guidance
+   * Enable/disable motorway-only mode
    */
-  public announceLaneGuidance(lanes: string): void {
+  public setMotorwayOnlyMode(enabled: boolean): void {
+    this.settings.motorwayOnlyMode = enabled;
+    this.saveSettings();
+    console.log(`[NavigationVoice] Motorway-only mode: ${enabled ? 'ON' : 'OFF'}`);
+  }
+  
+  /**
+   * Check if motorway-only mode is enabled
+   */
+  public isMotorwayOnlyMode(): boolean {
+    return this.settings.motorwayOnlyMode;
+  }
+  
+  /**
+   * Announce lane guidance with distance-based announcements
+   * Uses same distance thresholds as turn announcements: 1000ft, 500ft, 100ft
+   */
+  public announceLaneGuidance(lanes: string, distance?: number, unit: 'mi' | 'km' = 'mi'): void {
     if (!this.isEnabled() || !this.settings.announceLaneGuidance) {
       return;
     }
     
-    const message = this.t('voice.announcements.use_lanes', { lanes });
-    this.speak(message, 'normal', false);
+    let message: string;
+    let level: VoiceGuidanceLevel = 'normal';
+    
+    if (distance !== undefined) {
+      const distanceInFeet = distance * 3.28084;
+      const distanceInMeters = distance;
+      
+      if (unit === 'mi') {
+        // Imperial: 1000ft, 500ft, 100ft
+        if (distanceInFeet <= this.DISTANCE_THRESHOLDS.NEAR) {
+          // 100 feet - urgent
+          message = this.t('voice.announcements.use_lanes_in_100_feet', { lanes });
+          level = 'urgent';
+        } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.MEDIUM) {
+          // 500 feet
+          message = this.t('voice.announcements.use_lanes_in_500_feet', { lanes });
+        } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.FAR) {
+          // 1000 feet
+          message = this.t('voice.announcements.use_lanes_in_1000_feet', { lanes });
+        } else {
+          return; // Too far, don't announce yet
+        }
+      } else {
+        // Metric: 300m, 150m, 30m
+        if (distanceInMeters <= 30) {
+          // 30 meters - urgent
+          message = this.t('voice.announcements.use_lanes_in_30_meters', { lanes });
+          level = 'urgent';
+        } else if (distanceInMeters <= 150) {
+          // 150 meters
+          message = this.t('voice.announcements.use_lanes_in_150_meters', { lanes });
+        } else if (distanceInMeters <= 300) {
+          // 300 meters
+          message = this.t('voice.announcements.use_lanes_in_300_meters', { lanes });
+        } else {
+          return; // Too far, don't announce yet
+        }
+      }
+    } else {
+      // No distance provided, use simple announcement
+      message = this.t('voice.announcements.use_lanes', { lanes });
+    }
+    
+    this.speak(message, level, false, 'lane_guidance');
   }
   
   /**
