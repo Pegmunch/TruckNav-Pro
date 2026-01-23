@@ -113,3 +113,62 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Azure Maps Traffic API**: Free tier with Azure account
 - **Netherlands NDW Open Data**: Free government data for Europe (Datex-II format)
 - **TomTom Truck Routing API**: Works with current key (includes traffic delay estimates in route calculation)
+
+# Deployment Information
+
+## Feature Availability by Screen Size
+
+| Feature | Mobile (<1024px) | Tablet (1024px+) | Desktop | PWA |
+|---------|------------------|------------------|---------|-----|
+| Navigation & Routing | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Turn-by-Turn Voice | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| GPS Tracking | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Route Planning | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Traffic Visualization | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Vehicle Profiles | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Incident Reporting | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| 3D Map Mode | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| AR Navigation | ✅ Mobile only | ❌ | ❌ | ✅ Mobile only |
+| Offline Downloads | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Settings & Preferences | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Subscription Management | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| Fleet Management | ❌ Desktop only | ✅ Full | ✅ Full | ❌ |
+
+## Screen-Specific UI Adaptations
+- **Mobile (phones)**: Compact trip strip, MobileFAB for one-handed use, 44px+ touch targets, day theme enforced
+- **Tablet (1024px+)**: Full access to all features including Fleet Management
+- **Desktop**: Complete access with expanded sidebars and full Fleet Management (14 tabs)
+- **PWA**: Same as mobile browser with offline support, Screen Wake Lock, and iOS enhancements
+
+## Supported Languages (17 Total)
+
+### Full Coverage (13 categories)
+| Language | Code | Territory |
+|----------|------|-----------|
+| English (US) | en-US | United States |
+| English (UK) | en-GB | United Kingdom, Ireland |
+| German | de-DE | Germany, Austria, Switzerland |
+| Spanish | es-ES | Spain, Latin America |
+| Italian | it-IT | Italy |
+| Japanese | ja-JP | Japan |
+| Polish | pl-PL | Poland |
+| Portuguese (Brazil) | pt-BR | Brazil |
+| Romanian | ro-RO | Romania |
+| Chinese (Simplified) | zh-CN | China |
+
+### Core Coverage (9 categories)
+| Language | Code | Territory |
+|----------|------|-----------|
+| Arabic | ar-SA | Saudi Arabia, UAE, Middle East |
+| French | fr-FR | France, Belgium, Canada |
+| Hindi | hi-IN | India |
+| Korean | ko-KR | South Korea |
+| Dutch | nl-NL | Netherlands, Belgium |
+| Russian | ru-RU | Russia |
+| Turkish | tr-TR | Turkey |
+
+## App Store Deployment Territories
+Based on supported languages, target these App Store regions:
+- **Americas**: United States, Canada, Brazil, Mexico, Argentina
+- **Europe**: UK, Germany, France, Spain, Italy, Netherlands, Poland, Romania, Russia, Turkey
+- **Asia-Pacific**: Japan, South Korea, China, India, Saudi Arabia, UAE, Australia
