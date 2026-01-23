@@ -99,9 +99,17 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
   - Traffic status indicator and legend during navigation
   - Graceful error handling with gray/unknown color for API failures
 
+## HERE Traffic API Integration (v3.4.31)
+- **Date**: January 23, 2026
+- **Key Features**:
+  - HERE Traffic Flow API v7 integrated as automatic fallback when TomTom Traffic Flow fails
+  - Server-side endpoint at `/api/here/traffic-flow` proxies requests securely
+  - Seamless failover: TomTom tried first, HERE used if TomTom returns 403/error
+  - Speed data converted from m/s to mph for consistency
+  - 250,000 free queries/month from HERE
+
 ## Alternative Traffic Data Sources (for reference)
-If TomTom Traffic Flow API is not available in your subscription tier, consider these alternatives:
-- **HERE Traffic API**: 250,000 queries/month free tier, best alternative option
+- **HERE Traffic API**: 250,000 queries/month free tier (NOW INTEGRATED as fallback)
 - **Azure Maps Traffic API**: Free tier with Azure account
 - **Netherlands NDW Open Data**: Free government data for Europe (Datex-II format)
 - **TomTom Truck Routing API**: Works with current key (includes traffic delay estimates in route calculation)

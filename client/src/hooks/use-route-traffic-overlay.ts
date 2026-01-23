@@ -111,25 +111,48 @@ export function useRouteTrafficOverlay(
         const midPoint = segmentPoints[midIndex];
         
         try {
-          const response = await fetch(
+          // Try TomTom Traffic Flow API first
+          let data: any = null;
+          let response = await fetch(
             `https://api.tomtom.com/traffic/services/4/flowSegmentData/relative/10/json?point=${midPoint.lat.toFixed(6)},${midPoint.lng.toFixed(6)}&key=${TOMTOM_API_KEY}&unit=MPH`,
             { signal: abortControllerRef.current?.signal }
           );
 
+          // If TomTom fails (403 Forbidden or other error), try HERE Traffic API as fallback
           if (!response.ok) {
-            console.warn(`[ROUTE-TRAFFIC] API error for segment ${segStart}: ${response.status}`);
-            newSegments.push({
-              startIndex: segStart,
-              endIndex: segEnd,
-              coordinates: segmentPoints.map(p => [p.lng, p.lat] as [number, number]),
-              speedRatio: -1,
-              color: TRAFFIC_COLORS.unknown,
-              flowLevel: 'unknown',
-            });
-            continue;
+            console.warn(`[ROUTE-TRAFFIC] TomTom API error: ${response.status}, trying HERE fallback...`);
+            
+            try {
+              const hereResponse = await fetch(
+                `/api/here/traffic-flow?lat=${midPoint.lat.toFixed(6)}&lng=${midPoint.lng.toFixed(6)}`,
+                { signal: abortControllerRef.current?.signal }
+              );
+              
+              if (hereResponse.ok) {
+                data = await hereResponse.json();
+                console.log(`[ROUTE-TRAFFIC] ✅ HERE fallback successful for segment ${segStart}`);
+              } else {
+                console.warn(`[ROUTE-TRAFFIC] HERE fallback also failed: ${hereResponse.status}`);
+              }
+            } catch (hereErr) {
+              console.warn(`[ROUTE-TRAFFIC] HERE fallback error:`, hereErr);
+            }
+            
+            // If both APIs failed, mark as unknown
+            if (!data) {
+              newSegments.push({
+                startIndex: segStart,
+                endIndex: segEnd,
+                coordinates: segmentPoints.map(p => [p.lng, p.lat] as [number, number]),
+                speedRatio: -1,
+                color: TRAFFIC_COLORS.unknown,
+                flowLevel: 'unknown',
+              });
+              continue;
+            }
+          } else {
+            data = await response.json();
           }
-
-          const data = await response.json();
           
           if (data.flowSegmentData) {
             const { currentSpeed, freeFlowSpeed } = data.flowSegmentData;

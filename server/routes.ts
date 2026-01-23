@@ -2920,6 +2920,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // HERE Traffic Flow API - Fallback for real-time traffic data
+  app.get("/api/here/traffic-flow", async (req, res) => {
+    try {
+      const { lat, lng } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "lat and lng query parameters are required" });
+      }
+      
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ message: "Invalid lat or lng values" });
+      }
+      
+      const HERE_API_KEY = process.env.HERE_API_KEY;
+      
+      if (!HERE_API_KEY) {
+        console.warn('[HERE-TRAFFIC] API key not found');
+        return res.status(503).json({ message: "HERE API key not configured" });
+      }
+      
+      // HERE Traffic Flow API v7
+      // https://developer.here.com/documentation/traffic-api/dev_guide/topics/getting-traffic.html
+      const hereUrl = new URL('https://data.traffic.hereapi.com/v7/flow');
+      hereUrl.searchParams.set('apiKey', HERE_API_KEY);
+      hereUrl.searchParams.set('in', `circle:${latitude},${longitude};r=100`);
+      hereUrl.searchParams.set('locationReferencing', 'shape');
+      
+      console.log('[HERE-TRAFFIC] Request URL:', hereUrl.toString().replace(HERE_API_KEY, '***'));
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(hereUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[HERE-TRAFFIC] API error:', response.status, errorText);
+        return res.status(response.status).json({ 
+          message: "HERE Traffic API error", 
+          status: response.status,
+          details: errorText 
+        });
+      }
+      
+      const data = await response.json();
+      
+      // Transform HERE response to our format
+      // HERE returns results[].currentFlow with speed, speedUncapped, freeFlow, jamFactor, confidence
+      let speedRatio = 1;
+      let currentSpeed = 0;
+      let freeFlowSpeed = 0;
+      
+      if (data.results && data.results.length > 0) {
+        const flow = data.results[0].currentFlow;
+        if (flow) {
+          currentSpeed = flow.speed || 0;
+          freeFlowSpeed = flow.freeFlow || flow.speed || 30;
+          speedRatio = freeFlowSpeed > 0 ? currentSpeed / freeFlowSpeed : 1;
+        }
+      }
+      
+      res.json({
+        flowSegmentData: {
+          currentSpeed: Math.round(currentSpeed * 2.237), // m/s to mph
+          freeFlowSpeed: Math.round(freeFlowSpeed * 2.237),
+          speedRatio,
+        },
+        source: 'here',
+      });
+      
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ message: "HERE Traffic API timeout" });
+      }
+      console.error('[HERE-TRAFFIC] Error:', error);
+      res.status(500).json({ message: "Failed to fetch traffic data from HERE" });
+    }
+  });
+
   // User-Reported Traffic Incidents API
   app.post("/api/incidents", validateTrafficIncident, validateRequest, async (req: Request, res: Response) => {
     try {
