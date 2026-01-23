@@ -1109,20 +1109,40 @@ function NavigationPageContent() {
         const currPoint = routePath[i];
         const nextPoint = routePath[i + 1];
         
-        // Calculate bearing change at this vertex (using route segments only)
-        const incomingBearing = calculateBearing(prevPoint.lat, prevPoint.lng, currPoint.lat, currPoint.lng);
-        const outgoingBearing = calculateBearing(currPoint.lat, currPoint.lng, nextPoint.lat, nextPoint.lng);
+        // Calculate turn angle using cross product for correct left/right determination
+        // This matches the blue route line direction exactly
         
-        // Calculate turn angle (signed: positive = right, negative = left)
-        let turnAngle = outgoingBearing - incomingBearing;
-        // Normalize to [-180, 180]
-        if (turnAngle > 180) turnAngle -= 360;
-        if (turnAngle < -180) turnAngle += 360;
+        // Vector from prevPoint to currPoint (incoming direction)
+        const inX = currPoint.lng - prevPoint.lng;
+        const inY = currPoint.lat - prevPoint.lat;
+        
+        // Vector from currPoint to nextPoint (outgoing direction)
+        const outX = nextPoint.lng - currPoint.lng;
+        const outY = nextPoint.lat - currPoint.lat;
+        
+        // 2D cross product in geographic coords (X=lng, Y=lat):
+        // cross = inX * outY - inY * outX
+        // In standard right-handed coords: negative cross = clockwise = RIGHT turn
+        // Positive cross = counterclockwise = LEFT turn
+        const crossProduct = inX * outY - inY * outX;
+        
+        // Calculate magnitude of turn using dot product for angle
+        const inMag = Math.sqrt(inX * inX + inY * inY);
+        const outMag = Math.sqrt(outX * outX + outY * outY);
+        const dotProduct = inX * outX + inY * outY;
+        const cosAngle = (inMag > 0 && outMag > 0) ? dotProduct / (inMag * outMag) : 1;
+        const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
+        
+        // Apply sign from cross product:
+        // crossProduct < 0 → clockwise rotation → RIGHT turn (positive angle)
+        // crossProduct > 0 → counterclockwise → LEFT turn (negative angle)
+        let turnAngle = crossProduct < 0 ? turnMagnitude : -turnMagnitude;
         
         // Check if this is a significant turn
         if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
           nextTurnIndex = i;
           turnAngleAtPoint = turnAngle;
+          console.log(`[TURN-DEBUG] Detected turn at vertex ${i}: angle=${turnAngle.toFixed(1)}°, cross=${crossProduct.toFixed(6)}, in=(${inX.toFixed(5)},${inY.toFixed(5)}), out=(${outX.toFixed(5)},${outY.toFixed(5)})`);
           break;
         }
       }
