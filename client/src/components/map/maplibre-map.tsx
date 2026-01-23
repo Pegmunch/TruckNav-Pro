@@ -12,6 +12,8 @@ import { getIncidentIcon } from "@shared/incident-icons";
 import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
 import { useGPS } from "@/contexts/gps-context";
 import { StaticRouteOverlay } from "@/components/map/static-route-overlay";
+import { useRouteTrafficOverlay, type TrafficSegment } from "@/hooks/use-route-traffic-overlay";
+import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
 
 /**
  * BULLETPROOF COORDINATE VALIDATION
@@ -834,6 +836,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     refetchInterval: 120000, // 2 minutes
     enabled: showIncidents,
   });
+  
+  // Route-specific traffic overlay (Layer 2)
+  const routeTrafficData = useRouteTrafficOverlay(
+    currentRoute?.routePath,
+    showTraffic && isNavigating && !!currentRoute?.routePath,
+    2 * 60 * 1000 // 2 minute refresh
+  );
+  
+  // Route-specific incidents (Layer 3)
+  const routeIncidentsData = useRouteIncidents(
+    currentRoute?.routePath,
+    showIncidents && isNavigating && !!currentRoute?.routePath,
+    2 * 60 * 1000 // 2 minute refresh
+  );
+  
+  // Ref for route traffic overlay layer markers
+  const routeTrafficMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const routeIncidentMarkersRef = useRef<maplibregl.Marker[]>([]);
   
   // Keep refs in sync with state
   useEffect(() => {
@@ -2369,15 +2389,219 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, [isLoaded, showTraffic, preferences.mapViewMode]);
 
-  // Render incident markers
+  // LAYER 2: Route Traffic Overlay - Colored segments on top of blue route line
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    if (!map.current.isStyleLoaded()) return;
+    
+    const mapInstance = map.current;
+    const trafficSourceId = 'route-traffic-overlay-source';
+    const trafficLayerId = 'route-traffic-overlay-layer';
+    
+    // If no traffic data or navigation not active, remove traffic overlay
+    if (!routeTrafficData.segments || routeTrafficData.segments.length === 0 || !isNavigating) {
+      if (mapInstance.getLayer(trafficLayerId)) {
+        mapInstance.removeLayer(trafficLayerId);
+      }
+      if (mapInstance.getSource(trafficSourceId)) {
+        mapInstance.removeSource(trafficSourceId);
+      }
+      return;
+    }
+    
+    // Build GeoJSON features for each traffic segment
+    const features: GeoJSON.Feature<GeoJSON.LineString>[] = routeTrafficData.segments.map((segment, index) => ({
+      type: 'Feature' as const,
+      properties: {
+        segmentIndex: index,
+        speedRatio: segment.speedRatio,
+        flowLevel: segment.flowLevel,
+        color: segment.color,
+      },
+      geometry: {
+        type: 'LineString' as const,
+        coordinates: segment.coordinates,
+      },
+    }));
+    
+    const geojsonData: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
+      type: 'FeatureCollection',
+      features,
+    };
+    
+    // Add or update source
+    if (mapInstance.getSource(trafficSourceId)) {
+      (mapInstance.getSource(trafficSourceId) as maplibregl.GeoJSONSource).setData(geojsonData);
+    } else {
+      mapInstance.addSource(trafficSourceId, {
+        type: 'geojson',
+        data: geojsonData,
+      });
+    }
+    
+    // Add layer if it doesn't exist
+    if (!mapInstance.getLayer(trafficLayerId)) {
+      mapInstance.addLayer({
+        id: trafficLayerId,
+        type: 'line',
+        source: trafficSourceId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            5, 6,
+            12, 14,
+            16, 20,
+            20, 28
+          ],
+          'line-opacity': 0.85,
+        },
+      });
+      
+      // Move route traffic overlay above the blue route line
+      if (mapInstance.getLayer('route-line')) {
+        mapInstance.moveLayer(trafficLayerId);
+      }
+    }
+    
+    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
+  }, [isLoaded, isNavigating, routeTrafficData.segments, routeTrafficData.lastUpdated]);
+
+  // LAYER 3: Route Incident Markers - Icons along the route line
+  useEffect(() => {
+    if (!map.current || !isLoaded) {
+      routeIncidentMarkersRef.current.forEach(marker => marker.remove());
+      routeIncidentMarkersRef.current = [];
+      return;
+    }
+    if (!map.current.isStyleLoaded()) return;
+    
+    const mapInstance = map.current;
+    
+    // Clean up existing route incident markers
+    routeIncidentMarkersRef.current.forEach(marker => marker.remove());
+    routeIncidentMarkersRef.current = [];
+    
+    // If no route incidents or navigation not active, skip
+    if (!routeIncidentsData.incidents || routeIncidentsData.incidents.length === 0 || !isNavigating) {
+      return;
+    }
+    
+    // Create markers for each route incident
+    routeIncidentsData.incidents.forEach((incident: RouteIncident) => {
+      const iconConfig = getIncidentIcon(incident.type);
+      const size = incident.severity === 'critical' ? 36 : incident.severity === 'high' ? 32 : incident.severity === 'medium' ? 28 : 24;
+      
+      // Create HTML element for marker
+      const el = document.createElement('div');
+      el.className = 'route-incident-marker';
+      el.setAttribute('data-testid', `route-incident-marker-${incident.id}`);
+      el.style.cursor = 'pointer';
+      el.style.zIndex = '1000';
+      el.innerHTML = `
+        <div style="
+          width: ${size}px; 
+          height: ${size}px; 
+          background: ${iconConfig.bgColor}; 
+          border: 3px solid ${iconConfig.color};
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+          font-size: ${size * 0.55}px;
+          position: relative;
+          animation: pulse-incident 2s infinite;
+        ">
+          ${iconConfig.emoji}
+          ${incident.severity === 'critical' || incident.severity === 'high' ? `<div style="position: absolute; top: -4px; right: -4px; width: 10px; height: 10px; background: #DC2626; border-radius: 50%; border: 2px solid white;"></div>` : ''}
+        </div>
+      `;
+      
+      // Create popup content
+      const severityBadgeColor = 
+        incident.severity === 'critical' ? '#7F1D1D' :
+        incident.severity === 'high' ? '#DC2626' : 
+        incident.severity === 'medium' ? '#F59E0B' : 
+        '#64748B';
+      
+      const sourceLabel = incident.source === 'tomtom' ? '🛰️ Verified' : '👥 Reported';
+      
+      const popupContent = `
+        <div style="padding: 8px; min-width: 200px;">
+          <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+            <span style="
+              background: ${severityBadgeColor}; 
+              color: white; 
+              padding: 2px 8px; 
+              border-radius: 4px; 
+              font-size: 11px;
+              font-weight: 600;
+            ">
+              ${incident.severity.toUpperCase()}
+            </span>
+            <span style="
+              background: ${incident.source === 'tomtom' ? '#0284C7' : '#7C3AED'}; 
+              color: white; 
+              padding: 2px 8px; 
+              border-radius: 4px; 
+              font-size: 11px;
+            ">
+              ${sourceLabel}
+            </span>
+          </div>
+          <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">
+            ${iconConfig.label}
+          </div>
+          ${incident.description ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">${incident.description}</div>` : ''}
+          ${incident.roadName ? `<div style="font-size: 12px; color: #6B7280; margin-bottom: 4px;">📍 ${incident.roadName}</div>` : ''}
+          ${incident.delay ? `<div style="font-size: 12px; color: #DC2626; margin-bottom: 4px;">⏱️ ${Math.round(incident.delay / 60)} min delay</div>` : ''}
+          <div style="font-size: 11px; color: #9CA3AF; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
+            Reported ${formatTimeAgo(incident.reportedAt)}
+          </div>
+        </div>
+      `;
+      
+      // Create popup
+      const popup = new maplibregl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false
+      }).setHTML(popupContent);
+      
+      // Create and add marker
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([incident.coordinates.lng, incident.coordinates.lat])
+        .setPopup(popup)
+        .addTo(mapInstance);
+      
+      routeIncidentMarkersRef.current.push(marker);
+    });
+    
+    console.log(`[ROUTE-INCIDENTS] ✅ Rendered ${routeIncidentsData.incidents.length} incident markers along route`);
+  }, [isLoaded, isNavigating, routeIncidentsData.incidents, routeIncidentsData.lastUpdated]);
+
+  // Render incident markers (general - when not navigating)
   useEffect(() => {
     if (!map.current || !isLoaded || !showIncidents) {
-      // Clean up existing markers if incidents are disabled
       incidentMarkersRef.current.forEach(marker => marker.remove());
       incidentMarkersRef.current = [];
       return;
     }
     if (!map.current.isStyleLoaded()) return;
+    
+    // During navigation, always use route-specific incidents (Layer 3) - suppress general markers
+    if (isNavigating) {
+      incidentMarkersRef.current.forEach(marker => marker.remove());
+      incidentMarkersRef.current = [];
+      return;
+    }
 
     const mapInstance = map.current;
 

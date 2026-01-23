@@ -24,3 +24,27 @@ button.tnp-control svg * {
   stroke: #1f2937 !important;
   fill: none !important;
 }
+
+/* Route incident marker pulse animation */
+@keyframes pulse-incident {
+  0% {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 3px 16px rgba(220, 38, 38, 0.5);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    transform: scale(1);
+  }
+}
+
+.route-incident-marker {
+  z-index: 1000 !important;
+}
+
+.route-incident-marker > div {
+  animation: pulse-incident 2s infinite;
+}

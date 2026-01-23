@@ -21,6 +21,7 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Smart Route Planning**: Utilizes TomTom Truck Routing API as the primary engine with GraphHopper as a fallback. It includes intelligent restriction avoidance, spatial validation (Turf.js), critical violation detection, and dimensional checking. Features automatic off-route rerouting, a comprehensive restriction warning system with interactive map markers, and warnings that hide during navigation.
 - **Facility Discovery**: Allows searching for truck-friendly facilities by type and location.
 - **Interactive Mapping**: Uses MapLibre GL JS (primary, GPU-accelerated, 3D) and Leaflet (fallback). Features persistent tile sources, a professional navigation HUD with an enhanced speed limit system, 3D navigation mode, turn-by-turn indicator, CompactTripStrip, 8-button navigation control stack, real-time traffic visualization, and crowdsourced incident reporting. Automatic GPS position lock, real-time bearing rotation, and vehicle-specific GPS markers are also implemented.
+- **3-Layer Route Traffic Visualization**: During navigation, displays three stacked layers on the route line: (1) Base blue route line, (2) Traffic color overlay with real-time TomTom Flow API data (green/yellow/orange/red segments based on congestion), (3) Incident icons along route from both TomTom Incidents API and crowdsourced reports. Layers refresh every 2 minutes with proper polyline distance filtering for incidents.
 - **Address Autocomplete & POI Search**: Uses TomTom Search API for worldwide address autocomplete and truck-specific POI search with fuzzy matching. Features a bulletproof geocoding system with priority-based lookups.
 - **Mobile Menu**: Full-screen UI with a tabbed interface for route planning, recent destinations, vehicle selection, theme settings, and tools.
 - **Mobile Compatibility & PWA**: Progressive Web App with offline support, iOS enhancements, automatic update detection, and offline features for cached routes, restrictions, and facilities.
@@ -83,3 +84,15 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
   - Fixed turn direction using TomTom sign codes
   - Blue route line always visible during navigation
 - **Rollback Note**: Use this checkpoint to restore a known working version of TruckNav Pro
+
+## v3.4.30 - Route Traffic Visualization
+- **Date**: January 23, 2026
+- **Key Features**:
+  - 3-layer traffic visualization system on route line during navigation
+  - Layer 1: Base blue route line (always visible)
+  - Layer 2: TomTom Traffic Flow API color overlay (green/yellow/orange/red segments)
+  - Layer 3: Route incident icons (TomTom + crowdsourced) with proper polyline distance filtering
+  - 2-minute auto-refresh for traffic data and incidents
+  - Neutral gray color for segments with unknown traffic data (API errors)
+  - Voice-activated incident reporting with purple microphone button
+  - iOS-friendly touch handling for orange incident button
