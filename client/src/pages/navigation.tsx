@@ -268,6 +268,14 @@ function NavigationPageContent() {
     console.log('[NAV-CONTROLS] showNavControls state is now:', showNavControls);
   }, [showNavControls]);
   
+  // Force traffic layer ON when navigation is active (safety feature)
+  useEffect(() => {
+    if (isLocalNavActive) {
+      setShowTrafficLayer(true);
+      console.log('[TRAFFIC] Forced traffic layer ON during navigation');
+    }
+  }, [isLocalNavActive]);
+  
   // Incident reporting dialog state
   const [showIncidentReportDialog, setShowIncidentReportDialog] = useState(false);
   
