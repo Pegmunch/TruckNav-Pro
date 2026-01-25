@@ -9,6 +9,7 @@ import { PWAEnvironmentProvider } from "@/contexts/pwa-environment";
 import { OfflineDetector } from "@/components/offline/offline-detector";
 import { ServiceWorkerUpdates } from "@/components/offline/service-worker-updates";
 import { PWAInstallPrompt } from "@/components/pwa/install-prompt";
+import { initializeAudioOnInteraction } from "@/lib/audio-bluetooth-init";
 import NavigationPage from "@/pages/navigation";
 import LaneSelectionPage from "@/pages/lane-selection";
 import MapWindow from "@/pages/map-window";
@@ -36,6 +37,9 @@ function MobileThemeEnforcer() {
       setTheme('day');
       console.log('Mobile device detected - forcing day theme for better visibility');
     }
+    
+    // Initialize audio on first user interaction for Bluetooth/CarPlay/Android Auto
+    initializeAudioOnInteraction();
   }, []);
   
   return null;

@@ -11,6 +11,7 @@
  */
 
 import i18n from '@/i18n/config';
+import { audioBluetoothInit } from './audio-bluetooth-init';
 
 export type VoiceGuidanceLevel = 'normal' | 'urgent' | 'critical' | 'emergency';
 export type DistanceThreshold = 1000 | 500 | 100 | 50; // Distance in feet for announcements
@@ -450,10 +451,16 @@ export class NavigationVoice {
   
   /**
    * Process a single instruction
+   * Ensures audio is initialized for Bluetooth/CarPlay/Android Auto before speaking
    */
-  private processInstruction(instruction: QueuedInstruction): void {
+  private async processInstruction(instruction: QueuedInstruction): Promise<void> {
     if (!this.synthesis) {
       return;
+    }
+    
+    // Ensure audio is initialized for Bluetooth/CarPlay/Android Auto
+    if (!audioBluetoothInit.getIsInitialized()) {
+      await audioBluetoothInit.initialize();
     }
     
     this.isSpeaking = true;

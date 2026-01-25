@@ -134,6 +134,18 @@ class AlertSoundsService {
   }
 
   private getAudioContext(): AudioContext {
+    // Try to use shared AudioContext from Bluetooth init for better routing
+    try {
+      const { audioBluetoothInit } = require('./audio-bluetooth-init');
+      const sharedContext: AudioContext | null = audioBluetoothInit.getAudioContext();
+      if (sharedContext !== null && sharedContext.state !== 'closed') {
+        this.audioContext = sharedContext;
+        return this.audioContext;
+      }
+    } catch (e) {
+      // Fall through to create new context
+    }
+    
     if (!this.audioContext || this.audioContext.state === 'closed') {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
