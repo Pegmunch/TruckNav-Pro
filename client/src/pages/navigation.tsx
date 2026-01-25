@@ -57,6 +57,7 @@ import { QuickSettingsPanel } from "@/components/navigation/quick-settings-panel
 import { IncidentReportDialog } from "@/components/incidents/incident-report-dialog";
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
+import LiveTrafficPanel from "@/components/traffic/live-traffic-panel";
 import SpeedDisplay from "@/components/map/speed-display";
 import SpeedometerHUD from "@/components/navigation/speedometer-hud";
 import { GPSProvider, useGPS } from "@/contexts/gps-context";
@@ -282,6 +283,10 @@ function NavigationPageContent() {
   // Incident feed drawer state
   const [showIncidentFeed, setShowIncidentFeed] = useState(false);
   const [hasInteractedWithIncidentFeed, setHasInteractedWithIncidentFeed] = useState(false);
+  
+  // Live Traffic Panel state (unified view/report panel)
+  const [showLiveTrafficPanel, setShowLiveTrafficPanel] = useState(false);
+  const [liveTrafficPanelTab, setLiveTrafficPanelTab] = useState<'view' | 'report'>('view');
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -3541,7 +3546,11 @@ function NavigationPageContent() {
                     useStaticRoute={isNavigating || isLocalNavActive}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    onViewIncidents={() => {
+                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+                      setLiveTrafficPanelTab('view');
+                      setShowLiveTrafficPanel(true);
+                    }}
                   />
                 </MapShell>
               </div>
@@ -3901,8 +3910,9 @@ function NavigationPageContent() {
                       onNavigate={() => mapRef.current?.zoomToUserLocation()}
                       onCancel={handleStopNavigation}
                       onReportIncident={() => {
-                        console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening incident dialog');
-                        setShowIncidentReportDialog(true);
+                        console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening Live Traffic Panel (report tab)');
+                        setLiveTrafficPanelTab('report');
+                        setShowLiveTrafficPanel(true);
                       }}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
                       isNavigating={isNavUIActive}
@@ -4119,7 +4129,11 @@ function NavigationPageContent() {
                         });
                       }}
                       onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                      onViewIncidents={() => setShowIncidentFeed(true)}
+                      onViewIncidents={() => {
+                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+                      setLiveTrafficPanelTab('view');
+                      setShowLiveTrafficPanel(true);
+                    }}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
                       isVisible={showNavControls}
@@ -4342,7 +4356,11 @@ function NavigationPageContent() {
                     useStaticRoute={isNavigating || isLocalNavActive}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                    onViewIncidents={() => setShowIncidentFeed(true)}
+                    onViewIncidents={() => {
+                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+                      setLiveTrafficPanelTab('view');
+                      setShowLiveTrafficPanel(true);
+                    }}
                   />
                 </MapShell>
                 
@@ -4530,6 +4548,14 @@ function NavigationPageContent() {
         onInteraction={() => {
           setHasInteractedWithIncidentFeed(true);
         }}
+      />
+
+      {/* Live Traffic Panel - Unified view/report panel (switchable tabs) */}
+      <LiveTrafficPanel
+        open={showLiveTrafficPanel}
+        onClose={() => setShowLiveTrafficPanel(false)}
+        currentLocation={currentGPSLocation}
+        defaultTab={liveTrafficPanelTab}
       />
 
       {/* Comprehensive Mobile Menu - Uses internal early return for iOS Safari fix */}

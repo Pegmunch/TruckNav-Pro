@@ -24,7 +24,7 @@ const TRAFFIC_COLORS = {
   moderate: '#FDE047',
   heavy: '#F97316',
   standstill: '#DC2626',
-  unknown: '#94A3B8',
+  unknown: 'transparent', // Transparent so blue route shows through
 };
 
 function getFlowLevel(speedRatio: number): 'free' | 'light' | 'moderate' | 'heavy' | 'standstill' | 'unknown' {

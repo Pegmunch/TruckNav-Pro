@@ -2463,19 +2463,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
     
     // Build GeoJSON features for each traffic segment
-    const features: GeoJSON.Feature<GeoJSON.LineString>[] = routeTrafficData.segments.map((segment, index) => ({
-      type: 'Feature' as const,
-      properties: {
-        segmentIndex: index,
-        speedRatio: segment.speedRatio,
-        flowLevel: segment.flowLevel,
-        color: segment.color,
-      },
-      geometry: {
-        type: 'LineString' as const,
-        coordinates: segment.coordinates,
-      },
-    }));
+    // Filter out 'unknown' segments - they should be transparent to show blue route underneath
+    const features: GeoJSON.Feature<GeoJSON.LineString>[] = routeTrafficData.segments
+      .filter((segment) => segment.flowLevel !== 'unknown') // Skip unknown - let blue route show through
+      .map((segment, index) => ({
+        type: 'Feature' as const,
+        properties: {
+          segmentIndex: index,
+          speedRatio: segment.speedRatio,
+          flowLevel: segment.flowLevel,
+          color: segment.color,
+        },
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: segment.coordinates,
+        },
+      }));
     
     const geojsonData: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
       type: 'FeatureCollection',
