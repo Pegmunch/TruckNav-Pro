@@ -10,6 +10,7 @@ interface AutoRerouteConfig {
   minSecondsBetweenReroutes: number;
   minProgressMeters: number;
   headingDeviationDegrees: number;
+  offRouteDelaySeconds: number;
 }
 
 const DEFAULT_CONFIG: AutoRerouteConfig = {
@@ -18,6 +19,7 @@ const DEFAULT_CONFIG: AutoRerouteConfig = {
   minSecondsBetweenReroutes: 15,
   minProgressMeters: 100,
   headingDeviationDegrees: 60,
+  offRouteDelaySeconds: 10,
 };
 
 interface RerouteState {
@@ -61,6 +63,8 @@ export function useAutoReroute(
   const lastProgressDistanceRef = useRef(0);
   const routeLineRef = useRef<ReturnType<typeof turf.lineString> | null>(null);
   const isReroutingRef = useRef(false);
+  const offRouteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const offRouteStartTimeRef = useRef<number | null>(null);
   
   // Helper to validate a single coordinate pair
   const isValidCoordinate = useCallback((coord: unknown): coord is [number, number] => {
@@ -281,6 +285,12 @@ export function useAutoReroute(
   useEffect(() => {
     // Skip rerouting if not navigating, no valid GPS, no route, or already rerouting
     if (!isNavigating || !routeLineRef.current || isReroutingRef.current) {
+      // Clear any pending timer if navigation stops
+      if (offRouteTimerRef.current) {
+        clearTimeout(offRouteTimerRef.current);
+        offRouteTimerRef.current = null;
+        offRouteStartTimeRef.current = null;
+      }
       return;
     }
     
@@ -297,27 +307,67 @@ export function useAutoReroute(
     if (isOff) {
       consecutiveOffRouteFixesRef.current++;
       
+      // Only start timer after minimum consecutive fixes to avoid false positives
       if (consecutiveOffRouteFixesRef.current >= mergedConfig.consecutiveFixesRequired) {
-        console.log(`[AUTO-REROUTE] Off-route detected: ${distance.toFixed(0)}m from route (${consecutiveOffRouteFixesRef.current} consecutive fixes)`);
-        
         setState(prev => ({
           ...prev,
           isOffRoute: true,
-          offRouteCount: prev.offRouteCount + 1,
         }));
         
-        triggerReroute();
+        // Start 10-second timer if not already running
+        if (!offRouteTimerRef.current && !offRouteStartTimeRef.current) {
+          offRouteStartTimeRef.current = Date.now();
+          console.log(`[AUTO-REROUTE] Off-route detected: ${distance.toFixed(0)}m from route - starting ${mergedConfig.offRouteDelaySeconds}s timer`);
+          
+          offRouteTimerRef.current = setTimeout(() => {
+            console.log(`[AUTO-REROUTE] ${mergedConfig.offRouteDelaySeconds}s timer expired - triggering reroute`);
+            offRouteTimerRef.current = null;
+            offRouteStartTimeRef.current = null;
+            setState(prev => ({
+              ...prev,
+              offRouteCount: prev.offRouteCount + 1,
+            }));
+            triggerReroute();
+          }, mergedConfig.offRouteDelaySeconds * 1000);
+        } else if (offRouteStartTimeRef.current) {
+          const elapsedSeconds = Math.round((Date.now() - offRouteStartTimeRef.current) / 1000);
+          console.log(`[AUTO-REROUTE] Still off-route: ${distance.toFixed(0)}m - ${elapsedSeconds}s elapsed of ${mergedConfig.offRouteDelaySeconds}s`);
+        }
       }
     } else {
+      // Back on route - cancel the timer
+      if (offRouteTimerRef.current) {
+        console.log('[AUTO-REROUTE] Back on route - cancelling reroute timer');
+        clearTimeout(offRouteTimerRef.current);
+        offRouteTimerRef.current = null;
+        offRouteStartTimeRef.current = null;
+      }
       if (consecutiveOffRouteFixesRef.current > 0) {
         console.log('[AUTO-REROUTE] Back on route');
       }
       consecutiveOffRouteFixesRef.current = 0;
       setState(prev => ({ ...prev, isOffRoute: false }));
     }
-  }, [gpsData, gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired, hasValidGpsCoordinates]);
+  }, [gpsData, gpsData?.position?.latitude, gpsData?.position?.longitude, isNavigating, checkOffRoute, triggerReroute, mergedConfig.consecutiveFixesRequired, mergedConfig.offRouteDelaySeconds, hasValidGpsCoordinates]);
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (offRouteTimerRef.current) {
+        clearTimeout(offRouteTimerRef.current);
+        offRouteTimerRef.current = null;
+      }
+    };
+  }, []);
   
   const resetRerouteState = useCallback(() => {
+    // Clear any pending reroute timer
+    if (offRouteTimerRef.current) {
+      clearTimeout(offRouteTimerRef.current);
+      offRouteTimerRef.current = null;
+    }
+    offRouteStartTimeRef.current = null;
+    
     setState({
       isOffRoute: false,
       isRerouting: false,
