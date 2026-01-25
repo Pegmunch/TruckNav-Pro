@@ -519,13 +519,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomIn: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        map.current.easeTo({ zoom: Math.min(currentZoom + 4, 20), duration: 300 });
+        map.current.easeTo({ zoom: Math.min(currentZoom + 15, 20), duration: 300 });
       }
     },
     zoomOut: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        map.current.easeTo({ zoom: Math.max(currentZoom - 4, 1), duration: 300 });
+        map.current.easeTo({ zoom: Math.max(currentZoom - 15, 1), duration: 300 });
       }
     },
     zoomToUserLocation: (options) => {
