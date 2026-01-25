@@ -6,7 +6,7 @@
  * 
  * Features:
  * - Queries every 5 seconds based on GPS location
- * - 100m radius coverage
+ * - 25m radius coverage for precise road matching
  * - Confidence indicators (high/medium/low/none)
  * - Automatic mph/km/h conversion based on country
  * - Road type fallback estimates

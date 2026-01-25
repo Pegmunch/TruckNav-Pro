@@ -3531,12 +3531,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Query OpenStreetMap Overpass API for detailed road information
-      const radius = 100; // Increased from 50m to 100m for better coverage
+      // Reduced from 100m to 25m for tighter road matching to avoid picking up adjacent roads
+      const radius = 25;
       const query = `
         [out:json][timeout:5];
         (
           way[highway](around:${radius},${latitude},${longitude});
-          node[highway=motorway_junction](around:500,${latitude},${longitude});
+          node[highway=motorway_junction](around:150,${latitude},${longitude});
         );
         out tags;
       `;
