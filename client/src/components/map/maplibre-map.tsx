@@ -841,15 +841,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   });
   
   // Route-specific traffic overlay (Layer 2)
-  // Debug: Log the conditions for traffic overlay activation
-  const trafficOverlayEnabled = showTraffic && isNavigating && !!currentRoute?.routePath;
-  console.log('[TRAFFIC-OVERLAY-ACTIVATION]', {
-    showTraffic,
-    isNavigating,
-    hasRoutePath: !!currentRoute?.routePath,
-    routePathLength: currentRoute?.routePath?.length || 0,
-    enabled: trafficOverlayEnabled
-  });
+  // FIXED: Show traffic overlay when there's a route (preview or navigation mode)
+  // This allows users to see traffic conditions on their planned route before starting navigation
+  const hasValidRoute = !!currentRoute?.routePath && currentRoute.routePath.length > 0;
+  const trafficOverlayEnabled = showTraffic && hasValidRoute;
+  
+  // Debug: Only log when conditions change significantly
+  if (trafficOverlayEnabled) {
+    console.log('[TRAFFIC-OVERLAY] ✅ Traffic overlay ENABLED', {
+      showTraffic,
+      isNavigating,
+      routePathLength: currentRoute?.routePath?.length || 0
+    });
+  }
   
   const routeTrafficData = useRouteTrafficOverlay(
     currentRoute?.routePath,
@@ -858,9 +862,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   );
   
   // Route-specific incidents (Layer 3)
+  // FIXED: Show incidents when there's a route (preview or navigation mode)
   const routeIncidentsData = useRouteIncidents(
     currentRoute?.routePath,
-    showIncidents && isNavigating && !!currentRoute?.routePath,
+    showIncidents && hasValidRoute,
     2 * 60 * 1000 // 2 minute refresh
   );
   
@@ -2440,8 +2445,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const trafficSourceId = 'route-traffic-overlay-source';
     const trafficLayerId = 'route-traffic-overlay-layer';
     
-    // If no traffic data or navigation not active, remove traffic overlay
-    if (!routeTrafficData.segments || routeTrafficData.segments.length === 0 || !isNavigating) {
+    // If no traffic data, remove traffic overlay
+    // FIXED: No longer requires isNavigating - show traffic during route preview too
+    if (!routeTrafficData.segments || routeTrafficData.segments.length === 0) {
       if (mapInstance.getLayer(trafficLayerId)) {
         mapInstance.removeLayer(trafficLayerId);
       }
@@ -2513,7 +2519,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
     
     console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
-  }, [isLoaded, isNavigating, routeTrafficData.segments, routeTrafficData.lastUpdated]);
+  }, [isLoaded, routeTrafficData.segments, routeTrafficData.lastUpdated]);
 
   // LAYER 3: Route Incident Markers - Icons along the route line
   useEffect(() => {
@@ -2530,8 +2536,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     routeIncidentMarkersRef.current.forEach(marker => marker.remove());
     routeIncidentMarkersRef.current = [];
     
-    // If no route incidents or navigation not active, skip
-    if (!routeIncidentsData.incidents || routeIncidentsData.incidents.length === 0 || !isNavigating) {
+    // If no route incidents, skip (FIXED: no longer requires isNavigating)
+    if (!routeIncidentsData.incidents || routeIncidentsData.incidents.length === 0) {
       return;
     }
     
@@ -3771,8 +3777,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       {/* GPS/Cache selection moved to Settings modal - Online/Offline tab */}
       
-      {/* Traffic Status Indicator - Shows during navigation */}
-      {isNavigating && showTraffic && (
+      {/* Traffic Status Indicator - Shows when route has traffic data */}
+      {showTraffic && hasValidRoute && (
         <div 
           className="absolute top-4 right-4 z-40 pointer-events-auto"
           data-testid="traffic-status-indicator"
@@ -3792,7 +3798,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       )}
       
       {/* Traffic Legend - Shows when traffic overlay is active with data */}
-      {isNavigating && showTraffic && routeTrafficData.segments.length > 0 && (
+      {showTraffic && hasValidRoute && routeTrafficData.segments.length > 0 && (
         <div 
           className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto"
           data-testid="traffic-legend"
