@@ -35,6 +35,12 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
   - **Consolidated Architecture**: All voice sources (notifications, navigation, alerts) route through single NavigationVoice singleton
   - **Road Type Detection**: setRoadType() method for filtering based on current road classification
 - **Multilingual Voice System**: All voice features dynamically use the user's selected language from i18n settings, supporting 40+ language codes.
+- **Bluetooth/CarPlay/Android Auto Audio System**: Comprehensive audio initialization for vehicle connectivity:
+  - **Silent Audio Warmup**: HTML5 audio priming on first user interaction to establish audio session
+  - **AudioContext Resumption**: Shared AudioContext for alert sounds and audio effects
+  - **Speech Synthesis Priming**: Pre-warms Web Speech API for immediate voice response
+  - **Automatic Reinitialize**: Handles visibility changes and screen unlock events
+  - **Volume Control**: Device media buttons control all audio output via platform media APIs
 - **User Guide**: Comprehensive in-app documentation translated into 17 languages.
 - **Customizable Alert Sounds**: Personalized audio alerts using Web Audio API for speed limit warnings, traffic incidents, and fatigue/break reminders.
 - **Haptic Feedback System**: Vibration API integration for tactile feedback.
