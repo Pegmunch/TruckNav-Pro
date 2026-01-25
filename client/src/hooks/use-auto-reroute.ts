@@ -19,7 +19,7 @@ const DEFAULT_CONFIG: AutoRerouteConfig = {
   minSecondsBetweenReroutes: 15,
   minProgressMeters: 100,
   headingDeviationDegrees: 60,
-  offRouteDelaySeconds: 10,
+  offRouteDelaySeconds: 5,
 };
 
 interface RerouteState {
