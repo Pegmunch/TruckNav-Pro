@@ -1,4 +1,4 @@
-import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX, ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, ChevronRight, X, Gauge, Eye } from 'lucide-react';
+import { Clock, Route, Wifi, WifiOff, Navigation, MapPin, Timer, Volume2, VolumeX, ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, ChevronRight, X, Gauge, Eye, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMeasurement } from '@/components/measurement/measurement-provider';
 import { Button } from '@/components/ui/button';
@@ -137,7 +137,28 @@ export function CompactTripStrip({
     return 'bg-gray-600 text-white border-gray-700';
   };
 
-  // Get lane direction icon (compact) - larger on tablet
+  // Get lane arrow for multi-lane direction box
+  // Recommended lanes: blue arrow in direction, Non-recommended: gray dash
+  const getLaneArrow = (direction: string, isRecommended: boolean) => {
+    // Mobile: w-4 h-4, Tablet portrait: w-5 h-5
+    const iconClass = "w-4 h-4 md:w-5 md:h-5 stroke-[2.5px]";
+    
+    if (!isRecommended) {
+      // Non-recommended lane: show gray dash
+      return <Minus className={cn(iconClass, "text-gray-400")} />;
+    }
+    
+    // Recommended lane: show blue arrow in direction
+    switch (direction) {
+      case 'left': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
+      case 'right': return <ArrowRight className={cn(iconClass, "text-blue-600")} />;
+      case 'straight': return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
+      case 'exit': return <ArrowUpRight className={cn(iconClass, "text-blue-600")} />;
+      default: return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
+    }
+  };
+  
+  // Legacy function for separate lane guidance display (kept for compatibility)
   const getLaneIcon = (direction: string, isRecommended: boolean) => {
     const iconClass = cn("w-3 h-3 md:w-4 md:h-4", isRecommended ? "text-green-600" : "text-gray-500");
     switch (direction) {
@@ -295,28 +316,30 @@ export function CompactTripStrip({
             </div>
           )}
           
-          {/* Turn Indicator */}
-          {turnInfo && (
-            <div className="flex items-center gap-1 md:gap-2 bg-white/80 px-2 md:px-3 py-0.5 md:py-1 rounded shadow-sm border border-gray-200">
-              <div className="text-blue-600">{getTurnIcon(turnInfo.direction)}</div>
-              <span className="text-xs md:text-base font-bold text-gray-900">{formatTurnDistance(turnInfo.distance)}</span>
-            </div>
-          )}
-          
-          {/* Lane Guidance */}
-          {laneInfo && laneInfo.lanes.length > 0 && (
-            <div className="flex items-center gap-0.5 md:gap-1 bg-white/80 px-1.5 md:px-2 py-0.5 md:py-1 rounded shadow-sm border border-gray-200">
-              {laneInfo.lanes.map((lane, index) => (
-                <div 
-                  key={index}
-                  className={cn(
-                    'w-4 h-4 md:w-6 md:h-6 rounded border flex items-center justify-center',
-                    lane.isRecommended ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300'
-                  )}
-                >
-                  {getLaneIcon(lane.direction, lane.isRecommended)}
-                </div>
-              ))}
+          {/* Combined Direction Box with Multi-Arrow Lane Guidance */}
+          {/* Shows lane arrows when available, falls back to single turn arrow */}
+          {(turnInfo || (laneInfo && laneInfo.lanes.length > 0)) && (
+            <div className="flex items-center gap-1.5 md:gap-2 bg-white/90 px-2 md:px-3 py-1 md:py-1.5 rounded-lg shadow-sm border border-blue-200">
+              {/* Lane arrows or single direction arrow */}
+              <div className="flex items-center gap-0.5 md:gap-1">
+                {laneInfo && laneInfo.lanes.length > 0 ? (
+                  // Multi-arrow lane guidance: dashes for non-recommended, arrows for recommended
+                  laneInfo.lanes.map((lane, index) => (
+                    <div key={index} className="flex items-center justify-center">
+                      {getLaneArrow(lane.direction, lane.isRecommended)}
+                    </div>
+                  ))
+                ) : (
+                  // Single arrow fallback when no lane data
+                  turnInfo && <div className="text-blue-600">{getTurnIcon(turnInfo.direction)}</div>
+                )}
+              </div>
+              {/* Distance to turn */}
+              {turnInfo && (
+                <span className="text-xs md:text-base font-bold text-gray-900 ml-0.5">
+                  {formatTurnDistance(turnInfo.distance)}
+                </span>
+              )}
             </div>
           )}
         </div>
