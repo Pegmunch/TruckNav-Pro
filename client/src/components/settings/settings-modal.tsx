@@ -49,7 +49,9 @@ import {
   Play,
   Gauge,
   Coffee,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -470,16 +472,99 @@ const SettingsModal = memo(function SettingsModal({
             className="w-full justify-start"
             onClick={() => {
               setMapPreferences(defaultMapPreferences);
-              // toast({
-              //   title: "Settings Reset",
-              //   description: "Map preferences have been reset to defaults",
-              // });
+              toast({
+                title: "Settings Reset",
+                description: "Map preferences have been reset to defaults",
+              });
             }}
             data-testid="button-reset-map-settings"
           >
-            <MapPin className="w-4 h-4 mr-2" />
+            <RotateCcw className="w-4 h-4 mr-2" />
             Reset to Defaults
           </Button>
+          
+          <Button 
+            variant="destructive" 
+            className="w-full justify-start"
+            onClick={() => {
+              // Clear all route and map cached data
+              const keysToRemove = [
+                // Navigation state
+                'navigation_ui_active',
+                'navigation_mode',
+                'activeJourneyId',
+                'navigation_timestamp',
+                'activeRouteId',
+                'navigationSidebarState',
+                'shouldShowHUD',
+                'mobileNavMode',
+                'isLocalNavActive',
+                'last_navigation_state',
+                'navigation_recentOrigins',
+                // Route data
+                'saved_journey',
+                'current_route',
+                'saved_route_data',
+                'route_alternatives',
+                'truck_route_cache',
+                // Recent destinations
+                'recent_destinations',
+                'recentDestinations',
+                'trucknav_recent_destinations',
+                // Location data
+                'manual_location',
+                'cached_gps_position',
+                'last_known_position',
+                'gps_last_position',
+                // Map state
+                'trucknav_map_preferences',
+                'map_center',
+                'map_zoom',
+                'map_bearing',
+                'map_pitch',
+                // Restrictions cache
+                'restrictions_cache',
+                'restriction_violations',
+                // Traffic cache
+                'traffic_cache',
+                'route_traffic_data',
+                // Offline cache
+                'offline_routes',
+                'offline_restrictions',
+                'offline_facilities'
+              ];
+              
+              keysToRemove.forEach(key => {
+                try {
+                  localStorage.removeItem(key);
+                } catch (e) {
+                  console.warn(`Failed to remove ${key}:`, e);
+                }
+              });
+              
+              // Reset map preferences to defaults
+              setMapPreferences(defaultMapPreferences);
+              
+              toast({
+                title: "Map Data Cleared",
+                description: "All routes, recent locations, and cached data have been cleared. The map will reset on next load.",
+              });
+              
+              // Close modal and trigger a page reload after a short delay
+              setTimeout(() => {
+                onOpenChange(false);
+                window.location.reload();
+              }, 1500);
+            }}
+            data-testid="button-clear-map-data"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Clear Old Route & Reset Map
+          </Button>
+          
+          <p className="text-xs text-muted-foreground mt-2">
+            Clears all cached routes, recent destinations, and location data. The app will reload to a fresh state.
+          </p>
         </CardContent>
       </Card>
     </div>
