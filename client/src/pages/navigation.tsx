@@ -3780,18 +3780,7 @@ function NavigationPageContent() {
                     />
                   )}
 
-                  {/* Traffic Prediction Panel - Shows during route planning (not during active navigation) */}
-                  {currentRoute?.id && mobileNavMode === 'plan' && (
-                    <div 
-                      className="absolute left-4 right-4 z-[90] max-w-sm"
-                      style={{ top: 'calc(140px + var(--safe-area-top, 0px))' }}
-                    >
-                      <TrafficPredictionPanel 
-                        routeId={currentRoute.id}
-                        compact={true}
-                      />
-                    </div>
-                  )}
+                  {/* Traffic Prediction Panel - HIDDEN: Removed per user request for cleaner preview/navigation UI */}
 
                   {/* ETA Glass Bar moved to top level - always visible when route exists */}
                 </>
