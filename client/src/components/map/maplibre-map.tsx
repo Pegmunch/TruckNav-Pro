@@ -218,6 +218,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const previousPitchRef = useRef(0);
   const previousBearingRef = useRef(0);
   const initialNavViewSetupRef = useRef(false); // Track if initial 3D nav view has been set up
+  const userPreferredZoomRef = useRef(16.5); // User's preferred zoom level (respects manual zoom changes)
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
@@ -519,13 +520,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomIn: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        map.current.easeTo({ zoom: Math.min(currentZoom + 15, 20), duration: 300 });
+        const newZoom = Math.min(currentZoom + 15, 20);
+        userPreferredZoomRef.current = newZoom; // Store user's preferred zoom
+        map.current.easeTo({ zoom: newZoom, duration: 300 });
       }
     },
     zoomOut: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        map.current.easeTo({ zoom: Math.max(currentZoom - 15, 1), duration: 300 });
+        const newZoom = Math.max(currentZoom - 15, 1);
+        userPreferredZoomRef.current = newZoom; // Store user's preferred zoom
+        map.current.easeTo({ zoom: newZoom, duration: 300 });
       }
     },
     zoomToUserLocation: (options) => {
@@ -3217,11 +3222,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log(`[3D-NAV] Top padding: ${Math.round(containerHeight * 0.55)}px`);
       console.log('[3D-NAV] ==========================================');
       
+      // Reset user's preferred zoom to default when navigation starts
+      userPreferredZoomRef.current = 16.5;
+      
       // Apply TomTom GO style 3D navigation view
       try {
         mapInstance.easeTo({
           center: [centerLng, centerLat],
-          zoom: 16.5, // Street-level zoom for navigation
+          zoom: userPreferredZoomRef.current, // Street-level zoom for navigation
           pitch: 60, // TomTom GO style steep 3D tilt
           bearing: useBearing, // Heading-up rotation
           padding: {
@@ -3410,7 +3418,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             try {
               mapInstance.easeTo({
                 center: [longitude, latitude],
-                zoom: 16.5, // Street-level zoom for navigation (matches initial view)
+                zoom: userPreferredZoomRef.current, // Use user's preferred zoom (respects manual zoom changes)
                 pitch: 60, // TomTom GO style steep 3D tilt
                 bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
                 padding: { 
