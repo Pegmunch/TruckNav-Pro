@@ -1683,6 +1683,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         if (map.current.getLayer('route-line')) {
           map.current.moveLayer('route-line');
         }
+        // TRAFFIC FIX: Always move traffic overlay above route line
+        if (map.current.getLayer('route-traffic-overlay-layer')) {
+          map.current.moveLayer('route-traffic-overlay-layer');
+        }
       } catch (e) {
         // Layers might not exist yet
       }
@@ -1943,6 +1947,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (map.current.getLayer('route-line')) {
         map.current.moveLayer('route-line');
       }
+      // TRAFFIC FIX: Always move traffic overlay above route line
+      if (map.current.getLayer('route-traffic-overlay-layer')) {
+        map.current.moveLayer('route-traffic-overlay-layer');
+      }
       console.log('[ROUTE-RENDER] ✅ Route layers moved to top for visibility');
     } catch (e) {
       // Layer might already be on top or not exist yet
@@ -2103,6 +2111,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               }
               if (mapInstance.getLayer('route-line')) {
                 mapInstance.moveLayer('route-line');
+              }
+              // TRAFFIC FIX: Always move traffic overlay above route line
+              if (mapInstance.getLayer('route-traffic-overlay-layer')) {
+                mapInstance.moveLayer('route-traffic-overlay-layer');
               }
             } catch (e) {
               // Layers might not exist, rebuild them
@@ -2268,6 +2280,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             }
             if (map.current.getLayer('route-line')) {
               map.current.moveLayer('route-line');
+            }
+            // TRAFFIC FIX: Always move traffic overlay above route line
+            if (map.current.getLayer('route-traffic-overlay-layer')) {
+              map.current.moveLayer('route-traffic-overlay-layer');
             }
           } catch (e) {
             // Ignore
