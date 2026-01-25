@@ -56,17 +56,19 @@ export function NavigationLayout({
       )}
 
       {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
-      {/* FIXED: Changed to pointer-events-auto with explicit stacking context to prevent touch interception */}
+      {/* FIXED: Ultra-high z-index (500000) to ensure buttons are above ALL map layers including traffic */}
       {leftStack && (
         <div 
           className="fixed left-4 flex flex-col gap-3 pointer-events-auto touch-manipulation"
           style={{ 
             bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-            zIndex: 200000,
+            zIndex: 500000,
             touchAction: 'manipulation',
             isolation: 'isolate',
             contain: 'layout paint',
-            willChange: 'transform'
+            willChange: 'transform',
+            WebkitTransform: 'translateZ(0)',
+            transform: 'translateZ(0)'
           }}
         >
           {leftStack}
