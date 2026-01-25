@@ -518,12 +518,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     is3DMode: () => is3DMode,
     zoomIn: () => {
       if (map.current) {
-        map.current.zoomIn({ duration: 150 });
+        const currentZoom = map.current.getZoom();
+        map.current.easeTo({ zoom: Math.min(currentZoom + 4, 20), duration: 300 });
       }
     },
     zoomOut: () => {
       if (map.current) {
-        map.current.zoomOut({ duration: 150 });
+        const currentZoom = map.current.getZoom();
+        map.current.easeTo({ zoom: Math.max(currentZoom - 4, 1), duration: 300 });
       }
     },
     zoomToUserLocation: (options) => {
@@ -3470,13 +3472,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   const handleZoomIn = () => {
     if (map.current) {
-      map.current.zoomIn({ duration: 150 });
+      const currentZoom = map.current.getZoom();
+      map.current.easeTo({ zoom: Math.min(currentZoom + 4, 20), duration: 300 });
     }
   };
 
   const handleZoomOut = () => {
     if (map.current) {
-      map.current.zoomOut({ duration: 150 });
+      const currentZoom = map.current.getZoom();
+      map.current.easeTo({ zoom: Math.max(currentZoom - 4, 1), duration: 300 });
     }
   };
 
