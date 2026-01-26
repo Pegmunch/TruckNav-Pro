@@ -1,5 +1,5 @@
 import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from 'lucide-react';
-import { useRef, type PointerEvent, type MouseEvent, type TouchEvent } from 'react';
+import { useRef, useState, useCallback, type PointerEvent, type MouseEvent, type TouchEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
@@ -52,6 +52,17 @@ export function RightActionStack({
   const buttonSize = compact ? "h-9 w-9 min-h-[36px] min-w-[36px]" : "h-11 w-11 min-h-[44px] min-w-[44px]";
   const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
   const handledByPointerRef = useRef<Record<string, boolean>>({});
+  const zoomCooldownRef = useRef<boolean>(false);
+  
+  const handleZoomWithCooldown = useCallback((zoomFn: (() => void) | undefined, direction: string) => {
+    if (zoomCooldownRef.current || !zoomFn) return;
+    zoomCooldownRef.current = true;
+    console.log(`[ZOOM-${direction}] Zoom triggered, cooldown active`);
+    zoomFn();
+    setTimeout(() => {
+      zoomCooldownRef.current = false;
+    }, 400);
+  }, []);
   
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
@@ -145,12 +156,12 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 4. Zoom In - Gray border */}
+      {/* 4. Zoom In - Gray border - with cooldown to prevent double-tap */}
       {onZoomIn && (
         <Button
           variant="ghost"
           size="icon"
-          {...createHandler(onZoomIn, 'ZOOM-IN')}
+          {...createHandler(() => handleZoomWithCooldown(onZoomIn, 'IN'), 'ZOOM-IN')}
           className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation pointer-events-auto")}
           style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-zoom-in"
@@ -159,12 +170,12 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 5. Zoom Out - Gray border */}
+      {/* 5. Zoom Out - Gray border - with cooldown to prevent double-tap */}
       {onZoomOut && (
         <Button
           variant="ghost"
           size="icon"
-          {...createHandler(onZoomOut, 'ZOOM-OUT')}
+          {...createHandler(() => handleZoomWithCooldown(onZoomOut, 'OUT'), 'ZOOM-OUT')}
           className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation pointer-events-auto")}
           style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-zoom-out"

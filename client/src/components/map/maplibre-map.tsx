@@ -520,17 +520,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomIn: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        const newZoom = Math.min(currentZoom + 15, 20);
-        userPreferredZoomRef.current = newZoom; // Store user's preferred zoom
-        map.current.easeTo({ zoom: newZoom, duration: 300 });
+        const newZoom = Math.min(Math.floor(currentZoom) + 1, 20);
+        userPreferredZoomRef.current = newZoom;
+        map.current.easeTo({ zoom: newZoom, duration: 200 });
       }
     },
     zoomOut: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        const newZoom = Math.max(currentZoom - 15, 1);
-        userPreferredZoomRef.current = newZoom; // Store user's preferred zoom
-        map.current.easeTo({ zoom: newZoom, duration: 300 });
+        const newZoom = Math.max(Math.ceil(currentZoom) - 1, 1);
+        userPreferredZoomRef.current = newZoom;
+        map.current.easeTo({ zoom: newZoom, duration: 200 });
       }
     },
     zoomToUserLocation: (options) => {
