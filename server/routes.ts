@@ -8,7 +8,7 @@ import { routeMonitorService } from "./services/route-monitor";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth, requireFleetSubscription } from "./subscriptionMiddleware";
 import { sendPaymentFailedNotification, resetNotificationsForRenewedSubscription, stopNotificationsForExpiredSubscription, getBrandedEmailTemplate } from "./services/subscription-notifications";
-import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, insertShiftCheckinSchema, insertShiftHandoverSchema, insertDriverPerformanceScoreSchema, insertVehicleHealthScoreSchema, type VehicleProfile, type Restriction, type ShiftCheckin, type ShiftHandover, type DriverPerformanceScore, type VehicleHealthScore } from "@shared/schema";
+import { insertVehicleProfileSchema, insertRestrictionSchema, insertFacilitySchema, insertRouteSchema, insertTrafficIncidentSchema, insertUserSchema, updateUserProfileSchema, insertLocationSchema, insertJourneySchema, insertRouteMonitoringSchema, insertAlternativeRouteSchema, insertReRoutingEventSchema, geoJsonLineStringSchema, insertEntertainmentStationSchema, insertEntertainmentPresetSchema, insertEntertainmentHistorySchema, insertEntertainmentPlaybackStateSchema, insertGpsTrackingSchema, insertGeofenceSchema, insertGeofenceEventSchema, insertDriverBehaviorSchema, insertHoursOfServiceSchema, insertCustomerBillingSchema, insertShiftCheckinSchema, insertShiftHandoverSchema, insertDriverPerformanceScoreSchema, insertVehicleHealthScoreSchema, insertFleetBroadcastSchema, type VehicleProfile, type Restriction, type ShiftCheckin, type ShiftHandover, type DriverPerformanceScore, type VehicleHealthScore } from "@shared/schema";
 import { z } from "zod";
 import Stripe from "stripe";
 import { apiRateLimit, authRateLimit, validateRequest } from "./middleware/security";
@@ -6824,6 +6824,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =============================================================================
   // END ENTERPRISE FEATURES API ROUTES
   // =============================================================================
+
+  // =============================================================================
+  // FLEET BROADCAST MESSAGING API ROUTES
+  // =============================================================================
+
+  app.post("/api/fleet/broadcasts", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const broadcastData = {
+        senderId: userId,
+        senderName: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email || 'Fleet Manager',
+        title: req.body.title,
+        message: req.body.message,
+        priority: req.body.priority || 'info',
+        category: req.body.category || 'general',
+        expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
+        targetAudience: req.body.targetAudience || 'all',
+        isActive: true,
+      };
+
+      const validatedData = insertFleetBroadcastSchema.safeParse(broadcastData);
+      if (!validatedData.success) {
+        return res.status(400).json({ 
+          message: "Invalid broadcast data", 
+          errors: validatedData.error.flatten() 
+        });
+      }
+
+      const broadcast = await storage.createFleetBroadcast(validatedData.data);
+      res.status(201).json(broadcast);
+    } catch (error) {
+      console.error('Error creating fleet broadcast:', error);
+      res.status(500).json({ message: "Failed to create broadcast" });
+    }
+  });
+
+  app.get("/api/fleet/broadcasts", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcasts = await storage.getActiveFleetBroadcasts();
+      res.json(broadcasts);
+    } catch (error) {
+      console.error('Error fetching fleet broadcasts:', error);
+      res.status(500).json({ message: "Failed to fetch broadcasts" });
+    }
+  });
+
+  app.get("/api/fleet/broadcasts/my-broadcasts", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcasts = await storage.getUserFleetBroadcasts(userId);
+      res.json(broadcasts);
+    } catch (error) {
+      console.error('Error fetching user broadcasts:', error);
+      res.status(500).json({ message: "Failed to fetch broadcasts" });
+    }
+  });
+
+  app.get("/api/fleet/broadcasts/unread", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcasts = await storage.getUserUnreadBroadcasts(userId);
+      res.json(broadcasts);
+    } catch (error) {
+      console.error('Error fetching unread broadcasts:', error);
+      res.status(500).json({ message: "Failed to fetch unread broadcasts" });
+    }
+  });
+
+  app.get("/api/fleet/broadcasts/:id", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcast = await storage.getFleetBroadcast(req.params.id);
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      res.json(broadcast);
+    } catch (error) {
+      console.error('Error fetching broadcast:', error);
+      res.status(500).json({ message: "Failed to fetch broadcast" });
+    }
+  });
+
+  app.post("/api/fleet/broadcasts/:id/read", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcast = await storage.getFleetBroadcast(req.params.id);
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      const readReceipt = await storage.markBroadcastRead(req.params.id, userId);
+      res.json(readReceipt);
+    } catch (error) {
+      console.error('Error marking broadcast as read:', error);
+      res.status(500).json({ message: "Failed to mark broadcast as read" });
+    }
+  });
+
+  app.get("/api/fleet/broadcasts/:id/receipts", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcast = await storage.getFleetBroadcast(req.params.id);
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      if (broadcast.senderId !== userId) {
+        return res.status(403).json({ message: "Only the sender can view read receipts" });
+      }
+
+      const receipts = await storage.getBroadcastReadReceipts(req.params.id);
+      res.json(receipts);
+    } catch (error) {
+      console.error('Error fetching read receipts:', error);
+      res.status(500).json({ message: "Failed to fetch read receipts" });
+    }
+  });
+
+  app.patch("/api/fleet/broadcasts/:id", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcast = await storage.getFleetBroadcast(req.params.id);
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      if (broadcast.senderId !== userId) {
+        return res.status(403).json({ message: "Only the sender can update this broadcast" });
+      }
+
+      const { title, message, priority, category, expiresAt, isActive } = req.body;
+      const updates: any = {};
+
+      if (title !== undefined) updates.title = title;
+      if (message !== undefined) updates.message = message;
+      if (priority !== undefined) updates.priority = priority;
+      if (category !== undefined) updates.category = category;
+      if (expiresAt !== undefined) updates.expiresAt = expiresAt ? new Date(expiresAt) : null;
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const updated = await storage.updateFleetBroadcast(req.params.id, updates);
+      res.json(updated);
+    } catch (error) {
+      console.error('Error updating broadcast:', error);
+      res.status(500).json({ message: "Failed to update broadcast" });
+    }
+  });
+
+  app.delete("/api/fleet/broadcasts/:id", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const broadcast = await storage.getFleetBroadcast(req.params.id);
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      if (broadcast.senderId !== userId) {
+        return res.status(403).json({ message: "Only the sender can delete this broadcast" });
+      }
+
+      await storage.deleteFleetBroadcast(req.params.id);
+      res.json({ message: "Broadcast deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting broadcast:', error);
+      res.status(500).json({ message: "Failed to delete broadcast" });
+    }
+  });
 
   // =============================================================================
   // ROBUSTNESS MONITORING ROUTES (99% Reliability Target)

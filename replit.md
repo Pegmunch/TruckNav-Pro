@@ -98,6 +98,21 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Layer Ordering**: Traffic overlay automatically moved to top after satellite/label layer changes
 - **Fallback Architecture**: TomTom Traffic Flow API primary, HERE Traffic API fallback
 
+## Fleet Broadcast Messaging (v3.4.38)
+- **Purpose**: Fleet managers can send broadcast messages to all drivers in their fleet
+- **Database Tables**: fleet_broadcasts, fleet_broadcast_reads (read receipts tracking)
+- **Priority Levels**: Critical (red), Important (orange), Info (blue)
+- **Categories**: General, Safety, Traffic, Operations, Emergency
+- **Features**:
+  - Priority-based sorting (critical shown first)
+  - Read receipt tracking with count
+  - Optional message expiration
+  - Broadcast history management
+- **UI Components**:
+  - FleetBroadcastsTab: Manager interface for creating/viewing broadcasts
+  - BroadcastNotificationPopup: Driver notification popup (auto-opens for critical messages)
+- **API Endpoints**: `/api/fleet/broadcasts/*` with Zod validation
+
 # Fleet Shift Management System (v3.4.32)
 
 ## Database Tables

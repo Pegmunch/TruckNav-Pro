@@ -58,6 +58,7 @@ import { IncidentReportDialog } from "@/components/incidents/incident-report-dia
 import { IncidentFeed } from "@/components/incidents/incident-feed";
 import IncidentFeedPopup from "@/components/incidents/incident-feed-popup";
 import LiveTrafficPanel from "@/components/traffic/live-traffic-panel";
+import { BroadcastNotificationPopup } from "@/components/fleet/broadcast-notification-popup";
 import SpeedDisplay from "@/components/map/speed-display";
 import SpeedometerHUD from "@/components/navigation/speedometer-hud";
 import { GPSProvider, useGPS } from "@/contexts/gps-context";
@@ -3487,6 +3488,9 @@ function NavigationPageContent() {
 
   return (
     <div className="min-h-[100svh] flex flex-col" style={{background: "transparent"}}>
+      {/* Fleet Broadcast Notifications - Shows critical/important messages from fleet managers */}
+      <BroadcastNotificationPopup />
+      
       {/* Desktop-Only Navigation Header */}
       <DesktopHeader />
 

@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, type HistoricalTrafficData, type InsertHistoricalTrafficData, type TrafficObservation, type InsertTrafficObservation, type TrafficPrediction, type InsertTrafficPrediction, historicalTrafficData, trafficObservations, trafficPredictions, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, type HistoricalTrafficData, type InsertHistoricalTrafficData, type TrafficObservation, type InsertTrafficObservation, type TrafficPrediction, type InsertTrafficPrediction, type FleetBroadcast, type InsertFleetBroadcast, type FleetBroadcastRead, type InsertFleetBroadcastRead, historicalTrafficData, trafficObservations, trafficPredictions, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications, fleetBroadcasts, fleetBroadcastReads } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
@@ -333,6 +333,18 @@ export interface IStorage {
   updateCustomer(id: string, updates: Partial<CustomerBilling>): Promise<CustomerBilling | undefined>;
   deleteCustomer(id: string): Promise<boolean>;
   getCustomerAnalytics(userId: string): Promise<{ totalCustomers: number; totalRevenue: number; totalOutstanding: number; averageProfitMargin: number }>;
+
+  // Fleet Broadcast Messaging
+  createFleetBroadcast(broadcast: InsertFleetBroadcast): Promise<FleetBroadcast>;
+  getFleetBroadcast(id: string): Promise<FleetBroadcast | undefined>;
+  getActiveFleetBroadcasts(): Promise<FleetBroadcast[]>;
+  getUserFleetBroadcasts(userId: string): Promise<FleetBroadcast[]>;
+  updateFleetBroadcast(id: string, updates: Partial<FleetBroadcast>): Promise<FleetBroadcast | undefined>;
+  deleteFleetBroadcast(id: string): Promise<boolean>;
+  markBroadcastRead(broadcastId: string, userId: string): Promise<FleetBroadcastRead>;
+  getBroadcastReadStatus(broadcastId: string, userId: string): Promise<FleetBroadcastRead | undefined>;
+  getUserUnreadBroadcasts(userId: string): Promise<FleetBroadcast[]>;
+  getBroadcastReadReceipts(broadcastId: string): Promise<FleetBroadcastRead[]>;
 
 }
 
@@ -5030,6 +5042,115 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fleetNotifications.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  // ========================================
+  // FLEET BROADCAST MESSAGING
+  // ========================================
+
+  async createFleetBroadcast(broadcast: InsertFleetBroadcast): Promise<FleetBroadcast> {
+    const [result] = await db.insert(fleetBroadcasts).values(broadcast).returning();
+    return result;
+  }
+
+  async getFleetBroadcast(id: string): Promise<FleetBroadcast | undefined> {
+    const [result] = await db.select().from(fleetBroadcasts).where(eq(fleetBroadcasts.id, id));
+    return result;
+  }
+
+  async getActiveFleetBroadcasts(): Promise<FleetBroadcast[]> {
+    const now = new Date();
+    return await db.select()
+      .from(fleetBroadcasts)
+      .where(and(
+        eq(fleetBroadcasts.isActive, true),
+        or(
+          sql`${fleetBroadcasts.expiresAt} IS NULL`,
+          gte(fleetBroadcasts.expiresAt, now)
+        )
+      ))
+      .orderBy(desc(fleetBroadcasts.createdAt));
+  }
+
+  async getUserFleetBroadcasts(userId: string): Promise<FleetBroadcast[]> {
+    return await db.select()
+      .from(fleetBroadcasts)
+      .where(eq(fleetBroadcasts.senderId, userId))
+      .orderBy(desc(fleetBroadcasts.createdAt));
+  }
+
+  async updateFleetBroadcast(id: string, updates: Partial<FleetBroadcast>): Promise<FleetBroadcast | undefined> {
+    const [result] = await db.update(fleetBroadcasts)
+      .set(updates)
+      .where(eq(fleetBroadcasts.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteFleetBroadcast(id: string): Promise<boolean> {
+    const result = await db.delete(fleetBroadcasts)
+      .where(eq(fleetBroadcasts.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async markBroadcastRead(broadcastId: string, userId: string): Promise<FleetBroadcastRead> {
+    const existing = await this.getBroadcastReadStatus(broadcastId, userId);
+    if (existing) {
+      return existing;
+    }
+
+    const [result] = await db.insert(fleetBroadcastReads)
+      .values({ broadcastId, userId })
+      .returning();
+
+    await db.update(fleetBroadcasts)
+      .set({ readCount: sql`COALESCE(${fleetBroadcasts.readCount}, 0) + 1` })
+      .where(eq(fleetBroadcasts.id, broadcastId));
+
+    return result;
+  }
+
+  async getBroadcastReadStatus(broadcastId: string, userId: string): Promise<FleetBroadcastRead | undefined> {
+    const [result] = await db.select()
+      .from(fleetBroadcastReads)
+      .where(and(
+        eq(fleetBroadcastReads.broadcastId, broadcastId),
+        eq(fleetBroadcastReads.userId, userId)
+      ));
+    return result;
+  }
+
+  async getUserUnreadBroadcasts(userId: string): Promise<FleetBroadcast[]> {
+    const now = new Date();
+    const readBroadcastIds = await db.select({ broadcastId: fleetBroadcastReads.broadcastId })
+      .from(fleetBroadcastReads)
+      .where(eq(fleetBroadcastReads.userId, userId));
+
+    const readIds = readBroadcastIds.map(r => r.broadcastId);
+
+    if (readIds.length === 0) {
+      return await this.getActiveFleetBroadcasts();
+    }
+
+    return await db.select()
+      .from(fleetBroadcasts)
+      .where(and(
+        eq(fleetBroadcasts.isActive, true),
+        or(
+          sql`${fleetBroadcasts.expiresAt} IS NULL`,
+          gte(fleetBroadcasts.expiresAt, now)
+        ),
+        sql`${fleetBroadcasts.id} NOT IN (${sql.join(readIds.map(id => sql`${id}`), sql`, `)})`
+      ))
+      .orderBy(desc(fleetBroadcasts.createdAt));
+  }
+
+  async getBroadcastReadReceipts(broadcastId: string): Promise<FleetBroadcastRead[]> {
+    return await db.select()
+      .from(fleetBroadcastReads)
+      .where(eq(fleetBroadcastReads.broadcastId, broadcastId))
+      .orderBy(desc(fleetBroadcastReads.readAt));
   }
 
 }

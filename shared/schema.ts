@@ -1547,6 +1547,41 @@ export const vehicleHealthScores = pgTable("vehicle_health_scores", {
   periodIdx: index("vehicle_score_period_idx").on(table.periodStart),
 }));
 
+// ========================================
+// FLEET BROADCAST MESSAGING
+// ========================================
+
+// Fleet Broadcasts - Messages from managers to all fleet drivers
+export const fleetBroadcasts = pgTable("fleet_broadcasts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  senderName: text("sender_name").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  priority: text("priority").notNull().default('info'), // 'critical', 'important', 'info'
+  category: text("category").notNull().default('general'), // 'general', 'safety', 'traffic', 'operations', 'emergency'
+  expiresAt: timestamp("expires_at"), // Optional expiration time
+  isActive: boolean("is_active").default(true),
+  readCount: integer("read_count").default(0),
+  targetAudience: text("target_audience").default('all'), // 'all', 'operators', 'managers'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  senderIdx: index("broadcast_sender_idx").on(table.senderId),
+  priorityIdx: index("broadcast_priority_idx").on(table.priority),
+  createdAtIdx: index("broadcast_created_idx").on(table.createdAt),
+}));
+
+// Fleet Broadcast Read Receipts - Track which drivers have read which broadcasts
+export const fleetBroadcastReads = pgTable("fleet_broadcast_reads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  broadcastId: varchar("broadcast_id").notNull().references(() => fleetBroadcasts.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  readAt: timestamp("read_at").defaultNow(),
+}, (table) => ({
+  broadcastIdx: index("read_broadcast_idx").on(table.broadcastId),
+  userIdx: index("read_user_idx").on(table.userId),
+}));
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1576,6 +1611,10 @@ export const insertShiftCheckinSchema = createInsertSchema(shiftCheckins).omit({
 export const insertShiftHandoverSchema = createInsertSchema(shiftHandovers).omit({ id: true, createdAt: true });
 export const insertDriverPerformanceScoreSchema = createInsertSchema(driverPerformanceScores).omit({ id: true, createdAt: true });
 export const insertVehicleHealthScoreSchema = createInsertSchema(vehicleHealthScores).omit({ id: true, createdAt: true });
+
+// Zod schemas for fleet broadcasts
+export const insertFleetBroadcastSchema = createInsertSchema(fleetBroadcasts).omit({ id: true, createdAt: true, readCount: true });
+export const insertFleetBroadcastReadSchema = createInsertSchema(fleetBroadcastReads).omit({ id: true, readAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -1658,6 +1697,13 @@ export type InsertDriverBehavior = z.infer<typeof insertDriverBehaviorSchema>;
 
 export type HoursOfService = typeof hoursOfService.$inferSelect;
 export type InsertHoursOfService = z.infer<typeof insertHoursOfServiceSchema>;
+
+// Type exports for fleet broadcasts
+export type FleetBroadcast = typeof fleetBroadcasts.$inferSelect;
+export type InsertFleetBroadcast = z.infer<typeof insertFleetBroadcastSchema>;
+
+export type FleetBroadcastRead = typeof fleetBroadcastReads.$inferSelect;
+export type InsertFleetBroadcastRead = z.infer<typeof insertFleetBroadcastReadSchema>;
 
 export type CustomerBilling = typeof customerBilling.$inferSelect;
 export type InsertCustomerBilling = z.infer<typeof insertCustomerBillingSchema>;
