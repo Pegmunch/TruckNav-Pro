@@ -3423,6 +3423,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               return;
             }
             
+            // CRITICAL: Skip GPS tracking during zoom pause period (10 seconds after any zoom button press)
+            // This allows user to freely adjust zoom without GPS loop interference
+            const now = Date.now();
+            if (now < gpsTrackingResumeTimeRef.current) {
+              // GPS tracking paused - let user adjust zoom freely
+              return;
+            }
+            
             // TomTom GO style navigation view:
             // - Vehicle marker at bottom 45% of screen (centered above speedometer)
             // - Route line extends straight up toward horizon
@@ -3447,10 +3455,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 essential: true // Ensure animation isn't interrupted by user gestures
               };
               
-              // Only set zoom if no button-triggered zoom animation is in progress
-              if (!zoomAnimationInProgressRef.current) {
-                easeToOptions.zoom = userPreferredZoomRef.current;
-              }
+              // Apply user's preferred zoom level
+              easeToOptions.zoom = userPreferredZoomRef.current;
               
               mapInstance.easeTo(easeToOptions);
             } catch (e) {
@@ -3538,10 +3544,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // Each press = 2 zoom levels, max 5 presses = 10 levels total
   const staggeredZoomInProgressRef = useRef<boolean>(false);
   
+  // GPS tracking pause timer - pauses GPS tracking for 10 seconds after zoom button press
+  // This allows user to freely adjust zoom without GPS loop interference
+  const gpsTrackingResumeTimeRef = useRef<number>(0);
+  const GPS_TRACKING_PAUSE_DURATION = 10000; // 10 seconds
+  
+  const pauseGPSTracking = useCallback(() => {
+    gpsTrackingResumeTimeRef.current = Date.now() + GPS_TRACKING_PAUSE_DURATION;
+    console.log(`[GPS-PAUSE] GPS tracking paused for 10 seconds until ${new Date(gpsTrackingResumeTimeRef.current).toLocaleTimeString()}`);
+  }, []);
+  
   const handleStaggeredZoomIn = useCallback(() => {
     if (!map.current || staggeredZoomInProgressRef.current) return;
     staggeredZoomInProgressRef.current = true;
     zoomAnimationInProgressRef.current = true;
+    
+    // Pause GPS tracking for 10 seconds - allows user to freely adjust zoom
+    pauseGPSTracking();
     
     const totalLevels = 2; // x2 zoom per press
     const stepDelay = 80; // ms between each step
@@ -3588,12 +3607,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     
     animateStep();
-  }, []);
+  }, [pauseGPSTracking]);
   
   const handleStaggeredZoomOut = useCallback(() => {
     if (!map.current || staggeredZoomInProgressRef.current) return;
     staggeredZoomInProgressRef.current = true;
     zoomAnimationInProgressRef.current = true;
+    
+    // Pause GPS tracking for 10 seconds - allows user to freely adjust zoom
+    pauseGPSTracking();
     
     const totalLevels = 2; // x2 zoom per press
     const stepDelay = 80; // ms between each step
@@ -3640,7 +3662,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     
     animateStep();
-  }, []);
+  }, [pauseGPSTracking]);
 
   const handleRecenter = () => {
     if (!map.current) return;
