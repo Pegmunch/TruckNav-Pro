@@ -83,6 +83,7 @@ const TurnIndicator = memo(function TurnIndicator({
       className={cn(
         "fixed left-1/2 -translate-x-1/2 z-[190]",
         "flex flex-col items-center gap-1",
+        "pointer-events-none", // CRITICAL: Allow touches to pass through to buttons
         className
       )}
       style={{
