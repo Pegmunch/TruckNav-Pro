@@ -3552,6 +3552,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     const animateStep = () => {
       if (!map.current || currentStep >= totalLevels) {
+        // Sync the refs so GPS tracking loop uses the new zoom level
+        if (map.current) {
+          const finalZoom = map.current.getZoom();
+          userPreferredZoomRef.current = finalZoom;
+          currentZoomRef.current = finalZoom;
+          console.log(`[STAGGERED-ZOOM-IN] Synced userPreferredZoomRef to ${finalZoom}`);
+        }
         staggeredZoomInProgressRef.current = false;
         setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
         console.log(`[STAGGERED-ZOOM-IN] Complete at step ${currentStep}`);
@@ -3560,6 +3567,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       const currentZoom = map.current.getZoom();
       if (currentZoom >= maxZoom) {
+        // Sync the refs so GPS tracking loop uses the new zoom level
+        userPreferredZoomRef.current = maxZoom;
+        currentZoomRef.current = maxZoom;
+        console.log(`[STAGGERED-ZOOM-IN] Synced userPreferredZoomRef to ${maxZoom} (max)`);
         staggeredZoomInProgressRef.current = false;
         setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
         console.log(`[STAGGERED-ZOOM-IN] Hit max zoom (${maxZoom})`);
@@ -3588,6 +3599,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     const animateStep = () => {
       if (!map.current || currentStep >= totalLevels) {
+        // Sync the refs so GPS tracking loop uses the new zoom level
+        if (map.current) {
+          const finalZoom = map.current.getZoom();
+          userPreferredZoomRef.current = finalZoom;
+          currentZoomRef.current = finalZoom;
+          console.log(`[STAGGERED-ZOOM-OUT] Synced userPreferredZoomRef to ${finalZoom}`);
+        }
         staggeredZoomInProgressRef.current = false;
         setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
         console.log(`[STAGGERED-ZOOM-OUT] Complete at step ${currentStep}`);
@@ -3596,6 +3614,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       const currentZoom = map.current.getZoom();
       if (currentZoom <= minZoom) {
+        // Sync the refs so GPS tracking loop uses the new zoom level
+        userPreferredZoomRef.current = minZoom;
+        currentZoomRef.current = minZoom;
+        console.log(`[STAGGERED-ZOOM-OUT] Synced userPreferredZoomRef to ${minZoom} (min)`);
         staggeredZoomInProgressRef.current = false;
         setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
         console.log(`[STAGGERED-ZOOM-OUT] Hit min zoom (${minZoom})`);
