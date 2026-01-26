@@ -685,6 +685,24 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
         </div>
       </div>
 
+      {/* Road Name Display - Below speedometer during navigation */}
+      {isNavigating && (roadInfo.roadName || roadInfo.roadRef) && (
+        <div 
+          className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 z-10"
+          style={{ pointerEvents: 'none' }}
+        >
+          <div className={cn(
+            "px-3 py-0.5 rounded-full",
+            "bg-black/70 backdrop-blur-sm",
+            "text-white text-xs font-medium",
+            "whitespace-nowrap max-w-[200px] truncate",
+            "shadow-lg"
+          )}>
+            {roadInfo.roadName || roadInfo.roadRef}
+          </div>
+        </div>
+      )}
+
       {/* STOP BUTTON - Right crescent hugging speedometer's right edge */}
       {showStopButton && onStopNavigation && (
         <div 

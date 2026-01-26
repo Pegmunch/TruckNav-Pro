@@ -3566,8 +3566,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Query OpenStreetMap Overpass API for detailed road information
-      // Reduced from 100m to 25m for tighter road matching to avoid picking up adjacent roads
-      const radius = 25;
+      // Reduced to 10m for precise road matching - only identifies the exact road being traveled on
+      const radius = 10;
       const query = `
         [out:json][timeout:5];
         (
