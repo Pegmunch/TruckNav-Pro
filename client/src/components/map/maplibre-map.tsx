@@ -3423,11 +3423,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               return;
             }
             
-            // CRITICAL: Skip GPS tracking during zoom pause period (10 seconds after any zoom button press)
-            // This allows user to freely adjust zoom without GPS loop interference
-            const now = Date.now();
-            if (now < gpsTrackingResumeTimeRef.current) {
-              // GPS tracking paused - let user adjust zoom freely
+            // CRITICAL: Skip entire GPS loop during active zoom animation
+            // MapLibre's easeTo calls cancel previous animations - we must let staggered zoom complete
+            if (zoomAnimationInProgressRef.current) {
               return;
             }
             
@@ -3455,8 +3453,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 essential: true // Ensure animation isn't interrupted by user gestures
               };
               
-              // Apply user's preferred zoom level
-              easeToOptions.zoom = userPreferredZoomRef.current;
+              // Apply user's preferred zoom level - but skip during zoom pause period
+              // This allows center/bearing to continue updating (navigation tracking)
+              // while preserving user's zoom choice for 10 seconds after any zoom button press
+              const now = Date.now();
+              if (now >= gpsTrackingResumeTimeRef.current) {
+                easeToOptions.zoom = userPreferredZoomRef.current;
+              }
+              // If paused, zoom is omitted - but center/bearing still update for navigation
               
               mapInstance.easeTo(easeToOptions);
             } catch (e) {
