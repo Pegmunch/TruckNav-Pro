@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radio, RefreshCw, MapPin, Truck, AlertCircle, Satellite, Map, Plus, Minus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Radio, RefreshCw, MapPin, Truck, AlertCircle, Satellite, Map, Plus, Minus, Search, X, Navigation } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import L from 'leaflet';
@@ -43,6 +44,8 @@ export function FleetTrackingTab() {
   const [selectedVehicle, setSelectedVehicle] = useState<VehiclePosition | null>(null);
   const [isSatelliteView, setIsSatelliteView] = useState(false);
   const [clickCoordinates, setClickCoordinates] = useState<{ lat: number; lng: number; screenX: number; screenY: number } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResult, setSearchResult] = useState<VehiclePosition | null>(null);
 
   const { data: fleetData, isLoading, refetch, isFetching, isError: isFleetError } = useQuery<FleetGpsData>({
     queryKey: ['/api/enterprise/gps/fleet'],
@@ -72,6 +75,63 @@ export function FleetTrackingTab() {
     },
     refetchInterval: 30000,
   });
+
+  const handleSearchVehicle = useCallback(() => {
+    if (!searchQuery.trim() || !fleetData?.vehicles) {
+      setSearchResult(null);
+      return;
+    }
+    
+    const normalizedQuery = searchQuery.toUpperCase().replace(/\s/g, '');
+    const found = fleetData.vehicles.find(v => 
+      v.registration.toUpperCase().replace(/\s/g, '').includes(normalizedQuery)
+    );
+    
+    if (found) {
+      setSearchResult(found);
+      setSelectedVehicle(found);
+      
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setView([found.latitude, found.longitude], 15, { animate: true });
+        
+        const marker = markersRef.current.get(found.id);
+        if (marker) {
+          marker.openPopup();
+        }
+      }
+      
+      toast({
+        title: "Vehicle Located",
+        description: `${found.registration} - ${found.status === 'moving' ? `Moving at ${found.speed}mph` : found.status}`,
+      });
+    } else {
+      setSearchResult(null);
+      toast({
+        title: "Vehicle Not Found",
+        description: `No vehicle with registration "${searchQuery}" found in fleet`,
+        variant: "destructive",
+      });
+    }
+  }, [searchQuery, fleetData?.vehicles, toast]);
+
+  const clearSearch = useCallback(() => {
+    setSearchQuery('');
+    setSearchResult(null);
+  }, []);
+
+  const locateVehicle = useCallback((vehicle: VehiclePosition) => {
+    setSelectedVehicle(vehicle);
+    setSearchResult(vehicle);
+    
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([vehicle.latitude, vehicle.longitude], 15, { animate: true });
+      
+      const marker = markersRef.current.get(vehicle.id);
+      if (marker) {
+        marker.openPopup();
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -334,12 +394,63 @@ export function FleetTrackingTab() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Truck className="w-5 h-5" />
               {t('fleet.tracking.vehicleList')}
             </CardTitle>
             <CardDescription>{t('fleet.tracking.clickToLocate')}</CardDescription>
+            
+            {/* Vehicle Search by Registration */}
+            <div className="flex gap-2 mt-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by reg plate (e.g. AB12 CDE)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchVehicle()}
+                  className="pl-9 pr-8"
+                  data-testid="input-search-registration"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                    onClick={clearSearch}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+              <Button 
+                onClick={handleSearchVehicle}
+                size="icon"
+                disabled={!searchQuery.trim()}
+                data-testid="button-search-vehicle"
+              >
+                <Navigation className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            {/* Search Result Info */}
+            {searchResult && (
+              <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Navigation className="w-4 h-4 text-green-600" />
+                    <span className="font-medium text-green-700 dark:text-green-300">{searchResult.registration}</span>
+                  </div>
+                  <Badge variant={searchResult.status === 'moving' ? 'default' : searchResult.status === 'stopped' ? 'secondary' : 'outline'}>
+                    {searchResult.status === 'moving' ? `${searchResult.speed}mph` : searchResult.status}
+                  </Badge>
+                </div>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  {searchResult.address || 'Location on map'}
+                </p>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[400px]">
