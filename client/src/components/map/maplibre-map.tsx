@@ -3265,9 +3265,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     
     // Run initial setup ONCE per navigation session
-    // Skip if zoom lock is active (user recently adjusted zoom)
-    const now = Date.now();
-    if (!initialNavViewSetupRef.current && now >= gpsTrackingResumeTimeRef.current) {
+    // This sets up the 3D view when navigation starts - zoom lock doesn't block this
+    if (!initialNavViewSetupRef.current) {
       setupInitialNavigationView();
     }
     
@@ -3456,13 +3455,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               };
               
               // Only set zoom if it needs to change (prevents animation interference)
+              // AND user hasn't recently adjusted zoom (10-second lock)
               const currentZoom = mapInstance.getZoom();
               const targetZoom = userPreferredZoomRef.current;
+              const now = Date.now();
+              const isZoomLocked = now < gpsTrackingResumeTimeRef.current;
+              
               // Only animate zoom if difference is significant (> 0.1 level)
-              if (Math.abs(currentZoom - targetZoom) > 0.1) {
+              // Skip zoom changes entirely during the 10-second lock period
+              if (Math.abs(currentZoom - targetZoom) > 0.1 && !isZoomLocked) {
                 easeToOptions.zoom = targetZoom;
               }
-              // If close enough, omit zoom to prevent micro-animations
+              // If close enough or zoom locked, omit zoom to prevent overriding user's choice
               
               mapInstance.easeTo(easeToOptions);
             } catch (e) {
