@@ -3265,7 +3265,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
     
     // Run initial setup ONCE per navigation session
-    if (!initialNavViewSetupRef.current) {
+    // Skip if zoom lock is active (user recently adjusted zoom)
+    const now = Date.now();
+    if (!initialNavViewSetupRef.current && now >= gpsTrackingResumeTimeRef.current) {
       setupInitialNavigationView();
     }
     
@@ -3491,10 +3493,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         cancelAnimationFrame(animationFrame);
         console.log('[GPS-HEADING] ✓ GPS heading rotation stopped');
       }
-      // Reset initial view flag when navigation ends so next session sets it up fresh
-      initialNavViewSetupRef.current = false;
+      // Only reset initial view flag when NAVIGATION STOPS (not on every GPS update)
+      // This prevents zoom from being reset to 16.5 on each GPS position change
     };
   }, [isNavigating, isLoaded, gpsPosition, currentRoute]);
+  
+  // Separate effect to reset initial view flag when navigation ENDS
+  useEffect(() => {
+    if (!isNavigating) {
+      initialNavViewSetupRef.current = false;
+    }
+  }, [isNavigating]);
 
   // Listen for auto-zoom to GPS position event
   useEffect(() => {
