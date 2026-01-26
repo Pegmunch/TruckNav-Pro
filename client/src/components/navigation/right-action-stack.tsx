@@ -7,8 +7,8 @@ import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 interface RightActionStackProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
-  onStaggeredZoomIn?: (multiplier: number) => void;
-  onStaggeredZoomOut?: (multiplier: number) => void;
+  onStaggeredZoomIn?: () => void;
+  onStaggeredZoomOut?: () => void;
   onRecenter?: () => void;
   onToggle3D?: () => void;
   onToggleTraffic?: () => void;
@@ -67,30 +67,18 @@ export function RightActionStack({
   const handleNavigationZoom = useCallback((direction: 'in' | 'out') => {
     if (zoomCooldownRef.current) return;
     
-    const now = Date.now();
-    const lastTap = lastZoomTapRef.current;
-    let multiplier = 1;
+    console.log(`[NAV-ZOOM-${direction.toUpperCase()}] x2 staggered zoom triggered`);
     
-    // Check for double-tap (same direction within threshold)
-    if (lastTap && lastTap.direction === direction && (now - lastTap.time) < DOUBLE_TAP_THRESHOLD) {
-      multiplier = 2; // x2 layer press
-      lastZoomTapRef.current = null; // Reset after double-tap
-      console.log(`[NAV-ZOOM-${direction.toUpperCase()}] 🚀 Double-tap detected! x2 multiplier (x20 total zoom)`);
-    } else {
-      lastZoomTapRef.current = { direction, time: now };
-      console.log(`[NAV-ZOOM-${direction.toUpperCase()}] Single tap - x10 staggered zoom`);
-    }
-    
-    // Trigger staggered zoom
+    // Trigger staggered zoom (x2 per press, max 5 presses = x10 total)
     if (direction === 'in' && onStaggeredZoomIn) {
       zoomCooldownRef.current = true;
-      onStaggeredZoomIn(multiplier);
-      // Longer cooldown for staggered animation
-      setTimeout(() => { zoomCooldownRef.current = false; }, multiplier === 2 ? 2000 : 1000);
+      onStaggeredZoomIn();
+      // Short cooldown - allows rapid presses for cumulative zoom
+      setTimeout(() => { zoomCooldownRef.current = false; }, 400);
     } else if (direction === 'out' && onStaggeredZoomOut) {
       zoomCooldownRef.current = true;
-      onStaggeredZoomOut(multiplier);
-      setTimeout(() => { zoomCooldownRef.current = false; }, multiplier === 2 ? 2000 : 1000);
+      onStaggeredZoomOut();
+      setTimeout(() => { zoomCooldownRef.current = false; }, 400);
     }
   }, [onStaggeredZoomIn, onStaggeredZoomOut]);
   
@@ -208,7 +196,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 4. Zoom In - Gray border - staggered x10 zoom in navigation mode */}
+      {/* 4. Zoom In - Blue border during navigation - x2 staggered zoom per press */}
       {onZoomIn && (
         <Button
           variant="ghost"
@@ -229,7 +217,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 5. Zoom Out - Gray border - staggered x10 zoom in navigation mode */}
+      {/* 5. Zoom Out - Blue border during navigation - x2 staggered zoom per press */}
       {onZoomOut && (
         <Button
           variant="ghost"

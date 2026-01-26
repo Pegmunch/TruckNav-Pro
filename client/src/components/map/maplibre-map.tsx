@@ -3547,37 +3547,42 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const stepDelay = 80; // ms between each step
     const maxZoom = 20;
     let currentStep = 0;
+    let targetZoom = Math.min(map.current.getZoom() + totalLevels, maxZoom); // Calculate target upfront
     
-    console.log(`[STAGGERED-ZOOM-IN] Starting x2 staggered zoom animation`);
+    console.log(`[STAGGERED-ZOOM-IN] Starting x2 staggered zoom animation, target: ${targetZoom}`);
     
     const animateStep = () => {
       if (!map.current || currentStep >= totalLevels) {
-        // Sync the refs so GPS tracking loop uses the new zoom level
-        if (map.current) {
-          const finalZoom = map.current.getZoom();
-          userPreferredZoomRef.current = finalZoom;
-          currentZoomRef.current = finalZoom;
-          console.log(`[STAGGERED-ZOOM-IN] Synced userPreferredZoomRef to ${finalZoom}`);
-        }
-        staggeredZoomInProgressRef.current = false;
-        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
-        console.log(`[STAGGERED-ZOOM-IN] Complete at step ${currentStep}`);
+        // Wait for last animation to complete before syncing refs
+        setTimeout(() => {
+          // Sync refs to TARGET zoom (not current map zoom which may lag)
+          userPreferredZoomRef.current = targetZoom;
+          currentZoomRef.current = targetZoom;
+          console.log(`[STAGGERED-ZOOM-IN] Synced userPreferredZoomRef to ${targetZoom}`);
+          staggeredZoomInProgressRef.current = false;
+          setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 100);
+          console.log(`[STAGGERED-ZOOM-IN] Complete at step ${currentStep}`);
+        }, 100); // Wait for 70ms animation + buffer
         return;
       }
       
       const currentZoom = map.current.getZoom();
       if (currentZoom >= maxZoom) {
+        targetZoom = maxZoom;
         // Sync the refs so GPS tracking loop uses the new zoom level
-        userPreferredZoomRef.current = maxZoom;
-        currentZoomRef.current = maxZoom;
-        console.log(`[STAGGERED-ZOOM-IN] Synced userPreferredZoomRef to ${maxZoom} (max)`);
-        staggeredZoomInProgressRef.current = false;
-        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
-        console.log(`[STAGGERED-ZOOM-IN] Hit max zoom (${maxZoom})`);
+        setTimeout(() => {
+          userPreferredZoomRef.current = maxZoom;
+          currentZoomRef.current = maxZoom;
+          console.log(`[STAGGERED-ZOOM-IN] Synced userPreferredZoomRef to ${maxZoom} (max)`);
+          staggeredZoomInProgressRef.current = false;
+          setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 100);
+          console.log(`[STAGGERED-ZOOM-IN] Hit max zoom (${maxZoom})`);
+        }, 100);
         return;
       }
       
-      map.current.easeTo({ zoom: Math.min(currentZoom + 1, maxZoom), duration: 70 });
+      const newZoom = Math.min(currentZoom + 1, maxZoom);
+      map.current.easeTo({ zoom: newZoom, duration: 70 });
       currentStep++;
       setTimeout(animateStep, stepDelay);
     };
@@ -3594,37 +3599,42 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const stepDelay = 80; // ms between each step
     const minZoom = 1;
     let currentStep = 0;
+    let targetZoom = Math.max(map.current.getZoom() - totalLevels, minZoom); // Calculate target upfront
     
-    console.log(`[STAGGERED-ZOOM-OUT] Starting x2 staggered zoom animation`);
+    console.log(`[STAGGERED-ZOOM-OUT] Starting x2 staggered zoom animation, target: ${targetZoom}`);
     
     const animateStep = () => {
       if (!map.current || currentStep >= totalLevels) {
-        // Sync the refs so GPS tracking loop uses the new zoom level
-        if (map.current) {
-          const finalZoom = map.current.getZoom();
-          userPreferredZoomRef.current = finalZoom;
-          currentZoomRef.current = finalZoom;
-          console.log(`[STAGGERED-ZOOM-OUT] Synced userPreferredZoomRef to ${finalZoom}`);
-        }
-        staggeredZoomInProgressRef.current = false;
-        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
-        console.log(`[STAGGERED-ZOOM-OUT] Complete at step ${currentStep}`);
+        // Wait for last animation to complete before syncing refs
+        setTimeout(() => {
+          // Sync refs to TARGET zoom (not current map zoom which may lag)
+          userPreferredZoomRef.current = targetZoom;
+          currentZoomRef.current = targetZoom;
+          console.log(`[STAGGERED-ZOOM-OUT] Synced userPreferredZoomRef to ${targetZoom}`);
+          staggeredZoomInProgressRef.current = false;
+          setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 100);
+          console.log(`[STAGGERED-ZOOM-OUT] Complete at step ${currentStep}`);
+        }, 100); // Wait for 70ms animation + buffer
         return;
       }
       
       const currentZoom = map.current.getZoom();
       if (currentZoom <= minZoom) {
+        targetZoom = minZoom;
         // Sync the refs so GPS tracking loop uses the new zoom level
-        userPreferredZoomRef.current = minZoom;
-        currentZoomRef.current = minZoom;
-        console.log(`[STAGGERED-ZOOM-OUT] Synced userPreferredZoomRef to ${minZoom} (min)`);
-        staggeredZoomInProgressRef.current = false;
-        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
-        console.log(`[STAGGERED-ZOOM-OUT] Hit min zoom (${minZoom})`);
+        setTimeout(() => {
+          userPreferredZoomRef.current = minZoom;
+          currentZoomRef.current = minZoom;
+          console.log(`[STAGGERED-ZOOM-OUT] Synced userPreferredZoomRef to ${minZoom} (min)`);
+          staggeredZoomInProgressRef.current = false;
+          setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 100);
+          console.log(`[STAGGERED-ZOOM-OUT] Hit min zoom (${minZoom})`);
+        }, 100);
         return;
       }
       
-      map.current.easeTo({ zoom: Math.max(currentZoom - 1, minZoom), duration: 70 });
+      const newZoom = Math.max(currentZoom - 1, minZoom);
+      map.current.easeTo({ zoom: newZoom, duration: 70 });
       currentStep++;
       setTimeout(animateStep, stepDelay);
     };
