@@ -65,33 +65,35 @@ export function RightActionStack({
   }, []);
   
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
+    onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
+      console.log(`[RIGHT-BTN-${label}] 🔵 Touch started`);
+      handledByPointerRef.current[label] = true;
+      hapticButtonPress();
+      console.log(`[RIGHT-BTN-${label}] ✅ Pressed via touchStart`);
+      callback?.();
+      setTimeout(() => { handledByPointerRef.current[label] = false; }, 500);
+    },
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
+      if (handledByPointerRef.current[label]) {
+        console.log(`[RIGHT-BTN-${label}] ⏭️ Skipped pointerDown (already handled by touch)`);
+        return;
+      }
+      console.log(`[RIGHT-BTN-${label}] 🔵 PointerDown (${e.pointerType})`);
       handledByPointerRef.current[label] = true;
       hapticButtonPress();
       console.log(`[RIGHT-BTN-${label}] ✅ Pressed via pointerDown`);
       callback?.();
-      setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
-    },
-    onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
-      e.stopPropagation();
-      if (!handledByPointerRef.current[label]) {
-        handledByPointerRef.current[label] = true;
-        hapticButtonPress();
-        console.log(`[RIGHT-BTN-${label}] ✅ Pressed via touchStart`);
-        callback?.();
-        setTimeout(() => { handledByPointerRef.current[label] = false; }, 300);
-      }
+      setTimeout(() => { handledByPointerRef.current[label] = false; }, 500);
     },
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!handledByPointerRef.current[label]) {
-        hapticButtonPress();
-        console.log(`[RIGHT-BTN-${label}] ✅ Pressed via onClick`);
-        callback?.();
+      if (handledByPointerRef.current[label]) {
+        console.log(`[RIGHT-BTN-${label}] ⏭️ Skipped onClick (already handled)`);
+        return;
       }
+      console.log(`[RIGHT-BTN-${label}] 🔵 Click event`);
+      hapticButtonPress();
+      console.log(`[RIGHT-BTN-${label}] ✅ Pressed via onClick`);
+      callback?.();
     }
   });
 
