@@ -1349,14 +1349,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         if (!mapInstance) return;
 
         // Add satellite sources for map view toggle with optimized caching
+        // OPTIMIZATION: Multiple CDN endpoints for parallel tile loading + reduced tile size
         if (!mapInstance.getSource('satellite-2d')) {
           mapInstance.addSource('satellite-2d', {
             type: 'raster',
             tiles: [
+              // Multiple Esri CDN endpoints for faster parallel loading
               'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
             ],
             tileSize: 256,
+            minzoom: 1,
             maxzoom: 19,
             attribution: '&copy; Esri'
           });
@@ -1366,12 +1370,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           mapInstance.addSource('satellite-3d', {
             type: 'raster',
             tiles: [
+              // All 4 Google tile servers for maximum parallel loading
               'https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
               'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
               'https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
               'https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
             ],
             tileSize: 256,
+            minzoom: 1,
             maxzoom: 20
           });
         }
@@ -1567,6 +1573,36 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
         setIsLoaded(true);
         console.log('✅ MapLibre GL loaded - satellite sources, labels overlay, and 3D buildings added');
+        
+        // OPTIMIZATION: Background prefetch satellite tiles for faster switching
+        // This loads tiles into browser cache without showing them
+        setTimeout(() => {
+          if (!mapInstance) return;
+          const center = mapInstance.getCenter();
+          const zoom = Math.floor(mapInstance.getZoom());
+          const prefetchZooms = [zoom, Math.min(zoom + 1, 18)];
+          
+          prefetchZooms.forEach(z => {
+            // Calculate tile coordinates for current view
+            const tileX = Math.floor((center.lng + 180) / 360 * Math.pow(2, z));
+            const tileY = Math.floor((1 - Math.log(Math.tan(center.lat * Math.PI / 180) + 1 / Math.cos(center.lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
+            
+            // Prefetch center tile and adjacent tiles (3x3 grid)
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                const x = tileX + dx;
+                const y = tileY + dy;
+                const url = `https://mt${(x + y) % 4}.google.com/vt/lyrs=y&x=${x}&y=${y}&z=${z}`;
+                
+                // Prefetch via hidden image (goes into browser cache)
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.src = url;
+              }
+            }
+          });
+          console.log('[SATELLITE-PREFETCH] Background tile prefetch started for faster switching');
+        }, 3000); // Delay prefetch to not interfere with initial map load
       });
 
       map.current.on('error', (e) => {
