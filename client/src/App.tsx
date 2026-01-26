@@ -25,6 +25,7 @@ import PricingPage from "@/pages/pricing";
 import SubscribePage from "@/pages/subscribe";
 import FleetManagement from "@/pages/fleet-management";
 import { SocialNetworkPage } from "@/pages/social-network";
+import TestButtons from "@/pages/test-buttons";
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -67,6 +68,7 @@ function Router() {
           <Route path="/window/settings" component={SettingsWindow} />
           <Route path="/fleet-management" component={FleetManagement} />
           <Route path="/social" component={SocialNetworkPage} />
+          <Route path="/test-buttons" component={TestButtons} />
           <Route component={NotFound} />
         </Switch>
       </div>
