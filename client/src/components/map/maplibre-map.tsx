@@ -60,6 +60,8 @@ export interface MapLibreMapRef {
   is3DMode: () => boolean;
   zoomIn: () => void;
   zoomOut: () => void;
+  staggeredZoomIn: (multiplier?: number) => void;
+  staggeredZoomOut: (multiplier?: number) => void;
   toggleMapView: () => void;
   getMapViewMode: () => 'roads' | 'satellite';
   flyByRoute: (routeCoordinates: Array<{lat: number; lng: number}>, options?: {
@@ -540,6 +542,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
       }
     },
+    staggeredZoomIn: handleStaggeredZoomIn,
+    staggeredZoomOut: handleStaggeredZoomOut,
     zoomToUserLocation: (options) => {
       const {
         forceStreetMode = true,
@@ -3529,6 +3533,82 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       map.current.easeTo({ zoom: Math.max(currentZoom - 4, 1), duration: 300 });
     }
   };
+  
+  // Staggered zoom for navigation mode - x10 zoom levels with animation
+  // multiplier: 1 = x10 zoom, 2 = x20 zoom (double-tap)
+  const staggeredZoomInProgressRef = useRef<boolean>(false);
+  
+  const handleStaggeredZoomIn = useCallback((multiplier: number = 1) => {
+    if (!map.current || staggeredZoomInProgressRef.current) return;
+    staggeredZoomInProgressRef.current = true;
+    zoomAnimationInProgressRef.current = true;
+    
+    const totalLevels = 10 * multiplier; // x10 or x20 zoom
+    const stepDelay = 80; // ms between each step
+    const maxZoom = 20;
+    let currentStep = 0;
+    
+    console.log(`[STAGGERED-ZOOM-IN] Starting x${totalLevels} staggered zoom animation`);
+    
+    const animateStep = () => {
+      if (!map.current || currentStep >= totalLevels) {
+        staggeredZoomInProgressRef.current = false;
+        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
+        console.log(`[STAGGERED-ZOOM-IN] Complete at step ${currentStep}`);
+        return;
+      }
+      
+      const currentZoom = map.current.getZoom();
+      if (currentZoom >= maxZoom) {
+        staggeredZoomInProgressRef.current = false;
+        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
+        console.log(`[STAGGERED-ZOOM-IN] Hit max zoom (${maxZoom})`);
+        return;
+      }
+      
+      map.current.easeTo({ zoom: Math.min(currentZoom + 1, maxZoom), duration: 70 });
+      currentStep++;
+      setTimeout(animateStep, stepDelay);
+    };
+    
+    animateStep();
+  }, []);
+  
+  const handleStaggeredZoomOut = useCallback((multiplier: number = 1) => {
+    if (!map.current || staggeredZoomInProgressRef.current) return;
+    staggeredZoomInProgressRef.current = true;
+    zoomAnimationInProgressRef.current = true;
+    
+    const totalLevels = 10 * multiplier; // x10 or x20 zoom
+    const stepDelay = 80; // ms between each step
+    const minZoom = 1;
+    let currentStep = 0;
+    
+    console.log(`[STAGGERED-ZOOM-OUT] Starting x${totalLevels} staggered zoom animation`);
+    
+    const animateStep = () => {
+      if (!map.current || currentStep >= totalLevels) {
+        staggeredZoomInProgressRef.current = false;
+        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
+        console.log(`[STAGGERED-ZOOM-OUT] Complete at step ${currentStep}`);
+        return;
+      }
+      
+      const currentZoom = map.current.getZoom();
+      if (currentZoom <= minZoom) {
+        staggeredZoomInProgressRef.current = false;
+        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
+        console.log(`[STAGGERED-ZOOM-OUT] Hit min zoom (${minZoom})`);
+        return;
+      }
+      
+      map.current.easeTo({ zoom: Math.max(currentZoom - 1, minZoom), duration: 70 });
+      currentStep++;
+      setTimeout(animateStep, stepDelay);
+    };
+    
+    animateStep();
+  }, []);
 
   const handleRecenter = () => {
     if (!map.current) return;

@@ -7,6 +7,8 @@ import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 interface RightActionStackProps {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
+  onStaggeredZoomIn?: (multiplier: number) => void;
+  onStaggeredZoomOut?: (multiplier: number) => void;
   onRecenter?: () => void;
   onToggle3D?: () => void;
   onToggleTraffic?: () => void;
@@ -24,11 +26,14 @@ interface RightActionStackProps {
   restrictionViolations?: any[];
   isVisible?: boolean;
   compact?: boolean;
+  isNavigating?: boolean;
 }
 
 export function RightActionStack({
   onZoomIn,
   onZoomOut,
+  onStaggeredZoomIn,
+  onStaggeredZoomOut,
   onRecenter,
   onToggle3D,
   onToggleTraffic,
@@ -45,7 +50,8 @@ export function RightActionStack({
   hide3D = false,
   restrictionViolations = [],
   isVisible = true,
-  compact = false
+  compact = false,
+  isNavigating = false
 }: RightActionStackProps) {
   // Button and icon sizes - compact for mobile navigation
   // Minimum 44px touch target for accessibility on tablets/touch devices
@@ -53,6 +59,40 @@ export function RightActionStack({
   const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
   const handledByPointerRef = useRef<Record<string, boolean>>({});
   const zoomCooldownRef = useRef<boolean>(false);
+  
+  // Double-tap detection for x2 zoom multiplier during navigation
+  const lastZoomTapRef = useRef<{ direction: 'in' | 'out'; time: number } | null>(null);
+  const DOUBLE_TAP_THRESHOLD = 300; // ms
+  
+  const handleNavigationZoom = useCallback((direction: 'in' | 'out') => {
+    if (zoomCooldownRef.current) return;
+    
+    const now = Date.now();
+    const lastTap = lastZoomTapRef.current;
+    let multiplier = 1;
+    
+    // Check for double-tap (same direction within threshold)
+    if (lastTap && lastTap.direction === direction && (now - lastTap.time) < DOUBLE_TAP_THRESHOLD) {
+      multiplier = 2; // x2 layer press
+      lastZoomTapRef.current = null; // Reset after double-tap
+      console.log(`[NAV-ZOOM-${direction.toUpperCase()}] 🚀 Double-tap detected! x2 multiplier (x20 total zoom)`);
+    } else {
+      lastZoomTapRef.current = { direction, time: now };
+      console.log(`[NAV-ZOOM-${direction.toUpperCase()}] Single tap - x10 staggered zoom`);
+    }
+    
+    // Trigger staggered zoom
+    if (direction === 'in' && onStaggeredZoomIn) {
+      zoomCooldownRef.current = true;
+      onStaggeredZoomIn(multiplier);
+      // Longer cooldown for staggered animation
+      setTimeout(() => { zoomCooldownRef.current = false; }, multiplier === 2 ? 2000 : 1000);
+    } else if (direction === 'out' && onStaggeredZoomOut) {
+      zoomCooldownRef.current = true;
+      onStaggeredZoomOut(multiplier);
+      setTimeout(() => { zoomCooldownRef.current = false; }, multiplier === 2 ? 2000 : 1000);
+    }
+  }, [onStaggeredZoomIn, onStaggeredZoomOut]);
   
   const handleZoomWithCooldown = useCallback((zoomFn: (() => void) | undefined, direction: string) => {
     if (zoomCooldownRef.current || !zoomFn) return;
@@ -168,13 +208,20 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 4. Zoom In - Gray border - with cooldown to prevent double-tap */}
+      {/* 4. Zoom In - Gray border - staggered x10 zoom in navigation mode */}
       {onZoomIn && (
         <Button
           variant="ghost"
           size="icon"
-          {...createHandler(() => handleZoomWithCooldown(onZoomIn, 'IN'), 'ZOOM-IN')}
-          className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation pointer-events-auto")}
+          {...createHandler(
+            isNavigating && onStaggeredZoomIn
+              ? () => handleNavigationZoom('in')
+              : () => handleZoomWithCooldown(onZoomIn, 'IN'),
+            'ZOOM-IN'
+          )}
+          className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation pointer-events-auto",
+            isNavigating ? "border-blue-500" : "border-gray-400"
+          )}
           style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-zoom-in"
         >
@@ -182,13 +229,20 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 5. Zoom Out - Gray border - with cooldown to prevent double-tap */}
+      {/* 5. Zoom Out - Gray border - staggered x10 zoom in navigation mode */}
       {onZoomOut && (
         <Button
           variant="ghost"
           size="icon"
-          {...createHandler(() => handleZoomWithCooldown(onZoomOut, 'OUT'), 'ZOOM-OUT')}
-          className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation pointer-events-auto")}
+          {...createHandler(
+            isNavigating && onStaggeredZoomOut
+              ? () => handleNavigationZoom('out')
+              : () => handleZoomWithCooldown(onZoomOut, 'OUT'),
+            'ZOOM-OUT'
+          )}
+          className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation pointer-events-auto",
+            isNavigating ? "border-blue-500" : "border-gray-400"
+          )}
           style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-zoom-out"
         >

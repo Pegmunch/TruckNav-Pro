@@ -4121,6 +4121,8 @@ function NavigationPageContent() {
                     <RightActionStack
                       onZoomIn={() => mapRef.current?.zoomIn()}
                       onZoomOut={() => mapRef.current?.zoomOut()}
+                      onStaggeredZoomIn={(multiplier) => mapRef.current?.staggeredZoomIn(multiplier)}
+                      onStaggeredZoomOut={(multiplier) => mapRef.current?.staggeredZoomOut(multiplier)}
                       onRecenter={() => mapRef.current?.zoomToUserLocation()}
                       onToggleMapView={() => {
                         console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
@@ -4148,6 +4150,7 @@ function NavigationPageContent() {
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                       }}
                       is3DMode={mapControlState.is3DMode}
+                      isNavigating={true}
                     />
                   }
                   infoBoxes={
