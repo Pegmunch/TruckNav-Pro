@@ -66,6 +66,8 @@ export function RightActionStack({
   
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
     onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       console.log(`[RIGHT-BTN-${label}] 🔵 Touch started`);
       handledByPointerRef.current[label] = true;
       hapticButtonPress();
@@ -73,7 +75,13 @@ export function RightActionStack({
       callback?.();
       setTimeout(() => { handledByPointerRef.current[label] = false; }, 500);
     },
+    onTouchEnd: (e: TouchEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+    },
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (handledByPointerRef.current[label]) {
         console.log(`[RIGHT-BTN-${label}] ⏭️ Skipped pointerDown (already handled by touch)`);
         return;
@@ -86,6 +94,8 @@ export function RightActionStack({
       setTimeout(() => { handledByPointerRef.current[label] = false; }, 500);
     },
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (handledByPointerRef.current[label]) {
         console.log(`[RIGHT-BTN-${label}] ⏭️ Skipped onClick (already handled)`);
         return;

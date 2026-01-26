@@ -106,6 +106,8 @@ export function LeftActionStack({
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
     // Use onTouchStart for iOS Safari - more reliable than onPointerDown
     onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       console.log(`[LEFT-BTN-${label}] 🔵 Touch started (iOS: ${isIOSSafari})`);
       handledByTouchRef.current[label] = true;
       hapticButtonPress();
@@ -113,7 +115,13 @@ export function LeftActionStack({
       callback?.();
       setTimeout(() => { handledByTouchRef.current[label] = false; }, 500);
     },
+    onTouchEnd: (e: TouchEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+    },
     onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       // Skip if already handled by touch
       if (handledByTouchRef.current[label]) {
         console.log(`[LEFT-BTN-${label}] ⏭️ Skipped pointerDown (already handled by touch)`);
@@ -127,6 +135,8 @@ export function LeftActionStack({
       setTimeout(() => { handledByTouchRef.current[label] = false; }, 500);
     },
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
       // Skip if already handled
       if (handledByTouchRef.current[label]) {
         console.log(`[LEFT-BTN-${label}] ⏭️ Skipped onClick (already handled)`);
