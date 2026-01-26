@@ -1,8 +1,10 @@
-import { AlertCircle, Menu, Navigation, X, Mic, MicOff } from 'lucide-react';
+import { AlertCircle, Menu, Navigation, X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, type PointerEvent, type MouseEvent, type TouchEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } from '@/lib/voice-commands';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
+import { navigationVoice } from '@/lib/navigation-voice';
+import { getAlertSoundsService } from '@/lib/alert-sounds';
 
 // Detect iOS Safari for touch-specific handling
 const isIOSSafari = typeof navigator !== 'undefined' && 
@@ -21,6 +23,8 @@ interface LeftActionStackProps {
   showMenuButton?: boolean;
 }
 
+const MUTE_STATE_KEY = "trucknav_mute_all_alerts";
+
 export function LeftActionStack({
   onNavigate,
   onReportIncident,
@@ -33,8 +37,27 @@ export function LeftActionStack({
   showMenuButton = true
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(MUTE_STATE_KEY) === "true";
+  });
   const voiceSystem = getVoiceCommandSystem();
   const isVoiceSupported = voiceSystem.isVoiceCommandSupported();
+
+  useEffect(() => {
+    if (isMuted) {
+      navigationVoice.setEnabled(false);
+      getAlertSoundsService().setGlobalMute(true);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const newState = !isMuted;
+    setIsMuted(newState);
+    localStorage.setItem(MUTE_STATE_KEY, String(newState));
+    navigationVoice.setEnabled(!newState);
+    getAlertSoundsService().setGlobalMute(newState);
+  }, [isMuted]);
 
   const handleVoiceReport = useCallback((type: IncidentType, severity: 'low' | 'medium' | 'high') => {
     if (onVoiceIncidentReport) {
@@ -166,6 +189,30 @@ export function LeftActionStack({
             <Mic className="h-5 w-5" />
           ) : (
             <MicOff className="h-5 w-5" />
+          )}
+        </Button>
+      )}
+
+      {/* Mute All Alerts button - gray/red toggle - Only show when navigating */}
+      {isNavigating && (
+        <Button
+          variant="ghost"
+          size="icon"
+          {...createHandler(toggleMute, 'MUTE')}
+          className={`h-10 w-10 rounded-xl shadow-lg transition-all select-none touch-manipulation ${
+            isMuted 
+              ? 'bg-red-500 hover:bg-red-600 active:bg-red-700' 
+              : 'bg-gray-500 hover:bg-gray-600 active:bg-gray-700'
+          } text-white active:scale-95`}
+          style={{ touchAction: 'manipulation' }}
+          data-testid="button-mute-alerts"
+          data-tour-id="mute-button"
+          title={isMuted ? 'Tap to unmute alerts' : 'Tap to mute all alerts'}
+        >
+          {isMuted ? (
+            <VolumeX className="h-5 w-5" />
+          ) : (
+            <Volume2 className="h-5 w-5" />
           )}
         </Button>
       )}

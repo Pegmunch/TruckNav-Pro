@@ -79,9 +79,12 @@ const defaultSettings: AllAlertSoundSettings = {
   masterVolume: 0.8,
 };
 
+const GLOBAL_MUTE_KEY = 'trucknav_mute_all_alerts';
+
 class AlertSoundsService {
   private audioContext: AudioContext | null = null;
   private settings: AllAlertSoundSettings;
+  private globalMuted: boolean = false;
   private lastPlayedTime: Record<AlertType, number> = {
     speedLimit: 0,
     traffic: 0,
@@ -95,6 +98,15 @@ class AlertSoundsService {
 
   constructor() {
     this.settings = this.loadSettings();
+    this.globalMuted = localStorage.getItem(GLOBAL_MUTE_KEY) === 'true';
+  }
+
+  setGlobalMute(muted: boolean): void {
+    this.globalMuted = muted;
+  }
+
+  isGlobalMuted(): boolean {
+    return this.globalMuted;
   }
 
   private loadSettings(): AllAlertSoundSettings {
@@ -153,6 +165,10 @@ class AlertSoundsService {
   }
 
   private canPlay(alertType: AlertType): boolean {
+    if (this.globalMuted) {
+      return false;
+    }
+
     const now = Date.now();
     const lastPlayed = this.lastPlayedTime[alertType];
     const cooldown = this.cooldownMs[alertType];

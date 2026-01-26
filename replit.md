@@ -113,6 +113,13 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
   - BroadcastNotificationPopup: Driver notification popup (auto-opens for critical messages)
 - **API Endpoints**: `/api/fleet/broadcasts/*` with Zod validation
 
+## Mute All Alerts Button (v3.4.39)
+- **Purpose**: Quick access button for quiet driving - mutes all voice and audio alerts with one tap
+- **Location**: Left action stack (visible during navigation)
+- **Visual States**: Gray speaker icon (unmuted) / Red muted icon (muted)
+- **Persistence**: Mute state saved to localStorage (`trucknav_mute_all_alerts`)
+- **Integration**: Controls NavigationVoice system via `setEnabled()` method
+
 # Fleet Shift Management System (v3.4.32)
 
 ## Database Tables
