@@ -520,7 +520,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomIn: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        const newZoom = Math.min(Math.floor(currentZoom) + 1, 20);
+        const newZoom = Math.min(Math.floor(currentZoom) + 2, 20);
         userPreferredZoomRef.current = newZoom;
         map.current.easeTo({ zoom: newZoom, duration: 200 });
       }
@@ -528,7 +528,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomOut: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
-        const newZoom = Math.max(Math.ceil(currentZoom) - 1, 1);
+        const newZoom = Math.max(Math.ceil(currentZoom) - 2, 1);
         userPreferredZoomRef.current = newZoom;
         map.current.easeTo({ zoom: newZoom, duration: 200 });
       }
