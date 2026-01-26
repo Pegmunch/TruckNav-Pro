@@ -3453,14 +3453,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 essential: true // Ensure animation isn't interrupted by user gestures
               };
               
-              // Apply user's preferred zoom level - but skip during zoom pause period
-              // This allows center/bearing to continue updating (navigation tracking)
-              // while preserving user's zoom choice for 10 seconds after any zoom button press
-              const now = Date.now();
-              if (now >= gpsTrackingResumeTimeRef.current) {
-                easeToOptions.zoom = userPreferredZoomRef.current;
+              // Only set zoom if it needs to change (prevents animation interference)
+              const currentZoom = mapInstance.getZoom();
+              const targetZoom = userPreferredZoomRef.current;
+              // Only animate zoom if difference is significant (> 0.1 level)
+              if (Math.abs(currentZoom - targetZoom) > 0.1) {
+                easeToOptions.zoom = targetZoom;
               }
-              // If paused, zoom is omitted - but center/bearing still update for navigation
+              // If close enough, omit zoom to prevent micro-animations
               
               mapInstance.easeTo(easeToOptions);
             } catch (e) {
