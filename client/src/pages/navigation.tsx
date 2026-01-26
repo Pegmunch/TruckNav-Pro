@@ -4409,7 +4409,7 @@ function NavigationPageContent() {
                     {/* 3. Turn Indicator - Only show at 1000ft/500ft/100ft thresholds */}
                     {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
                       <div 
-                        className="fixed left-0 right-0 z-[190]"
+                        className="fixed left-0 right-0 z-[190] pointer-events-none"
                         style={{ top: 'calc(112px + var(--safe-area-top, 0px))' }}
                       >
                         <TurnIndicator
