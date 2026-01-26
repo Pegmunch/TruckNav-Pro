@@ -219,6 +219,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const previousBearingRef = useRef(0);
   const initialNavViewSetupRef = useRef(false); // Track if initial 3D nav view has been set up
   const userPreferredZoomRef = useRef(16.5); // User's preferred zoom level (respects manual zoom changes)
+  const zoomAnimationInProgressRef = useRef(false); // Prevents GPS tracking from overriding zoom during button animations
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
@@ -521,16 +522,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (map.current) {
         const currentZoom = map.current.getZoom();
         const newZoom = Math.min(Math.floor(currentZoom) + 2, 20);
+        console.log(`[ZOOM-IN] Current: ${currentZoom.toFixed(1)}, Target: ${newZoom}`);
         userPreferredZoomRef.current = newZoom;
+        zoomAnimationInProgressRef.current = true;
         map.current.easeTo({ zoom: newZoom, duration: 200 });
+        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
       }
     },
     zoomOut: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
         const newZoom = Math.max(Math.ceil(currentZoom) - 2, 1);
+        console.log(`[ZOOM-OUT] Current: ${currentZoom.toFixed(1)}, Target: ${newZoom}`);
         userPreferredZoomRef.current = newZoom;
+        zoomAnimationInProgressRef.current = true;
         map.current.easeTo({ zoom: newZoom, duration: 200 });
+        setTimeout(() => { zoomAnimationInProgressRef.current = false; }, 250);
       }
     },
     zoomToUserLocation: (options) => {
@@ -3419,9 +3426,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
             
             try {
-              mapInstance.easeTo({
+              const easeToOptions: maplibregl.EaseToOptions = {
                 center: [longitude, latitude],
-                zoom: userPreferredZoomRef.current, // Use user's preferred zoom (respects manual zoom changes)
                 pitch: 60, // TomTom GO style steep 3D tilt
                 bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
                 padding: { 
@@ -3435,7 +3441,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                 duration: 200, // Short duration for responsive feel
                 easing: (t) => t, // Linear easing prevents acceleration artifacts during rotation
                 essential: true // Ensure animation isn't interrupted by user gestures
-              });
+              };
+              
+              // Only set zoom if no button-triggered zoom animation is in progress
+              if (!zoomAnimationInProgressRef.current) {
+                easeToOptions.zoom = userPreferredZoomRef.current;
+              }
+              
+              mapInstance.easeTo(easeToOptions);
             } catch (e) {
               console.warn('[GPS-HEADING] easeTo failed:', e);
             }
