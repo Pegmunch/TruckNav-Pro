@@ -3910,9 +3910,8 @@ function NavigationPageContent() {
                       onNavigate={() => mapRef.current?.zoomToUserLocation()}
                       onCancel={handleStopNavigation}
                       onReportIncident={() => {
-                        console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening Live Traffic Panel (report tab)');
-                        setLiveTrafficPanelTab('report');
-                        setShowLiveTrafficPanel(true);
+                        console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening Incident Report Dialog (categories + mic)');
+                        setShowIncidentReportDialog(true);
                       }}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
                       isNavigating={isNavUIActive}

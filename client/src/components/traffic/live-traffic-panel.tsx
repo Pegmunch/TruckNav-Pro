@@ -19,7 +19,9 @@ import {
   Construction,
   AlertTriangle,
   TrafficCone,
-  Shield
+  Shield,
+  Mic,
+  MicOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type TrafficIncident } from "@shared/schema";
@@ -103,8 +105,111 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
   const [activeTab, setActiveTab] = useState<'view' | 'report'>(defaultTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastReportedType, setLastReportedType] = useState<string | null>(null);
+  const [recordingType, setRecordingType] = useState<IncidentTypeKey | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const { system } = useMeasurement();
   const { toast } = useToast();
+
+  // Voice recording handler
+  const handleVoiceReport = useCallback((incidentType: IncidentTypeKey) => {
+    hapticButtonPress();
+    
+    if (!currentLocation) {
+      toast({
+        title: "Location Required",
+        description: "Enable GPS to report incidents",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for speech recognition support
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({
+        title: "Voice Not Supported",
+        description: "Your browser doesn't support voice input. Tap the icon to report.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isRecording && recordingType === incidentType) {
+      // Stop recording
+      setIsRecording(false);
+      setRecordingType(null);
+      return;
+    }
+
+    setRecordingType(incidentType);
+    setIsRecording(true);
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = navigator.language || 'en-GB';
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setIsRecording(false);
+      setRecordingType(null);
+      
+      // Submit report with voice description
+      const incidentData = {
+        type: incidentType,
+        severity: 'medium',
+        title: `${INCIDENT_ICON_LIBRARY[incidentType]?.label || incidentType} reported`,
+        description: transcript || 'Voice report from driver',
+        coordinates: currentLocation,
+        direction: 'both_directions',
+        reportedBy: 'user',
+      };
+
+      apiRequest("POST", "/api/traffic-incidents", incidentData)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/traffic-incidents"] });
+          setLastReportedType(incidentType);
+          toast({
+            title: "Voice Report Submitted",
+            description: `"${transcript.substring(0, 50)}${transcript.length > 50 ? '...' : ''}"`,
+          });
+          setTimeout(() => setLastReportedType(null), 3000);
+        })
+        .catch((error) => {
+          toast({
+            title: "Report Failed",
+            description: error.message || "Could not submit voice report",
+            variant: "destructive",
+          });
+        });
+    };
+
+    recognition.onerror = (event: any) => {
+      setIsRecording(false);
+      setRecordingType(null);
+      toast({
+        title: "Voice Error",
+        description: event.error === 'no-speech' ? 'No speech detected' : 'Voice recognition failed',
+        variant: "destructive",
+      });
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      setRecordingType(null);
+    };
+
+    try {
+      recognition.start();
+      toast({
+        title: "Listening...",
+        description: `Describe the ${INCIDENT_ICON_LIBRARY[incidentType]?.label || incidentType}`,
+      });
+    } catch (error) {
+      setIsRecording(false);
+      setRecordingType(null);
+    }
+  }, [currentLocation, isRecording, recordingType, toast]);
 
   // Update tab when defaultTab changes
   useEffect(() => {

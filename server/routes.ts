@@ -2574,6 +2574,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid traffic incident data", errors: result.error.errors });
       }
       
+      // Check for duplicate incidents (same type within 500m in last 30 minutes)
+      const newCoords = result.data.coordinates as { lat: number; lng: number };
+      const searchBounds = {
+        north: newCoords.lat + 0.01,
+        south: newCoords.lat - 0.01,
+        east: newCoords.lng + 0.01,
+        west: newCoords.lng - 0.01
+      };
+      const existingIncidents = await storage.getTrafficIncidentsByArea(searchBounds);
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+      
+      const isDuplicate = existingIncidents.some(incident => {
+        if (!incident.isActive || incident.type !== result.data.type) return false;
+        if (incident.reportedAt && new Date(incident.reportedAt) < thirtyMinutesAgo) return false;
+        
+        // Calculate distance (Haversine formula)
+        const coords = incident.coordinates as { lat: number; lng: number };
+        const R = 6371000; // Earth radius in meters
+        const dLat = (coords.lat - newCoords.lat) * Math.PI / 180;
+        const dLng = (coords.lng - newCoords.lng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(newCoords.lat * Math.PI / 180) * Math.cos(coords.lat * Math.PI / 180) *
+          Math.sin(dLng/2) * Math.sin(dLng/2);
+        const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        
+        return distance < 500; // Within 500 meters
+      });
+      
+      if (isDuplicate) {
+        return res.status(409).json({ 
+          message: "Similar incident already reported nearby",
+          duplicate: true 
+        });
+      }
+      
       const incident = await storage.createTrafficIncident(result.data);
       res.json(incident);
     } catch (error) {
