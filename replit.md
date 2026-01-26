@@ -120,14 +120,14 @@ The frontend uses React with TypeScript and Vite, leveraging Shadcn/ui (Radix UI
 - **Persistence**: Mute state saved to localStorage (`trucknav_mute_all_alerts`)
 - **Integration**: Controls NavigationVoice system via `setEnabled()` method
 
-## Staggered Zoom System (v3.4.40)
+## Staggered Zoom System (v3.4.42)
 - **Purpose**: Enhanced zoom controls during navigation mode with smooth staggered animation
 - **Activation**: Zoom +/- buttons get blue border and staggered behavior during navigation mode
-- **Single Tap**: x10 staggered zoom (1 level at a time, 80ms between steps, ~800ms total)
-- **Double Tap**: x20 staggered zoom (double-tap within 300ms triggers 2x multiplier)
+- **Single Tap**: x2 staggered zoom per press (1 level at a time, 80ms between steps)
+- **Max Presses**: 5 presses = x10 total zoom (max zoom 20, min zoom 1)
 - **Animation**: Each zoom step uses 70ms easeTo animation for smooth visual feedback
+- **Position Hold**: userPreferredZoomRef synced after animation to prevent bounce-back during navigation
 - **Protection**: GPS tracking loop skips zoom updates during staggered animation (`zoomAnimationInProgressRef`)
-- **Cooldown**: 1 second for single tap, 2 seconds for double-tap to prevent overlap
 
 # Fleet Shift Management System (v3.4.32)
 

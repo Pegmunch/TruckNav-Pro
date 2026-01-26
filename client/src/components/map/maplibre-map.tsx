@@ -3534,21 +3534,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
   };
   
-  // Staggered zoom for navigation mode - x10 zoom levels with animation
-  // multiplier: 1 = x10 zoom, 2 = x20 zoom (double-tap)
+  // Staggered zoom for navigation mode - x2 zoom levels per press with smooth animation
+  // Each press = 2 zoom levels, max 5 presses = 10 levels total
   const staggeredZoomInProgressRef = useRef<boolean>(false);
   
-  const handleStaggeredZoomIn = useCallback((multiplier: number = 1) => {
+  const handleStaggeredZoomIn = useCallback(() => {
     if (!map.current || staggeredZoomInProgressRef.current) return;
     staggeredZoomInProgressRef.current = true;
     zoomAnimationInProgressRef.current = true;
     
-    const totalLevels = 10 * multiplier; // x10 or x20 zoom
+    const totalLevels = 2; // x2 zoom per press
     const stepDelay = 80; // ms between each step
     const maxZoom = 20;
     let currentStep = 0;
     
-    console.log(`[STAGGERED-ZOOM-IN] Starting x${totalLevels} staggered zoom animation`);
+    console.log(`[STAGGERED-ZOOM-IN] Starting x2 staggered zoom animation`);
     
     const animateStep = () => {
       if (!map.current || currentStep >= totalLevels) {
@@ -3585,17 +3585,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     animateStep();
   }, []);
   
-  const handleStaggeredZoomOut = useCallback((multiplier: number = 1) => {
+  const handleStaggeredZoomOut = useCallback(() => {
     if (!map.current || staggeredZoomInProgressRef.current) return;
     staggeredZoomInProgressRef.current = true;
     zoomAnimationInProgressRef.current = true;
     
-    const totalLevels = 10 * multiplier; // x10 or x20 zoom
+    const totalLevels = 2; // x2 zoom per press
     const stepDelay = 80; // ms between each step
     const minZoom = 1;
     let currentStep = 0;
     
-    console.log(`[STAGGERED-ZOOM-OUT] Starting x${totalLevels} staggered zoom animation`);
+    console.log(`[STAGGERED-ZOOM-OUT] Starting x2 staggered zoom animation`);
     
     const animateStep = () => {
       if (!map.current || currentStep >= totalLevels) {
