@@ -6,15 +6,198 @@ import { Button } from "@/components/ui/button";
 import { 
   ArrowUp, 
   ArrowUpRight, 
-  ArrowRight, 
+  ArrowUpLeft,
+  ArrowRight,
+  ArrowLeft,
   CheckCircle,
   Navigation,
   Hand,
-  X
+  X,
+  CornerUpRight,
+  CornerUpLeft,
+  RotateCcw,
+  TrendingUp
 } from "lucide-react";
 import { type LaneSegment, type LaneOption, type Route } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+
+// Bendy arrow SVG components for curved turns
+const BendyArrowRight = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 19V5" />
+    <path d="M5 5c6 0 10 4 14 10" />
+    <path d="M15 11l4 4-4 4" />
+  </svg>
+);
+
+const BendyArrowLeft = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 19V5" />
+    <path d="M19 5c-6 0-10 4-14 10" />
+    <path d="M9 11l-4 4 4 4" />
+  </svg>
+);
+
+const SharpBendRight = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 19V12a3 3 0 013-3h6" />
+    <path d="M12 6l3 3-3 3" />
+  </svg>
+);
+
+const SharpBendLeft = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 19V12a3 3 0 00-3-3H9" />
+    <path d="M12 6l-3 3 3 3" />
+  </svg>
+);
+
+const UTurnArrow = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 14l-4-4 4-4" />
+    <path d="M5 10h11a4 4 0 014 4v0a4 4 0 01-4 4H12" />
+  </svg>
+);
+
+const SlightCurveRight = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 19V5" />
+    <path d="M12 5c4 0 6 2 8 6" />
+    <path d="M17 8l3 3-3 3" />
+  </svg>
+);
+
+const SlightCurveLeft = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 19V5" />
+    <path d="M12 5c-4 0-6 2-8 6" />
+    <path d="M7 8l-3 3 3 3" />
+  </svg>
+);
+
+// Direction type from maneuver instruction
+type DirectionType = 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' | 'uturn_left' | 'uturn_right' | 'exit_right' | 'exit_left' | 'merge' | 'roundabout';
+
+// Get direction from maneuver instruction text
+function getDirectionFromInstruction(instruction: string): DirectionType {
+  const lower = instruction.toLowerCase();
+  if (lower.includes('u-turn') || lower.includes('uturn')) {
+    return lower.includes('left') ? 'uturn_left' : 'uturn_right';
+  }
+  if (lower.includes('sharp right')) return 'sharp_right';
+  if (lower.includes('sharp left')) return 'sharp_left';
+  if (lower.includes('slight right') || lower.includes('bear right') || lower.includes('keep right')) return 'slight_right';
+  if (lower.includes('slight left') || lower.includes('bear left') || lower.includes('keep left')) return 'slight_left';
+  if (lower.includes('exit') && lower.includes('right')) return 'exit_right';
+  if (lower.includes('exit') && lower.includes('left')) return 'exit_left';
+  if (lower.includes('turn right') || lower.includes('right onto')) return 'right';
+  if (lower.includes('turn left') || lower.includes('left onto')) return 'left';
+  if (lower.includes('roundabout')) return 'roundabout';
+  if (lower.includes('merge')) return 'merge';
+  return 'straight';
+}
+
+// Large direction indicator component with arrows/bendy arrows
+function DirectionIndicator({ direction, distance, instruction }: { direction: DirectionType; distance: number; instruction?: string }) {
+  const iconClass = "w-10 h-10 md:w-12 md:h-12 stroke-[2.5px]";
+  
+  const getDirectionIcon = () => {
+    switch (direction) {
+      case 'straight':
+        return <ArrowUp className={iconClass} />;
+      case 'right':
+        return <BendyArrowRight className={iconClass} />;
+      case 'left':
+        return <BendyArrowLeft className={iconClass} />;
+      case 'slight_right':
+        return <SlightCurveRight className={iconClass} />;
+      case 'slight_left':
+        return <SlightCurveLeft className={iconClass} />;
+      case 'sharp_right':
+        return <SharpBendRight className={iconClass} />;
+      case 'sharp_left':
+        return <SharpBendLeft className={iconClass} />;
+      case 'uturn_left':
+      case 'uturn_right':
+        return <UTurnArrow className={cn(iconClass, direction === 'uturn_right' && 'scale-x-[-1]')} />;
+      case 'exit_right':
+        return <CornerUpRight className={iconClass} />;
+      case 'exit_left':
+        return <CornerUpLeft className={iconClass} />;
+      case 'roundabout':
+        return <RotateCcw className={iconClass} />;
+      case 'merge':
+        return <TrendingUp className={iconClass} />;
+      default:
+        return <ArrowUp className={iconClass} />;
+    }
+  };
+
+  const getDirectionLabel = () => {
+    switch (direction) {
+      case 'straight': return 'Continue straight';
+      case 'right': return 'Turn right';
+      case 'left': return 'Turn left';
+      case 'slight_right': return 'Bear right';
+      case 'slight_left': return 'Bear left';
+      case 'sharp_right': return 'Sharp right';
+      case 'sharp_left': return 'Sharp left';
+      case 'uturn_left':
+      case 'uturn_right': return 'U-turn';
+      case 'exit_right': return 'Exit right';
+      case 'exit_left': return 'Exit left';
+      case 'roundabout': return 'Roundabout';
+      case 'merge': return 'Merge';
+      default: return 'Continue';
+    }
+  };
+
+  const getDistanceDisplay = () => {
+    if (distance < 100) {
+      return `${Math.round(distance)} m`;
+    } else if (distance < 1000) {
+      return `${Math.round(distance / 10) * 10} m`;
+    } else {
+      return `${(distance / 1000).toFixed(1)} km`;
+    }
+  };
+
+  const getBackgroundColor = () => {
+    // Color-code based on distance for urgency
+    if (distance < 100) return 'bg-red-600'; // Imminent
+    if (distance < 300) return 'bg-orange-500'; // Approaching
+    return 'bg-blue-600'; // Upcoming
+  };
+
+  return (
+    <div className="flex items-center gap-2 w-full">
+      {/* Direction arrow box */}
+      <div className={cn(
+        "flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-xl shadow-lg",
+        getBackgroundColor(),
+        "text-white flex-shrink-0"
+      )}>
+        {getDirectionIcon()}
+      </div>
+      
+      {/* Direction info */}
+      <div className="flex flex-col min-w-0 flex-1">
+        <span className="text-sm md:text-base font-bold text-foreground truncate">
+          {getDirectionLabel()}
+        </span>
+        <span className="text-lg md:text-xl font-bold text-blue-600">
+          {getDistanceDisplay()}
+        </span>
+        {instruction && (
+          <span className="text-[10px] md:text-xs text-muted-foreground truncate">
+            {instruction.length > 30 ? instruction.substring(0, 30) + '...' : instruction}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface LaneGuidancePopupProps {
   currentRoute: Route | null;
@@ -291,9 +474,31 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   const popupStyle = {
     width: 'auto',
     height: 'auto',
-    minWidth: '140px', // Reasonable minimum for readability
-    maxWidth: '200px',
+    minWidth: '180px', // Increased for direction indicator
+    maxWidth: '240px',
   };
+
+  // Get direction type from maneuverType or demo instruction
+  const getDirectionFromManeuverType = (maneuverType: string): DirectionType => {
+    switch (maneuverType) {
+      case 'turn-right': return 'right';
+      case 'turn-left': return 'left';
+      case 'exit': return 'exit_right';
+      case 'merge': return 'merge';
+      case 'straight': return 'straight';
+      case 'enter': return 'straight';
+      default: return 'straight';
+    }
+  };
+  
+  const directionType = 'maneuverType' in currentManeuver && currentManeuver.maneuverType
+    ? getDirectionFromManeuverType(currentManeuver.maneuverType)
+    : ('instruction' in currentManeuver && currentManeuver.instruction 
+        ? getDirectionFromInstruction(currentManeuver.instruction as string)
+        : 'straight');
+  
+  const instructionText = 'roadName' in currentManeuver ? currentManeuver.roadName : 
+    ('instruction' in currentManeuver ? (currentManeuver.instruction as string) : undefined);
 
   return (
     <div 
@@ -359,6 +564,21 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
             <span id="lane-guidance-description" className="sr-only">
               Lane guidance popup showing available lanes and recommendations for your route
             </span>
+
+            {/* Direction Indicator - Shows upcoming turn with arrow */}
+            <DirectionIndicator 
+              direction={directionType}
+              distance={currentManeuver.distance}
+              instruction={instructionText}
+            />
+
+            {/* Separator */}
+            <div className="border-t border-gray-200 my-1" />
+
+            {/* Lane indicators label */}
+            <div className="text-[10px] text-muted-foreground text-center uppercase tracking-wide">
+              Lane Selection
+            </div>
 
             {/* Lane indicators */}
             <div className="flex justify-center space-x-1">
