@@ -4121,8 +4121,8 @@ function NavigationPageContent() {
                     <RightActionStack
                       onZoomIn={() => mapRef.current?.zoomIn()}
                       onZoomOut={() => mapRef.current?.zoomOut()}
-                      onStaggeredZoomIn={(multiplier) => mapRef.current?.staggeredZoomIn(multiplier)}
-                      onStaggeredZoomOut={(multiplier) => mapRef.current?.staggeredZoomOut(multiplier)}
+                      onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
+                      onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
                       onRecenter={() => mapRef.current?.zoomToUserLocation()}
                       onToggleMapView={() => {
                         console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
