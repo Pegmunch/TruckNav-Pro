@@ -2368,22 +2368,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
   }, [currentRoute, isLoaded, removeRouteLayers, renderRouteLayers]);
 
-  // Traffic-aware route coloring - DISABLED to preserve cyan route visibility
-  // The traffic overlay was masking the professional cyan route (#06b6d4) with black/dark colors
-  useEffect(() => {
-    if (!map.current || !isLoaded || !currentRoute?.routePath) return;
-    if (!map.current.isStyleLoaded()) return;
-
-    const mapInstance = map.current;
-
-    // ALWAYS remove traffic overlay to show beautiful cyan route underneath
-    if (mapInstance.getLayer('route-traffic-overlay')) {
-      mapInstance.removeLayer('route-traffic-overlay');
-    }
-    if (mapInstance.getSource('route-traffic')) {
-      mapInstance.removeSource('route-traffic');
-    }
-  }, [currentRoute, isLoaded]);
+  // Traffic-aware route coloring - ENABLED to show live traffic on route
+  // The traffic overlay shows colored segments (green/yellow/orange/red) on top of the blue route line
+  // This is Layer 2 of the 3-layer traffic visualization system
 
   // Traffic Flow Layer Implementation with TomTom API
   useEffect(() => {
