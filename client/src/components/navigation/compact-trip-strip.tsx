@@ -174,7 +174,7 @@ export function CompactTripStrip({
     <div 
       className={cn(
         'fixed left-0 right-0 px-2 md:px-4 py-1.5 md:py-2',
-        'bg-white',
+        'bg-gray-900',
         'border-b-2 border-blue-500 shadow-md',
         'flex flex-col gap-1 md:gap-2',
         'pointer-events-auto',
@@ -207,21 +207,21 @@ export function CompactTripStrip({
         {/* Center: Speed limit + Current speed (unpacked) - larger on tablet */}
         {(isNavigating || isPreviewActive) && (
           <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
-            {/* Speed Limit Sign */}
+            {/* Speed Limit Sign - Knight theme: dark background */}
             <div className={cn(
               'flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-3',
-              convertedSpeedLimit ? 'bg-white border-red-500' : 'bg-gray-100 border-gray-300'
+              convertedSpeedLimit ? 'bg-gray-800 border-red-500' : 'bg-gray-800 border-gray-600'
             )}>
-              <span className="text-[11px] md:text-lg font-bold text-gray-900">{convertedSpeedLimit || '--'}</span>
+              <span className="text-[11px] md:text-lg font-bold text-white">{convertedSpeedLimit || '--'}</span>
             </div>
-            {/* Current Speed */}
+            {/* Current Speed - Knight theme: dark background when not speeding */}
             <div className={cn(
               'flex items-center gap-0.5 md:gap-1 px-1.5 md:px-3 py-1 md:py-2 rounded-lg shadow-sm min-w-[65px] md:min-w-[100px] justify-center',
-              isSpeeding ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-900'
+              isSpeeding ? 'bg-red-500 text-white' : 'bg-gray-800 text-white'
             )}>
               <Gauge className={cn('w-4 h-4 md:w-6 md:h-6', isSpeeding ? 'text-white' : 'text-blue-600')} />
               <span className={cn('text-sm md:text-xl font-bold', isSpeeding && 'animate-pulse')}>{convertedSpeed}</span>
-              <span className={cn('text-[9px] md:text-sm font-medium opacity-80', isSpeeding ? 'text-red-100' : 'text-gray-500')}>{speedUnit}</span>
+              <span className={cn('text-[9px] md:text-sm font-medium opacity-80', isSpeeding ? 'text-red-100' : 'text-gray-400')}>{speedUnit}</span>
             </div>
           </div>
         )}
@@ -316,10 +316,10 @@ export function CompactTripStrip({
             </div>
           )}
           
-          {/* Combined Direction Box with Multi-Arrow Lane Guidance */}
+          {/* Combined Direction Box with Multi-Arrow Lane Guidance - Knight theme */}
           {/* Shows lane arrows when available, falls back to single turn arrow */}
           {(turnInfo || (laneInfo && laneInfo.lanes.length > 0)) && (
-            <div className="flex items-center gap-1.5 md:gap-2 bg-white/90 px-2 md:px-3 py-1 md:py-1.5 rounded-lg shadow-sm border border-blue-200">
+            <div className="flex items-center gap-1.5 md:gap-2 bg-gray-800/90 px-2 md:px-3 py-1 md:py-1.5 rounded-lg shadow-sm border border-blue-500">
               {/* Lane arrows or single direction arrow */}
               <div className="flex items-center gap-0.5 md:gap-1">
                 {laneInfo && laneInfo.lanes.length > 0 ? (
@@ -334,9 +334,9 @@ export function CompactTripStrip({
                   turnInfo && <div className="text-blue-600">{getTurnIcon(turnInfo.direction)}</div>
                 )}
               </div>
-              {/* Distance to turn */}
+              {/* Distance to turn - Knight theme: white text */}
               {turnInfo && (
-                <span className="text-xs md:text-base font-bold text-gray-900 ml-0.5">
+                <span className="text-xs md:text-base font-bold text-white ml-0.5">
                   {formatTurnDistance(turnInfo.distance)}
                 </span>
               )}
