@@ -147,6 +147,10 @@ function NavigationPageContent() {
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
   
+  // Car profile mode - when true, routes use car mode (fastest route, no truck restrictions)
+  // Auto-resets to false (Class 1 Lorry) after route completion
+  const [isCarProfileMode, setIsCarProfileMode] = useState(false);
+  
   // Traffic prediction for ETA adjustment
   const [predictedTrafficDelay, setPredictedTrafficDelay] = useState<number>(0);
   
@@ -2585,8 +2589,10 @@ function NavigationPageContent() {
       endCoordinates: finalEndCoords,
       vehicleProfileId: activeProfileId,
       routePreference: routePreference || 'fastest',
+      useCarMode: isCarProfileMode,
     };
 
+    console.log('[PLAN-ROUTE] Using Car mode:', isCarProfileMode);
     calculateRouteMutation.mutate(routeData);
   };
 
@@ -2764,9 +2770,11 @@ function NavigationPageContent() {
     localStorage.removeItem('navigation_timestamp');
     console.log('[ROUTE-CANCEL] ✅ Navigation UI state cleared - returning to plan mode');
     
-    // NOTE: Do NOT reset vehicle profile - respect user's truck/car selection
-    // The selected profile will be used for the next route planning
-    console.log('[ROUTE-CANCEL] ℹ️ Keeping current vehicle profile selection');
+    // AUTO-RESET CAR MODE: If user was using Car mode for this route, reset to Lorry
+    if (isCarProfileMode) {
+      console.log('[ROUTE-CANCEL] 🔄 Resetting Car mode back to Class 1 Lorry');
+      setIsCarProfileMode(false);
+    }
     
     // DEACTIVATE OVERLAY KILL-SWITCH: Restore normal overlay behavior
     document.body.classList.remove('navigation-active');
@@ -3312,9 +3320,11 @@ function NavigationPageContent() {
     // NOTE: Do NOT remove activeVehicleProfileId - preserve user's vehicle selection
     console.log('[NAV-STOP] ✅ Navigation UI state cleared - returning to preview mode');
 
-    // NOTE: Do NOT reset vehicle profile - respect user's truck/car selection
-    // The selected profile will be used for the next route planning
-    console.log('[NAV-STOP] ℹ️ Keeping current vehicle profile selection');
+    // AUTO-RESET CAR MODE: If user was using Car mode for this route, reset to Lorry
+    if (isCarProfileMode) {
+      console.log('[NAV-STOP] 🔄 Resetting Car mode back to Class 1 Lorry');
+      setIsCarProfileMode(false);
+    }
     
     if (currentJourney && (currentJourney.status === 'active' || currentJourney.status === 'planned')) {
       // Capture current session at invocation time for stale detection
@@ -4600,6 +4610,11 @@ function NavigationPageContent() {
           setActiveProfile(profile);
           queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
         }}
+        isCarProfileMode={isCarProfileMode}
+        onCarProfileModeChange={(isCarMode) => {
+          console.log('[PROFILE-SWITCH] Car profile mode changed to:', isCarMode);
+          setIsCarProfileMode(isCarMode);
+        }}
         coordinates={currentGPSLocation}
         hideTabsInInputMode={false}
       />
@@ -4663,6 +4678,12 @@ function NavigationPageContent() {
                 hasShownDestinationDialogRef.current = false;
                 setShowDestinationReached(false);
                 setSidebarState(isMobile ? 'collapsed' : 'open');
+                
+                // AUTO-RESET CAR MODE: If user was using Car mode, reset to Class 1 Lorry
+                if (isCarProfileMode) {
+                  console.log('[ROUTE-COMPLETE] 🔄 Resetting Car mode back to Class 1 Lorry');
+                  setIsCarProfileMode(false);
+                }
                 
                 console.log('[ROUTE-COMPLETE] ✅ Route completed - fresh start page restored');
               }}

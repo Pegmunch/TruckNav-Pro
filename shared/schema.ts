@@ -291,8 +291,9 @@ export const insertRouteSchema = createInsertSchema(routes).omit({
 export const planningRequestSchema = z.object({
   startLocation: z.string().min(3).max(200),
   endLocation: z.string().min(3).max(200),
-  vehicleProfileId: z.string().min(1),
+  vehicleProfileId: z.string().min(1).optional(),
   routePreference: z.enum(['fastest', 'eco', 'avoid_tolls']).optional(),
+  useCarMode: z.boolean().optional(),
   startCoordinates: z.object({
     lat: z.number().min(-90).max(90),
     lng: z.number().min(-180).max(180)

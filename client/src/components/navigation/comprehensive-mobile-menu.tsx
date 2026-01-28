@@ -24,6 +24,7 @@ import {
   History,
   Bookmark,
   Truck,
+  Car,
   Palette,
   Map,
   Settings,
@@ -76,6 +77,7 @@ import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
 import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
 import SettingsModal from "@/components/settings/settings-modal";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
 import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
 import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
@@ -110,6 +112,9 @@ interface ComprehensiveMobileMenuProps {
   // Vehicle
   selectedProfile: VehicleProfile | null;
   onProfileSelect: (profile: VehicleProfile) => void;
+  // Car profile mode - when true, uses car routing without truck restrictions
+  isCarProfileMode?: boolean;
+  onCarProfileModeChange?: (isCarMode: boolean) => void;
   // POI search
   coordinates?: { lat: number; lng: number };
   onSelectFacility?: (facility: any) => void;
@@ -132,6 +137,8 @@ function ComprehensiveMobileMenu({
   onRequestAutoNavigation,
   selectedProfile,
   onProfileSelect,
+  isCarProfileMode = false,
+  onCarProfileModeChange,
   coordinates,
   onSelectFacility,
   hideTabsInInputMode = false
@@ -1426,19 +1433,57 @@ function ComprehensiveMobileMenu({
                       ))
                     )}
 
-                    {/* Create New Profile Button */}
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        onOpenChange(false);
-                        setShowVehicleSetup(true);
-                      }}
-                      data-testid="button-create-vehicle-profile"
-                    >
-                      <Truck className="h-4 w-4 mr-2" />
-                      Create New Profile
-                    </Button>
+                    {/* Switch Profile Dropdown */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Switch Profile</Label>
+                      <Select
+                        value={isCarProfileMode ? "car" : "lorry"}
+                        onValueChange={(value) => {
+                          if (value === "car") {
+                            onCarProfileModeChange?.(true);
+                          } else {
+                            onCarProfileModeChange?.(false);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full" data-testid="select-switch-profile">
+                          <SelectValue>
+                            <div className="flex items-center gap-2">
+                              {isCarProfileMode ? (
+                                <>
+                                  <Car className="h-4 w-4" />
+                                  <span>Car (Fastest Route)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Truck className="h-4 w-4" />
+                                  <span>Class 1 Lorry (Default)</span>
+                                </>
+                              )}
+                            </div>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="lorry">
+                            <div className="flex items-center gap-2">
+                              <Truck className="h-4 w-4" />
+                              <span>Class 1 Lorry (Default)</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="car">
+                            <div className="flex items-center gap-2">
+                              <Car className="h-4 w-4" />
+                              <span>Car (Fastest Route)</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">
+                        {isCarProfileMode 
+                          ? "Car mode: Fastest route without truck restrictions. Will reset to Lorry after route completion."
+                          : "Lorry mode: Routes avoid low bridges, weight limits and width restrictions."}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

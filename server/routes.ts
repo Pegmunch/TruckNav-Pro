@@ -2160,7 +2160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Routes with strict vehicle class enforcement (open access for route planning)
   app.post("/api/routes/calculate", validateRoutePlanningRequest, async (req: Request, res: Response) => {
     try {
-      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference } = req.body;
+      const { startLocation, endLocation, vehicleProfileId, startCoordinates, endCoordinates, routePreference, useCarMode } = req.body;
       
       if (!startLocation || !endLocation) {
         return res.status(400).json({ message: "Start and end locations are required" });
@@ -2168,7 +2168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log route preference for debugging (would be passed to routing engine in production)
       const preference = routePreference || 'fastest';
-      console.log(`[ROUTE] Calculating route with preference: ${preference}`);
+      console.log(`[ROUTE] Calculating route with preference: ${preference}, useCarMode: ${!!useCarMode}`);
 
       // Get vehicle profile for truck-safe routing
       let vehicleProfile = null;
@@ -2180,6 +2180,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (vehicleProfileId) {
         vehicleProfile = await storage.getVehicleProfile(vehicleProfileId);
+        
+        // CAR MODE OVERRIDE: When useCarMode is true, treat as car routing (fastest route, no truck restrictions)
+        if (useCarMode && vehicleProfile) {
+          console.log(`[ROUTE] CAR MODE OVERRIDE: Switching from ${vehicleProfile.type} to car routing`);
+          vehicleProfile = {
+            ...vehicleProfile,
+            type: 'car',
+          };
+        }
+      }
+      
+      // CAR MODE WITHOUT PROFILE: Create synthetic car profile for fastest route without truck restrictions
+      if (useCarMode && !vehicleProfile) {
+        console.log(`[ROUTE] CAR MODE: Creating synthetic car profile for fastest routing`);
+        vehicleProfile = {
+          id: 'car-mode-synthetic',
+          name: 'Car Mode',
+          type: 'car',
+          height: 2.0,
+          width: 2.0,
+          length: 5.0,
+          weight: 2,
+          axles: 2,
+          isHazmat: false,
+          userId: null,
+          isActive: true,
+          createdAt: new Date(),
+        } as any;
       }
 
       // Use provided coordinates or return error if missing
