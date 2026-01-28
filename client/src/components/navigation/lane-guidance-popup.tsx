@@ -342,8 +342,43 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
 
   // Get the next upcoming maneuver
   const nextManeuver = laneGuidance.length > 0 ? laneGuidance[0] : null;
+  
+  // Track previous maneuver distance to detect when we've passed a junction
+  const [previousDistance, setPreviousDistance] = useState<number | null>(null);
+  const [maneuverCompleted, setManeuverCompleted] = useState(false);
+  const [lastManeuverStepIndex, setLastManeuverStepIndex] = useState<number | null>(null);
 
-  // Auto show/hide logic: show when navigating, has route, has maneuver, and has multiple usable lanes
+  // Distance thresholds for auto-show/hide (in meters)
+  const APPROACH_DISTANCE = 500; // Show when within 500m of maneuver
+  const COMPLETION_DISTANCE = 30; // Consider completed when within 30m (passed through)
+
+  // Detect maneuver completion - when distance decreases to near-zero then we've passed it
+  useEffect(() => {
+    if (!nextManeuver) {
+      setPreviousDistance(null);
+      return;
+    }
+    
+    const currentDistance = nextManeuver.distance;
+    
+    // Detect new maneuver (step index changed) - reset completion state
+    if (lastManeuverStepIndex !== nextManeuver.stepIndex) {
+      setManeuverCompleted(false);
+      setLastManeuverStepIndex(nextManeuver.stepIndex);
+      setPreviousDistance(currentDistance);
+      return;
+    }
+    
+    // Detect if we've passed through the junction (distance went below threshold)
+    if (previousDistance !== null && previousDistance > COMPLETION_DISTANCE && currentDistance <= COMPLETION_DISTANCE) {
+      console.log('Maneuver completed - passed through junction');
+      setManeuverCompleted(true);
+    }
+    
+    setPreviousDistance(currentDistance);
+  }, [nextManeuver?.distance, nextManeuver?.stepIndex, previousDistance, lastManeuverStepIndex]);
+
+  // Auto show/hide logic based on distance and maneuver completion
   useEffect(() => {
     // If forced to be visible (manual trigger), always show
     if (forceVisible) {
@@ -356,20 +391,39 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
       return;
     }
     
+    // Hide if maneuver was completed (we passed through)
+    if (maneuverCompleted) {
+      setIsVisible(false);
+      return;
+    }
+    
     // Count only usable lanes (filter out restricted lanes)
     const usableLanes = nextManeuver.laneOptions.filter(lane => 
       !lane.restrictions || lane.restrictions.length === 0
     );
     const usableLanesCount = usableLanes.length;
     
-    // Show popup only when there are multiple usable lanes available
+    // Check distance - only show when approaching (within threshold distance)
+    const isApproaching = nextManeuver.distance <= APPROACH_DISTANCE;
+    
+    // Check if user has already selected the correct lane (recommended lane)
+    const selectedLaneIndex = savedSelections[nextManeuver.stepIndex];
+    const hasSelectedRecommendedLane = selectedLaneIndex !== undefined && 
+      nextManeuver.laneOptions[selectedLaneIndex]?.recommended === true;
+    
+    // Show popup when:
+    // 1. Approaching the maneuver (within threshold)
+    // 2. Multiple usable lanes available
+    // 3. User hasn't yet confirmed they're in the recommended lane
     const shouldShow = Boolean(
+      isApproaching &&
       usableLanesCount > 1 && 
-      nextManeuver.laneOptions.length > 1
+      nextManeuver.laneOptions.length > 1 &&
+      !hasSelectedRecommendedLane
     );
     
     setIsVisible(shouldShow);
-  }, [isNavigating, currentRoute, nextManeuver, forceVisible]);
+  }, [isNavigating, currentRoute, nextManeuver, forceVisible, maneuverCompleted, savedSelections]);
 
   // Handle lane selection
   const handleLaneSelection = (laneIndex: number, currentManeuver: any) => {
