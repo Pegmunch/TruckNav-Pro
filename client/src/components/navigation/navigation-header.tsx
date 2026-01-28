@@ -87,21 +87,21 @@ export function NavigationHeader({
         <h1 className="text-lg font-bold text-gray-900">TruckNav Pro</h1>
       </div>
 
-      {/* Settings Dropdown */}
+      {/* Settings Dropdown - Green gear button opens quick settings menu */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 hover:bg-gray-100"
+            className="h-10 w-10 rounded-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white shadow-md"
             data-testid="button-header-settings"
             data-tour-id="header-settings"
           >
-            <Settings className="h-6 w-6 text-green-600" />
+            <Settings className="h-5 w-5" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-64 p-0"
+          className="w-64 p-0 z-[6000]"
           align="end"
           sideOffset={8}
         >

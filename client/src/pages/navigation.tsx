@@ -1110,6 +1110,12 @@ function NavigationPageContent() {
       const segmentLength = cumulativeDistances[bestSegmentIndex + 1] - cumulativeDistances[bestSegmentIndex];
       const projectedDistanceAlongRoute = cumulativeDistances[bestSegmentIndex] + segmentLength * bestProjectionT;
 
+      // Update dynamic distance remaining during navigation
+      const remainingDistance = totalRouteLength - projectedDistanceAlongRoute;
+      if (remainingDistance >= 0) {
+        setDynamicDistanceRemaining(remainingDistance);
+      }
+
       // Scan ahead from projected position to find the next significant turn (>25° angle change)
       const TURN_THRESHOLD = 25;
       const startSearchIndex = bestSegmentIndex + 1;
