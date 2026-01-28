@@ -188,8 +188,18 @@ export function CompactTripStrip({
     >
       {/* Row 1: ETA info + Speed + Action buttons */}
       <div className="flex items-center justify-between gap-1">
-        {/* Left: ETA/Distance/Arrival - larger on tablet */}
+        {/* Left: Direction Square + ETA/Distance/Arrival - larger on tablet */}
         <div className="flex items-center gap-0.5 md:gap-1.5 flex-1 min-w-0">
+          {/* Direction Square with Turn Arrow - shows next turn direction */}
+          {turnInfo && (isNavigating || isPreviewActive) && (
+            <div 
+              className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 bg-blue-600 rounded-lg shadow-md flex-shrink-0"
+              data-testid="direction-square"
+              aria-label={`Next turn: ${turnInfo.direction.replace('_', ' ')}`}
+            >
+              {getTurnIcon(turnInfo.direction)}
+            </div>
+          )}
           <div className="flex items-center gap-0.5 md:gap-1 bg-blue-600 text-white px-1.5 md:px-3 py-1 md:py-2 rounded shadow-sm flex-shrink-0">
             <Clock className="w-3.5 h-3.5 md:w-5 md:h-5" />
             <span className="text-[11px] md:text-base font-bold whitespace-nowrap">{eta}m</span>

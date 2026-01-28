@@ -287,12 +287,12 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   const selectedLaneIndex = savedSelections[currentManeuver.stepIndex] ?? null;
   const hasLaneSelection = selectedLaneIndex !== null;
 
-  // Calculate responsive size (1/8 of screen)
+  // Calculate responsive size for top-left positioning
   const popupStyle = {
-    width: 'calc(12.5vw)', // True 1/8 screen width
+    width: 'auto',
     height: 'auto',
-    minWidth: '120px', // Reasonable minimum for readability
-    minHeight: '100px',
+    minWidth: '140px', // Reasonable minimum for readability
+    maxWidth: '200px',
   };
 
   return (
@@ -303,17 +303,18 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
       aria-describedby="lane-guidance-description"
       aria-modal="true"
       className={cn(
-        "fixed z-50 transition-all duration-300 ease-in-out lane-guidance-safe professional-nav-interface",
+        "fixed z-[5500] transition-all duration-300 ease-in-out lane-guidance-safe professional-nav-interface",
         isDragging ? "cursor-grabbing" : "cursor-grab",
-        isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
         className
       )}
       style={{
         ...popupStyle,
-        right: dragPosition.x > 0 ? 'auto' : `max(16px, calc(16px + env(safe-area-inset-right, 0px)))`,
-        bottom: dragPosition.y > 0 ? 'auto' : `max(128px, calc(128px + env(safe-area-inset-bottom, 0px)))`,
-        left: dragPosition.x > 0 ? `${dragPosition.x}px` : 'auto',
-        top: dragPosition.y > 0 ? `${dragPosition.y}px` : `max(80px, calc(80px + env(safe-area-inset-top, 0px)))`,
+        // Position: top-left corner above the stack button during navigation
+        left: dragPosition.x > 0 ? `${dragPosition.x}px` : `max(12px, calc(12px + env(safe-area-inset-left, 0px)))`,
+        top: dragPosition.y > 0 ? `${dragPosition.y}px` : `calc(64px + max(env(safe-area-inset-top, 0px), 0px) + 100px)`,
+        right: 'auto',
+        bottom: 'auto',
         transform: isDragging ? 'scale(1.05)' : 'scale(1)'
       }}
       data-testid="popup-lane-indicators"
