@@ -122,7 +122,7 @@ export function TrafficLegend({ className }: { className?: string }) {
   const { t } = useTranslation();
   
   const legendItems = [
-    { color: '#22C55E', label: t('traffic.legend.free', 'Free flow') },
+    { color: '#0067FF', label: t('traffic.legend.free', 'Normal Flo') },
     { color: '#84CC16', label: t('traffic.legend.light', 'Light') },
     { color: '#FDE047', label: t('traffic.legend.moderate', 'Moderate') },
     { color: '#F97316', label: t('traffic.legend.heavy', 'Heavy') },

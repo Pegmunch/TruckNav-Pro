@@ -2557,7 +2557,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Move route traffic overlay above the blue route line
       if (mapInstance.getLayer('route-line')) {
         mapInstance.moveLayer(trafficLayerId);
+      } else {
+        // If route-line doesn't exist yet, move to top anyway
+        mapInstance.moveLayer(trafficLayerId);
       }
+
+      // Add an interval to ensure layer ordering persists during navigation updates
+      // This ensures that even if other layers are added, the traffic overlay stays on top
+      const enforceOrder = () => {
+        if (mapInstance.getLayer(trafficLayerId) && mapInstance.getLayer('route-line')) {
+          mapInstance.moveLayer(trafficLayerId);
+        }
+      };
+      const orderInterval = setInterval(enforceOrder, 1000);
+      setTimeout(() => clearInterval(orderInterval), 10000); // Enforce for 10 seconds during initialization
     }
     
     console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
