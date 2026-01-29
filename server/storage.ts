@@ -1,7 +1,7 @@
 import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, type HistoricalTrafficData, type InsertHistoricalTrafficData, type TrafficObservation, type InsertTrafficObservation, type TrafficPrediction, type InsertTrafficPrediction, type FleetBroadcast, type InsertFleetBroadcast, type FleetBroadcastRead, type InsertFleetBroadcastRead, historicalTrafficData, trafficObservations, trafficPredictions, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications, fleetBroadcasts, fleetBroadcastReads } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, and, gte, lte, sql, desc, asc, or, ilike } from "drizzle-orm";
+import { eq, and, gte, lte, gt, sql, desc, asc, or, ilike } from "drizzle-orm";
 
 // Postcode search result type for storage layer
 export interface PostcodeResult {
@@ -1383,10 +1383,13 @@ export class MemStorage implements IStorage {
 
   async createTrafficIncident(insertIncident: InsertTrafficIncident): Promise<TrafficIncident> {
     const id = randomUUID();
+    const reportedAt = new Date();
+    const expiresAt = new Date(reportedAt.getTime() + 2 * 60 * 60 * 1000); // Expires 2 hours after reported
     const incident: TrafficIncident = {
       ...insertIncident,
       id,
-      reportedAt: new Date(),
+      reportedAt,
+      expiresAt,
       description: insertIncident.description ?? null,
       roadName: insertIncident.roadName ?? null,
       direction: insertIncident.direction ?? null,
@@ -1412,8 +1415,11 @@ export class MemStorage implements IStorage {
   }
 
   async getTrafficIncidentsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<TrafficIncident[]> {
+    const now = new Date();
     return Array.from(this.trafficIncidents.values()).filter(incident => {
       if (!incident.coordinates || !incident.isActive) return false;
+      // Filter out expired incidents
+      if (incident.expiresAt && new Date(incident.expiresAt) <= now) return false;
       const coords = incident.coordinates as { lat: number; lng: number };
       return coords.lat <= bounds.north && coords.lat >= bounds.south &&
              coords.lng <= bounds.east && coords.lng >= bounds.west;
@@ -1421,7 +1427,13 @@ export class MemStorage implements IStorage {
   }
 
   async getActiveTrafficIncidents(): Promise<TrafficIncident[]> {
-    return Array.from(this.trafficIncidents.values()).filter(incident => incident.isActive);
+    const now = new Date();
+    return Array.from(this.trafficIncidents.values()).filter(incident => {
+      if (!incident.isActive) return false;
+      // Filter out expired incidents
+      if (incident.expiresAt && new Date(incident.expiresAt) <= now) return false;
+      return true;
+    });
   }
 
   async updateTrafficIncident(id: string, updates: Partial<TrafficIncident>): Promise<TrafficIncident | undefined> {
@@ -1464,8 +1476,11 @@ export class MemStorage implements IStorage {
   }
 
   async getIncidentsNearLocation(lat: number, lng: number, radiusKm: number): Promise<TrafficIncident[]> {
+    const now = new Date();
     return Array.from(this.trafficIncidents.values()).filter(incident => {
       if (!incident.coordinates || !incident.isActive) return false;
+      // Filter out expired incidents
+      if (incident.expiresAt && new Date(incident.expiresAt) <= now) return false;
       const coords = incident.coordinates as { lat: number; lng: number };
       const distance = this.calculateDistance({ lat, lng }, coords);
       const distanceKm = distance * 1.60934; // Convert miles to km
@@ -1474,9 +1489,12 @@ export class MemStorage implements IStorage {
   }
 
   async getAllActiveIncidents(): Promise<TrafficIncident[]> {
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const now = new Date();
     return Array.from(this.trafficIncidents.values()).filter(incident => {
-      return incident.isActive && incident.reportedAt && incident.reportedAt >= twentyFourHoursAgo;
+      if (!incident.isActive) return false;
+      // Filter out expired incidents (use expiresAt instead of 24-hour window)
+      if (incident.expiresAt && new Date(incident.expiresAt) <= now) return false;
+      return true;
     });
   }
 
@@ -3208,20 +3226,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTrafficIncident(incident: InsertTrafficIncident): Promise<TrafficIncident> {
+    const reportedAt = new Date();
+    const expiresAt = new Date(reportedAt.getTime() + 2 * 60 * 60 * 1000); // Expires 2 hours after reported
     const [created] = await db
       .insert(trafficIncidents)
-      .values(incident)
+      .values({ ...incident, reportedAt, expiresAt })
       .returning();
     return created;
   }
 
   async getTrafficIncidentsByArea(bounds: { north: number; south: number; east: number; west: number }): Promise<TrafficIncident[]> {
-    // For now, return all active incidents. In a real implementation, you would filter by geospatial coordinates
-    return await db.select().from(trafficIncidents).where(eq(trafficIncidents.isActive, true));
+    // Return all active, non-expired incidents
+    const now = new Date();
+    return await db.select().from(trafficIncidents).where(
+      and(
+        eq(trafficIncidents.isActive, true),
+        or(
+          sql`${trafficIncidents.expiresAt} IS NULL`,
+          gt(trafficIncidents.expiresAt, now)
+        )
+      )
+    );
   }
 
   async getActiveTrafficIncidents(): Promise<TrafficIncident[]> {
-    return await db.select().from(trafficIncidents).where(eq(trafficIncidents.isActive, true));
+    // Return all active, non-expired incidents
+    const now = new Date();
+    return await db.select().from(trafficIncidents).where(
+      and(
+        eq(trafficIncidents.isActive, true),
+        or(
+          sql`${trafficIncidents.expiresAt} IS NULL`,
+          gt(trafficIncidents.expiresAt, now)
+        )
+      )
+    );
   }
 
   async updateTrafficIncident(id: string, updates: Partial<TrafficIncident>): Promise<TrafficIncident | undefined> {
@@ -3257,7 +3296,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getIncidentsNearLocation(lat: number, lng: number, radiusKm: number): Promise<TrafficIncident[]> {
-    const allActiveIncidents = await db.select().from(trafficIncidents).where(eq(trafficIncidents.isActive, true));
+    const now = new Date();
+    const allActiveIncidents = await db.select().from(trafficIncidents).where(
+      and(
+        eq(trafficIncidents.isActive, true),
+        or(
+          sql`${trafficIncidents.expiresAt} IS NULL`,
+          gt(trafficIncidents.expiresAt, now)
+        )
+      )
+    );
     
     return allActiveIncidents.filter(incident => {
       if (!incident.coordinates) return false;
@@ -3278,13 +3326,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllActiveIncidents(): Promise<TrafficIncident[]> {
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const now = new Date();
     return await db.select()
       .from(trafficIncidents)
       .where(
         and(
           eq(trafficIncidents.isActive, true),
-          gte(trafficIncidents.reportedAt, twentyFourHoursAgo)
+          or(
+            sql`${trafficIncidents.expiresAt} IS NULL`,
+            gt(trafficIncidents.expiresAt, now)
+          )
         )
       );
   }

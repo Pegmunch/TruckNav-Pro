@@ -119,6 +119,7 @@ export const trafficIncidents = pgTable("traffic_incidents", {
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
   reportedAt: timestamp("reported_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Auto-expires 2 hours after reportedAt
   resolvedAt: timestamp("resolved_at"),
   estimatedClearTime: timestamp("estimated_clear_time"),
   affectedLanes: integer("affected_lanes"),
