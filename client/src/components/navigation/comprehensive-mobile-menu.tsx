@@ -1394,116 +1394,83 @@ function ComprehensiveMobileMenu({
                       Vehicle Profiles
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Select or create a vehicle profile
+                      Switch between truck and car routing
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {/* Current Profile */}
-                    {selectedProfile && (
-                      <Card className="bg-primary/5 border-primary/20">
+                    {/* Current Active Profile Display */}
+                    <Card className="bg-primary/5 border-primary/20">
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-sm">Current Vehicle</div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {isCarProfileMode ? 'Car' : 'Class 1 Truck'}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {isCarProfileMode 
+                                ? 'L: 4.4m × H: 1.5m × W: 1.8m'
+                                : `H: ${selectedProfile?.height || 4.5}m × W: ${selectedProfile?.width || 2.5}m × L: ${selectedProfile?.length || 12}m`
+                              }
+                            </div>
+                          </div>
+                          <Badge>Active</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Vehicle Selection - Simple two options */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Select Vehicle Type</Label>
+                      
+                      {/* Class 1 Truck Option */}
+                      <Card 
+                        className={cn(
+                          "cursor-pointer transition-all hover:bg-muted/50 active:scale-[0.98]",
+                          !isCarProfileMode && "border-primary bg-primary/5"
+                        )}
+                        onClick={() => onCarProfileModeChange?.(false)}
+                      >
                         <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-sm">Current Vehicle</div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {selectedProfile.name || 'Unnamed Vehicle'}
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                H: {selectedProfile.height}m × W: {selectedProfile.width}m × L: {selectedProfile.length}m
+                          <div className="flex items-center gap-3">
+                            <Truck className="h-5 w-5 text-primary" />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">Class 1 Truck</div>
+                              <div className="text-xs text-muted-foreground">
+                                H: {selectedProfile?.height || 4.5}m × W: {selectedProfile?.width || 2.5}m × L: {selectedProfile?.length || 12}m
                               </div>
                             </div>
-                            <Badge>Active</Badge>
+                            {!isCarProfileMode && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
                           </div>
                         </CardContent>
                       </Card>
-                    )}
-
-                    {/* Vehicle Profile List */}
-                    {isLoadingProfiles ? (
-                      <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                          <Card key={i} className="animate-pulse">
-                            <CardContent className="p-3 space-y-2">
-                              <div className="h-4 bg-muted rounded-md w-3/4"></div>
-                              <div className="h-3 bg-muted rounded-md w-1/2"></div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : vehicleProfiles.length === 0 ? (
-                      <div className="text-sm text-muted-foreground py-4 text-center">
-                        No vehicle profiles yet. Create one to get started!
-                      </div>
-                    ) : (
-                      vehicleProfiles.map((profile) => (
-                        <Card 
-                          key={profile.id} 
-                          className={cn(
-                            "cursor-pointer transition-all hover:bg-muted/50 hover:translate-x-1 active:translate-x-0",
-                            selectedProfile?.id === profile.id && "border-primary"
-                          )}
-                          onClick={() => onProfileSelect(profile)}
-                          data-testid={`card-vehicle-profile-${profile.id}`}
-                        >
-                          <CardContent className="p-3 space-y-2">
-                            <div className="font-medium text-sm">{profile.name || 'Unnamed Vehicle'}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {profile.height}m × {profile.width}m × {profile.length}m
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-
-                    {/* Switch Profile Dropdown */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Switch Profile</Label>
-                      <Select
-                        value={isCarProfileMode ? "car" : "lorry"}
-                        onValueChange={(value) => {
-                          if (value === "car") {
-                            onCarProfileModeChange?.(true);
-                          } else {
-                            onCarProfileModeChange?.(false);
-                          }
-                        }}
+                      
+                      {/* Car Option */}
+                      <Card 
+                        className={cn(
+                          "cursor-pointer transition-all hover:bg-muted/50 active:scale-[0.98]",
+                          isCarProfileMode && "border-primary bg-primary/5"
+                        )}
+                        onClick={() => onCarProfileModeChange?.(true)}
                       >
-                        <SelectTrigger className="w-full" data-testid="select-switch-profile">
-                          <SelectValue>
-                            <div className="flex items-center gap-2">
-                              {isCarProfileMode ? (
-                                <>
-                                  <Car className="h-4 w-4" />
-                                  <span>Car (Fastest Route)</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Truck className="h-4 w-4" />
-                                  <span>Class 1 Lorry (Default)</span>
-                                </>
-                              )}
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <Car className="h-5 w-5 text-primary" />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">Car</div>
+                              <div className="text-xs text-muted-foreground">
+                                L: 4.4m × H: 1.5m × W: 1.8m
+                              </div>
                             </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="lorry">
-                            <div className="flex items-center gap-2">
-                              <Truck className="h-4 w-4" />
-                              <span>Class 1 Lorry (Default)</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="car">
-                            <div className="flex items-center gap-2">
-                              <Car className="h-4 w-4" />
-                              <span>Car (Fastest Route)</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                            {isCarProfileMode && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
                       <p className="text-[10px] text-muted-foreground">
                         {isCarProfileMode 
-                          ? "Car mode: Fastest route without truck restrictions. Will reset to Lorry after route completion."
-                          : "Lorry mode: Routes avoid low bridges, weight limits and width restrictions."}
+                          ? "Car mode: Fastest route without truck restrictions."
+                          : "Truck mode: Routes avoid low bridges, weight limits and width restrictions."}
                       </p>
                     </div>
                   </CardContent>
