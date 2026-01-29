@@ -860,8 +860,19 @@ function ComprehensiveMobileMenu({
                             // Fire route calculation
                             onPlanRoute();
                           }}
+                          onTouchEnd={(e) => {
+                            e.preventDefault();
+                            if (!fromInput || !toInput || !selectedProfile || isCalculating) return;
+                            console.log('[PREVIEW-BUTTON] TouchEnd - triggering auto-navigation flow');
+                            onOpenChange(false);
+                            if (onRequestAutoNavigation) {
+                              onRequestAutoNavigation();
+                            }
+                            onPlanRoute();
+                          }}
                           disabled={!fromInput || !toInput || !selectedProfile || isCalculating}
                           className="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                           data-testid="button-preview-route"
                         >
                           <Map className="h-4 w-4 mr-1" />
@@ -1038,8 +1049,19 @@ function ComprehensiveMobileMenu({
                           // Calculate and display route
                           await onPlanRoute();
                         }}
+                        onTouchEnd={async (e) => {
+                          e.preventDefault();
+                          if (isCalculating) return;
+                          console.log('[PREVIEW-BUTTON-BOTTOM] TouchEnd - triggering auto-navigation flow');
+                          onOpenChange(false);
+                          if (onRequestAutoNavigation) {
+                            onRequestAutoNavigation();
+                          }
+                          await onPlanRoute();
+                        }}
                         disabled={isCalculating}
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                         data-testid="button-preview-route-bottom"
                       >
                         {isCalculating ? (
