@@ -209,7 +209,6 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const screenArrowheadRef = useRef<HTMLDivElement | null>(null);
   const destinationMarkerRef = useRef<maplibregl.Marker | null>(null);
-  const startMarkerRef = useRef<maplibregl.Marker | null>(null);
   const restrictionMarkersRef = useRef<maplibregl.Marker[]>([]);
   const restrictionViolationsRef = useRef(restrictionViolations);
   const isNavigatingRef = useRef(isNavigating);
@@ -2035,27 +2034,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
 
     if (!isNavigating && routeCoordinates.length > 0) {
-      const firstCoord = routeCoordinates[0];
       const lastCoord = routeCoordinates[routeCoordinates.length - 1];
-      
-      // Add truck icon at start of route (matches route line width ~8px)
-      if (firstCoord && firstCoord[0] !== 0 && firstCoord[1] !== 0) {
-        if (startMarkerRef.current) {
-          startMarkerRef.current.remove();
-        }
-        const truckEl = document.createElement('div');
-        truckEl.innerHTML = `
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));">
-            <rect x="2" y="6" width="12" height="10" rx="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-            <path d="M14 10 L18 10 L20 14 L20 16 L14 16 Z" fill="white" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
-            <circle cx="6" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-            <circle cx="17" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-          </svg>
-        `;
-        startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'center' })
-          .setLngLat(firstCoord as [number, number])
-          .addTo(map.current);
-      }
       
       // Validate coordinates are not at origin (0,0) which indicates invalid data
       if (lastCoord && lastCoord[0] !== 0 && lastCoord[1] !== 0) {
@@ -2073,16 +2052,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           .setLngLat(lastCoord as [number, number])
           .addTo(map.current);
       }
-    } else {
-      // Always remove markers during navigation or when no route
-      if (startMarkerRef.current) {
-        startMarkerRef.current.remove();
-        startMarkerRef.current = null;
-      }
-      if (destinationMarkerRef.current) {
-        destinationMarkerRef.current.remove();
-        destinationMarkerRef.current = null;
-      }
+    } else if (destinationMarkerRef.current) {
+      // Always remove flag during navigation or when no route
+      destinationMarkerRef.current.remove();
+      destinationMarkerRef.current = null;
     }
 
     // Only auto-fit bounds when not navigating (during planning)
@@ -3172,10 +3145,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const iconSize = Math.round(markerSize * 0.5);
       
       if (vehicleType.includes('lorry') || vehicleType.includes('tonne')) {
-        // Truck icon
+        // Truck icon - simple blue outlined design matching route line style
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
-            <path d="M18 18.5a1.5 1.5 0 0 1-1 1.5a1.5 1.5 0 0 1-1.5-1.5a1.5 1.5 0 0 1 1.5-1.5a1.5 1.5 0 0 1 1 1.5m1.5-9l1.96 2.5H17V9.5m-11 9A1.5 1.5 0 0 1 4.5 17A1.5 1.5 0 0 1 6 15.5A1.5 1.5 0 0 1 7.5 17A1.5 1.5 0 0 1 6 18.5M20 8h-3V4H3c-1.11 0-2 .89-2 2v11h2a3 3 0 0 0 3 3a3 3 0 0 0 3-3h6a3 3 0 0 0 3 3a3 3 0 0 0 3-3h2v-5l-3-4Z"/>
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
+            <rect x="2" y="6" width="12" height="10" rx="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
+            <path d="M14 10 L18 10 L20 14 L20 16 L14 16 Z" fill="white" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="6" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
+            <circle cx="17" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
           </svg>
         `;
       } else if (vehicleType.includes('caravan')) {
