@@ -2075,15 +2075,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
         const truckEl = document.createElement('div');
         truckEl.style.zIndex = '9999';
+        const markerSize = 8;
         truckEl.innerHTML = `
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
-            <rect x="2" y="6" width="12" height="10" rx="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-            <path d="M14 10 L18 10 L20 14 L20 16 L14 16 Z" fill="white" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
-            <circle cx="6" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-            <circle cx="17" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-          </svg>
+          <img 
+            src="/truck-marker-icon.png" 
+            width="${markerSize}" 
+            height="${markerSize}" 
+            style="
+              object-fit: contain;
+              filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+              border-radius: 2px;
+            "
+            alt="Vehicle"
+          />
         `;
-        startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'center' })
+        startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'top' })
           .setLngLat(firstCoord as [number, number])
           .addTo(map.current);
         
