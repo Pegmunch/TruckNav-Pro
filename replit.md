@@ -6,6 +6,11 @@ This project is a specialized web application for truck navigation, designed to 
 
 Preferred communication style: Simple, everyday language.
 
+## Design Decisions (DO NOT CHANGE)
+- **Traffic Color Scheme**: Normal/Free flow traffic uses BLUE (#0067FF, #3B82F6), NOT green. The traffic legend shows: Blue = Normal Flow, Green = Light, Yellow = Moderate, Orange = Heavy, Red = Standstill.
+- **Theme Default**: Auto theme (not Day theme) should be default on first app entry.
+- **Vehicle Profiles**: Simplified to two options - Class 1 Truck (truck restrictions) and Car (fastest route).
+
 # System Architecture
 
 ## UI/UX Decisions
