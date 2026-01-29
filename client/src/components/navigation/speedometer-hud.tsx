@@ -324,6 +324,35 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
+      {/* TRUCK ICON - Positioned at top edge of speedometer during navigation */}
+      {isNavigating && (
+        <div 
+          className="absolute z-20"
+          style={{ 
+            top: '-32px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none'
+          }}
+        >
+          <div 
+            className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+            style={{
+              background: 'linear-gradient(145deg, #3B82F6 0%, #2563EB 50%, #1D4ED8 100%)',
+              border: '2px solid white',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.5)'
+            }}
+          >
+            <img 
+              src="/truck-marker-icon.png" 
+              alt="Truck" 
+              className="w-6 h-6 object-contain"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* GO BUTTON - Left crescent hugging speedometer's left edge */}
       {showGoButton && onStartNavigation && (
         <div 
@@ -686,7 +715,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       </div>
 
       {/* Road Name Display - Below speedometer during navigation */}
-      {isNavigating && (roadInfo.roadName || roadInfo.roadRef) && (
+      {isNavigating && roadInfo.roadRef && (
         <div 
           className="absolute -bottom-5 left-1/2 transform -translate-x-1/2 z-10"
           style={{ pointerEvents: 'none' }}
@@ -698,7 +727,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
             "whitespace-nowrap max-w-[200px] truncate",
             "shadow-lg"
           )}>
-            {roadInfo.roadName || roadInfo.roadRef}
+            {roadInfo.roadRef}
           </div>
         </div>
       )}
