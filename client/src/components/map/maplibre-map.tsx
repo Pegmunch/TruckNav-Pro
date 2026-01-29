@@ -2045,8 +2045,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           startMarkerRef.current.remove();
         }
         const truckEl = document.createElement('div');
+        truckEl.style.zIndex = '9999';
         truckEl.innerHTML = `
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">
             <rect x="2" y="6" width="12" height="10" rx="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
             <path d="M14 10 L18 10 L20 14 L20 16 L14 16 Z" fill="white" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
             <circle cx="6" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
@@ -2056,6 +2057,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'center' })
           .setLngLat(firstCoord as [number, number])
           .addTo(map.current);
+        
+        // Ensure parent element also has high z-index
+        setTimeout(() => {
+          if (truckEl.parentElement) {
+            truckEl.parentElement.style.zIndex = '9999';
+          }
+        }, 0);
+        
         console.log('[ROUTE-MARKER] Truck icon placed at route start:', firstCoord);
       } else if (!isNavigating && startMarkerRef.current) {
         // Remove truck icon when not navigating
