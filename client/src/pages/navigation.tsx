@@ -4103,7 +4103,7 @@ function NavigationPageContent() {
                           });
                         }
                       }}
-                      isVisible={true}
+                      isVisible={showNavControls}
                       onVoiceNavigationCommand={(command: NavigationCommandType) => {
                         console.log('[VOICE-NAV] Navigation command received:', command);
                         switch (command) {
@@ -4287,7 +4287,7 @@ function NavigationPageContent() {
                       }}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
-                      isVisible={true}
+                      isVisible={showNavControls}
                       hideIncidents={false}
                       hideCompass={true}
                       hide3D={false}
