@@ -63,19 +63,16 @@ export function NavigationLayout({
       )}
 
       {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
-      {/* FIXED: Ultra-high z-index (500000) to ensure buttons are above ALL map layers including traffic */}
+      {/* iOS Safari fix: Removed isolation/contain/transform that were blocking touch events */}
       {leftStack && (
         <div 
-          className="fixed left-4 flex flex-col gap-3 pointer-events-auto touch-manipulation"
+          className="fixed left-4 flex flex-col gap-3"
           style={{ 
             bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
             zIndex: 500000,
+            pointerEvents: 'auto',
             touchAction: 'manipulation',
-            isolation: 'isolate',
-            contain: 'layout paint',
-            willChange: 'transform',
-            WebkitTransform: 'translateZ(0)',
-            transform: 'translateZ(0)'
+            WebkitTapHighlightColor: 'transparent'
           }}
         >
           {leftStack}
@@ -97,23 +94,17 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - Positioned from bottom, above instrumentation bar */}
-      {/* CRITICAL: Higher position (100px/80px) to avoid overlap with SpeedometerHUD GO/STOP buttons */}
-      {/* Max height prevents overlap with top elements - scroll if needed */}
-      {/* FIXED: Ultra-high z-index (500000) to match left stack and ensure buttons are above ALL overlays */}
+      {/* iOS Safari fix: Removed isolation/contain/transform that were blocking touch events */}
       {rightStackVisible && (
         <div 
-          className="fixed right-4 overflow-y-auto overflow-x-hidden pointer-events-auto touch-manipulation"
+          className="fixed right-4 overflow-y-auto overflow-x-hidden"
           style={{ 
             bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
             maxHeight: 'calc(100vh - 280px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))',
             zIndex: 500000,
-            touchAction: 'manipulation',
-            isolation: 'isolate',
-            contain: 'layout paint',
-            willChange: 'transform',
-            WebkitTransform: 'translateZ(0)',
-            transform: 'translateZ(0)',
             pointerEvents: 'auto',
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
             userSelect: 'none'
           }}
         >

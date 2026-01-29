@@ -96,11 +96,19 @@ export function LeftActionStack({
     }
   };
 
-  // Simple click handler - matches Preview mode approach that works correctly
-  // Previous complex touch/pointer handler was blocking events on iOS Safari
+  // iOS Safari optimized handler - uses both onClick and onTouchEnd for reliability
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
-    onClick: () => {
-      console.log(`[LEFT-BTN-${label}] ✅ Clicked`);
+    onClick: (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[LEFT-BTN-${label}] ✅ Click event`);
+      hapticButtonPress();
+      callback?.();
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[LEFT-BTN-${label}] ✅ Touch event`);
       hapticButtonPress();
       callback?.();
     }
