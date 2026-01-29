@@ -106,10 +106,10 @@ export function NavigationLayout({
         </div>
       )}
 
-      {/* Info boxes above speedometer - Distance and ETA during navigation - LEFT positioned */}
+      {/* Info boxes above speedometer - Distance and ETA during navigation - CENTERED */}
       {shouldShowBottomBar && infoBoxes && (
         <div 
-          className="fixed left-4 z-[99999] pointer-events-auto"
+          className="fixed left-1/2 -translate-x-1/2 z-[99999] pointer-events-auto"
           style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))' }}
         >
           {infoBoxes}
