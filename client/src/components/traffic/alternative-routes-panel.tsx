@@ -82,8 +82,8 @@ const RouteComparisonRow = memo(function RouteComparisonRow({
       return acc + flowValues[condition.flowLevel];
     }, 0) / alternative.trafficConditions.length;
 
-    if (avgFlow <= 0.5) return { level: 'free', color: 'bg-green-500', label: 'Free Flow' };
-    if (avgFlow <= 1.5) return { level: 'light', color: 'bg-green-400', label: 'Light Traffic' };
+    if (avgFlow <= 0.5) return { level: 'free', color: 'bg-blue-500', label: 'Free Flow' };
+    if (avgFlow <= 1.5) return { level: 'light', color: 'bg-blue-400', label: 'Light Traffic' };
     if (avgFlow <= 2.5) return { level: 'moderate', color: 'bg-yellow-500', label: 'Moderate' };
     if (avgFlow <= 3.5) return { level: 'heavy', color: 'bg-orange-500', label: 'Heavy Traffic' };
     return { level: 'standstill', color: 'bg-red-500', label: 'Congested' };
@@ -429,8 +429,8 @@ const AlternativeRoutesPanel = memo(function AlternativeRoutesPanel({
                               <div key={condIndex} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                                 <div className="flex items-center space-x-3">
                                   <div className={cn("w-3 h-3 rounded-full", {
-                                    'bg-green-500': condition.flowLevel === 'free',
-                                    'bg-green-400': condition.flowLevel === 'light',
+                                    'bg-blue-500': condition.flowLevel === 'free',
+                                    'bg-blue-400': condition.flowLevel === 'light',
                                     'bg-yellow-500': condition.flowLevel === 'moderate',
                                     'bg-orange-500': condition.flowLevel === 'heavy',
                                     'bg-red-500': condition.flowLevel === 'standstill',

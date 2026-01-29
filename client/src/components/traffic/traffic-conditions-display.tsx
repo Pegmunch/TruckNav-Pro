@@ -61,17 +61,17 @@ const TrafficSegment = memo(function TrafficSegment({
     switch (condition.flowLevel) {
       case 'free':
         return { 
-          color: 'bg-green-500', 
-          textColor: 'text-green-700 dark:text-green-300',
-          bgColor: 'bg-green-50 dark:bg-green-950/30',
+          color: 'bg-blue-500', 
+          textColor: 'text-blue-700 dark:text-blue-300',
+          bgColor: 'bg-blue-50 dark:bg-blue-950/30',
           label: 'Free Flow',
           icon: <CheckCircle className="w-4 h-4" />
         };
       case 'light':
         return { 
-          color: 'bg-green-400', 
-          textColor: 'text-green-600 dark:text-green-400',
-          bgColor: 'bg-green-50 dark:bg-green-950/20',
+          color: 'bg-blue-400', 
+          textColor: 'text-blue-600 dark:text-blue-400',
+          bgColor: 'bg-blue-50 dark:bg-blue-950/20',
           label: 'Light Traffic',
           icon: <CheckCircle className="w-4 h-4" />
         };

@@ -584,7 +584,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             bearing,
             padding: {
               top: Math.round(containerHeight * 0.55), // TomTom GO style - vehicle at lower 45%
-              bottom: 80, // Space for speedometer
+              bottom: 40, // Reduced gap - route extends closer to speedometer
               left: 0,
               right: 0
             },
@@ -2429,12 +2429,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             ['==', ['typeof', ['get', 'speed_ratio']], 'number'],
             [
               'case',
-              ['<', ['get', 'speed_ratio'], 0.3], '#DC2626', // Red: heavy traffic/congestion
-              ['<', ['get', 'speed_ratio'], 0.6], '#F59E0B', // Orange: moderate traffic
-              ['<', ['get', 'speed_ratio'], 0.8], '#FDE047', // Yellow: light traffic
-              '#22C55E' // Green: free flow
+              ['<', ['get', 'speed_ratio'], 0.3], '#DC2626', // Red: heavy traffic/standstill
+              ['<', ['get', 'speed_ratio'], 0.5], '#F97316', // Orange: heavy traffic
+              ['<', ['get', 'speed_ratio'], 0.65], '#FDE047', // Yellow: moderate traffic
+              ['<', ['get', 'speed_ratio'], 0.85], '#60A5FA', // Light blue: light traffic
+              '#3B82F6' // Blue: free flow (matching legend)
             ],
-            '#22C55E' // Default to green if speed_ratio is missing/invalid
+            '#3B82F6' // Default to blue if speed_ratio is missing/invalid
           ],
           'line-width': [
             'interpolate',
@@ -3284,7 +3285,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           bearing: useBearing, // Heading-up rotation
           padding: {
             top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
-            bottom: 80, // Space for speedometer
+            bottom: 40, // Reduced gap - route extends closer to speedometer
             left: 0,
             right: 0
           },
@@ -3481,7 +3482,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
                   // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
                   // This makes the route line extend upward from the speedometer area
                   top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
-                  bottom: 80, // Space for speedometer
+                  bottom: 40, // Reduced gap - route extends closer to speedometer
                   left: 0, 
                   right: 0 
                 },

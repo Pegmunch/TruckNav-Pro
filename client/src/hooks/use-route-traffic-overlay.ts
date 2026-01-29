@@ -19,8 +19,8 @@ export interface RouteTrafficData {
 }
 
 const TRAFFIC_COLORS = {
-  free: '#22C55E',
-  light: '#84CC16',
+  free: '#3B82F6', // Blue for free-flowing traffic (matching legend)
+  light: '#60A5FA', // Light blue for light traffic (matching legend)
   moderate: '#FDE047',
   heavy: '#F97316',
   standstill: '#DC2626',
