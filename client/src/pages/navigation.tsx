@@ -3723,7 +3723,10 @@ function NavigationPageContent() {
                         mapRef.current?.toggle3DMode();
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                       }}
-                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleTraffic={() => {
+                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in PREVIEW mode - toggling from:', showTrafficLayer);
+                        setShowTrafficLayer(prev => !prev);
+                      }}
                       onToggleMapView={() => {
                         console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
                         mapRef.current?.toggleMapView();
@@ -4173,12 +4176,15 @@ function NavigationPageContent() {
                           return { ...prev, isSatelliteView: newSatelliteState };
                         });
                       }}
-                      onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
+                      onToggleTraffic={() => {
+                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
+                        setShowTrafficLayer(prev => !prev);
+                      }}
                       onViewIncidents={() => {
-                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
-                      setLiveTrafficPanelTab('view');
-                      setShowLiveTrafficPanel(true);
-                    }}
+                        console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+                        setLiveTrafficPanelTab('view');
+                        setShowLiveTrafficPanel(true);
+                      }}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
                       isVisible={showNavControls}
@@ -4191,6 +4197,8 @@ function NavigationPageContent() {
                       }}
                       is3DMode={mapControlState.is3DMode}
                       isNavigating={true}
+                      compact={true}
+                      bearing={mapControlState.bearing}
                     />
                   }
                   infoBoxes={
