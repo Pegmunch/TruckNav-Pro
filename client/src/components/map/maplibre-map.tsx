@@ -209,6 +209,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const screenArrowheadRef = useRef<HTMLDivElement | null>(null);
   const destinationMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const startMarkerRef = useRef<maplibregl.Marker | null>(null);
   const restrictionMarkersRef = useRef<maplibregl.Marker[]>([]);
   const restrictionViolationsRef = useRef(restrictionViolations);
   const isNavigatingRef = useRef(isNavigating);
@@ -2034,7 +2035,28 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }
 
     if (!isNavigating && routeCoordinates.length > 0) {
+      const firstCoord = routeCoordinates[0];
       const lastCoord = routeCoordinates[routeCoordinates.length - 1];
+      
+      // Add truck icon at start of route (matches route line width ~8px)
+      if (firstCoord && firstCoord[0] !== 0 && firstCoord[1] !== 0) {
+        if (startMarkerRef.current) {
+          startMarkerRef.current.remove();
+        }
+        const truckEl = document.createElement('div');
+        truckEl.innerHTML = `
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));">
+            <rect x="2" y="6" width="12" height="10" rx="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
+            <path d="M14 10 L18 10 L20 14 L20 16 L14 16 Z" fill="white" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="6" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
+            <circle cx="17" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
+          </svg>
+        `;
+        startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'center' })
+          .setLngLat(firstCoord as [number, number])
+          .addTo(map.current);
+      }
+      
       // Validate coordinates are not at origin (0,0) which indicates invalid data
       if (lastCoord && lastCoord[0] !== 0 && lastCoord[1] !== 0) {
         if (destinationMarkerRef.current) {
@@ -2051,10 +2073,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           .setLngLat(lastCoord as [number, number])
           .addTo(map.current);
       }
-    } else if (destinationMarkerRef.current) {
-      // Always remove flag during navigation or when no route
-      destinationMarkerRef.current.remove();
-      destinationMarkerRef.current = null;
+    } else {
+      // Always remove markers during navigation or when no route
+      if (startMarkerRef.current) {
+        startMarkerRef.current.remove();
+        startMarkerRef.current = null;
+      }
+      if (destinationMarkerRef.current) {
+        destinationMarkerRef.current.remove();
+        destinationMarkerRef.current = null;
+      }
     }
 
     // Only auto-fit bounds when not navigating (during planning)
