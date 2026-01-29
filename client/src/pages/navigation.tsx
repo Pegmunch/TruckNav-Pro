@@ -3747,26 +3747,8 @@ function NavigationPageContent() {
                       bottom: 'calc(20px + var(--safe-area-bottom, 0px))'
                     }}
                   >
-                    {/* Route Info Boxes - Transparent (no white card) */}
+                    {/* Action Buttons - Info boxes moved to infoBoxes prop */}
                     <div className="flex flex-col items-center gap-3 pointer-events-auto w-full max-w-sm">
-                      {/* Info boxes: Left=Distance, Right=ETA arrival time */}
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">
-                          <RouteIcon className="w-4 h-4" />
-                          <span className="font-bold text-sm">
-                            {measurementSystem === 'imperial' 
-                              ? `${((currentRoute.distance || 0) / 1609.344).toFixed(1)} mi`
-                              : `${((currentRoute.distance || 0) / 1000).toFixed(1)} km`}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
-                          <Clock className="w-4 h-4" />
-                          <span className="font-bold text-sm">
-                            {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </div>
-                      
                       {/* Action Buttons */}
                       <div className="flex gap-2 w-full">
                         <Button
