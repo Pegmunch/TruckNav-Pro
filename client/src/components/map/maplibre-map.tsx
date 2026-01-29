@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback, memo } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback, memo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './maplibre-overrides.css';
@@ -870,16 +870,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // This allows users to see traffic conditions on their planned route before starting navigation
   // CRITICAL FIX: Use persistent route reference during navigation when currentRoute is cleared
   
-  // SYNCHRONOUS CACHE UPDATE: Populate persistentNavRouteRef DURING render (not in effect)
-  // This ensures the cache is available for traffic overlay immediately when a route is set
-  if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
-    if (!persistentNavRouteRef.current || 
-        persistentNavRouteRef.current.length !== currentRoute.routePath.length) {
-      persistentNavRouteRef.current = [...currentRoute.routePath];
-    }
-  }
+  // State for cached route path - updated via useLayoutEffect for React-safe side effects
+  const [cachedRouteForTraffic, setCachedRouteForTraffic] = useState<{lat: number; lng: number}[] | null>(null);
   
-  const routePathForOverlay = currentRoute?.routePath || (isNavigating ? persistentNavRouteRef.current : null);
+  // Use useLayoutEffect to update cached route BEFORE paint - ensures traffic overlay has data
+  useLayoutEffect(() => {
+    if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+      // Update both the ref (for route rendering) and state (for traffic overlay)
+      persistentNavRouteRef.current = [...currentRoute.routePath];
+      setCachedRouteForTraffic([...currentRoute.routePath]);
+    }
+  }, [currentRoute?.routePath]);
+  
+  // Use currentRoute path, or cached route during navigation when currentRoute is cleared
+  const routePathForOverlay = currentRoute?.routePath || (isNavigating ? cachedRouteForTraffic : null);
   const hasValidRoute = !!routePathForOverlay && routePathForOverlay.length > 0;
   const trafficOverlayEnabled = showTraffic && hasValidRoute;
   
@@ -890,13 +894,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       isNavigating,
       hasCurrentRoute: !!currentRoute?.routePath,
       currentRouteLength: currentRoute?.routePath?.length || 0,
-      hasPersistentCache: !!persistentNavRouteRef.current,
-      persistentCacheLength: persistentNavRouteRef.current?.length || 0,
+      hasCachedRoute: !!cachedRouteForTraffic,
+      cachedRouteLength: cachedRouteForTraffic?.length || 0,
       routePathForOverlayLength: routePathForOverlay?.length || 0,
       hasValidRoute,
       trafficOverlayEnabled
     });
-  }, [showTraffic, isNavigating, currentRoute?.routePath, hasValidRoute, trafficOverlayEnabled]);
+  }, [showTraffic, isNavigating, currentRoute?.routePath, cachedRouteForTraffic, hasValidRoute, trafficOverlayEnabled]);
   
   const routeTrafficData = useRouteTrafficOverlay(
     routePathForOverlay,
