@@ -1266,7 +1266,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // to handle dynamic hideControls/hideCompass changes properly.
       // DO NOT add NavigationControl here to avoid duplicates.
 
+      // Single-finger double-tap detection for UI toggle (mobile-optimized)
+      let lastSingleTap = 0;
+      const SINGLE_TAP_DOUBLE_TAP_DELAY = 300; // ms
+      
       if (onMapClick) {
+        // For desktop: use click events
         map.current.on('click', (e) => {
           console.log('[MAPLIBRE-CLICK] Map clicked at:', e.lngLat.lat, e.lngLat.lng);
           onMapClick(e.lngLat.lat, e.lngLat.lng);
@@ -1284,7 +1289,30 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
       
       const handleTouchEnd = (e: TouchEvent) => {
-        // Only trigger on exactly 2 fingers
+        // Single finger tap - for UI toggle double-tap detection
+        if (e.touches.length === 0 && e.changedTouches.length === 1) {
+          const now = Date.now();
+          const timeSinceLastTap = now - lastSingleTap;
+          
+          if (timeSinceLastTap < SINGLE_TAP_DOUBLE_TAP_DELAY && timeSinceLastTap > 50) {
+            // Double-tap detected with single finger - trigger UI toggle
+            console.log('[MAP-GESTURE] ✅ Single-finger double-tap detected - toggling UI');
+            if (onMapClick && map.current) {
+              const touch = e.changedTouches[0];
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              // Call onMapClick twice rapidly to trigger double-tap detection in navigation.tsx
+              onMapClick(0, 0);
+              // Immediately call again to ensure the double-tap is detected
+              setTimeout(() => onMapClick(0, 0), 10);
+            }
+            lastSingleTap = 0; // Reset to prevent triple-tap
+          } else {
+            // First tap of potential double-tap
+            lastSingleTap = now;
+          }
+        }
+        
+        // Two finger tap - for zoom out
         if (e.touches.length === 0 && e.changedTouches.length === 2) {
           const now = Date.now();
           const timeSinceLastTap = now - lastTwoFingerTap;
@@ -1311,6 +1339,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (touchContainerRef.current) {
         touchContainerRef.current.addEventListener('touchend', handleTouchEnd, { passive: false });
         console.log('[MAP-GESTURE] ✅ Two-finger double-tap zoom out enabled');
+        console.log('[MAP-GESTURE] ✅ Single-finger double-tap UI toggle enabled');
       }
 
       map.current.on('moveend', () => {
