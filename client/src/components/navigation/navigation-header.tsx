@@ -69,7 +69,7 @@ export function NavigationHeader({
     <div
       className={cn(
         "fixed left-0 right-0 z-[5000]",
-        "bg-gray-900 border-b border-gray-700",
+        "bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700",
         "h-16 px-4",
         "flex items-center justify-between",
         "shadow-sm",
@@ -82,9 +82,9 @@ export function NavigationHeader({
       }}
       data-testid="navigation-header"
     >
-      {/* TruckNav Pro Logo/Text - Knight theme: white text on dark */}
+      {/* TruckNav Pro Logo/Text - theme responsive */}
       <div className="flex items-center gap-2">
-        <h1 className="text-lg font-bold text-white">TruckNav Pro</h1>
+        <h1 className="text-lg font-bold text-gray-900 dark:text-white">TruckNav Pro</h1>
       </div>
 
       {/* Settings Dropdown - Green gear button opens quick settings menu */}
