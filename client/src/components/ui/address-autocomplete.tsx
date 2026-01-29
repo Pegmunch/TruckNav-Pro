@@ -77,7 +77,8 @@ export function AddressAutocomplete({
   // This prevents flashing caused by rapid focus/blur cycles on iOS Safari
   const openTimestampRef = useRef<number>(0);
   const isClosingRef = useRef<boolean>(false); // Prevent multiple close attempts
-  const MINIMUM_OPEN_DURATION_MS = 500; // Dropdown must stay open for at least 500ms (increased for iOS stability)
+  const MINIMUM_OPEN_DURATION_MS = 800; // Dropdown must stay open for at least 800ms (increased for iOS stability)
+  const isInteractingRef = useRef<boolean>(false); // Track if user is actively interacting with dropdown
   
   // GPS candidate state - holds geocoded location pending user confirmation
   const [gpsCandidate, setGpsCandidate] = useState<{
@@ -130,10 +131,10 @@ export function AddressAutocomplete({
   // Stable close function that prevents rapid close/reopen cycles
   const stableClose = useCallback(() => {
     if (isClosingRef.current) return; // Already closing
+    if (isInteractingRef.current) return; // User is actively interacting with dropdown
     
     const elapsed = Date.now() - openTimestampRef.current;
     if (elapsed < MINIMUM_OPEN_DURATION_MS) {
-      console.log('[AUTOCOMPLETE] Prevented premature close after', elapsed, 'ms');
       return;
     }
     
@@ -740,6 +741,10 @@ export function AddressAutocomplete({
               transform: 'translateY(0)',
               userSelect: 'none'
             }}
+            onTouchStart={() => { isInteractingRef.current = true; }}
+            onTouchEnd={() => { setTimeout(() => { isInteractingRef.current = false; }, 300); }}
+            onMouseDown={() => { isInteractingRef.current = true; }}
+            onMouseUp={() => { setTimeout(() => { isInteractingRef.current = false; }, 300); }}
           >
             <Command className="bg-transparent">
               <CommandList className="max-h-[300px] overflow-y-auto">

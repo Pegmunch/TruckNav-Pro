@@ -588,11 +588,8 @@ function ComprehensiveMobileMenu({
   // CRITICAL FIX: Use simple fixed div instead of Radix Dialog to avoid iOS Safari portal issues
   // The Radix Dialog portal can cause invisible overlays that block touch events
   if (!open) {
-    console.log('[MOBILE-MENU] Menu closed - returning null for complete unmount');
     return null;
   }
-
-  console.log('[MOBILE-MENU] 🟢 Menu is OPEN - rendering full-screen menu');
 
   return (
     <>
