@@ -3590,6 +3590,10 @@ function NavigationPageContent() {
                     hideControls={false}
                     hideCompass={false}
                     onMapClick={handleMapClick}
+                    onDoubleTap={() => {
+                      console.log('[DOUBLE-TAP] Toggling nav controls visibility');
+                      setShowNavControls(prev => !prev);
+                    }}
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating || isLocalNavActive}
@@ -4405,6 +4409,10 @@ function NavigationPageContent() {
                     hideControls={false}
                     hideCompass={false}
                     onMapClick={handleMapClick}
+                    onDoubleTap={() => {
+                      console.log('[DOUBLE-TAP] Toggling nav controls visibility');
+                      setShowNavControls(prev => !prev);
+                    }}
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating || isLocalNavActive}

@@ -94,6 +94,7 @@ interface MapLibreMapProps {
   currentRoute: Route | null;
   selectedProfile: VehicleProfile | null;
   onMapClick?: (lat: number, lng: number) => void;
+  onDoubleTap?: () => void;
   className?: string;
   showTraffic?: boolean;
   showIncidents?: boolean;
@@ -181,6 +182,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   currentRoute,
   selectedProfile,
   onMapClick,
+  onDoubleTap,
   className,
   showTraffic = true,
   showIncidents = false,
@@ -1297,13 +1299,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           if (timeSinceLastTap < SINGLE_TAP_DOUBLE_TAP_DELAY && timeSinceLastTap > 50) {
             // Double-tap detected with single finger - trigger UI toggle
             console.log('[MAP-GESTURE] ✅ Single-finger double-tap detected - toggling UI');
-            if (onMapClick && map.current) {
-              const touch = e.changedTouches[0];
-              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-              // Call onMapClick twice rapidly to trigger double-tap detection in navigation.tsx
-              onMapClick(0, 0);
-              // Immediately call again to ensure the double-tap is detected
-              setTimeout(() => onMapClick(0, 0), 10);
+            if (onDoubleTap) {
+              onDoubleTap();
             }
             lastSingleTap = 0; // Reset to prevent triple-tap
           } else {
@@ -2075,7 +2072,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
         const truckEl = document.createElement('div');
         truckEl.style.zIndex = '9999';
-        const markerSize = 8;
+        const markerSize = 24;
         truckEl.innerHTML = `
           <img 
             src="/truck-marker-icon.png" 
