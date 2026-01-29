@@ -862,7 +862,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // Route-specific traffic overlay (Layer 2)
   // FIXED: Show traffic overlay when there's a route (preview or navigation mode)
   // This allows users to see traffic conditions on their planned route before starting navigation
-  const hasValidRoute = !!currentRoute?.routePath && currentRoute.routePath.length > 0;
+  // CRITICAL FIX: Use persistent route reference during navigation when currentRoute is cleared
+  const routePathForOverlay = currentRoute?.routePath || (isNavigating ? persistentNavRouteRef.current : null);
+  const hasValidRoute = !!routePathForOverlay && routePathForOverlay.length > 0;
   const trafficOverlayEnabled = showTraffic && hasValidRoute;
   
   // Debug: Only log when conditions change significantly
@@ -870,12 +872,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     console.log('[TRAFFIC-OVERLAY] ✅ Traffic overlay ENABLED', {
       showTraffic,
       isNavigating,
-      routePathLength: currentRoute?.routePath?.length || 0
+      routePathLength: routePathForOverlay?.length || 0,
+      usingPersistentCache: !currentRoute?.routePath && isNavigating
     });
   }
   
   const routeTrafficData = useRouteTrafficOverlay(
-    currentRoute?.routePath,
+    routePathForOverlay,
     trafficOverlayEnabled,
     2 * 60 * 1000 // 2 minute refresh
   );
@@ -883,7 +886,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // Route-specific incidents (Layer 3)
   // FIXED: Show incidents when there's a route (preview or navigation mode)
   const routeIncidentsData = useRouteIncidents(
-    currentRoute?.routePath,
+    routePathForOverlay,
     showIncidents && hasValidRoute,
     2 * 60 * 1000 // 2 minute refresh
   );
