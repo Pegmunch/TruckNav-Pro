@@ -82,14 +82,14 @@ class LRUCache<K, V> {
   }
 }
 
-// Circuit breaker for API calls
+// Circuit breaker for API calls - less aggressive to handle temporary rate limits
 class CircuitBreaker {
   private failures: number = 0;
   private lastFailureTime: number = 0;
   private isOpen: boolean = false;
-  private readonly threshold: number = 3;
-  private readonly timeout: number = 30000;
-  private cooldownPeriod: number = 10000;
+  private readonly threshold: number = 5; // Increased from 3 to 5 failures before opening
+  private readonly timeout: number = 15000; // Reduced from 30s to 15s
+  private cooldownPeriod: number = 5000; // Start with 5s cooldown instead of 10s
 
   canProceed(): boolean {
     const now = Date.now();
@@ -98,6 +98,7 @@ class CircuitBreaker {
       console.log(`[TOMTOM-CIRCUIT] Half-open after ${this.cooldownPeriod}ms cooldown`);
       this.isOpen = false;
       this.failures = 0;
+      this.cooldownPeriod = 5000; // Reset cooldown on recovery
       return true;
     }
 
@@ -115,7 +116,7 @@ class CircuitBreaker {
   recordFailure(): void {
     this.failures++;
     this.lastFailureTime = Date.now();
-    this.cooldownPeriod = Math.min(this.cooldownPeriod * 2, 60000);
+    this.cooldownPeriod = Math.min(this.cooldownPeriod * 1.5, 30000); // Less aggressive backoff
     console.warn(`[TOMTOM-CIRCUIT] Failure #${this.failures}, next cooldown: ${this.cooldownPeriod}ms`);
   }
 
@@ -126,10 +127,15 @@ class CircuitBreaker {
     this.reset();
   }
 
+  forceReset(): void {
+    console.log('[TOMTOM-CIRCUIT] Force reset - clearing all state');
+    this.reset();
+  }
+
   private reset(): void {
     this.failures = 0;
     this.isOpen = false;
-    this.cooldownPeriod = 10000;
+    this.cooldownPeriod = 5000;
   }
 
   isCircuitOpen(): boolean {
@@ -195,11 +201,11 @@ export const useTomTomAutocomplete = (
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Debounce the query with 300ms delay
+  // Debounce the query with 500ms delay to reduce API calls and prevent rate limiting
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -459,4 +465,9 @@ export const isTomTomPOI = (result: TomTomResult): boolean => {
 export const getTomTomPOICategories = (result: TomTomResult): string[] => {
   if (!result.poi) return [];
   return result.poi.categories || [];
+};
+
+// Reset the circuit breaker - useful after rate limit issues
+export const resetTomTomCircuitBreaker = (): void => {
+  globalTomTomCircuitBreaker.forceReset();
 };
