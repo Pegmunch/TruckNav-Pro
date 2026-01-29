@@ -84,6 +84,11 @@ export function NavigationHeader({
     >
       {/* TruckNav Pro Logo/Text - theme responsive */}
       <div className="flex items-center gap-2">
+        <img 
+          src="/truck-marker-icon.png" 
+          alt="TruckNav Pro" 
+          className="w-8 h-8 object-contain rounded"
+        />
         <h1 className="text-lg font-bold text-gray-900 dark:text-white">TruckNav Pro</h1>
       </div>
 
