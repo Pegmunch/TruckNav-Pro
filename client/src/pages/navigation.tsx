@@ -3780,6 +3780,18 @@ function NavigationPageContent() {
                     <div className="flex flex-col items-center gap-3 pointer-events-auto w-full max-w-sm">
                       {/* Action Buttons */}
                       <div className="flex gap-2 w-full">
+                        {/* Incident Report Button - same functionality as Navigation mode */}
+                        <Button
+                          onClick={() => {
+                            console.log('[INCIDENT-BTN] 🟠 Orange button pressed in PREVIEW mode - opening Incident Report Dialog');
+                            setShowIncidentReportDialog(true);
+                          }}
+                          variant="outline"
+                          className="h-11 w-11 p-0 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white border-0 shadow-lg"
+                          data-testid="button-report-incident-preview"
+                        >
+                          <AlertCircle className="w-5 h-5" />
+                        </Button>
                         <Button
                           onClick={handlePreviewRoute}
                           disabled={isFlyByInProgress}
