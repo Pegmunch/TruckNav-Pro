@@ -17,6 +17,7 @@ import { startVersionMonitoring } from "./lib/cache-buster";
 import { initializeGlobalErrorHandler } from "./lib/global-error-handler";
 import "./index.css";
 import "./i18n/config";
+import "./utils/nav-button-test"; // Navigation button test utility - run window.testNavButtons() in console
 
 // Debug: Log localStorage state immediately on script load (before React mounts)
 console.log('[MAIN] Script loaded - checking localStorage immediately:');
