@@ -149,8 +149,21 @@ function NavigationPageContent() {
   const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
   
   // Car profile mode - when true, routes use car mode (fastest route, no truck restrictions)
-  // Auto-resets to false (Class 1 Lorry) after route completion
-  const [isCarProfileMode, setIsCarProfileMode] = useState(false);
+  // SAFETY-CRITICAL: Persisted to localStorage to prevent accidental resets
+  // Default is ALWAYS false (Class 1 Truck) for maximum safety
+  const [isCarProfileMode, setIsCarProfileMode] = useState(() => {
+    const stored = localStorage.getItem('isCarProfileMode');
+    // SAFETY: Default to false (Truck mode) - never default to car mode
+    const value = stored === 'true';
+    console.log('[VEHICLE-PROFILE] Initial mode:', value ? 'Car' : 'Class 1 Truck');
+    return value;
+  });
+  
+  // SAFETY: Persist vehicle mode changes to localStorage immediately
+  useEffect(() => {
+    localStorage.setItem('isCarProfileMode', String(isCarProfileMode));
+    console.log('[VEHICLE-PROFILE] Mode changed to:', isCarProfileMode ? 'Car (fastest route)' : 'Class 1 Truck (truck restrictions)');
+  }, [isCarProfileMode]);
   
   // Traffic prediction for ETA adjustment
   const [predictedTrafficDelay, setPredictedTrafficDelay] = useState<number>(0);
