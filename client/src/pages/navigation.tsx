@@ -4336,6 +4336,139 @@ function NavigationPageContent() {
                 />
               )}
 
+              {/* NAVIGATION MODE BUTTONS - Rendered OUTSIDE NavigationLayout to avoid parent container issues */}
+              {/* These buttons are rendered as separate fixed elements just like Preview mode buttons which work correctly */}
+              {mobileNavMode === 'navigate' && showNavControls && (
+                <>
+                  {/* Left Stack - Incident, Mute, Voice buttons */}
+                  <div 
+                    className="fixed left-4 flex flex-col gap-3 pointer-events-auto"
+                    style={{ 
+                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+                      zIndex: 600000
+                    }}
+                  >
+                    {/* Incident Report Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[INCIDENT-BTN-OUTSIDE] 🟠 Button pressed - opening dialog');
+                        setShowIncidentReportDialog(true);
+                      }}
+                      className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg"
+                      data-testid="button-incident-outside"
+                    >
+                      <AlertCircle className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  {/* Right Stack - Zoom, Recenter, 3D, Traffic, Map View, Incidents buttons */}
+                  <div 
+                    className="fixed right-4 flex flex-col gap-2 pointer-events-auto"
+                    style={{ 
+                      bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+                      zIndex: 600000
+                    }}
+                  >
+                    {/* View Incidents Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[INCIDENTS-BTN-OUTSIDE] Button pressed');
+                        setLiveTrafficPanelTab('view');
+                        setShowLiveTrafficPanel(true);
+                      }}
+                      className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                      data-testid="button-incidents-outside"
+                    >
+                      <AlertCircle className="h-5 w-5" />
+                    </Button>
+                    {/* Map View Toggle */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[MAPVIEW-BTN-OUTSIDE] Button pressed');
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ ...prev, isSatelliteView: !prev.isSatelliteView }));
+                      }}
+                      className={`h-10 w-10 rounded-xl shadow-lg ${mapControlState.isSatelliteView ? 'bg-green-600 text-white' : 'bg-white/90 text-gray-700'}`}
+                      data-testid="button-mapview-outside"
+                    >
+                      <Map className="h-5 w-5" />
+                    </Button>
+                    {/* Recenter Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[RECENTER-BTN-OUTSIDE] Button pressed');
+                        mapRef.current?.zoomToUserLocation();
+                      }}
+                      className="h-10 w-10 rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
+                      data-testid="button-recenter-outside"
+                    >
+                      <Crosshair className="h-5 w-5" />
+                    </Button>
+                    {/* Zoom In */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[ZOOMIN-BTN-OUTSIDE] Button pressed');
+                        mapRef.current?.staggeredZoomIn?.() || mapRef.current?.zoomIn();
+                      }}
+                      className="h-10 w-10 rounded-xl bg-white/90 text-gray-700 shadow-lg"
+                      data-testid="button-zoomin-outside"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                    {/* Zoom Out */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[ZOOMOUT-BTN-OUTSIDE] Button pressed');
+                        mapRef.current?.staggeredZoomOut?.() || mapRef.current?.zoomOut();
+                      }}
+                      className="h-10 w-10 rounded-xl bg-white/90 text-gray-700 shadow-lg"
+                      data-testid="button-zoomout-outside"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </Button>
+                    {/* 3D Toggle */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[3D-BTN-OUTSIDE] Button pressed');
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      className={`h-10 w-10 rounded-xl shadow-lg ${mapControlState.is3DMode ? 'bg-purple-600 text-white' : 'bg-white/90 text-gray-700'}`}
+                      data-testid="button-3d-outside"
+                    >
+                      <Box className="h-5 w-5" />
+                    </Button>
+                    {/* Traffic Toggle */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        console.log('[TRAFFIC-BTN-OUTSIDE] Button pressed');
+                        setShowTrafficLayer(prev => !prev);
+                      }}
+                      className={`h-10 w-10 rounded-xl shadow-lg ${showTrafficLayer ? 'bg-amber-500 text-white' : 'bg-white/90 text-gray-700'}`}
+                      data-testid="button-traffic-outside"
+                    >
+                      <Layers className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </>
+              )}
+
               {/* Legal Ownership - Bottom of screen */}
               <div className="fixed bottom-0 left-0 right-0 w-full z-[5] pointer-events-auto">
                 <MapLegalOwnership compact={true} className="sm:hidden" />
