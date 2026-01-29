@@ -869,19 +869,34 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // FIXED: Show traffic overlay when there's a route (preview or navigation mode)
   // This allows users to see traffic conditions on their planned route before starting navigation
   // CRITICAL FIX: Use persistent route reference during navigation when currentRoute is cleared
+  
+  // SYNCHRONOUS CACHE UPDATE: Populate persistentNavRouteRef DURING render (not in effect)
+  // This ensures the cache is available for traffic overlay immediately when a route is set
+  if (currentRoute?.routePath && currentRoute.routePath.length >= 2) {
+    if (!persistentNavRouteRef.current || 
+        persistentNavRouteRef.current.length !== currentRoute.routePath.length) {
+      persistentNavRouteRef.current = [...currentRoute.routePath];
+    }
+  }
+  
   const routePathForOverlay = currentRoute?.routePath || (isNavigating ? persistentNavRouteRef.current : null);
   const hasValidRoute = !!routePathForOverlay && routePathForOverlay.length > 0;
   const trafficOverlayEnabled = showTraffic && hasValidRoute;
   
-  // Debug: Only log when conditions change significantly
-  if (trafficOverlayEnabled) {
-    console.log('[TRAFFIC-OVERLAY] ✅ Traffic overlay ENABLED', {
+  // Debug: Log traffic overlay status for troubleshooting
+  useEffect(() => {
+    console.log('[TRAFFIC-OVERLAY-DEBUG] Status check:', {
       showTraffic,
       isNavigating,
-      routePathLength: routePathForOverlay?.length || 0,
-      usingPersistentCache: !currentRoute?.routePath && isNavigating
+      hasCurrentRoute: !!currentRoute?.routePath,
+      currentRouteLength: currentRoute?.routePath?.length || 0,
+      hasPersistentCache: !!persistentNavRouteRef.current,
+      persistentCacheLength: persistentNavRouteRef.current?.length || 0,
+      routePathForOverlayLength: routePathForOverlay?.length || 0,
+      hasValidRoute,
+      trafficOverlayEnabled
     });
-  }
+  }, [showTraffic, isNavigating, currentRoute?.routePath, hasValidRoute, trafficOverlayEnabled]);
   
   const routeTrafficData = useRouteTrafficOverlay(
     routePathForOverlay,
