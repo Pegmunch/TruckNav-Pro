@@ -75,11 +75,11 @@ export default function VehicleProfileSetup({ onClose, onProfileCreated, current
       case 'class_1_lorry':
         return {
           name: "My Class 1 Lorry",
-          height: heightUnit === 'metric' ? 3.2 : 10.5, // 3.2m (10.5 feet) for Class 1 Lorry
-          width: widthUnit === 'metric' ? 2.5 : 8.2, // 2.5m (8.2 feet) for Class 1 Lorry
-          length: units === 'metric' ? 8.5 : 27.9, // 8.5m (27.9 feet) for Class 1 Lorry
-          weight: 7.5, // 7.5 tonnes for Class 1 Lorry (light commercial)
-          axles: 2, // 2 axles for Class 1 Lorry
+          height: heightUnit === 'metric' ? 4.95 : 15.95, // 4.95m (15.95 feet) for Class 1 Lorry
+          width: widthUnit === 'metric' ? 2.55 : 8.0, // 2.55m (8 feet) for Class 1 Lorry
+          length: units === 'metric' ? 16.5 : 54.0, // 16.5m (54 feet) for Class 1 Lorry
+          weight: 44.0, // 44 tonnes for Class 1 Lorry (HGV articulated)
+          axles: 6, // 6 axles for Class 1 Lorry
           isHazmat: false,
         };
       case 'class_2_lorry':

@@ -1410,7 +1410,7 @@ function ComprehensiveMobileMenu({
                             <div className="text-xs text-muted-foreground mt-1">
                               {isCarProfileMode 
                                 ? 'L: 4.4m × H: 1.5m × W: 1.8m'
-                                : `H: ${selectedProfile?.height || 4.5}m × W: ${selectedProfile?.width || 2.5}m × L: ${selectedProfile?.length || 12}m`
+                                : `H: ${selectedProfile?.height || 4.95}m × W: ${selectedProfile?.width || 2.55}m × L: ${selectedProfile?.length || 16.5}m`
                               }
                             </div>
                           </div>
@@ -1437,7 +1437,7 @@ function ComprehensiveMobileMenu({
                             <div className="flex-1">
                               <div className="font-medium text-sm">Class 1 Truck</div>
                               <div className="text-xs text-muted-foreground">
-                                H: {selectedProfile?.height || 4.5}m × W: {selectedProfile?.width || 2.5}m × L: {selectedProfile?.length || 12}m
+                                H: {selectedProfile?.height || 4.95}m × W: {selectedProfile?.width || 2.55}m × L: {selectedProfile?.length || 16.5}m
                               </div>
                             </div>
                             {!isCarProfileMode && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
