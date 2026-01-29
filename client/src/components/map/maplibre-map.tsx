@@ -2038,8 +2038,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const firstCoord = routeCoordinates[0];
       const lastCoord = routeCoordinates[routeCoordinates.length - 1];
       
-      // Add truck icon at start of route - sized to match route line width
-      if (firstCoord && firstCoord[0] !== 0 && firstCoord[1] !== 0) {
+      // Add truck icon at start of route during navigation (after GO button pressed)
+      // This shows vehicle position at the southern end of the clipped route line
+      if (isNavigating && firstCoord && firstCoord[0] !== 0 && firstCoord[1] !== 0) {
         if (startMarkerRef.current) {
           startMarkerRef.current.remove();
         }
@@ -2055,6 +2056,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         startMarkerRef.current = new maplibregl.Marker({ element: truckEl, anchor: 'center' })
           .setLngLat(firstCoord as [number, number])
           .addTo(map.current);
+        console.log('[ROUTE-MARKER] Truck icon placed at route start:', firstCoord);
+      } else if (!isNavigating && startMarkerRef.current) {
+        // Remove truck icon when not navigating
+        startMarkerRef.current.remove();
+        startMarkerRef.current = null;
       }
       
       // Add destination flag at end of route (only when not navigating)
