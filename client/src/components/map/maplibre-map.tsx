@@ -228,6 +228,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
+  const onDoubleTapRef = useRef<(() => void) | undefined>(onDoubleTap);
   
   // Fly-by animation state
   const [isFlyByActive, setIsFlyByActive] = useState(false);
@@ -260,6 +261,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     }, 10000);
     return () => clearTimeout(timeout);
   }, [isLoaded]);
+  
+  // Keep onDoubleTap ref updated with latest callback (closure fix)
+  useEffect(() => {
+    onDoubleTapRef.current = onDoubleTap;
+  }, [onDoubleTap]);
   
   // CRITICAL: Delete MapLibre's transparent button color rule from its stylesheet
   // This is the ONLY reliable fix - MapLibre's CSS keeps re-inserting after overrides
@@ -1302,8 +1308,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           if (timeSinceLastTap < SINGLE_TAP_DOUBLE_TAP_DELAY && timeSinceLastTap > 50) {
             // Double-tap detected with single finger - trigger UI toggle
             console.log('[MAP-GESTURE] ✅ Single-finger double-tap detected - toggling UI');
-            if (onDoubleTap) {
-              onDoubleTap();
+            if (onDoubleTapRef.current) {
+              onDoubleTapRef.current();
             }
             lastSingleTap = 0; // Reset to prevent triple-tap
           } else {
