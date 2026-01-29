@@ -3207,38 +3207,38 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
-      // LARGER marker size for mobile visibility
-      const markerSize = 48; // Increased to 48px for better mobile visibility
-      const borderWidth = 3; // Thicker 3px border
+      // COMPACT marker size - matches route line width for clean appearance
+      const markerSize = 22; // Small, compressed to match route line width
+      const borderWidth = 2; // Thin border
       
       // Determine vehicle icon based on selected profile
       let vehicleIcon = '';
       const vehicleType = selectedProfile?.type || 'car';
       
-      // SVG vehicle icons for different types
-      const iconSize = Math.round(markerSize * 0.5);
+      // SVG vehicle icons for different types - compact size
+      const iconSize = Math.round(markerSize * 0.6);
       
       if (vehicleType.includes('lorry') || vehicleType.includes('tonne')) {
-        // Truck icon - simple blue outlined design matching route line style
+        // Compact truck icon - simple filled design
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
-            <rect x="2" y="6" width="12" height="10" rx="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-            <path d="M14 10 L18 10 L20 14 L20 16 L14 16 Z" fill="white" stroke="#3B82F6" stroke-width="2" stroke-linejoin="round"/>
-            <circle cx="6" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
-            <circle cx="17" cy="18" r="2" fill="white" stroke="#3B82F6" stroke-width="2"/>
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));">
+            <rect x="2" y="7" width="11" height="8" rx="1" fill="white"/>
+            <path d="M13 9 L17 9 L19 12 L19 15 L13 15 Z" fill="white"/>
+            <circle cx="6" cy="16" r="1.5" fill="#3B82F6"/>
+            <circle cx="16" cy="16" r="1.5" fill="#3B82F6"/>
           </svg>
         `;
       } else if (vehicleType.includes('caravan')) {
-        // Car with caravan icon
+        // Compact car with caravan icon
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));">
             <path d="M19.5 17c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5m-12 0c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m4.5-5V5h7l3 4v7h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V8h10v4h1m-1 0H2v4h2.22c.55-.61 1.33-1 2.28-1c.95 0 1.73.39 2.28 1H11v-4Z"/>
           </svg>
         `;
       } else {
-        // Default car icon
+        // Compact car icon
         vehicleIcon = `
-          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
+          <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="white" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));">
             <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
           </svg>
         `;
