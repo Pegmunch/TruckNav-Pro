@@ -148,22 +148,65 @@ function NavigationPageContent() {
   const [selectedProfile, setSelectedProfile] = useState<VehicleProfile | null>(activeProfile);
   const [currentRoute, setCurrentRoute] = useState<RouteWithViolations | null>(null);
   
-  // Car profile mode - when true, routes use car mode (fastest route, no truck restrictions)
+  // Vehicle type selection - supports multiple Class 1 trailer heights
   // SAFETY-CRITICAL: Persisted to localStorage to prevent accidental resets
-  // Default is ALWAYS false (Class 1 Truck) for maximum safety
-  const [isCarProfileMode, setIsCarProfileMode] = useState(() => {
-    const stored = localStorage.getItem('isCarProfileMode');
-    // SAFETY: Default to false (Truck mode) - never default to car mode
-    const value = stored === 'true';
-    console.log('[VEHICLE-PROFILE] Initial mode:', value ? 'Car' : 'Class 1 Truck');
-    return value;
+  // Default is ALWAYS 'class1_high' (Class 1 High Trailer) for maximum safety
+  type VehicleType = 'car' | 'class1_high' | 'class1_standard';
+  const [vehicleType, setVehicleType] = useState<VehicleType>(() => {
+    const stored = localStorage.getItem('vehicleType');
+    // Migration from old boolean isCarProfileMode
+    const oldStored = localStorage.getItem('isCarProfileMode');
+    if (stored) {
+      const value = stored as VehicleType;
+      console.log('[VEHICLE-PROFILE] Initial type:', value);
+      return value;
+    } else if (oldStored === 'true') {
+      console.log('[VEHICLE-PROFILE] Migrating from old car mode to new format');
+      return 'car';
+    }
+    // SAFETY: Default to Class 1 High Trailer - never default to car mode
+    console.log('[VEHICLE-PROFILE] Initial type: class1_high (default)');
+    return 'class1_high';
   });
   
-  // SAFETY: Persist vehicle mode changes to localStorage immediately
+  // Derived boolean for backward compatibility
+  const isCarProfileMode = vehicleType === 'car';
+  const setIsCarProfileMode = (isCarMode: boolean) => {
+    setVehicleType(isCarMode ? 'car' : 'class1_high');
+  };
+  
+  // SAFETY: Persist vehicle type changes to localStorage immediately
   useEffect(() => {
-    localStorage.setItem('isCarProfileMode', String(isCarProfileMode));
-    console.log('[VEHICLE-PROFILE] Mode changed to:', isCarProfileMode ? 'Car (fastest route)' : 'Class 1 Truck (truck restrictions)');
-  }, [isCarProfileMode]);
+    localStorage.setItem('vehicleType', vehicleType);
+    // Also update old key for any legacy code
+    localStorage.setItem('isCarProfileMode', String(vehicleType === 'car'));
+    const typeLabels: Record<VehicleType, string> = {
+      'car': 'Car (fastest route)',
+      'class1_high': 'Class 1 - Double Decker Trailer (4.95m / 15.95ft)',
+      'class1_standard': 'Class 1 : Standard Trailer (3.97m / 13.01ft)'
+    };
+    console.log('[VEHICLE-PROFILE] Type changed to:', typeLabels[vehicleType]);
+    
+    // Update profile dimensions based on vehicle type
+    if (vehicleType !== 'car') {
+      const heightValues: Record<Exclude<VehicleType, 'car'>, { metric: number; imperial: number }> = {
+        'class1_high': { metric: 4.95, imperial: 15.95 },
+        'class1_standard': { metric: 3.97, imperial: 13.01 }
+      };
+      const heights = heightValues[vehicleType as Exclude<VehicleType, 'car'>];
+      if (selectedProfile) {
+        const updatedProfile = {
+          ...selectedProfile,
+          height: heights.metric,
+          width: 2.55,
+          length: 16.5
+        };
+        console.log('[VEHICLE-PROFILE] Updating profile dimensions:', updatedProfile);
+        setSelectedProfile(updatedProfile);
+        setActiveProfile(updatedProfile);
+      }
+    }
+  }, [vehicleType]);
   
   // Traffic prediction for ETA adjustment
   const [predictedTrafficDelay, setPredictedTrafficDelay] = useState<number>(0);
@@ -4649,6 +4692,11 @@ function NavigationPageContent() {
           setSelectedProfile(profile);
           setActiveProfile(profile);
           queryClient.invalidateQueries({ queryKey: ["/api/vehicle-profiles"] });
+        }}
+        vehicleType={vehicleType}
+        onVehicleTypeChange={(type) => {
+          console.log('[PROFILE-SWITCH] Vehicle type changed to:', type);
+          setVehicleType(type);
         }}
         isCarProfileMode={isCarProfileMode}
         onCarProfileModeChange={(isCarMode) => {

@@ -112,7 +112,10 @@ interface ComprehensiveMobileMenuProps {
   // Vehicle
   selectedProfile: VehicleProfile | null;
   onProfileSelect: (profile: VehicleProfile) => void;
-  // Car profile mode - when true, uses car routing without truck restrictions
+  // Vehicle type selection - supports multiple trailer types
+  vehicleType?: 'car' | 'class1_high' | 'class1_standard';
+  onVehicleTypeChange?: (type: 'car' | 'class1_high' | 'class1_standard') => void;
+  // Legacy car profile mode - for backward compatibility
   isCarProfileMode?: boolean;
   onCarProfileModeChange?: (isCarMode: boolean) => void;
   // POI search
@@ -137,12 +140,24 @@ function ComprehensiveMobileMenu({
   onRequestAutoNavigation,
   selectedProfile,
   onProfileSelect,
+  vehicleType = 'class1_high',
+  onVehicleTypeChange,
   isCarProfileMode = false,
   onCarProfileModeChange,
   coordinates,
   onSelectFacility,
   hideTabsInInputMode = false
 }: ComprehensiveMobileMenuProps) {
+  // Use vehicleType if provided, otherwise derive from isCarProfileMode for backward compatibility
+  const activeVehicleType = vehicleType || (isCarProfileMode ? 'car' : 'class1_high');
+  const handleVehicleTypeChange = (type: 'car' | 'class1_high' | 'class1_standard') => {
+    if (onVehicleTypeChange) {
+      onVehicleTypeChange(type);
+    } else if (onCarProfileModeChange) {
+      // Fallback to legacy boolean mode
+      onCarProfileModeChange(type === 'car');
+    }
+  };
   const { formatDistance } = useMeasurement();
   const gps = useGPS();
   const { resetTour } = useOnboarding();
@@ -1405,12 +1420,16 @@ function ComprehensiveMobileMenu({
                           <div>
                             <div className="font-medium text-sm">Current Vehicle</div>
                             <div className="text-xs text-muted-foreground mt-1">
-                              {isCarProfileMode ? 'Car' : 'Class 1 Truck'}
+                              {activeVehicleType === 'car' ? 'Car' : 
+                               activeVehicleType === 'class1_high' ? 'Class 1 - Double Decker Trailer' : 
+                               'Class 1 : Standard Trailer'}
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
-                              {isCarProfileMode 
+                              {activeVehicleType === 'car' 
                                 ? 'L: 4.4m × H: 1.5m × W: 1.8m'
-                                : `H: ${selectedProfile?.height || 4.95}m × W: ${selectedProfile?.width || 2.55}m × L: ${selectedProfile?.length || 16.5}m`
+                                : activeVehicleType === 'class1_high'
+                                ? 'H: 4.95m (15.95ft) × W: 2.55m × L: 16.5m'
+                                : 'H: 3.97m (13.01ft) × W: 2.55m × L: 16.5m'
                               }
                             </div>
                           </div>
@@ -1419,28 +1438,50 @@ function ComprehensiveMobileMenu({
                       </CardContent>
                     </Card>
 
-                    {/* Vehicle Selection - Simple two options */}
+                    {/* Vehicle Selection - Three options */}
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Select Vehicle Type</Label>
                       
-                      {/* Class 1 Truck Option */}
+                      {/* Class 1 - Double Decker Trailer Option (High) */}
                       <Card 
                         className={cn(
                           "cursor-pointer transition-all hover:bg-muted/50 active:scale-[0.98]",
-                          !isCarProfileMode && "border-primary bg-primary/5"
+                          activeVehicleType === 'class1_high' && "border-primary bg-primary/5"
                         )}
-                        onClick={() => onCarProfileModeChange?.(false)}
+                        onClick={() => handleVehicleTypeChange('class1_high')}
                       >
                         <CardContent className="p-3">
                           <div className="flex items-center gap-3">
                             <Truck className="h-5 w-5 text-primary" />
                             <div className="flex-1">
-                              <div className="font-medium text-sm">Class 1 Truck</div>
+                              <div className="font-bold text-sm">Class 1 - Double Decker Trailer</div>
                               <div className="text-xs text-muted-foreground">
-                                H: {selectedProfile?.height || 4.95}m × W: {selectedProfile?.width || 2.55}m × L: {selectedProfile?.length || 16.5}m
+                                H: <span className="font-bold">15.95ft</span> (4.95m) × W: 2.55m × L: 16.5m
                               </div>
                             </div>
-                            {!isCarProfileMode && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
+                            {activeVehicleType === 'class1_high' && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      {/* Class 1 : Standard Trailer Option */}
+                      <Card 
+                        className={cn(
+                          "cursor-pointer transition-all hover:bg-muted/50 active:scale-[0.98]",
+                          activeVehicleType === 'class1_standard' && "border-primary bg-primary/5"
+                        )}
+                        onClick={() => handleVehicleTypeChange('class1_standard')}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <Truck className="h-5 w-5 text-primary" />
+                            <div className="flex-1">
+                              <div className="font-bold text-sm">Class 1 : Standard Trailer</div>
+                              <div className="text-xs text-muted-foreground">
+                                H: <span className="font-bold">13.01ft</span> (3.97m) × W: 2.55m × L: 16.5m
+                              </div>
+                            </div>
+                            {activeVehicleType === 'class1_standard' && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
                           </div>
                         </CardContent>
                       </Card>
@@ -1449,9 +1490,9 @@ function ComprehensiveMobileMenu({
                       <Card 
                         className={cn(
                           "cursor-pointer transition-all hover:bg-muted/50 active:scale-[0.98]",
-                          isCarProfileMode && "border-primary bg-primary/5"
+                          activeVehicleType === 'car' && "border-primary bg-primary/5"
                         )}
-                        onClick={() => onCarProfileModeChange?.(true)}
+                        onClick={() => handleVehicleTypeChange('car')}
                       >
                         <CardContent className="p-3">
                           <div className="flex items-center gap-3">
@@ -1462,13 +1503,13 @@ function ComprehensiveMobileMenu({
                                 L: 4.4m × H: 1.5m × W: 1.8m
                               </div>
                             </div>
-                            {isCarProfileMode && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
+                            {activeVehicleType === 'car' && <Badge variant="secondary" className="text-[10px]">Selected</Badge>}
                           </div>
                         </CardContent>
                       </Card>
                       
                       <p className="text-[10px] text-muted-foreground">
-                        {isCarProfileMode 
+                        {activeVehicleType === 'car' 
                           ? "Car mode: Fastest route without truck restrictions."
                           : "Truck mode: Routes avoid low bridges, weight limits and width restrictions."}
                       </p>
