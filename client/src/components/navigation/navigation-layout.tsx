@@ -35,14 +35,13 @@ export function NavigationLayout({
   return (
     <div 
       className="relative w-full h-screen overflow-visible pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]"
-      style={{ touchAction: 'none' }}
     >
       {/* Map content - full screen overlay container - pointer-events-none so touch events reach the actual map below */}
       {/* Child elements that need interaction (buttons, controls) have their own pointer-events-auto */}
       {/* CRITICAL: This container must NOT intercept touch events - they must pass through to the map AND to fixed-position button stacks */}
+      {/* FIXED: Removed touchAction: 'none' to allow double-tap gestures to reach the underlying map */}
       <div 
         className="absolute inset-0 lg:top-[calc(env(safe-area-inset-top,0px)+56px)] z-0 pointer-events-none"
-        style={{ touchAction: 'none' }}
       >
         {mapContent}
       </div>
