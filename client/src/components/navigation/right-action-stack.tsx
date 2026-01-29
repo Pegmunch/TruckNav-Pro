@@ -148,7 +148,7 @@ export function RightActionStack({
         pointerEvents: 'auto'
       }}
     >
-      {/* 1. Incidents - Red border (hidden when controls hidden or moved to top-right) */}
+      {/* 1. Incidents - Red border - ALWAYS VISIBLE (never hides on double-tap) */}
       {onViewIncidents && !hideIncidents && (
         <Button
           variant="ghost"
@@ -156,18 +156,16 @@ export function RightActionStack({
           {...createHandler(onViewIncidents, 'INCIDENTS')}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation pointer-events-auto",
-            "transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation pointer-events-auto"
           )}
-          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
+          style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-view-incidents"
         >
           <AlertCircle className={iconSize} />
         </Button>
       )}
 
-      {/* 2. Toggle Map View - Green/Gray border (hides with double-tap) */}
+      {/* 2. Toggle Map View - Green/Gray border - ALWAYS VISIBLE */}
       {onToggleMapView && (
         <Button
           variant="ghost"
@@ -176,11 +174,9 @@ export function RightActionStack({
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation pointer-events-auto",
-            isSatelliteView ? "border-green-500" : "border-gray-400",
-            "transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            isSatelliteView ? "border-green-500" : "border-gray-400"
           )}
-          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
+          style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-toggle-view"
         >
           <Map className={iconSize} />
@@ -188,7 +184,7 @@ export function RightActionStack({
       )}
 
 
-      {/* 3. Recenter - Gray border (hides with double-tap) */}
+      {/* 3. Recenter - Gray border - ALWAYS VISIBLE */}
       {onRecenter && (
         <Button
           variant="ghost"
@@ -196,11 +192,9 @@ export function RightActionStack({
           {...createHandler(onRecenter, 'RECENTER')}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation pointer-events-auto",
-            "transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation pointer-events-auto"
           )}
-          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
+          style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-recenter"
         >
           <Crosshair className={iconSize} />
@@ -249,7 +243,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 6. Compass - Blue border (hides with double-tap) */}
+      {/* 6. Compass - Blue border - ALWAYS VISIBLE */}
       {!hideCompass && onCompassClick && (
         <Button
           variant="ghost"
@@ -257,11 +251,9 @@ export function RightActionStack({
           {...createHandler(onCompassClick, 'COMPASS')}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-blue-500 shadow-lg select-none touch-manipulation pointer-events-auto",
-            "transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-blue-500 shadow-lg select-none touch-manipulation pointer-events-auto"
           )}
-          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
+          style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-compass-reset"
         >
           <Compass 
@@ -271,7 +263,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 7. 3D Toggle - Blue/Gray border (hides with double-tap) */}
+      {/* 7. 3D Toggle - Blue/Gray border - ALWAYS VISIBLE */}
       {onToggle3D && !hide3D && (
         <Button
           variant="ghost"
@@ -280,18 +272,16 @@ export function RightActionStack({
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation pointer-events-auto",
-            is3DMode ? "border-blue-500" : "border-gray-400",
-            "transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            is3DMode ? "border-blue-500" : "border-gray-400"
           )}
-          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
+          style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-toggle-3d"
         >
           <Box className={iconSize} />
         </Button>
       )}
 
-      {/* 8. Traffic Toggle - Orange/Gray border (hides with double-tap) */}
+      {/* 8. Traffic Toggle - Orange/Gray border - ALWAYS VISIBLE */}
       {onToggleTraffic && (
         <Button
           variant="ghost"
@@ -300,11 +290,9 @@ export function RightActionStack({
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation pointer-events-auto",
-            showTraffic ? "border-orange-500" : "border-gray-400",
-            "transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            showTraffic ? "border-orange-500" : "border-gray-400"
           )}
-          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
+          style={{ touchAction: 'manipulation', pointerEvents: 'auto' }}
           data-testid="button-toggle-traffic"
         >
           <Layers className={iconSize} />
