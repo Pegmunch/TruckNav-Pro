@@ -1,15 +1,11 @@
 import { AlertCircle, Menu, Navigation, X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { useState, useEffect, useCallback, useRef, type PointerEvent, type MouseEvent, type TouchEvent } from 'react';
+import { useState, useEffect, useCallback, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } from '@/lib/voice-commands';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 import { navigationVoice } from '@/lib/navigation-voice';
 import { getAlertSoundsService } from '@/lib/alert-sounds';
 
-// Detect iOS Safari for touch-specific handling
-const isIOSSafari = typeof navigator !== 'undefined' && 
-  /iPhone|iPad|iPod/.test(navigator.userAgent) && 
-  !('MSStream' in window);
 
 interface LeftActionStackProps {
   onNavigate?: () => void;
@@ -101,52 +97,13 @@ export function LeftActionStack({
     }
   };
 
-  // Per-button guard to prevent double-firing from both touch and click events
-  const handledByTouchRef = useRef<Record<string, boolean>>({});
-  
-  // iOS Safari-optimized handler using onTouchStart for immediate response
+  // Simple click handler - works reliably across all platforms
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
-    // Use onTouchStart for iOS Safari - more reliable than onPointerDown
-    onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[LEFT-BTN-${label}] 🔵 Touch started (iOS: ${isIOSSafari})`);
-      handledByTouchRef.current[label] = true;
-      hapticButtonPress();
-      console.log(`[LEFT-BTN-${label}] ✅ Pressed via touchStart`);
-      callback?.();
-      setTimeout(() => { handledByTouchRef.current[label] = false; }, 500);
-    },
-    onTouchEnd: (e: TouchEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // Skip if already handled by touch
-      if (handledByTouchRef.current[label]) {
-        console.log(`[LEFT-BTN-${label}] ⏭️ Skipped pointerDown (already handled by touch)`);
-        return;
-      }
-      console.log(`[LEFT-BTN-${label}] 🔵 PointerDown (${e.pointerType})`);
-      handledByTouchRef.current[label] = true;
-      hapticButtonPress();
-      console.log(`[LEFT-BTN-${label}] ✅ Pressed via pointerDown`);
-      callback?.();
-      setTimeout(() => { handledByTouchRef.current[label] = false; }, 500);
-    },
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      // Skip if already handled
-      if (handledByTouchRef.current[label]) {
-        console.log(`[LEFT-BTN-${label}] ⏭️ Skipped onClick (already handled)`);
-        return;
-      }
-      console.log(`[LEFT-BTN-${label}] 🔵 Click event`);
+      console.log(`[LEFT-BTN-${label}] ✅ Clicked`);
       hapticButtonPress();
-      console.log(`[LEFT-BTN-${label}] ✅ Pressed via onClick`);
       callback?.();
     }
   });

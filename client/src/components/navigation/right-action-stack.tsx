@@ -1,5 +1,5 @@
 import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from 'lucide-react';
-import { useRef, useState, useCallback, type PointerEvent, type MouseEvent, type TouchEvent } from 'react';
+import { useRef, useCallback, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
@@ -57,7 +57,6 @@ export function RightActionStack({
   // Minimum 44px touch target for accessibility on tablets/touch devices
   const buttonSize = compact ? "h-9 w-9 min-h-[36px] min-w-[36px]" : "h-11 w-11 min-h-[44px] min-w-[44px]";
   const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
-  const handledByPointerRef = useRef<Record<string, boolean>>({});
   const zoomCooldownRef = useRef<boolean>(false);
   
   // Double-tap detection for x2 zoom multiplier during navigation
@@ -92,45 +91,13 @@ export function RightActionStack({
     }, 400);
   }, []);
   
+  // Simple click handler - works reliably across all platforms
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
-    onTouchStart: (e: TouchEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[RIGHT-BTN-${label}] 🔵 Touch started`);
-      handledByPointerRef.current[label] = true;
-      hapticButtonPress();
-      console.log(`[RIGHT-BTN-${label}] ✅ Pressed via touchStart`);
-      callback?.();
-      setTimeout(() => { handledByPointerRef.current[label] = false; }, 500);
-    },
-    onTouchEnd: (e: TouchEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (handledByPointerRef.current[label]) {
-        console.log(`[RIGHT-BTN-${label}] ⏭️ Skipped pointerDown (already handled by touch)`);
-        return;
-      }
-      console.log(`[RIGHT-BTN-${label}] 🔵 PointerDown (${e.pointerType})`);
-      handledByPointerRef.current[label] = true;
-      hapticButtonPress();
-      console.log(`[RIGHT-BTN-${label}] ✅ Pressed via pointerDown`);
-      callback?.();
-      setTimeout(() => { handledByPointerRef.current[label] = false; }, 500);
-    },
     onClick: (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (handledByPointerRef.current[label]) {
-        console.log(`[RIGHT-BTN-${label}] ⏭️ Skipped onClick (already handled)`);
-        return;
-      }
-      console.log(`[RIGHT-BTN-${label}] 🔵 Click event`);
+      console.log(`[RIGHT-BTN-${label}] ✅ Clicked`);
       hapticButtonPress();
-      console.log(`[RIGHT-BTN-${label}] ✅ Pressed via onClick`);
       callback?.();
     }
   });
