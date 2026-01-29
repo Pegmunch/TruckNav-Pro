@@ -958,8 +958,9 @@ function NavigationPageContent() {
   }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
   
   // Calculate next turn from route and GPS position
+  // Runs in both Navigation mode AND Preview mode so turn indicators appear in both
   useEffect(() => {
-    if (!isNavigating || !currentRoute) {
+    if ((!isNavigating && !isShowingPreview) || !currentRoute) {
       setNextTurn(null);
       return;
     }
@@ -1317,7 +1318,7 @@ function NavigationPageContent() {
         });
       }
     }
-  }, [isNavigating, currentRoute, gpsData?.position]);
+  }, [isNavigating, isShowingPreview, currentRoute, gpsData?.position]);
   
   // Announce turn-by-turn navigation with voice
   useEffect(() => {
