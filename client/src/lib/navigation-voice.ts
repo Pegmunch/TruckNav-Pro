@@ -129,7 +129,7 @@ export class NavigationVoice {
     'sl-SI': ['sl-SI', 'sl_SI', 'sl'],
   };
 
-  // Default settings - female voice at 0.8 rate, motorway-only mode
+  // Default settings - female voice at 0.8 rate, all turns announced
   private readonly DEFAULT_SETTINGS: VoiceSettings = {
     enabled: true,
     voice: null,
@@ -141,8 +141,8 @@ export class NavigationVoice {
     announceSpeed: false,
     announceLaneGuidance: true,
     language: 'en-GB', // Default to British English
-    motorwayOnlyMode: true, // Only announce on motorways
-    preferFemaleVoice: true // Prefer female voices
+    motorwayOnlyMode: false, // Announce ALL turns and lane selections, not just motorways
+    preferFemaleVoice: true // Prefer female English voices
   };
   
   private constructor() {
