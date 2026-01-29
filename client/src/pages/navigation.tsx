@@ -52,6 +52,7 @@ import { MobileFAB } from "@/components/navigation/mobile-fab";
 import { CompactTripStrip } from "@/components/navigation/compact-trip-strip";
 import { SimplifiedRouteDrawer } from "@/components/navigation/simplified-route-drawer";
 import TurnIndicator from "@/components/navigation/turn-indicator";
+import MapTurnLaneIndicator from "@/components/navigation/map-turn-lane-indicator";
 import ComprehensiveMobileMenu from "@/components/navigation/comprehensive-mobile-menu";
 import { NavigationHeader } from "@/components/navigation/navigation-header";
 import { QuickSettingsPanel } from "@/components/navigation/quick-settings-panel";
@@ -380,6 +381,9 @@ function NavigationPageContent() {
   // Dynamic distance remaining that counts down during navigation
   const [dynamicDistanceRemaining, setDynamicDistanceRemaining] = useState<number>(0);
   
+  // Dynamic ETA that counts down during navigation (in minutes)
+  const [dynamicEtaMinutes, setDynamicEtaMinutes] = useState<number>(0);
+  
   // Route cancellation guard to prevent race condition
   const isCancellingRouteRef = useRef(false);
   
@@ -440,9 +444,12 @@ function NavigationPageContent() {
     setCurrentRoute(newRoute);
     // Reset route progress tracking for new route
     routeProgressRef.current = 0;
-    // Reset distance remaining with new route distance
+    // Reset distance and ETA remaining with new route values
     if (newRoute.distance) {
       setDynamicDistanceRemaining(newRoute.distance);
+    }
+    if (newRoute.duration) {
+      setDynamicEtaMinutes(Math.ceil(newRoute.duration / 60));
     }
   }, []);
 
@@ -1190,6 +1197,16 @@ function NavigationPageContent() {
       const remainingDistance = totalRouteLength - projectedDistanceAlongRoute;
       if (remainingDistance >= 0) {
         setDynamicDistanceRemaining(remainingDistance);
+        
+        // Update dynamic ETA based on proportion of route remaining
+        // Use the original route duration and scale it by remaining distance
+        const originalDuration = currentRoute.duration || 0;
+        const originalDistance = currentRoute.distance || totalRouteLength;
+        if (originalDistance > 0 && originalDuration > 0) {
+          const proportionRemaining = remainingDistance / originalDistance;
+          const remainingSeconds = originalDuration * proportionRemaining;
+          setDynamicEtaMinutes(Math.ceil(remainingSeconds / 60));
+        }
       }
 
       // Scan ahead from projected position to find the next significant turn (>25° angle change)
@@ -1206,20 +1223,31 @@ function NavigationPageContent() {
         const nextPoint = routePath[i + 1];
         
         // Calculate turn angle using cross product for correct left/right determination
-        // This matches the blue route line direction exactly
+        // 
+        // HEADING-UP NAVIGATION MODE ASSUMPTION:
+        // This app uses heading-up map rotation during navigation, where the route line
+        // always points upward (toward the top of screen) and the map rotates with the
+        // user's heading. In this mode:
+        // - The user is always "facing" up the screen along the route line
+        // - LEFT turn = route curves to the left side of screen
+        // - RIGHT turn = route curves to the right side of screen
+        //
+        // The turn direction is calculated relative to the route path (travel direction),
+        // NOT relative to compass north. This is correct for heading-up navigation.
         
-        // Vector from prevPoint to currPoint (incoming direction)
+        // Vector from prevPoint to currPoint (incoming direction along route)
         const inX = currPoint.lng - prevPoint.lng;
         const inY = currPoint.lat - prevPoint.lat;
         
-        // Vector from currPoint to nextPoint (outgoing direction)
+        // Vector from currPoint to nextPoint (outgoing direction along route)
         const outX = nextPoint.lng - currPoint.lng;
         const outY = nextPoint.lat - currPoint.lat;
         
-        // 2D cross product in geographic coords (X=lng, Y=lat):
+        // 2D cross product determines rotation direction from incoming to outgoing:
         // cross = inX * outY - inY * outX
-        // In standard right-handed coords: negative cross = clockwise = RIGHT turn
-        // Positive cross = counterclockwise = LEFT turn
+        // For heading-up display where route line points UP:
+        // - Positive cross = route curves RIGHT relative to travel direction
+        // - Negative cross = route curves LEFT relative to travel direction
         const crossProduct = inX * outY - inY * outX;
         
         // Calculate magnitude of turn using dot product for angle
@@ -1230,9 +1258,9 @@ function NavigationPageContent() {
         const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
         
         // Apply sign from cross product:
-        // crossProduct < 0 → clockwise rotation → RIGHT turn (positive angle)
-        // crossProduct > 0 → counterclockwise → LEFT turn (negative angle)
-        let turnAngle = crossProduct < 0 ? turnMagnitude : -turnMagnitude;
+        // crossProduct > 0 → RIGHT turn relative to travel direction (positive angle)
+        // crossProduct < 0 → LEFT turn relative to travel direction (negative angle)
+        let turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
         
         // Check if this is a significant turn
         if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
@@ -2392,6 +2420,13 @@ function NavigationPageContent() {
       setCurrentRoute(route);
       // Reset route progress tracking for new route
       routeProgressRef.current = 0;
+      // Initialize dynamic distance and ETA for new route
+      if (route.distance) {
+        setDynamicDistanceRemaining(route.distance);
+      }
+      if (route.duration) {
+        setDynamicEtaMinutes(Math.ceil(route.duration / 60));
+      }
       // SAFETY: Also store in persistent ref for navigation start resilience
       lastCalculatedRouteRef.current = route;
       // Update route ID ref SYNCHRONOUSLY before any callbacks can fire
@@ -2702,6 +2737,13 @@ function NavigationPageContent() {
       setCurrentRoute(newRoute);
       // Reset route progress tracking for new route
       routeProgressRef.current = 0;
+      // Initialize dynamic distance and ETA for alternative route
+      if (newRoute.distance) {
+        setDynamicDistanceRemaining(newRoute.distance);
+      }
+      if (newRoute.duration) {
+        setDynamicEtaMinutes(Math.ceil(newRoute.duration / 60));
+      }
       // SAFETY: Store in persistent ref for navigation resilience
       lastCalculatedRouteRef.current = newRoute;
       
@@ -3922,14 +3964,19 @@ function NavigationPageContent() {
                         />
                       )}
                       
-                      {/* Turn Indicator - Large bubble at top center */}
+                      {/* Map Turn + Lane Indicator - Large bubble at top left with lane guidance */}
                       {/* Only show when distance is within thresholds: 1000ft/500ft/100ft (imperial) or 300m/150m/30m (metric) */}
                       {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
-                        <TurnIndicator
-                          direction={nextTurn.direction}
-                          distance={nextTurn.distance}
+                        <MapTurnLaneIndicator
+                          turnInfo={nextTurn}
                           unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                          roadName={nextTurn.roadName}
+                          laneInfo={currentRoute?.laneGuidance?.[0] ? {
+                            lanes: currentRoute.laneGuidance[0].laneOptions?.map(l => ({
+                              direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
+                              isRecommended: l.recommended || false
+                            })) || []
+                          } : null}
+                          isVisible={true}
                         />
                       )}
                       
@@ -3957,7 +4004,7 @@ function NavigationPageContent() {
                   topStrip={
                     currentRoute ? (
                       <CompactTripStrip
-                        eta={currentRoute.duration || 0}
+                        eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute.duration || 0)}
                         distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
                         isOnline={navigator.onLine}
                         gpsStatus={gpsData?.status || 'unavailable'}
@@ -4513,20 +4560,19 @@ function NavigationPageContent() {
                       {/* CRITICAL: Use isNavigating instead of isNavUIActive to prevent HUD showing during preview mode */}
                       {isNavigating && (
                   <>
-                    {/* 3. Turn Indicator - Only show at 1000ft/500ft/100ft thresholds */}
+                    {/* 3. Map Turn + Lane Indicator - Only show at 1000ft/500ft/100ft thresholds */}
                     {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
-                      <div 
-                        className="fixed left-0 right-0 z-[190] pointer-events-none"
-                        style={{ top: 'calc(112px + var(--safe-area-top, 0px))' }}
-                      >
-                        <TurnIndicator
-                          direction={nextTurn.direction}
-                          distance={nextTurn.distance}
-                          unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                          roadName={nextTurn.roadName}
-                          className="!relative !left-1/2 !-translate-x-1/2"
-                        />
-                      </div>
+                      <MapTurnLaneIndicator
+                        turnInfo={nextTurn}
+                        unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
+                        laneInfo={currentRoute?.laneGuidance?.[0] ? {
+                          lanes: currentRoute.laneGuidance[0].laneOptions?.map(l => ({
+                            direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
+                            isRecommended: l.recommended || false
+                          })) || []
+                        } : null}
+                        isVisible={true}
+                      />
                     )}
 
                     {/* Route Mask - Solid white mask covering bottom area behind speedometer */}
