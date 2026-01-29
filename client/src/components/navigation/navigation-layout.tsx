@@ -34,8 +34,9 @@ export function NavigationLayout({
   
   return (
     <div className="relative w-full h-screen overflow-visible pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]">
-      {/* Map content - full screen overlay container - pointer-events-auto to allow map interaction */}
-      <div className="absolute inset-0 lg:top-[calc(env(safe-area-inset-top,0px)+56px)] z-0 pointer-events-auto">
+      {/* Map content - full screen overlay container - pointer-events-none so touch events reach the actual map below */}
+      {/* Child elements that need interaction (buttons, controls) have their own pointer-events-auto */}
+      <div className="absolute inset-0 lg:top-[calc(env(safe-area-inset-top,0px)+56px)] z-0 pointer-events-none">
         {mapContent}
       </div>
 
