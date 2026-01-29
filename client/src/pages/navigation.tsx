@@ -3138,6 +3138,13 @@ function NavigationPageContent() {
     isStartingNavigationRef.current = true;
     console.log('[NAV-ACTIVATION] 🔒 Navigation transition guard SET - route clearing blocked');
     
+    // CRITICAL FIX: Set isLocalNavActive VERY EARLY so MapLibreMap knows navigation is starting
+    // This prevents the route/traffic layers from being cleared during async operations
+    // Must happen BEFORE any async calls (ensureRouteReady) or state changes (setIsShowingPreview)
+    setIsLocalNavActive(true);
+    localStorage.setItem('navigation_ui_active', 'true');
+    console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
+    
     try {
       // CRITICAL: Cancel any active fly-by animation to prevent camera conflicts
       if (mapRef.current) {
@@ -3185,11 +3192,9 @@ function NavigationPageContent() {
       document.body.classList.add('navigation-active');
       document.documentElement.classList.add('overlay-safe-mode');
       
-      // CRITICAL FIX: Set isLocalNavActive EARLY so SpeedometerHUD renders with correct state
-      // This prevents the STOP button from being disabled when the menu closes
-      setIsLocalNavActive(true);
-      localStorage.setItem('navigation_ui_active', 'true');
-      console.log('[NAV-ACTIVATION] ✅ Navigation UI state set EARLY to prevent disabled STOP button');
+      // NOTE: isLocalNavActive was already set VERY EARLY (before async operations)
+      // to ensure MapLibreMap preserves route/traffic layers during state transitions
+      console.log('[NAV-ACTIVATION] ✅ Navigation UI state already set - verifying SpeedometerHUD state');
       
       // Reset any stale cancellation guard
       isCancellingRouteRef.current = false;
