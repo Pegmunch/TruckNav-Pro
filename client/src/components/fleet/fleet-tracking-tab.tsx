@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Radio, RefreshCw, MapPin, Truck, AlertCircle, Satellite, Map, Plus, Minus, Search, X, Navigation } from 'lucide-react';
+import { Radio, RefreshCw, MapPin, Truck, AlertCircle, Satellite, Map, Plus, Minus, Search, X, Navigation, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import L from 'leaflet';
@@ -34,6 +34,22 @@ interface FleetGpsData {
   offlineCount: number;
 }
 
+interface TrafficIncident {
+  id: string;
+  type: string;
+  severity: string;
+  title: string;
+  description?: string;
+  coordinates: { lat: number; lng: number };
+  roadName?: string;
+  direction?: string;
+  reportedBy?: string;
+  reporterName?: string;
+  isActive: boolean;
+  reportedAt: string;
+  expiresAt?: string;
+}
+
 export function FleetTrackingTab() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -46,6 +62,8 @@ export function FleetTrackingTab() {
   const [clickCoordinates, setClickCoordinates] = useState<{ lat: number; lng: number; screenX: number; screenY: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<VehiclePosition | null>(null);
+  const [showIncidents, setShowIncidents] = useState(true);
+  const incidentMarkersRef = useRef<globalThis.Map<string, L.Marker>>(new globalThis.Map());
 
   const { data: fleetData, isLoading, refetch, isFetching, isError: isFleetError } = useQuery<FleetGpsData>({
     queryKey: ['/api/enterprise/gps/fleet'],
@@ -74,6 +92,20 @@ export function FleetTrackingTab() {
       return response.json();
     },
     refetchInterval: 30000,
+  });
+
+  // Fetch active traffic incidents (network-wide)
+  const { data: trafficIncidents = [] } = useQuery<TrafficIncident[]>({
+    queryKey: ['/api/traffic-incidents', 'active'],
+    queryFn: async () => {
+      const response = await fetch('/api/traffic-incidents?active=true');
+      if (!response.ok) {
+        console.warn('[Fleet] Traffic incidents API unavailable');
+        return [];
+      }
+      return response.json();
+    },
+    refetchInterval: 60000, // Refresh every minute
   });
 
   const handleSearchVehicle = useCallback(() => {
@@ -222,6 +254,88 @@ export function FleetTrackingTab() {
     });
   }, [fleetData?.vehicles]);
 
+  // Render traffic incident markers
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    // Clear existing incident markers
+    incidentMarkersRef.current.forEach((marker: L.Marker) => marker.remove());
+    incidentMarkersRef.current.clear();
+
+    // Don't render if incidents are hidden
+    if (!showIncidents) return;
+
+    trafficIncidents.forEach(incident => {
+      const coords = incident.coordinates;
+      if (!coords) return;
+
+      // Color based on severity
+      const severityColors: Record<string, string> = {
+        critical: '#ef4444', // red
+        high: '#f97316', // orange
+        medium: '#eab308', // yellow
+        low: '#3b82f6', // blue
+      };
+      const color = severityColors[incident.severity] || '#6b7280';
+
+      // Icon based on type
+      const typeIcons: Record<string, string> = {
+        accident: '🚗💥',
+        police: '🚔',
+        road_closure: '🚧',
+        construction: '🔧',
+        heavy_traffic: '🚦',
+        obstacle: '⚠️',
+        hazmat_spill: '☢️',
+      };
+      const emoji = typeIcons[incident.type] || '⚠️';
+
+      const icon = L.divIcon({
+        className: 'traffic-incident-marker',
+        html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4); font-size: 14px;">
+          ${emoji}
+        </div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -20],
+      });
+
+      // Calculate time remaining before expiration
+      let timeRemaining = '';
+      if (incident.expiresAt) {
+        const expiresAt = new Date(incident.expiresAt);
+        const now = new Date();
+        const diffMs = expiresAt.getTime() - now.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins > 60) {
+          timeRemaining = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+        } else if (diffMins > 0) {
+          timeRemaining = `${diffMins}m`;
+        } else {
+          timeRemaining = 'Expiring soon';
+        }
+      }
+
+      const marker = L.marker([coords.lat, coords.lng], { icon })
+        .addTo(mapInstanceRef.current!)
+        .bindPopup(`
+          <div style="font-size: 12px; min-width: 180px;">
+            <strong style="color: ${color}; font-size: 14px;">${incident.title}</strong><br/>
+            <strong>Type:</strong> ${incident.type.replace('_', ' ')}<br/>
+            <strong>Severity:</strong> <span style="color: ${color};">${incident.severity}</span><br/>
+            ${incident.roadName ? `<strong>Road:</strong> ${incident.roadName}<br/>` : ''}
+            ${incident.direction ? `<strong>Direction:</strong> ${incident.direction}<br/>` : ''}
+            ${incident.description ? `<strong>Details:</strong> ${incident.description}<br/>` : ''}
+            <strong>Reported:</strong> ${new Date(incident.reportedAt).toLocaleTimeString()}<br/>
+            ${timeRemaining ? `<strong>Expires in:</strong> ${timeRemaining}<br/>` : ''}
+            <strong>Source:</strong> ${incident.reportedBy === 'user' ? (incident.reporterName || 'Driver Report') : 'Traffic Authority'}
+          </div>
+        `);
+
+      incidentMarkersRef.current.set(incident.id, marker);
+    });
+  }, [trafficIncidents, showIncidents]);
+
   const handleVehicleClick = (vehicle: VehiclePosition) => {
     setSelectedVehicle(vehicle);
     if (mapInstanceRef.current) {
@@ -286,7 +400,7 @@ export function FleetTrackingTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">{t('fleet.tracking.totalVehicles')}</CardTitle>
@@ -328,6 +442,28 @@ export function FleetTrackingTab() {
             <div className="text-2xl font-bold text-gray-600" data-testid="text-offline-count">{fleetData?.offlineCount || 0}</div>
           </CardContent>
         </Card>
+        <Card className={showIncidents ? "ring-2 ring-orange-500" : ""}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-orange-500" />
+              Traffic Incidents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold text-orange-600" data-testid="text-incidents-count">{trafficIncidents.length}</div>
+              <Button
+                variant={showIncidents ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowIncidents(!showIncidents)}
+                className="gap-1"
+              >
+                {showIncidents ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                {showIncidents ? 'On' : 'Off'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -341,6 +477,16 @@ export function FleetTrackingTab() {
               <CardDescription>{t('fleet.tracking.realTimePositions')}</CardDescription>
             </div>
             <div className="flex gap-1 flex-wrap justify-end">
+              <Button
+                variant={showIncidents ? "default" : "outline"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowIncidents(!showIncidents)}
+                data-testid="button-toggle-incidents"
+                title={showIncidents ? 'Hide traffic incidents' : 'Show traffic incidents'}
+              >
+                <AlertTriangle className={`w-4 h-4 ${showIncidents ? 'text-white' : 'text-orange-500'}`} />
+              </Button>
               <Button
                 variant={isSatelliteView ? "default" : "outline"}
                 size="icon"
