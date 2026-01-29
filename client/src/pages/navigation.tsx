@@ -4337,134 +4337,207 @@ function NavigationPageContent() {
               )}
 
               {/* NAVIGATION MODE BUTTONS - Rendered OUTSIDE NavigationLayout to avoid parent container issues */}
-              {/* These buttons are rendered as separate fixed elements just like Preview mode buttons which work correctly */}
+              {/* These buttons are rendered as separate fixed elements with iOS-specific touch handlers */}
               {mobileNavMode === 'navigate' && showNavControls && (
                 <>
-                  {/* Left Stack - Incident, Mute, Voice buttons */}
+                  {/* Left Stack - Incident Report button */}
                   <div 
-                    className="fixed left-4 flex flex-col gap-3 pointer-events-auto"
+                    className="fixed left-4 flex flex-col gap-3"
                     style={{ 
                       bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-                      zIndex: 600000
+                      zIndex: 600000,
+                      pointerEvents: 'auto',
+                      touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent'
                     }}
                   >
-                    {/* Incident Report Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[INCIDENT-BTN-OUTSIDE] 🟠 Button pressed - opening dialog');
+                    {/* Incident Report Button - iOS touch-optimized */}
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[INCIDENT-BTN-OUTSIDE] 🟠 Touch event - opening dialog');
                         setShowIncidentReportDialog(true);
                       }}
-                      className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[INCIDENT-BTN-OUTSIDE] 🟠 Click event - opening dialog');
+                        setShowIncidentReportDialog(true);
+                      }}
+                      className="h-12 w-12 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg flex items-center justify-center"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-incident-outside"
                     >
-                      <AlertCircle className="h-5 w-5" />
-                    </Button>
+                      <AlertCircle className="h-6 w-6" />
+                    </button>
                   </div>
 
-                  {/* Right Stack - Zoom, Recenter, 3D, Traffic, Map View, Incidents buttons */}
+                  {/* Right Stack - All control buttons with iOS touch handlers */}
                   <div 
-                    className="fixed right-4 flex flex-col gap-2 pointer-events-auto"
+                    className="fixed right-4 flex flex-col gap-2"
                     style={{ 
                       bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-                      zIndex: 600000
+                      zIndex: 600000,
+                      pointerEvents: 'auto',
+                      touchAction: 'manipulation',
+                      WebkitTapHighlightColor: 'transparent'
                     }}
                   >
                     {/* View Incidents Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[INCIDENTS-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[INCIDENTS-BTN-OUTSIDE] Touch event');
                         setLiveTrafficPanelTab('view');
                         setShowLiveTrafficPanel(true);
                       }}
-                      className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[INCIDENTS-BTN-OUTSIDE] Click event');
+                        setLiveTrafficPanelTab('view');
+                        setShowLiveTrafficPanel(true);
+                      }}
+                      className="h-12 w-12 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg flex items-center justify-center"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-incidents-outside"
                     >
-                      <AlertCircle className="h-5 w-5" />
-                    </Button>
+                      <AlertCircle className="h-6 w-6" />
+                    </button>
                     {/* Map View Toggle */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[MAPVIEW-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[MAPVIEW-BTN-OUTSIDE] Touch event');
                         mapRef.current?.toggleMapView();
                         setMapControlState(prev => ({ ...prev, isSatelliteView: !prev.isSatelliteView }));
                       }}
-                      className={`h-10 w-10 rounded-xl shadow-lg ${mapControlState.isSatelliteView ? 'bg-green-600 text-white' : 'bg-white/90 text-gray-700'}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[MAPVIEW-BTN-OUTSIDE] Click event');
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => ({ ...prev, isSatelliteView: !prev.isSatelliteView }));
+                      }}
+                      className={`h-12 w-12 rounded-xl shadow-lg flex items-center justify-center active:scale-95 ${mapControlState.isSatelliteView ? 'bg-green-600 text-white' : 'bg-white/90 text-gray-700'}`}
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-mapview-outside"
                     >
-                      <Map className="h-5 w-5" />
-                    </Button>
+                      <Map className="h-6 w-6" />
+                    </button>
                     {/* Recenter Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[RECENTER-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[RECENTER-BTN-OUTSIDE] Touch event');
                         mapRef.current?.zoomToUserLocation();
                       }}
-                      className="h-10 w-10 rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[RECENTER-BTN-OUTSIDE] Click event');
+                        mapRef.current?.zoomToUserLocation();
+                      }}
+                      className="h-12 w-12 rounded-xl bg-blue-500 hover:bg-blue-600 active:bg-blue-700 active:scale-95 text-white shadow-lg flex items-center justify-center"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-recenter-outside"
                     >
-                      <Crosshair className="h-5 w-5" />
-                    </Button>
+                      <Crosshair className="h-6 w-6" />
+                    </button>
                     {/* Zoom In */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[ZOOMIN-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[ZOOMIN-BTN-OUTSIDE] Touch event');
                         mapRef.current?.staggeredZoomIn?.() || mapRef.current?.zoomIn();
                       }}
-                      className="h-10 w-10 rounded-xl bg-white/90 text-gray-700 shadow-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[ZOOMIN-BTN-OUTSIDE] Click event');
+                        mapRef.current?.staggeredZoomIn?.() || mapRef.current?.zoomIn();
+                      }}
+                      className="h-12 w-12 rounded-xl bg-white/90 hover:bg-white text-gray-700 shadow-lg flex items-center justify-center active:scale-95"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-zoomin-outside"
                     >
-                      <Plus className="h-5 w-5" />
-                    </Button>
+                      <Plus className="h-6 w-6" />
+                    </button>
                     {/* Zoom Out */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[ZOOMOUT-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[ZOOMOUT-BTN-OUTSIDE] Touch event');
                         mapRef.current?.staggeredZoomOut?.() || mapRef.current?.zoomOut();
                       }}
-                      className="h-10 w-10 rounded-xl bg-white/90 text-gray-700 shadow-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[ZOOMOUT-BTN-OUTSIDE] Click event');
+                        mapRef.current?.staggeredZoomOut?.() || mapRef.current?.zoomOut();
+                      }}
+                      className="h-12 w-12 rounded-xl bg-white/90 hover:bg-white text-gray-700 shadow-lg flex items-center justify-center active:scale-95"
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-zoomout-outside"
                     >
-                      <Minus className="h-5 w-5" />
-                    </Button>
+                      <Minus className="h-6 w-6" />
+                    </button>
                     {/* 3D Toggle */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[3D-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[3D-BTN-OUTSIDE] Touch event');
                         mapRef.current?.toggle3DMode();
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                       }}
-                      className={`h-10 w-10 rounded-xl shadow-lg ${mapControlState.is3DMode ? 'bg-purple-600 text-white' : 'bg-white/90 text-gray-700'}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[3D-BTN-OUTSIDE] Click event');
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      className={`h-12 w-12 rounded-xl shadow-lg flex items-center justify-center active:scale-95 ${mapControlState.is3DMode ? 'bg-purple-600 text-white' : 'bg-white/90 text-gray-700'}`}
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-3d-outside"
                     >
-                      <Box className="h-5 w-5" />
-                    </Button>
+                      <Box className="h-6 w-6" />
+                    </button>
                     {/* Traffic Toggle */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        console.log('[TRAFFIC-BTN-OUTSIDE] Button pressed');
+                    <button
+                      type="button"
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[TRAFFIC-BTN-OUTSIDE] Touch event');
                         setShowTrafficLayer(prev => !prev);
                       }}
-                      className={`h-10 w-10 rounded-xl shadow-lg ${showTrafficLayer ? 'bg-amber-500 text-white' : 'bg-white/90 text-gray-700'}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[TRAFFIC-BTN-OUTSIDE] Click event');
+                        setShowTrafficLayer(prev => !prev);
+                      }}
+                      className={`h-12 w-12 rounded-xl shadow-lg flex items-center justify-center active:scale-95 ${showTrafficLayer ? 'bg-amber-500 text-white' : 'bg-white/90 text-gray-700'}`}
+                      style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                       data-testid="button-traffic-outside"
                     >
-                      <Layers className="h-5 w-5" />
-                    </Button>
+                      <Layers className="h-6 w-6" />
+                    </button>
                   </div>
                 </>
               )}
