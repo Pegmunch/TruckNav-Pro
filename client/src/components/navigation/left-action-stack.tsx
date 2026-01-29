@@ -21,6 +21,7 @@ interface LeftActionStackProps {
   onVoiceIncidentReport?: (type: IncidentType, severity: 'low' | 'medium' | 'high') => void;
   onVoiceNavigationCommand?: (command: NavigationCommandType) => void;
   showMenuButton?: boolean;
+  isVisible?: boolean;
 }
 
 const MUTE_STATE_KEY = "trucknav_mute_all_alerts";
@@ -34,7 +35,8 @@ export function LeftActionStack({
   currentLocation,
   onVoiceIncidentReport,
   onVoiceNavigationCommand,
-  showMenuButton = true
+  showMenuButton = true,
+  isVisible = true
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isMuted, setIsMuted] = useState<boolean>(() => {
@@ -161,14 +163,16 @@ export function LeftActionStack({
   
   return (
     <div className="flex flex-col gap-2 pointer-events-auto">
-      {/* Navigation button - red navigation arrow - Only show when navigating */}
+      {/* Navigation button - red navigation arrow - Only show when navigating (hides with double-tap) */}
       {isNavigating && (
         <Button
           variant="ghost"
           size="icon"
           {...createHandler(onNavigate, 'NAV')}
-          className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
-          style={{ touchAction: 'manipulation' }}
+          className={`h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+            isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+          }`}
+          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
           data-testid="button-nav-left"
           data-tour-id="nav-button"
         >
@@ -176,21 +180,23 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Voice command button - microphone - Only show when navigating */}
+      {/* Voice command button - microphone - Only show when navigating (hides with double-tap) */}
       {isNavigating && (
         <Button
           variant="ghost"
           size="icon"
           {...createHandler(toggleVoiceListening, 'VOICE')}
           disabled={!isVoiceSupported}
-          className={`h-10 w-10 rounded-xl shadow-lg transition-all select-none touch-manipulation ${
+          className={`h-10 w-10 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVoiceSupported
               ? isVoiceListening 
                 ? 'bg-green-500 hover:bg-green-600 animate-pulse' 
                 : 'bg-purple-500 hover:bg-purple-600'
               : 'bg-gray-300 cursor-not-allowed opacity-50'
-          } text-white active:scale-95`}
-          style={{ touchAction: 'manipulation' }}
+          } text-white active:scale-95 ${
+            isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+          }`}
+          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
           data-testid="button-voice-command"
           data-tour-id="voice-button"
           title={!isVoiceSupported ? 'Voice not supported' : isVoiceListening ? 'Voice commands active' : 'Tap to enable voice commands'}
@@ -203,18 +209,20 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Mute All Alerts button - gray/red toggle - Only show when navigating */}
+      {/* Mute All Alerts button - gray/red toggle - Only show when navigating (hides with double-tap) */}
       {isNavigating && (
         <Button
           variant="ghost"
           size="icon"
           {...createHandler(toggleMute, 'MUTE')}
-          className={`h-10 w-10 rounded-xl shadow-lg transition-all select-none touch-manipulation ${
+          className={`h-10 w-10 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isMuted 
               ? 'bg-red-500 hover:bg-red-600 active:bg-red-700' 
               : 'bg-gray-500 hover:bg-gray-600 active:bg-gray-700'
-          } text-white active:scale-95`}
-          style={{ touchAction: 'manipulation' }}
+          } text-white active:scale-95 ${
+            isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+          }`}
+          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
           data-testid="button-mute-alerts"
           data-tour-id="mute-button"
           title={isMuted ? 'Tap to unmute alerts' : 'Tap to mute all alerts'}
@@ -227,18 +235,22 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Incident report button - orange - Only show when navigating */}
+      {/* Incident report button - orange - Only show when navigating (hides with double-tap) */}
       {isNavigating && (
         <Button
           variant="ghost"
           size="icon"
           {...createHandler(onReportIncident, 'INCIDENT')}
-          className="h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
+          className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+            isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+          }`}
           style={{ 
             touchAction: 'manipulation',
             position: 'relative',
             zIndex: 100000,
-            isolation: 'isolate'
+            isolation: 'isolate',
+            pointerEvents: isVisible ? 'auto' : 'none',
+            visibility: isVisible ? 'visible' : 'hidden'
           }}
           data-testid="button-report-incident"
           data-tour-id="incident-button"
@@ -247,28 +259,32 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Cancel navigation button - red X - Only show when navigating */}
+      {/* Cancel navigation button - red X - Only show when navigating (hides with double-tap) */}
       {isNavigating && (
         <Button
           variant="ghost"
           size="icon"
           {...createHandler(onCancel, 'CANCEL')}
-          className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation"
-          style={{ touchAction: 'manipulation' }}
+          className={`h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+            isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+          }`}
+          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
           data-testid="button-cancel-nav"
         >
           <X className="h-5 w-5" />
         </Button>
       )}
 
-      {/* Menu button - blue hamburger at bottom - conditionally show */}
+      {/* Menu button - blue hamburger at bottom - conditionally show (hides with double-tap) */}
       {showMenuButton && (
         <Button
           variant="ghost"
           size="icon"
           {...createHandler(onOpenMenu, 'MENU')}
-          className="h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation"
-          style={{ touchAction: 'manipulation' }}
+          className={`h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+            isVisible ? 'translate-x-0 opacity-100 scale-100' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+          }`}
+          style={{ touchAction: 'manipulation', pointerEvents: isVisible ? 'auto' : 'none', visibility: isVisible ? 'visible' : 'hidden' }}
           data-testid="button-menu"
           data-tour-id="menu-button"
         >

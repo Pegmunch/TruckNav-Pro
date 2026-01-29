@@ -3977,6 +3977,7 @@ function NavigationPageContent() {
                           });
                         }
                       }}
+                      isVisible={showNavControls}
                       onVoiceNavigationCommand={(command: NavigationCommandType) => {
                         console.log('[VOICE-NAV] Navigation command received:', command);
                         switch (command) {
