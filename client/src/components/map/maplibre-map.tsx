@@ -871,6 +871,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // CRITICAL FIX: Use persistent route reference during navigation when currentRoute is cleared
   
   // State for cached route path - updated via useLayoutEffect for React-safe side effects
+  // CRITICAL: This cache persists the route for traffic overlay even when currentRoute is cleared during navigation
   const [cachedRouteForTraffic, setCachedRouteForTraffic] = useState<{lat: number; lng: number}[] | null>(null);
   
   // Use useLayoutEffect to update cached route BEFORE paint - ensures traffic overlay has data
@@ -879,11 +880,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Update both the ref (for route rendering) and state (for traffic overlay)
       persistentNavRouteRef.current = [...currentRoute.routePath];
       setCachedRouteForTraffic([...currentRoute.routePath]);
+      console.log('[TRAFFIC-CACHE] Route cached for traffic overlay:', currentRoute.routePath.length, 'points');
+    } else if (!currentRoute && !isNavigating) {
+      // Clear cache only when not navigating - this preserves cache during navigation transitions
+      // but clears it when user explicitly clears the route in plan mode
+      if (cachedRouteForTraffic) {
+        console.log('[TRAFFIC-CACHE] Clearing cached route (not navigating)');
+        setCachedRouteForTraffic(null);
+      }
     }
-  }, [currentRoute?.routePath]);
+  }, [currentRoute?.routePath, isNavigating]);
   
-  // Use currentRoute path, or cached route during navigation when currentRoute is cleared
-  const routePathForOverlay = currentRoute?.routePath || (isNavigating ? cachedRouteForTraffic : null);
+  // CRITICAL FIX: Use cached route for traffic overlay if currentRoute is cleared
+  // The cache should be used when:
+  // 1. We're navigating (isNavigating=true) and currentRoute was cleared
+  // 2. We have a cached route from a previous calculation
+  // This ensures live traffic data continues to render during navigation mode
+  const routePathForOverlay = currentRoute?.routePath || cachedRouteForTraffic;
   const hasValidRoute = !!routePathForOverlay && routePathForOverlay.length > 0;
   const trafficOverlayEnabled = showTraffic && hasValidRoute;
   
