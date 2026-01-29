@@ -40,6 +40,7 @@ import { useOriginHistory } from "@/hooks/use-origin-history";
 import { useActiveVehicleProfile } from "@/hooks/use-active-vehicle-profile";
 import { useNavigationSession } from "@/hooks/use-navigation-session";
 import { useAutoReroute } from "@/hooks/use-auto-reroute";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
@@ -180,6 +181,21 @@ function NavigationPageContent() {
   
   // Backwards compatibility: Derive isNavigating from LOCAL state (not server)
   const isNavigating = isLocalNavActive;
+  
+  // Screen Wake Lock - keeps screen on during navigation
+  // Uses Wake Lock API with iOS Safari fallback (video element method)
+  const { acquire: acquireWakeLock, release: releaseWakeLock } = useWakeLock();
+  
+  // Auto-acquire wake lock when navigation starts, release when it stops
+  useEffect(() => {
+    if (isNavigating) {
+      console.log('[WAKE-LOCK] Navigation started - acquiring screen wake lock');
+      acquireWakeLock();
+    } else {
+      // Only release if we were previously navigating (avoid release on initial mount)
+      releaseWakeLock();
+    }
+  }, [isNavigating, acquireWakeLock, releaseWakeLock]);
   
   // Unified sidebar state management - single source of truth
   const [sidebarState, setSidebarState] = useState<'closed' | 'open' | 'collapsed'>(
