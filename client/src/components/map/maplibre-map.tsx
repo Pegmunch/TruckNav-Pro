@@ -1332,6 +1332,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
       
       const handleTouchEnd = (e: TouchEvent) => {
+        // CRITICAL: Ignore taps on buttons/controls to prevent UI toggle when tapping buttons
+        const target = e.target as HTMLElement;
+        if (target && (
+          target.closest('button') ||
+          target.closest('[data-testid]') ||
+          target.closest('[data-nav-controls]') ||
+          target.closest('.pointer-events-auto') && !target.closest('.maplibregl-canvas-container')
+        )) {
+          // Tap was on a button or control - don't count it for double-tap detection
+          lastSingleTap = 0;
+          return;
+        }
+        
         // Single finger tap - for UI toggle double-tap detection
         if (e.touches.length === 0 && e.changedTouches.length === 1) {
           const now = Date.now();
