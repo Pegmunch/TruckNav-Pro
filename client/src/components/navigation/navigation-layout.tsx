@@ -192,23 +192,36 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - Positioned from bottom, above instrumentation bar */}
-      {/* iOS Safari fix: Removed isolation/contain/transform that were blocking touch events */}
-      {/* iOS Safari fix: Removed overflow-y-auto which was consuming touch events at edges */}
+      {/* iOS Safari WebGL fix: Background forces proper compositing layer above WebGL canvas */}
       {/* CRITICAL: onTouchStartCapture ensures touch events reach buttons before window listeners */}
-      {rightStackVisible && (
+      {rightStackVisible && rightStack && (
         <div 
           className="fixed right-4 flex flex-col gap-1"
+          onTouchStart={(e) => {
+            console.log('[RIGHT-STACK-TOUCH] 🔵 TouchStart on rightStack container');
+            e.stopPropagation();
+          }}
+          onTouchEnd={(e) => {
+            console.log('[RIGHT-STACK-TOUCH] 🔴 TouchEnd on rightStack container');
+          }}
           onTouchStartCapture={handleStackTouchCapture}
           onTouchEndCapture={handleStackTouchCapture}
           data-nav-controls="right-stack"
           style={{ 
             bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
-            zIndex: 500000,
+            zIndex: 999999,
             pointerEvents: 'auto',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
             userSelect: 'none',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            // iOS Safari WebGL compositing fix - forces new layer
+            transform: 'translate3d(0,0,0)',
+            WebkitTransform: 'translate3d(0,0,0)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            perspective: 1000,
+            WebkitPerspective: 1000
           }}
         >
           {rightStack}
