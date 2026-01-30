@@ -1332,15 +1332,36 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
       
       const handleTouchEnd = (e: TouchEvent) => {
-        // CRITICAL: Ignore taps on buttons/controls to prevent UI toggle when tapping buttons
         const target = e.target as HTMLElement;
+        const targetTag = target?.tagName || 'unknown';
+        const targetClass = target?.className || '';
+        const isMapCanvas = target?.closest('.maplibregl-canvas-container') !== null;
+        const isButton = target?.closest('button') !== null;
+        const hasTestId = target?.closest('[data-testid]') !== null;
+        const hasNavControls = target?.closest('[data-nav-controls]') !== null;
+        const hasPointerAuto = target?.closest('.pointer-events-auto') !== null;
+        
+        console.log('[DOUBLE-TAP-DEBUG] Touch event received:', {
+          targetTag,
+          targetClass: targetClass.toString().substring(0, 50),
+          isMapCanvas,
+          isButton,
+          hasTestId,
+          hasNavControls,
+          hasPointerAuto,
+          touches: e.touches.length,
+          changedTouches: e.changedTouches.length,
+          hasDoubleTapCallback: !!onDoubleTapRef.current
+        });
+        
+        // CRITICAL: Ignore taps on buttons/controls to prevent UI toggle when tapping buttons
+        // But ALLOW taps on the map canvas even if it has pointer-events-auto
         if (target && (
-          target.closest('button') ||
-          target.closest('[data-testid]') ||
-          target.closest('[data-nav-controls]') ||
-          target.closest('.pointer-events-auto') && !target.closest('.maplibregl-canvas-container')
+          isButton ||
+          hasNavControls ||
+          (hasPointerAuto && !isMapCanvas)
         )) {
-          // Tap was on a button or control - don't count it for double-tap detection
+          console.log('[DOUBLE-TAP-DEBUG] ❌ Ignored - tap was on button/control');
           lastSingleTap = 0;
           return;
         }
@@ -1350,15 +1371,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           const now = Date.now();
           const timeSinceLastTap = now - lastSingleTap;
           
+          console.log('[DOUBLE-TAP-DEBUG] Single finger tap:', { now, lastSingleTap, timeSinceLastTap, threshold: SINGLE_TAP_DOUBLE_TAP_DELAY });
+          
           if (timeSinceLastTap < SINGLE_TAP_DOUBLE_TAP_DELAY && timeSinceLastTap > 50) {
             // Double-tap detected with single finger - trigger UI toggle
             console.log('[MAP-GESTURE] ✅ Single-finger double-tap detected - toggling UI');
             if (onDoubleTapRef.current) {
+              console.log('[DOUBLE-TAP-DEBUG] ✅ Calling onDoubleTap callback');
               onDoubleTapRef.current();
+            } else {
+              console.log('[DOUBLE-TAP-DEBUG] ⚠️ No onDoubleTap callback registered!');
             }
             lastSingleTap = 0; // Reset to prevent triple-tap
           } else {
             // First tap of potential double-tap
+            console.log('[DOUBLE-TAP-DEBUG] First tap registered, waiting for second tap');
             lastSingleTap = now;
           }
         }
