@@ -22,46 +22,67 @@ interface ButtonRegistration {
 // Global registry of buttons that need window-level touch handling
 const buttonRegistry = new Map<string, ButtonRegistration>();
 
-// Single window-level touchend listener (like double-tap feature)
-let windowListenerAttached = false;
+// Reference counter for window listener - attached when count > 0
+let windowListenerRefCount = 0;
+let windowTouchHandler: ((e: TouchEvent) => void) | null = null;
+
+function handleWindowTouchEnd(e: TouchEvent) {
+  if (e.changedTouches.length !== 1) return; // Only single-finger taps
+  
+  const touch = e.changedTouches[0];
+  const x = touch.clientX;
+  const y = touch.clientY;
+  
+  console.log(`[WINDOW-TOUCH-INTERCEPT] Touch at (${x}, ${y}), checking ${buttonRegistry.size} buttons`);
+  
+  // Check if touch landed on any registered button
+  for (const [id, registration] of buttonRegistry) {
+    const rect = registration.getRect();
+    if (!rect) continue;
+    
+    // Check if touch is within button bounds (with small padding for touch accuracy)
+    const padding = 8;
+    if (
+      x >= rect.left - padding &&
+      x <= rect.right + padding &&
+      y >= rect.top - padding &&
+      y <= rect.bottom + padding
+    ) {
+      console.log(`[WINDOW-TOUCH-INTERCEPT] ✅ Touch hit button: ${id} at (${x}, ${y})`);
+      e.preventDefault();
+      e.stopPropagation();
+      hapticButtonPress();
+      registration.callback();
+      return; // Only trigger first matching button
+    }
+  }
+}
 
 function attachWindowTouchListener() {
-  if (windowListenerAttached) return;
-  
-  const handleWindowTouchEnd = (e: TouchEvent) => {
-    if (e.changedTouches.length !== 1) return; // Only single-finger taps
-    
-    const touch = e.changedTouches[0];
-    const x = touch.clientX;
-    const y = touch.clientY;
-    
-    // Check if touch landed on any registered button
-    for (const [id, registration] of buttonRegistry) {
-      const rect = registration.getRect();
-      if (!rect) continue;
-      
-      // Check if touch is within button bounds (with small padding for touch accuracy)
-      const padding = 5;
-      if (
-        x >= rect.left - padding &&
-        x <= rect.right + padding &&
-        y >= rect.top - padding &&
-        y <= rect.bottom + padding
-      ) {
-        console.log(`[WINDOW-TOUCH-INTERCEPT] ✅ Touch hit button: ${id} at (${x}, ${y})`);
-        e.preventDefault();
-        e.stopPropagation();
-        hapticButtonPress();
-        registration.callback();
-        return; // Only trigger first matching button
-      }
-    }
-  };
-  
-  // Use window.addEventListener like the working double-tap feature
-  window.addEventListener('touchend', handleWindowTouchEnd, { passive: false, capture: true });
-  windowListenerAttached = true;
-  console.log('[WINDOW-TOUCH-INTERCEPT] 📎 Window-level touch interceptor attached');
+  windowListenerRefCount++;
+  if (windowListenerRefCount === 1) {
+    // Use document-level with capture:true to intercept before MapLibre can block
+    // Also add touchstart to track potential button presses
+    windowTouchHandler = handleWindowTouchEnd;
+    document.addEventListener('touchend', windowTouchHandler, { passive: false, capture: true });
+    // Also try window level as backup (like double-tap)
+    window.addEventListener('touchend', windowTouchHandler, { passive: false });
+    console.log('[TOUCH-INTERCEPT] 📎 Document+Window touch interceptor attached (refCount: 1, capture: true)');
+  } else {
+    console.log(`[TOUCH-INTERCEPT] Ref count increased to ${windowListenerRefCount}`);
+  }
+}
+
+function detachWindowTouchListener() {
+  windowListenerRefCount--;
+  if (windowListenerRefCount === 0 && windowTouchHandler) {
+    document.removeEventListener('touchend', windowTouchHandler, { capture: true });
+    window.removeEventListener('touchend', windowTouchHandler);
+    windowTouchHandler = null;
+    console.log('[TOUCH-INTERCEPT] 🗑️ Document+Window touch interceptor detached');
+  } else if (windowListenerRefCount > 0) {
+    console.log(`[TOUCH-INTERCEPT] Ref count decreased to ${windowListenerRefCount}`);
+  }
 }
 
 // Hook to register a button with the window-level interceptor
@@ -92,6 +113,7 @@ function useWindowTouchInterceptor(
     
     return () => {
       buttonRegistry.delete(id);
+      detachWindowTouchListener();
       console.log(`[WINDOW-TOUCH-REGISTER] 🗑️ Unregistered button: ${id}`);
     };
   }, [ref, callback, id, isNavigating]);
