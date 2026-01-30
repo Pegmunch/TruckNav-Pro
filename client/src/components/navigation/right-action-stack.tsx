@@ -1,80 +1,46 @@
 import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from 'lucide-react';
-import { useRef, useCallback, useEffect, MutableRefObject } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
-// iOS Safari aggressive touch handler - fires callback on TOUCHSTART for instant response
-// iOS Safari often cancels touchend on fixed elements over maps, so we fire immediately on touchstart
+// Standard native event handler - uses touchend and click for consistent behavior
+// Now that buttons are rendered with direct fixed positioning (not through NavigationLayout),
+// standard event handling should work reliably on iOS Safari
 function useNativeClickHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
   label: string
 ) {
-  const touchActiveRef = useRef(false);
-  const lastTouchTimeRef = useRef(0);
-  
   useEffect(() => {
     const button = ref.current;
     if (!button || !callback) return;
     
-    // CRITICAL: Fire on touchstart for iOS Safari reliability
-    // iOS Safari often cancels touchend on fixed elements when map gestures are active
-    const handleTouchStart = (e: TouchEvent) => {
-      const now = Date.now();
-      // Debounce rapid touches (prevent double-fire)
-      if (now - lastTouchTimeRef.current < 300) {
-        console.log(`[NATIVE-${label}] ⏳ Debounced (too fast)`);
-        return;
-      }
-      lastTouchTimeRef.current = now;
-      touchActiveRef.current = true;
-      
-      // IMMEDIATELY stop propagation to prevent map gesture interference
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      
-      console.log(`[NATIVE-${label}] ✅ TouchStart FIRED - executing callback immediately`);
-      hapticButtonPress();
-      callback();
-    };
-    
     const handleTouchEnd = (e: TouchEvent) => {
-      // Prevent default to stop any scroll/zoom behavior
       e.preventDefault();
       e.stopPropagation();
-      touchActiveRef.current = false;
-      // Don't fire callback here - already fired on touchstart
-      console.log(`[NATIVE-${label}] TouchEnd (callback already fired)`);
+      console.log(`[NATIVE-${label}] ✅ TouchEnd fired`);
+      hapticButtonPress();
+      callback();
     };
     
     const handleClick = (e: MouseEvent) => {
-      // Only fire for non-touch (mouse) interactions
-      // Touch interactions already fired on touchstart
-      if (touchActiveRef.current) {
-        console.log(`[NATIVE-${label}] Click ignored (touch active)`);
-        e.preventDefault();
-        return;
-      }
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-${label}] ✅ Click (mouse) fired`);
+      console.log(`[NATIVE-${label}] ✅ Click fired`);
       hapticButtonPress();
       callback();
     };
     
-    // Capture phase for maximum priority
-    button.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+    // Use capture phase to get events before any other handlers
     button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
     button.addEventListener('click', handleClick, { capture: true });
     
-    console.log(`[NATIVE-${label}] 📎 iOS-aggressive listeners attached`);
+    console.log(`[NATIVE-${label}] 📎 Listeners attached`);
     
     return () => {
-      button.removeEventListener('touchstart', handleTouchStart, { capture: true });
       button.removeEventListener('touchend', handleTouchEnd, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
-      console.log(`[NATIVE-${label}] 🔓 Listeners removed`);
     };
   }, [ref, callback, label]);
 }

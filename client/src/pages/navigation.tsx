@@ -74,7 +74,7 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
-import { IOSTouchCapture } from "@/components/navigation/ios-touch-capture";
+// IOSTouchCapture removed - no longer needed with direct fixed positioning
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
@@ -4262,47 +4262,7 @@ function NavigationPageContent() {
                     ) : null
                   }
                   topRightStack={null}
-                  rightStack={
-                    <RightActionStack
-                      onZoomIn={() => mapRef.current?.zoomIn()}
-                      onZoomOut={() => mapRef.current?.zoomOut()}
-                      onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
-                      onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
-                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
-                      onToggleMapView={() => {
-                        console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
-                        mapRef.current?.toggleMapView();
-                        setMapControlState(prev => {
-                          const newSatelliteState = !prev.isSatelliteView;
-                          console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
-                          return { ...prev, isSatelliteView: newSatelliteState };
-                        });
-                      }}
-                      onToggleTraffic={() => {
-                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
-                        setShowTrafficLayer(prev => !prev);
-                      }}
-                      onViewIncidents={() => {
-                        console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
-                        setLiveTrafficPanelTab('view');
-                        setShowLiveTrafficPanel(true);
-                      }}
-                      showTraffic={showTrafficLayer}
-                      isSatelliteView={mapControlState.isSatelliteView}
-                      isVisible={showNavControls}
-                      hideIncidents={false}
-                      hideCompass={true}
-                      hide3D={false}
-                      onToggle3D={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                      }}
-                      is3DMode={mapControlState.is3DMode}
-                      isNavigating={true}
-                      compact={true}
-                      bearing={mapControlState.bearing}
-                    />
-                  }
+                  rightStack={null}
                   infoBoxes={
                     currentRoute ? (
                       <div className="flex items-center justify-center gap-3">
@@ -4337,21 +4297,53 @@ function NavigationPageContent() {
                   }
                 />
                 
-                {/* iOS Safari Touch Capture Layer - Invisible overlay for Incidents and Traffic buttons */}
-                {/* Bypasses iOS Safari's touch event blocking on fixed/transformed elements */}
-                <IOSTouchCapture
-                  onIncidentsClick={() => {
-                    console.log('[IOS-TOUCH-CAPTURE] 🔴 Incidents callback triggered');
-                    setLiveTrafficPanelTab('view');
-                    setShowLiveTrafficPanel(true);
-                  }}
-                  onTrafficClick={() => {
-                    console.log('[IOS-TOUCH-CAPTURE] 🟠 Traffic callback triggered');
-                    setShowTrafficLayer(prev => !prev);
-                  }}
-                  isVisible={showNavControls}
-                  compact={true}
-                />
+                {/* NAVIGATION MODE CONTROLS - Right Stack - Direct fixed positioning like preview mode */}
+                {/* This bypasses NavigationLayout to ensure consistent touch handling across modes */}
+                <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                  style={{
+                    bottom: 'calc(100px + var(--safe-area-bottom))',
+                    right: '16px'
+                  }}>
+                  <RightActionStack
+                    onZoomIn={() => mapRef.current?.zoomIn()}
+                    onZoomOut={() => mapRef.current?.zoomOut()}
+                    onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
+                    onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
+                    onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                    onToggleMapView={() => {
+                      console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
+                      mapRef.current?.toggleMapView();
+                      setMapControlState(prev => {
+                        const newSatelliteState = !prev.isSatelliteView;
+                        console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
+                        return { ...prev, isSatelliteView: newSatelliteState };
+                      });
+                    }}
+                    onToggleTraffic={() => {
+                      console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
+                      setShowTrafficLayer(prev => !prev);
+                    }}
+                    onViewIncidents={() => {
+                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+                      setLiveTrafficPanelTab('view');
+                      setShowLiveTrafficPanel(true);
+                    }}
+                    showTraffic={showTrafficLayer}
+                    isSatelliteView={mapControlState.isSatelliteView}
+                    isVisible={showNavControls}
+                    hideIncidents={false}
+                    hideCompass={true}
+                    hide3D={false}
+                    onToggle3D={() => {
+                      mapRef.current?.toggle3DMode();
+                      setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                    }}
+                    is3DMode={mapControlState.is3DMode}
+                    isNavigating={true}
+                    compact={true}
+                    bearing={mapControlState.bearing}
+                  />
+                </div>
                 </>
               )}
 
