@@ -218,11 +218,19 @@ export function RightActionStack({
       }}
     >
       {/* 1. Incidents - Red border - hides/shows with double-tap */}
+      {/* FIXED: Added direct onClick for iOS Safari compatibility - matches preview mode approach */}
       {onViewIncidents && !hideIncidents && (
         <Button
           ref={incidentsButtonRef}
           variant="ghost"
           size="icon"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[INCIDENTS-BTN] ✅ Direct onClick fired');
+            hapticButtonPress();
+            onViewIncidents();
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -348,11 +356,19 @@ export function RightActionStack({
       )}
 
       {/* 8. Traffic Toggle - Orange/Gray border - hides/shows with double-tap */}
+      {/* FIXED: Added direct onClick for iOS Safari compatibility - matches preview mode approach */}
       {onToggleTraffic && (
         <Button
           ref={trafficButtonRef}
           variant="ghost"
           size="icon"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[TRAFFIC-BTN] ✅ Direct onClick fired');
+            hapticButtonPress();
+            onToggleTraffic();
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
