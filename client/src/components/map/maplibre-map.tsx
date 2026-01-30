@@ -282,13 +282,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   // Controls are only added during navigation mode for incident, traffic, and 3D toggle.
   // ============================================================================
   useEffect(() => {
-    if (!map.current || !isLoaded) return;
+    console.log('[MAPLIBRE-CONTROLS] useEffect triggered - isNavigating:', isNavigating, 'isLoaded:', isLoaded, 'hasMap:', !!map.current);
+    
+    if (!map.current || !isLoaded) {
+      console.log('[MAPLIBRE-CONTROLS] Skipping - map not ready. map.current:', !!map.current, 'isLoaded:', isLoaded);
+      return;
+    }
     
     const mapInstance = map.current;
     
     // Create and add controls when navigating
     if (isNavigating) {
-      console.log('[MAPLIBRE-CONTROLS] Adding custom controls for navigation mode');
+      console.log('[MAPLIBRE-CONTROLS] ✅ Adding custom controls for navigation mode');
       
       // Incident control (red border)
       if (onViewIncidents && !incidentControlRef.current) {
