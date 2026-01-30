@@ -74,6 +74,7 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
+import { IOSTouchCapture } from "@/components/navigation/ios-touch-capture";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
@@ -3940,6 +3941,7 @@ function NavigationPageContent() {
               {/* Only render NavigationLayout when navigation is active or route exists */}
               {/* This prevents the z-[99999] overlays from blocking the hamburger button in plan mode */}
               {!showComprehensiveMenu && (isNavUIActive || currentRoute) && (
+                <>
                 <NavigationLayout
                   isNavigating={isNavigating}
                   isNavUIActive={isNavUIActive}
@@ -4334,6 +4336,23 @@ function NavigationPageContent() {
                     />
                   }
                 />
+                
+                {/* iOS Safari Touch Capture Layer - Invisible overlay for Incidents and Traffic buttons */}
+                {/* Bypasses iOS Safari's touch event blocking on fixed/transformed elements */}
+                <IOSTouchCapture
+                  onIncidentsClick={() => {
+                    console.log('[IOS-TOUCH-CAPTURE] 🔴 Incidents callback triggered');
+                    setLiveTrafficPanelTab('view');
+                    setShowLiveTrafficPanel(true);
+                  }}
+                  onTrafficClick={() => {
+                    console.log('[IOS-TOUCH-CAPTURE] 🟠 Traffic callback triggered');
+                    setShowTrafficLayer(prev => !prev);
+                  }}
+                  isVisible={showNavControls}
+                  compact={true}
+                />
+                </>
               )}
 
               {/* Legal Ownership - Bottom of screen */}
