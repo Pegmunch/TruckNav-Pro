@@ -116,14 +116,14 @@ export function IOSTouchProxyLayer() {
           return;
         }
         
-        let proxy = proxyMapRef.current.get(id);
-        if (proxy) {
-          updateProxyPosition(proxy, rect);
+        const existingProxy = proxyMapRef.current.get(id);
+        if (existingProxy) {
+          updateProxyPosition(existingProxy, rect);
         } else {
-          proxy = createProxyButton(id, registration);
-          if (proxy) {
-            containerRef.current!.appendChild(proxy);
-            proxyMapRef.current.set(id, proxy);
+          const newProxy = createProxyButton(id, registration);
+          if (newProxy) {
+            containerRef.current!.appendChild(newProxy);
+            proxyMapRef.current.set(id, newProxy);
           }
         }
       });

@@ -42,7 +42,7 @@ function handleWindowTouchEnd(e: TouchEvent) {
   // Check if touch landed on any registered button
   // Use large padding (25px) to compensate for iOS Safari WebGL coordinate offset
   // Logs show touches at x=324 when buttons are at x=341 - 17px offset
-  for (const [id, registration] of buttonRegistry) {
+  for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     const rect = registration.getRect();
     if (!rect) continue;
     

@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // iOS Safari touch event handler - ensures buttons receive touch events
 // This handler runs during the capture phase to prevent window-level handlers from interfering
@@ -109,6 +110,18 @@ export function NavigationLayout({
 }: NavigationLayoutProps) {
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
   const shouldShowBottomBar = showBottomBar !== undefined ? showBottomBar : shouldShowUI;
+  const [mounted, setMounted] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOS(iOS);
+    if (iOS) {
+      console.log('[NAV-LAYOUT] iOS detected - right stack will render via portal');
+    }
+  }, []);
   
   // iOS Safari fix: Add document-level touch listeners to ensure buttons work
   useIOSSafariTouchFix();
@@ -192,40 +205,78 @@ export function NavigationLayout({
       )}
 
       {/* Right navigation controls stack - Positioned from bottom, above instrumentation bar */}
-      {/* iOS Safari WebGL fix: Background forces proper compositing layer above WebGL canvas */}
-      {/* CRITICAL: onTouchStartCapture ensures touch events reach buttons before window listeners */}
-      {rightStackVisible && rightStack && (
-        <div 
-          className="fixed right-4 flex flex-col gap-1"
-          onTouchStart={(e) => {
-            console.log('[RIGHT-STACK-TOUCH] 🔵 TouchStart on rightStack container');
-            e.stopPropagation();
-          }}
-          onTouchEnd={(e) => {
-            console.log('[RIGHT-STACK-TOUCH] 🔴 TouchEnd on rightStack container');
-          }}
-          onTouchStartCapture={handleStackTouchCapture}
-          onTouchEndCapture={handleStackTouchCapture}
-          data-nav-controls="right-stack"
-          style={{ 
-            bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
-            zIndex: 999999,
-            pointerEvents: 'auto',
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'transparent',
-            userSelect: 'none',
-            cursor: 'pointer',
-            // iOS Safari WebGL compositing fix - forces new layer
-            transform: 'translate3d(0,0,0)',
-            WebkitTransform: 'translate3d(0,0,0)',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            perspective: 1000,
-            WebkitPerspective: 1000
-          }}
-        >
-          {rightStack}
-        </div>
+      {/* iOS Safari WebGL fix: Render via portal on iOS to escape WebGL compositor blocking */}
+      {/* CRITICAL: On iOS, this renders directly to document.body via createPortal */}
+      {rightStackVisible && rightStack && mounted && (
+        isIOS ? (
+          createPortal(
+            <div 
+              id="ios-right-stack-portal"
+              onTouchStart={(e) => {
+                console.log('[IOS-RIGHT-PORTAL] 🔵 TouchStart on portal container');
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                console.log('[IOS-RIGHT-PORTAL] 🔴 TouchEnd on portal container');
+              }}
+              onTouchStartCapture={handleStackTouchCapture}
+              onTouchEndCapture={handleStackTouchCapture}
+              data-nav-controls="right-stack-portal"
+              style={{ 
+                position: 'fixed',
+                right: '16px',
+                bottom: shouldShowUI ? 'calc(100px + env(safe-area-inset-bottom, 0px))' : 'calc(80px + env(safe-area-inset-bottom, 0px))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                zIndex: 2147483646,
+                pointerEvents: 'auto',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                userSelect: 'none',
+                cursor: 'pointer',
+                transform: 'translate3d(0,0,0)',
+                WebkitTransform: 'translate3d(0,0,0)',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
+              }}
+            >
+              {rightStack}
+            </div>,
+            document.body
+          )
+        ) : (
+          <div 
+            className="fixed right-4 flex flex-col gap-1"
+            onTouchStart={(e) => {
+              console.log('[RIGHT-STACK-TOUCH] 🔵 TouchStart on rightStack container');
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              console.log('[RIGHT-STACK-TOUCH] 🔴 TouchEnd on rightStack container');
+            }}
+            onTouchStartCapture={handleStackTouchCapture}
+            onTouchEndCapture={handleStackTouchCapture}
+            data-nav-controls="right-stack"
+            style={{ 
+              bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
+              zIndex: 999999,
+              pointerEvents: 'auto',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none',
+              cursor: 'pointer',
+              transform: 'translate3d(0,0,0)',
+              WebkitTransform: 'translate3d(0,0,0)',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              perspective: 1000,
+              WebkitPerspective: 1000
+            }}
+          >
+            {rightStack}
+          </div>
+        )
       )}
 
       {/* Info boxes above speedometer - Distance and ETA during navigation - CENTERED */}

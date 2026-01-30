@@ -75,7 +75,6 @@ import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
 import { IOSTouchProxyLayer } from "@/components/navigation/ios-touch-proxy-layer";
-import { IOSBottomActionBar } from "@/components/navigation/ios-bottom-action-bar";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
@@ -5002,22 +5001,6 @@ function NavigationPageContent() {
         />
       )}
 
-      {/* iOS Safari Bottom Action Bar - Critical buttons moved OUTSIDE WebGL canvas area
-          This solves the iOS Safari WebGL compositor touch blocking issue.
-          The bar renders via React Portal directly to document.body, completely outside the map's DOM tree. */}
-      <IOSBottomActionBar
-        isNavigating={isNavigating || isLocalNavActive}
-        isPreviewMode={isShowingPreview}
-        showTraffic={showTrafficLayer}
-        onReportIncident={() => {
-          console.log('[IOS-BOTTOM-BAR] 🔴 Report Incident triggered');
-          setShowIncidentReportDialog(true);
-        }}
-        onToggleTraffic={() => {
-          console.log('[IOS-BOTTOM-BAR] 🔵 Toggle Traffic triggered, current:', showTrafficLayer);
-          setShowTrafficLayer(prev => !prev);
-        }}
-      />
 
     </div>
   );
