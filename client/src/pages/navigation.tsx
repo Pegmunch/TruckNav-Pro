@@ -3820,7 +3820,7 @@ function NavigationPageContent() {
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
                       }}
                       onToggleTraffic={() => {
-                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in PREVIEW mode - toggling from:', showTrafficLayer);
+                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in PLAN mode - toggling from:', showTrafficLayer);
                         setShowTrafficLayer(prev => !prev);
                       }}
                       onToggleMapView={() => {
@@ -3832,6 +3832,11 @@ function NavigationPageContent() {
                           return { ...prev, isSatelliteView: newSatelliteState };
                         });
                       }}
+                      onViewIncidents={() => {
+                        console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed in PLAN mode - opening Live Traffic Panel');
+                        setLiveTrafficPanelTab('view');
+                        setShowLiveTrafficPanel(true);
+                      }}
                       onCompassClick={() => {
                         mapRef.current?.resetBearing();
                         mapRef.current?.zoomToUserLocation({ bearing: 0, pitch: 0 });
@@ -3841,7 +3846,7 @@ function NavigationPageContent() {
                       isSatelliteView={mapControlState.isSatelliteView}
                       bearing={mapControlState.bearing}
                       isVisible={showNavControls}
-                      hideIncidents={true}
+                      hideIncidents={false}
                       compact={true}
                     />
                   </div>
