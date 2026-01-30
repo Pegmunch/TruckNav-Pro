@@ -358,37 +358,38 @@ export function RightActionStack({
         pointerEvents: 'auto'
       }}
     >
-      {/* 1. Incidents - Red border - hides/shows with double-tap */}
-      {/* Uses direct onTouchStart for iOS Safari WebGL compatibility */}
-      {onViewIncidents && !hideIncidents && (
-        <Button
-          ref={incidentsButtonRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={(e) => {
+      {/* 1. Incidents - Red border - ALWAYS rendered for iOS touch proxy registration */}
+      <Button
+        ref={incidentsButtonRef}
+        variant="ghost"
+        size="icon"
+        onTouchStart={(e) => {
+          if (!onViewIncidents || hideIncidents) return;
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('[INCIDENTS-BTN] 🔴 View Incidents TOUCHSTART');
+          onViewIncidents();
+        }}
+        onPointerDown={(e) => {
+          if (!onViewIncidents || hideIncidents) return;
+          if (e.pointerType === 'mouse') {
             e.preventDefault();
-            e.stopPropagation();
-            console.log('[INCIDENTS-BTN] 🔴 View Incidents TOUCHSTART in NAV mode');
+            console.log('[INCIDENTS-BTN] 🔴 View Incidents POINTERDOWN (mouse)');
             onViewIncidents();
-          }}
-          onPointerDown={(e) => {
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[INCIDENTS-BTN] 🔴 View Incidents POINTERDOWN (mouse) in NAV mode');
-              onViewIncidents();
-            }
-          }}
-          className={cn(
-            buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
-          )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          data-testid="button-view-incidents"
-        >
-          <AlertCircle className={iconSize} />
-        </Button>
-      )}
+          }
+        }}
+        className={cn(
+          buttonSize, 
+          "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
+          onViewIncidents && !hideIncidents && isVisible 
+            ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" 
+            : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+        )}
+        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        data-testid="button-view-incidents"
+      >
+        <AlertCircle className={iconSize} />
+      </Button>
 
       {/* 2. Toggle Map View - Green/Gray border - hides/shows with double-tap */}
       {onToggleMapView && (

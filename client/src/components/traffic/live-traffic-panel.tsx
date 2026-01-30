@@ -289,9 +289,11 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
 
   if (!open) return null;
 
+  console.log('[LIVE-TRAFFIC-PANEL] 🎯 RENDERING - open:', open);
+
   return (
     <div className={cn(
-      "fixed inset-x-4 bottom-24 z-[10000] max-w-md mx-auto",
+      "fixed inset-x-4 bottom-24 z-[2147483646] max-w-md mx-auto",
       "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm",
       "rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700",
       "transform transition-all duration-300",

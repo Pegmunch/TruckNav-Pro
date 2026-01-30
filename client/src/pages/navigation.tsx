@@ -3530,14 +3530,18 @@ function NavigationPageContent() {
   // which breaks the iOS touch proxy system
   const handleViewIncidents = useCallback(() => {
     console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+    console.log('[INCIDENTS-BTN] STATE BEFORE:', { showLiveTrafficPanel });
     setLiveTrafficPanelTab('view');
     setShowLiveTrafficPanel(true);
-  }, []);
+    console.log('[INCIDENTS-BTN] STATE SET TO TRUE - Panel should appear!');
+  }, [showLiveTrafficPanel]);
   
   const handleReportIncident = useCallback(() => {
     console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening Incident Report Dialog (categories + mic)');
+    console.log('[INCIDENT-BTN] STATE BEFORE:', { showIncidentReportDialog });
     setShowIncidentReportDialog(true);
-  }, []);
+    console.log('[INCIDENT-BTN] STATE SET TO TRUE - Dialog should appear!');
+  }, [showIncidentReportDialog]);
 
   // Map expansion toggle functionality
   const handleToggleMapExpansion = () => {

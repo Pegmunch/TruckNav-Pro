@@ -277,7 +277,7 @@ export function IncidentReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900">
+      <DialogContent className="max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 z-[2147483646]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5" />

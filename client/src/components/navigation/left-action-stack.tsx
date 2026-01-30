@@ -90,9 +90,11 @@ function useNativeClickHandler(
 function useWindowTouchInterceptor(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
-  id: string
+  id: string,
+  isNavigating: boolean
 ) {
   useEffect(() => {
+    // Enable in BOTH modes for iOS Safari WebGL bug workaround
     if (!callback) {
       buttonRegistry.delete(id);
       return;
@@ -105,13 +107,13 @@ function useWindowTouchInterceptor(
       callback
     });
     
-    console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 📎 Registered button: ${id}`);
+    console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 📎 Registered button: ${id} (navigating: ${isNavigating})`);
     
     return () => {
       buttonRegistry.delete(id);
       console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 🗑️ Unregistered button: ${id}`);
     };
-  }, [ref, callback, id]);
+  }, [ref, callback, id, isNavigating]);
 }
 
 interface LeftActionStackProps {
@@ -184,6 +186,14 @@ export function LeftActionStack({
     }
   }, [onVoiceNavigationCommand]);
 
+  // CRITICAL: Stable callback wrapper for iOS touch proxy - always defined
+  const stableIncidentCallback = useCallback(() => {
+    if (isNavigating && onReportIncident) {
+      console.log('[LEFT-STACK] 🟠 Stable incident callback fired');
+      onReportIncident();
+    }
+  }, [isNavigating, onReportIncident]);
+
   useEffect(() => {
     if (isVoiceSupported && onVoiceIncidentReport) {
       voiceSystem.setIncidentReportCallback(handleVoiceReport);
@@ -222,7 +232,8 @@ export function LeftActionStack({
   useNativeClickHandler(menuButtonRef, onOpenMenu, 'MENU', isNavigating);
   
   // Window-level touch interceptor for iOS Safari WebGL bug - registers with global handler
-  useWindowTouchInterceptor(incidentButtonRef, onReportIncident, 'left-incident-btn');
+  // CRITICAL: Use stableIncidentCallback which is ALWAYS defined (not undefined)
+  useWindowTouchInterceptor(incidentButtonRef, stableIncidentCallback, 'left-incident-btn', isNavigating);
 
   // CRITICAL: Return null if no buttons would be visible
   // This prevents an empty container from blocking touch events
@@ -308,36 +319,38 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Incident report button - orange - hides/shows with double-tap */}
-      {/* Uses direct onTouchStart for iOS Safari WebGL compatibility */}
-      {isNavigating && onReportIncident && (
-        <Button
-          ref={incidentButtonRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={(e) => {
+      {/* Incident report button - orange - ALWAYS rendered for iOS touch proxy registration */}
+      {/* Hidden when not navigating, but ref is always valid for touch interception */}
+      <Button
+        ref={incidentButtonRef}
+        variant="ghost"
+        size="icon"
+        onTouchStart={(e) => {
+          if (!isNavigating || !onReportIncident) return;
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('[INCIDENT-BTN] 🟠 Orange button TOUCHSTART in NAV mode');
+          onReportIncident();
+        }}
+        onPointerDown={(e) => {
+          if (!isNavigating || !onReportIncident) return;
+          if (e.pointerType === 'mouse') {
             e.preventDefault();
-            e.stopPropagation();
-            console.log('[INCIDENT-BTN] 🟠 Orange button TOUCHSTART in NAV mode');
+            console.log('[INCIDENT-BTN] 🟠 Orange button POINTERDOWN (mouse) in NAV mode');
             onReportIncident();
-          }}
-          onPointerDown={(e) => {
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[INCIDENT-BTN] 🟠 Orange button POINTERDOWN (mouse) in NAV mode');
-              onReportIncident();
-            }
-          }}
-          className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
-            isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
-          }`}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-          data-testid="button-report-incident"
-          data-tour-id="incident-button"
-        >
-          <AlertCircle className="h-5 w-5" />
-        </Button>
-      )}
+          }
+        }}
+        className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+          isNavigating && onReportIncident && isVisible 
+            ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' 
+            : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
+        }`}
+        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        data-testid="button-report-incident"
+        data-tour-id="incident-button"
+      >
+        <AlertCircle className="h-5 w-5" />
+      </Button>
 
       {/* Cancel navigation button - red X - hides/shows with double-tap */}
       {isNavigating && (
