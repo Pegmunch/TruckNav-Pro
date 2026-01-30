@@ -3525,6 +3525,20 @@ function NavigationPageContent() {
     }
   };
 
+  // MEMOIZED incident callbacks - stable references for iOS Safari touch handling
+  // Without useCallback, inline arrow functions cause constant re-registration
+  // which breaks the iOS touch proxy system
+  const handleViewIncidents = useCallback(() => {
+    console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+    setLiveTrafficPanelTab('view');
+    setShowLiveTrafficPanel(true);
+  }, []);
+  
+  const handleReportIncident = useCallback(() => {
+    console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening Incident Report Dialog (categories + mic)');
+    setShowIncidentReportDialog(true);
+  }, []);
+
   // Map expansion toggle functionality
   const handleToggleMapExpansion = () => {
     setIsMapExpanded(!isMapExpanded);
@@ -3691,11 +3705,7 @@ function NavigationPageContent() {
                     useStaticRoute={isNavigating || isLocalNavActive}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                    onViewIncidents={() => {
-                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
-                      setLiveTrafficPanelTab('view');
-                      setShowLiveTrafficPanel(true);
-                    }}
+                    onViewIncidents={handleViewIncidents}
                   />
                 </MapShell>
               </div>
@@ -3832,11 +3842,7 @@ function NavigationPageContent() {
                           return { ...prev, isSatelliteView: newSatelliteState };
                         });
                       }}
-                      onViewIncidents={() => {
-                        console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed in PLAN mode - opening Live Traffic Panel');
-                        setLiveTrafficPanelTab('view');
-                        setShowLiveTrafficPanel(true);
-                      }}
+                      onViewIncidents={handleViewIncidents}
                       onCompassClick={() => {
                         mapRef.current?.resetBearing();
                         mapRef.current?.zoomToUserLocation({ bearing: 0, pitch: 0 });
@@ -4062,10 +4068,7 @@ function NavigationPageContent() {
                     <LeftActionStack
                       onNavigate={() => mapRef.current?.zoomToUserLocation()}
                       onCancel={handleStopNavigation}
-                      onReportIncident={() => {
-                        console.log('[INCIDENT-BTN] 🟠 Orange button pressed - opening Incident Report Dialog (categories + mic)');
-                        setShowIncidentReportDialog(true);
-                      }}
+                      onReportIncident={handleReportIncident}
                       onOpenMenu={() => setShowComprehensiveMenu(true)}
                       isNavigating={isNavUIActive}
                       currentLocation={currentGPSLocation}
@@ -4287,11 +4290,7 @@ function NavigationPageContent() {
                         console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
                         setShowTrafficLayer(prev => !prev);
                       }}
-                      onViewIncidents={() => {
-                        console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
-                        setLiveTrafficPanelTab('view');
-                        setShowLiveTrafficPanel(true);
-                      }}
+                      onViewIncidents={handleViewIncidents}
                       showTraffic={showTrafficLayer}
                       isSatelliteView={mapControlState.isSatelliteView}
                       isVisible={showNavControls}
@@ -4522,11 +4521,7 @@ function NavigationPageContent() {
                     useStaticRoute={isNavigating || isLocalNavActive}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
-                    onViewIncidents={() => {
-                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
-                      setLiveTrafficPanelTab('view');
-                      setShowLiveTrafficPanel(true);
-                    }}
+                    onViewIncidents={handleViewIncidents}
                   />
                 </MapShell>
                 
