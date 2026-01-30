@@ -74,7 +74,7 @@ import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
-// IOSTouchCapture removed - no longer needed with direct fixed positioning
+import { IOSTouchProxyLayer } from "@/components/navigation/ios-touch-proxy-layer";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
@@ -5077,6 +5077,8 @@ export default function NavigationPage() {
       <OnboardingProvider isReady={true} isFleetPage={false}>
         <NavigationPageContent key={`nav-epoch-${navigationEpoch}`} />
       </OnboardingProvider>
+      {/* iOS Safari WebGL touch proxy - renders outside map hierarchy to capture touches */}
+      <IOSTouchProxyLayer />
     </GPSProvider>
   );
 }
