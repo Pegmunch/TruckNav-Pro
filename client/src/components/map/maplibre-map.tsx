@@ -17,6 +17,7 @@ import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-inciden
 import { TrafficStatusIndicator, TrafficLegend, type TrafficStatus } from "@/components/navigation/traffic-status-indicator";
 import { buttonRegistry } from "@/components/navigation/right-action-stack";
 import { hapticButtonPress } from "@/hooks/use-haptic-feedback";
+import { IncidentControl, TrafficControl, TiltControl } from "./maplibre-custom-controls";
 
 /**
  * BULLETPROOF COORDINATE VALIDATION
@@ -232,6 +233,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
   const onDoubleTapRef = useRef<(() => void) | undefined>(onDoubleTap);
   
+  // MapLibre custom controls for iOS Safari WebGL touch fix
+  const incidentControlRef = useRef<IncidentControl | null>(null);
+  const trafficControlRef = useRef<TrafficControl | null>(null);
+  const tiltControlRef = useRef<TiltControl | null>(null);
+  
   // Fly-by animation state
   const [isFlyByActive, setIsFlyByActive] = useState(false);
   const flyByAnimationRef = useRef<number | null>(null);
@@ -268,6 +274,110 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   useEffect(() => {
     onDoubleTapRef.current = onDoubleTap;
   }, [onDoubleTap]);
+  
+  // ============================================================================
+  // MAPLIBRE CUSTOM CONTROLS - iOS Safari WebGL touch fix
+  // These controls are rendered through MapLibre's IControl interface which
+  // bypasses the WebGL touch blocking issue that affects regular DOM buttons.
+  // Controls are only added during navigation mode for incident, traffic, and 3D toggle.
+  // ============================================================================
+  useEffect(() => {
+    if (!map.current || !isLoaded) return;
+    
+    const mapInstance = map.current;
+    
+    // Create and add controls when navigating
+    if (isNavigating) {
+      console.log('[MAPLIBRE-CONTROLS] Adding custom controls for navigation mode');
+      
+      // Incident control (red border)
+      if (onViewIncidents && !incidentControlRef.current) {
+        incidentControlRef.current = new IncidentControl(() => {
+          console.log('[MAPLIBRE-CONTROLS] Incident control clicked');
+          onViewIncidents();
+        });
+        mapInstance.addControl(incidentControlRef.current, 'top-right');
+      }
+      
+      // Traffic control (orange border when active)
+      if (onToggleTraffic && !trafficControlRef.current) {
+        trafficControlRef.current = new TrafficControl(() => {
+          console.log('[MAPLIBRE-CONTROLS] Traffic control clicked');
+          onToggleTraffic();
+        }, showTraffic);
+        mapInstance.addControl(trafficControlRef.current, 'top-right');
+      }
+      
+      // 3D/Tilt control (blue border when active)
+      if (!tiltControlRef.current) {
+        tiltControlRef.current = new TiltControl(() => {
+          console.log('[MAPLIBRE-CONTROLS] Tilt control clicked');
+          // Toggle 3D mode via existing mechanism
+          setIs3DMode(prev => {
+            const newMode = !prev;
+            if (mapInstance) {
+              try {
+                mapInstance.easeTo({
+                  pitch: newMode ? 50 : 0,
+                  duration: 300
+                });
+              } catch (e) {
+                console.warn('[MAPLIBRE-CONTROLS] Failed to toggle 3D:', e);
+              }
+            }
+            return newMode;
+          });
+        }, is3DMode);
+        mapInstance.addControl(tiltControlRef.current, 'top-right');
+      }
+    } else {
+      // Remove controls when not navigating
+      console.log('[MAPLIBRE-CONTROLS] Removing custom controls (not navigating)');
+      
+      if (incidentControlRef.current) {
+        try { mapInstance.removeControl(incidentControlRef.current); } catch (e) {}
+        incidentControlRef.current = null;
+      }
+      if (trafficControlRef.current) {
+        try { mapInstance.removeControl(trafficControlRef.current); } catch (e) {}
+        trafficControlRef.current = null;
+      }
+      if (tiltControlRef.current) {
+        try { mapInstance.removeControl(tiltControlRef.current); } catch (e) {}
+        tiltControlRef.current = null;
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (incidentControlRef.current) {
+        try { mapInstance.removeControl(incidentControlRef.current); } catch (e) {}
+        incidentControlRef.current = null;
+      }
+      if (trafficControlRef.current) {
+        try { mapInstance.removeControl(trafficControlRef.current); } catch (e) {}
+        trafficControlRef.current = null;
+      }
+      if (tiltControlRef.current) {
+        try { mapInstance.removeControl(tiltControlRef.current); } catch (e) {}
+        tiltControlRef.current = null;
+      }
+    };
+  }, [isNavigating, isLoaded, onViewIncidents, onToggleTraffic, showTraffic, is3DMode]);
+  
+  // Update traffic control active state when showTraffic changes
+  useEffect(() => {
+    if (trafficControlRef.current) {
+      trafficControlRef.current.setActive(showTraffic);
+    }
+  }, [showTraffic]);
+  
+  // Update tilt control active state when is3DMode changes
+  useEffect(() => {
+    if (tiltControlRef.current) {
+      tiltControlRef.current.setActive(is3DMode);
+    }
+  }, [is3DMode]);
   
   // CRITICAL: Delete MapLibre's transparent button color rule from its stylesheet
   // This is the ONLY reliable fix - MapLibre's CSS keeps re-inserting after overrides
