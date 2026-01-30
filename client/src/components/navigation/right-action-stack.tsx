@@ -65,7 +65,8 @@ function handleWindowTouchStart(e: TouchEvent) {
   }
 }
 
-function attachWindowTouchListener() {
+// Exported so left-action-stack can also use the same listener
+export function attachWindowTouchListener() {
   windowListenerRefCount++;
   if (windowListenerRefCount === 1) {
     // CRITICAL: Use touchstart NOT touchend - iOS Safari cancels touchend events over WebGL
@@ -80,7 +81,8 @@ function attachWindowTouchListener() {
   }
 }
 
-function detachWindowTouchListener() {
+// Exported so left-action-stack can also use the same listener
+export function detachWindowTouchListener() {
   windowListenerRefCount--;
   if (windowListenerRefCount === 0 && windowTouchHandler) {
     document.removeEventListener('touchstart', windowTouchHandler, { capture: true });
@@ -335,6 +337,14 @@ export function RightActionStack({
     }
   }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
   
+  // CRITICAL: Stable callback wrapper for iOS touch proxy - always defined
+  const stableViewIncidentsCallback = useCallback(() => {
+    if (onViewIncidents && !hideIncidents) {
+      console.log('[RIGHT-STACK] 🔴 Stable incidents callback fired');
+      onViewIncidents();
+    }
+  }, [onViewIncidents, hideIncidents]);
+  
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
   useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS', isNavigating);
@@ -351,7 +361,8 @@ export function RightActionStack({
   // This uses the same pattern as the working double-tap feature
   // Window-level listeners receive ALL touches regardless of WebGL canvas blocking
   // ============================================================================
-  useWindowTouchInterceptor(incidentsButtonRef, onViewIncidents, 'incidents-btn', isNavigating);
+  // CRITICAL: Use stableViewIncidentsCallback which is ALWAYS defined (not undefined)
+  useWindowTouchInterceptor(incidentsButtonRef, stableViewIncidentsCallback, 'incidents-btn', isNavigating);
   useWindowTouchInterceptor(trafficButtonRef, onToggleTraffic, 'traffic-btn', isNavigating);
   useWindowTouchInterceptor(mapViewButtonRef, onToggleMapView, 'map-view-btn', isNavigating);
   useWindowTouchInterceptor(recenterButtonRef, onRecenter, 'recenter-btn', isNavigating);

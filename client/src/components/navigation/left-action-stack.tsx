@@ -5,7 +5,7 @@ import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } 
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 import { navigationVoice } from '@/lib/navigation-voice';
 import { getAlertSoundsService } from '@/lib/alert-sounds';
-import { buttonRegistry } from './right-action-stack';
+import { buttonRegistry, attachWindowTouchListener, detachWindowTouchListener } from './right-action-stack';
 
 // Native event listener hook for iOS Safari - uses TOUCHSTART (not touchend)
 // iOS Safari cancels touchend events over WebGL canvases
@@ -115,6 +115,9 @@ function useWindowTouchInterceptor(
       return;
     }
     
+    // CRITICAL: Attach the global listener - don't just rely on right-action-stack
+    attachWindowTouchListener();
+    
     // Register this button with the global registry
     buttonRegistry.set(id, {
       id,
@@ -126,6 +129,7 @@ function useWindowTouchInterceptor(
     
     return () => {
       buttonRegistry.delete(id);
+      detachWindowTouchListener();
       console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 🗑️ Unregistered button: ${id}`);
     };
   }, [ref, callback, id, isNavigating, mounted]);
@@ -250,18 +254,13 @@ export function LeftActionStack({
   // CRITICAL: Use stableIncidentCallback which is ALWAYS defined (not undefined)
   useWindowTouchInterceptor(incidentButtonRef, stableIncidentCallback, 'left-incident-btn', isNavigating);
 
-  // CRITICAL: Return null if no buttons would be visible
-  // This prevents an empty container from blocking touch events
+  // CRITICAL: For iOS Safari WebGL fix, we need to ALWAYS render the incident button
+  // so its ref is valid and can register with the touch proxy system.
+  // We still check if any buttons would be visible to avoid blocking touch events.
   const hasVisibleButtons = isNavigating || showMenuButton;
   
-  console.log('[LEFT-STACK-RENDER]', { isNavigating, showMenuButton, hasVisibleButtons, hasOnReportIncident: !!onReportIncident });
-  
-  if (!hasVisibleButtons) {
-    return null;
-  }
-  
   return (
-    <div className="flex flex-col gap-2 pointer-events-auto">
+    <div className={`flex flex-col gap-2 ${hasVisibleButtons ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       {/* Navigation button - red navigation arrow - hides/shows with double-tap */}
       {isNavigating && (
         <Button
