@@ -351,30 +351,12 @@ export function RightActionStack({
       }}
     >
       {/* 1. Incidents - Red border - hides/shows with double-tap */}
-      {/* FIXED: Added direct onClick AND onTouchEnd for iOS Safari compatibility */}
+      {/* Uses native event handlers via useNativeClickHandler hook (same as zoom buttons) */}
       {onViewIncidents && !hideIncidents && (
         <Button
           ref={incidentsButtonRef}
           variant="ghost"
           size="icon"
-          onPointerDown={(e) => {
-            // iOS Safari fix: Fire on pointer DOWN not up/end
-            // This fires immediately when finger touches screen
-            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('[INCIDENTS-BTN] ✅ PointerDown fired');
-              hapticButtonPress();
-              onViewIncidents();
-            }
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[INCIDENTS-BTN] ✅ onClick fired');
-            hapticButtonPress();
-            onViewIncidents();
-          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -500,29 +482,12 @@ export function RightActionStack({
       )}
 
       {/* 8. Traffic Toggle - Orange/Gray border - hides/shows with double-tap */}
-      {/* FIXED: Added direct onClick AND onTouchEnd for iOS Safari compatibility */}
+      {/* Uses native event handlers via useNativeClickHandler hook (same as zoom buttons) */}
       {onToggleTraffic && (
         <Button
           ref={trafficButtonRef}
           variant="ghost"
           size="icon"
-          onPointerDown={(e) => {
-            // iOS Safari fix: Fire on pointer DOWN not up/end
-            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('[TRAFFIC-BTN] ✅ PointerDown fired');
-              hapticButtonPress();
-              onToggleTraffic();
-            }
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[TRAFFIC-BTN] ✅ onClick fired');
-            hapticButtonPress();
-            onToggleTraffic();
-          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
