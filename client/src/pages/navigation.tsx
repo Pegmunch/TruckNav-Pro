@@ -4267,7 +4267,47 @@ function NavigationPageContent() {
                     ) : null
                   }
                   topRightStack={null}
-                  rightStack={null}
+                  rightStack={
+                    <RightActionStack
+                      onZoomIn={() => mapRef.current?.zoomIn()}
+                      onZoomOut={() => mapRef.current?.zoomOut()}
+                      onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
+                      onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
+                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onToggleMapView={() => {
+                        console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
+                        mapRef.current?.toggleMapView();
+                        setMapControlState(prev => {
+                          const newSatelliteState = !prev.isSatelliteView;
+                          console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
+                          return { ...prev, isSatelliteView: newSatelliteState };
+                        });
+                      }}
+                      onToggleTraffic={() => {
+                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
+                        setShowTrafficLayer(prev => !prev);
+                      }}
+                      onViewIncidents={() => {
+                        console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
+                        setLiveTrafficPanelTab('view');
+                        setShowLiveTrafficPanel(true);
+                      }}
+                      showTraffic={showTrafficLayer}
+                      isSatelliteView={mapControlState.isSatelliteView}
+                      isVisible={showNavControls}
+                      hideIncidents={false}
+                      hideCompass={true}
+                      hide3D={false}
+                      onToggle3D={() => {
+                        mapRef.current?.toggle3DMode();
+                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                      }}
+                      is3DMode={mapControlState.is3DMode}
+                      isNavigating={true}
+                      compact={true}
+                      bearing={mapControlState.bearing}
+                    />
+                  }
                   infoBoxes={
                     currentRoute ? (
                       <div className="flex items-center justify-center gap-3">
@@ -4301,61 +4341,6 @@ function NavigationPageContent() {
                     />
                   }
                 />
-                
-                {/* NAVIGATION MODE CONTROLS - Right Stack - Direct fixed positioning like preview mode */}
-                {/* CRITICAL: z-index must be HIGHER than NavigationLayout's 600000 to receive touch events on iOS Safari */}
-                {/* iOS Safari doesn't properly pass touch events through pointer-events-none when z-index is lower */}
-                {/* iOS Safari WebGL compositing fix: transform forces new compositing layer for proper hit-testing */}
-                <div className="fixed flex flex-col gap-1 pointer-events-auto"
-                  style={{
-                    bottom: 'calc(100px + var(--safe-area-bottom))',
-                    right: '16px',
-                    zIndex: 700000,
-                    transform: 'translateZ(0)',
-                    WebkitTransform: 'translateZ(0)',
-                    isolation: 'isolate',
-                    willChange: 'transform'
-                  }}>
-                  <RightActionStack
-                    onZoomIn={() => mapRef.current?.zoomIn()}
-                    onZoomOut={() => mapRef.current?.zoomOut()}
-                    onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
-                    onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
-                    onRecenter={() => mapRef.current?.zoomToUserLocation()}
-                    onToggleMapView={() => {
-                      console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
-                      mapRef.current?.toggleMapView();
-                      setMapControlState(prev => {
-                        const newSatelliteState = !prev.isSatelliteView;
-                        console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
-                        return { ...prev, isSatelliteView: newSatelliteState };
-                      });
-                    }}
-                    onToggleTraffic={() => {
-                      console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
-                      setShowTrafficLayer(prev => !prev);
-                    }}
-                    onViewIncidents={() => {
-                      console.log('[INCIDENTS-BTN] 🔴 Incidents button pressed - opening Live Traffic Panel (view tab)');
-                      setLiveTrafficPanelTab('view');
-                      setShowLiveTrafficPanel(true);
-                    }}
-                    showTraffic={showTrafficLayer}
-                    isSatelliteView={mapControlState.isSatelliteView}
-                    isVisible={showNavControls}
-                    hideIncidents={false}
-                    hideCompass={true}
-                    hide3D={false}
-                    onToggle3D={() => {
-                      mapRef.current?.toggle3DMode();
-                      setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                    }}
-                    is3DMode={mapControlState.is3DMode}
-                    isNavigating={true}
-                    compact={true}
-                    bearing={mapControlState.bearing}
-                  />
-                </div>
                 </>
               )}
 
