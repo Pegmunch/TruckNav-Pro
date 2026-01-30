@@ -1,62 +1,100 @@
-import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from 'lucide-react';
+import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map as MapIcon } from 'lucide-react';
 import { useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
-// COMPREHENSIVE DEBUG: Log all touch/pointer events at document level
-function useDocumentTouchDebug(isNavigating: boolean) {
+// ============================================================================
+// WINDOW-LEVEL TOUCH INTERCEPTOR (Same pattern as working double-tap feature)
+// ============================================================================
+// iOS Safari WebGL bug blocks touch events from reaching DOM elements above canvas.
+// The double-tap feature works because it uses window-level listeners.
+// This registry allows buttons to register their bounds and callbacks,
+// then a single window-level listener intercepts touches and triggers callbacks.
+// ============================================================================
+
+interface ButtonRegistration {
+  id: string;
+  getRect: () => DOMRect | null;
+  callback: () => void;
+}
+
+// Global registry of buttons that need window-level touch handling
+const buttonRegistry = new Map<string, ButtonRegistration>();
+
+// Single window-level touchend listener (like double-tap feature)
+let windowListenerAttached = false;
+
+function attachWindowTouchListener() {
+  if (windowListenerAttached) return;
+  
+  const handleWindowTouchEnd = (e: TouchEvent) => {
+    if (e.changedTouches.length !== 1) return; // Only single-finger taps
+    
+    const touch = e.changedTouches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+    
+    // Check if touch landed on any registered button
+    for (const [id, registration] of buttonRegistry) {
+      const rect = registration.getRect();
+      if (!rect) continue;
+      
+      // Check if touch is within button bounds (with small padding for touch accuracy)
+      const padding = 5;
+      if (
+        x >= rect.left - padding &&
+        x <= rect.right + padding &&
+        y >= rect.top - padding &&
+        y <= rect.bottom + padding
+      ) {
+        console.log(`[WINDOW-TOUCH-INTERCEPT] ✅ Touch hit button: ${id} at (${x}, ${y})`);
+        e.preventDefault();
+        e.stopPropagation();
+        hapticButtonPress();
+        registration.callback();
+        return; // Only trigger first matching button
+      }
+    }
+  };
+  
+  // Use window.addEventListener like the working double-tap feature
+  window.addEventListener('touchend', handleWindowTouchEnd, { passive: false, capture: true });
+  windowListenerAttached = true;
+  console.log('[WINDOW-TOUCH-INTERCEPT] 📎 Window-level touch interceptor attached');
+}
+
+// Hook to register a button with the window-level interceptor
+function useWindowTouchInterceptor(
+  ref: React.RefObject<HTMLButtonElement>,
+  callback: (() => void) | undefined,
+  id: string,
+  isNavigating: boolean
+) {
   useEffect(() => {
-    const mode = isNavigating ? 'NAVIGATION' : 'PREVIEW';
+    // Only use window interceptor in navigation mode (where iOS Safari bug occurs)
+    if (!isNavigating || !callback) {
+      buttonRegistry.delete(id);
+      return;
+    }
     
-    const handleDocTouchStart = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const testId = target?.getAttribute?.('data-testid') || 'unknown';
-      const tagName = target?.tagName || 'unknown';
-      console.log(`[DOC-TOUCH-${mode}] 🔵 TouchStart on:`, tagName, testId, {
-        x: e.touches[0]?.clientX,
-        y: e.touches[0]?.clientY,
-        targetClasses: target?.className?.substring?.(0, 50)
-      });
-    };
+    // Attach the global listener if not already attached
+    attachWindowTouchListener();
     
-    const handleDocTouchEnd = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const testId = target?.getAttribute?.('data-testid') || 'unknown';
-      console.log(`[DOC-TOUCH-${mode}] 🔴 TouchEnd on:`, target?.tagName, testId);
-    };
+    // Register this button
+    buttonRegistry.set(id, {
+      id,
+      getRect: () => ref.current?.getBoundingClientRect() || null,
+      callback
+    });
     
-    const handleDocPointerDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement;
-      const testId = target?.getAttribute?.('data-testid') || 'unknown';
-      console.log(`[DOC-POINTER-${mode}] 👆 PointerDown on:`, target?.tagName, testId, {
-        pointerType: e.pointerType,
-        x: e.clientX,
-        y: e.clientY
-      });
-    };
-    
-    const handleDocClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const testId = target?.getAttribute?.('data-testid') || 'unknown';
-      console.log(`[DOC-CLICK-${mode}] 🖱️ Click on:`, target?.tagName, testId);
-    };
-    
-    // Attach at capture phase to see events before any stopPropagation
-    document.addEventListener('touchstart', handleDocTouchStart, { capture: true, passive: true });
-    document.addEventListener('touchend', handleDocTouchEnd, { capture: true, passive: true });
-    document.addEventListener('pointerdown', handleDocPointerDown, { capture: true });
-    document.addEventListener('click', handleDocClick, { capture: true });
-    
-    console.log(`[DOC-DEBUG-${mode}] 📎 Document-level debug listeners attached`);
+    console.log(`[WINDOW-TOUCH-REGISTER] 📎 Registered button: ${id}`);
     
     return () => {
-      document.removeEventListener('touchstart', handleDocTouchStart, { capture: true });
-      document.removeEventListener('touchend', handleDocTouchEnd, { capture: true });
-      document.removeEventListener('pointerdown', handleDocPointerDown, { capture: true });
-      document.removeEventListener('click', handleDocClick, { capture: true });
+      buttonRegistry.delete(id);
+      console.log(`[WINDOW-TOUCH-REGISTER] 🗑️ Unregistered button: ${id}`);
     };
-  }, [isNavigating]);
+  }, [ref, callback, id, isNavigating]);
 }
 
 // Standard native event handler - uses touchend and click for consistent behavior
@@ -245,9 +283,6 @@ export function RightActionStack({
     }
   }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
   
-  // DEBUGGING: Track all touch/pointer events at document level
-  useDocumentTouchDebug(isNavigating);
-  
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
   useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS', isNavigating);
@@ -258,6 +293,20 @@ export function RightActionStack({
   useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE', isNavigating);
   useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN', isNavigating);
   useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT', isNavigating);
+  
+  // ============================================================================
+  // WINDOW-LEVEL TOUCH INTERCEPTOR - Critical fix for iOS Safari WebGL bug
+  // This uses the same pattern as the working double-tap feature
+  // Window-level listeners receive ALL touches regardless of WebGL canvas blocking
+  // ============================================================================
+  useWindowTouchInterceptor(incidentsButtonRef, onViewIncidents, 'incidents-btn', isNavigating);
+  useWindowTouchInterceptor(trafficButtonRef, onToggleTraffic, 'traffic-btn', isNavigating);
+  useWindowTouchInterceptor(mapViewButtonRef, onToggleMapView, 'map-view-btn', isNavigating);
+  useWindowTouchInterceptor(recenterButtonRef, onRecenter, 'recenter-btn', isNavigating);
+  useWindowTouchInterceptor(compassButtonRef, onCompassClick, 'compass-btn', isNavigating);
+  useWindowTouchInterceptor(toggle3DButtonRef, onToggle3D, '3d-toggle-btn', isNavigating);
+  useWindowTouchInterceptor(zoomInButtonRef, zoomInHandler, 'zoom-in-btn', isNavigating);
+  useWindowTouchInterceptor(zoomOutButtonRef, zoomOutHandler, 'zoom-out-btn', isNavigating);
   
   return (
     <div 
@@ -324,7 +373,7 @@ export function RightActionStack({
           style={{ touchAction: 'manipulation' }}
           data-testid="button-toggle-view"
         >
-          <Map className={iconSize} />
+          <MapIcon className={iconSize} />
         </Button>
       )}
 
