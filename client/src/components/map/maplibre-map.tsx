@@ -1336,17 +1336,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const targetTag = target?.tagName || 'unknown';
         const targetClass = target?.className || '';
         const isMapCanvas = target?.closest('.maplibregl-canvas-container') !== null;
+        const isMapArea = target?.closest('.maplibregl-map') !== null || 
+                          target?.closest('[class*="map-container"]') !== null ||
+                          target?.closest('.mobile-layout') !== null;
+        const isPointerNoneOverlay = target?.closest('.pointer-events-none') !== null;
         const isButton = target?.closest('button') !== null;
-        const hasTestId = target?.closest('[data-testid]') !== null;
         const hasNavControls = target?.closest('[data-nav-controls]') !== null;
         const hasPointerAuto = target?.closest('.pointer-events-auto') !== null;
+        const isSpeedometer = target?.closest('[data-testid*="speedometer"]') !== null;
+        const isActionStack = target?.closest('[data-testid*="action-stack"]') !== null ||
+                              target?.closest('[data-testid*="stack"]') !== null;
         
         console.log('[DOUBLE-TAP-DEBUG] Touch event received:', {
           targetTag,
           targetClass: targetClass.toString().substring(0, 50),
           isMapCanvas,
+          isMapArea,
+          isPointerNoneOverlay,
           isButton,
-          hasTestId,
           hasNavControls,
           hasPointerAuto,
           touches: e.touches.length,
@@ -1355,13 +1362,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         });
         
         // CRITICAL: Ignore taps on buttons/controls to prevent UI toggle when tapping buttons
-        // But ALLOW taps on the map canvas even if it has pointer-events-auto
-        if (target && (
-          isButton ||
-          hasNavControls ||
-          (hasPointerAuto && !isMapCanvas)
-        )) {
+        // Allow taps on: map canvas, map area, or pointer-events-none overlays (navigation mode)
+        const isTapOnControl = isButton || hasNavControls || isSpeedometer || isActionStack;
+        const isTapOnMapOrOverlay = isMapCanvas || isMapArea || isPointerNoneOverlay;
+        
+        if (target && isTapOnControl) {
           console.log('[DOUBLE-TAP-DEBUG] ❌ Ignored - tap was on button/control');
+          lastSingleTap = 0;
+          return;
+        }
+        
+        // Also reject taps on pointer-events-auto elements that aren't map-related
+        if (hasPointerAuto && !isTapOnMapOrOverlay) {
+          console.log('[DOUBLE-TAP-DEBUG] ❌ Ignored - tap on non-map pointer-events-auto element');
           lastSingleTap = 0;
           return;
         }
@@ -1414,11 +1427,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       touchEndHandlerRef.current = handleTouchEnd;
       touchContainerRef.current = mapContainer.current;
       
+      // Add listener to BOTH map container AND window to capture touches on navigation overlays
       if (touchContainerRef.current) {
         touchContainerRef.current.addEventListener('touchend', handleTouchEnd, { passive: false });
         console.log('[MAP-GESTURE] ✅ Two-finger double-tap zoom out enabled');
         console.log('[MAP-GESTURE] ✅ Single-finger double-tap UI toggle enabled');
       }
+      
+      // Window-level listener for navigation mode overlays (sibling elements to map container)
+      window.addEventListener('touchend', handleTouchEnd, { passive: false });
+      console.log('[MAP-GESTURE] ✅ Window-level double-tap listener added for navigation overlays');
 
       map.current.on('moveend', () => {
         if (!map.current) return;
@@ -1741,9 +1759,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      // Clean up touch event listener
+      // Clean up touch event listeners (both container and window)
       if (touchContainerRef.current && touchEndHandlerRef.current) {
         touchContainerRef.current.removeEventListener('touchend', touchEndHandlerRef.current);
+      }
+      if (touchEndHandlerRef.current) {
+        window.removeEventListener('touchend', touchEndHandlerRef.current);
       }
       if (map.current) {
         map.current.remove();
