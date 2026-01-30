@@ -219,6 +219,14 @@ export function RightActionStack({
     >
       {/* 1. Incidents - Red border - hides/shows with double-tap */}
       {/* FIXED: Added direct onClick for iOS Safari compatibility - matches preview mode approach */}
+      {/* DEBUG: Log rendering conditions */}
+      {console.log('[INCIDENTS-BTN-RENDER] Rendering check:', { 
+        hasCallback: !!onViewIncidents, 
+        hideIncidents, 
+        shouldRender: onViewIncidents && !hideIncidents,
+        isVisible,
+        compact
+      })}
       {onViewIncidents && !hideIncidents && (
         <Button
           ref={incidentsButtonRef}
@@ -227,9 +235,18 @@ export function RightActionStack({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[INCIDENTS-BTN] ✅ Direct onClick fired');
+            console.log('[INCIDENTS-BTN] ✅ Direct onClick fired - isVisible:', isVisible, 'compact:', compact);
             hapticButtonPress();
             onViewIncidents();
+          }}
+          onTouchStart={(e) => {
+            console.log('[INCIDENTS-BTN] 🔵 TouchStart event received');
+          }}
+          onTouchEnd={(e) => {
+            console.log('[INCIDENTS-BTN] 🔴 TouchEnd event received');
+          }}
+          onPointerDown={(e) => {
+            console.log('[INCIDENTS-BTN] 👆 PointerDown event received');
           }}
           className={cn(
             buttonSize, 
