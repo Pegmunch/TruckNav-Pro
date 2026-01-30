@@ -1837,6 +1837,7 @@ function ComprehensiveMobileMenu({
             </DialogDescription>
           </DialogHeader>
           <FuelPriceComparison 
+            routePath={currentRoute?.routePath ?? undefined}
             onNavigateToStation={(station) => {
               setShowFuelPrices(false);
             }}

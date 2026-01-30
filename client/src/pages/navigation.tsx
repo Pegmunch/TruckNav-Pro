@@ -4938,7 +4938,7 @@ function NavigationPageContent() {
             <DialogTitle className="text-gray-900">Fuel Price Comparison</DialogTitle>
           </DialogHeader>
           <div className="bg-white">
-            <FuelPriceComparison />
+            <FuelPriceComparison routePath={currentRoute?.routePath ?? undefined} />
           </div>
         </DialogContent>
       </Dialog>

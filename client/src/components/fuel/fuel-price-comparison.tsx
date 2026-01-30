@@ -1,10 +1,11 @@
 /**
  * Fuel Price Comparison Tool
  * Shows nearby fuel stations with current prices, sorted by cheapest
+ * Supports both GPS-based and route-based fuel station discovery
  * Uses UK Government Open Data Scheme for fuel pricing
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,21 +14,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Fuel, 
   MapPin, 
-  ArrowUpDown, 
   RefreshCw, 
   Navigation,
   TrendingDown,
   TrendingUp,
   Clock,
   Star,
-  ExternalLink
+  Route,
+  Droplets,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGPS } from "@/contexts/gps-context";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
+import { apiRequest } from "@/lib/queryClient";
 
 // Fuel types available in UK
 type FuelType = 'B7' | 'E10' | 'E5' | 'SDV';
@@ -47,7 +51,9 @@ interface FuelStation {
   postcode: string;
   latitude: number;
   longitude: number;
-  distance: number; // km from current location
+  distance?: number; // km from current location (nearby mode)
+  distanceAlongRoute?: number; // km from route start (route mode)
+  distanceFromRoute?: number; // km off the main route
   prices: {
     B7?: number; // Diesel
     E10?: number; // Petrol E10
@@ -56,23 +62,30 @@ interface FuelStation {
   };
   lastUpdated: string;
   facilities?: string[];
+  hasHGVPumps?: boolean;
+  hasAdBlue?: boolean;
 }
 
 interface FuelPriceComparisonProps {
   onNavigateToStation?: (station: FuelStation) => void;
+  routePath?: Array<{ lat: number; lng: number }>; // Optional route for along-route search
   className?: string;
 }
 
-export function FuelPriceComparison({ onNavigateToStation, className }: FuelPriceComparisonProps) {
+export function FuelPriceComparison({ onNavigateToStation, routePath, className }: FuelPriceComparisonProps) {
   const gps = useGPS();
   const position = gps?.position;
   const { formatDistance } = useMeasurement();
   const [selectedFuelType, setSelectedFuelType] = useState<FuelType>('B7'); // Diesel default for trucks
   const [searchRadius, setSearchRadius] = useState(10); // km
+  const [corridorWidth, setCorridorWidth] = useState(5); // km from route
   const [sortBy, setSortBy] = useState<'price' | 'distance'>('price');
+  const [searchMode, setSearchMode] = useState<'nearby' | 'route'>(routePath ? 'route' : 'nearby');
+  const [filterHGV, setFilterHGV] = useState(false);
+  const [filterAdBlue, setFilterAdBlue] = useState(false);
 
-  // Fetch fuel prices from backend with coordinates and radius
-  const { data: stations, isLoading, error, refetch, isFetching } = useQuery<FuelStation[]>({
+  // Fetch nearby fuel prices from backend with coordinates and radius
+  const { data: nearbyStations, isLoading: isLoadingNearby, error: errorNearby, refetch: refetchNearby, isFetching: isFetchingNearby } = useQuery<FuelStation[]>({
     queryKey: ['/api/fuel-prices', position?.latitude, position?.longitude, searchRadius],
     queryFn: async () => {
       if (!position) return [];
@@ -81,10 +94,42 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
       if (!response.ok) throw new Error('Failed to fetch fuel prices');
       return response.json();
     },
-    enabled: !!position,
+    enabled: !!position && searchMode === 'nearby',
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
   });
+
+  // Create a stable hash of the route for cache key
+  const routeHash = useMemo(() => {
+    if (!routePath || routePath.length < 2) return null;
+    // Use first, middle, and last points plus length for a stable signature
+    const first = routePath[0];
+    const mid = routePath[Math.floor(routePath.length / 2)];
+    const last = routePath[routePath.length - 1];
+    return `${first.lat.toFixed(4)},${first.lng.toFixed(4)}-${mid.lat.toFixed(4)},${mid.lng.toFixed(4)}-${last.lat.toFixed(4)},${last.lng.toFixed(4)}-${routePath.length}`;
+  }, [routePath]);
+
+  // Fetch fuel stations along route
+  const { data: routeStations, isLoading: isLoadingRoute, error: errorRoute, refetch: refetchRoute, isFetching: isFetchingRoute } = useQuery<FuelStation[]>({
+    queryKey: ['/api/fuel-prices/along-route', routeHash, corridorWidth],
+    queryFn: async () => {
+      if (!routePath || routePath.length < 2) return [];
+      const response = await apiRequest('POST', '/api/fuel-prices/along-route', {
+        routePath,
+        corridorWidth,
+      });
+      return response.json();
+    },
+    enabled: !!routePath && routePath.length >= 2 && searchMode === 'route',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Use appropriate stations based on search mode
+  const stations = searchMode === 'route' ? routeStations : nearbyStations;
+  const isLoading = searchMode === 'route' ? isLoadingRoute : isLoadingNearby;
+  const error = searchMode === 'route' ? errorRoute : errorNearby;
+  const isFetching = searchMode === 'route' ? isFetchingRoute : isFetchingNearby;
+  const refetch = searchMode === 'route' ? refetchRoute : refetchNearby;
 
   // Sort and filter stations
   const sortedStations = useMemo(() => {
@@ -92,15 +137,20 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
     
     return [...stations]
       .filter(station => station.prices[selectedFuelType] !== undefined)
+      .filter(station => !filterHGV || station.hasHGVPumps)
+      .filter(station => !filterAdBlue || station.hasAdBlue)
       .sort((a, b) => {
         if (sortBy === 'price') {
           const priceA = a.prices[selectedFuelType] ?? Infinity;
           const priceB = b.prices[selectedFuelType] ?? Infinity;
           return priceA - priceB;
         }
-        return a.distance - b.distance;
+        // Distance sorting - use appropriate distance field
+        const distA = searchMode === 'route' ? (a.distanceAlongRoute ?? 0) : (a.distance ?? 0);
+        const distB = searchMode === 'route' ? (b.distanceAlongRoute ?? 0) : (b.distance ?? 0);
+        return distA - distB;
       });
-  }, [stations, selectedFuelType, sortBy]);
+  }, [stations, selectedFuelType, sortBy, filterHGV, filterAdBlue, searchMode]);
 
   // Calculate average price for comparison
   const averagePrice = useMemo(() => {
@@ -118,12 +168,14 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
     const cheapestPrice = cheapestStation.prices[selectedFuelType];
     if (!cheapestPrice) return null;
     // Calculate savings for a 400L tank (typical truck tank)
-    return ((averagePrice - cheapestPrice) * 400).toFixed(2);
+    // Prices are in pence per litre, so divide by 100 to convert to pounds
+    return ((averagePrice - cheapestPrice) * 400 / 100).toFixed(2);
   }, [cheapestStation, averagePrice, selectedFuelType]);
 
   const formatPrice = (price: number | undefined) => {
     if (price === undefined) return 'N/A';
-    return `£${price.toFixed(1)}p`;
+    // Prices are in pence per litre, format as "XXX.Xp"
+    return `${price.toFixed(1)}p`;
   };
 
   const getPriceIndicator = (price: number | undefined) => {
@@ -134,7 +186,8 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
     return null;
   };
 
-  if (!position) {
+  // Show waiting for GPS only if no route and no position
+  if (!position && !routePath) {
     return (
       <Card className={cn("", className)}>
         <CardHeader>
@@ -143,13 +196,13 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
             Fuel Price Comparison
           </CardTitle>
           <CardDescription>
-            Enable location to find nearby fuel stations
+            Enable location or plan a route to find fuel stations
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center p-8 text-muted-foreground">
             <MapPin className="w-6 h-6 mr-2" />
-            <span>Waiting for GPS location...</span>
+            <span>Waiting for GPS location or route...</span>
           </div>
         </CardContent>
       </Card>
@@ -186,6 +239,22 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Search Mode Tabs - only show if route is available */}
+        {routePath && routePath.length >= 2 && (
+          <Tabs value={searchMode} onValueChange={(v) => setSearchMode(v as 'nearby' | 'route')} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="nearby" className="text-xs">
+                <MapPin className="w-3 h-3 mr-1" />
+                Nearby
+              </TabsTrigger>
+              <TabsTrigger value="route" className="text-xs">
+                <Route className="w-3 h-3 mr-1" />
+                Along Route
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+
         {/* Filters */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
@@ -212,24 +281,50 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="price">Cheapest First</SelectItem>
-                <SelectItem value="distance">Nearest First</SelectItem>
+                <SelectItem value="distance">{searchMode === 'route' ? 'Along Route' : 'Nearest First'}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Search radius */}
+        {/* HGV Filters */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={filterHGV ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterHGV(!filterHGV)}
+            className="h-7 text-xs"
+          >
+            <Truck className="w-3 h-3 mr-1" />
+            HGV Pumps
+          </Button>
+          <Button
+            variant={filterAdBlue ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterAdBlue(!filterAdBlue)}
+            className="h-7 text-xs"
+          >
+            <Droplets className="w-3 h-3 mr-1" />
+            AdBlue
+          </Button>
+        </div>
+
+        {/* Search radius / Corridor width */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <label className="text-xs text-muted-foreground">Search Radius</label>
-            <span className="text-xs font-medium">{searchRadius} km</span>
+            <label className="text-xs text-muted-foreground">
+              {searchMode === 'route' ? 'Corridor Width' : 'Search Radius'}
+            </label>
+            <span className="text-xs font-medium">
+              {searchMode === 'route' ? corridorWidth : searchRadius} km
+            </span>
           </div>
           <Slider
-            value={[searchRadius]}
-            onValueChange={([v]) => setSearchRadius(v)}
-            min={5}
-            max={50}
-            step={5}
+            value={[searchMode === 'route' ? corridorWidth : searchRadius]}
+            onValueChange={([v]) => searchMode === 'route' ? setCorridorWidth(v) : setSearchRadius(v)}
+            min={searchMode === 'route' ? 1 : 5}
+            max={searchMode === 'route' ? 20 : 50}
+            step={searchMode === 'route' ? 1 : 5}
             data-testid="slider-search-radius"
           />
         </div>
@@ -259,8 +354,12 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
         ) : sortedStations.length === 0 ? (
           <div className="text-center p-8 text-muted-foreground">
             <Fuel className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No fuel stations found within {searchRadius}km</p>
-            <p className="text-xs mt-1">Try increasing the search radius</p>
+            <p>No fuel stations found {searchMode === 'route' ? 'along route' : `within ${searchRadius}km`}</p>
+            <p className="text-xs mt-1">
+              {searchMode === 'route' 
+                ? 'Try increasing the corridor width' 
+                : 'Try increasing the search radius'}
+            </p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-2">
@@ -269,6 +368,9 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
                 const price = station.prices[selectedFuelType];
                 const indicator = getPriceIndicator(price);
                 const isCheapest = index === 0 && sortBy === 'price';
+                const displayDistance = searchMode === 'route' 
+                  ? station.distanceAlongRoute 
+                  : station.distance;
                 
                 return (
                   <div
@@ -281,12 +383,24 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-medium truncate">{station.brand}</h4>
                           {isCheapest && (
                             <Badge variant="default" className="bg-green-600 text-xs">
                               <Star className="w-3 h-3 mr-1" />
                               Best Price
+                            </Badge>
+                          )}
+                          {station.hasHGVPumps && (
+                            <Badge variant="outline" className="text-xs">
+                              <Truck className="w-3 h-3 mr-1" />
+                              HGV
+                            </Badge>
+                          )}
+                          {station.hasAdBlue && (
+                            <Badge variant="outline" className="text-xs text-blue-600 border-blue-300">
+                              <Droplets className="w-3 h-3 mr-1" />
+                              AdBlue
                             </Badge>
                           )}
                         </div>
@@ -317,12 +431,19 @@ export function FuelPriceComparison({ onNavigateToStation, className }: FuelPric
                     <div className="flex items-center justify-between mt-2 pt-2 border-t">
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {formatDistance(station.distance, 'km')}
+                          {searchMode === 'route' ? <Route className="w-3 h-3" /> : <MapPin className="w-3 h-3" />}
+                          {formatDistance(displayDistance ?? 0, 'km')}
+                          {searchMode === 'route' && ' along route'}
                         </span>
+                        {searchMode === 'route' && station.distanceFromRoute !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {formatDistance(station.distanceFromRoute, 'km')} off route
+                          </span>
+                        )}
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Updated {new Date(station.lastUpdated).toLocaleDateString()}
+                          {new Date(station.lastUpdated).toLocaleDateString()}
                         </span>
                       </div>
                       

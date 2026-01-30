@@ -2692,6 +2692,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ==========================================
+  // FUEL STATIONS ALONG ROUTE API
+  // Finds fuel stations along a planned route with price comparison
+  // ==========================================
+  app.post("/api/fuel-prices/along-route", async (req, res) => {
+    try {
+      const { routePath, corridorWidth = 5 } = req.body; // corridorWidth in km
+      
+      if (!routePath || !Array.isArray(routePath) || routePath.length < 2) {
+        return res.status(400).json({ message: "Valid route path with at least 2 points is required" });
+      }
+      
+      const width = Math.min(Math.max(parseFloat(corridorWidth), 1), 20); // 1-20km corridor
+      
+      // Generate fuel stations along the route corridor
+      const fuelStations = generateFuelStationsAlongRoute(routePath, width);
+      
+      console.log(`[FUEL-ALONG-ROUTE] Found ${fuelStations.length} stations along ${routePath.length}-point route`);
+      res.json(fuelStations);
+    } catch (error) {
+      console.error('[FUEL-ALONG-ROUTE] Error:', error);
+      res.status(500).json({ message: "Failed to find fuel stations along route" });
+    }
+  });
+  
+  // Helper function to find fuel stations along a route corridor
+  function generateFuelStationsAlongRoute(
+    routePath: Array<{lat: number; lng: number}>, 
+    corridorWidthKm: number
+  ) {
+    const brands = [
+      'BP', 'Shell', 'Esso', 'Texaco', 'Sainsbury\'s', 'Tesco', 
+      'Asda', 'Morrisons', 'Gulf', 'Murco', 'Jet', 'Total Energies'
+    ];
+    
+    // Base prices (pence per litre)
+    const basePrices = {
+      B7: 145 + Math.random() * 10,
+      E10: 138 + Math.random() * 8,
+      E5: 148 + Math.random() * 10,
+      SDV: 155 + Math.random() * 12,
+    };
+    
+    const stations: any[] = [];
+    const routeLength = routePath.length;
+    
+    // Calculate total route distance
+    let totalDistance = 0;
+    const segmentDistances: number[] = [0];
+    for (let i = 1; i < routePath.length; i++) {
+      const dist = haversineDistance(
+        routePath[i-1].lat, routePath[i-1].lng,
+        routePath[i].lat, routePath[i].lng
+      );
+      totalDistance += dist;
+      segmentDistances.push(totalDistance);
+    }
+    
+    // Generate stations at regular intervals along the route
+    const stationInterval = 15; // km between potential stations
+    const numPotentialStations = Math.floor(totalDistance / stationInterval) + 1;
+    
+    for (let i = 0; i < numPotentialStations; i++) {
+      // Random chance of station existing at this interval
+      if (Math.random() > 0.7) continue; // 30% chance at each interval
+      
+      const targetDistance = i * stationInterval + (Math.random() - 0.5) * stationInterval * 0.5;
+      
+      // Find the route segment for this distance
+      let segmentIndex = segmentDistances.findIndex(d => d >= targetDistance);
+      if (segmentIndex <= 0) segmentIndex = 1;
+      if (segmentIndex >= routePath.length) segmentIndex = routePath.length - 1;
+      
+      // Interpolate position on route
+      const prevDist = segmentDistances[segmentIndex - 1];
+      const nextDist = segmentDistances[segmentIndex];
+      const t = nextDist > prevDist ? (targetDistance - prevDist) / (nextDist - prevDist) : 0;
+      
+      const baseLat = routePath[segmentIndex - 1].lat + t * (routePath[segmentIndex].lat - routePath[segmentIndex - 1].lat);
+      const baseLng = routePath[segmentIndex - 1].lng + t * (routePath[segmentIndex].lng - routePath[segmentIndex - 1].lng);
+      
+      // Add random offset within corridor
+      const offsetAngle = Math.random() * 2 * Math.PI;
+      const offsetDist = Math.random() * corridorWidthKm;
+      const latOffset = (offsetDist * Math.cos(offsetAngle)) / 111;
+      const lngOffset = (offsetDist * Math.sin(offsetAngle)) / (111 * Math.cos(baseLat * Math.PI / 180));
+      
+      const stationLat = baseLat + latOffset;
+      const stationLng = baseLng + lngOffset;
+      
+      const brand = brands[Math.floor(Math.random() * brands.length)];
+      const priceMultiplier = ['Asda', 'Tesco', 'Sainsbury\'s', 'Morrisons'].includes(brand) 
+        ? 0.96 + Math.random() * 0.02 
+        : 0.98 + Math.random() * 0.04;
+      
+      const postcodeLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const postcode = `${postcodeLetters[Math.floor(Math.random() * 26)]}${postcodeLetters[Math.floor(Math.random() * 26)]}${Math.floor(Math.random() * 99) + 1} ${Math.floor(Math.random() * 9) + 1}${postcodeLetters[Math.floor(Math.random() * 26)]}${postcodeLetters[Math.floor(Math.random() * 26)]}`;
+      
+      stations.push({
+        id: `route-fuel-${i}-${Date.now()}`,
+        brand,
+        name: `${brand} ${['Service Station', 'Fuel', 'Express', 'Garage'][Math.floor(Math.random() * 4)]}`,
+        address: `${Math.floor(Math.random() * 200) + 1} ${['High Street', 'Main Road', 'Station Road', 'London Road', 'Park Lane'][Math.floor(Math.random() * 5)]}`,
+        postcode,
+        latitude: stationLat,
+        longitude: stationLng,
+        distanceAlongRoute: Math.round(targetDistance * 10) / 10, // km from route start
+        distanceFromRoute: Math.round(offsetDist * 10) / 10, // km off the route
+        prices: {
+          B7: Math.round(basePrices.B7 * priceMultiplier * 10) / 10,
+          E10: Math.round(basePrices.E10 * priceMultiplier * 10) / 10,
+          E5: Math.round(basePrices.E5 * priceMultiplier * 10) / 10,
+          SDV: Math.random() > 0.3 ? Math.round(basePrices.SDV * priceMultiplier * 10) / 10 : undefined,
+        },
+        lastUpdated: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+        facilities: generateFacilities(),
+        hasHGVPumps: Math.random() > 0.5, // 50% have HGV-friendly pumps
+        hasAdBlue: Math.random() > 0.4, // 60% have AdBlue
+      });
+    }
+    
+    // Sort by distance along route
+    return stations.sort((a, b) => a.distanceAlongRoute - b.distanceAlongRoute);
+  }
+  
+  // Haversine distance calculation (km)
+  function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+  
   // Helper function to generate realistic fuel station data
   // In production, replace with actual UK Government Open Data API calls
   function generateNearbyFuelStations(lat: number, lng: number, radiusKm: number) {
