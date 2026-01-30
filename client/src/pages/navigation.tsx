@@ -75,6 +75,7 @@ import { NavigationLayout } from "@/components/navigation/navigation-layout";
 import { LeftActionStack } from "@/components/navigation/left-action-stack";
 import { RightActionStack } from "@/components/navigation/right-action-stack";
 import { IOSTouchProxyLayer } from "@/components/navigation/ios-touch-proxy-layer";
+import { PortalIncidentButton, PortalTrafficButton } from "@/components/navigation/portal-button";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
@@ -5001,6 +5002,25 @@ function NavigationPageContent() {
         />
       )}
 
+      {/* Portal-based buttons for iOS Safari WebGL touch fix */}
+      {/* These render to document.body, completely outside the WebGL stacking context */}
+      <PortalIncidentButton
+        onClick={() => {
+          console.log('[PORTAL-INCIDENT] Opening incident report dialog');
+          setShowIncidentReportDialog(true);
+        }}
+        isNavigating={isNavUIActive}
+        isVisible={showNavControls}
+      />
+      <PortalTrafficButton
+        onClick={() => {
+          console.log('[PORTAL-TRAFFIC] Toggling traffic layer from:', showTrafficLayer);
+          setShowTrafficLayer(prev => !prev);
+        }}
+        isNavigating={isNavUIActive}
+        isVisible={showNavControls}
+        showTraffic={showTrafficLayer}
+      />
 
     </div>
   );
