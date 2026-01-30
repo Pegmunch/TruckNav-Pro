@@ -1334,6 +1334,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
       
       const handleTouchEnd = (e: TouchEvent) => {
+        // UNCONDITIONAL DEBUG - Always log when handler fires
+        console.log(`[MAPLIBRE-TOUCHEND] Handler fired! changedTouches: ${e.changedTouches.length}, buttonRegistry.size: ${buttonRegistry.size}`);
+        
         // ====================================================================
         // iOS SAFARI BUTTON INTERCEPT - Check registered buttons FIRST
         // Since iOS Safari WebGL blocks touch events, we intercept them here
