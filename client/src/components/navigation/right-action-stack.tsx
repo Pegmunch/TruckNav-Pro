@@ -109,38 +109,11 @@ export function RightActionStack({
   const compassButtonRef = useRef<HTMLButtonElement>(null);
   const toggle3DButtonRef = useRef<HTMLButtonElement>(null);
   
-  // Zoom handlers with cooldown - wrapped for native listeners
-  const zoomInHandler = useCallback(() => {
-    if (isNavigating && onStaggeredZoomIn) {
-      handleNavigationZoom('in');
-    } else if (onZoomIn) {
-      handleZoomWithCooldown(onZoomIn, 'IN');
-    }
-  }, [isNavigating, onStaggeredZoomIn, onZoomIn, handleNavigationZoom, handleZoomWithCooldown]);
-  
-  const zoomOutHandler = useCallback(() => {
-    if (isNavigating && onStaggeredZoomOut) {
-      handleNavigationZoom('out');
-    } else if (onZoomOut) {
-      handleZoomWithCooldown(onZoomOut, 'OUT');
-    }
-  }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
-  
-  // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
-  // iOS Safari has issues with React's event delegation on fixed/transformed elements
-  useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS');
-  useNativeClickHandler(trafficButtonRef, onToggleTraffic, 'TRAFFIC');
-  useNativeClickHandler(mapViewButtonRef, onToggleMapView, 'MAP-VIEW');
-  useNativeClickHandler(recenterButtonRef, onRecenter, 'RECENTER');
-  useNativeClickHandler(compassButtonRef, onCompassClick, 'COMPASS');
-  useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE');
-  useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN');
-  useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT');
-  
   // Double-tap detection for x2 zoom multiplier during navigation
   const lastZoomTapRef = useRef<{ direction: 'in' | 'out'; time: number } | null>(null);
   const DOUBLE_TAP_THRESHOLD = 300; // ms
   
+  // Define helper functions FIRST (before they're used in handlers)
   const handleNavigationZoom = useCallback((direction: 'in' | 'out') => {
     if (zoomCooldownRef.current) return;
     
@@ -168,6 +141,34 @@ export function RightActionStack({
       zoomCooldownRef.current = false;
     }, 400);
   }, []);
+  
+  // Zoom handlers with cooldown - wrapped for native listeners
+  const zoomInHandler = useCallback(() => {
+    if (isNavigating && onStaggeredZoomIn) {
+      handleNavigationZoom('in');
+    } else if (onZoomIn) {
+      handleZoomWithCooldown(onZoomIn, 'IN');
+    }
+  }, [isNavigating, onStaggeredZoomIn, onZoomIn, handleNavigationZoom, handleZoomWithCooldown]);
+  
+  const zoomOutHandler = useCallback(() => {
+    if (isNavigating && onStaggeredZoomOut) {
+      handleNavigationZoom('out');
+    } else if (onZoomOut) {
+      handleZoomWithCooldown(onZoomOut, 'OUT');
+    }
+  }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
+  
+  // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
+  // iOS Safari has issues with React's event delegation on fixed/transformed elements
+  useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS');
+  useNativeClickHandler(trafficButtonRef, onToggleTraffic, 'TRAFFIC');
+  useNativeClickHandler(mapViewButtonRef, onToggleMapView, 'MAP-VIEW');
+  useNativeClickHandler(recenterButtonRef, onRecenter, 'RECENTER');
+  useNativeClickHandler(compassButtonRef, onCompassClick, 'COMPASS');
+  useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE');
+  useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN');
+  useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT');
   
   // iOS Safari optimized handler - uses onClick, onTouchEnd AND onPointerUp for maximum reliability
   // iOS Safari sometimes blocks onTouchEnd on fixed elements with transforms
