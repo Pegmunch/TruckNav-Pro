@@ -191,17 +191,21 @@ export function RightActionStack({
           ref={incidentsButtonRef}
           variant="ghost"
           size="icon"
+          onPointerDown={(e) => {
+            // iOS Safari fix: Fire on pointer DOWN not up/end
+            // This fires immediately when finger touches screen
+            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[INCIDENTS-BTN] ✅ PointerDown fired');
+              hapticButtonPress();
+              onViewIncidents();
+            }
+          }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('[INCIDENTS-BTN] ✅ onClick fired');
-            hapticButtonPress();
-            onViewIncidents();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[INCIDENTS-BTN] ✅ TouchEnd fired - calling callback');
             hapticButtonPress();
             onViewIncidents();
           }}
@@ -210,7 +214,7 @@ export function RightActionStack({
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-view-incidents"
         >
           <AlertCircle className={iconSize} />
@@ -336,17 +340,20 @@ export function RightActionStack({
           ref={trafficButtonRef}
           variant="ghost"
           size="icon"
+          onPointerDown={(e) => {
+            // iOS Safari fix: Fire on pointer DOWN not up/end
+            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[TRAFFIC-BTN] ✅ PointerDown fired');
+              hapticButtonPress();
+              onToggleTraffic();
+            }
+          }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('[TRAFFIC-BTN] ✅ onClick fired');
-            hapticButtonPress();
-            onToggleTraffic();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[TRAFFIC-BTN] ✅ TouchEnd fired - calling callback');
             hapticButtonPress();
             onToggleTraffic();
           }}
@@ -356,7 +363,7 @@ export function RightActionStack({
             showTraffic ? "border-orange-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-toggle-traffic"
         >
           <Layers className={iconSize} />
