@@ -218,17 +218,30 @@ export function useRouteTrafficOverlay(
       hasValidPath: routePath && routePath.length >= 2
     });
     
-    if (!enabled || !routePath || routePath.length < 2) {
-      console.log('[ROUTE-TRAFFIC-HOOK] Early exit - disabled or no valid path');
+    // FIXED: Don't clear segments when just disabled - preserve data for quick toggle back
+    // Only clear if there's no valid path
+    if (!routePath || routePath.length < 2) {
+      console.log('[ROUTE-TRAFFIC-HOOK] Early exit - no valid path');
       setSegments([]);
+      lastRouteHashRef.current = '';
+      return;
+    }
+    
+    // If disabled but path exists, just pause updates but keep data
+    if (!enabled) {
+      console.log('[ROUTE-TRAFFIC-HOOK] Disabled - preserving existing segments for quick re-enable');
       return;
     }
 
     const routeHash = hashRoute(routePath);
+    
+    // Force refetch if segments are empty (after toggle ON), even if hash matches
     if (routeHash === lastRouteHashRef.current && segments.length > 0) {
       console.log('[ROUTE-TRAFFIC-HOOK] Route hash unchanged, using cached segments');
       return;
     }
+    
+    // Always update hash and refetch when enabled with empty segments
     lastRouteHashRef.current = routeHash;
 
     console.log('[ROUTE-TRAFFIC-HOOK] ✅ Fetching traffic for route with', routePath.length, 'points');

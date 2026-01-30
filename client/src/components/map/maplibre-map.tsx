@@ -2706,6 +2706,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const trafficSourceId = 'route-traffic-overlay-source';
     const trafficLayerId = 'route-traffic-overlay-layer';
     
+    // FIXED: Handle showTraffic toggle visibility
+    // If showTraffic is false, hide the layer but preserve data for quick toggle back
+    if (!showTraffic) {
+      if (mapInstance.getLayer(trafficLayerId)) {
+        mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'none');
+        console.log('[ROUTE-TRAFFIC-OVERLAY] 🔴 Hidden - traffic toggle OFF');
+      }
+      return;
+    }
+    
     // If no traffic data, remove traffic overlay
     // FIXED: No longer requires isNavigating - show traffic during route preview too
     if (!routeTrafficData.segments || routeTrafficData.segments.length === 0) {
@@ -2760,6 +2770,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         layout: {
           'line-join': 'round',
           'line-cap': 'round',
+          'visibility': 'visible',
         },
         paint: {
           'line-color': ['get', 'color'],
@@ -2793,10 +2804,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       };
       const orderInterval = setInterval(enforceOrder, 1000);
       setTimeout(() => clearInterval(orderInterval), 10000); // Enforce for 10 seconds during initialization
+    } else {
+      // FIXED: Ensure layer is visible when showTraffic is toggled back ON
+      mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
+      console.log('[ROUTE-TRAFFIC-OVERLAY] 🟢 Shown - traffic toggle ON');
     }
     
     console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
-  }, [isLoaded, routeTrafficData.segments, routeTrafficData.lastUpdated]);
+  }, [isLoaded, showTraffic, routeTrafficData.segments, routeTrafficData.lastUpdated]);
 
   // LAYER 3: Route Incident Markers - Icons along the route line
   useEffect(() => {

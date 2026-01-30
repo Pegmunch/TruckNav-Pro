@@ -237,15 +237,34 @@ export function LeftActionStack({
       )}
 
       {/* Incident report button - orange - hides/shows with double-tap */}
-      {isNavigating && (
+      {/* FIXED: Added direct onPointerDown AND onClick for iOS Safari compatibility */}
+      {isNavigating && onReportIncident && (
         <Button
           ref={incidentButtonRef}
           variant="ghost"
           size="icon"
+          onPointerDown={(e) => {
+            // iOS Safari fix: Fire on pointer DOWN not up/end
+            // This fires immediately when finger touches screen
+            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('[LEFT-INCIDENT-BTN] ✅ PointerDown fired');
+              hapticButtonPress();
+              onReportIncident();
+            }
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[LEFT-INCIDENT-BTN] ✅ onClick fired');
+            hapticButtonPress();
+            onReportIncident();
+          }}
           className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-report-incident"
           data-tour-id="incident-button"
         >

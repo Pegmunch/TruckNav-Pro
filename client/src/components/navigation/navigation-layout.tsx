@@ -163,26 +163,65 @@ export function NavigationLayout({
       )}
 
       {/* Left action stack - ALWAYS visible for menu button access - positioned at bottom */}
-      {/* iOS Safari fix: Removed isolation/contain/transform that were blocking touch events */}
-      {/* CRITICAL: onTouchStartCapture ensures touch events reach buttons before window listeners */}
-      {leftStack && (
-        <div 
-          className="fixed left-4 flex flex-col gap-3"
-          onTouchStartCapture={handleStackTouchCapture}
-          onTouchEndCapture={handleStackTouchCapture}
-          data-nav-controls="left-stack"
-          style={{ 
-            bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
-            zIndex: 500000,
-            pointerEvents: 'auto',
-            touchAction: 'manipulation',
-            WebkitTapHighlightColor: 'transparent',
-            userSelect: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          {leftStack}
-        </div>
+      {/* iOS Safari WebGL fix: Render via portal on iOS to escape WebGL compositor blocking */}
+      {/* CRITICAL: On iOS, this renders directly to document.body via createPortal */}
+      {leftStack && mounted && (
+        isIOS ? (
+          createPortal(
+            <div 
+              id="ios-left-stack-portal"
+              onTouchStart={(e) => {
+                console.log('[IOS-LEFT-PORTAL] 🔵 TouchStart on left portal container');
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                console.log('[IOS-LEFT-PORTAL] 🔴 TouchEnd on left portal container');
+              }}
+              onTouchStartCapture={handleStackTouchCapture}
+              onTouchEndCapture={handleStackTouchCapture}
+              data-nav-controls="left-stack-portal"
+              style={{ 
+                position: 'fixed',
+                left: '16px',
+                bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                zIndex: 2147483646,
+                pointerEvents: 'auto',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                userSelect: 'none',
+                cursor: 'pointer',
+                transform: 'translate3d(0,0,0)',
+                WebkitTransform: 'translate3d(0,0,0)',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
+              }}
+            >
+              {leftStack}
+            </div>,
+            document.body
+          )
+        ) : (
+          <div 
+            className="fixed left-4 flex flex-col gap-3"
+            onTouchStartCapture={handleStackTouchCapture}
+            onTouchEndCapture={handleStackTouchCapture}
+            data-nav-controls="left-stack"
+            style={{ 
+              bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+              zIndex: 500000,
+              pointerEvents: 'auto',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              userSelect: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {leftStack}
+          </div>
+        )
       )}
 
       {/* Top-right quick access buttons (GPS toggle) - positioned below ETA header */}
