@@ -6,6 +6,45 @@ import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 import { navigationVoice } from '@/lib/navigation-voice';
 import { getAlertSoundsService } from '@/lib/alert-sounds';
 
+// Native event listener hook for iOS Safari - bypasses React's synthetic event delegation
+function useNativeClickHandler(
+  ref: React.RefObject<HTMLButtonElement>,
+  callback: (() => void) | undefined,
+  label: string
+) {
+  useEffect(() => {
+    const button = ref.current;
+    if (!button || !callback) return;
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[NATIVE-LEFT-${label}] ✅ Native touchend fired`);
+      hapticButtonPress();
+      callback();
+    };
+    
+    const handleClick = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[NATIVE-LEFT-${label}] ✅ Native click fired`);
+      hapticButtonPress();
+      callback();
+    };
+    
+    // Use capture phase to ensure we get the event first
+    button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    button.addEventListener('click', handleClick, { capture: true });
+    
+    console.log(`[NATIVE-LEFT-${label}] 📎 Native listeners attached`);
+    
+    return () => {
+      button.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      button.removeEventListener('click', handleClick, { capture: true });
+    };
+  }, [ref, callback, label]);
+}
+
 interface LeftActionStackProps {
   onNavigate?: () => void;
   onReportIncident?: () => void;
@@ -40,6 +79,14 @@ export function LeftActionStack({
   });
   const voiceSystem = getVoiceCommandSystem();
   const isVoiceSupported = voiceSystem.isVoiceCommandSupported();
+  
+  // Refs for buttons that need native event listeners (iOS Safari fix)
+  const navButtonRef = useRef<HTMLButtonElement>(null);
+  const voiceButtonRef = useRef<HTMLButtonElement>(null);
+  const muteButtonRef = useRef<HTMLButtonElement>(null);
+  const incidentButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isMuted) {
@@ -86,7 +133,7 @@ export function LeftActionStack({
     }
   }, [isNavigating, isVoiceListening, voiceSystem]);
 
-  const toggleVoiceListening = () => {
+  const toggleVoiceListening = useCallback(() => {
     if (isVoiceListening) {
       voiceSystem.stopListening();
       setIsVoiceListening(false);
@@ -94,40 +141,16 @@ export function LeftActionStack({
       const started = voiceSystem.startListening();
       setIsVoiceListening(started);
     }
-  };
+  }, [isVoiceListening, voiceSystem]);
 
-  // iOS Safari optimized handler - uses onClick, onTouchEnd AND onPointerUp for maximum reliability
-  // iOS Safari sometimes blocks onTouchEnd on fixed elements with transforms
-  const createHandler = (callback: (() => void) | undefined, label: string) => ({
-    onClick: (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[LEFT-BTN-${label}] ✅ Click event`);
-      hapticButtonPress();
-      callback?.();
-    },
-    onTouchEnd: (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[LEFT-BTN-${label}] ✅ TouchEnd event`);
-      hapticButtonPress();
-      callback?.();
-    },
-    onTouchStart: (e: React.TouchEvent) => {
-      // Mark this element as being touched - helps iOS Safari recognize the tap
-      console.log(`[LEFT-BTN-${label}] TouchStart`);
-      e.currentTarget.classList.add('touching');
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      // Fallback for iOS Safari - pointer events are more reliable than touch events
-      if (e.pointerType === 'touch') {
-        console.log(`[LEFT-BTN-${label}] ✅ PointerUp event (touch)`);
-        e.preventDefault();
-        hapticButtonPress();
-        callback?.();
-      }
-    }
-  });
+  // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
+  // iOS Safari has issues with React's event delegation on fixed/transformed elements
+  useNativeClickHandler(navButtonRef, onNavigate, 'NAV');
+  useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE');
+  useNativeClickHandler(muteButtonRef, toggleMute, 'MUTE');
+  useNativeClickHandler(incidentButtonRef, onReportIncident, 'INCIDENT');
+  useNativeClickHandler(cancelButtonRef, onCancel, 'CANCEL');
+  useNativeClickHandler(menuButtonRef, onOpenMenu, 'MENU');
 
   // CRITICAL: Return null if no buttons would be visible
   // This prevents an empty container from blocking touch events
@@ -144,9 +167,9 @@ export function LeftActionStack({
       {/* Navigation button - red navigation arrow - hides/shows with double-tap */}
       {isNavigating && (
         <Button
+          ref={navButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onNavigate, 'NAV')}
           className={`h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
@@ -161,9 +184,9 @@ export function LeftActionStack({
       {/* Voice command button - microphone - hides/shows with double-tap */}
       {isNavigating && (
         <Button
+          ref={voiceButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(toggleVoiceListening, 'VOICE')}
           disabled={!isVoiceSupported}
           className={`h-10 w-10 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVoiceSupported
@@ -190,9 +213,9 @@ export function LeftActionStack({
       {/* Mute All Alerts button - gray/red toggle - hides/shows with double-tap */}
       {isNavigating && (
         <Button
+          ref={muteButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(toggleMute, 'MUTE')}
           className={`h-10 w-10 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isMuted 
               ? 'bg-red-500 hover:bg-red-600 active:bg-red-700' 
@@ -216,9 +239,9 @@ export function LeftActionStack({
       {/* Incident report button - orange - hides/shows with double-tap */}
       {isNavigating && (
         <Button
+          ref={incidentButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onReportIncident, 'INCIDENT')}
           className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
@@ -233,9 +256,9 @@ export function LeftActionStack({
       {/* Cancel navigation button - red X - hides/shows with double-tap */}
       {isNavigating && (
         <Button
+          ref={cancelButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onCancel, 'CANCEL')}
           className={`h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
@@ -249,9 +272,9 @@ export function LeftActionStack({
       {/* Menu button - blue hamburger at bottom - hides/shows with double-tap */}
       {showMenuButton && (
         <Button
+          ref={menuButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onOpenMenu, 'MENU')}
           className={`h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}

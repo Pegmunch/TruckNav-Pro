@@ -1,8 +1,48 @@
 import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map } from 'lucide-react';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
+
+// Native event listener hook for iOS Safari - bypasses React's synthetic event delegation
+function useNativeClickHandler(
+  ref: React.RefObject<HTMLButtonElement>,
+  callback: (() => void) | undefined,
+  label: string
+) {
+  useEffect(() => {
+    const button = ref.current;
+    if (!button || !callback) return;
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[NATIVE-${label}] ✅ Native touchend fired`);
+      hapticButtonPress();
+      callback();
+    };
+    
+    const handleClick = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[NATIVE-${label}] ✅ Native click fired`);
+      hapticButtonPress();
+      callback();
+    };
+    
+    // Use capture phase to ensure we get the event first
+    button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    button.addEventListener('click', handleClick, { capture: true });
+    
+    console.log(`[NATIVE-${label}] 📎 Native listeners attached`);
+    
+    return () => {
+      button.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      button.removeEventListener('click', handleClick, { capture: true });
+      console.log(`[NATIVE-${label}] 🔓 Native listeners removed`);
+    };
+  }, [ref, callback, label]);
+}
 
 interface RightActionStackProps {
   onZoomIn?: () => void;
@@ -58,6 +98,44 @@ export function RightActionStack({
   const buttonSize = compact ? "h-9 w-9 min-h-[36px] min-w-[36px]" : "h-11 w-11 min-h-[44px] min-w-[44px]";
   const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
   const zoomCooldownRef = useRef<boolean>(false);
+  
+  // Refs for buttons that need native event listeners (iOS Safari fix)
+  const incidentsButtonRef = useRef<HTMLButtonElement>(null);
+  const trafficButtonRef = useRef<HTMLButtonElement>(null);
+  const mapViewButtonRef = useRef<HTMLButtonElement>(null);
+  const recenterButtonRef = useRef<HTMLButtonElement>(null);
+  const zoomInButtonRef = useRef<HTMLButtonElement>(null);
+  const zoomOutButtonRef = useRef<HTMLButtonElement>(null);
+  const compassButtonRef = useRef<HTMLButtonElement>(null);
+  const toggle3DButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Zoom handlers with cooldown - wrapped for native listeners
+  const zoomInHandler = useCallback(() => {
+    if (isNavigating && onStaggeredZoomIn) {
+      handleNavigationZoom('in');
+    } else if (onZoomIn) {
+      handleZoomWithCooldown(onZoomIn, 'IN');
+    }
+  }, [isNavigating, onStaggeredZoomIn, onZoomIn, handleNavigationZoom, handleZoomWithCooldown]);
+  
+  const zoomOutHandler = useCallback(() => {
+    if (isNavigating && onStaggeredZoomOut) {
+      handleNavigationZoom('out');
+    } else if (onZoomOut) {
+      handleZoomWithCooldown(onZoomOut, 'OUT');
+    }
+  }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
+  
+  // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
+  // iOS Safari has issues with React's event delegation on fixed/transformed elements
+  useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS');
+  useNativeClickHandler(trafficButtonRef, onToggleTraffic, 'TRAFFIC');
+  useNativeClickHandler(mapViewButtonRef, onToggleMapView, 'MAP-VIEW');
+  useNativeClickHandler(recenterButtonRef, onRecenter, 'RECENTER');
+  useNativeClickHandler(compassButtonRef, onCompassClick, 'COMPASS');
+  useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE');
+  useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN');
+  useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT');
   
   // Double-tap detection for x2 zoom multiplier during navigation
   const lastZoomTapRef = useRef<{ direction: 'in' | 'out'; time: number } | null>(null);
@@ -140,9 +218,9 @@ export function RightActionStack({
       {/* 1. Incidents - Red border - hides/shows with double-tap */}
       {onViewIncidents && !hideIncidents && (
         <Button
+          ref={incidentsButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onViewIncidents, 'INCIDENTS')}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -158,9 +236,9 @@ export function RightActionStack({
       {/* 2. Toggle Map View - Green/Gray border - hides/shows with double-tap */}
       {onToggleMapView && (
         <Button
+          ref={mapViewButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onToggleMapView, 'MAP-VIEW')}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -178,9 +256,9 @@ export function RightActionStack({
       {/* 3. Recenter - Gray border - hides/shows with double-tap */}
       {onRecenter && (
         <Button
+          ref={recenterButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onRecenter, 'RECENTER')}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -196,14 +274,9 @@ export function RightActionStack({
       {/* 4. Zoom In - Blue border during navigation - hides/shows with double-tap */}
       {onZoomIn && (
         <Button
+          ref={zoomInButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(
-            isNavigating && onStaggeredZoomIn
-              ? () => handleNavigationZoom('in')
-              : () => handleZoomWithCooldown(onZoomIn, 'IN'),
-            'ZOOM-IN'
-          )}
           className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isNavigating ? "border-blue-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
@@ -218,14 +291,9 @@ export function RightActionStack({
       {/* 5. Zoom Out - Blue border during navigation - hides/shows with double-tap */}
       {onZoomOut && (
         <Button
+          ref={zoomOutButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(
-            isNavigating && onStaggeredZoomOut
-              ? () => handleNavigationZoom('out')
-              : () => handleZoomWithCooldown(onZoomOut, 'OUT'),
-            'ZOOM-OUT'
-          )}
           className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isNavigating ? "border-blue-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
@@ -240,9 +308,9 @@ export function RightActionStack({
       {/* 6. Compass - Blue border - hides/shows with double-tap */}
       {!hideCompass && onCompassClick && (
         <Button
+          ref={compassButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onCompassClick, 'COMPASS')}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-blue-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -261,9 +329,9 @@ export function RightActionStack({
       {/* 7. 3D Toggle - Blue/Gray border - hides/shows with double-tap */}
       {onToggle3D && !hide3D && (
         <Button
+          ref={toggle3DButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onToggle3D, '3D')}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
@@ -280,9 +348,9 @@ export function RightActionStack({
       {/* 8. Traffic Toggle - Orange/Gray border - hides/shows with double-tap */}
       {onToggleTraffic && (
         <Button
+          ref={trafficButtonRef}
           variant="ghost"
           size="icon"
-          {...createHandler(onToggleTraffic, 'TRAFFIC')}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
