@@ -2816,7 +2816,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TomTom Traffic Incidents API - Real-time incidents from TomTom
+  // HERE Traffic Incidents Fallback - converts HERE incidents to TomTom format
+  async function fetchHEREIncidents(
+    bounds: { north: number; south: number; east: number; west: number }
+  ): Promise<any[] | null> {
+    const HERE_API_KEY = process.env.HERE_API_KEY;
+    
+    if (!HERE_API_KEY) {
+      console.warn('[HERE-INCIDENTS] API key not found');
+      return null;
+    }
+    
+    try {
+      // HERE Traffic Incidents API v7
+      const hereUrl = new URL('https://data.traffic.hereapi.com/v7/incidents');
+      hereUrl.searchParams.set('apiKey', HERE_API_KEY);
+      hereUrl.searchParams.set('in', `bbox:${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
+      hereUrl.searchParams.set('locationReferencing', 'shape');
+      
+      console.log('[HERE-INCIDENTS] Fallback request:', hereUrl.toString().replace(HERE_API_KEY, '***'));
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(hereUrl.toString(), {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'TruckNav-Pro/1.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.error(`[HERE-INCIDENTS] API error: HTTP ${response.status}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      const results = data.results || [];
+      
+      // Map HERE incident types to our format (HERE v7 uses incidentType field)
+      const hereTypeMap: Record<string, string> = {
+        'ACCIDENT': 'accident',
+        'CONGESTION': 'jam',
+        'ROAD_CLOSED': 'road_closed',
+        'CONSTRUCTION': 'construction',
+        'ROAD_WORKS': 'road_works',
+        'DISABLED_VEHICLE': 'broken_down_vehicle',
+        'WEATHER': 'hazard',
+        'HAZARD': 'hazard',
+        'LANE_RESTRICTION': 'lane_closed',
+        'FOG': 'fog',
+        'FLOODING': 'flooding',
+        'OTHER': 'other',
+        // Also support lowercase variants
+        'accident': 'accident',
+        'congestion': 'jam',
+        'roadClosed': 'road_closed',
+        'construction': 'construction',
+        'roadWorks': 'road_works',
+        'disabledVehicle': 'broken_down_vehicle',
+        'weatherCondition': 'hazard',
+        'hazard': 'hazard',
+        'laneRestriction': 'lane_closed',
+        'fog': 'fog',
+        'flooding': 'flooding',
+        'other': 'other'
+      };
+      
+      // Convert HERE incidents to our format
+      const incidents = results.map((item: any, index: number) => {
+        const location = item.location || {};
+        
+        // Try multiple coordinate sources (HERE v7 may use different structures)
+        let latitude = 0;
+        let longitude = 0;
+        let shapeCoords: any[] = [];
+        
+        // Try shape.links[0].points first
+        const shape = location.shape?.links?.[0]?.points || location.shape?.points || [];
+        if (shape.length > 0) {
+          const midIndex = Math.floor(shape.length / 2);
+          const midpoint = shape[midIndex];
+          if (midpoint) {
+            latitude = midpoint.lat || midpoint.latitude || 0;
+            longitude = midpoint.lng || midpoint.lon || midpoint.longitude || 0;
+          }
+          shapeCoords = shape;
+        }
+        
+        // Fallback to entryPoint or position
+        if (latitude === 0 && longitude === 0) {
+          const entryPoint = item.entryPoint || location.entryPoint;
+          if (entryPoint) {
+            latitude = entryPoint.lat || entryPoint.latitude || 0;
+            longitude = entryPoint.lng || entryPoint.lon || entryPoint.longitude || 0;
+          }
+        }
+        
+        // Fallback to location coordinates directly
+        if (latitude === 0 && longitude === 0) {
+          latitude = location.lat || location.latitude || 0;
+          longitude = location.lng || location.lon || location.longitude || 0;
+        }
+        
+        // Map severity (HERE v7 uses criticality object or string)
+        let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+        const criticality = item.criticality;
+        if (typeof criticality === 'object') {
+          // Object format: { value: 'major', description: '...' }
+          const critValue = (criticality.value || '').toLowerCase();
+          if (critValue === 'critical' || critValue === 'major') severity = 'high';
+          else if (critValue === 'minor') severity = 'medium';
+          else severity = 'low';
+        } else if (typeof criticality === 'string') {
+          const critLower = criticality.toLowerCase();
+          if (critLower === 'critical' || critLower === 'major') severity = 'high';
+          else if (critLower === 'minor') severity = 'medium';
+          else severity = 'low';
+        } else if (typeof criticality === 'number') {
+          if (criticality >= 3) severity = 'high';
+          else if (criticality >= 2) severity = 'medium';
+          else severity = 'low';
+        }
+        
+        // Get incident type (HERE v7 may use incidentType or type)
+        const incidentTypeRaw = item.incidentType || item.type || 'other';
+        const incidentType = hereTypeMap[incidentTypeRaw] || 'other';
+        
+        // Get description (multiple possible fields)
+        const description = item.description?.value || item.description || 
+                           item.summary?.value || item.summary || 
+                           item.shortDesc || 'Traffic incident';
+        
+        return {
+          id: `here-${item.incidentId || item.id || index}`,
+          type: incidentType,
+          description: typeof description === 'string' ? description : 'Traffic incident',
+          latitude: latitude,
+          longitude: longitude,
+          severity: severity,
+          reportedAt: item.startTime || item.entryTime || new Date().toISOString(),
+          expiresAt: item.endTime || null,
+          isActive: true,
+          verifiedCount: 1,
+          source: 'here',
+          roadNumbers: item.roadNumbers || [],
+          delay: item.delay || item.junctionTraversal?.delay || 0,
+          length: item.length || 0,
+          from: item.from || null,
+          to: item.to || null,
+          geometry: shapeCoords.length > 0 ? {
+            type: 'LineString',
+            coordinates: shapeCoords.map((p: any) => [p.lng || p.lon || p.longitude || 0, p.lat || p.latitude || 0])
+          } : null
+        };
+      }).filter((inc: any) => inc.latitude !== 0 || inc.longitude !== 0); // Filter out items without valid coordinates
+      
+      console.log('[HERE-INCIDENTS] Fallback success:', incidents.length, 'incidents');
+      return incidents;
+      
+    } catch (error) {
+      console.error('[HERE-INCIDENTS] Fallback error:', error);
+      return null;
+    }
+  }
+
+  // TomTom Traffic Incidents API - Real-time incidents from TomTom (with HERE fallback)
   app.get("/api/tomtom/traffic-incidents", async (req, res) => {
     try {
       const { north, south, east, west } = req.query;
@@ -2825,161 +2993,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Bounding box coordinates are required (north, south, east, west)" });
       }
       
+      const bounds = {
+        north: parseFloat(north as string),
+        south: parseFloat(south as string),
+        east: parseFloat(east as string),
+        west: parseFloat(west as string)
+      };
+      
       const TOMTOM_API_KEY = process.env.VITE_TOMTOM_API_KEY;
       
-      if (!TOMTOM_API_KEY) {
-        console.error('[TOMTOM-INCIDENTS] API key not found');
-        return res.status(500).json({ message: "TomTom API key not configured" });
-      }
-      
-      // Build TomTom Traffic Incidents API URL
-      // API format: https://api.tomtom.com/traffic/services/5/incidentDetails
-      const tomtomUrl = new URL('https://api.tomtom.com/traffic/services/5/incidentDetails');
-      
-      // Add API key
-      tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
-      
-      // Set bounding box (minLon,minLat,maxLon,maxLat)
-      const bbox = `${west},${south},${east},${north}`;
-      tomtomUrl.searchParams.set('bbox', bbox);
-      
-      // Request fields for detailed incident information
-      tomtomUrl.searchParams.set('fields', '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description,code,iconCategory},startTime,endTime,from,to,length,delay,roadNumbers,aci{probabilityOfOccurrence,numberOfReports,lastReportTime}}}}');
-      
-      // Language preference
-      tomtomUrl.searchParams.set('language', 'en-GB');
-      
-      // Output format
-      tomtomUrl.searchParams.set('categoryFilter', 'all');
-      tomtomUrl.searchParams.set('timeValidityFilter', 'present');
-      
-      console.log('[TOMTOM-INCIDENTS] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
-      
-      // Create AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
-      const response = await fetch(tomtomUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'TruckNav-Pro/1.0'
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
+      // Try TomTom first if API key is available
+      if (TOMTOM_API_KEY) {
+        // Build TomTom Traffic Incidents API URL
+        const tomtomUrl = new URL('https://api.tomtom.com/traffic/services/5/incidentDetails');
+        
+        tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+        const bbox = `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`;
+        tomtomUrl.searchParams.set('bbox', bbox);
+        tomtomUrl.searchParams.set('fields', '{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description,code,iconCategory},startTime,endTime,from,to,length,delay,roadNumbers,aci{probabilityOfOccurrence,numberOfReports,lastReportTime}}}}');
+        tomtomUrl.searchParams.set('language', 'en-GB');
+        tomtomUrl.searchParams.set('categoryFilter', 'all');
+        tomtomUrl.searchParams.set('timeValidityFilter', 'present');
+        
+        console.log('[TOMTOM-INCIDENTS] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        try {
+          const response = await fetch(tomtomUrl.toString(), {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'TruckNav-Pro/1.0'
+            },
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[TOMTOM-INCIDENTS] API error: HTTP ${response.status}`, errorText);
-        return res.status(response.status).json({ message: "TomTom API error", details: errorText });
-      }
-
-      const data = await response.json();
-      
-      // Transform TomTom incidents to our app's format
-      const incidents = (data.incidents || []).map((incident: any) => {
-        const props = incident.properties || {};
-        const geometry = incident.geometry || {};
-        const events = props.events || [];
-        
-        // Map TomTom icon category to our incident types
-        const iconCategoryMap: Record<number, string> = {
-          0: 'other',
-          1: 'accident',
-          2: 'fog',
-          3: 'hazard',
-          4: 'construction',
-          5: 'ice',
-          6: 'jam',
-          7: 'lane_closed',
-          8: 'road_closed',
-          9: 'road_works',
-          10: 'wind',
-          11: 'flooding',
-          14: 'broken_down_vehicle'
-        };
-        
-        const incidentType = iconCategoryMap[props.iconCategory] || 'other';
-        
-        // Get coordinates (TomTom uses GeoJSON format)
-        let latitude = 0;
-        let longitude = 0;
-        
-        if (geometry.type === 'Point' && geometry.coordinates && geometry.coordinates.length >= 2) {
-          longitude = geometry.coordinates[0];
-          latitude = geometry.coordinates[1];
-        } else if (geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length > 0) {
-          // Use midpoint of line for better representation
-          const midIndex = Math.floor(geometry.coordinates.length / 2);
-          const midpoint = geometry.coordinates[midIndex];
-          if (midpoint && midpoint.length >= 2) {
-            longitude = midpoint[0];
-            latitude = midpoint[1];
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Transform TomTom incidents to our app's format
+            const incidents = (data.incidents || []).map((incident: any) => {
+              const props = incident.properties || {};
+              const geometry = incident.geometry || {};
+              const events = props.events || [];
+              
+              const iconCategoryMap: Record<number, string> = {
+                0: 'other', 1: 'accident', 2: 'fog', 3: 'hazard', 4: 'construction',
+                5: 'ice', 6: 'jam', 7: 'lane_closed', 8: 'road_closed', 9: 'road_works',
+                10: 'wind', 11: 'flooding', 14: 'broken_down_vehicle'
+              };
+              
+              const incidentType = iconCategoryMap[props.iconCategory] || 'other';
+              
+              let latitude = 0;
+              let longitude = 0;
+              
+              if (geometry.type === 'Point' && geometry.coordinates?.length >= 2) {
+                longitude = geometry.coordinates[0];
+                latitude = geometry.coordinates[1];
+              } else if (geometry.type === 'LineString' && geometry.coordinates?.length > 0) {
+                const midIndex = Math.floor(geometry.coordinates.length / 2);
+                const midpoint = geometry.coordinates[midIndex];
+                if (midpoint?.length >= 2) {
+                  longitude = midpoint[0];
+                  latitude = midpoint[1];
+                }
+              } else if (geometry.coordinates?.length >= 2) {
+                longitude = geometry.coordinates[0];
+                latitude = geometry.coordinates[1];
+              }
+              
+              const description = events.map((e: any) => e.description).filter(Boolean).join('. ') || 'Traffic incident';
+              
+              const delayMagnitude = props.magnitudeOfDelay || 0;
+              const delaySeconds = props.delay || 0;
+              let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+              
+              if (delayMagnitude === 4 || delayMagnitude === 3) severity = 'high';
+              else if (delayMagnitude === 2) severity = 'medium';
+              else if (delayMagnitude === 1) severity = 'low';
+              else if (delayMagnitude === 0) {
+                if (delaySeconds >= 1800) severity = 'high';
+                else if (delaySeconds >= 600) severity = 'medium';
+              }
+              
+              if (props.iconCategory === 1 || props.iconCategory === 8) {
+                severity = 'high';
+              }
+              
+              return {
+                id: `tomtom-${props.id}`,
+                type: incidentType,
+                description: description,
+                latitude: latitude,
+                longitude: longitude,
+                severity: severity,
+                reportedAt: props.startTime || new Date().toISOString(),
+                expiresAt: props.endTime || null,
+                isActive: true,
+                verifiedCount: 1,
+                source: 'tomtom',
+                roadNumbers: props.roadNumbers || [],
+                delay: props.delay || 0,
+                length: props.length || 0,
+                from: props.from || null,
+                to: props.to || null,
+                geometry: geometry
+              };
+            });
+            
+            console.log(`[TOMTOM-INCIDENTS] Retrieved ${incidents.length} incidents`);
+            return res.json(incidents);
           }
-        } else if (geometry.coordinates && Array.isArray(geometry.coordinates) && geometry.coordinates.length >= 2) {
-          // Fallback: try to extract coordinates from any array format
-          longitude = geometry.coordinates[0];
-          latitude = geometry.coordinates[1];
+          
+          // TomTom failed - try HERE fallback
+          const errorText = await response.text();
+          console.warn(`[TOMTOM-INCIDENTS] API error: HTTP ${response.status} - trying HERE fallback`, errorText);
+          
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          console.warn('[TOMTOM-INCIDENTS] Fetch error - trying HERE fallback:', fetchError);
         }
-        
-        // Build description from events
-        const description = events.map((e: any) => e.description).filter(Boolean).join('. ') || 'Traffic incident';
-        
-        // Calculate severity based on delay magnitude (TomTom scale: 0=Unknown, 1=Minor, 2=Moderate, 3=Major, 4=Undefined)
-        // Also consider delay time in seconds
-        const delayMagnitude = props.magnitudeOfDelay || 0;
-        const delaySeconds = props.delay || 0;
-        let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
-        
-        // Primary: use delay magnitude
-        if (delayMagnitude === 4 || delayMagnitude === 3) {
-          severity = 'high';
-        } else if (delayMagnitude === 2) {
-          severity = 'medium';
-        } else if (delayMagnitude === 1) {
-          severity = 'low';
-        } else if (delayMagnitude === 0) {
-          // Fallback: use delay time if magnitude is unknown
-          if (delaySeconds >= 1800) severity = 'high'; // 30+ min delay
-          else if (delaySeconds >= 600) severity = 'medium'; // 10+ min delay
-          else severity = 'low';
-        }
-        
-        // Upgrade severity for critical incident types
-        if (props.iconCategory === 1 || props.iconCategory === 8) {
-          // Accident or Road Closed = always high severity
-          severity = 'high';
-        }
-        
-        return {
-          id: `tomtom-${props.id}`,
-          type: incidentType,
-          description: description,
-          latitude: latitude,
-          longitude: longitude,
-          severity: severity,
-          reportedAt: props.startTime || new Date().toISOString(),
-          expiresAt: props.endTime || null,
-          isActive: true,
-          verifiedCount: 1, // TomTom data is pre-verified
-          source: 'tomtom',
-          roadNumbers: props.roadNumbers || [],
-          delay: props.delay || 0,
-          length: props.length || 0,
-          from: props.from || null,
-          to: props.to || null,
-          geometry: geometry
-        };
+      } else {
+        console.warn('[TOMTOM-INCIDENTS] API key not found - trying HERE fallback');
+      }
+      
+      // Fallback to HERE Traffic Incidents API
+      const hereIncidents = await fetchHEREIncidents(bounds);
+      
+      if (hereIncidents) {
+        return res.json(hereIncidents);
+      }
+      
+      // Both APIs failed
+      console.error('[INCIDENTS-PROXY] Both TomTom and HERE APIs failed');
+      return res.status(503).json({ 
+        message: 'Traffic incident services temporarily unavailable',
+        incidents: []
       });
       
-      console.log(`[TOMTOM-INCIDENTS] Retrieved ${incidents.length} incidents`);
-      
-      res.json(incidents);
     } catch (error) {
-      console.error('[TOMTOM-INCIDENTS] API call failed:', error);
-      res.status(500).json({ message: "Failed to fetch TomTom traffic incidents" });
+      console.error('[INCIDENTS-PROXY] API call failed:', error);
+      res.status(500).json({ message: "Failed to fetch traffic incidents" });
     }
   });
 
@@ -3471,7 +3630,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TomTom Search API Proxy - Address Autocomplete & POI Search
+  // HERE Search API Fallback - converts HERE results to TomTom format
+  async function fetchHERESearch(
+    query: string, 
+    options: { 
+      limit?: number; 
+      lat?: number; 
+      lon?: number; 
+      countrySet?: string;
+      searchType?: string;
+    }
+  ): Promise<{ results: any[]; source: string } | null> {
+    const HERE_API_KEY = process.env.HERE_API_KEY;
+    
+    if (!HERE_API_KEY) {
+      console.warn('[HERE-SEARCH] API key not found');
+      return null;
+    }
+    
+    try {
+      // Use HERE Discover API for general search, Geocode for address-specific
+      const isPOI = options.searchType === 'poi';
+      const baseUrl = isPOI 
+        ? 'https://discover.search.hereapi.com/v1/discover'
+        : 'https://geocode.search.hereapi.com/v1/geocode';
+      
+      const hereUrl = new URL(baseUrl);
+      hereUrl.searchParams.set('apiKey', HERE_API_KEY);
+      hereUrl.searchParams.set('q', query);
+      hereUrl.searchParams.set('limit', String(options.limit || 10));
+      
+      // Add location bias if available
+      if (options.lat && options.lon) {
+        if (isPOI) {
+          // Discover API uses 'at' parameter
+          hereUrl.searchParams.set('at', `${options.lat},${options.lon}`);
+        } else {
+          // Geocode API uses 'at' for bias
+          hereUrl.searchParams.set('at', `${options.lat},${options.lon}`);
+        }
+      }
+      
+      // Add country filter (HERE uses ISO 3166-1 alpha-3 codes)
+      if (options.countrySet) {
+        const countries = options.countrySet.split(',').map(c => {
+          const mapping: Record<string, string> = { 'GB': 'GBR', 'IE': 'IRL', 'US': 'USA', 'DE': 'DEU', 'FR': 'FRA' };
+          return mapping[c.trim()] || c.trim();
+        }).join(',');
+        hereUrl.searchParams.set('in', `countryCode:${countries}`);
+      }
+      
+      console.log('[HERE-SEARCH] Fallback request:', hereUrl.toString().replace(HERE_API_KEY, '***'));
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await fetch(hereUrl.toString(), {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'TruckNav-Pro/1.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.error(`[HERE-SEARCH] API error: HTTP ${response.status}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      const items = data.items || [];
+      
+      // Convert HERE results to TomTom format for compatibility
+      const results = items.map((item: any, index: number) => ({
+        type: item.resultType || 'Address',
+        id: item.id || `here-${index}`,
+        score: 1 - (index * 0.1), // Approximate score
+        address: {
+          streetNumber: item.address?.houseNumber,
+          streetName: item.address?.street,
+          municipality: item.address?.city,
+          countrySubdivision: item.address?.state || item.address?.county,
+          postalCode: item.address?.postalCode,
+          country: item.address?.countryName,
+          countryCode: item.address?.countryCode,
+          freeformAddress: item.address?.label || item.title,
+          localName: item.address?.district
+        },
+        position: {
+          lat: item.position?.lat,
+          lon: item.position?.lng
+        },
+        poi: item.categories ? {
+          name: item.title,
+          categories: item.categories?.map((c: any) => c.name || c.id) || []
+        } : undefined,
+        entityType: item.resultType
+      }));
+      
+      console.log('[HERE-SEARCH] Fallback success:', results.length, 'results converted to TomTom format');
+      return { results, source: 'here' };
+      
+    } catch (error) {
+      console.error('[HERE-SEARCH] Fallback error:', error);
+      return null;
+    }
+  }
+
+  // TomTom Search API Proxy - Address Autocomplete & POI Search (with HERE fallback)
   app.get("/api/tomtom-search", async (req: Request, res: Response) => {
     try {
       const { q, limit, searchType, categorySet, lat, lon, countrySet, radius } = req.query;
@@ -3481,97 +3749,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const TOMTOM_API_KEY = process.env.VITE_TOMTOM_API_KEY;
-      
-      if (!TOMTOM_API_KEY) {
-        console.error('[TOMTOM-PROXY] API key not found');
-        return res.status(500).json({ message: "TomTom API key not configured" });
-      }
-      
-      const type = searchType === 'poi' ? 'poiSearch' : 'search'; // POI or fuzzy search
-      const tomtomUrl = new URL(`https://api.tomtom.com/search/2/${type}/${encodeURIComponent(q)}.json`);
-      
-      tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
-      tomtomUrl.searchParams.set('limit', limit as string || '10');
-      tomtomUrl.searchParams.set('typeahead', 'true'); // Enable typeahead for autocomplete
-      
-      // Add GPS coordinates for location-biased search
-      const userLat = lat && typeof lat === 'string' ? parseFloat(lat) : null;
-      const userLon = lon && typeof lon === 'string' ? parseFloat(lon) : null;
-      
-      if (userLat !== null && userLon !== null && !isNaN(userLat) && !isNaN(userLon)) {
-        tomtomUrl.searchParams.set('lat', userLat.toString());
-        tomtomUrl.searchParams.set('lon', userLon.toString());
-        console.log(`[TOMTOM-PROXY] Location-biased search: lat=${userLat}, lon=${userLon}`);
-      }
-      
-      // Add search radius in meters (e.g., 6 miles = 9656 meters)
-      if (radius && typeof radius === 'string') {
-        const radiusMeters = parseInt(radius, 10);
-        if (!isNaN(radiusMeters) && radiusMeters > 0) {
-          tomtomUrl.searchParams.set('radius', radiusMeters.toString());
-          console.log(`[TOMTOM-PROXY] Search radius: ${radiusMeters}m (${(radiusMeters / 1609.34).toFixed(1)} miles)`);
-        }
-      }
-      
-      // Add POI category filter
-      if (categorySet && typeof categorySet === 'string') {
-        tomtomUrl.searchParams.set('categorySet', categorySet);
-      }
-      
-      // Add country filter - default to UK/Ireland for accurate geocoding
+      const userLat = lat && typeof lat === 'string' ? parseFloat(lat) : undefined;
+      const userLon = lon && typeof lon === 'string' ? parseFloat(lon) : undefined;
       const effectiveCountrySet = (countrySet && typeof countrySet === 'string') ? countrySet : 'GB,IE';
-      tomtomUrl.searchParams.set('countrySet', effectiveCountrySet);
-      console.log(`[TOMTOM-PROXY] Country filter: ${effectiveCountrySet}`);
+      const effectiveLimit = parseInt(limit as string || '10', 10);
       
-      console.log('[TOMTOM-PROXY] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      
-      try {
-        const tomtomResponse = await fetch(tomtomUrl.toString(), {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'TruckNav-Pro/1.0'
+      // Try TomTom first if API key is available
+      if (TOMTOM_API_KEY) {
+        const type = searchType === 'poi' ? 'poiSearch' : 'search';
+        const tomtomUrl = new URL(`https://api.tomtom.com/search/2/${type}/${encodeURIComponent(q)}.json`);
+        
+        tomtomUrl.searchParams.set('key', TOMTOM_API_KEY);
+        tomtomUrl.searchParams.set('limit', String(effectiveLimit));
+        tomtomUrl.searchParams.set('typeahead', 'true');
+        
+        if (userLat !== undefined && userLon !== undefined && !isNaN(userLat) && !isNaN(userLon)) {
+          tomtomUrl.searchParams.set('lat', userLat.toString());
+          tomtomUrl.searchParams.set('lon', userLon.toString());
+          console.log(`[TOMTOM-PROXY] Location-biased search: lat=${userLat}, lon=${userLon}`);
+        }
+        
+        if (radius && typeof radius === 'string') {
+          const radiusMeters = parseInt(radius, 10);
+          if (!isNaN(radiusMeters) && radiusMeters > 0) {
+            tomtomUrl.searchParams.set('radius', radiusMeters.toString());
           }
-        });
+        }
         
-        clearTimeout(timeoutId);
+        if (categorySet && typeof categorySet === 'string') {
+          tomtomUrl.searchParams.set('categorySet', categorySet);
+        }
         
-        if (!tomtomResponse.ok) {
+        tomtomUrl.searchParams.set('countrySet', effectiveCountrySet);
+        console.log(`[TOMTOM-PROXY] Country filter: ${effectiveCountrySet}`);
+        console.log('[TOMTOM-PROXY] Request URL:', tomtomUrl.toString().replace(TOMTOM_API_KEY, '***'));
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        try {
+          const tomtomResponse = await fetch(tomtomUrl.toString(), {
+            signal: controller.signal,
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'TruckNav-Pro/1.0'
+            }
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (tomtomResponse.ok) {
+            const data = await tomtomResponse.json();
+            const results = data.results || [];
+            console.log('[TOMTOM-PROXY] Success:', results.length, 'results returned');
+            return res.json({ ...data, source: 'tomtom' });
+          }
+          
+          // TomTom failed - try HERE fallback
           const errorText = await tomtomResponse.text();
-          console.error(`[TOMTOM-PROXY] API error: HTTP ${tomtomResponse.status}`, errorText);
-          return res.status(tomtomResponse.status).json({ 
-            message: `TomTom API error: HTTP ${tomtomResponse.status}`,
-            results: []
-          });
+          console.warn(`[TOMTOM-PROXY] API error: HTTP ${tomtomResponse.status} - trying HERE fallback`, errorText);
+          
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          console.warn('[TOMTOM-PROXY] Fetch error - trying HERE fallback:', fetchError);
         }
-        
-        const data = await tomtomResponse.json();
-        const results = data.results || [];
-        
-        console.log('[TOMTOM-PROXY] Success:', results.length, 'results returned');
-        res.json(data);
-        
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-          console.error('[TOMTOM-PROXY] Timeout after 8 seconds');
-          return res.status(504).json({ 
-            message: 'Request timeout after 8 seconds',
-            results: []
-          });
-        }
-        
-        throw fetchError;
+      } else {
+        console.warn('[TOMTOM-PROXY] API key not found - trying HERE fallback');
       }
+      
+      // Fallback to HERE Search API
+      const hereResult = await fetchHERESearch(q, {
+        limit: effectiveLimit,
+        lat: userLat,
+        lon: userLon,
+        countrySet: effectiveCountrySet,
+        searchType: searchType as string
+      });
+      
+      if (hereResult) {
+        return res.json({ results: hereResult.results, source: 'here' });
+      }
+      
+      // Both APIs failed
+      console.error('[SEARCH-PROXY] Both TomTom and HERE APIs failed');
+      return res.status(503).json({ 
+        message: 'Search services temporarily unavailable',
+        results: []
+      });
       
     } catch (error) {
-      console.error("[TOMTOM-PROXY] Proxy error:", error);
+      console.error("[SEARCH-PROXY] Proxy error:", error);
       res.status(500).json({ 
-        message: "Failed to fetch TomTom search results",
+        message: "Failed to fetch search results",
         results: []
       });
     }
