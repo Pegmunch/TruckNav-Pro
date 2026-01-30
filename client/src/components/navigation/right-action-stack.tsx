@@ -40,19 +40,21 @@ function handleWindowTouchEnd(e: TouchEvent) {
   console.log(`[WINDOW-TOUCH-INTERCEPT] Touch at (${x}, ${y}), checking ${buttonRegistry.size} buttons`);
   
   // Check if touch landed on any registered button
+  // Use large padding (25px) to compensate for iOS Safari WebGL coordinate offset
+  // Logs show touches at x=324 when buttons are at x=341 - 17px offset
   for (const [id, registration] of buttonRegistry) {
     const rect = registration.getRect();
     if (!rect) continue;
     
-    // Check if touch is within button bounds (with small padding for touch accuracy)
-    const padding = 8;
+    // Check if touch is within button bounds with generous padding for iOS accuracy
+    const padding = 25;
     if (
       x >= rect.left - padding &&
       x <= rect.right + padding &&
       y >= rect.top - padding &&
       y <= rect.bottom + padding
     ) {
-      console.log(`[WINDOW-TOUCH-INTERCEPT] ✅ Touch hit button: ${id} at (${x}, ${y})`);
+      console.log(`[WINDOW-TOUCH-INTERCEPT] ✅ Touch hit button: ${id} at (${x}, ${y}), rect: (${rect.left}, ${rect.top})`);
       e.preventDefault();
       e.stopPropagation();
       hapticButtonPress();

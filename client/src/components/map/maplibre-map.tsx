@@ -1353,15 +1353,15 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             const rect = registration.getRect();
             if (!rect) continue;
             
-            // Check if touch is within button bounds (with padding for touch accuracy)
-            const padding = 10;
+            // Check if touch is within button bounds (25px padding for iOS WebGL coordinate offset)
+            const padding = 25;
             if (
               x >= rect.left - padding &&
               x <= rect.right + padding &&
               y >= rect.top - padding &&
               y <= rect.bottom + padding
             ) {
-              console.log(`[IOS-BUTTON-INTERCEPT] ✅ HIT button: ${id}`);
+              console.log(`[IOS-BUTTON-INTERCEPT] ✅ HIT button: ${id} at rect (${rect.left}, ${rect.top})`);
               e.preventDefault();
               e.stopPropagation();
               hapticButtonPress();

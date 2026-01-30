@@ -1,102 +1,143 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { buttonRegistry } from './right-action-stack';
 
-interface ProxyButton {
-  id: string;
-  rect: DOMRect;
-  callback: () => void;
-}
+const PROXY_CONTAINER_ID = 'ios-touch-proxy-container';
 
 export function IOSTouchProxyLayer() {
-  const [proxyButtons, setProxyButtons] = useState<ProxyButton[]>([]);
   const isIOS = useRef(false);
+  const proxyMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  
+  const createProxyButton = useCallback((id: string, registration: { getRect: () => DOMRect | null; callback: () => void }) => {
+    const rect = registration.getRect();
+    if (!rect || rect.width === 0 || rect.height === 0) return null;
+    
+    const proxy = document.createElement('div');
+    proxy.setAttribute('data-proxy-id', id);
+    proxy.style.cssText = `
+      position: fixed !important;
+      top: ${rect.top - 15}px !important;
+      left: ${rect.left - 15}px !important;
+      width: ${rect.width + 30}px !important;
+      height: ${rect.height + 30}px !important;
+      z-index: 2147483647 !important;
+      pointer-events: auto !important;
+      touch-action: manipulation !important;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      background: rgba(255,0,0,0.0) !important;
+      cursor: pointer !important;
+      border: none !important;
+      outline: none !important;
+    `;
+    
+    const handleAction = (e: Event, eventType: string) => {
+      console.log(`[IOS-TOUCH-PROXY] ✅ ${eventType} captured for: ${id}`);
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      if (navigator.vibrate) navigator.vibrate(10);
+      
+      const currentReg = buttonRegistry.get(id);
+      if (currentReg) {
+        currentReg.callback();
+      }
+    };
+    
+    proxy.ontouchstart = (e) => handleAction(e, 'ontouchstart');
+    proxy.ontouchend = (e) => { e.preventDefault(); e.stopPropagation(); };
+    proxy.onpointerdown = (e) => handleAction(e, 'onpointerdown');
+    proxy.onclick = (e) => handleAction(e, 'onclick');
+    
+    return proxy;
+  }, []);
+  
+  const updateProxyPosition = useCallback((proxy: HTMLDivElement, rect: DOMRect) => {
+    proxy.style.top = `${rect.top - 15}px`;
+    proxy.style.left = `${rect.left - 15}px`;
+    proxy.style.width = `${rect.width + 30}px`;
+    proxy.style.height = `${rect.height + 30}px`;
+  }, []);
   
   useEffect(() => {
     isIOS.current = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
     if (!isIOS.current) {
-      console.log('[IOS-TOUCH-PROXY] Not iOS - proxy layer disabled');
+      console.log('[IOS-TOUCH-PROXY] Not iOS - disabled');
       return;
     }
     
-    console.log('[IOS-TOUCH-PROXY] iOS detected - activating touch proxy layer');
+    console.log('[IOS-TOUCH-PROXY] iOS detected - creating permanent proxy layer');
+    
+    let container = document.getElementById(PROXY_CONTAINER_ID) as HTMLDivElement;
+    if (!container) {
+      container = document.createElement('div');
+      container.id = PROXY_CONTAINER_ID;
+      container.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 2147483647 !important;
+        pointer-events: none !important;
+      `;
+      document.body.appendChild(container);
+    }
+    containerRef.current = container;
     
     const updateProxies = () => {
-      const proxies: ProxyButton[] = [];
-      Array.from(buttonRegistry.entries()).forEach(([id, registration]) => {
-        const rect = registration.getRect();
-        if (rect && rect.width > 0 && rect.height > 0) {
-          proxies.push({
-            id,
-            rect,
-            callback: registration.callback
-          });
+      if (!containerRef.current) return;
+      
+      const currentIds = new Set(buttonRegistry.keys());
+      const existingIds = new Set(proxyMapRef.current.keys());
+      
+      existingIds.forEach(id => {
+        if (!currentIds.has(id)) {
+          const proxy = proxyMapRef.current.get(id);
+          if (proxy && proxy.parentNode) {
+            proxy.parentNode.removeChild(proxy);
+          }
+          proxyMapRef.current.delete(id);
         }
       });
-      console.log(`[IOS-TOUCH-PROXY] Updated ${proxies.length} proxy buttons`);
-      setProxyButtons(proxies);
+      
+      buttonRegistry.forEach((registration, id) => {
+        const rect = registration.getRect();
+        if (!rect || rect.width === 0 || rect.height === 0) {
+          const existing = proxyMapRef.current.get(id);
+          if (existing && existing.parentNode) {
+            existing.parentNode.removeChild(existing);
+            proxyMapRef.current.delete(id);
+          }
+          return;
+        }
+        
+        let proxy = proxyMapRef.current.get(id);
+        if (proxy) {
+          updateProxyPosition(proxy, rect);
+        } else {
+          proxy = createProxyButton(id, registration);
+          if (proxy) {
+            containerRef.current!.appendChild(proxy);
+            proxyMapRef.current.set(id, proxy);
+          }
+        }
+      });
+      
+      console.log(`[IOS-TOUCH-PROXY] Synced ${proxyMapRef.current.size} proxy buttons`);
     };
     
     updateProxies();
     const interval = setInterval(updateProxies, 500);
     
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [createProxyButton, updateProxyPosition]);
   
-  const handleProxyTouch = useCallback((e: React.TouchEvent, button: ProxyButton) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log(`[IOS-TOUCH-PROXY] ✅ Proxy touch captured for: ${button.id}`);
-    
-    if (navigator.vibrate) {
-      navigator.vibrate(10);
-    }
-    
-    button.callback();
-  }, []);
-  
-  if (!isIOS.current || proxyButtons.length === 0) {
-    return null;
-  }
-  
-  return (
-    <div 
-      className="ios-touch-proxy-layer"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 99999,
-        pointerEvents: 'none',
-      }}
-    >
-      {proxyButtons.map((button) => (
-        <div
-          key={button.id}
-          data-proxy-for={button.id}
-          onTouchStart={(e) => handleProxyTouch(e, button)}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          style={{
-            position: 'fixed',
-            top: button.rect.top - 5,
-            left: button.rect.left - 5,
-            width: button.rect.width + 10,
-            height: button.rect.height + 10,
-            pointerEvents: 'auto',
-            touchAction: 'none',
-            WebkitTouchCallout: 'none',
-            WebkitUserSelect: 'none',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
-          }}
-        />
-      ))}
-    </div>
-  );
+  return null;
 }
