@@ -20,7 +20,11 @@ interface ButtonRegistration {
 }
 
 // Global registry of buttons that need window-level touch handling
-const buttonRegistry = new Map<string, ButtonRegistration>();
+// EXPORTED so MapLibre can check button bounds in its working touchend handler
+export const buttonRegistry = new Map<string, ButtonRegistration>();
+
+// Export type for MapLibre
+export type { ButtonRegistration };
 
 // Reference counter for window listener - attached when count > 0
 let windowListenerRefCount = 0;

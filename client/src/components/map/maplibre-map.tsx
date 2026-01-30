@@ -15,6 +15,8 @@ import { StaticRouteOverlay } from "@/components/map/static-route-overlay";
 import { useRouteTrafficOverlay, type TrafficSegment } from "@/hooks/use-route-traffic-overlay";
 import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
 import { TrafficStatusIndicator, TrafficLegend, type TrafficStatus } from "@/components/navigation/traffic-status-indicator";
+import { buttonRegistry } from "@/components/navigation/right-action-stack";
+import { hapticButtonPress } from "@/hooks/use-haptic-feedback";
 
 /**
  * BULLETPROOF COORDINATE VALIDATION
@@ -1332,6 +1334,42 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
       
       const handleTouchEnd = (e: TouchEvent) => {
+        // ====================================================================
+        // iOS SAFARI BUTTON INTERCEPT - Check registered buttons FIRST
+        // Since iOS Safari WebGL blocks touch events, we intercept them here
+        // in the working double-tap handler and trigger button callbacks
+        // ====================================================================
+        if (e.changedTouches.length === 1 && buttonRegistry.size > 0) {
+          const touch = e.changedTouches[0];
+          const x = touch.clientX;
+          const y = touch.clientY;
+          
+          console.log(`[IOS-BUTTON-INTERCEPT] Touch at (${x.toFixed(0)}, ${y.toFixed(0)}), checking ${buttonRegistry.size} registered buttons`);
+          
+          for (const [id, registration] of buttonRegistry) {
+            const rect = registration.getRect();
+            if (!rect) continue;
+            
+            // Check if touch is within button bounds (with padding for touch accuracy)
+            const padding = 10;
+            if (
+              x >= rect.left - padding &&
+              x <= rect.right + padding &&
+              y >= rect.top - padding &&
+              y <= rect.bottom + padding
+            ) {
+              console.log(`[IOS-BUTTON-INTERCEPT] ✅ HIT button: ${id}`);
+              e.preventDefault();
+              e.stopPropagation();
+              hapticButtonPress();
+              registration.callback();
+              return; // Button handled, don't process double-tap
+            }
+          }
+          console.log('[IOS-BUTTON-INTERCEPT] No button hit, continuing to double-tap check');
+        }
+        // ====================================================================
+        
         const target = e.target as HTMLElement;
         const targetTag = target?.tagName || 'unknown';
         const targetClass = target?.className || '';
