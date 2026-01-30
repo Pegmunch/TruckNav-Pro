@@ -93,8 +93,9 @@ function useWindowTouchInterceptor(
   isNavigating: boolean
 ) {
   useEffect(() => {
-    // Only use window interceptor in navigation mode (where iOS Safari bug occurs)
-    if (!isNavigating || !callback) {
+    // Enable window interceptor in BOTH modes for iOS Safari WebGL bug workaround
+    // This ensures buttons work even when MapLibre blocks touch events
+    if (!callback) {
       buttonRegistry.delete(id);
       return;
     }
