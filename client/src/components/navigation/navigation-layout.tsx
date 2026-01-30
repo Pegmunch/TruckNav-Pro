@@ -12,38 +12,58 @@ const handleStackTouchCapture = (e: React.TouchEvent) => {
 };
 
 // Native touch handler for iOS Safari - adds document-level listeners to ensure button touches work
+// This is a fallback for when React event handlers don't fire on iOS Safari
 const useIOSSafariTouchFix = () => {
   const hasAddedListeners = useRef(false);
+  const touchedButtonRef = useRef<HTMLElement | null>(null);
   
   useEffect(() => {
     if (hasAddedListeners.current) return;
     hasAddedListeners.current = true;
     
+    // Detect iOS Safari (excluding Chrome/Firefox on iOS which have their own handling)
+    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+                        !(window as any).MSStream && 
+                        /Safari/.test(navigator.userAgent) &&
+                        !/CriOS|FxiOS/.test(navigator.userAgent);
+    
+    console.log('[IOS-TOUCH-FIX] Initialized, isIOSSafari:', isIOSSafari);
+    
     // iOS Safari sometimes needs a native event listener to properly recognize touch targets
     const handleTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
-      const button = target?.closest('button');
-      const navControl = target?.closest('[data-nav-controls]');
+      // Check if target is a button or inside a button - more permissive check
+      const button = target?.closest('button') || 
+                     (target?.tagName === 'BUTTON' ? target : null) ||
+                     target?.closest('[role="button"]');
       
-      if (button && navControl) {
-        console.log('[IOS-TOUCH-FIX] ✅ Touch start on nav button detected');
-        // Ensure the button is marked as active for iOS
-        button.classList.add('active');
+      if (button) {
+        console.log('[IOS-TOUCH-FIX] ✅ Touch start on button detected:', button.getAttribute('data-testid'));
+        touchedButtonRef.current = button as HTMLElement;
+        button.classList.add('active', 'touching');
       }
     };
     
     const handleTouchEnd = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
-      const button = target?.closest('button');
-      const navControl = target?.closest('[data-nav-controls]');
+      const button = target?.closest('button') || 
+                     (target?.tagName === 'BUTTON' ? target : null) ||
+                     target?.closest('[role="button"]') ||
+                     touchedButtonRef.current;
       
-      if (button && navControl) {
-        console.log('[IOS-TOUCH-FIX] ✅ Touch end on nav button detected - triggering click');
-        button.classList.remove('active');
-        // Manually trigger click for iOS Safari reliability
-        setTimeout(() => {
-          button.click();
-        }, 0);
+      if (button) {
+        console.log('[IOS-TOUCH-FIX] ✅ Touch end on button detected - triggering click:', button.getAttribute('data-testid'));
+        button.classList.remove('active', 'touching');
+        touchedButtonRef.current = null;
+        
+        // For iOS Safari, manually dispatch a click event
+        if (isIOSSafari) {
+          e.preventDefault();
+          // Use requestAnimationFrame to ensure the click happens after touch processing
+          requestAnimationFrame(() => {
+            (button as HTMLElement).click();
+          });
+        }
       }
     };
     

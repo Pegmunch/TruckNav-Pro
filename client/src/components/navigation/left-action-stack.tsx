@@ -96,7 +96,8 @@ export function LeftActionStack({
     }
   };
 
-  // iOS Safari optimized handler - uses both onClick and onTouchEnd for reliability
+  // iOS Safari optimized handler - uses onClick, onTouchEnd AND onPointerUp for maximum reliability
+  // iOS Safari sometimes blocks onTouchEnd on fixed elements with transforms
   const createHandler = (callback: (() => void) | undefined, label: string) => ({
     onClick: (e: React.MouseEvent) => {
       e.preventDefault();
@@ -108,9 +109,23 @@ export function LeftActionStack({
     onTouchEnd: (e: React.TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[LEFT-BTN-${label}] ✅ Touch event`);
+      console.log(`[LEFT-BTN-${label}] ✅ TouchEnd event`);
       hapticButtonPress();
       callback?.();
+    },
+    onTouchStart: (e: React.TouchEvent) => {
+      // Mark this element as being touched - helps iOS Safari recognize the tap
+      console.log(`[LEFT-BTN-${label}] TouchStart`);
+      e.currentTarget.classList.add('touching');
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      // Fallback for iOS Safari - pointer events are more reliable than touch events
+      if (e.pointerType === 'touch') {
+        console.log(`[LEFT-BTN-${label}] ✅ PointerUp event (touch)`);
+        e.preventDefault();
+        hapticButtonPress();
+        callback?.();
+      }
     }
   });
 
