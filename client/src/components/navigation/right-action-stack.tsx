@@ -171,39 +171,6 @@ export function RightActionStack({
   useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN');
   useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT');
   
-  // iOS Safari optimized handler - uses onClick, onTouchEnd AND onPointerUp for maximum reliability
-  // iOS Safari sometimes blocks onTouchEnd on fixed elements with transforms
-  const createHandler = (callback: (() => void) | undefined, label: string) => ({
-    onClick: (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[RIGHT-BTN-${label}] ✅ Click event`);
-      hapticButtonPress();
-      callback?.();
-    },
-    onTouchEnd: (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[RIGHT-BTN-${label}] ✅ TouchEnd event`);
-      hapticButtonPress();
-      callback?.();
-    },
-    onTouchStart: (e: React.TouchEvent) => {
-      // Mark this element as being touched - helps iOS Safari recognize the tap
-      console.log(`[RIGHT-BTN-${label}] TouchStart`);
-      e.currentTarget.classList.add('touching');
-    },
-    onPointerUp: (e: React.PointerEvent) => {
-      // Fallback for iOS Safari - pointer events are more reliable than touch events
-      if (e.pointerType === 'touch') {
-        console.log(`[RIGHT-BTN-${label}] ✅ PointerUp event (touch)`);
-        e.preventDefault();
-        hapticButtonPress();
-        callback?.();
-      }
-    }
-  });
-
   return (
     <div 
       className={cn(
@@ -218,15 +185,7 @@ export function RightActionStack({
       }}
     >
       {/* 1. Incidents - Red border - hides/shows with double-tap */}
-      {/* FIXED: Added direct onClick for iOS Safari compatibility - matches preview mode approach */}
-      {/* DEBUG: Log rendering conditions */}
-      {console.log('[INCIDENTS-BTN-RENDER] Rendering check:', { 
-        hasCallback: !!onViewIncidents, 
-        hideIncidents, 
-        shouldRender: onViewIncidents && !hideIncidents,
-        isVisible,
-        compact
-      })}
+      {/* FIXED: Added direct onClick AND onTouchEnd for iOS Safari compatibility */}
       {onViewIncidents && !hideIncidents && (
         <Button
           ref={incidentsButtonRef}
@@ -235,18 +194,16 @@ export function RightActionStack({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[INCIDENTS-BTN] ✅ Direct onClick fired - isVisible:', isVisible, 'compact:', compact);
+            console.log('[INCIDENTS-BTN] ✅ onClick fired');
             hapticButtonPress();
             onViewIncidents();
           }}
-          onTouchStart={(e) => {
-            console.log('[INCIDENTS-BTN] 🔵 TouchStart event received');
-          }}
           onTouchEnd={(e) => {
-            console.log('[INCIDENTS-BTN] 🔴 TouchEnd event received');
-          }}
-          onPointerDown={(e) => {
-            console.log('[INCIDENTS-BTN] 👆 PointerDown event received');
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[INCIDENTS-BTN] ✅ TouchEnd fired - calling callback');
+            hapticButtonPress();
+            onViewIncidents();
           }}
           className={cn(
             buttonSize, 
@@ -373,7 +330,7 @@ export function RightActionStack({
       )}
 
       {/* 8. Traffic Toggle - Orange/Gray border - hides/shows with double-tap */}
-      {/* FIXED: Added direct onClick for iOS Safari compatibility - matches preview mode approach */}
+      {/* FIXED: Added direct onClick AND onTouchEnd for iOS Safari compatibility */}
       {onToggleTraffic && (
         <Button
           ref={trafficButtonRef}
@@ -382,7 +339,14 @@ export function RightActionStack({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[TRAFFIC-BTN] ✅ Direct onClick fired');
+            console.log('[TRAFFIC-BTN] ✅ onClick fired');
+            hapticButtonPress();
+            onToggleTraffic();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[TRAFFIC-BTN] ✅ TouchEnd fired - calling callback');
             hapticButtonPress();
             onToggleTraffic();
           }}
