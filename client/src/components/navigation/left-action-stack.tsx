@@ -5,44 +5,106 @@ import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } 
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 import { navigationVoice } from '@/lib/navigation-voice';
 import { getAlertSoundsService } from '@/lib/alert-sounds';
+import { buttonRegistry } from './right-action-stack';
 
 // Native event listener hook for iOS Safari - bypasses React's synthetic event delegation
 function useNativeClickHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
-  label: string
+  label: string,
+  isNavigating: boolean
 ) {
   useEffect(() => {
     const button = ref.current;
     if (!button || !callback) return;
     
+    const mode = isNavigating ? 'NAV' : 'PREVIEW';
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      console.log(`[NATIVE-LEFT-${label}-${mode}] 🔵 TouchStart - event received`);
+    };
+    
     const handleTouchEnd = (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-LEFT-${label}] ✅ Native touchend fired`);
+      console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ TouchEnd fired - CALLING CALLBACK`);
       hapticButtonPress();
       callback();
+    };
+    
+    const handlePointerDown = (e: PointerEvent) => {
+      console.log(`[NATIVE-LEFT-${label}-${mode}] 👆 PointerDown - type:`, e.pointerType);
+      if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ PointerDown - CALLING CALLBACK`);
+        hapticButtonPress();
+        callback();
+      }
     };
     
     const handleClick = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-LEFT-${label}] ✅ Native click fired`);
+      console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ Click fired - CALLING CALLBACK`);
       hapticButtonPress();
       callback();
     };
     
-    // Use capture phase to ensure we get the event first
+    // Attach ALL event types in capture phase
+    button.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
     button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    button.addEventListener('pointerdown', handlePointerDown, { capture: true });
     button.addEventListener('click', handleClick, { capture: true });
     
-    console.log(`[NATIVE-LEFT-${label}] 📎 Native listeners attached`);
+    // Log button position and computed styles
+    const rect = button.getBoundingClientRect();
+    const styles = window.getComputedStyle(button);
+    console.log(`[NATIVE-LEFT-${label}-${mode}] 📎 Listeners attached. Button info:`, {
+      rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+      pointerEvents: styles.pointerEvents,
+      zIndex: styles.zIndex,
+      visibility: styles.visibility,
+      opacity: styles.opacity,
+      display: styles.display
+    });
     
     return () => {
+      button.removeEventListener('touchstart', handleTouchStart, { capture: true });
       button.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
     };
-  }, [ref, callback, label]);
+  }, [ref, callback, label, isNavigating]);
+}
+
+// Window-level touch interceptor for iOS Safari WebGL bug
+// Registers button with the global touch handler from right-action-stack
+function useWindowTouchInterceptor(
+  ref: React.RefObject<HTMLButtonElement>,
+  callback: (() => void) | undefined,
+  id: string
+) {
+  useEffect(() => {
+    if (!callback) {
+      buttonRegistry.delete(id);
+      return;
+    }
+    
+    // Register this button with the global registry
+    buttonRegistry.set(id, {
+      id,
+      getRect: () => ref.current?.getBoundingClientRect() || null,
+      callback
+    });
+    
+    console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 📎 Registered button: ${id}`);
+    
+    return () => {
+      buttonRegistry.delete(id);
+      console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 🗑️ Unregistered button: ${id}`);
+    };
+  }, [ref, callback, id]);
 }
 
 interface LeftActionStackProps {
@@ -145,12 +207,15 @@ export function LeftActionStack({
 
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
-  useNativeClickHandler(navButtonRef, onNavigate, 'NAV');
-  useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE');
-  useNativeClickHandler(muteButtonRef, toggleMute, 'MUTE');
-  useNativeClickHandler(incidentButtonRef, onReportIncident, 'INCIDENT');
-  useNativeClickHandler(cancelButtonRef, onCancel, 'CANCEL');
-  useNativeClickHandler(menuButtonRef, onOpenMenu, 'MENU');
+  useNativeClickHandler(navButtonRef, onNavigate, 'NAV', isNavigating);
+  useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE', isNavigating);
+  useNativeClickHandler(muteButtonRef, toggleMute, 'MUTE', isNavigating);
+  useNativeClickHandler(incidentButtonRef, onReportIncident, 'INCIDENT', isNavigating);
+  useNativeClickHandler(cancelButtonRef, onCancel, 'CANCEL', isNavigating);
+  useNativeClickHandler(menuButtonRef, onOpenMenu, 'MENU', isNavigating);
+  
+  // Window-level touch interceptor for iOS Safari WebGL bug - registers with global handler
+  useWindowTouchInterceptor(incidentButtonRef, onReportIncident, 'left-incident-btn');
 
   // CRITICAL: Return null if no buttons would be visible
   // This prevents an empty container from blocking touch events
@@ -237,30 +302,12 @@ export function LeftActionStack({
       )}
 
       {/* Incident report button - orange - hides/shows with double-tap */}
-      {/* FIXED: Added direct onPointerDown AND onClick for iOS Safari compatibility */}
+      {/* Uses native event handlers via useNativeClickHandler hook (same as zoom buttons) */}
       {isNavigating && onReportIncident && (
         <Button
           ref={incidentButtonRef}
           variant="ghost"
           size="icon"
-          onPointerDown={(e) => {
-            // iOS Safari fix: Fire on pointer DOWN not up/end
-            // This fires immediately when finger touches screen
-            if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('[LEFT-INCIDENT-BTN] ✅ PointerDown fired');
-              hapticButtonPress();
-              onReportIncident();
-            }
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[LEFT-INCIDENT-BTN] ✅ onClick fired');
-            hapticButtonPress();
-            onReportIncident();
-          }}
           className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
