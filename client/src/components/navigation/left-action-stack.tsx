@@ -309,12 +309,25 @@ export function LeftActionStack({
       )}
 
       {/* Incident report button - orange - hides/shows with double-tap */}
-      {/* Uses native event handlers via useNativeClickHandler hook (same as zoom buttons) */}
+      {/* Uses direct onTouchStart for iOS Safari WebGL compatibility */}
       {isNavigating && onReportIncident && (
         <Button
           ref={incidentButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[INCIDENT-BTN] 🟠 Orange button TOUCHSTART in NAV mode');
+            onReportIncident();
+          }}
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[INCIDENT-BTN] 🟠 Orange button POINTERDOWN (mouse) in NAV mode');
+              onReportIncident();
+            }
+          }}
           className={`h-10 w-10 rounded-xl bg-orange-500 hover:bg-orange-600 active:bg-orange-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}

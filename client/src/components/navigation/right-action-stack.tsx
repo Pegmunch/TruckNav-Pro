@@ -359,12 +359,25 @@ export function RightActionStack({
       }}
     >
       {/* 1. Incidents - Red border - hides/shows with double-tap */}
-      {/* Uses native event handlers via useNativeClickHandler hook (same as zoom buttons) */}
+      {/* Uses direct onTouchStart for iOS Safari WebGL compatibility */}
       {onViewIncidents && !hideIncidents && (
         <Button
           ref={incidentsButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[INCIDENTS-BTN] 🔴 View Incidents TOUCHSTART in NAV mode');
+            onViewIncidents();
+          }}
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[INCIDENTS-BTN] 🔴 View Incidents POINTERDOWN (mouse) in NAV mode');
+              onViewIncidents();
+            }
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
