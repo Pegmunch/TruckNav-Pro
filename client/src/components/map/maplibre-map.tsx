@@ -1418,7 +1418,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         touchContainerRef.current.addEventListener('touchend', handleTouchEnd, { passive: false });
         console.log('[MAP-GESTURE] ✅ Two-finger double-tap zoom out enabled');
         console.log('[MAP-GESTURE] ✅ Single-finger double-tap UI toggle enabled');
+        console.log('[MAP-GESTURE] Touch container element:', touchContainerRef.current?.tagName, touchContainerRef.current?.className);
       }
+      
+      // DEBUG: Document-level touch listener to trace where touches are going
+      const documentTouchDebug = (e: TouchEvent) => {
+        const target = e.target as HTMLElement;
+        console.log('[DOCUMENT-TOUCH-DEBUG] touchend on document:', {
+          targetTag: target?.tagName,
+          targetClass: target?.className?.toString()?.substring(0, 100),
+          targetId: target?.id,
+          isMapCanvas: target?.classList?.contains('maplibregl-canvas'),
+          isInMapContainer: mapContainer.current?.contains(target),
+          mapContainerExists: !!mapContainer.current
+        });
+      };
+      document.addEventListener('touchend', documentTouchDebug, { passive: true });
+      
+      // Store for cleanup
+      (window as any).__documentTouchDebug = documentTouchDebug;
 
       map.current.on('moveend', () => {
         if (!map.current) return;
