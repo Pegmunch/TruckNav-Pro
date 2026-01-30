@@ -357,12 +357,40 @@ export function RightActionStack({
   useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT', isNavigating);
   
   // ============================================================================
+  // DIRECT MANUAL REGISTRATION for incidents-btn - bypasses problematic hook
+  // The useWindowTouchInterceptor hook's effect doesn't run for incidents-btn
+  // for unknown reasons. This direct registration ensures the button works.
+  // ============================================================================
+  useEffect(() => {
+    console.log('[INCIDENTS-DIRECT] Manual registration effect running');
+    if (!stableViewIncidentsCallback) {
+      console.log('[INCIDENTS-DIRECT] ❌ No callback - skipping');
+      return;
+    }
+    
+    attachWindowTouchListener();
+    
+    buttonRegistry.set('incidents-btn', {
+      id: 'incidents-btn',
+      getRect: () => incidentsButtonRef.current?.getBoundingClientRect() || null,
+      callback: stableViewIncidentsCallback
+    });
+    
+    console.log('[INCIDENTS-DIRECT] ✅ Registered incidents-btn directly');
+    
+    return () => {
+      buttonRegistry.delete('incidents-btn');
+      detachWindowTouchListener();
+      console.log('[INCIDENTS-DIRECT] 🗑️ Unregistered incidents-btn');
+    };
+  }, [stableViewIncidentsCallback]);
+  
+  // ============================================================================
   // WINDOW-LEVEL TOUCH INTERCEPTOR - Critical fix for iOS Safari WebGL bug
   // This uses the same pattern as the working double-tap feature
   // Window-level listeners receive ALL touches regardless of WebGL canvas blocking
   // ============================================================================
-  // CRITICAL: Use stableViewIncidentsCallback which is ALWAYS defined (not undefined)
-  useWindowTouchInterceptor(incidentsButtonRef, stableViewIncidentsCallback, 'incidents-btn', isNavigating);
+  // Note: incidents-btn is registered directly above, not through this hook
   useWindowTouchInterceptor(trafficButtonRef, onToggleTraffic, 'traffic-btn', isNavigating);
   useWindowTouchInterceptor(mapViewButtonRef, onToggleMapView, 'map-view-btn', isNavigating);
   useWindowTouchInterceptor(recenterButtonRef, onRecenter, 'recenter-btn', isNavigating);

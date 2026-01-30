@@ -250,9 +250,34 @@ export function LeftActionStack({
   useNativeClickHandler(cancelButtonRef, onCancel, 'CANCEL', isNavigating);
   useNativeClickHandler(menuButtonRef, onOpenMenu, 'MENU', isNavigating);
   
-  // Window-level touch interceptor for iOS Safari WebGL bug - registers with global handler
-  // CRITICAL: Use stableIncidentCallback which is ALWAYS defined (not undefined)
-  useWindowTouchInterceptor(incidentButtonRef, stableIncidentCallback, 'left-incident-btn', isNavigating);
+  // ============================================================================
+  // DIRECT MANUAL REGISTRATION for left-incident-btn - bypasses problematic hook
+  // The useWindowTouchInterceptor hook's effect sometimes doesn't run for certain buttons
+  // for unknown reasons. This direct registration ensures the button works.
+  // ============================================================================
+  useEffect(() => {
+    console.log('[LEFT-INCIDENT-DIRECT] Manual registration effect running');
+    if (!stableIncidentCallback) {
+      console.log('[LEFT-INCIDENT-DIRECT] ❌ No callback - skipping');
+      return;
+    }
+    
+    attachWindowTouchListener();
+    
+    buttonRegistry.set('left-incident-btn', {
+      id: 'left-incident-btn',
+      getRect: () => incidentButtonRef.current?.getBoundingClientRect() || null,
+      callback: stableIncidentCallback
+    });
+    
+    console.log('[LEFT-INCIDENT-DIRECT] ✅ Registered left-incident-btn directly');
+    
+    return () => {
+      buttonRegistry.delete('left-incident-btn');
+      detachWindowTouchListener();
+      console.log('[LEFT-INCIDENT-DIRECT] 🗑️ Unregistered left-incident-btn');
+    };
+  }, [stableIncidentCallback]);
 
   // CRITICAL: For iOS Safari WebGL fix, we need to ALWAYS render the incident button
   // so its ref is valid and can register with the touch proxy system.
