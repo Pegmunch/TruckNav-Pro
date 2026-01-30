@@ -4,45 +4,130 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
+// COMPREHENSIVE DEBUG: Log all touch/pointer events at document level
+function useDocumentTouchDebug(isNavigating: boolean) {
+  useEffect(() => {
+    const mode = isNavigating ? 'NAVIGATION' : 'PREVIEW';
+    
+    const handleDocTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const testId = target?.getAttribute?.('data-testid') || 'unknown';
+      const tagName = target?.tagName || 'unknown';
+      console.log(`[DOC-TOUCH-${mode}] 🔵 TouchStart on:`, tagName, testId, {
+        x: e.touches[0]?.clientX,
+        y: e.touches[0]?.clientY,
+        targetClasses: target?.className?.substring?.(0, 50)
+      });
+    };
+    
+    const handleDocTouchEnd = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const testId = target?.getAttribute?.('data-testid') || 'unknown';
+      console.log(`[DOC-TOUCH-${mode}] 🔴 TouchEnd on:`, target?.tagName, testId);
+    };
+    
+    const handleDocPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      const testId = target?.getAttribute?.('data-testid') || 'unknown';
+      console.log(`[DOC-POINTER-${mode}] 👆 PointerDown on:`, target?.tagName, testId, {
+        pointerType: e.pointerType,
+        x: e.clientX,
+        y: e.clientY
+      });
+    };
+    
+    const handleDocClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const testId = target?.getAttribute?.('data-testid') || 'unknown';
+      console.log(`[DOC-CLICK-${mode}] 🖱️ Click on:`, target?.tagName, testId);
+    };
+    
+    // Attach at capture phase to see events before any stopPropagation
+    document.addEventListener('touchstart', handleDocTouchStart, { capture: true, passive: true });
+    document.addEventListener('touchend', handleDocTouchEnd, { capture: true, passive: true });
+    document.addEventListener('pointerdown', handleDocPointerDown, { capture: true });
+    document.addEventListener('click', handleDocClick, { capture: true });
+    
+    console.log(`[DOC-DEBUG-${mode}] 📎 Document-level debug listeners attached`);
+    
+    return () => {
+      document.removeEventListener('touchstart', handleDocTouchStart, { capture: true });
+      document.removeEventListener('touchend', handleDocTouchEnd, { capture: true });
+      document.removeEventListener('pointerdown', handleDocPointerDown, { capture: true });
+      document.removeEventListener('click', handleDocClick, { capture: true });
+    };
+  }, [isNavigating]);
+}
+
 // Standard native event handler - uses touchend and click for consistent behavior
-// Now that buttons are rendered with direct fixed positioning (not through NavigationLayout),
-// standard event handling should work reliably on iOS Safari
 function useNativeClickHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
-  label: string
+  label: string,
+  isNavigating: boolean
 ) {
   useEffect(() => {
     const button = ref.current;
     if (!button || !callback) return;
     
+    const mode = isNavigating ? 'NAV' : 'PREVIEW';
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      console.log(`[NATIVE-${label}-${mode}] 🔵 TouchStart - event received`);
+    };
+    
     const handleTouchEnd = (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-${label}] ✅ TouchEnd fired`);
+      console.log(`[NATIVE-${label}-${mode}] ✅ TouchEnd fired - CALLING CALLBACK`);
       hapticButtonPress();
       callback();
+    };
+    
+    const handlePointerDown = (e: PointerEvent) => {
+      console.log(`[NATIVE-${label}-${mode}] 👆 PointerDown - type:`, e.pointerType);
+      if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`[NATIVE-${label}-${mode}] ✅ PointerDown - CALLING CALLBACK`);
+        hapticButtonPress();
+        callback();
+      }
     };
     
     const handleClick = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-${label}] ✅ Click fired`);
+      console.log(`[NATIVE-${label}-${mode}] ✅ Click fired - CALLING CALLBACK`);
       hapticButtonPress();
       callback();
     };
     
-    // Use capture phase to get events before any other handlers
+    // Attach ALL event types in capture phase
+    button.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
     button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    button.addEventListener('pointerdown', handlePointerDown, { capture: true });
     button.addEventListener('click', handleClick, { capture: true });
     
-    console.log(`[NATIVE-${label}] 📎 Listeners attached`);
+    // Log button position and computed styles
+    const rect = button.getBoundingClientRect();
+    const styles = window.getComputedStyle(button);
+    console.log(`[NATIVE-${label}-${mode}] 📎 Listeners attached. Button info:`, {
+      rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+      pointerEvents: styles.pointerEvents,
+      zIndex: styles.zIndex,
+      visibility: styles.visibility,
+      opacity: styles.opacity,
+      display: styles.display
+    });
     
     return () => {
+      button.removeEventListener('touchstart', handleTouchStart, { capture: true });
       button.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
     };
-  }, [ref, callback, label]);
+  }, [ref, callback, label, isNavigating]);
 }
 
 interface RightActionStackProps {
@@ -160,16 +245,19 @@ export function RightActionStack({
     }
   }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
   
+  // DEBUGGING: Track all touch/pointer events at document level
+  useDocumentTouchDebug(isNavigating);
+  
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
-  useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS');
-  useNativeClickHandler(trafficButtonRef, onToggleTraffic, 'TRAFFIC');
-  useNativeClickHandler(mapViewButtonRef, onToggleMapView, 'MAP-VIEW');
-  useNativeClickHandler(recenterButtonRef, onRecenter, 'RECENTER');
-  useNativeClickHandler(compassButtonRef, onCompassClick, 'COMPASS');
-  useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE');
-  useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN');
-  useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT');
+  useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS', isNavigating);
+  useNativeClickHandler(trafficButtonRef, onToggleTraffic, 'TRAFFIC', isNavigating);
+  useNativeClickHandler(mapViewButtonRef, onToggleMapView, 'MAP-VIEW', isNavigating);
+  useNativeClickHandler(recenterButtonRef, onRecenter, 'RECENTER', isNavigating);
+  useNativeClickHandler(compassButtonRef, onCompassClick, 'COMPASS', isNavigating);
+  useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE', isNavigating);
+  useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN', isNavigating);
+  useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT', isNavigating);
   
   return (
     <div 
