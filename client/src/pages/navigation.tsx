@@ -4298,11 +4298,13 @@ function NavigationPageContent() {
                 />
                 
                 {/* NAVIGATION MODE CONTROLS - Right Stack - Direct fixed positioning like preview mode */}
-                {/* This bypasses NavigationLayout to ensure consistent touch handling across modes */}
-                <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                {/* CRITICAL: z-index must be HIGHER than NavigationLayout's 600000 to receive touch events on iOS Safari */}
+                {/* iOS Safari doesn't properly pass touch events through pointer-events-none when z-index is lower */}
+                <div className="fixed flex flex-col gap-1 pointer-events-auto"
                   style={{
                     bottom: 'calc(100px + var(--safe-area-bottom))',
-                    right: '16px'
+                    right: '16px',
+                    zIndex: 700000
                   }}>
                   <RightActionStack
                     onZoomIn={() => mapRef.current?.zoomIn()}
