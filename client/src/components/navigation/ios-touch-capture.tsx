@@ -16,56 +16,70 @@ export function IOSTouchCapture({
 }: IOSTouchCaptureProps) {
   const incidentsTouchRef = useRef<HTMLDivElement>(null);
   const trafficTouchRef = useRef<HTMLDivElement>(null);
+  const lastIncidentsTouchRef = useRef(0);
+  const lastTrafficTouchRef = useRef(0);
   
   const buttonSize = compact ? 36 : 44;
   const gap = compact ? 4 : 6;
   const buttonStep = buttonSize + gap;
   
-  const handleIncidentsTouch = useCallback((e: TouchEvent | MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('[IOS-TOUCH-CAPTURE] ✅ Incidents touch captured!');
-    hapticButtonPress();
-    onIncidentsClick?.();
-  }, [onIncidentsClick]);
-  
-  const handleTrafficTouch = useCallback((e: TouchEvent | MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('[IOS-TOUCH-CAPTURE] ✅ Traffic touch captured!');
-    hapticButtonPress();
-    onTrafficClick?.();
-  }, [onTrafficClick]);
-  
   useEffect(() => {
     const incidentsEl = incidentsTouchRef.current;
     const trafficEl = trafficTouchRef.current;
     
+    // CRITICAL: Fire on TOUCHSTART for iOS Safari - touchend often gets cancelled
+    const handleIncidentsTouchStart = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastIncidentsTouchRef.current < 300) return; // Debounce
+      lastIncidentsTouchRef.current = now;
+      
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      console.log('[IOS-TOUCH-CAPTURE] ✅ Incidents TOUCHSTART - firing immediately!');
+      hapticButtonPress();
+      onIncidentsClick?.();
+    };
+    
+    const handleTrafficTouchStart = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTrafficTouchRef.current < 300) return; // Debounce
+      lastTrafficTouchRef.current = now;
+      
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      console.log('[IOS-TOUCH-CAPTURE] ✅ Traffic TOUCHSTART - firing immediately!');
+      hapticButtonPress();
+      onTrafficClick?.();
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    
     if (incidentsEl && onIncidentsClick) {
-      incidentsEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true, capture: true });
-      incidentsEl.addEventListener('touchend', handleIncidentsTouch, { passive: false, capture: true });
-      incidentsEl.addEventListener('click', handleIncidentsTouch, { capture: true });
-      console.log('[IOS-TOUCH-CAPTURE] 📎 Incidents capture layer attached');
+      incidentsEl.addEventListener('touchstart', handleIncidentsTouchStart, { passive: false, capture: true });
+      incidentsEl.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+      console.log('[IOS-TOUCH-CAPTURE] 📎 Incidents layer (touchstart mode) attached');
     }
     
     if (trafficEl && onTrafficClick) {
-      trafficEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true, capture: true });
-      trafficEl.addEventListener('touchend', handleTrafficTouch, { passive: false, capture: true });
-      trafficEl.addEventListener('click', handleTrafficTouch, { capture: true });
-      console.log('[IOS-TOUCH-CAPTURE] 📎 Traffic capture layer attached');
+      trafficEl.addEventListener('touchstart', handleTrafficTouchStart, { passive: false, capture: true });
+      trafficEl.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+      console.log('[IOS-TOUCH-CAPTURE] 📎 Traffic layer (touchstart mode) attached');
     }
     
     return () => {
       if (incidentsEl) {
-        incidentsEl.removeEventListener('touchend', handleIncidentsTouch, { capture: true });
-        incidentsEl.removeEventListener('click', handleIncidentsTouch, { capture: true });
+        incidentsEl.removeEventListener('touchstart', handleIncidentsTouchStart, { capture: true });
+        incidentsEl.removeEventListener('touchend', handleTouchEnd, { capture: true });
       }
       if (trafficEl) {
-        trafficEl.removeEventListener('touchend', handleTrafficTouch, { capture: true });
-        trafficEl.removeEventListener('click', handleTrafficTouch, { capture: true });
+        trafficEl.removeEventListener('touchstart', handleTrafficTouchStart, { capture: true });
+        trafficEl.removeEventListener('touchend', handleTouchEnd, { capture: true });
       }
     };
-  }, [handleIncidentsTouch, handleTrafficTouch, onIncidentsClick, onTrafficClick]);
+  }, [onIncidentsClick, onTrafficClick]);
   
   if (!isVisible) return null;
   
