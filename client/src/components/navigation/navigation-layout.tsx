@@ -144,6 +144,7 @@ export function NavigationLayout({
             pointerEvents: 'auto',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
+            userSelect: 'none',
             cursor: 'pointer'
           }}
         >
@@ -172,16 +173,16 @@ export function NavigationLayout({
 
       {/* Right navigation controls stack - Positioned from bottom, above instrumentation bar */}
       {/* iOS Safari fix: Removed isolation/contain/transform that were blocking touch events */}
+      {/* iOS Safari fix: Removed overflow-y-auto which was consuming touch events at edges */}
       {/* CRITICAL: onTouchStartCapture ensures touch events reach buttons before window listeners */}
       {rightStackVisible && (
         <div 
-          className="fixed right-4 overflow-y-auto overflow-x-hidden"
+          className="fixed right-4 flex flex-col gap-1"
           onTouchStartCapture={handleStackTouchCapture}
           onTouchEndCapture={handleStackTouchCapture}
           data-nav-controls="right-stack"
           style={{ 
             bottom: shouldShowUI ? 'calc(100px + var(--safe-area-bottom, 0px))' : 'calc(80px + var(--safe-area-bottom, 0px))',
-            maxHeight: 'calc(100vh - 280px - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))',
             zIndex: 500000,
             pointerEvents: 'auto',
             touchAction: 'manipulation',
