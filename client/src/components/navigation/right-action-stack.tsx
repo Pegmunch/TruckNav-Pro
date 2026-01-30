@@ -30,14 +30,15 @@ export type { ButtonRegistration };
 let windowListenerRefCount = 0;
 let windowTouchHandler: ((e: TouchEvent) => void) | null = null;
 
-function handleWindowTouchEnd(e: TouchEvent) {
-  if (e.changedTouches.length !== 1) return; // Only single-finger taps
+// CRITICAL: Uses touchstart NOT touchend - iOS Safari cancels touchend over WebGL
+function handleWindowTouchStart(e: TouchEvent) {
+  if (e.touches.length !== 1) return; // Only single-finger taps
   
-  const touch = e.changedTouches[0];
+  const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
   
-  console.log(`[WINDOW-TOUCH-INTERCEPT] Touch at (${x}, ${y}), checking ${buttonRegistry.size} buttons`);
+  console.log(`[WINDOW-TOUCH-START-INTERCEPT] Touch at (${x}, ${y}), checking ${buttonRegistry.size} buttons`);
   
   // Check if touch landed on any registered button
   // Use large padding (25px) to compensate for iOS Safari WebGL coordinate offset
@@ -67,13 +68,13 @@ function handleWindowTouchEnd(e: TouchEvent) {
 function attachWindowTouchListener() {
   windowListenerRefCount++;
   if (windowListenerRefCount === 1) {
-    // Use document-level with capture:true to intercept before MapLibre can block
-    // Also add touchstart to track potential button presses
-    windowTouchHandler = handleWindowTouchEnd;
-    document.addEventListener('touchend', windowTouchHandler, { passive: false, capture: true });
+    // CRITICAL: Use touchstart NOT touchend - iOS Safari cancels touchend events over WebGL
+    // touchstart fires BEFORE WebGL can intercept and block the event
+    windowTouchHandler = handleWindowTouchStart;
+    document.addEventListener('touchstart', windowTouchHandler, { passive: false, capture: true });
     // Also try window level as backup (like double-tap)
-    window.addEventListener('touchend', windowTouchHandler, { passive: false });
-    console.log('[TOUCH-INTERCEPT] 📎 Document+Window touch interceptor attached (refCount: 1, capture: true)');
+    window.addEventListener('touchstart', windowTouchHandler, { passive: false });
+    console.log('[TOUCH-INTERCEPT] 📎 Document+Window TOUCHSTART interceptor attached (refCount: 1, capture: true)');
   } else {
     console.log(`[TOUCH-INTERCEPT] Ref count increased to ${windowListenerRefCount}`);
   }
@@ -82,8 +83,8 @@ function attachWindowTouchListener() {
 function detachWindowTouchListener() {
   windowListenerRefCount--;
   if (windowListenerRefCount === 0 && windowTouchHandler) {
-    document.removeEventListener('touchend', windowTouchHandler, { capture: true });
-    window.removeEventListener('touchend', windowTouchHandler);
+    document.removeEventListener('touchstart', windowTouchHandler, { capture: true });
+    window.removeEventListener('touchstart', windowTouchHandler);
     windowTouchHandler = null;
     console.log('[TOUCH-INTERCEPT] 🗑️ Document+Window touch interceptor detached');
   } else if (windowListenerRefCount > 0) {
@@ -126,43 +127,52 @@ function useWindowTouchInterceptor(
   }, [ref, callback, id, isNavigating]);
 }
 
-// Standard native event handler - uses touchend and click for consistent behavior
+// Standard native event handler - uses TOUCHSTART (not touchend) for iOS Safari
+// iOS Safari cancels touchend events over WebGL canvases
 function useNativeClickHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
   label: string,
   isNavigating: boolean
 ) {
+  // Debounce ref to prevent double-firing
+  const lastTouchRef = useRef(0);
+  
   useEffect(() => {
     const button = ref.current;
     if (!button || !callback) return;
     
     const mode = isNavigating ? 'NAV' : 'PREVIEW';
     
+    // CRITICAL: Fire on touchstart - fires BEFORE WebGL can cancel the event
     const handleTouchStart = (e: TouchEvent) => {
-      console.log(`[NATIVE-${label}-${mode}] 🔵 TouchStart - event received`);
-    };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTouchRef.current < 300) {
+        console.log(`[NATIVE-${label}-${mode}] ⏳ TouchStart debounced`);
+        return; // Debounce
+      }
+      lastTouchRef.current = now;
+      
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-${label}-${mode}] ✅ TouchEnd fired - CALLING CALLBACK`);
+      console.log(`[NATIVE-${label}-${mode}] ✅ TouchStart fired - CALLING CALLBACK`);
       hapticButtonPress();
       callback();
     };
     
     const handlePointerDown = (e: PointerEvent) => {
-      console.log(`[NATIVE-${label}-${mode}] 👆 PointerDown - type:`, e.pointerType);
-      if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+      // Only handle mouse events here - touch is handled by touchstart
+      if (e.pointerType === 'mouse') {
         e.preventDefault();
         e.stopPropagation();
-        console.log(`[NATIVE-${label}-${mode}] ✅ PointerDown - CALLING CALLBACK`);
+        console.log(`[NATIVE-${label}-${mode}] ✅ PointerDown (mouse) - CALLING CALLBACK`);
         hapticButtonPress();
         callback();
       }
     };
     
     const handleClick = (e: MouseEvent) => {
+      // Fallback for desktop
       e.preventDefault();
       e.stopPropagation();
       console.log(`[NATIVE-${label}-${mode}] ✅ Click fired - CALLING CALLBACK`);
@@ -170,9 +180,8 @@ function useNativeClickHandler(
       callback();
     };
     
-    // Attach ALL event types in capture phase
-    button.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
-    button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    // CRITICAL: Use touchstart with passive:false to preventDefault
+    button.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
     button.addEventListener('pointerdown', handlePointerDown, { capture: true });
     button.addEventListener('click', handleClick, { capture: true });
     
@@ -190,7 +199,6 @@ function useNativeClickHandler(
     
     return () => {
       button.removeEventListener('touchstart', handleTouchStart, { capture: true });
-      button.removeEventListener('touchend', handleTouchEnd, { capture: true });
       button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
     };

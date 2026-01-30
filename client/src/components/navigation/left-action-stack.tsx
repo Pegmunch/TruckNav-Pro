@@ -7,43 +7,52 @@ import { navigationVoice } from '@/lib/navigation-voice';
 import { getAlertSoundsService } from '@/lib/alert-sounds';
 import { buttonRegistry } from './right-action-stack';
 
-// Native event listener hook for iOS Safari - bypasses React's synthetic event delegation
+// Native event listener hook for iOS Safari - uses TOUCHSTART (not touchend)
+// iOS Safari cancels touchend events over WebGL canvases
 function useNativeClickHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
   label: string,
   isNavigating: boolean
 ) {
+  // Debounce ref to prevent double-firing
+  const lastTouchRef = useRef(0);
+  
   useEffect(() => {
     const button = ref.current;
     if (!button || !callback) return;
     
     const mode = isNavigating ? 'NAV' : 'PREVIEW';
     
+    // CRITICAL: Fire on touchstart - fires BEFORE WebGL can cancel the event
     const handleTouchStart = (e: TouchEvent) => {
-      console.log(`[NATIVE-LEFT-${label}-${mode}] 🔵 TouchStart - event received`);
-    };
-    
-    const handleTouchEnd = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTouchRef.current < 300) {
+        console.log(`[NATIVE-LEFT-${label}-${mode}] ⏳ TouchStart debounced`);
+        return; // Debounce
+      }
+      lastTouchRef.current = now;
+      
       e.preventDefault();
       e.stopPropagation();
-      console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ TouchEnd fired - CALLING CALLBACK`);
+      console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ TouchStart fired - CALLING CALLBACK`);
       hapticButtonPress();
       callback();
     };
     
     const handlePointerDown = (e: PointerEvent) => {
-      console.log(`[NATIVE-LEFT-${label}-${mode}] 👆 PointerDown - type:`, e.pointerType);
-      if (e.pointerType === 'touch' || e.pointerType === 'mouse') {
+      // Only handle mouse events here - touch is handled by touchstart
+      if (e.pointerType === 'mouse') {
         e.preventDefault();
         e.stopPropagation();
-        console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ PointerDown - CALLING CALLBACK`);
+        console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ PointerDown (mouse) - CALLING CALLBACK`);
         hapticButtonPress();
         callback();
       }
     };
     
     const handleClick = (e: MouseEvent) => {
+      // Fallback for desktop
       e.preventDefault();
       e.stopPropagation();
       console.log(`[NATIVE-LEFT-${label}-${mode}] ✅ Click fired - CALLING CALLBACK`);
@@ -51,9 +60,8 @@ function useNativeClickHandler(
       callback();
     };
     
-    // Attach ALL event types in capture phase
-    button.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
-    button.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    // CRITICAL: Use touchstart with passive:false to preventDefault
+    button.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
     button.addEventListener('pointerdown', handlePointerDown, { capture: true });
     button.addEventListener('click', handleClick, { capture: true });
     
@@ -71,7 +79,6 @@ function useNativeClickHandler(
     
     return () => {
       button.removeEventListener('touchstart', handleTouchStart, { capture: true });
-      button.removeEventListener('touchend', handleTouchEnd, { capture: true });
       button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
     };
