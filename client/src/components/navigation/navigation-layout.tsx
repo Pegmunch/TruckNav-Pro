@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 
 // iOS Safari touch event handler - ensures buttons receive touch events
 // This handler runs during the capture phase to prevent window-level handlers from interfering
@@ -9,6 +9,53 @@ const handleStackTouchCapture = (e: React.TouchEvent) => {
   if (isButton) {
     console.log('[NAV-LAYOUT] ✅ Touch captured on stack button, allowing through');
   }
+};
+
+// Native touch handler for iOS Safari - adds document-level listeners to ensure button touches work
+const useIOSSafariTouchFix = () => {
+  const hasAddedListeners = useRef(false);
+  
+  useEffect(() => {
+    if (hasAddedListeners.current) return;
+    hasAddedListeners.current = true;
+    
+    // iOS Safari sometimes needs a native event listener to properly recognize touch targets
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const button = target?.closest('button');
+      const navControl = target?.closest('[data-nav-controls]');
+      
+      if (button && navControl) {
+        console.log('[IOS-TOUCH-FIX] ✅ Touch start on nav button detected');
+        // Ensure the button is marked as active for iOS
+        button.classList.add('active');
+      }
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const button = target?.closest('button');
+      const navControl = target?.closest('[data-nav-controls]');
+      
+      if (button && navControl) {
+        console.log('[IOS-TOUCH-FIX] ✅ Touch end on nav button detected - triggering click');
+        button.classList.remove('active');
+        // Manually trigger click for iOS Safari reliability
+        setTimeout(() => {
+          button.click();
+        }, 0);
+      }
+    };
+    
+    // Add to document with capture: true to catch events before they're blocked
+    document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { capture: true, passive: false });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchend', handleTouchEnd, { capture: true });
+    };
+  }, []);
 };
 
 interface NavigationLayoutProps {
@@ -43,9 +90,13 @@ export function NavigationLayout({
   const shouldShowUI = isNavUIActive !== undefined ? isNavUIActive : isNavigating;
   const shouldShowBottomBar = showBottomBar !== undefined ? showBottomBar : shouldShowUI;
   
+  // iOS Safari fix: Add document-level touch listeners to ensure buttons work
+  useIOSSafariTouchFix();
+  
   return (
     <div 
       className="relative w-full h-screen overflow-visible pointer-events-none lg:pt-[calc(env(safe-area-inset-top,0px)+56px)]"
+      style={{ zIndex: 600000 }}
     >
       {/* Map content - full screen overlay container - pointer-events-none so touch events reach the actual map below */}
       {/* Child elements that need interaction (buttons, controls) have their own pointer-events-auto */}
