@@ -1,5 +1,5 @@
 import { AlertCircle, Compass, Box, Plus, Minus, Layers, Crosshair, Map as MapIcon } from 'lucide-react';
-import { useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
@@ -99,6 +99,14 @@ function useWindowTouchInterceptor(
   id: string,
   isNavigating: boolean
 ) {
+  // CRITICAL: Track mount state to re-run effect after refs are populated
+  const [mounted, setMounted] = useState(false);
+  
+  // Force re-run after first render when refs are populated
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   useEffect(() => {
     // Enable window interceptor in BOTH modes for iOS Safari WebGL bug workaround
     // This ensures buttons work even when MapLibre blocks touch events
@@ -124,7 +132,7 @@ function useWindowTouchInterceptor(
       detachWindowTouchListener();
       console.log(`[WINDOW-TOUCH-REGISTER] 🗑️ Unregistered button: ${id}`);
     };
-  }, [ref, callback, id, isNavigating]);
+  }, [ref, callback, id, isNavigating, mounted]);
 }
 
 // Standard native event handler - uses TOUCHSTART (not touchend) for iOS Safari
@@ -137,6 +145,13 @@ function useNativeClickHandler(
 ) {
   // Debounce ref to prevent double-firing
   const lastTouchRef = useRef(0);
+  // CRITICAL: Track mount state to re-run effect after refs are populated
+  const [mounted, setMounted] = useState(false);
+  
+  // Force re-run after first render when refs are populated
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   useEffect(() => {
     const button = ref.current;
@@ -202,7 +217,7 @@ function useNativeClickHandler(
       button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
     };
-  }, [ref, callback, label, isNavigating]);
+  }, [ref, callback, label, isNavigating, mounted]);
 }
 
 interface RightActionStackProps {

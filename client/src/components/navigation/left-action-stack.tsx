@@ -17,6 +17,13 @@ function useNativeClickHandler(
 ) {
   // Debounce ref to prevent double-firing
   const lastTouchRef = useRef(0);
+  // CRITICAL: Track mount state to re-run effect after refs are populated
+  const [mounted, setMounted] = useState(false);
+  
+  // Force re-run after first render when refs are populated
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   useEffect(() => {
     const button = ref.current;
@@ -82,7 +89,7 @@ function useNativeClickHandler(
       button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
       button.removeEventListener('click', handleClick, { capture: true });
     };
-  }, [ref, callback, label, isNavigating]);
+  }, [ref, callback, label, isNavigating, mounted]);
 }
 
 // Window-level touch interceptor for iOS Safari WebGL bug
@@ -93,6 +100,14 @@ function useWindowTouchInterceptor(
   id: string,
   isNavigating: boolean
 ) {
+  // CRITICAL: Track mount state to re-run effect after refs are populated
+  const [mounted, setMounted] = useState(false);
+  
+  // Force re-run after first render when refs are populated
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   useEffect(() => {
     // Enable in BOTH modes for iOS Safari WebGL bug workaround
     if (!callback) {
@@ -113,7 +128,7 @@ function useWindowTouchInterceptor(
       buttonRegistry.delete(id);
       console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 🗑️ Unregistered button: ${id}`);
     };
-  }, [ref, callback, id, isNavigating]);
+  }, [ref, callback, id, isNavigating, mounted]);
 }
 
 interface LeftActionStackProps {
