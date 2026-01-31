@@ -121,8 +121,9 @@ class GlobalErrorHandler {
         this.handleNetworkError(event.reason);
       }
 
-      // Prevent the rejection from crashing the app
-      event.preventDefault();
+      // NOTE: We no longer call event.preventDefault() here because it can
+      // interfere with React Query's error handling and prevent the app from
+      // properly handling 401 errors for subscription gates.
     });
   }
 

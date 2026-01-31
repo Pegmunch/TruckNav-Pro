@@ -96,10 +96,18 @@ if (import.meta.env.DEV && document) {
 }
 
 // Initialize global error handler early to catch all errors
-initializeGlobalErrorHandler();
+try {
+  initializeGlobalErrorHandler();
+} catch (e) {
+  console.error('[INIT] Global error handler failed:', e);
+}
 
 // Start cache busting to prevent PWA multi-version issues
-startVersionMonitoring();
+try {
+  startVersionMonitoring();
+} catch (e) {
+  console.error('[INIT] Version monitoring failed:', e);
+}
 
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
@@ -107,18 +115,21 @@ initializeCSRF();
 // Render the actual TruckNav Pro app
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  try {
-    createRoot(rootElement).render(
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </ErrorBoundary>
-    );
-  } catch (error) {
-    console.error('Failed to render app:', error);
-    rootElement.innerHTML = '<div style="padding: 20px; text-align: center;"><h1>TruckNav Pro</h1><p>Loading failed. Please refresh.</p></div>';
-  }
+  console.log('[MOUNT] Starting React render...');
+  
+  // Use a simpler approach - render immediately and let ErrorBoundary catch issues
+  const root = createRoot(rootElement);
+  
+  root.render(
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+  
+  console.log('[MOUNT] React render initiated');
 } else {
-  console.error('Root element not found');
+  console.error('[MOUNT] Root element not found');
+  document.body.innerHTML = '<div style="padding:20px;text-align:center;"><h1>TruckNav Pro</h1><p>Failed to initialize. Please refresh.</p></div>';
 }
