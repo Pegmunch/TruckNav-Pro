@@ -31,8 +31,8 @@ export function SubscriptionGate({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-background" data-testid="subscription-gate-loading">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="fixed inset-0 flex items-center justify-center p-8 bg-white z-50" data-testid="subscription-gate-loading">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -100,8 +100,8 @@ function SubscriptionPaywall({ requiredTier }: SubscriptionPaywallProps) {
   const isFleetTier = requiredTier === "fleet";
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background" data-testid="subscription-paywall">
-      <Card className="max-w-md w-full border-2 border-primary/20">
+    <div className="fixed inset-0 flex items-center justify-center p-6 bg-white z-50" data-testid="subscription-paywall">
+      <Card className="max-w-md w-full border-2 border-blue-200 bg-white shadow-lg text-gray-900">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             {isFleetTier ? (
