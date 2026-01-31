@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -226,7 +226,7 @@ export default function SubscribePage() {
   const { planId } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { hasAcceptedTerms } = useLegalConsent();
+  const { hasAcceptedTerms, setConsentAccepted } = useLegalConsent();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const { data: plan, isLoading: planLoading } = useQuery<SubscriptionPlan[], Error, SubscriptionPlan | undefined>({
@@ -253,11 +253,19 @@ export default function SubscribePage() {
     },
   });
 
-  useEffect(() => {
-    if (planId && plan && !clientSecret && !createSubscriptionMutation.isPending && hasAcceptedTerms) {
+  // Terms can be accepted during checkout - initiate subscription when we have plan and terms
+  const initiateSubscription = useCallback(() => {
+    if (planId && plan && !clientSecret && !createSubscriptionMutation.isPending) {
       createSubscriptionMutation.mutate(planId);
     }
-  }, [planId, plan, clientSecret, hasAcceptedTerms]);
+  }, [planId, plan, clientSecret, createSubscriptionMutation]);
+
+  useEffect(() => {
+    // Auto-initiate if terms already accepted
+    if (hasAcceptedTerms) {
+      initiateSubscription();
+    }
+  }, [hasAcceptedTerms, initiateSubscription]);
 
   if (planLoading || !plan) {
     return (
@@ -275,27 +283,62 @@ export default function SubscribePage() {
     return null;
   }
 
-  if (!hasAcceptedTerms) {
+  // If terms not yet accepted, show simplified terms acceptance with plan info
+  if (!hasAcceptedTerms && !clientSecret) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Accept Terms to Continue
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Please review and accept our terms before subscribing to {plan.name}
+            </p>
+          </div>
+          
           <Card>
-            <CardContent className="py-12">
-              <div className="text-center space-y-4">
-                <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-                <div>
-                  <h2 className="text-xl font-semibold mb-2">Terms Not Accepted</h2>
-                  <p className="text-muted-foreground mb-4">
-                    You must accept the legal terms before subscribing.
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Please return to the homepage and accept the terms to continue.
-                  </p>
-                </div>
-                <Button onClick={() => setLocation('/')}>
-                  Return to Homepage
+            <CardHeader>
+              <CardTitle>Terms & Conditions</CardTitle>
+              <CardDescription>
+                By subscribing to TruckNav Pro, you agree to our terms of service
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg bg-muted p-4 text-sm">
+                <p className="mb-2">By proceeding, you agree to:</p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                  <li>TruckNav Pro Terms of Service</li>
+                  <li>Privacy Policy and data handling practices</li>
+                  <li>Navigation is advisory only - you remain responsible for safe driving</li>
+                  <li>Route information may not reflect current road conditions</li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-col gap-3 pt-4">
+                <Button 
+                  onClick={async () => {
+                    await setConsentAccepted();
+                    initiateSubscription();
+                  }}
+                  size="lg"
+                  className="w-full"
+                >
+                  Accept Terms & Continue to Payment
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation('/pricing')}
+                  className="w-full"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Pricing
                 </Button>
               </div>
+              
+              <p className="text-xs text-center text-muted-foreground pt-2">
+                <a href="/legal-popup" target="_blank" className="underline">Read full terms</a>
+              </p>
             </CardContent>
           </Card>
         </div>

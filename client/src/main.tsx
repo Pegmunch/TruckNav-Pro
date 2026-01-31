@@ -125,10 +125,21 @@ const AppWithMountFlag = () => {
   );
 };
 
+// Hide static paywall when React takes over
+function hideStaticPaywall() {
+  const paywall = document.getElementById('static-paywall');
+  if (paywall) {
+    paywall.style.display = 'none';
+  }
+}
+
 // Render the actual TruckNav Pro app
 const rootElement = document.getElementById("root");
 if (rootElement) {
   console.log('[MOUNT] Starting React render...');
+  
+  // Hide static paywall immediately when React mounts
+  hideStaticPaywall();
   
   const root = createRoot(rootElement);
   root.render(<AppWithMountFlag />);

@@ -80,40 +80,32 @@
     <!-- TruckNav Pro is patent-protected technology owned by Bespoke Marketing.Ai Ltd -->
   </head>
   <body>
-    <div id="root">
-      <!-- Static paywall - hidden by script if on allowed pages -->
-      <div id="static-paywall" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);z-index:9999;font-family:system-ui,-apple-system,sans-serif;">
-        <div style="max-width:420px;padding:32px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);text-align:center;">
-          <div style="width:72px;height:72px;margin:0 auto 20px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-            <svg width="36" height="36" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          </div>
-          <h1 style="font-size:24px;font-weight:700;margin-bottom:8px;color:#111;">TruckNav Pro</h1>
-          <h2 style="font-size:18px;font-weight:600;margin-bottom:12px;color:#374151;">Premium Feature</h2>
-          <p style="color:#6b7280;margin-bottom:24px;line-height:1.5;">Subscribe to unlock professional truck navigation with route planning, restrictions, and live traffic.</p>
-          <a href="/pricing" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:16px;">View Subscription Plans</a>
-          <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Already subscribed? <a href="/login" style="color:#2563eb;text-decoration:none;">Sign in</a></p>
+    <!-- Static paywall OUTSIDE #root - React won't replace it -->
+    <div id="static-paywall" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);z-index:9999;font-family:system-ui,-apple-system,sans-serif;">
+      <div style="max-width:420px;padding:32px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);text-align:center;">
+        <div style="width:72px;height:72px;margin:0 auto 20px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <svg width="36" height="36" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         </div>
-      </div>
-      <!-- Loading indicator for allowed pages -->
-      <div id="page-loader" style="display:none;position:fixed;inset:0;background:#fff;z-index:9998;align-items:center;justify-content:center;">
-        <div style="text-align:center;font-family:system-ui,sans-serif;">
-          <div style="font-size:24px;font-weight:bold;color:#2563eb;margin-bottom:8px;">TruckNav Pro</div>
-          <div style="color:#666;">Loading...</div>
-        </div>
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:8px;color:#111;">TruckNav Pro</h1>
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:12px;color:#374151;">Premium Feature</h2>
+        <p style="color:#6b7280;margin-bottom:24px;line-height:1.5;">Subscribe to unlock professional truck navigation with route planning, restrictions, and live traffic.</p>
+        <a href="/pricing" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:16px;">View Subscription Plans</a>
+        <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Already subscribed? <a href="/login" style="color:#2563eb;text-decoration:none;">Sign in</a></p>
       </div>
     </div>
+    
+    <!-- React root -->
+    <div id="root"></div>
+    
     <script>
-      // Hide paywall on public pages (pricing, login, etc.) - show loading instead
+      // Immediately hide paywall on public pages
       (function() {
         var path = window.location.pathname;
-        var publicPages = ['/pricing', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/about'];
+        var publicPages = ['/pricing', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/about', '/subscribe'];
         var isPublicPage = publicPages.some(function(p) { return path === p || path.startsWith(p + '/'); });
         
         if (isPublicPage) {
-          var paywall = document.getElementById('static-paywall');
-          var loader = document.getElementById('page-loader');
-          if (paywall) paywall.style.display = 'none';
-          if (loader) loader.style.display = 'flex';
+          document.getElementById('static-paywall').style.display = 'none';
         }
       })();
     </script>
