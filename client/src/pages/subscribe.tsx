@@ -50,11 +50,11 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
 
       if (error) {
         setErrorMessage(error.message || 'Payment failed. Please try again.');
-        // toast({
-        //   title: "Payment Failed",
-        //   description: error.message || 'An error occurred during payment processing.',
-        //   variant: "destructive",
-        // });
+        toast({
+          title: "Payment Failed",
+          description: error.message || 'An error occurred during payment processing.',
+          variant: "destructive",
+        });
       } else {
         // Save consent on successful payment
         setConsentAccepted();
@@ -68,11 +68,11 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
       setErrorMessage(errorMsg);
-      // toast({
-      //   title: "Payment Error",
-      //   description: errorMsg,
-      //   variant: "destructive",
-      // });
+      toast({
+        title: "Payment Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -244,12 +244,12 @@ export default function SubscribePage() {
       setClientSecret(data.clientSecret);
     },
     onError: (error: Error) => {
-      // toast({
-      //   title: "Subscription Error",
-      //   description: error.message || "Failed to create subscription. Please try again.",
-      //   variant: "destructive",
-      // });
-      setLocation('/pricing');
+      toast({
+        title: "Subscription Error",
+        description: error.message || "Failed to create subscription. Please try again.",
+        variant: "destructive",
+      });
+      // Don't auto-redirect - let user see error and retry
     },
   });
 
@@ -388,11 +388,21 @@ export default function SubscribePage() {
               <div className="text-center">
                 <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  Unable to initialize payment. Please try again.
+                  {createSubscriptionMutation.error 
+                    ? `Error: ${createSubscriptionMutation.error.message}` 
+                    : "Unable to initialize payment. Please try again."}
                 </p>
-                <Button onClick={() => setLocation('/pricing')}>
-                  Back to Pricing
-                </Button>
+                <div className="flex gap-3 justify-center">
+                  <Button 
+                    onClick={() => initiateSubscription()}
+                    disabled={createSubscriptionMutation.isPending}
+                  >
+                    {createSubscriptionMutation.isPending ? "Retrying..." : "Try Again"}
+                  </Button>
+                  <Button variant="outline" onClick={() => setLocation('/pricing')}>
+                    Back to Pricing
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
