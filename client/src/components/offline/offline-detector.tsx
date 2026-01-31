@@ -99,7 +99,18 @@ export function OfflineDetector({
             </span>
             <button 
               onClick={() => setShowOfflineBanner(false)}
-              className="ml-4 text-destructive-foreground/80 hover:text-destructive-foreground"
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowOfflineBanner(false);
+              }}
+              onPointerDown={(e) => {
+                if (e.pointerType === 'mouse') {
+                  setShowOfflineBanner(false);
+                }
+              }}
+              className="ml-4 px-2 py-1 text-destructive-foreground/80 hover:text-destructive-foreground active:scale-95 touch-manipulation select-none"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-dismiss-offline"
               aria-label="Dismiss offline notice"
             >
