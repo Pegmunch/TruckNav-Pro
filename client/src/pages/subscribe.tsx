@@ -352,7 +352,7 @@ export default function SubscribePage() {
           <CardContent className="space-y-4">
             <Button onClick={() => window.location.href = '/api/login'} className="w-full" size="lg">
               <LogIn className="h-4 w-4 mr-2" />
-              Sign In
+              Sign In with Replit
             </Button>
             <Button variant="outline" onClick={() => setLocation('/pricing')} className="w-full">
               <ArrowLeft className="h-4 w-4 mr-2" />
