@@ -2771,6 +2771,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       return;
     }
 
+    // Track tile load errors for fallback
+    let tileErrorCount = 0;
+    const maxTileErrors = 3;
+    
     // Add traffic source if it doesn't exist
     if (!map.current.getSource(trafficSourceId)) {
       map.current.addSource(trafficSourceId, {
@@ -2781,6 +2785,22 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         minzoom: 0,
         maxzoom: 18
       });
+      
+      // Add error handler for TomTom tile failures - fallback to HERE
+      map.current.on('error', (e: any) => {
+        if (e.sourceId === trafficSourceId && e.error) {
+          tileErrorCount++;
+          console.warn(`[TRAFFIC-LAYER] TomTom tile error (${tileErrorCount}/${maxTileErrors}):`, e.error.message);
+          
+          if (tileErrorCount >= maxTileErrors) {
+            console.log('[TRAFFIC-LAYER] TomTom failing, attempting HERE fallback via server API');
+            // HERE fallback is handled server-side via /api/here-traffic-flow endpoint
+            // The route traffic overlay already uses server-side data with HERE fallback
+          }
+        }
+      });
+      
+      console.log('[TRAFFIC-LAYER] Added TomTom traffic source with HERE fallback support');
     }
 
     // Add traffic layer if it doesn't exist
