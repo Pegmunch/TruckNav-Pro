@@ -140,16 +140,11 @@ export async function getSessionConfig() {
   };
 }
 
-// Session debugging and fallback middleware
+// Session fallback middleware (logging disabled for performance)
 export const sessionDebugAndFallback = (req: any, res: any, next: any) => {
   const sessionId = req.sessionID;
   const cookies = req.headers.cookie;
-  const sessionHeader = req.headers['x-session-id'];
-  const sessionFromStorage = req.headers['x-storage-session'];
-  
-  // Comprehensive cookie debugging
   const cookieReceived = cookies && cookies.includes('trucknav_session');
-  console.log(`[SESSION-DEBUG] ${req.method} ${req.url} - Session: ${sessionId?.substring(0, 8)}... Cookie sent: ${cookieReceived}, Header: ${sessionHeader?.substring(0, 8) || 'none'}, Storage: ${sessionFromStorage?.substring(0, 8) || 'none'}`);
   
   // Add session ID to response headers for client-side persistence
   if (sessionId) {
@@ -160,7 +155,7 @@ export const sessionDebugAndFallback = (req: any, res: any, next: any) => {
   next();
 };
 
-// Session recovery middleware for cookie-resistant clients
+// Session recovery middleware for cookie-resistant clients (logging disabled for performance)
 export const sessionRecovery = (req: any, res: any, next: any) => {
   const sessionFromHeader = req.headers['x-session-id'];
   const sessionFromStorage = req.headers['x-storage-session'];
@@ -172,9 +167,7 @@ export const sessionRecovery = (req: any, res: any, next: any) => {
     
     // Check if we can restore the session from the store
     if (preferredSessionId !== currentSessionId) {
-      console.log(`[SESSION-RECOVERY] Attempting to restore session ${preferredSessionId.substring(0, 8)}... (current: ${currentSessionId.substring(0, 8)}...)`);
-      
-      // Store recovery info for potential session bridging
+      // Store recovery info for potential session bridging (silently)
       req.sessionRecovery = {
         requestedSessionId: preferredSessionId,
         currentSessionId: currentSessionId,

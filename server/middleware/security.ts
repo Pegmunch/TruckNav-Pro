@@ -235,69 +235,40 @@ export const sessionBridge = (req: express.Request & { session?: any }, res: exp
     const clientSessionId = sessionFromHeader || sessionFromStorage;
     
     if (clientSessionId !== currentSessionId) {
-      console.log(`[SESSION-BRIDGE] Bridging session from ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
-      
-      // Copy session data to maintain continuity and transfer CSRF tokens
+      // Bridge session silently for performance
       if (req.session) {
         req.session.bridgedFrom = clientSessionId;
         req.session.bridgeTimestamp = Date.now();
         req.session.bridgeReason = sessionFromHeader ? 'header' : 'storage';
         
-        // Get the session store to access source session data for CSRF token transfer
         const sessionStore = req.sessionStore;
         
         if (sessionStore) {
-          // Try to get the source session data to transfer CSRF tokens
           sessionStore.get(clientSessionId, (err: any, sourceSessionData: any) => {
             if (!err && sourceSessionData && sourceSessionData.csrfTokens) {
-              // Initialize target session CSRF tokens if not exists
               if (!req.session.csrfTokens) {
                 req.session.csrfTokens = [];
               }
               
-              // Filter valid tokens from source session (not expired)
               const now = Date.now();
-              const TOKEN_EXPIRY_MS = 600000; // 10 minutes
+              const TOKEN_EXPIRY_MS = 600000;
               const validSourceTokens = sourceSessionData.csrfTokens.filter((tokenInfo: any) => 
                 tokenInfo && tokenInfo.token && (now - tokenInfo.timestamp < TOKEN_EXPIRY_MS)
               );
               
-              // Transfer valid tokens from source to target session
               if (validSourceTokens.length > 0) {
-                // Merge tokens, keeping unique ones and preventing duplicates
                 const existingTokens = new Set(req.session.csrfTokens.map((t: any) => t.token));
                 const newTokens = validSourceTokens.filter((t: any) => !existingTokens.has(t.token));
-                
                 req.session.csrfTokens = [...req.session.csrfTokens, ...newTokens];
-                
-                // Keep only the last 10 tokens to prevent memory bloat
                 if (req.session.csrfTokens.length > 10) {
                   req.session.csrfTokens = req.session.csrfTokens.slice(-10);
                 }
-                
-                console.log(`[SESSION-BRIDGE-CSRF] Transferred ${newTokens.length} valid CSRF tokens from source session (total pool: ${req.session.csrfTokens.length})`);
               }
             }
-            
-            // Force session save to persist bridge information and transferred tokens
-            req.session.save((saveErr: any) => {
-              if (saveErr) {
-                console.error('[SESSION-BRIDGE] Failed to save bridged session:', saveErr);
-              } else {
-                console.log(`[SESSION-BRIDGE] Successfully bridged session ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
-              }
-            });
+            req.session.save(() => {});
           });
         } else {
-          console.warn('[SESSION-BRIDGE] No session store available for CSRF token transfer');
-          // Force session save to persist bridge information even without token transfer
-          req.session.save((err: any) => {
-            if (err) {
-              console.error('[SESSION-BRIDGE] Failed to save bridged session:', err);
-            } else {
-              console.log(`[SESSION-BRIDGE] Successfully bridged session ${clientSessionId.substring(0, 8)}... to ${currentSessionId.substring(0, 8)}...`);
-            }
-          });
+          req.session.save(() => {});
         }
       }
     }
@@ -341,21 +312,12 @@ export const ensureSessionExists = (req: express.Request & { session?: any; sess
     });
   }
 
-  // Comprehensive cookie and session debugging
+  // Session cookie detection (minimal overhead)
   const cookies = req.headers.cookie;
   const sessionHeader = Array.isArray(req.headers['x-session-id']) ? req.headers['x-session-id'][0] : req.headers['x-session-id'];
   const sessionFromStorage = Array.isArray(req.headers['x-storage-session']) ? req.headers['x-storage-session'][0] : req.headers['x-storage-session'];
   const userAgent = Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent'];
   const cookieReceived = cookies && cookies.includes('trucknav_session');
-  
-  // Log detailed session information
-  console.log(`[SESSION-ANALYSIS] ${req.method} ${req.url} - IP: ${req.ip}`);
-  console.log(`[SESSION-ANALYSIS] Session ID: ${req.sessionID?.substring(0, 8)}...`);
-  console.log(`[SESSION-ANALYSIS] Cookie sent: ${cookieReceived}`);
-  console.log(`[SESSION-ANALYSIS] Raw cookies: ${cookies ? cookies.substring(0, 100) + '...' : 'none'}`);
-  console.log(`[SESSION-ANALYSIS] Session header: ${sessionHeader?.substring(0, 8) || 'none'}...`);
-  console.log(`[SESSION-ANALYSIS] Storage session: ${sessionFromStorage?.substring(0, 8) || 'none'}...`);
-  console.log(`[SESSION-ANALYSIS] User agent: ${userAgent?.substring(0, 50) || 'none'}...`);
   
   // Add session persistence headers for client-side correlation
   if (req.sessionID) {
@@ -372,25 +334,19 @@ export const ensureSessionExists = (req: express.Request & { session?: any; sess
     req.session.accessCount = 1;
     req.session.cookieWorking = cookieReceived;
     req.session.fallbackActive = !cookieReceived && (sessionHeader || sessionFromStorage);
-    
-    console.log(`[SESSION] Initialized session ${req.sessionID?.substring(0, 8)}... for first time (Cookie working: ${cookieReceived})`);
   } else {
     // Update session tracking for existing sessions
     req.session.lastAccess = Date.now();
     req.session.accessCount = (req.session.accessCount || 0) + 1;
     
-    // Check if cookie status changed
+    // Update cookie status silently
     if (req.session.cookieWorking !== cookieReceived) {
-      console.log(`[SESSION] Cookie status changed for session ${req.sessionID?.substring(0, 8)}... - was: ${req.session.cookieWorking}, now: ${cookieReceived}`);
       req.session.cookieWorking = cookieReceived;
     }
-    
-    console.log(`[SESSION] Reusing session ${req.sessionID?.substring(0, 8)}... (Access #${req.session.accessCount}, Cookie: ${cookieReceived})`);
   }
   
-  // Handle session recovery if needed
+  // Handle session recovery if needed (silently)
   if (req.sessionRecovery) {
-    console.log(`[SESSION-RECOVERY] Recovery requested for session ${req.sessionRecovery.requestedSessionId.substring(0, 8)}... via ${req.sessionRecovery.source}`);
     // Store recovery information for potential session bridging
     req.session.recoveryAttempted = true;
     req.session.originalSessionId = req.sessionRecovery.requestedSessionId;
@@ -439,40 +395,26 @@ export const csrfProtection = (req: express.Request & { session?: any }, res: ex
     now - tokenInfo.timestamp < TOKEN_EXPIRY_MS
   );
 
-  // If no valid tokens, generate one automatically for robustness
+  // If no valid tokens, generate one automatically for robustness (silently)
   if (!req.session.csrfTokens.length) {
-    console.warn(`[CSRF] No valid CSRF tokens in session - auto-generating token for recovery`, {
-      sessionId: req.sessionID ? req.sessionID.substring(0, 8) + '...' : 'missing',
-      url: req.url,
-      method: req.method,
-      sessionAge: req.session.created ? Date.now() - req.session.created : 'unknown',
-      timestamp: new Date().toISOString()
-    });
-    
-    // Auto-generate token for seamless recovery
     const newToken = crypto.randomBytes(32).toString('hex');
     req.session.csrfTokens = [{
       token: newToken,
       timestamp: Date.now()
     }];
     
-    // Force session save to ensure token persists, then validate
+    // Force session save to ensure token persists, then validate (silent)
     req.session.save((err: any) => {
       if (err) {
-        console.error('[CSRF] Failed to save session during token recovery:', err);
         return res.status(500).json({
           error: 'Failed to save CSRF token',
           code: 'CSRF_SAVE_ERROR',
           timestamp: new Date().toISOString()
         });
       }
-      
-      console.log(`[CSRF] Auto-generated recovery token for session ${req.sessionID?.substring(0, 8)}... - saved successfully`);
-      
-      // Now validate the token AFTER session is saved
       validateTokenAndProceed(req, res, next, token);
     });
-    return; // Important: stop execution here, validation happens in callback
+    return;
   }
 
   // If we have tokens, validate immediately
@@ -492,21 +434,14 @@ function validateTokenAndProceed(
   );
 
   if (!token || !validToken) {
-    // For robust recovery, try auto-generating a fresh token
+    // For robust recovery, try auto-generating a fresh token (silently)
     if (!token) {
-      console.warn(`[CSRF] No token provided for ${req.method} ${req.url} - generating recovery token`);
       const recoveryToken = crypto.randomBytes(32).toString('hex');
       req.session.csrfTokens.push({
         token: recoveryToken,
         timestamp: Date.now()
       });
-      
-      // Set the recovery token in response headers for client to use
       res.setHeader('X-CSRF-Token-Recovery', recoveryToken);
-      
-      console.log(`[CSRF] Recovery token generated for session ${req.sessionID?.substring(0, 8)}...`);
-      
-      // Return recovery response
       return res.status(409).json({
         error: 'CSRF token missing - recovery token provided',
         code: 'CSRF_TOKEN_MISSING',
@@ -516,14 +451,6 @@ function validateTokenAndProceed(
       });
     }
     
-    console.warn(`[CSRF] Token validation failed for ${req.method} ${req.url}`, {
-      providedToken: token.substring(0, 8) + '...',
-      sessionId: req.sessionID?.substring(0, 8) + '...',
-      validTokensCount: req.session.csrfTokens.length,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Return standard validation error
     return res.status(403).json({
       error: 'CSRF token validation failed',
       code: 'CSRF_ERROR',
@@ -535,16 +462,8 @@ function validateTokenAndProceed(
   // Update timestamp for this token to keep it fresh
   validToken.timestamp = Date.now();
   
-  console.log(`[CSRF] Token validated successfully for ${req.method} ${req.url} (session: ${req.sessionID?.substring(0, 8)}...)`);
-  
-  // Save session to persist timestamp update before proceeding
-  req.session.save((err: any) => {
-    if (err) {
-      console.error('[CSRF] Failed to save session after token validation:', err);
-      // Continue anyway - timestamp update is not critical
-    }
-    next();
-  });
+  // Save session silently and proceed
+  req.session.save(() => next());
 };
 
 // Generate CSRF token
@@ -577,16 +496,8 @@ export const generateCSRFToken = (req: express.Request & { session?: any }, res:
     req.session.csrfTokens = req.session.csrfTokens.slice(-5);
   }
 
-  console.log(`[CSRF] New token generated for session ${req.sessionID?.substring(0, 8)}...: ${newToken.substring(0, 8)}... (pool size: ${req.session.csrfTokens.length})`);
-
-  // Force session save to ensure token is persisted before sending response
+  // Force session save to ensure token is persisted before sending response (silent)
   req.session.save((err: any) => {
-    if (err) {
-      console.error('[CSRF] Failed to save session:', err);
-    } else {
-      console.log(`[CSRF] Session saved successfully - token pool size: ${req.session.csrfTokens.length}`);
-    }
-    
     // Set CSRF token in response header for client to use
     res.setHeader('X-CSRF-Token', newToken);
     next();
