@@ -2893,12 +2893,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 6,
-            12, 14,
-            16, 20,
-            20, 28
+            5, 8,
+            12, 16,
+            16, 24,
+            20, 32
           ],
-          'line-opacity': 0.85,
+          'line-opacity': 0.95,
         },
       });
       

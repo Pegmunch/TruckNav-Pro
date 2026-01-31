@@ -122,12 +122,11 @@ export function TrafficLegend({ className }: { className?: string }) {
   const { t } = useTranslation();
   
   const legendItems = [
-    { color: '#0067FF', label: t('traffic.legend.free', 'Normal Flo') },
-    { color: '#84CC16', label: t('traffic.legend.light', 'Light') },
-    { color: '#FDE047', label: t('traffic.legend.moderate', 'Moderate') },
-    { color: '#F97316', label: t('traffic.legend.heavy', 'Heavy') },
+    { color: '#2563EB', label: t('traffic.legend.free', 'Normal Flow') },
+    { color: '#22C55E', label: t('traffic.legend.light', 'Light') },
+    { color: '#EAB308', label: t('traffic.legend.moderate', 'Moderate') },
+    { color: '#EA580C', label: t('traffic.legend.heavy', 'Heavy') },
     { color: '#DC2626', label: t('traffic.legend.standstill', 'Standstill') },
-    { color: '#94A3B8', label: t('traffic.legend.unknown', 'Unknown') },
   ];
   
   return (
