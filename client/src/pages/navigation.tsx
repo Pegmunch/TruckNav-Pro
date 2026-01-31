@@ -3700,8 +3700,8 @@ function NavigationPageContent() {
             />
           ) : (
             <>
-              {/* MAP - ALWAYS RENDERED - Base Layer (z-0) */}
-              <div className="absolute inset-0 z-0">
+              {/* MAP - ALWAYS RENDERED - Base Layer (z-0) - Use fixed positioning for full viewport coverage */}
+              <div className="fixed inset-0 z-0">
                 <MapShell className="h-full w-full">
                   <MapLibreMap
                     ref={mapRef}
