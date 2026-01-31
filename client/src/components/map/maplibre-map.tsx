@@ -4426,17 +4426,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     : [];
 
   return (
-    <div className={cn("relative w-full h-full overflow-hidden pointer-events-auto", className)} data-testid="maplibre-container">
+    <div className={cn("relative w-full h-full overflow-hidden pointer-events-auto", className)} style={{ minHeight: '300px' }} data-testid="maplibre-container">
       {/* ISOLATED: MapLibre container - wrapped in its own div to prevent CSS leakage */}
-      <div className="absolute inset-0 pointer-events-auto">
+      <div className="absolute inset-0 pointer-events-auto" style={{ minHeight: '300px' }}>
         <div 
           ref={mapContainer} 
           className="absolute inset-0 pointer-events-auto" 
           style={{ 
-            background: 'transparent',
+            background: '#e2e8f0',
             border: 'none',
             outline: 'none',
-            touchAction: 'manipulation'
+            touchAction: 'manipulation',
+            minHeight: '300px'
           }}
         />
       </div>
