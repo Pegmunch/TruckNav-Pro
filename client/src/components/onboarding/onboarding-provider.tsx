@@ -325,50 +325,53 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
     },
     buttonNext: {
       backgroundColor: '#3b82f6',
-      borderRadius: '10px',
-      padding: '10px 20px',
+      borderRadius: '8px',
+      padding: isMobile ? '8px 16px' : '10px 20px',
       fontWeight: 600,
-      fontSize: '14px',
+      fontSize: isMobile ? '13px' : '14px',
       boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
       border: 'none'
     },
     buttonBack: {
       color: '#94a3b8',
-      marginRight: '12px',
-      fontWeight: 500
+      marginRight: isMobile ? '8px' : '12px',
+      fontWeight: 500,
+      fontSize: isMobile ? '13px' : '14px'
     },
     buttonSkip: {
       color: '#64748b',
-      fontWeight: 500
+      fontWeight: 500,
+      fontSize: isMobile ? '12px' : '14px'
     },
     buttonClose: {
       color: '#94a3b8'
     },
     tooltip: {
-      borderRadius: '16px',
-      padding: '20px 24px',
+      borderRadius: isMobile ? '12px' : '16px',
+      padding: isMobile ? '14px 16px' : '20px 24px',
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
-      maxWidth: '380px'
+      maxWidth: isMobile ? 'calc(100vw - 32px)' : '380px',
+      margin: isMobile ? '0 16px' : '0'
     },
     tooltipTitle: {
-      fontSize: '20px',
+      fontSize: isMobile ? '16px' : '20px',
       fontWeight: 700,
-      marginBottom: '12px',
+      marginBottom: isMobile ? '8px' : '12px',
       color: '#f8fafc',
       letterSpacing: '-0.02em'
     },
     tooltipContent: {
-      fontSize: '15px',
-      lineHeight: 1.7,
+      fontSize: isMobile ? '13px' : '15px',
+      lineHeight: 1.6,
       color: '#cbd5e1',
       whiteSpace: 'pre-line' as const
     },
     tooltipFooter: {
-      marginTop: '16px'
+      marginTop: isMobile ? '12px' : '16px'
     },
     spotlight: {
-      borderRadius: '16px',
+      borderRadius: '12px',
       boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.4)'
     },
     beacon: {
