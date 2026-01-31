@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, ExpressCheckoutElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import type { StripeExpressCheckoutElementConfirmEvent } from "@stripe/stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,45 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const onExpressCheckoutConfirm = async (event: StripeExpressCheckoutElementConfirmEvent) => {
+    if (!stripe || !elements) return;
+    
+    setIsProcessing(true);
+    setErrorMessage(null);
+
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/`,
+        },
+        redirect: 'if_required',
+      });
+
+      if (error) {
+        setErrorMessage(error.message || 'Payment failed. Please try again.');
+        toast({
+          title: "Payment Failed",
+          description: error.message || 'An error occurred during payment processing.',
+          variant: "destructive",
+        });
+      } else {
+        setConsentAccepted();
+        setLocation('/');
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setErrorMessage(errorMsg);
+      toast({
+        title: "Payment Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,11 +154,39 @@ function CheckoutForm({ plan, clientSecret }: { plan: SubscriptionPlan; clientSe
         </CardContent>
       </Card>
 
+      {/* Express Checkout - Apple Pay, Google Pay, Link */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Express Checkout</CardTitle>
+          <CardDescription>Pay quickly with Apple Pay, Google Pay, or Link</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ExpressCheckoutElement 
+            onConfirm={onExpressCheckoutConfirm}
+            options={{
+              buttonType: {
+                applePay: 'subscribe',
+                googlePay: 'subscribe',
+              },
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Or pay with card</span>
+        </div>
+      </div>
+
       {/* Payment Element */}
       <Card>
         <CardHeader>
           <CardTitle>Payment Details</CardTitle>
-          <CardDescription>Enter your payment information below</CardDescription>
+          <CardDescription>Enter your card information below</CardDescription>
         </CardHeader>
         <CardContent>
           <PaymentElement />
