@@ -937,7 +937,7 @@ body {
 
 :root {
   /* Day Theme - Bright, warm colors for daytime truck navigation */
-  --background: transparent;
+  --background: hsl(0, 0%, 100%);
   --foreground: hsl(220, 90%, 8%);
   --card: hsl(0, 0%, 100%);
   --card-foreground: hsl(220, 90%, 8%);
