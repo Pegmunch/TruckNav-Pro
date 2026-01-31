@@ -324,15 +324,13 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
       overlayColor: 'rgba(0, 0, 0, 0.75)'
     },
     buttonNext: {
-      backgroundColor: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-      background: '#3b82f6',
+      backgroundColor: '#3b82f6',
       borderRadius: '10px',
       padding: '10px 20px',
       fontWeight: 600,
       fontSize: '14px',
       boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-      border: 'none',
-      transition: 'all 0.2s ease'
+      border: 'none'
     },
     buttonBack: {
       color: '#94a3b8',
