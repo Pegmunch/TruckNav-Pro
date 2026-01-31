@@ -341,6 +341,9 @@ export default function SubscribePage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <LogIn className="h-8 w-8 text-primary" />
+            </div>
             <CardTitle className="text-2xl font-bold">Truck Nav Pro</CardTitle>
             <CardDescription>
               Sign In
