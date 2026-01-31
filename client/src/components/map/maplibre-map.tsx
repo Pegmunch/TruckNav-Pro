@@ -264,14 +264,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const isGPSReady = gpsStatus === 'ready' && !gps?.isUsingCached;
   const isManualLocation = gpsStatus === 'manual' || gps?.isUsingManualLocation;
   
-  // Fallback timeout to hide loading spinner after 10 seconds (for PWA)
+  // Fallback timeout to hide loading spinner after 3 seconds
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isLoaded) {
-        console.warn('[MAP] Loading overlay timeout - forcing completion after 10s');
+        console.warn('[MAP] Loading overlay timeout - forcing completion after 3s');
         setIsLoaded(true);
       }
-    }, 10000);
+    }, 3000);
     return () => clearTimeout(timeout);
   }, [isLoaded]);
   
@@ -1409,6 +1409,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       map.current = null;
     }
 
+    console.log('[MAP-INIT] Starting MapLibre initialization');
     try {
       map.current = new maplibregl.Map({
         container: mapContainer.current,
@@ -1445,8 +1446,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             }
           ]
         } as any,
-        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [0, 0],
-        zoom: gpsPosition ? preferences.zoomLevel : 2,
+        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [-1.5, 52.5],
+        zoom: gpsPosition ? preferences.zoomLevel : 6,
         pitch: 0,
         bearing: 0,
         minZoom: 3,
@@ -1891,7 +1892,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
 
         setIsLoaded(true);
-        console.log('✅ MapLibre GL loaded - satellite sources, labels overlay, and 3D buildings added');
+        console.log('[MAP-INIT] ✅ MapLibre GL LOADED - isLoaded set to true');
         
         // OPTIMIZATION: Background prefetch satellite tiles for faster switching
         // This loads tiles into browser cache without showing them
