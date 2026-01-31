@@ -85,26 +85,43 @@ export const securityHeaders = helmet({
   contentSecurityPolicy: process.env.NODE_ENV === 'development' ? false : {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://js.stripe.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "https:", "blob:", 
         "https://*.tile.openstreetmap.org", 
         "https://*.basemaps.cartocdn.com", 
         "https://server.arcgisonline.com",
-        "https://*.tile.opentopomap.org"
+        "https://*.tile.opentopomap.org",
+        "https://*.api.tomtom.com",
+        "https://*.google.com",
+        "https://*.googleapis.com",
+        "https://*.gstatic.com"
       ],
       connectSrc: ["'self'", "https://api.stripe.com",
         "https://*.tile.openstreetmap.org", 
         "https://*.basemaps.cartocdn.com", 
         "https://server.arcgisonline.com",
-        "https://*.tile.opentopomap.org"
+        "https://*.tile.opentopomap.org",
+        "https://*.api.tomtom.com",
+        "https://api.tomtom.com",
+        "https://*.here.com",
+        "https://router.hereapi.com",
+        "https://traffic.ls.hereapi.com",
+        "https://*.hereapi.com",
+        "https://*.google.com",
+        "https://*.googleapis.com",
+        "https://maps.googleapis.com",
+        "https://*.gstatic.com",
+        "wss://*.replit.dev",
+        "wss://*.replit.app",
+        "ws://localhost:*"
       ],
       frameSrc: ["'self'", "https://js.stripe.com"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      childSrc: ["'self'"],
-      workerSrc: ["'self'", "blob:"], // For map libraries
+      mediaSrc: ["'self'", "blob:", "data:"],
+      childSrc: ["'self'", "blob:"],
+      workerSrc: ["'self'", "blob:"],
     },
   },
   crossOriginEmbedderPolicy: false, // Needed for some maps functionality
@@ -124,13 +141,15 @@ export const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Allow localhost and replit.dev domains for development
+    // Allow localhost, replit domains, and custom domain
     const allowedOrigins = [
       /^https?:\/\/localhost(:\d+)?$/,
       /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
       /^https?:\/\/.*\.replit\.dev$/,
       /^https?:\/\/.*\.replit\.app$/,
       /^https?:\/\/.*\.repl\.co$/,
+      /^https?:\/\/trucknavpro\.com$/,
+      /^https?:\/\/www\.trucknavpro\.com$/,
     ];
     
     const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
