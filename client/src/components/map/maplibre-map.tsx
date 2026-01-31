@@ -214,6 +214,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const preferencesRef = useRef(preferences);
   const currentZoomRef = useRef(currentZoom);
   const incidentMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const trafficLightMarkersRef = useRef<maplibregl.Marker[]>([]);
   const navigationControlRef = useRef<maplibregl.NavigationControl | null>(null);
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const screenArrowheadRef = useRef<HTMLDivElement | null>(null);
@@ -3229,6 +3230,86 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       incidentMarkersRef.current = [];
     };
   }, [incidents, isLoaded, showIncidents]);
+
+  // Smart Traffic Light Markers - Show traffic lights along route with phase predictions
+  useEffect(() => {
+    if (!isLoaded || !map.current || !currentRoute?.routePath || currentRoute.routePath.length < 2) {
+      trafficLightMarkersRef.current.forEach(marker => marker.remove());
+      trafficLightMarkersRef.current = [];
+      return;
+    }
+    if (!map.current.isStyleLoaded()) return;
+
+    const mapInstance = map.current;
+
+    const fetchAndRenderTrafficLights = async () => {
+      try {
+        const response = await fetch('/api/traffic-lights/along-route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ routeCoordinates: currentRoute.routePath })
+        });
+
+        if (!response.ok) {
+          console.warn('[TRAFFIC-LIGHTS-MAP] Failed to fetch traffic lights');
+          return;
+        }
+
+        const data = await response.json();
+        const trafficLights = data.trafficLights || [];
+
+        trafficLightMarkersRef.current.forEach(marker => marker.remove());
+        trafficLightMarkersRef.current = [];
+
+        trafficLights.forEach((light: any) => {
+          const phaseColor = light.currentPhase === 'green' ? '#22C55E' : 
+                            light.currentPhase === 'yellow' ? '#EAB308' : '#EF4444';
+          
+          const el = document.createElement('div');
+          el.className = 'traffic-light-marker';
+          el.setAttribute('data-testid', `traffic-light-${light.id}`);
+          el.style.cssText = `
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: ${phaseColor};
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+          `;
+          el.title = `${light.name} - ${light.currentPhase.toUpperCase()} (${light.timeToNextPhase}s)`;
+
+          el.addEventListener('mouseenter', () => {
+            el.style.transform = 'scale(1.3)';
+          });
+          el.addEventListener('mouseleave', () => {
+            el.style.transform = 'scale(1)';
+          });
+
+          const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([light.coordinates.lng, light.coordinates.lat])
+            .addTo(mapInstance);
+
+          trafficLightMarkersRef.current.push(marker);
+        });
+
+        console.log(`[TRAFFIC-LIGHTS-MAP] Rendered ${trafficLights.length} traffic light markers`);
+      } catch (error) {
+        console.error('[TRAFFIC-LIGHTS-MAP] Error fetching traffic lights:', error);
+      }
+    };
+
+    fetchAndRenderTrafficLights();
+
+    const refreshInterval = setInterval(fetchAndRenderTrafficLights, 30000);
+
+    return () => {
+      clearInterval(refreshInterval);
+      trafficLightMarkersRef.current.forEach(marker => marker.remove());
+      trafficLightMarkersRef.current = [];
+    };
+  }, [isLoaded, currentRoute?.routePath, isNavigating]);
 
   // Keep refs in sync with props (prevents stale closures)
   // Trigger re-render when violations change

@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { apiRequest } from '@/lib/queryClient';
 
 interface TrafficLight {
   id: string;
@@ -91,15 +90,21 @@ export function SmartTrafficLightsPanel({
     setError(null);
 
     try {
-      const response = await apiRequest('/api/traffic-lights/analyze', {
+      const response = await fetch('/api/traffic-lights/analyze', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           routeCoordinates,
           averageSpeed: currentSpeed
         })
       });
 
-      setAnalysis(response as GreenWaveAnalysis);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAnalysis(data as GreenWaveAnalysis);
       setLastUpdate(new Date());
     } catch (err) {
       console.error('[SMART-TRAFFIC-LIGHTS] Error fetching analysis:', err);

@@ -48,6 +48,7 @@ The frontend uses React with TypeScript and Vite, employing Shadcn/ui (Radix UI,
 - **Fleet Broadcast Messaging**: Allows fleet managers to send broadcast messages with priority levels (Critical, Important, Info) and categories (General, Safety, Traffic, Operations, Emergency). Features include priority sorting, read receipt tracking, optional message expiration, and broadcast history.
 - **Mute All Alerts Button**: Provides a quick access button to mute all voice and audio alerts during navigation, with state persistence and integration with the `NavigationVoice` system.
 - **Staggered Zoom System**: Enhances zoom controls during navigation with smooth, staggered animations, a zoom lock mechanism after user input, and protection layers to prevent unintended zoom resets.
+- **Smart Traffic Light Integration**: Green wave optimization system that analyzes traffic lights along routes, predicts signal phases based on timing patterns, and provides speed recommendations to maximize green lights. Features include: traffic light markers on the map, green wave percentage display, optimal speed calculation, and upcoming signal predictions panel.
 
 # External Dependencies
 

@@ -370,7 +370,6 @@ function NavigationPageContent() {
   // Live Traffic Panel state (unified view/report panel)
   const [showLiveTrafficPanel, setShowLiveTrafficPanel] = useState(false);
   const [liveTrafficPanelTab, setLiveTrafficPanelTab] = useState<'view' | 'report'>('view');
-  const [showSmartTrafficLights, setShowSmartTrafficLights] = useState(false);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
