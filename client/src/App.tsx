@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,25 +10,37 @@ import { OfflineDetector } from "@/components/offline/offline-detector";
 import { ServiceWorkerUpdates } from "@/components/offline/service-worker-updates";
 import { PWAInstallPrompt } from "@/components/pwa/install-prompt";
 import { initializeAudioOnInteraction } from "@/lib/audio-bluetooth-init";
-import NavigationPage from "@/pages/navigation";
-import LaneSelectionPage from "@/pages/lane-selection";
-import MapWindow from "@/pages/map-window";
-import LegalPopupPage from "@/pages/legal-popup";
-import NotFound from "@/pages/not-found";
-import RouteWindow from "@/pages/window-route";
-import VehicleWindow from "@/pages/window-vehicle";
-import EntertainmentWindow from "@/pages/window-entertainment";
-import ThemesWindow from "@/pages/window-themes";
-import HistoryWindow from "@/pages/window-history";
-import SettingsWindow from "@/pages/window-settings";
-import PricingPage from "@/pages/pricing";
-import SubscribePage from "@/pages/subscribe";
-import FleetManagement from "@/pages/fleet-management";
-import { SocialNetworkPage } from "@/pages/social-network";
 import { SubscriptionGate } from "@/components/subscription-gate";
-import ConnectStore from "@/pages/connect-store";
-import ConnectSuccess from "@/pages/connect-success";
-import ConnectDashboard from "@/pages/connect-dashboard";
+
+const NavigationPage = lazy(() => import("@/pages/navigation"));
+const LaneSelectionPage = lazy(() => import("@/pages/lane-selection"));
+const MapWindow = lazy(() => import("@/pages/map-window"));
+const LegalPopupPage = lazy(() => import("@/pages/legal-popup"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+const RouteWindow = lazy(() => import("@/pages/window-route"));
+const VehicleWindow = lazy(() => import("@/pages/window-vehicle"));
+const EntertainmentWindow = lazy(() => import("@/pages/window-entertainment"));
+const ThemesWindow = lazy(() => import("@/pages/window-themes"));
+const HistoryWindow = lazy(() => import("@/pages/window-history"));
+const SettingsWindow = lazy(() => import("@/pages/window-settings"));
+const PricingPage = lazy(() => import("@/pages/pricing"));
+const SubscribePage = lazy(() => import("@/pages/subscribe"));
+const FleetManagement = lazy(() => import("@/pages/fleet-management"));
+const SocialNetworkPage = lazy(() => import("@/pages/social-network").then(m => ({ default: m.SocialNetworkPage })));
+const ConnectStore = lazy(() => import("@/pages/connect-store"));
+const ConnectSuccess = lazy(() => import("@/pages/connect-success"));
+const ConnectDashboard = lazy(() => import("@/pages/connect-dashboard"));
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground text-sm">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -42,7 +54,6 @@ function MobileThemeEnforcer() {
       console.log('Mobile device detected - forcing day theme for better visibility');
     }
     
-    // Initialize audio on first user interaction for Bluetooth/CarPlay/Android Auto
     initializeAudioOnInteraction();
   }, []);
   
@@ -69,29 +80,31 @@ function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
-        <Switch>
-          <Route path="/" component={ProtectedNavigationPage} />
-          <Route path="/navigation" component={ProtectedNavigationPage} />
-          <Route path="/pricing" component={PricingPage} />
-          <Route path="/subscribe/:planId" component={SubscribePage} />
-          <Route path="/lane-selection/:id" component={LaneSelectionPage} />
-          <Route path="/lane-selection" component={LaneSelectionPage} />
-          <Route path="/lanes/:routeId" component={LaneSelectionPage} />
-          <Route path="/map-window" component={MapWindow} />
-          <Route path="/legal-popup" component={LegalPopupPage} />
-          <Route path="/window/route" component={RouteWindow} />
-          <Route path="/window/vehicle" component={VehicleWindow} />
-          <Route path="/window/entertainment" component={EntertainmentWindow} />
-          <Route path="/window/themes" component={ThemesWindow} />
-          <Route path="/window/history" component={HistoryWindow} />
-          <Route path="/window/settings" component={SettingsWindow} />
-          <Route path="/fleet-management" component={ProtectedFleetPage} />
-          <Route path="/social" component={SocialNetworkPage} />
-          <Route path="/connect/store/:accountId" component={ConnectStore} />
-          <Route path="/connect/success" component={ConnectSuccess} />
-          <Route path="/connect/dashboard" component={ConnectDashboard} />
-          <Route component={NotFound} />
-        </Switch>
+        <Suspense fallback={<LoadingFallback />}>
+          <Switch>
+            <Route path="/" component={ProtectedNavigationPage} />
+            <Route path="/navigation" component={ProtectedNavigationPage} />
+            <Route path="/pricing" component={PricingPage} />
+            <Route path="/subscribe/:planId" component={SubscribePage} />
+            <Route path="/lane-selection/:id" component={LaneSelectionPage} />
+            <Route path="/lane-selection" component={LaneSelectionPage} />
+            <Route path="/lanes/:routeId" component={LaneSelectionPage} />
+            <Route path="/map-window" component={MapWindow} />
+            <Route path="/legal-popup" component={LegalPopupPage} />
+            <Route path="/window/route" component={RouteWindow} />
+            <Route path="/window/vehicle" component={VehicleWindow} />
+            <Route path="/window/entertainment" component={EntertainmentWindow} />
+            <Route path="/window/themes" component={ThemesWindow} />
+            <Route path="/window/history" component={HistoryWindow} />
+            <Route path="/window/settings" component={SettingsWindow} />
+            <Route path="/fleet-management" component={ProtectedFleetPage} />
+            <Route path="/social" component={SocialNetworkPage} />
+            <Route path="/connect/store/:accountId" component={ConnectStore} />
+            <Route path="/connect/success" component={ConnectSuccess} />
+            <Route path="/connect/dashboard" component={ConnectDashboard} />
+            <Route component={NotFound} />
+          </Switch>
+        </Suspense>
       </div>
     </div>
   );
@@ -114,7 +127,6 @@ function App() {
                 <Toaster />
                 <ServiceWorkerUpdates />
                 <PWAInstallPrompt showBadge={true} />
-                {/* Main Application with PWA and Offline Support */}
                 <Router />
               </OfflineDetector>
             </TooltipProvider>
