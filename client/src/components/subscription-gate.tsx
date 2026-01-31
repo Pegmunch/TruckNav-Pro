@@ -23,8 +23,10 @@ export function SubscriptionGate({
   fallback,
   showUpgradePrompt = true,
 }: SubscriptionGateProps) {
-  const { data: status, isLoading } = useQuery<SubscriptionStatusResponse>({
+  const { data: status, isLoading, isError } = useQuery<SubscriptionStatusResponse>({
     queryKey: ["/api/subscription/status"],
+    retry: false,
+    staleTime: 30000,
   });
 
   if (isLoading) {
@@ -33,6 +35,14 @@ export function SubscriptionGate({
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // If there's an error (e.g., 401 not authenticated) or no subscription, show paywall
+  if (isError) {
+    if (!showUpgradePrompt) {
+      return fallback ? <>{fallback}</> : null;
+    }
+    return <SubscriptionPaywall requiredTier={requiredTier} />;
   }
 
   const hasAccess = checkSubscriptionAccess(status, requiredTier);
