@@ -2785,6 +2785,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Add traffic layer if it doesn't exist
     if (!map.current.getLayer(trafficLayerId)) {
+      // TomTom relative flow tiles provide current_speed and free_flow_speed
+      // Calculate congestion ratio: current_speed / free_flow_speed
+      // Ratio < 0.3 = standstill, < 0.5 = heavy, < 0.7 = moderate, < 0.85 = light, >= 0.85 = free flow
       map.current.addLayer({
         id: trafficLayerId,
         type: 'line',
@@ -2793,21 +2796,36 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
-          visibility: preferences.mapViewMode === 'satellite' ? 'none' : 'visible'
+          visibility: 'visible' // Controlled by updateLayerVisibility, not here
         },
         paint: {
           'line-color': [
             'case',
-            ['==', ['typeof', ['get', 'speed_ratio']], 'number'],
+            // Check if we have speed data
+            ['all', ['has', 'current_speed'], ['has', 'free_flow_speed'], ['>', ['get', 'free_flow_speed'], 0]],
             [
-              'case',
-              ['<', ['get', 'speed_ratio'], 0.3], '#DC2626', // Red: heavy traffic/standstill
-              ['<', ['get', 'speed_ratio'], 0.5], '#F97316', // Orange: heavy traffic
-              ['<', ['get', 'speed_ratio'], 0.65], '#FDE047', // Yellow: moderate traffic
-              ['<', ['get', 'speed_ratio'], 0.85], '#60A5FA', // Light blue: light traffic
-              '#3B82F6' // Blue: free flow (matching legend)
+              'step',
+              ['/', ['get', 'current_speed'], ['get', 'free_flow_speed']],
+              '#DC2626',  // 0.0 - 0.3: Red (standstill/heavy)
+              0.3, '#F97316',  // 0.3 - 0.5: Orange (heavy)
+              0.5, '#FDE047',  // 0.5 - 0.7: Yellow (moderate)
+              0.7, '#22C55E',  // 0.7 - 0.85: Green (light)
+              0.85, '#3B82F6'  // 0.85+: Blue (free flow)
             ],
-            '#3B82F6' // Default to blue if speed_ratio is missing/invalid
+            // Fallback: check for traffic_level property (some tile versions)
+            ['has', 'traffic_level'],
+            [
+              'match',
+              ['get', 'traffic_level'],
+              0, '#3B82F6',  // Unknown -> blue
+              1, '#3B82F6',  // Free flow -> blue
+              2, '#22C55E',  // Light -> green  
+              3, '#FDE047',  // Moderate -> yellow
+              4, '#DC2626',  // Heavy -> red
+              '#3B82F6'      // Default -> blue
+            ],
+            // Default fallback: blue (free flow assumed)
+            '#3B82F6'
           ],
           'line-width': [
             'interpolate',
@@ -2820,12 +2838,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-blur': 0.5
         }
       });
+      console.log('[TRAFFIC-LAYER] Added traffic flow layer with speed-based coloring');
       // Mark layer as ready after adding
       setIsTrafficLayerReady(true);
     } else {
-      // Update visibility if layer exists - but not in satellite mode
-      const visibility = preferences.mapViewMode === 'satellite' ? 'none' : 'visible';
-      map.current.setLayoutProperty(trafficLayerId, 'visibility', visibility);
+      // Visibility controlled by updateLayerVisibility effect
+      map.current.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
       // Mark layer as ready
       setIsTrafficLayerReady(true);
     }
@@ -2846,7 +2864,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     return () => {
       clearInterval(refreshInterval);
     };
-  }, [isLoaded, showTraffic, preferences.mapViewMode]);
+  }, [isLoaded, showTraffic]); // Removed preferences.mapViewMode - traffic visibility now handled by updateLayerVisibility
 
   // LAYER 2: Route Traffic Overlay - Colored segments on top of blue route line
   useEffect(() => {
