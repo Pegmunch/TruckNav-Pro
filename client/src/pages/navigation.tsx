@@ -82,7 +82,7 @@ import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
 import { TrafficPredictionPanel } from "@/components/navigation/traffic-prediction-panel";
-// SmartTrafficLightsPanel removed per user request
+import { SmartTrafficLightsPanel } from "@/components/navigation/smart-traffic-lights-panel";
 import { OnboardingProvider, useOnboarding } from "@/components/onboarding/onboarding-provider";
 import WeatherWidget from "@/components/weather/weather-widget";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -370,6 +370,9 @@ function NavigationPageContent() {
   // Live Traffic Panel state (unified view/report panel)
   const [showLiveTrafficPanel, setShowLiveTrafficPanel] = useState(false);
   const [liveTrafficPanelTab, setLiveTrafficPanelTab] = useState<'view' | 'report'>('view');
+  
+  // Smart Traffic Lights Panel state
+  const [showSmartTrafficLights, setShowSmartTrafficLights] = useState(false);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -3193,6 +3196,10 @@ function NavigationPageContent() {
     localStorage.setItem('navigation_ui_active', 'true');
     console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
     
+    // Enable Smart Traffic Lights Panel during navigation
+    setShowSmartTrafficLights(true);
+    console.log('[NAV-ACTIVATION] ✅ Smart Traffic Lights enabled');
+    
     try {
       // CRITICAL: Cancel any active fly-by animation to prevent camera conflicts
       if (mapRef.current) {
@@ -3431,6 +3438,7 @@ function NavigationPageContent() {
     setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
     setSidebarState(isMobile ? 'closed' : 'open'); // CRITICAL: Reset sidebar to prevent full-screen overlay blocking map
     resetRerouteState(); // Reset auto-reroute state for next navigation session
+    setShowSmartTrafficLights(false); // Hide Smart Traffic Lights Panel when navigation stops
     // CRITICAL: Clear the persistent route ref on explicit stop to prevent restoration
     lastCalculatedRouteRef.current = null;
     // CRITICAL FIX: Clear currentRoute immediately to prevent NavigationLayout from blocking
@@ -4759,7 +4767,20 @@ function NavigationPageContent() {
         defaultTab={liveTrafficPanelTab}
       />
 
-      {/* Smart Traffic Lights Panel - REMOVED per user request */}
+      {/* Smart Traffic Lights Panel - Green wave optimization for traffic signals */}
+      {showSmartTrafficLights && currentRoute?.routePath && isNavigating && (
+        <div className="fixed top-20 right-4 z-40 w-80 max-w-[calc(100vw-2rem)]">
+          <SmartTrafficLightsPanel
+            routeCoordinates={currentRoute.routePath}
+            isNavigating={isNavigating}
+            currentSpeed={currentSpeed}
+            onSpeedRecommendation={(speed, action) => {
+              console.log(`[SMART-TRAFFIC] Speed recommendation: ${speed} km/h, action: ${action}`);
+            }}
+            className="shadow-lg"
+          />
+        </div>
+      )}
 
       {/* Comprehensive Mobile Menu - Uses internal early return for iOS Safari fix */}
       <ComprehensiveMobileMenu
