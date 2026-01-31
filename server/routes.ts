@@ -7822,6 +7822,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/connect/checkout - Create checkout session with application fee
+  // Note: This is a public endpoint for customers purchasing from a seller's storefront
+  // The priceId must belong to the specified accountId (Stripe validates this automatically)
   app.post("/api/connect/checkout", async (req: Request, res: Response) => {
     try {
       console.log('[STRIPE-CONNECT] Creating checkout session');
@@ -7837,11 +7839,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "accountId and priceId are required" });
       }
 
+      // Validate accountId format (Stripe Connect account IDs start with 'acct_')
+      if (typeof accountId !== 'string' || !accountId.startsWith('acct_')) {
+        return res.status(400).json({ message: "Invalid account ID format" });
+      }
+
+      // Validate priceId format (Stripe price IDs start with 'price_')
+      if (typeof priceId !== 'string' || !priceId.startsWith('price_')) {
+        return res.status(400).json({ message: "Invalid price ID format" });
+      }
+
       const baseUrl = process.env.REPLIT_DEV_DOMAIN 
         ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
         : 'http://localhost:5000';
 
       console.log('[STRIPE-CONNECT] Creating checkout for:', { accountId, priceId });
+
+      // Server-side validation: verify the price exists on the connected account
+      try {
+        await stripe.prices.retrieve(priceId, { stripeAccount: accountId });
+        console.log('[STRIPE-CONNECT] Price validated successfully');
+      } catch (priceError: any) {
+        console.error('[STRIPE-CONNECT] Price validation failed:', priceError.message);
+        return res.status(400).json({ 
+          message: "Product not found or doesn't belong to this seller" 
+        });
+      }
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: priceId, quantity: 1 }],
@@ -7859,6 +7882,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('[STRIPE-CONNECT] Error creating checkout session:', error);
+      // Stripe will return an error if the price doesn't exist on the connected account
+      if (error.code === 'resource_missing') {
+        return res.status(400).json({ 
+          message: "Product not found or doesn't belong to this seller",
+          error: error.message 
+        });
+      }
       res.status(500).json({ 
         message: "Failed to create checkout session",
         error: error.message 

@@ -81,6 +81,7 @@ if (app.get("env") === "development") {
 
 // Handle Stripe webhooks with raw body before JSON parsing
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/connect/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' })); // Reduced payload size to save memory
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
