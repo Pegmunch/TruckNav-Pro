@@ -306,6 +306,36 @@ export default function SubscribePage() {
     select: (plans) => plans.find(p => p.id === planId),
   });
 
+  const createSubscriptionMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const response = await apiRequest('POST', '/api/subscription/create', { planId, termsAccepted: hasAcceptedTerms });
+      const data: SubscriptionCreateResponse = await response.json();
+      return data;
+    },
+    onSuccess: (data) => {
+      setClientSecret(data.clientSecret);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Subscription Error",
+        description: error.message || "Failed to create subscription. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const initiateSubscription = useCallback(() => {
+    if (planId && plan && user && !clientSecret && !createSubscriptionMutation.isPending) {
+      createSubscriptionMutation.mutate(planId);
+    }
+  }, [planId, plan, user, clientSecret, createSubscriptionMutation]);
+
+  useEffect(() => {
+    if (hasAcceptedTerms && user) {
+      initiateSubscription();
+    }
+  }, [hasAcceptedTerms, user, initiateSubscription]);
+
   if (!userLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
@@ -333,39 +363,6 @@ export default function SubscribePage() {
       </div>
     );
   }
-
-  const createSubscriptionMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      const response = await apiRequest('POST', '/api/subscription/create', { planId, termsAccepted: hasAcceptedTerms });
-      const data: SubscriptionCreateResponse = await response.json();
-      return data;
-    },
-    onSuccess: (data) => {
-      setClientSecret(data.clientSecret);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Subscription Error",
-        description: error.message || "Failed to create subscription. Please try again.",
-        variant: "destructive",
-      });
-      // Don't auto-redirect - let user see error and retry
-    },
-  });
-
-  // Terms can be accepted during checkout - initiate subscription when we have plan and terms
-  const initiateSubscription = useCallback(() => {
-    if (planId && plan && !clientSecret && !createSubscriptionMutation.isPending) {
-      createSubscriptionMutation.mutate(planId);
-    }
-  }, [planId, plan, clientSecret, createSubscriptionMutation]);
-
-  useEffect(() => {
-    // Auto-initiate if terms already accepted
-    if (hasAcceptedTerms) {
-      initiateSubscription();
-    }
-  }, [hasAcceptedTerms, initiateSubscription]);
 
   if (userLoading || planLoading || !plan) {
     return (
