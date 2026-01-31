@@ -7557,6 +7557,420 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =============================================================================
+  // STRIPE CONNECT ROUTES (V2 API)
+  // =============================================================================
+
+  // POST /api/connect/create-account - Create a Stripe Connect account using V2 API
+  app.post("/api/connect/create-account", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT] Creating new Connect account');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { displayName, email } = req.body;
+      
+      if (!displayName || !email) {
+        return res.status(400).json({ message: "displayName and email are required" });
+      }
+
+      console.log('[STRIPE-CONNECT] Creating account for:', { displayName, email });
+
+      const account = await (stripe as any).v2.core.accounts.create({
+        display_name: displayName,
+        contact_email: email,
+        identity: { country: 'us' },
+        dashboard: 'full',
+        defaults: {
+          responsibilities: {
+            fees_collector: 'stripe',
+            losses_collector: 'stripe',
+          },
+        },
+        configuration: {
+          customer: {},
+          merchant: {
+            capabilities: { card_payments: { requested: true } },
+          },
+        },
+      });
+
+      console.log('[STRIPE-CONNECT] Account created:', account.id);
+
+      await storage.updateUser(userId, { 
+        stripeConnectAccountId: account.id,
+        connectOnboardingStatus: 'pending'
+      });
+
+      res.json({ 
+        accountId: account.id,
+        message: "Connect account created successfully" 
+      });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error creating account:', error);
+      res.status(500).json({ 
+        message: "Failed to create Connect account",
+        error: error.message 
+      });
+    }
+  });
+
+  // POST /api/connect/create-account-link - Create an account link for onboarding
+  app.post("/api/connect/create-account-link", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT] Creating account link');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.stripeConnectAccountId) {
+        return res.status(400).json({ message: "No Connect account found for user" });
+      }
+
+      const accountId = user.stripeConnectAccountId;
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : 'http://localhost:5000';
+
+      console.log('[STRIPE-CONNECT] Creating account link for:', accountId);
+
+      const accountLink = await (stripe as any).v2.core.accountLinks.create({
+        account: accountId,
+        use_case: {
+          type: 'account_onboarding',
+          account_onboarding: {
+            configurations: ['merchant', 'customer'],
+            refresh_url: `${baseUrl}/connect/dashboard`,
+            return_url: `${baseUrl}/connect/dashboard?accountId=${accountId}`,
+          },
+        },
+      });
+
+      console.log('[STRIPE-CONNECT] Account link created:', accountLink.url);
+
+      res.json({ 
+        url: accountLink.url,
+        expiresAt: accountLink.expires_at 
+      });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error creating account link:', error);
+      res.status(500).json({ 
+        message: "Failed to create account link",
+        error: error.message 
+      });
+    }
+  });
+
+  // GET /api/connect/account-status - Check onboarding status
+  app.get("/api/connect/account-status", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT] Checking account status');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.stripeConnectAccountId) {
+        return res.status(400).json({ message: "No Connect account found for user" });
+      }
+
+      const accountId = user.stripeConnectAccountId;
+
+      console.log('[STRIPE-CONNECT] Retrieving account status for:', accountId);
+
+      const account = await (stripe as any).v2.core.accounts.retrieve(accountId, {
+        include: ["configuration.merchant", "requirements"],
+      });
+
+      const readyToProcessPayments = account?.configuration?.merchant?.capabilities?.card_payments?.status === "active";
+      const requirementsStatus = account.requirements?.summary?.minimum_deadline?.status;
+      const onboardingComplete = requirementsStatus !== "currently_due" && requirementsStatus !== "past_due";
+
+      console.log('[STRIPE-CONNECT] Account status:', { 
+        readyToProcessPayments, 
+        onboardingComplete,
+        requirementsStatus 
+      });
+
+      if (onboardingComplete && user.connectOnboardingStatus !== 'complete') {
+        await storage.updateUser(userId, { connectOnboardingStatus: 'complete' });
+      }
+
+      res.json({
+        accountId,
+        readyToProcessPayments,
+        onboardingComplete,
+        requirementsStatus,
+        capabilities: account?.configuration?.merchant?.capabilities
+      });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error checking account status:', error);
+      res.status(500).json({ 
+        message: "Failed to check account status",
+        error: error.message 
+      });
+    }
+  });
+
+  // POST /api/connect/products - Create product on connected account
+  app.post("/api/connect/products", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT] Creating product');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.stripeConnectAccountId) {
+        return res.status(400).json({ message: "No Connect account found for user" });
+      }
+
+      const accountId = user.stripeConnectAccountId;
+      const { name, description, priceInCents, currency } = req.body;
+
+      if (!name || !priceInCents) {
+        return res.status(400).json({ message: "name and priceInCents are required" });
+      }
+
+      console.log('[STRIPE-CONNECT] Creating product:', { name, priceInCents, currency });
+
+      const product = await stripe.products.create({
+        name,
+        description: description || '',
+        default_price_data: {
+          unit_amount: priceInCents,
+          currency: currency || 'gbp',
+        },
+      }, { stripeAccount: accountId });
+
+      console.log('[STRIPE-CONNECT] Product created:', product.id);
+
+      res.json({ 
+        product,
+        message: "Product created successfully" 
+      });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error creating product:', error);
+      res.status(500).json({ 
+        message: "Failed to create product",
+        error: error.message 
+      });
+    }
+  });
+
+  // GET /api/connect/products/:accountId - List products on connected account (public endpoint for storefront)
+  app.get("/api/connect/products/:accountId", async (req: Request, res: Response) => {
+    try {
+      const { accountId } = req.params;
+      
+      console.log('[STRIPE-CONNECT] Listing products for account:', accountId);
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      if (!accountId) {
+        return res.status(400).json({ message: "accountId is required" });
+      }
+
+      const products = await stripe.products.list({
+        limit: 20,
+        active: true,
+        expand: ['data.default_price'],
+      }, { stripeAccount: accountId });
+
+      console.log('[STRIPE-CONNECT] Found products:', products.data.length);
+
+      res.json({ products: products.data });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error listing products:', error);
+      res.status(500).json({ 
+        message: "Failed to list products",
+        error: error.message 
+      });
+    }
+  });
+
+  // POST /api/connect/checkout - Create checkout session with application fee
+  app.post("/api/connect/checkout", async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT] Creating checkout session');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const { accountId, priceId } = req.body;
+
+      if (!accountId || !priceId) {
+        return res.status(400).json({ message: "accountId and priceId are required" });
+      }
+
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : 'http://localhost:5000';
+
+      console.log('[STRIPE-CONNECT] Creating checkout for:', { accountId, priceId });
+
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{ price: priceId, quantity: 1 }],
+        payment_intent_data: { application_fee_amount: 100 },
+        mode: 'payment',
+        success_url: `${baseUrl}/connect/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/connect/store/${accountId}`,
+      }, { stripeAccount: accountId });
+
+      console.log('[STRIPE-CONNECT] Checkout session created:', session.id);
+
+      res.json({ 
+        sessionId: session.id,
+        url: session.url 
+      });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error creating checkout session:', error);
+      res.status(500).json({ 
+        message: "Failed to create checkout session",
+        error: error.message 
+      });
+    }
+  });
+
+  // POST /api/connect/billing-portal - Create billing portal session
+  app.post("/api/connect/billing-portal", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT] Creating billing portal session');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.stripeConnectAccountId) {
+        return res.status(400).json({ message: "No Connect account found for user" });
+      }
+
+      const accountId = user.stripeConnectAccountId;
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : 'http://localhost:5000';
+
+      console.log('[STRIPE-CONNECT] Creating billing portal for:', accountId);
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer_account: accountId,
+        return_url: `${baseUrl}/connect/dashboard`,
+      } as any);
+
+      console.log('[STRIPE-CONNECT] Billing portal session created:', session.url);
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT] Error creating billing portal session:', error);
+      res.status(500).json({ 
+        message: "Failed to create billing portal session",
+        error: error.message 
+      });
+    }
+  });
+
+  // POST /api/connect/webhook - Handle thin events for V2 accounts
+  app.post("/api/connect/webhook", async (req: Request, res: Response) => {
+    try {
+      console.log('[STRIPE-CONNECT-WEBHOOK] Received webhook event');
+      
+      if (!stripe) {
+        console.error('[STRIPE-CONNECT-WEBHOOK] Stripe not initialized');
+        return res.status(500).json({ message: "Stripe is not configured" });
+      }
+
+      const sig = req.headers['stripe-signature'];
+      const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+
+      if (!sig) {
+        console.error('[STRIPE-CONNECT-WEBHOOK] Missing stripe-signature header');
+        return res.status(400).json({ message: "Missing stripe-signature header" });
+      }
+
+      if (!webhookSecret) {
+        console.error('[STRIPE-CONNECT-WEBHOOK] Webhook secret not configured');
+        return res.status(500).json({ message: "Webhook secret not configured" });
+      }
+
+      let thinEvent;
+      try {
+        thinEvent = (stripe as any).parseThinEvent(req.body, sig, webhookSecret);
+      } catch (err: any) {
+        console.error('[STRIPE-CONNECT-WEBHOOK] Error parsing thin event:', err.message);
+        return res.status(400).json({ message: `Webhook Error: ${err.message}` });
+      }
+
+      console.log('[STRIPE-CONNECT-WEBHOOK] Thin event received:', thinEvent.type);
+
+      const event = await (stripe as any).v2.core.events.retrieve(thinEvent.id);
+
+      console.log('[STRIPE-CONNECT-WEBHOOK] Full event retrieved:', event.type);
+
+      switch (event.type) {
+        case 'v2.core.account.requirements.updated':
+          console.log('[STRIPE-CONNECT-WEBHOOK] Account requirements updated:', event.data);
+          break;
+          
+        case 'v2.core.account.capability_status_updated':
+          console.log('[STRIPE-CONNECT-WEBHOOK] Capability status updated:', event.data);
+          break;
+
+        default:
+          console.log('[STRIPE-CONNECT-WEBHOOK] Unhandled event type:', event.type);
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error('[STRIPE-CONNECT-WEBHOOK] Error processing webhook:', error);
+      res.status(500).json({ 
+        message: "Failed to process webhook",
+        error: error.message 
+      });
+    }
+  });
+
+  // =============================================================================
   // ROBUSTNESS MONITORING ROUTES (99% Reliability Target)
   // =============================================================================
   robustnessMiddleware.forEach(mw => app.use(mw));
