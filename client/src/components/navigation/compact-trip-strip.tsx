@@ -290,7 +290,7 @@ export function CompactTripStrip({
           <div 
             aria-label={isOnline ? "Online" : "Offline"}
             className={cn(
-              'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-sm text-[10px] md:text-sm font-bold',
+              'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-sm text-[10px] md:text-sm font-bold ml-1 md:ml-0',
               isOnline ? 'bg-green-500 text-white' : 'bg-slate-400 text-white'
             )}
           >
