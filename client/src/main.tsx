@@ -105,10 +105,20 @@ startVersionMonitoring();
 initializeCSRF();
 
 // Render the actual TruckNav Pro app
-createRoot(document.getElementById("root")!).render(
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  try {
+    createRoot(rootElement).render(
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    );
+  } catch (error) {
+    console.error('Failed to render app:', error);
+    rootElement.innerHTML = '<div style="padding: 20px; text-align: center;"><h1>TruckNav Pro</h1><p>Loading failed. Please refresh.</p></div>';
+  }
+} else {
+  console.error('Root element not found');
+}
