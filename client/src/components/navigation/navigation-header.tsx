@@ -87,7 +87,7 @@ export function NavigationHeader({
         <img 
           src="/truck-marker-icon.png" 
           alt="TruckNav Pro" 
-          className="w-8 h-8 object-contain rounded"
+          className="w-8 h-8 object-contain rounded border-t-2 border-b-2 border-blue-500"
         />
         <h1 className="text-lg font-bold text-gray-900 dark:text-white">TruckNav Pro</h1>
       </div>
