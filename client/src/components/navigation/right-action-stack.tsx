@@ -427,6 +427,7 @@ export function RightActionStack({
           e.preventDefault();
           e.stopPropagation();
           console.log('[INCIDENTS-BTN] 🔴 View Incidents TOUCHSTART');
+          hapticButtonPress();
           onViewIncidents();
         }}
         onPointerDown={(e) => {
@@ -456,13 +457,29 @@ export function RightActionStack({
           ref={mapViewButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            if (!onToggleMapView) return;
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[MAP-VIEW-BTN] 🗺️ Map View Toggle TOUCHSTART');
+            hapticButtonPress();
+            onToggleMapView();
+          }}
+          onPointerDown={(e) => {
+            if (!onToggleMapView) return;
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[MAP-VIEW-BTN] 🗺️ Map View Toggle POINTERDOWN (mouse)');
+              onToggleMapView();
+            }
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isSatelliteView ? "border-green-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-toggle-view"
         >
           <MapIcon className={iconSize} />
@@ -476,12 +493,28 @@ export function RightActionStack({
           ref={recenterButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            if (!onRecenter) return;
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[RECENTER-BTN] 📍 Recenter TOUCHSTART');
+            hapticButtonPress();
+            onRecenter();
+          }}
+          onPointerDown={(e) => {
+            if (!onRecenter) return;
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[RECENTER-BTN] 📍 Recenter POINTERDOWN (mouse)');
+              onRecenter();
+            }
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-recenter"
         >
           <Crosshair className={iconSize} />
@@ -494,11 +527,25 @@ export function RightActionStack({
           ref={zoomInButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[ZOOM-IN-BTN] ➕ Zoom In TOUCHSTART');
+            hapticButtonPress();
+            zoomInHandler();
+          }}
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[ZOOM-IN-BTN] ➕ Zoom In POINTERDOWN (mouse)');
+              zoomInHandler();
+            }
+          }}
           className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isNavigating ? "border-blue-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-zoom-in"
         >
           <Plus className={iconSize} />
@@ -511,11 +558,25 @@ export function RightActionStack({
           ref={zoomOutButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[ZOOM-OUT-BTN] ➖ Zoom Out TOUCHSTART');
+            hapticButtonPress();
+            zoomOutHandler();
+          }}
+          onPointerDown={(e) => {
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[ZOOM-OUT-BTN] ➖ Zoom Out POINTERDOWN (mouse)');
+              zoomOutHandler();
+            }
+          }}
           className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isNavigating ? "border-blue-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-zoom-out"
         >
           <Minus className={iconSize} />
@@ -528,12 +589,28 @@ export function RightActionStack({
           ref={compassButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            if (!onCompassClick) return;
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[COMPASS-BTN] 🧭 Compass TOUCHSTART');
+            hapticButtonPress();
+            onCompassClick();
+          }}
+          onPointerDown={(e) => {
+            if (!onCompassClick) return;
+            if (e.pointerType === 'mouse') {
+              e.preventDefault();
+              console.log('[COMPASS-BTN] 🧭 Compass POINTERDOWN (mouse)');
+              onCompassClick();
+            }
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-blue-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-compass-reset"
         >
           <Compass 
