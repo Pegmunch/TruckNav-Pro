@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode,
 import Joyride, { Step, CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const ONBOARDING_STORAGE_KEY = 'trucknav_onboarding_v1_completed';
+const ONBOARDING_STORAGE_KEY = 'trucknav_onboarding_v2_completed';
 const FLEET_ONBOARDING_STORAGE_KEY = 'trucknav_fleet_onboarding_v1_completed';
 
 interface OnboardingContextType {
@@ -68,7 +68,7 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
     },
     {
       target: '[data-tour-id="right-controls"]',
-      content: 'These controls let you zoom, toggle 3D view, show traffic, switch to satellite view, and view incidents.',
+      content: 'Map controls: Zoom in/out, toggle 3D view, show live traffic, switch to satellite view. The red-bordered button shows reported incidents on the map.',
       placement: 'left',
       title: 'Map Controls'
     },
@@ -92,9 +92,9 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
     },
     {
       target: '[data-tour-id="incident-button"]',
-      content: 'Tap here to manually report road incidents like accidents, hazards, or traffic jams to help other drivers.',
+      content: 'The more users report traffic, the more accurate live data becomes! To report manually: Use Preview mode while stationary. If navigating, cancel your route, use Recent Destinations to re-enter, press Preview (orange), then tap Report Incident. Press Go to continue your route.',
       placement: 'right',
-      title: 'Report Incidents'
+      title: 'Traffic Reporting'
     },
     ...(!isMobile ? [{
       target: '[data-tour-id="desktop-fleet-link"]',
