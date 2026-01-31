@@ -84,7 +84,11 @@ export default function UserGuide() {
         {/* Incident Reporting */}
         <section className="space-y-3">
           <h3 className="text-lg font-bold text-blue-600">{t('userGuide.incidentReporting.title', 'Incident Reporting')}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t('userGuide.incidentReporting.intro', 'The more users report traffic incidents, the more accurate live data becomes for everyone. Your reports help fellow drivers avoid delays and hazards.')}
+          </p>
           <ul className="space-y-2 pl-4">
+            <li><span className="font-bold">{t('userGuide.incidentReporting.manualReport', 'Manual Reporting')}</span> - {t('userGuide.incidentReporting.manualReportDesc', 'Traffic reporting can only be done in Preview mode, preferably while stationary. To report: Cancel your current route, use Recent Destinations to re-enter your destination, press Preview (orange button), then use the Report Incident button in the top right stack. Press Go to continue your route.')}</li>
             <li><span className="font-bold">{t('userGuide.incidentReporting.voiceReport', 'Voice Reporting')}</span> - {t('userGuide.incidentReporting.voiceReportDesc', 'Tap microphone and speak: "report traffic", "report accident", "road hazard".')}</li>
             <li><span className="font-bold">{t('userGuide.incidentReporting.trafficJam', 'Traffic Jam')}</span> - {t('userGuide.incidentReporting.trafficJamDesc', 'Report heavy traffic or standstill. Helps other drivers find alternate routes.')}</li>
             <li><span className="font-bold">{t('userGuide.incidentReporting.accident', 'Accident Report')}</span> - {t('userGuide.incidentReporting.accidentDesc', 'Report accidents ahead. Critical for safety and route recalculation.')}</li>
