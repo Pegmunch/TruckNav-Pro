@@ -2905,10 +2905,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return stations.sort((a, b) => a.distance - b.distance);
   }
   
-  function generateFacilities() {
+  function generateFacilities(): string[] {
     const allFacilities = ['Shop', 'Toilets', 'ATM', 'Car Wash', 'Air', 'Vacuum', 'AdBlue', 'HGV Pumps'];
     const numFacilities = Math.floor(Math.random() * 5) + 2;
-    const facilities = [];
+    const facilities: string[] = [];
     for (let i = 0; i < numFacilities; i++) {
       const f = allFacilities[Math.floor(Math.random() * allFacilities.length)];
       if (!facilities.includes(f)) facilities.push(f);
@@ -4307,28 +4307,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Navigation endpoints support anonymous users - no subscription required
   app.patch("/api/journeys/:id/complete", validateNumericId, validateRequest, async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      
-      // CRITICAL LOGGING: Track who's completing journeys
-      console.log('====================================');
-      console.log(`[JOURNEY-COMPLETE] 🔴 JOURNEY ${id} IS BEING COMPLETED!`);
-      console.log(`[JOURNEY-COMPLETE] Session ID: ${req.sessionID || 'anonymous'}`);
-      console.log(`[JOURNEY-COMPLETE] User-Agent: ${req.headers['user-agent']}`);
-      console.log(`[JOURNEY-COMPLETE] Referer: ${req.headers['referer']}`);
-      console.log(`[JOURNEY-COMPLETE] Origin: ${req.headers['origin']}`);
-      console.log(`[JOURNEY-COMPLETE] Request body:`, req.body);
-      console.log('====================================');
-      
       const journey = await storage.completeJourney(parseInt(id));
       if (!journey) {
         return res.status(404).json({ message: "Journey not found" });
       }
-      
-      console.log(`[JOURNEY-COMPLETE] ✅ Journey ${id} marked as completed at ${journey.completedAt}`);
       res.json(journey);
     } catch (error) {
-      console.error(`[JOURNEY-COMPLETE] ❌ Error completing journey ${id}:`, error);
+      console.error(`[JOURNEY-COMPLETE] Error completing journey ${id}:`, error);
       res.status(500).json({ message: "Failed to complete journey" });
     }
   });
@@ -5972,6 +5959,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { routeId, title, description, isPublic, shareWithConnections, tags } = req.body;
       const sharedRoute = await storage.shareRoute(userId, routeId, {
         title,
+        routeId,
+        userId,
         description,
         isPublic,
         shareWithConnections,
