@@ -117,6 +117,9 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   console.log('[MOUNT] Starting React render...');
   
+  // Mark React as mounted to prevent fallback from showing
+  (window as any).__reactMounted = true;
+  
   // Use a simpler approach - render immediately and let ErrorBoundary catch issues
   const root = createRoot(rootElement);
   
