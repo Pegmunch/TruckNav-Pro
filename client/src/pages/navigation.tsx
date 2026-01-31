@@ -82,6 +82,7 @@ import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
 import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
 import { TrafficPredictionPanel } from "@/components/navigation/traffic-prediction-panel";
+import { SmartTrafficLightsPanel } from "@/components/navigation/smart-traffic-lights-panel";
 import { OnboardingProvider, useOnboarding } from "@/components/onboarding/onboarding-provider";
 import WeatherWidget from "@/components/weather/weather-widget";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -369,6 +370,7 @@ function NavigationPageContent() {
   // Live Traffic Panel state (unified view/report panel)
   const [showLiveTrafficPanel, setShowLiveTrafficPanel] = useState(false);
   const [liveTrafficPanelTab, setLiveTrafficPanelTab] = useState<'view' | 'report'>('view');
+  const [showSmartTrafficLights, setShowSmartTrafficLights] = useState(false);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -4757,6 +4759,20 @@ function NavigationPageContent() {
         currentLocation={currentGPSLocation}
         defaultTab={liveTrafficPanelTab}
       />
+
+      {/* Smart Traffic Lights Panel - Green Wave Optimization */}
+      {(isNavigating || isShowingPreview) && currentRoute?.routePath && currentRoute.routePath.length >= 2 && (
+        <div className="fixed bottom-24 left-4 z-50 w-80 max-w-[calc(100vw-2rem)] md:bottom-4 md:left-4">
+          <SmartTrafficLightsPanel
+            routeCoordinates={currentRoute.routePath}
+            isNavigating={isNavigating}
+            currentSpeed={currentSpeed || 50}
+            onSpeedRecommendation={(speed, action) => {
+              console.log(`[SMART-TRAFFIC-LIGHTS] Speed recommendation: ${speed} km/h, action: ${action}`);
+            }}
+          />
+        </div>
+      )}
 
       {/* Comprehensive Mobile Menu - Uses internal early return for iOS Safari fix */}
       <ComprehensiveMobileMenu
