@@ -291,6 +291,11 @@ export function RightActionStack({
   const lastZoomTapRef = useRef<{ direction: 'in' | 'out'; time: number } | null>(null);
   const DOUBLE_TAP_THRESHOLD = 300; // ms
   
+  // Debounce refs to prevent double-firing from multiple event handlers
+  const last3DToggleRef = useRef(0);
+  const lastTrafficToggleRef = useRef(0);
+  const TOGGLE_DEBOUNCE = 300; // ms
+  
   // Define helper functions FIRST (before they're used in handlers)
   const handleNavigationZoom = useCallback((direction: 'in' | 'out') => {
     if (zoomCooldownRef.current) return;
@@ -538,32 +543,89 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 7. 3D Toggle - Blue/Gray border - hides/shows with double-tap */}
+      {/* 7. 3D Toggle - Blue/Gray border - cycles: tilted → overhead → normal */}
+      {/* Uses INLINE handlers with debouncing to prevent double-firing */}
       {onToggle3D && !hide3D && (
         <Button
           ref={toggle3DButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            if (!onToggle3D) return;
+            const now = Date.now();
+            if (now - last3DToggleRef.current < TOGGLE_DEBOUNCE) return;
+            last3DToggleRef.current = now;
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[3D-BTN] 🔵 3D Toggle TOUCHSTART - calling callback');
+            hapticButtonPress();
+            onToggle3D();
+          }}
+          onPointerDown={(e) => {
+            if (!onToggle3D) return;
+            if (e.pointerType === 'mouse') {
+              const now = Date.now();
+              if (now - last3DToggleRef.current < TOGGLE_DEBOUNCE) return;
+              last3DToggleRef.current = now;
+              e.preventDefault();
+              console.log('[3D-BTN] 🔵 3D Toggle POINTERDOWN (mouse) - calling callback');
+              hapticButtonPress();
+              onToggle3D();
+            }
+          }}
+          onClick={(e) => {
+            // Skip onClick if already handled by touchstart/pointerdown
+            const now = Date.now();
+            if (now - last3DToggleRef.current < TOGGLE_DEBOUNCE) return;
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
             is3DMode ? "border-blue-500" : "border-gray-400",
             isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
           )}
-          style={{ touchAction: 'manipulation' }}
+          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           data-testid="button-toggle-3d"
         >
           <Box className={iconSize} />
         </Button>
       )}
 
-      {/* 8. Traffic Toggle - Orange/Gray border - hides/shows with double-tap */}
-      {/* Uses native event handlers via useNativeClickHandler hook (same as zoom buttons) */}
+      {/* 8. Traffic Toggle - Orange/Gray border - toggles traffic layer visibility */}
+      {/* Uses INLINE handlers with debouncing to prevent double-firing */}
       {onToggleTraffic && (
         <Button
           ref={trafficButtonRef}
           variant="ghost"
           size="icon"
+          onTouchStart={(e) => {
+            if (!onToggleTraffic) return;
+            const now = Date.now();
+            if (now - lastTrafficToggleRef.current < TOGGLE_DEBOUNCE) return;
+            lastTrafficToggleRef.current = now;
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[TRAFFIC-BTN] 🟠 Traffic Toggle TOUCHSTART - calling callback');
+            hapticButtonPress();
+            onToggleTraffic();
+          }}
+          onPointerDown={(e) => {
+            if (!onToggleTraffic) return;
+            if (e.pointerType === 'mouse') {
+              const now = Date.now();
+              if (now - lastTrafficToggleRef.current < TOGGLE_DEBOUNCE) return;
+              lastTrafficToggleRef.current = now;
+              e.preventDefault();
+              console.log('[TRAFFIC-BTN] 🟠 Traffic Toggle POINTERDOWN (mouse) - calling callback');
+              hapticButtonPress();
+              onToggleTraffic();
+            }
+          }}
+          onClick={(e) => {
+            // Skip onClick if already handled by touchstart/pointerdown
+            const now = Date.now();
+            if (now - lastTrafficToggleRef.current < TOGGLE_DEBOUNCE) return;
+          }}
           className={cn(
             buttonSize, 
             "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",

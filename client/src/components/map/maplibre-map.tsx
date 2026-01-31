@@ -54,6 +54,8 @@ const safeExtendBounds = (bounds: maplibregl.LngLatBounds, coords: [number, numb
   return extended;
 };
 
+export type ViewState = 'normal' | 'tilted' | 'overhead';
+
 export interface MapLibreMapRef {
   getMap: () => maplibregl.Map | null;
   getBearing: () => number;
@@ -61,6 +63,7 @@ export interface MapLibreMapRef {
   getMapValidity: () => boolean;
   toggle3DMode: () => void;
   is3DMode: () => boolean;
+  getViewState: () => ViewState;
   zoomIn: () => void;
   zoomOut: () => void;
   staggeredZoomIn: (multiplier?: number) => void;
@@ -203,7 +206,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const [preferences, setPreferences] = useState<MapPreferences>(loadMapPreferences);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
-  const [is3DMode, setIs3DMode] = useState(false);
+  const [viewState, setViewState] = useState<ViewState>('normal');
+  const is3DMode = viewState === 'tilted' || viewState === 'overhead';
   const [isTrafficLayerReady, setIsTrafficLayerReady] = useState(false);
   const [bearing, setBearing] = useState(0);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -317,20 +321,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (!tiltControlRef.current) {
         tiltControlRef.current = new TiltControl(() => {
           console.log('[MAPLIBRE-CONTROLS] Tilt control clicked');
-          // Toggle 3D mode via existing mechanism
-          setIs3DMode(prev => {
-            const newMode = !prev;
-            if (mapInstance) {
-              try {
-                mapInstance.easeTo({
-                  pitch: newMode ? 50 : 0,
-                  duration: 300
-                });
-              } catch (e) {
-                console.warn('[MAPLIBRE-CONTROLS] Failed to toggle 3D:', e);
-              }
+          // Cycle through 3 states: normal → tilted → overhead → normal
+          setViewState(prev => {
+            let newState: ViewState;
+            const currentBearing = mapInstance.getBearing();
+            
+            if (prev === 'normal') {
+              newState = 'tilted';
+              mapInstance.easeTo({ pitch: 60, duration: 300 });
+            } else if (prev === 'tilted') {
+              newState = 'overhead';
+              // Keep bearing, set pitch to 0 for plan view
+              mapInstance.easeTo({ pitch: 0, bearing: currentBearing, duration: 300 });
+            } else {
+              newState = 'normal';
+              // Reset to north-up 2D
+              mapInstance.easeTo({ pitch: 0, bearing: 0, duration: 300 });
             }
-            return newMode;
+            console.log(`[3D-TOGGLE] View state: ${prev} → ${newState}`);
+            return newState;
           });
         }, is3DMode);
         mapInstance.addControl(tiltControlRef.current, 'top-right');
@@ -638,14 +647,41 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     getMapValidity: () => isMapLibreValid,
     toggle3DMode: () => {
       if (!map.current) return;
-      const newMode = !is3DMode;
-      setIs3DMode(newMode);
-      map.current.easeTo({
-        pitch: newMode ? 60 : 0,
-        duration: 400
-      });
+      // Cycle: normal → tilted → overhead → normal
+      // tilted = 60° pitch (3D perspective view)
+      // overhead = 0° pitch but keeps current bearing (plan view, heading-up)
+      // normal = 0° pitch, bearing reset to 0 (north-up 2D)
+      let newState: ViewState;
+      const currentBearing = map.current.getBearing();
+      
+      if (viewState === 'normal') {
+        newState = 'tilted';
+        map.current.easeTo({
+          pitch: 60,
+          duration: 400
+        });
+      } else if (viewState === 'tilted') {
+        newState = 'overhead';
+        // Overhead: keep bearing (heading-up), set pitch to 0 for plan view
+        map.current.easeTo({
+          pitch: 0,
+          bearing: currentBearing, // Keep current heading
+          duration: 400
+        });
+      } else {
+        newState = 'normal';
+        // Normal: reset to north-up 2D view
+        map.current.easeTo({
+          pitch: 0,
+          bearing: 0, // North up
+          duration: 400
+        });
+      }
+      setViewState(newState);
+      console.log(`[3D-TOGGLE] View state: ${viewState} → ${newState}`);
     },
     is3DMode: () => is3DMode,
+    getViewState: () => viewState,
     zoomIn: () => {
       if (map.current) {
         const currentZoom = map.current.getZoom();
@@ -1085,7 +1121,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[NAV-3D] Navigation started - 3D mode enabled (60° pitch, zoom 16.5)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
-      setIs3DMode(true);
+      setViewState('tilted');
       // Don't set camera here - let GPS heading rotation effect handle it for consistency
     }
     
@@ -1102,9 +1138,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         easing: (t) => t * (2 - t)
       });
       
-      // Reset 3D mode state to match previous pitch
+      // Reset view state based on previous pitch
       const was3D = previousPitchRef.current > 30;
-      setIs3DMode(was3D);
+      setViewState(was3D ? 'tilted' : 'normal');
       
       // CRITICAL: Force map resize after navigation ends to fix container sizing
       setTimeout(() => {
@@ -4126,36 +4162,53 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const toggle3DMode = () => {
     if (!map.current) return;
     
-    // During navigation, 3D mode is auto-controlled by GPS heading
-    // Still allow toggle, but inform user via state change
-    if (isNavigating) {
-      console.log('[3D-TOGGLE] 3D mode is auto-managed during navigation (60° pitch, heading-up rotation)');
-      // Toggle state for visual feedback, but navigation will override camera
-      setIs3DMode(!is3DMode);
-      return;
+    // Cycle through 3 states: normal → tilted → overhead → normal
+    // Works in both navigation and non-navigation modes
+    // tilted = 60° pitch (3D perspective view)
+    // overhead = 0° pitch but keeps current bearing (plan view, heading-up during nav)
+    // normal = 0° pitch, bearing reset to 0 (north-up 2D)
+    let newState: ViewState;
+    const currentBearing = map.current.getBearing();
+    
+    if (viewState === 'normal') {
+      newState = 'tilted';
+      map.current.easeTo({
+        pitch: 60,
+        duration: 500
+      });
+    } else if (viewState === 'tilted') {
+      newState = 'overhead';
+      // Overhead: keep bearing (heading-up during nav), set pitch to 0 for plan view
+      map.current.easeTo({
+        pitch: 0,
+        bearing: currentBearing, // Keep current heading direction
+        duration: 500
+      });
+    } else {
+      newState = 'normal';
+      // Normal: reset to north-up 2D view
+      map.current.easeTo({
+        pitch: 0,
+        bearing: 0, // North up
+        duration: 500
+      });
     }
     
-    const newMode = !is3DMode;
-    setIs3DMode(newMode);
-    
-    // Smoothly transition between 2D (pitch 0) and 3D (pitch 60)
-    map.current.easeTo({
-      pitch: newMode ? 60 : 0,
-      duration: 800
-    });
+    console.log(`[3D-TOGGLE] View state cycling: ${viewState} → ${newState} (isNavigating: ${isNavigating})`);
+    setViewState(newState);
   };
   
   // AUTO-ENABLE 3D MODE when navigation starts
   useEffect(() => {
-    if (isNavigating && !is3DMode) {
-      console.log('[3D-AUTO] Automatically enabling 3D mode for navigation');
-      setIs3DMode(true);
+    if (isNavigating && viewState === 'normal') {
+      console.log('[3D-AUTO] Automatically enabling tilted view for navigation');
+      setViewState('tilted');
     } else if (!isNavigating && previousNavigationStateRef.current && is3DMode) {
-      console.log('[3D-AUTO] Navigation ended, keeping 3D mode state');
-      // Keep 3D mode even after navigation ends - user can manually toggle
+      console.log('[3D-AUTO] Navigation ended, keeping view state');
+      // Keep current view state even after navigation ends - user can manually toggle
     }
     previousNavigationStateRef.current = isNavigating;
-  }, [isNavigating, is3DMode]);
+  }, [isNavigating, viewState, is3DMode]);
 
   // Toggle 3D buildings visibility based on is3DMode state
   useEffect(() => {

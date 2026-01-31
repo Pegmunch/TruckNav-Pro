@@ -348,12 +348,15 @@ function NavigationPageContent() {
     console.log('[NAV-CONTROLS] showNavControls state is now:', showNavControls);
   }, [showNavControls]);
   
-  // Force traffic layer ON when navigation is active (safety feature)
+  // Set traffic layer ON when navigation starts (user can toggle off if desired)
+  // Only runs on navigation start, not on every render
+  const wasNavigatingRef = useRef(false);
   useEffect(() => {
-    if (isLocalNavActive) {
+    if (isLocalNavActive && !wasNavigatingRef.current) {
       setShowTrafficLayer(true);
-      console.log('[TRAFFIC] Forced traffic layer ON during navigation');
+      console.log('[TRAFFIC] Initial traffic layer ON when navigation started (user can toggle)');
     }
+    wasNavigatingRef.current = isLocalNavActive;
   }, [isLocalNavActive]);
   
   // Incident reporting dialog state
