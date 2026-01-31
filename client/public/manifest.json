@@ -6,7 +6,7 @@
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#2563eb",
-  "background_color": "#ffffff",
+  "background_color": "#2563eb",
   "scope": "/",
   "categories": ["navigation", "travel", "productivity", "business"],
   "lang": "en",
