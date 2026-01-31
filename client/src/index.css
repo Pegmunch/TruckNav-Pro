@@ -575,11 +575,14 @@ body {
 
 /* Map shell wrapper for consistent sizing across devices */
 .map-shell {
-  /* Default fallback height - overridden by parent flex container */
-  height: 100%;
-  min-height: 300px;
+  /* Force full viewport height */
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
-  position: relative;
+  position: fixed !important;
+  inset: 0 !important;
   overflow: hidden;
   
   /* Safe area handling for map edges */
