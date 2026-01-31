@@ -3785,13 +3785,17 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Reset user's preferred zoom to default when navigation starts
       userPreferredZoomRef.current = 16.5;
       
+      // Calculate pitch based on current view state (respect user's tilt preference)
+      const targetPitch = viewState === 'tilted' ? 60 : 0;
+      const targetBearing = viewState === 'normal' ? 0 : useBearing;
+      
       // Apply TomTom GO style 3D navigation view
       try {
         mapInstance.easeTo({
           center: [centerLng, centerLat],
           zoom: userPreferredZoomRef.current, // Street-level zoom for navigation
-          pitch: 60, // TomTom GO style steep 3D tilt
-          bearing: useBearing, // Heading-up rotation
+          pitch: targetPitch, // Respect viewState: tilted=60°, overhead/normal=0°
+          bearing: targetBearing, // Heading-up rotation (or north-up for normal)
           padding: {
             top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
             bottom: 40, // Reduced gap - route extends closer to speedometer
@@ -3979,14 +3983,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             // TomTom GO style navigation view:
             // - Vehicle marker at bottom 45% of screen (centered above speedometer)
             // - Route line extends straight up toward horizon
-            // - Steep 60° 3D perspective for immersive driving feel
+            // - Pitch respects user's viewState preference (3-state tilt control)
             const containerHeight = mapInstance.getContainer().clientHeight || 800;
+            
+            // Calculate pitch and bearing based on current view state (respect user's tilt preference)
+            // tilted = 60° pitch (3D perspective), overhead = 0° pitch (keeps heading), normal = 0° pitch + north-up
+            const targetPitch = viewState === 'tilted' ? 60 : 0;
+            const targetBearing = viewState === 'normal' ? 0 : bearing;
             
             try {
               const easeToOptions: maplibregl.EaseToOptions = {
                 center: [longitude, latitude],
-                pitch: 60, // TomTom GO style steep 3D tilt
-                bearing: bearing, // CRITICAL: Rotate map so GPS heading points up (route appears vertical)
+                pitch: targetPitch, // Respect viewState: tilted=60°, overhead/normal=0°
+                bearing: targetBearing, // Heading-up (tilted/overhead) or north-up (normal)
                 padding: { 
                   // CRITICAL: Large top padding pushes vehicle marker to bottom of screen
                   // This makes the route line extend upward from the speedometer area
@@ -4046,7 +4055,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // Only reset initial view flag when NAVIGATION STOPS (not on every GPS update)
       // This prevents zoom from being reset to 16.5 on each GPS position change
     };
-  }, [isNavigating, isLoaded, gpsPosition, currentRoute]);
+  }, [isNavigating, isLoaded, gpsPosition, currentRoute, viewState]);
   
   // Separate effect to reset initial view flag when navigation ENDS
   useEffect(() => {
