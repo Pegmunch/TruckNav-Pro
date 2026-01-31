@@ -151,6 +151,8 @@ export const users = pgTable("users", {
   username: text("username"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeConnectAccountId: text("stripe_connect_account_id"),
+  connectOnboardingStatus: text("connect_onboarding_status").default("not_started"),
   hasAcceptedTerms: boolean("has_accepted_terms").default(false).notNull(),
   termsAcceptedAt: timestamp("terms_accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
