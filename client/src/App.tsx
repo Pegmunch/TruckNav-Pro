@@ -25,6 +25,7 @@ import PricingPage from "@/pages/pricing";
 import SubscribePage from "@/pages/subscribe";
 import FleetManagement from "@/pages/fleet-management";
 import { SocialNetworkPage } from "@/pages/social-network";
+import { SubscriptionGate } from "@/components/subscription-gate";
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -45,13 +46,29 @@ function MobileThemeEnforcer() {
   return null;
 }
 
+function ProtectedNavigationPage() {
+  return (
+    <SubscriptionGate requiredTier="navigation">
+      <NavigationPage />
+    </SubscriptionGate>
+  );
+}
+
+function ProtectedFleetPage() {
+  return (
+    <SubscriptionGate requiredTier="fleet">
+      <FleetManagement />
+    </SubscriptionGate>
+  );
+}
+
 function Router() {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1">
         <Switch>
-          <Route path="/" component={NavigationPage} />
-          <Route path="/navigation" component={NavigationPage} />
+          <Route path="/" component={ProtectedNavigationPage} />
+          <Route path="/navigation" component={ProtectedNavigationPage} />
           <Route path="/pricing" component={PricingPage} />
           <Route path="/subscribe/:planId" component={SubscribePage} />
           <Route path="/lane-selection/:id" component={LaneSelectionPage} />
@@ -65,7 +82,7 @@ function Router() {
           <Route path="/window/themes" component={ThemesWindow} />
           <Route path="/window/history" component={HistoryWindow} />
           <Route path="/window/settings" component={SettingsWindow} />
-          <Route path="/fleet-management" component={FleetManagement} />
+          <Route path="/fleet-management" component={ProtectedFleetPage} />
           <Route path="/social" component={SocialNetworkPage} />
           <Route component={NotFound} />
         </Switch>
