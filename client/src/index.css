@@ -575,8 +575,9 @@ body {
 
 /* Map shell wrapper for consistent sizing across devices */
 .map-shell {
-  /* Default fallback height - overridden by parent container */
+  /* Default fallback height - overridden by parent flex container */
   height: 100%;
+  min-height: 300px;
   width: 100%;
   position: relative;
   overflow: hidden;

@@ -4426,24 +4426,44 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     : [];
 
   return (
-    <div className={cn("relative w-full h-full overflow-hidden pointer-events-auto", className)} data-testid="maplibre-container">
+    <div className={cn("relative w-full h-full overflow-hidden pointer-events-auto", className)} style={{ minHeight: '300px' }} data-testid="maplibre-container">
       {/* ISOLATED: MapLibre container - wrapped in its own div to prevent CSS leakage */}
-      <div className="absolute inset-0 pointer-events-auto z-10">
+      <div className="absolute inset-0 pointer-events-auto" style={{ minHeight: '300px' }}>
         <div 
           ref={mapContainer} 
           className="absolute inset-0 pointer-events-auto" 
           style={{ 
-            background: 'transparent',
+            background: '#e2e8f0',
             border: 'none',
             outline: 'none',
-            touchAction: 'manipulation'
+            touchAction: 'manipulation',
+            minHeight: '300px'
           }}
         />
       </div>
       
       {/* ISOLATED: All overlays outside MapLibre's DOM tree to avoid CSS conflicts */}
-      <div className="absolute inset-0 pointer-events-none z-20" data-testid="map-overlays">
-        {/* Note: Loading overlay removed - map loads directly */}
+      <div className="absolute inset-0 pointer-events-none" data-testid="map-overlays">
+        {/* Loading Overlay - prevents map flashing during initialization */}
+        <div 
+          className={cn(
+            "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-300",
+            isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+          )}
+          data-testid="map-loading-overlay"
+          aria-hidden={isLoaded}
+          style={{
+            transitionDelay: isLoaded ? '0ms' : 'undefined'
+          }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
+              <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" />
+            </div>
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading map...</span>
+          </div>
+        </div>
         
         {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
         <StaticRouteOverlay
