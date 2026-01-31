@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { trafficService } from "./services/traffic-service";
 import { predictiveTrafficService } from "./services/predictive-traffic-service";
 import { routeMonitorService } from "./services/route-monitor";
+import { getTrafficLightsAlongRoute, analyzeGreenWave, predictTrafficLightPhases, getSpeedRecommendation, type TrafficLight, type GreenWaveAnalysis } from "./services/smart-traffic-lights-service";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireSubscription, requireAuth, requireFleetSubscription } from "./subscriptionMiddleware";
 import { sendPaymentFailedNotification, resetNotificationsForRenewedSubscription, stopNotificationsForExpiredSubscription, getBrandedEmailTemplate } from "./services/subscription-notifications";
@@ -7466,6 +7467,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting broadcast:', error);
       res.status(500).json({ message: "Failed to delete broadcast" });
+    }
+  });
+
+  // =============================================================================
+  // SMART TRAFFIC LIGHTS API (Green Wave Optimization)
+  // =============================================================================
+  
+  // Get traffic lights along a route with predictions
+  app.post("/api/traffic-lights/analyze", async (req: Request, res: Response) => {
+    try {
+      const { routeCoordinates, averageSpeed } = req.body;
+      
+      if (!routeCoordinates || !Array.isArray(routeCoordinates) || routeCoordinates.length < 2) {
+        return res.status(400).json({ 
+          message: "Route coordinates required (array of {lat, lng} with at least 2 points)" 
+        });
+      }
+      
+      // Validate coordinates
+      for (const coord of routeCoordinates) {
+        if (typeof coord.lat !== 'number' || typeof coord.lng !== 'number') {
+          return res.status(400).json({ 
+            message: "Each coordinate must have numeric lat and lng properties" 
+          });
+        }
+      }
+      
+      const speed = typeof averageSpeed === 'number' && averageSpeed > 0 ? averageSpeed : 50;
+      
+      console.log(`[TRAFFIC-LIGHTS] Analyzing route with ${routeCoordinates.length} points at ${speed} km/h`);
+      
+      const analysis = analyzeGreenWave(routeCoordinates, speed);
+      
+      console.log(`[TRAFFIC-LIGHTS] Found ${analysis.totalTrafficLights} traffic lights, ${analysis.greenLightPercentage}% green wave`);
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('[TRAFFIC-LIGHTS] Error analyzing route:', error);
+      res.status(500).json({ message: "Failed to analyze traffic lights" });
+    }
+  });
+  
+  // Get traffic lights for a specific route segment
+  app.post("/api/traffic-lights/along-route", async (req: Request, res: Response) => {
+    try {
+      const { routeCoordinates } = req.body;
+      
+      if (!routeCoordinates || !Array.isArray(routeCoordinates) || routeCoordinates.length < 2) {
+        return res.status(400).json({ 
+          message: "Route coordinates required" 
+        });
+      }
+      
+      const lights = getTrafficLightsAlongRoute(routeCoordinates);
+      
+      res.json({
+        trafficLights: lights,
+        count: lights.length
+      });
+    } catch (error) {
+      console.error('[TRAFFIC-LIGHTS] Error getting traffic lights:', error);
+      res.status(500).json({ message: "Failed to get traffic lights" });
+    }
+  });
+  
+  // Get speed recommendation for approaching traffic light
+  app.post("/api/traffic-lights/speed-recommendation", async (req: Request, res: Response) => {
+    try {
+      const { currentPosition, trafficLight, currentSpeed } = req.body;
+      
+      if (!currentPosition || typeof currentPosition.lat !== 'number' || typeof currentPosition.lng !== 'number') {
+        return res.status(400).json({ message: "Current position with lat/lng required" });
+      }
+      
+      if (!trafficLight || !trafficLight.coordinates) {
+        return res.status(400).json({ message: "Traffic light data required" });
+      }
+      
+      const speed = typeof currentSpeed === 'number' && currentSpeed > 0 ? currentSpeed : 50;
+      
+      const recommendation = getSpeedRecommendation(currentPosition, trafficLight, speed);
+      
+      res.json(recommendation);
+    } catch (error) {
+      console.error('[TRAFFIC-LIGHTS] Error getting speed recommendation:', error);
+      res.status(500).json({ message: "Failed to get speed recommendation" });
     }
   });
 
