@@ -4428,7 +4428,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   return (
     <div className={cn("relative w-full h-full overflow-hidden pointer-events-auto", className)} data-testid="maplibre-container">
       {/* ISOLATED: MapLibre container - wrapped in its own div to prevent CSS leakage */}
-      <div className="absolute inset-0 pointer-events-auto">
+      <div className="absolute inset-0 pointer-events-auto z-10">
         <div 
           ref={mapContainer} 
           className="absolute inset-0 pointer-events-auto" 
@@ -4442,8 +4442,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       </div>
       
       {/* ISOLATED: All overlays outside MapLibre's DOM tree to avoid CSS conflicts */}
-      <div className="absolute inset-0 pointer-events-none" data-testid="map-overlays">
-        {/* Loading Overlay - DISABLED to fix gray overlay issue */}
+      <div className="absolute inset-0 pointer-events-none z-20" data-testid="map-overlays">
+        {/* Note: Loading overlay removed - map loads directly */}
         
         {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
         <StaticRouteOverlay
