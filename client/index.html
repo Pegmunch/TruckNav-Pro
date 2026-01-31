@@ -98,14 +98,29 @@
     <div id="root"></div>
     
     <script>
-      // Immediately hide paywall on public pages
+      // Immediately hide paywall on public pages and add auto-hide timeout
       (function() {
         var path = window.location.pathname;
         var publicPages = ['/pricing', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/about', '/subscribe'];
         var isPublicPage = publicPages.some(function(p) { return path === p || path.startsWith(p + '/'); });
+        var paywall = document.getElementById('static-paywall');
         
         if (isPublicPage) {
-          document.getElementById('static-paywall').style.display = 'none';
+          paywall.style.display = 'none';
+        } else {
+          // Auto-hide after 3 seconds - React should have loaded by then
+          setTimeout(function() {
+            if (paywall && window.__reactMounted) {
+              paywall.style.display = 'none';
+            }
+          }, 3000);
+          
+          // Fallback: if React still hasn't mounted after 8 seconds, hide paywall anyway
+          setTimeout(function() {
+            if (paywall) {
+              paywall.style.display = 'none';
+            }
+          }, 8000);
         }
       })();
     </script>
