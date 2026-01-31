@@ -1137,7 +1137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/subscription/create', isAuthenticated, async (req: any, res: Response) => {
     try {
       const userId = req.user.claims.sub;
-      const { planId } = req.body;
+      const { planId, termsAccepted } = req.body;
 
       if (!planId) {
         return res.status(400).json({ message: "Plan ID is required" });
@@ -1148,10 +1148,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Auto-accept terms if provided in request and not yet accepted in DB
       if (!user.hasAcceptedTerms) {
-        return res.status(403).json({ 
-          message: "Terms and conditions must be accepted before creating a subscription" 
-        });
+        if (termsAccepted) {
+          await storage.updateUser(userId, {
+            hasAcceptedTerms: true,
+            termsAcceptedAt: new Date()
+          });
+        } else {
+          return res.status(403).json({ 
+            message: "Terms and conditions must be accepted before creating a subscription" 
+          });
+        }
       }
 
       const plan = await storage.getSubscriptionPlan(planId);
