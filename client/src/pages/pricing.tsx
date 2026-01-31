@@ -56,9 +56,9 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Pricing Grid */}
+        {/* Pricing Grid - sorted by price ascending */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 px-1 sm:px-0">
-          {plans?.map((plan) => {
+          {plans?.slice().sort((a, b) => parseFloat(a.priceGBP) - parseFloat(b.priceGBP)).map((plan) => {
             const isBestValue = plan.name === "12 Months";
             const isCurrentUserPlan = isCurrentPlan(plan.id);
             const features = plan.features as string[] || [];
