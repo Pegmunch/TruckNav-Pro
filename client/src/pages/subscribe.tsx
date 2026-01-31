@@ -8,10 +8,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Check, AlertCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, AlertCircle, AlertTriangle, LogIn } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
-import type { SubscriptionPlan } from "@shared/schema";
+import type { SubscriptionPlan, User } from "@shared/schema";
 
 interface SubscriptionCreateResponse {
   subscriptionId: string;
@@ -229,10 +229,42 @@ export default function SubscribePage() {
   const { hasAcceptedTerms, setConsentAccepted } = useLegalConsent();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
+  const { data: user, isLoading: userLoading } = useQuery<User | null>({
+    queryKey: ["/api/auth/user"],
+  });
+
   const { data: plan, isLoading: planLoading } = useQuery<SubscriptionPlan[], Error, SubscriptionPlan | undefined>({
     queryKey: ["/api/subscription/plans"],
     select: (plans) => plans.find(p => p.id === planId),
   });
+
+  if (!userLoading && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <LogIn className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle>Sign In Required</CardTitle>
+            <CardDescription>
+              Please sign in to subscribe to a plan
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={() => window.location.href = '/api/login'} className="w-full" size="lg">
+              <LogIn className="h-4 w-4 mr-2" />
+              Sign In with Replit
+            </Button>
+            <Button variant="outline" onClick={() => setLocation('/pricing')} className="w-full">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Pricing
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const createSubscriptionMutation = useMutation({
     mutationFn: async (planId: string) => {
@@ -267,12 +299,12 @@ export default function SubscribePage() {
     }
   }, [hasAcceptedTerms, initiateSubscription]);
 
-  if (planLoading || !plan) {
+  if (userLoading || planLoading || !plan) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading plan details...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
