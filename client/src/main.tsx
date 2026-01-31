@@ -112,24 +112,26 @@ try {
 // Initialize CSRF token in background (don't wait for it)
 initializeCSRF();
 
-// Render the actual TruckNav Pro app
-const rootElement = document.getElementById("root");
-if (rootElement) {
-  console.log('[MOUNT] Starting React render...');
-  
-  // Mark React as mounted to prevent fallback from showing
+// App wrapper that marks mount complete
+const AppWithMountFlag = () => {
+  // Mark as mounted after first render
   (window as any).__reactMounted = true;
-  
-  // Use a simpler approach - render immediately and let ErrorBoundary catch issues
-  const root = createRoot(rootElement);
-  
-  root.render(
+  return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
     </ErrorBoundary>
   );
+};
+
+// Render the actual TruckNav Pro app
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  console.log('[MOUNT] Starting React render...');
+  
+  const root = createRoot(rootElement);
+  root.render(<AppWithMountFlag />);
   
   console.log('[MOUNT] React render initiated');
 } else {
