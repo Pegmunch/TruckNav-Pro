@@ -5109,20 +5109,8 @@ export default function NavigationPage() {
     };
   }, []);
 
-  // Wait for consent state to load before deciding what to show
-  // This prevents flashing Legal Disclaimer in PWA mode when consent is already stored
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Show legal disclaimer BEFORE GPS starts - prevents permission popup during consent
-  if (!hasAcceptedTerms) {
-    return <LegalDisclaimerSimple onAccept={handleAccept} />;
-  }
+  // Bypass all loading checks and legal disclaimers for preview
+  // Note: Re-enable for production
 
   // Only start GPS AFTER consent is accepted
   // Key prop forces complete remount when epoch changes, giving fresh initial state
