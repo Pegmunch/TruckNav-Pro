@@ -204,7 +204,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [preferences, setPreferences] = useState<MapPreferences>(loadMapPreferences);
-  const [isLoaded, setIsLoaded] = useState(true); // Start as loaded to prevent white overlay flash
+  const [isLoaded, setIsLoaded] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(preferences.zoomLevel);
   const [viewState, setViewState] = useState<ViewState>('normal');
   const is3DMode = viewState === 'tilted' || viewState === 'overhead';
@@ -4443,26 +4443,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       
       {/* ISOLATED: All overlays outside MapLibre's DOM tree to avoid CSS conflicts */}
       <div className="absolute inset-0 pointer-events-none" data-testid="map-overlays">
-        {/* Loading Overlay - prevents map flashing during initialization */}
-        <div 
-          className={cn(
-            "absolute inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 transition-opacity duration-300",
-            isLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
-          )}
-          data-testid="map-loading-overlay"
-          aria-hidden={isLoaded}
-          style={{
-            transitionDelay: isLoaded ? '0ms' : 'undefined'
-          }}
-        >
-          <div className="flex flex-col items-center gap-3">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
-              <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" />
-            </div>
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Loading map...</span>
-          </div>
-        </div>
+        {/* Loading overlay removed to prevent white screen issues */}
         
         {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
         <StaticRouteOverlay
