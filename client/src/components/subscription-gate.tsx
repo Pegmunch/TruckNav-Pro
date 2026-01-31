@@ -153,7 +153,7 @@ function LoginPrompt() {
           <div className="flex flex-col gap-3 pt-2">
             <a href="/api/login">
               <Button className="w-full" size="lg" data-testid="button-sign-in">
-                Sign In with Replit
+                Sign In
               </Button>
             </a>
             <Link href="/pricing">
