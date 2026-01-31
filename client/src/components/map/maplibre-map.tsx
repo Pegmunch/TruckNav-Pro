@@ -1273,10 +1273,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     };
   }, [hideControls, hideCompass, isLoaded]);
 
-  const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number) => {
+  const updateLayerVisibility = useCallback((mapInstance: maplibregl.Map, viewMode: 'roads' | 'satellite', zoom: number, currentViewState: ViewState) => {
     if (!mapInstance.isStyleLoaded()) return;
 
-    const is3D = zoom >= 17;
+    // Use actual view state for 3D determination (tilted or overhead = 3D layers)
+    const is3D = currentViewState === 'tilted' || currentViewState === 'overhead';
     
     // Helper to safely set layer visibility only if layer exists
     const safeSetVisibility = (layerId: string, visibility: 'visible' | 'none') => {
@@ -1363,9 +1364,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         ensureLabelsOverlay();
         safeSetVisibility('labels-overlay-layer', 'visible');
         
-        // CRITICAL: Hide traffic layer in satellite mode - fixes black lines issue
+        // Traffic layer is now controlled by showTraffic toggle in both modes
+        // Previously hidden in satellite mode, now user can toggle it
         if (mapInstance.getLayer('traffic-flow-layer')) {
-          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'none');
+          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showTraffic ? 'visible' : 'none');
         }
       }
       
@@ -1640,10 +1642,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         
         setCurrentZoom(zoom);
         
-        const zoomThresholdCrossed = (prevZoom < 17 && zoom >= 17) || (prevZoom >= 17 && zoom < 17);
-        if (zoomThresholdCrossed) {
-          updateLayerVisibility(map.current, currentPrefs.mapViewMode, zoom);
-        }
+        // Layer visibility is now controlled by the effect that watches viewState
+        // No need to update on zoom threshold crossing since 3D is based on viewState not zoom
 
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current);
@@ -1967,9 +1967,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   useEffect(() => {
     if (!map.current || !isLoaded) return;
-    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', preferences.mapViewMode, 'zoom:', currentZoom);
-    updateLayerVisibility(map.current, preferences.mapViewMode, currentZoom);
-  }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom]);
+    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', preferences.mapViewMode, 'viewState:', viewState, 'zoom:', currentZoom);
+    updateLayerVisibility(map.current, preferences.mapViewMode, currentZoom, viewState);
+  }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom, viewState, showTraffic]);
 
   // Dynamically control map rotation gestures during navigation
   useEffect(() => {
