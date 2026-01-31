@@ -89,5 +89,22 @@
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Fallback: If React hasn't mounted after 8 seconds, show subscription page
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        var loader = document.getElementById('initial-loader');
+        if (loader && root && root.children.length === 1) {
+          loader.innerHTML = '<div style="max-width:400px;padding:24px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);text-align:center;">' +
+            '<div style="width:64px;height:64px;margin:0 auto 16px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">' +
+            '<svg width="32" height="32" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>' +
+            '</div>' +
+            '<h2 style="font-size:20px;font-weight:600;margin-bottom:8px;color:#111;">Premium Feature</h2>' +
+            '<p style="color:#666;margin-bottom:20px;">Subscribe to TruckNav Pro to unlock navigation features.</p>' +
+            '<a href="/pricing" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:500;">View Plans</a>' +
+            '</div>';
+        }
+      }, 8000);
+    </script>
   </body>
 </html>
