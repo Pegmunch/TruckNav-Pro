@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode,
 import Joyride, { Step, CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const ONBOARDING_STORAGE_KEY = 'trucknav_onboarding_v2_completed';
-const FLEET_ONBOARDING_STORAGE_KEY = 'trucknav_fleet_onboarding_v1_completed';
+const ONBOARDING_STORAGE_KEY = 'trucknav_onboarding_v3_completed';
+const FLEET_ONBOARDING_STORAGE_KEY = 'trucknav_fleet_onboarding_v2_completed';
 
 interface OnboardingContextType {
   isOnboardingComplete: boolean;
@@ -54,54 +54,84 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
 
   const navigationTourSteps: Step[] = useMemo(() => [
     {
-      target: '[data-tour-id="menu-button"]',
-      content: 'Welcome to TruckNav Pro! Tap the menu button to access route planning, vehicle settings, and more.',
-      placement: 'right',
+      target: 'body',
+      content: '🚛 Welcome to TruckNav Pro! Your professional truck navigation companion with intelligent routing, real-time traffic, and fleet management.',
+      placement: 'center',
       disableBeacon: true,
-      title: 'Menu Button'
+      title: '👋 Welcome to TruckNav Pro!'
+    },
+    {
+      target: '[data-tour-id="menu-button"]',
+      content: 'Tap here to access route planning, recent destinations, vehicle profiles, and app settings. Everything you need is one tap away!',
+      placement: 'right',
+      title: '📍 Main Menu'
     },
     {
       target: '[data-tour-id="header-settings"]',
-      content: 'Use the settings gear to quickly change your vehicle profile, language, and theme preferences.',
+      content: 'Quick access to change your vehicle profile (Class 1 Truck or Car mode), language, and light/dark theme.',
       placement: 'bottom',
-      title: 'Quick Settings'
+      title: '⚙️ Quick Settings'
     },
     {
       target: '[data-tour-id="right-controls"]',
-      content: 'Map controls: Zoom in/out, toggle 3D view, show live traffic, switch to satellite view. The red-bordered button shows reported incidents on the map.',
+      content: 'Map controls for zoom, 3D view toggle (cycles through 3 tilt positions!), live traffic overlay, satellite view, and incident alerts.',
       placement: 'left',
-      title: 'Map Controls'
+      title: '🗺️ Map Controls'
+    },
+    {
+      target: '[data-testid="button-toggle-3d"]',
+      content: 'NEW! 3-State Tilt Control: Press to cycle between Tilted (3D perspective), Overhead (flat heading-up), and Normal (2D north-up) views.',
+      placement: 'left',
+      title: '🎮 3D View Toggle'
+    },
+    {
+      target: '[data-testid="button-toggle-traffic"]',
+      content: 'Show real-time traffic conditions on the map. Colors indicate flow: Blue = Free, Green = Light, Yellow = Moderate, Orange = Heavy, Red = Standstill.',
+      placement: 'left',
+      title: '🚦 Live Traffic'
     },
     {
       target: '[data-tour-id="speedometer"]',
-      content: 'The speedometer shows your current speed, speed limit, and road information during navigation.',
+      content: 'Professional speedometer showing current speed, speed limit, and road name. Alerts you when exceeding the limit!',
       placement: 'top',
-      title: 'Speed Display'
+      title: '⏱️ Speed Display'
     },
     {
       target: '[data-tour-id="nav-button"]',
-      content: 'During navigation, use this button to recenter the map on your current position.',
+      content: 'Recenter the map on your current GPS position. During navigation, keeps you centered on the route.',
       placement: 'right',
-      title: 'Navigation Controls'
+      title: '📌 Recenter Button'
     },
     {
       target: '[data-tour-id="voice-button"]',
-      content: 'Enable voice commands to report traffic incidents hands-free while driving. Say "report traffic" or "report accident".',
+      content: 'Hands-free voice commands! Say "report traffic", "report accident", or "report hazard" while driving to contribute to live traffic data.',
       placement: 'right',
-      title: 'Voice Commands'
+      title: '🎤 Voice Commands'
     },
     {
       target: '[data-tour-id="incident-button"]',
-      content: 'The more users report traffic, the more accurate live data becomes! To report manually: Use Preview mode while stationary. If navigating, cancel your route, use Recent Destinations to re-enter, press Preview (orange), then tap Report Incident. Press Go to continue your route.',
+      content: 'Report traffic incidents to help fellow drivers. The more reports, the better the live data! Long-press for quick reporting.',
       placement: 'right',
-      title: 'Traffic Reporting'
+      title: '⚠️ Traffic Reporting'
+    },
+    {
+      target: 'body',
+      content: '✨ NEW FEATURES:\n\n🚦 Smart Traffic Lights - Green wave optimization shows optimal speed to catch green lights!\n\n🔄 Auto-Reroute - Automatically recalculates if you deviate from route\n\n🗣️ Voice Navigation - Turn-by-turn guidance in 17 languages',
+      placement: 'center',
+      title: '🆕 What\'s New'
     },
     ...(!isMobile ? [{
       target: '[data-tour-id="desktop-fleet-link"]',
-      content: 'Access the Fleet Management system from here to manage your vehicles, drivers, compliance, and more.',
+      content: 'Enterprise Fleet Management: Vehicle registry, driver management, service records, fuel tracking, compliance monitoring, and real-time fleet GPS tracking.',
       placement: 'bottom' as const,
-      title: 'Fleet Management'
-    }] : [])
+      title: '🏢 Fleet Management'
+    }] : []),
+    {
+      target: 'body',
+      content: 'You\'re all set! Start by entering a destination in the menu. Safe travels! 🛣️',
+      placement: 'center',
+      title: '✅ Ready to Navigate!'
+    }
   ], [isMobile]);
 
   const fleetTourSteps: Step[] = useMemo(() => [
@@ -192,24 +222,20 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
     }
   ], []);
 
-  // DISABLED: Auto-start tour removed - users can manually trigger tour from menu
-  // This prevents the "NAV" label and tour highlights from appearing unexpectedly
-  // To re-enable auto-start, uncomment the effect below
-  /*
+  // Auto-start tour for first-time users - shows welcome tour after brief delay
   useEffect(() => {
     if (isFleetPage && !isFleetOnboardingComplete && isReady) {
       const timer = setTimeout(() => {
         setRunFleetTour(true);
-      }, 1000);
+      }, 1500);
       return () => clearTimeout(timer);
     } else if (!isFleetPage && !isOnboardingComplete && isReady) {
       const timer = setTimeout(() => {
         setRunTour(true);
-      }, 1500);
+      }, 2000); // 2 second delay to let map fully load
       return () => clearTimeout(timer);
     }
   }, [isReady, isOnboardingComplete, isFleetOnboardingComplete, isFleetPage]);
-  */
 
   const handleJoyrideCallback = useCallback((data: CallBackProps) => {
     const { status, action, type } = data;
@@ -290,48 +316,80 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
 
   const joyrideStyles = {
     options: {
-      primaryColor: '#3b82f6',
+      primaryColor: '#2563eb',
       zIndex: 10000,
-      arrowColor: '#fff',
-      backgroundColor: '#fff',
-      textColor: '#1f2937',
-      overlayColor: 'rgba(0, 0, 0, 0.5)'
+      arrowColor: '#1e293b',
+      backgroundColor: '#1e293b',
+      textColor: '#f8fafc',
+      overlayColor: 'rgba(0, 0, 0, 0.75)'
     },
     buttonNext: {
-      backgroundColor: '#3b82f6',
-      borderRadius: '8px',
-      padding: '8px 16px'
+      backgroundColor: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      background: '#3b82f6',
+      borderRadius: '10px',
+      padding: '10px 20px',
+      fontWeight: 600,
+      fontSize: '14px',
+      boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+      border: 'none',
+      transition: 'all 0.2s ease'
     },
     buttonBack: {
-      color: '#6b7280',
-      marginRight: '8px'
+      color: '#94a3b8',
+      marginRight: '12px',
+      fontWeight: 500
     },
     buttonSkip: {
-      color: '#9ca3af'
+      color: '#64748b',
+      fontWeight: 500
+    },
+    buttonClose: {
+      color: '#94a3b8'
     },
     tooltip: {
-      borderRadius: '12px',
-      padding: '16px'
+      borderRadius: '16px',
+      padding: '20px 24px',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      maxWidth: '380px'
     },
     tooltipTitle: {
-      fontSize: '18px',
-      fontWeight: 600,
-      marginBottom: '8px'
+      fontSize: '20px',
+      fontWeight: 700,
+      marginBottom: '12px',
+      color: '#f8fafc',
+      letterSpacing: '-0.02em'
     },
     tooltipContent: {
-      fontSize: '14px',
-      lineHeight: 1.5
+      fontSize: '15px',
+      lineHeight: 1.7,
+      color: '#cbd5e1',
+      whiteSpace: 'pre-line' as const
+    },
+    tooltipFooter: {
+      marginTop: '16px'
     },
     spotlight: {
-      borderRadius: '12px'
+      borderRadius: '16px',
+      boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.4)'
+    },
+    beacon: {
+      display: 'none'
+    },
+    beaconInner: {
+      backgroundColor: '#3b82f6'
+    },
+    beaconOuter: {
+      backgroundColor: 'rgba(59, 130, 246, 0.3)',
+      border: '2px solid #3b82f6'
     }
   };
 
   const joyrideLocale = {
-    back: 'Back',
-    close: 'Close',
-    last: 'Done',
-    next: 'Next',
+    back: '← Back',
+    close: '✕',
+    last: 'Get Started! 🚀',
+    next: 'Next →',
     skip: 'Skip Tour'
   };
 
