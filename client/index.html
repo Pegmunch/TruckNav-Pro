@@ -80,48 +80,34 @@
     <!-- TruckNav Pro is patent-protected technology owned by Bespoke Marketing.Ai Ltd -->
   </head>
   <body>
-    <!-- Static paywall OUTSIDE #root - React won't replace it -->
-    <div id="static-paywall" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);z-index:9999;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="max-width:420px;padding:32px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);text-align:center;">
-        <div style="width:72px;height:72px;margin:0 auto 20px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-          <svg width="36" height="36" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        </div>
-        <h1 style="font-size:24px;font-weight:700;margin-bottom:8px;color:#111;">TruckNav Pro</h1>
-        <h2 style="font-size:18px;font-weight:600;margin-bottom:12px;color:#374151;">Premium Feature</h2>
-        <p style="color:#6b7280;margin-bottom:24px;line-height:1.5;">Subscribe to unlock professional truck navigation with route planning, restrictions, and live traffic.</p>
-        <a href="/pricing" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:16px;">View Subscription Plans</a>
-        <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Already subscribed? <a href="/login" style="color:#2563eb;text-decoration:none;">Sign in</a></p>
-      </div>
-    </div>
-    
     <!-- React root -->
     <div id="root"></div>
     
+    <!-- Simple loading indicator while React loads -->
+    <div id="app-loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#fff;z-index:9999;">
+      <div style="text-align:center;">
+        <div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+        <p style="color:#6b7280;font-family:system-ui,sans-serif;">Loading TruckNav Pro...</p>
+      </div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
+    
     <script>
-      // Immediately hide paywall on public pages and add auto-hide timeout
+      // Hide loader when React mounts or after timeout
       (function() {
-        var path = window.location.pathname;
-        var publicPages = ['/pricing', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/about', '/subscribe'];
-        var isPublicPage = publicPages.some(function(p) { return path === p || path.startsWith(p + '/'); });
-        var paywall = document.getElementById('static-paywall');
-        
-        if (isPublicPage) {
-          paywall.style.display = 'none';
-        } else {
-          // Auto-hide after 3 seconds - React should have loaded by then
-          setTimeout(function() {
-            if (paywall && window.__reactMounted) {
-              paywall.style.display = 'none';
-            }
-          }, 3000);
-          
-          // Fallback: if React still hasn't mounted after 8 seconds, hide paywall anyway
-          setTimeout(function() {
-            if (paywall) {
-              paywall.style.display = 'none';
-            }
-          }, 8000);
-        }
+        var loader = document.getElementById('app-loader');
+        // Check every 100ms if React has mounted
+        var checkInterval = setInterval(function() {
+          if (window.__reactMounted && loader) {
+            loader.style.display = 'none';
+            clearInterval(checkInterval);
+          }
+        }, 100);
+        // Fallback: hide after 5 seconds regardless
+        setTimeout(function() {
+          if (loader) loader.style.display = 'none';
+          clearInterval(checkInterval);
+        }, 5000);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

@@ -125,11 +125,11 @@ const AppWithMountFlag = () => {
   );
 };
 
-// Hide static paywall when React takes over
-function hideStaticPaywall() {
-  const paywall = document.getElementById('static-paywall');
-  if (paywall) {
-    paywall.style.display = 'none';
+// Hide loading indicator when React takes over
+function hideLoader() {
+  const loader = document.getElementById('app-loader');
+  if (loader) {
+    loader.style.display = 'none';
   }
 }
 
@@ -138,8 +138,8 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   console.log('[MOUNT] Starting React render...');
   
-  // Hide static paywall immediately when React mounts
-  hideStaticPaywall();
+  // Hide loading indicator immediately when React mounts
+  hideLoader();
   
   const root = createRoot(rootElement);
   root.render(<AppWithMountFlag />);
