@@ -1209,9 +1209,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientSecret: paymentIntent?.client_secret,
         status: subscription.status,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating subscription:", error);
-      res.status(500).json({ message: "Failed to create subscription" });
+      // Return more specific error message for debugging
+      const errorMessage = error?.message || "Failed to create subscription";
+      const isStripeError = error?.type?.startsWith('Stripe') || error?.raw?.type;
+      res.status(500).json({ 
+        message: isStripeError ? `Payment error: ${errorMessage}` : errorMessage,
+        code: error?.code || 'SUBSCRIPTION_ERROR'
+      });
     }
   });
 

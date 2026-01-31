@@ -176,7 +176,15 @@ function clearCSRFToken() {
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    // Try to parse JSON error response and extract the message
+    try {
+      const json = JSON.parse(text);
+      const errorMessage = json.message || json.error || text;
+      throw new Error(errorMessage);
+    } catch (parseError) {
+      // Not JSON, use raw text
+      throw new Error(text || `Request failed with status ${res.status}`);
+    }
   }
 }
 
