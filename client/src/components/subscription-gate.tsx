@@ -23,6 +23,12 @@ export function SubscriptionGate({
   fallback,
   showUpgradePrompt = true,
 }: SubscriptionGateProps) {
+  // Bypass auth/subscription in development mode for preview
+  const isDevelopment = import.meta.env.DEV;
+  if (isDevelopment) {
+    return <>{children}</>;
+  }
+
   // Check authentication first
   const { data: authUser, isLoading: authLoading } = useQuery<any>({
     queryKey: ["/api/auth/user"],
