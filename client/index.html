@@ -81,7 +81,7 @@
   </head>
   <body>
     <div id="root">
-      <!-- Static paywall shown by default - React hides it when loaded -->
+      <!-- Static paywall - hidden by script if on allowed pages -->
       <div id="static-paywall" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);z-index:9999;font-family:system-ui,-apple-system,sans-serif;">
         <div style="max-width:420px;padding:32px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.12);text-align:center;">
           <div style="width:72px;height:72px;margin:0 auto 20px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
@@ -94,7 +94,29 @@
           <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Already subscribed? <a href="/login" style="color:#2563eb;text-decoration:none;">Sign in</a></p>
         </div>
       </div>
+      <!-- Loading indicator for allowed pages -->
+      <div id="page-loader" style="display:none;position:fixed;inset:0;background:#fff;z-index:9998;align-items:center;justify-content:center;">
+        <div style="text-align:center;font-family:system-ui,sans-serif;">
+          <div style="font-size:24px;font-weight:bold;color:#2563eb;margin-bottom:8px;">TruckNav Pro</div>
+          <div style="color:#666;">Loading...</div>
+        </div>
+      </div>
     </div>
+    <script>
+      // Hide paywall on public pages (pricing, login, etc.) - show loading instead
+      (function() {
+        var path = window.location.pathname;
+        var publicPages = ['/pricing', '/login', '/register', '/forgot-password', '/reset-password', '/terms', '/privacy', '/about'];
+        var isPublicPage = publicPages.some(function(p) { return path === p || path.startsWith(p + '/'); });
+        
+        if (isPublicPage) {
+          var paywall = document.getElementById('static-paywall');
+          var loader = document.getElementById('page-loader');
+          if (paywall) paywall.style.display = 'none';
+          if (loader) loader.style.display = 'flex';
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
