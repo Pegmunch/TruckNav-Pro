@@ -26,6 +26,9 @@ import SubscribePage from "@/pages/subscribe";
 import FleetManagement from "@/pages/fleet-management";
 import { SocialNetworkPage } from "@/pages/social-network";
 import { SubscriptionGate } from "@/components/subscription-gate";
+import ConnectStore from "@/pages/connect-store";
+import ConnectSuccess from "@/pages/connect-success";
+import ConnectDashboard from "@/pages/connect-dashboard";
 
 function MobileThemeEnforcer() {
   const { currentTheme, setTheme } = useTheme();
@@ -84,6 +87,9 @@ function Router() {
           <Route path="/window/settings" component={SettingsWindow} />
           <Route path="/fleet-management" component={ProtectedFleetPage} />
           <Route path="/social" component={SocialNetworkPage} />
+          <Route path="/connect/store/:accountId" component={ConnectStore} />
+          <Route path="/connect/success" component={ConnectSuccess} />
+          <Route path="/connect/dashboard" component={ConnectDashboard} />
           <Route component={NotFound} />
         </Switch>
       </div>
