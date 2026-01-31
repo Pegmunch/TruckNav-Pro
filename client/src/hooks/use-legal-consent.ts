@@ -222,10 +222,14 @@ export function useLegalConsent(): UseLegalConsentReturn {
     setConsentData(newConsentData);
     saveConsentData(newConsentData);
 
-    // Fire-and-forget server sync - don't block consent on API response
-    apiRequest('POST', '/api/users/accept-terms', {})
-      .then(() => console.log('Consent recorded on server'))
-      .catch((error) => console.error('Failed to record consent on server:', error));
+    // IMPORTANT: Wait for server to record consent before allowing subscription creation
+    try {
+      await apiRequest('POST', '/api/users/accept-terms', {});
+      console.log('Consent recorded on server');
+    } catch (error) {
+      console.error('Failed to record consent on server:', error);
+      // Still continue - local consent is saved, subscription creation will retry server sync
+    }
   }, [saveConsentData]);
 
   /**
