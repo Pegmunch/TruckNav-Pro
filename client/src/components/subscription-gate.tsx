@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Lock, Crown, Truck, Building2 } from "lucide-react";
+import { Lock, Crown, Truck, Building2, LogIn } from "lucide-react";
 import type { UserSubscription } from "@shared/schema";
 
 interface SubscriptionStatusResponse {
@@ -23,13 +23,23 @@ export function SubscriptionGate({
   fallback,
   showUpgradePrompt = true,
 }: SubscriptionGateProps) {
-  const { data: status, isLoading, isError } = useQuery<SubscriptionStatusResponse>({
+  // Check authentication first
+  const { data: authUser, isLoading: authLoading } = useQuery<any>({
+    queryKey: ["/api/auth/user"],
+    retry: false,
+  });
+
+  const isAuthenticated = !!authUser;
+
+  // Only check subscription if authenticated
+  const { data: status, isLoading: subLoading, isError } = useQuery<SubscriptionStatusResponse>({
     queryKey: ["/api/subscription/status"],
     retry: false,
     staleTime: 30000,
+    enabled: isAuthenticated, // Only run if authenticated
   });
 
-  if (isLoading) {
+  if (authLoading || (isAuthenticated && subLoading)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center p-8 bg-white z-50" data-testid="subscription-gate-loading">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -37,7 +47,15 @@ export function SubscriptionGate({
     );
   }
 
-  // If there's an error (e.g., 401 not authenticated) or no subscription, show paywall
+  // If not authenticated, show login prompt instead of subscription paywall
+  if (!isAuthenticated) {
+    if (!showUpgradePrompt) {
+      return fallback ? <>{fallback}</> : null;
+    }
+    return <LoginPrompt />;
+  }
+
+  // If there's an error checking subscription, show paywall
   if (isError) {
     if (!showUpgradePrompt) {
       return fallback ? <>{fallback}</> : null;
@@ -94,6 +112,60 @@ function checkSubscriptionAccess(
 
 interface SubscriptionPaywallProps {
   requiredTier: "navigation" | "fleet" | "any";
+}
+
+function LoginPrompt() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center p-6 bg-white z-50" data-testid="login-prompt">
+      <Card className="max-w-md w-full border-2 border-blue-200 bg-white shadow-lg text-gray-900">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <LogIn className="w-8 h-8 text-primary" />
+          </div>
+          <CardTitle className="text-xl">Sign In Required</CardTitle>
+          <CardDescription className="text-base">
+            Please sign in to access TruckNav Pro. New users can view our plans and subscribe after signing in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">TruckNav Pro offers:</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-primary" />
+                Truck-safe route planning
+              </li>
+              <li className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-primary" />
+                Height & weight restrictions
+              </li>
+              <li className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-primary" />
+                3D navigation with turn-by-turn
+              </li>
+              <li className="flex items-center gap-2">
+                <Crown className="w-4 h-4 text-primary" />
+                Fleet management tools
+              </li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-2">
+            <a href="/api/login">
+              <Button className="w-full" size="lg" data-testid="button-sign-in">
+                Sign In with Replit
+              </Button>
+            </a>
+            <Link href="/pricing">
+              <Button variant="outline" className="w-full" size="lg">
+                View Plans First
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 function SubscriptionPaywall({ requiredTier }: SubscriptionPaywallProps) {
