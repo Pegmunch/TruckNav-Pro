@@ -314,12 +314,20 @@ const SettingsModal = memo(function SettingsModal({
                 setMapPreferences(prev => ({ ...prev, mapViewMode: value }))
               }
             >
-              <SelectTrigger className="w-32" data-testid="select-map-view-mode">
-                <SelectValue />
+              <SelectTrigger 
+                className="w-32 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600" 
+                data-testid="select-map-view-mode"
+                style={{ touchAction: 'manipulation' }}
+              >
+                <SelectValue placeholder="Select view" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="roads">Roads</SelectItem>
-                <SelectItem value="satellite">Satellite</SelectItem>
+              <SelectContent 
+                className="z-[10000] bg-white dark:bg-gray-800"
+                position="popper"
+                sideOffset={4}
+              >
+                <SelectItem value="roads" className="cursor-pointer">Roads</SelectItem>
+                <SelectItem value="satellite" className="cursor-pointer">Satellite</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -414,7 +422,11 @@ const SettingsModal = memo(function SettingsModal({
                 setMapPreferences(prev => ({ ...prev, poiSearchRadius: parseInt(value) }))
               }
             >
-              <SelectTrigger className="w-40" data-testid="select-poi-radius">
+              <SelectTrigger 
+                className="w-40 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600" 
+                data-testid="select-poi-radius"
+                style={{ touchAction: 'manipulation' }}
+              >
                 <SelectValue>
                   {system === 'imperial' ? (
                     mapPreferences.poiSearchRadius === 5 ? '3 miles' :
@@ -428,20 +440,24 @@ const SettingsModal = memo(function SettingsModal({
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">
+              <SelectContent 
+                className="z-[10000] bg-white dark:bg-gray-800"
+                position="popper"
+                sideOffset={4}
+              >
+                <SelectItem value="5" className="cursor-pointer">
                   {system === 'imperial' ? '3 miles' : '5 km'}
                 </SelectItem>
-                <SelectItem value="10">
+                <SelectItem value="10" className="cursor-pointer">
                   {system === 'imperial' ? '6 miles' : '10 km'} {/* Clean display for 6 miles */}
                 </SelectItem>
-                <SelectItem value="25">
+                <SelectItem value="25" className="cursor-pointer">
                   {system === 'imperial' ? '15 miles' : '25 km'}
                 </SelectItem>
-                <SelectItem value="50">
+                <SelectItem value="50" className="cursor-pointer">
                   {system === 'imperial' ? '30 miles' : '50 km'}
                 </SelectItem>
-                <SelectItem value="100">
+                <SelectItem value="100" className="cursor-pointer">
                   {system === 'imperial' ? '60 miles' : '100 km'}
                 </SelectItem>
               </SelectContent>
