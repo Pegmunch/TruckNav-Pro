@@ -56,12 +56,12 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useGPS } from "@/contexts/gps-context";
+import { useTranslation } from "react-i18next";
+import { countries } from "@/data/countries";
 
 // Import existing components
 import { MeasurementSelector } from "@/components/measurement/measurement-selector";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
-import LanguageSelector from "@/components/language/language-selector";
-import CountryLanguageSelector from "@/components/country/country-language-selector";
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import LegalNotices from "@/components/legal/legal-notices";
 import { navigationVoice } from "@/lib/navigation-voice";
@@ -181,6 +181,7 @@ const SettingsModal = memo(function SettingsModal({
   const { toast } = useToast();
   const { system, convertDistance } = useMeasurement();
   const gps = useGPS();
+  const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState(defaultTab);
   
   // Settings state
@@ -925,25 +926,75 @@ const SettingsModal = memo(function SettingsModal({
                           </CardHeader>
                           <CardContent className="space-y-6">
                             <div className="space-y-3">
-                              <Label className="text-base font-medium">Country & Language Selection</Label>
-                              <CountryLanguageSelector
-                                onValueChange={handleCountryLanguageChange}
-                                mode="country-first"
-                                variant="default"
-                                showFavorites={true}
-                                showRecent={true}
-                                showTruckingMarkets={true}
-                              />
+                              <Label className="text-base font-medium">Country Selection</Label>
+                              <Select
+                                value={localStorage.getItem('trucknav_country') || 'GB'}
+                                onValueChange={(countryCode) => {
+                                  const countryData = countries.find(c => c.code === countryCode);
+                                  if (countryData) {
+                                    localStorage.setItem('trucknav_country', countryCode);
+                                    handleCountryLanguageChange(countryCode, countryData.defaultLanguage);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="w-full" data-testid="country-selector">
+                                  <SelectValue placeholder="Select country" />
+                                </SelectTrigger>
+                                <SelectContent position="popper" className="z-[10000] max-h-[300px]">
+                                  {countries.filter(c => c.truckingMarket).map((country) => (
+                                    <SelectItem key={country.code} value={country.code}>
+                                      <span className="flex items-center gap-2">
+                                        <span>{country.flag}</span>
+                                        <span>{country.name}</span>
+                                      </span>
+                                    </SelectItem>
+                                  ))}
+                                  <Separator className="my-1" />
+                                  {countries.filter(c => !c.truckingMarket).slice(0, 20).map((country) => (
+                                    <SelectItem key={country.code} value={country.code}>
+                                      <span className="flex items-center gap-2">
+                                        <span>{country.flag}</span>
+                                        <span>{country.name}</span>
+                                      </span>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                             
                             <Separator />
                             
                             <div className="space-y-3">
-                              <Label className="text-base font-medium">Quick Language Selection</Label>
-                              <LanguageSelector
-                                variant="dropdown"
-                                showCountryFlags={true}
-                              />
+                              <Label className="text-base font-medium">Language Selection</Label>
+                              <Select
+                                value={i18n.language}
+                                onValueChange={(languageCode) => {
+                                  i18n.changeLanguage(languageCode);
+                                  localStorage.setItem('trucknav_language', languageCode);
+                                }}
+                              >
+                                <SelectTrigger className="w-full" data-testid="language-selector">
+                                  <SelectValue placeholder="Select language" />
+                                </SelectTrigger>
+                                <SelectContent position="popper" className="z-[10000] max-h-[300px]">
+                                  <SelectItem value="en-GB">🇬🇧 English (UK)</SelectItem>
+                                  <SelectItem value="en-US">🇺🇸 English (US)</SelectItem>
+                                  <SelectItem value="de-DE">🇩🇪 Deutsch</SelectItem>
+                                  <SelectItem value="fr-FR">🇫🇷 Français</SelectItem>
+                                  <SelectItem value="es-ES">🇪🇸 Español</SelectItem>
+                                  <SelectItem value="it-IT">🇮🇹 Italiano</SelectItem>
+                                  <SelectItem value="pt-BR">🇧🇷 Português (BR)</SelectItem>
+                                  <SelectItem value="nl-NL">🇳🇱 Nederlands</SelectItem>
+                                  <SelectItem value="pl-PL">🇵🇱 Polski</SelectItem>
+                                  <SelectItem value="ru-RU">🇷🇺 Русский</SelectItem>
+                                  <SelectItem value="ja-JP">🇯🇵 日本語</SelectItem>
+                                  <SelectItem value="zh-CN">🇨🇳 中文</SelectItem>
+                                  <SelectItem value="ko-KR">🇰🇷 한국어</SelectItem>
+                                  <SelectItem value="ar-SA">🇸🇦 العربية</SelectItem>
+                                  <SelectItem value="hi-IN">🇮🇳 हिन्दी</SelectItem>
+                                  <SelectItem value="tr-TR">🇹🇷 Türkçe</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </CardContent>
                         </Card>
