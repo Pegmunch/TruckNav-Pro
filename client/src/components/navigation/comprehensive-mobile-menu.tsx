@@ -78,6 +78,7 @@ import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel
 import SettingsModal from "@/components/settings/settings-modal";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
 import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
 import { DriverFatigueAlert } from "@/components/safety/driver-fatigue-alert";
 import { LanguageSelector } from "@/components/settings/language-selector";
@@ -676,6 +677,14 @@ function ComprehensiveMobileMenu({
                 >
                   <Settings className="h-4 w-4" />
                   <span className="text-xs">Tools</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="offline" 
+                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  data-testid="tab-offline"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="text-xs">Offline</span>
                 </TabsTrigger>
               </TabsList>
             )}
@@ -1762,6 +1771,23 @@ function ComprehensiveMobileMenu({
                 </Card>
               </TabsContent>
 
+              {/* OFFLINE TAB - Offline Map Downloads */}
+              <TabsContent value="offline" className="p-4 space-y-4 mt-0">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Download className="h-4 w-4 text-green-500" />
+                      Offline Maps
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Download map regions for offline navigation
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <OfflineDownloadsPanel onClose={() => onOpenChange(false)} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </ScrollArea>
           </Tabs>
     </div>
