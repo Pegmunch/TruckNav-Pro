@@ -182,6 +182,9 @@ export function LeftActionStack({
     if (isMuted) {
       navigationVoice.setEnabled(false);
       getAlertSoundsService().setGlobalMute(true);
+    } else {
+      // When not muted, ensure maximum volume for clear navigation audio
+      navigationVoice.forceMaxVolume();
     }
   }, []);
 
@@ -190,6 +193,10 @@ export function LeftActionStack({
     setIsMuted(newState);
     localStorage.setItem(MUTE_STATE_KEY, String(newState));
     navigationVoice.setEnabled(!newState);
+    // When unmuting, force maximum volume for clear navigation audio
+    if (!newState) {
+      navigationVoice.forceMaxVolume();
+    }
     getAlertSoundsService().setGlobalMute(newState);
   }, [isMuted]);
 

@@ -135,7 +135,7 @@ export class NavigationVoice {
     voice: null,
     rate: 0.8, // Slower for clearer navigation
     pitch: 1.0,
-    volume: 0.9,
+    volume: 1.0, // MAXIMUM volume for clear navigation audio
     announceDistances: true,
     announceRoadNames: true,
     announceSpeed: false,
@@ -289,12 +289,16 @@ export class NavigationVoice {
   
   /**
    * Load settings from localStorage
+   * Always ensures volume is at maximum (1.0) for clear navigation audio
    */
   private loadSettings(): VoiceSettings {
     try {
       const stored = localStorage.getItem('trucknav_voice_settings');
       if (stored) {
-        return { ...this.DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        const parsedSettings = { ...this.DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        // ALWAYS force maximum volume for clear navigation audio
+        parsedSettings.volume = 1.0;
+        return parsedSettings;
       }
     } catch (error) {
       console.warn('[NavigationVoice] Failed to load settings:', error);
@@ -351,6 +355,38 @@ export class NavigationVoice {
    */
   public isEnabled(): boolean {
     return this.settings.enabled && this.isInitialized;
+  }
+  
+  /**
+   * Set volume (0.0 to 1.0)
+   */
+  public setVolume(volume: number): void {
+    this.settings.volume = Math.max(0, Math.min(1, volume));
+    this.saveSettings();
+    console.log(`[NavigationVoice] Volume set to ${this.settings.volume}`);
+  }
+  
+  /**
+   * Get current volume
+   */
+  public getVolume(): number {
+    return this.settings.volume;
+  }
+  
+  /**
+   * Force maximum volume - useful for ensuring loud, clear navigation
+   */
+  public forceMaxVolume(): void {
+    this.settings.volume = 1.0;
+    this.saveSettings();
+    console.log('[NavigationVoice] Volume forced to MAXIMUM (1.0)');
+  }
+  
+  /**
+   * Check if volume is at maximum
+   */
+  public isMaxVolume(): boolean {
+    return this.settings.volume >= 1.0;
   }
   
   /**
