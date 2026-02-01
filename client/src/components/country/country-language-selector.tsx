@@ -4,7 +4,7 @@
  * Provides integrated country and language selection with visual flags
  */
 
-import { memo, useState, useMemo, useCallback } from 'react';
+import { memo, useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -26,6 +26,14 @@ import {
 } from '@/data/countries';
 import FlagIcon, { DropdownFlagIcon, FlagBadge } from './flag-icon';
 import { useCountryPreferences } from '@/hooks/use-country-preferences';
+
+// Detect if user is on a mobile/touch device
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
+         ('ontouchstart' in window) ||
+         (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+};
 
 interface CountryLanguageSelectorProps {
   value?: string; // Country code or language code
@@ -55,6 +63,12 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile on mount
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
   
   // Use the new country preferences hook
   const { 
@@ -282,6 +296,57 @@ const CountryLanguageSelector = memo(function CountryLanguageSelector({
     );
   }
 
+  // Mobile: Use native HTML select to prevent keyboard popup and overlay issues on iOS
+  if (isMobile) {
+    const majorTruckingMarkets = getTruckingMarkets().slice(0, 10);
+    const allCountries = countries;
+
+    return (
+      <div className={cn("relative", className)}>
+        <div className="flex items-center gap-2 p-2 border rounded-md bg-background">
+          <DropdownFlagIcon country={selectedCountry} />
+          <select
+            value={selectedCountry.code}
+            onChange={(e) => {
+              const country = getCountryByCode(e.target.value);
+              if (country) {
+                handleCountrySelect(country);
+              }
+            }}
+            className="flex-1 bg-transparent border-none outline-none appearance-none cursor-pointer text-sm"
+            style={{
+              fontSize: '16px', // iOS Safari requires 16px to prevent zoom/keyboard
+              WebkitAppearance: 'menulist',
+              MozAppearance: 'menulist',
+            }}
+            data-testid="country-selector-native"
+          >
+            <optgroup label="Major Trucking Markets">
+              {majorTruckingMarkets.map(country => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="All Countries">
+              {allCountries
+                .filter(c => !majorTruckingMarkets.some(m => m.code === c.code))
+                .map(country => (
+                  <option key={country.code} value={country.code}>
+                    {country.flag} {country.name}
+                  </option>
+                ))}
+            </optgroup>
+          </select>
+          {isChangingCountry && (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop: Use Popover with Command search
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
