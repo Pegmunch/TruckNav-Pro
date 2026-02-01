@@ -28,31 +28,39 @@ export function RegionSelector({ variant = "full", className = "" }: RegionSelec
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <Label className="flex items-center gap-2">
+      <Label className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
         <Globe className="w-4 h-4" />
         Region / Speed Limit Style
       </Label>
       <Select value={region} onValueChange={setRegion}>
-        <SelectTrigger data-testid="select-region">
-          <SelectValue />
+        <SelectTrigger 
+          data-testid="select-region"
+          className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+          style={{ touchAction: 'manipulation' }}
+        >
+          <SelectValue placeholder="Select region" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="uk">
+        <SelectContent 
+          className="z-[10000] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+          position="popper"
+          sideOffset={4}
+        >
+          <SelectItem value="uk" className="cursor-pointer">
             <div className="flex flex-col">
-              <span>UK</span>
-              <span className="text-xs text-muted-foreground">Circular red border, MPH</span>
+              <span className="text-gray-900 dark:text-gray-100">UK</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Circular red border, MPH</span>
             </div>
           </SelectItem>
-          <SelectItem value="usa">
+          <SelectItem value="usa" className="cursor-pointer">
             <div className="flex flex-col">
-              <span>USA</span>
-              <span className="text-xs text-muted-foreground">Rectangular white/black, MPH</span>
+              <span className="text-gray-900 dark:text-gray-100">USA</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Rectangular white/black, MPH</span>
             </div>
           </SelectItem>
-          <SelectItem value="europe">
+          <SelectItem value="europe" className="cursor-pointer">
             <div className="flex flex-col">
-              <span>Europe</span>
-              <span className="text-xs text-muted-foreground">Circular red border, KPH</span>
+              <span className="text-gray-900 dark:text-gray-100">Europe</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Circular red border, KPH</span>
             </div>
           </SelectItem>
         </SelectContent>
