@@ -4764,6 +4764,7 @@ function NavigationPageContent() {
         open={showLiveTrafficPanel}
         onClose={() => setShowLiveTrafficPanel(false)}
         currentLocation={currentGPSLocation}
+        routePath={currentRoute?.routePath ?? undefined}
         defaultTab={liveTrafficPanelTab}
       />
 

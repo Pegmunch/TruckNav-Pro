@@ -21,7 +21,8 @@ import {
   TrafficCone,
   Shield,
   Mic,
-  MicOff
+  MicOff,
+  Satellite
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type TrafficIncident } from "@shared/schema";
@@ -30,11 +31,13 @@ import { INCIDENT_ICON_LIBRARY, type IncidentTypeKey } from "@shared/incident-ic
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { hapticButtonPress } from "@/hooks/use-haptic-feedback";
+import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
 
 interface LiveTrafficPanelProps {
   open: boolean;
   onClose: () => void;
   currentLocation?: { lat: number; lng: number };
+  routePath?: Array<{ lat: number; lng: number }>;
   defaultTab?: 'view' | 'report';
   className?: string;
 }
@@ -99,6 +102,7 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
   open,
   onClose,
   currentLocation,
+  routePath,
   defaultTab = 'view',
   className
 }: LiveTrafficPanelProps) {
@@ -109,6 +113,14 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
   const [isRecording, setIsRecording] = useState(false);
   const { system } = useMeasurement();
   const { toast } = useToast();
+  
+  // Fetch LIVE TomTom incidents along the route
+  const { 
+    incidents: liveRouteIncidents, 
+    tomtomIncidents,
+    isLoading: isLoadingLiveIncidents, 
+    lastUpdated: liveIncidentsUpdated 
+  } = useRouteIncidents(routePath, open && !!routePath, 60000);
 
   // Voice recording handler
   const handleVoiceReport = useCallback((incidentType: IncidentTypeKey) => {
@@ -275,21 +287,46 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
     reportMutation.mutate(incidentType);
   }, [currentLocation, reportMutation, toast]);
 
-  // Filter and sort incidents by distance
-  const sortedIncidents = incidents
+  // Filter and sort crowdsourced incidents by distance
+  const crowdsourcedIncidents = incidents
     .filter(incident => incident.isActive)
     .map(incident => ({
       ...incident,
       distance: currentLocation
         ? calculateDistance(currentLocation.lat, currentLocation.lng, incident.coordinates.lat, incident.coordinates.lng)
-        : 999
+        : 999,
+      source: 'crowdsourced' as const
     }))
-    .filter(incident => incident.distance <= 50) // Within 50km
+    .filter(incident => incident.distance <= 50); // Within 50km
+
+  // Convert TomTom live incidents to display format
+  const tomtomDisplayIncidents = tomtomIncidents.map(incident => ({
+    id: incident.id,
+    type: incident.type,
+    severity: incident.severity,
+    title: INCIDENT_ICON_LIBRARY[incident.type]?.label || incident.type.replace('_', ' '),
+    description: incident.description || incident.roadName || 'Traffic incident',
+    coordinates: incident.coordinates,
+    createdAt: incident.reportedAt,
+    isActive: true,
+    distance: currentLocation
+      ? calculateDistance(currentLocation.lat, currentLocation.lng, incident.coordinates.lat, incident.coordinates.lng)
+      : incident.distanceFromRoute,
+    source: 'tomtom' as const,
+    delay: incident.delay,
+    roadName: incident.roadName
+  }));
+
+  // Merge and sort all incidents by distance
+  const sortedIncidents = [...crowdsourcedIncidents, ...tomtomDisplayIncidents]
     .sort((a, b) => a.distance - b.distance);
+
+  const totalIncidentCount = sortedIncidents.length;
+  const liveIncidentCount = tomtomDisplayIncidents.length;
 
   if (!open) return null;
 
-  console.log('[LIVE-TRAFFIC-PANEL] 🎯 RENDERING - open:', open);
+  console.log('[LIVE-TRAFFIC-PANEL] 🎯 RENDERING - open:', open, 'TomTom incidents:', liveIncidentCount, 'Crowdsourced:', crowdsourcedIncidents.length);
 
   return (
     <div className={cn(
@@ -305,9 +342,15 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
         <div className="flex items-center gap-2">
           <Radio className="w-5 h-5 text-red-500 animate-pulse" />
           <h2 className="font-semibold text-lg">Live Traffic</h2>
-          {sortedIncidents.length > 0 && (
+          {totalIncidentCount > 0 && (
             <Badge variant="destructive" className="text-xs">
-              {sortedIncidents.length}
+              {totalIncidentCount}
+            </Badge>
+          )}
+          {liveIncidentCount > 0 && (
+            <Badge variant="outline" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              <Satellite className="w-3 h-3 mr-1" />
+              {liveIncidentCount} Live
             </Badge>
           )}
         </div>
@@ -378,8 +421,14 @@ const LiveTrafficPanel = memo(function LiveTrafficPanel({
                             )}
                             <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                               <Clock className="w-3 h-3" />
-                              {formatTimeAgo(incident.reportedAt)}
-                              {incident.isVerified && (
+                              {formatTimeAgo((incident as any).reportedAt || (incident as any).createdAt)}
+                              {incident.source === 'tomtom' && (
+                                <span className="flex items-center gap-0.5 text-green-600">
+                                  <Satellite className="w-3 h-3" />
+                                  Live
+                                </span>
+                              )}
+                              {incident.source === 'crowdsourced' && (incident as any).isVerified && (
                                 <span className="flex items-center gap-0.5">
                                   <CheckCircle2 className="w-3 h-3 text-green-500" />
                                   Verified
