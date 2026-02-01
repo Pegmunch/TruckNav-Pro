@@ -1379,9 +1379,13 @@ function NavigationPageContent() {
       console.log(`[DESTINATION] Reached! Distance: ${distance.toFixed(1)}m`);
       setShowDestinationReached(true);
       hasShownDestinationDialogRef.current = true;
-      // Announce arrival with voice
+      // Announce arrival with voice - always announce when voice is enabled
       if (professionalVoiceEnabled) {
+        // Ensure voice is enabled and force max volume for arrival
+        navigationVoice.setEnabled(true);
+        navigationVoice.forceMaxVolume();
         navigationVoice.announceArrival();
+        console.log('[DESTINATION] Voice announcement: Arrived at destination');
       }
     }
   }, [isNavigating, currentRoute, gpsData?.position]);
