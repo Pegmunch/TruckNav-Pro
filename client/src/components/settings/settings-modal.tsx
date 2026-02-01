@@ -930,53 +930,41 @@ const SettingsModal = memo(function SettingsModal({
                               <p className="text-sm text-muted-foreground">
                                 Sets your region and default language
                               </p>
-                              <Select
+                              <select
+                                className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                                 value={localStorage.getItem('trucknav_country') || 'GB'}
-                                onValueChange={(countryCode) => {
+                                onChange={(e) => {
+                                  const countryCode = e.target.value;
                                   const countryData = countries.find(c => c.code === countryCode);
                                   if (countryData) {
-                                    // Save country preference
                                     localStorage.setItem('trucknav_country', countryCode);
-                                    
-                                    // Update app language to country's default
                                     i18n.changeLanguage(countryData.defaultLanguage);
                                     localStorage.setItem('trucknav_language', countryData.defaultLanguage);
-                                    
-                                    // Update voice navigation language
                                     navigationVoice.setLanguage(countryData.defaultLanguage);
-                                    
                                     handleCountryLanguageChange(countryCode, countryData.defaultLanguage);
-                                    
                                     toast({
                                       title: "Country Updated",
                                       description: `Set to ${countryData.name} with ${countryData.defaultLanguage} language`,
                                     });
                                   }
                                 }}
+                                data-testid="country-selector"
                               >
-                                <SelectTrigger className="w-full" data-testid="country-selector">
-                                  <SelectValue placeholder="Select country" />
-                                </SelectTrigger>
-                                <SelectContent position="popper" className="z-[10000] max-h-[300px]">
+                                <optgroup label="Major Trucking Markets">
                                   {countries.filter(c => c.truckingMarket).map((country) => (
-                                    <SelectItem key={country.code} value={country.code}>
-                                      <span className="flex items-center gap-2">
-                                        <span>{country.flag}</span>
-                                        <span>{country.name}</span>
-                                      </span>
-                                    </SelectItem>
+                                    <option key={country.code} value={country.code}>
+                                      {country.flag} {country.name}
+                                    </option>
                                   ))}
-                                  <Separator className="my-1" />
-                                  {countries.filter(c => !c.truckingMarket).slice(0, 20).map((country) => (
-                                    <SelectItem key={country.code} value={country.code}>
-                                      <span className="flex items-center gap-2">
-                                        <span>{country.flag}</span>
-                                        <span>{country.name}</span>
-                                      </span>
-                                    </SelectItem>
+                                </optgroup>
+                                <optgroup label="Other Countries">
+                                  {countries.filter(c => !c.truckingMarket).slice(0, 30).map((country) => (
+                                    <option key={country.code} value={country.code}>
+                                      {country.flag} {country.name}
+                                    </option>
                                   ))}
-                                </SelectContent>
-                              </Select>
+                                </optgroup>
+                              </select>
                             </div>
                             
                             <Separator />
@@ -986,44 +974,38 @@ const SettingsModal = memo(function SettingsModal({
                               <p className="text-sm text-muted-foreground">
                                 Changes app text and voice navigation language
                               </p>
-                              <Select
+                              <select
+                                className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                                 value={i18n.language}
-                                onValueChange={(languageCode) => {
-                                  // Update app language (all text/fonts)
+                                onChange={(e) => {
+                                  const languageCode = e.target.value;
                                   i18n.changeLanguage(languageCode);
                                   localStorage.setItem('trucknav_language', languageCode);
-                                  
-                                  // Update voice navigation language
                                   navigationVoice.setLanguage(languageCode);
-                                  
                                   toast({
                                     title: "Language Updated",
                                     description: `App and voice navigation set to ${languageCode}`,
                                   });
                                 }}
+                                data-testid="language-selector"
                               >
-                                <SelectTrigger className="w-full" data-testid="language-selector">
-                                  <SelectValue placeholder="Select language" />
-                                </SelectTrigger>
-                                <SelectContent position="popper" className="z-[10000] max-h-[300px]">
-                                  <SelectItem value="en-GB">🇬🇧 English (UK)</SelectItem>
-                                  <SelectItem value="en-US">🇺🇸 English (US)</SelectItem>
-                                  <SelectItem value="de-DE">🇩🇪 Deutsch</SelectItem>
-                                  <SelectItem value="fr-FR">🇫🇷 Français</SelectItem>
-                                  <SelectItem value="es-ES">🇪🇸 Español</SelectItem>
-                                  <SelectItem value="it-IT">🇮🇹 Italiano</SelectItem>
-                                  <SelectItem value="pt-BR">🇧🇷 Português (BR)</SelectItem>
-                                  <SelectItem value="nl-NL">🇳🇱 Nederlands</SelectItem>
-                                  <SelectItem value="pl-PL">🇵🇱 Polski</SelectItem>
-                                  <SelectItem value="ru-RU">🇷🇺 Русский</SelectItem>
-                                  <SelectItem value="ja-JP">🇯🇵 日本語</SelectItem>
-                                  <SelectItem value="zh-CN">🇨🇳 中文</SelectItem>
-                                  <SelectItem value="ko-KR">🇰🇷 한국어</SelectItem>
-                                  <SelectItem value="ar-SA">🇸🇦 العربية</SelectItem>
-                                  <SelectItem value="hi-IN">🇮🇳 हिन्दी</SelectItem>
-                                  <SelectItem value="tr-TR">🇹🇷 Türkçe</SelectItem>
-                                </SelectContent>
-                              </Select>
+                                <option value="en-GB">🇬🇧 English (UK)</option>
+                                <option value="en-US">🇺🇸 English (US)</option>
+                                <option value="de-DE">🇩🇪 Deutsch</option>
+                                <option value="fr-FR">🇫🇷 Français</option>
+                                <option value="es-ES">🇪🇸 Español</option>
+                                <option value="it-IT">🇮🇹 Italiano</option>
+                                <option value="pt-BR">🇧🇷 Português (BR)</option>
+                                <option value="nl-NL">🇳🇱 Nederlands</option>
+                                <option value="pl-PL">🇵🇱 Polski</option>
+                                <option value="ru-RU">🇷🇺 Русский</option>
+                                <option value="ja-JP">🇯🇵 日本語</option>
+                                <option value="zh-CN">🇨🇳 中文</option>
+                                <option value="ko-KR">🇰🇷 한국어</option>
+                                <option value="ar-SA">🇸🇦 العربية</option>
+                                <option value="hi-IN">🇮🇳 हिन्दी</option>
+                                <option value="tr-TR">🇹🇷 Türkçe</option>
+                              </select>
                             </div>
                           </CardContent>
                         </Card>
