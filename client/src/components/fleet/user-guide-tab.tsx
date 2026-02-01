@@ -8,7 +8,8 @@ import {
   BarChart3, AlertTriangle, MapPin, Shield, Radio, Activity, 
   Clock, CreditCard, MapPinned, Menu, Mic, X, AlertCircle,
   Compass, Layers, Mountain, Car, ChevronRight, CheckCircle2,
-  Smartphone, Monitor, Globe, Zap, Lock, Bell, Route, Search
+  Smartphone, Monitor, Globe, Zap, Lock, Bell, Route, Search,
+  Video, Camera, HardDrive, Gauge
 } from 'lucide-react';
 
 interface GuideSection {
@@ -1707,7 +1708,183 @@ export function UserGuideTab() {
                 <Badge>Driver Behavior</Badge>
                 <Badge>Hours of Service</Badge>
                 <Badge>Customer Billing</Badge>
+                <Badge>Dash Cam</Badge>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    },
+    {
+      id: 'dashcam',
+      title: 'Dash Cam',
+      icon: <Video className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Video className="w-6 h-6 text-blue-600" />
+            Dash Cam Telemetry Guide
+          </h2>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Purpose & Benefits</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>The Dash Cam feature lets you record journeys with real-time GPS overlay data:</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Record video from device camera during journeys</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>GPS coordinates overlay on video</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Speed tracking with timestamp</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Save recordings for incident review</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Camera className="w-5 h-5" />
+                How to Use
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">1</div>
+                  <div>
+                    <p className="font-medium">Start Camera</p>
+                    <p className="text-muted-foreground">Click "Start Camera" to enable the live preview. Grant camera permissions when prompted.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">2</div>
+                  <div>
+                    <p className="font-medium">Position Your Device</p>
+                    <p className="text-muted-foreground">Mount your phone/tablet on your dashboard facing the road ahead.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">3</div>
+                  <div>
+                    <p className="font-medium">Start Recording</p>
+                    <p className="text-muted-foreground">Click "Start Recording" to begin capturing video with GPS overlay.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">4</div>
+                  <div>
+                    <p className="font-medium">Stop & Save</p>
+                    <p className="text-muted-foreground">Click "Stop Recording" when finished. The video will be saved automatically.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Gauge className="w-5 h-5" />
+                Telemetry Data Captured
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                  <p className="font-medium">Date & Time</p>
+                  <p className="text-muted-foreground text-xs">Timestamp overlay on every frame</p>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                  <p className="font-medium">GPS Coordinates</p>
+                  <p className="text-muted-foreground text-xs">Latitude & longitude position</p>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                  <p className="font-medium">Speed</p>
+                  <p className="text-muted-foreground text-xs">Current speed in MPH</p>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                  <p className="font-medium">Heading</p>
+                  <p className="text-muted-foreground text-xs">Direction of travel in degrees</p>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                  <p className="font-medium">Max Speed</p>
+                  <p className="text-muted-foreground text-xs">Highest speed during recording</p>
+                </div>
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+                  <p className="font-medium">Average Speed</p>
+                  <p className="text-muted-foreground text-xs">Mean speed throughout journey</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <HardDrive className="w-5 h-5" />
+                Saved Recordings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>All recordings are saved and can be managed from the recordings table:</p>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Play:</strong> Review recordings directly in the browser</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Download:</strong> Save videos to your device</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Delete:</strong> Remove old recordings to free up storage</span>
+                </li>
+              </ul>
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
+                <p className="text-yellow-700 dark:text-yellow-300 text-xs">
+                  <strong>Tip:</strong> Recordings include GPS track data which can be used for incident review and driver training.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Best Practices</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Mount device securely on dashboard before starting journey</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Ensure device is connected to power for long recordings</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Clean camera lens regularly for best video quality</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Review and delete old recordings periodically</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </div>
