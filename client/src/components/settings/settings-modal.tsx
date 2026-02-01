@@ -931,7 +931,8 @@ const SettingsModal = memo(function SettingsModal({
                                 Sets your region and default language
                               </p>
                               <select
-                                className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="w-full h-12 px-3 py-2 text-base bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+                                style={{ fontSize: '16px', WebkitAppearance: 'menulist' }}
                                 value={localStorage.getItem('trucknav_country') || 'GB'}
                                 onChange={(e) => {
                                   const countryCode = e.target.value;
@@ -975,7 +976,8 @@ const SettingsModal = memo(function SettingsModal({
                                 Changes app text and voice navigation language
                               </p>
                               <select
-                                className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="w-full h-12 px-3 py-2 text-base bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+                                style={{ fontSize: '16px', WebkitAppearance: 'menulist' }}
                                 value={i18n.language}
                                 onChange={(e) => {
                                   const languageCode = e.target.value;
