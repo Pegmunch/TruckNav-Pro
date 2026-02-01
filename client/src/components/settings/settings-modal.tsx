@@ -927,13 +927,30 @@ const SettingsModal = memo(function SettingsModal({
                           <CardContent className="space-y-6">
                             <div className="space-y-3">
                               <Label className="text-base font-medium">Country Selection</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Sets your region and default language
+                              </p>
                               <Select
                                 value={localStorage.getItem('trucknav_country') || 'GB'}
                                 onValueChange={(countryCode) => {
                                   const countryData = countries.find(c => c.code === countryCode);
                                   if (countryData) {
+                                    // Save country preference
                                     localStorage.setItem('trucknav_country', countryCode);
+                                    
+                                    // Update app language to country's default
+                                    i18n.changeLanguage(countryData.defaultLanguage);
+                                    localStorage.setItem('trucknav_language', countryData.defaultLanguage);
+                                    
+                                    // Update voice navigation language
+                                    navigationVoice.setLanguage(countryData.defaultLanguage);
+                                    
                                     handleCountryLanguageChange(countryCode, countryData.defaultLanguage);
+                                    
+                                    toast({
+                                      title: "Country Updated",
+                                      description: `Set to ${countryData.name} with ${countryData.defaultLanguage} language`,
+                                    });
                                   }
                                 }}
                               >
@@ -966,11 +983,23 @@ const SettingsModal = memo(function SettingsModal({
                             
                             <div className="space-y-3">
                               <Label className="text-base font-medium">Language Selection</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Changes app text and voice navigation language
+                              </p>
                               <Select
                                 value={i18n.language}
                                 onValueChange={(languageCode) => {
+                                  // Update app language (all text/fonts)
                                   i18n.changeLanguage(languageCode);
                                   localStorage.setItem('trucknav_language', languageCode);
+                                  
+                                  // Update voice navigation language
+                                  navigationVoice.setLanguage(languageCode);
+                                  
+                                  toast({
+                                    title: "Language Updated",
+                                    description: `App and voice navigation set to ${languageCode}`,
+                                  });
                                 }}
                               >
                                 <SelectTrigger className="w-full" data-testid="language-selector">
