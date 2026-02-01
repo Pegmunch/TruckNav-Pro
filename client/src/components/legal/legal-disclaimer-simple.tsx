@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { AlertTriangle, Navigation, Shield, Eye, Truck, CheckCircle2, Loader2 } from "lucide-react";
 import { useLegalConsent } from "@/hooks/use-legal-consent";
 
@@ -16,6 +16,7 @@ interface LegalDisclaimerSimpleProps {
 export default function LegalDisclaimerSimple({ onAccept }: LegalDisclaimerSimpleProps) {
   const [isAccepting, setIsAccepting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [, setLocation] = useLocation();
   
   const {
     setConsentAccepted,
@@ -31,7 +32,8 @@ export default function LegalDisclaimerSimple({ onAccept }: LegalDisclaimerSimpl
     
     try {
       await acceptFn();
-      // Consent hook will update state and component will unmount
+      // Redirect to navigation page after accepting
+      setLocation('/navigation');
     } catch (error) {
       console.error('[LEGAL] Failed to save consent:', error);
       setIsAccepting(false);

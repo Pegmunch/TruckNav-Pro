@@ -76,7 +76,7 @@ function Router() {
       <div className="flex-1">
         <Suspense fallback={<LoadingFallback />}>
           <Switch>
-            <Route path="/" component={ProtectedNavigationPage} />
+            <Route path="/" component={LegalPopupPage} />
             <Route path="/navigation" component={ProtectedNavigationPage} />
             <Route path="/pricing" component={PricingPage} />
             <Route path="/subscribe/:planId" component={SubscribePage} />
