@@ -64,6 +64,7 @@ import LanguageSelector from "@/components/language/language-selector";
 import CountryLanguageSelector from "@/components/country/country-language-selector";
 import { DNDControls } from "@/components/notifications/dnd-controls";
 import LegalNotices from "@/components/legal/legal-notices";
+import { navigationVoice } from "@/lib/navigation-voice";
 import { 
   getAlertSoundsService, 
   type AllAlertSoundSettings, 
@@ -197,6 +198,11 @@ const SettingsModal = memo(function SettingsModal({
   const [alertSoundSettings, setAlertSoundSettings] = useState<AllAlertSoundSettings>(() => 
     getAlertSoundsService().getSettings()
   );
+  
+  // Voice navigation state - connected to actual NavigationVoice singleton
+  const [voiceNavEnabled, setVoiceNavEnabled] = useState(() => navigationVoice.isEnabled());
+  const [voiceNavVolume, setVoiceNavVolume] = useState(() => navigationVoice.getVolume());
+  const [voiceNavRate, setVoiceNavRate] = useState(() => navigationVoice.getSettings().rate);
   
   // Mock state for demonstration - in real app these would come from context/hooks
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -1008,6 +1014,129 @@ const SettingsModal = memo(function SettingsModal({
                                 }}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                               />
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Voice Navigation Settings */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Navigation className="w-5 h-5 text-blue-500" />
+                              Voice Navigation
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-base font-medium">Enable Voice Navigation</Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Spoken turn-by-turn directions
+                                </p>
+                              </div>
+                              <Switch
+                                checked={voiceNavEnabled}
+                                onCheckedChange={(checked) => {
+                                  setVoiceNavEnabled(checked);
+                                  navigationVoice.setEnabled(checked);
+                                  if (checked) {
+                                    navigationVoice.forceMaxVolume();
+                                  }
+                                }}
+                                data-testid="switch-voice-navigation"
+                              />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Voice Volume</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round(voiceNavVolume * 100)}%
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={Math.round(voiceNavVolume * 100)}
+                                onChange={(e) => {
+                                  const newVolume = parseInt(e.target.value) / 100;
+                                  setVoiceNavVolume(newVolume);
+                                  navigationVoice.setVolume(newVolume);
+                                }}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                                disabled={!voiceNavEnabled}
+                              />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-base font-medium">Speech Rate</Label>
+                                <span className="text-sm text-muted-foreground">
+                                  {voiceNavRate === 0.6 ? 'Slow' : voiceNavRate === 0.8 ? 'Normal' : voiceNavRate === 1.0 ? 'Fast' : `${voiceNavRate}x`}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant={voiceNavRate === 0.6 ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => {
+                                    setVoiceNavRate(0.6);
+                                    navigationVoice.updateSettings({ rate: 0.6 });
+                                  }}
+                                  disabled={!voiceNavEnabled}
+                                >
+                                  Slow
+                                </Button>
+                                <Button
+                                  variant={voiceNavRate === 0.8 ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => {
+                                    setVoiceNavRate(0.8);
+                                    navigationVoice.updateSettings({ rate: 0.8 });
+                                  }}
+                                  disabled={!voiceNavEnabled}
+                                >
+                                  Normal
+                                </Button>
+                                <Button
+                                  variant={voiceNavRate === 1.0 ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => {
+                                    setVoiceNavRate(1.0);
+                                    navigationVoice.updateSettings({ rate: 1.0 });
+                                  }}
+                                  disabled={!voiceNavEnabled}
+                                >
+                                  Fast
+                                </Button>
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-0.5">
+                                <Label className="text-base font-medium">Test Voice</Label>
+                                <p className="text-sm text-muted-foreground">
+                                  Play a sample navigation instruction
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigationVoice.testVoice();
+                                }}
+                                disabled={!voiceNavEnabled}
+                              >
+                                <Play className="w-4 h-4 mr-1" />
+                                Test
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
