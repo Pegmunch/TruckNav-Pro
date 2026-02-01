@@ -7474,6 +7474,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =============================================================================
+  // DASH CAM TELEMETRY API
+  // =============================================================================
+
+  // Get all dash cam recordings for a user
+  app.get("/api/fleet/dashcam/recordings", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const recordings = await storage.getDashCamRecordings(userId);
+      res.json(recordings);
+    } catch (error) {
+      console.error('Error fetching dash cam recordings:', error);
+      res.status(500).json({ message: "Failed to fetch recordings" });
+    }
+  });
+
+  // Upload a new dash cam recording
+  app.post("/api/fleet/dashcam/upload", requireFleetSubscription, multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } }).single('video'), async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "Video file required" });
+      }
+
+      const metadata = req.body.metadata ? JSON.parse(req.body.metadata) : {};
+      const filename = req.file.originalname || `dashcam_${Date.now()}.webm`;
+      
+      // Save to object storage (use private directory for videos)
+      const objectPath = `.private/dashcam/${userId}/${filename}`;
+      
+      // For now, create a local blob URL (in production would upload to object storage)
+      const videoUrl = `/api/fleet/dashcam/video/${encodeURIComponent(filename)}`;
+      
+      const recording = await storage.createDashCamRecording({
+        userId,
+        filename,
+        videoUrl,
+        fileSize: req.file.size,
+        duration: metadata.duration || 0,
+        startTime: metadata.startTime ? new Date(metadata.startTime) : new Date(),
+        endTime: metadata.endTime ? new Date(metadata.endTime) : new Date(),
+        startLocation: metadata.startLocation || null,
+        endLocation: metadata.endLocation || null,
+        gpsTrack: metadata.gpsTrack || null,
+        maxSpeed: metadata.maxSpeed || 0,
+        averageSpeed: metadata.averageSpeed || 0,
+        incidents: 0,
+      });
+
+      res.json(recording);
+    } catch (error) {
+      console.error('Error uploading dash cam recording:', error);
+      res.status(500).json({ message: "Failed to upload recording" });
+    }
+  });
+
+  // Delete a dash cam recording
+  app.delete("/api/fleet/dashcam/recordings/:id", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const userId = getAuthUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const recording = await storage.getDashCamRecording(req.params.id);
+      if (!recording) {
+        return res.status(404).json({ message: "Recording not found" });
+      }
+
+      if (recording.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to delete this recording" });
+      }
+
+      await storage.deleteDashCamRecording(req.params.id);
+      res.json({ message: "Recording deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting dash cam recording:', error);
+      res.status(500).json({ message: "Failed to delete recording" });
+    }
+  });
+
+  // =============================================================================
   // SMART TRAFFIC LIGHTS API (Green Wave Optimization)
   // =============================================================================
   

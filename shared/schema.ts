@@ -1586,6 +1586,31 @@ export const fleetBroadcastReads = pgTable("fleet_broadcast_reads", {
   userIdx: index("read_user_idx").on(table.userId),
 }));
 
+// Dash Cam Recordings - Store dash cam video recordings with telemetry data
+export const dashCamRecordings = pgTable("dash_cam_recordings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }),
+  vehicleId: varchar("vehicle_id"), // Optional: link to fleet vehicle
+  filename: text("filename").notNull(),
+  videoUrl: text("video_url").notNull(), // Object storage URL
+  thumbnailUrl: text("thumbnail_url"),
+  fileSize: integer("file_size").notNull(), // bytes
+  duration: integer("duration").notNull(), // seconds
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  startLocation: jsonb("start_location").$type<{lat: number; lng: number}>(),
+  endLocation: jsonb("end_location").$type<{lat: number; lng: number}>(),
+  gpsTrack: jsonb("gps_track").$type<Array<{lat: number; lng: number; speed: number; heading: number; timestamp: number}>>(),
+  maxSpeed: integer("max_speed").default(0), // mph
+  averageSpeed: integer("average_speed").default(0), // mph
+  incidents: integer("incidents").default(0), // number of detected incidents
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("dashcam_user_idx").on(table.userId),
+  vehicleIdx: index("dashcam_vehicle_idx").on(table.vehicleId),
+  startTimeIdx: index("dashcam_start_time_idx").on(table.startTime),
+}));
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1619,6 +1644,9 @@ export const insertVehicleHealthScoreSchema = createInsertSchema(vehicleHealthSc
 // Zod schemas for fleet broadcasts
 export const insertFleetBroadcastSchema = createInsertSchema(fleetBroadcasts).omit({ id: true, createdAt: true, readCount: true });
 export const insertFleetBroadcastReadSchema = createInsertSchema(fleetBroadcastReads).omit({ id: true, readAt: true });
+
+// Zod schemas for dash cam
+export const insertDashCamRecordingSchema = createInsertSchema(dashCamRecordings).omit({ id: true, createdAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -1724,4 +1752,7 @@ export type InsertDriverPerformanceScore = z.infer<typeof insertDriverPerformanc
 
 export type VehicleHealthScore = typeof vehicleHealthScores.$inferSelect;
 export type InsertVehicleHealthScore = z.infer<typeof insertVehicleHealthScoreSchema>;
+
+export type DashCamRecording = typeof dashCamRecordings.$inferSelect;
+export type InsertDashCamRecording = z.infer<typeof insertDashCamRecordingSchema>;
 

@@ -23,7 +23,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFo
 import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned, Monitor, ClipboardCheck, Award, HeartPulse } from 'lucide-react';
+import { Truck, Users, Wrench, Fuel, Plus, Edit, Trash2, AlertTriangle, CheckCircle, FileText, Download, BarChart3, MapPin, Shield, Radio, Activity, Clock, CreditCard, MapPinned, Monitor, ClipboardCheck, Award, HeartPulse, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { FleetVehicle, Operator, ServiceRecord, FuelLog, VehicleAttachment } from '@shared/schema';
 import { format } from 'date-fns';
@@ -44,6 +44,7 @@ import { ShiftManagementTab } from '@/components/fleet/shift-management-tab';
 import { DriverPerformanceTab } from '@/components/fleet/driver-performance-tab';
 import { VehicleHealthTab } from '@/components/fleet/vehicle-health-tab';
 import { FleetBroadcastsTab } from '@/components/fleet/fleet-broadcasts-tab';
+import { DashCamTab } from '@/components/fleet/dash-cam-tab';
 import { Link } from 'wouter';
 
 function MobileRestrictionScreen() {
@@ -205,6 +206,11 @@ export default function FleetManagement() {
               <span className="hidden sm:inline">Broadcasts</span>
               <span className="sm:hidden">BC</span>
             </TabsTrigger>
+            <TabsTrigger value="dashcam" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-dashcam">
+              <Video className="w-4 h-4" />
+              <span className="hidden sm:inline">Dash Cam</span>
+              <span className="sm:hidden">DC</span>
+            </TabsTrigger>
             <TabsTrigger value="guide" className="flex items-center gap-2 text-xs sm:text-sm bg-blue-100 dark:bg-blue-900/30" data-testid="tab-guide">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">User Guide</span>
@@ -282,6 +288,10 @@ export default function FleetManagement() {
 
           <TabsContent value="broadcasts">
             <FleetBroadcastsTab />
+          </TabsContent>
+
+          <TabsContent value="dashcam">
+            <DashCamTab />
           </TabsContent>
 
           <TabsContent value="guide">
