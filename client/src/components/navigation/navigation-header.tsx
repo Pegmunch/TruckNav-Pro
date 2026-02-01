@@ -101,6 +101,21 @@ export function NavigationHeader({
             className="h-10 w-10 rounded-full bg-white hover:bg-green-50 active:bg-green-100 text-green-500 border-2 border-green-500 shadow-md"
             data-testid="button-header-settings"
             data-tour-id="header-settings"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
+            onTouchStart={(e) => {
+              // iOS Safari fix - use touchstart since touchend may be blocked
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
+            style={{ touchAction: 'manipulation' }}
           >
             <Settings className="h-5 w-5" />
           </Button>
