@@ -351,12 +351,8 @@ export function OnboardingProvider({ children, isReady = true, isFleetPage = fal
       padding: isMobile ? '14px 16px' : '20px 24px',
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
       border: '1px solid rgba(255, 255, 255, 0.1)',
-      maxWidth: isMobile ? 'calc(100vw - 40px)' : '380px',
-      width: isMobile ? 'calc(100vw - 40px)' : 'auto',
-      margin: isMobile ? '0 auto' : '0',
-      left: isMobile ? '20px' : 'auto',
-      right: isMobile ? '20px' : 'auto',
-      transform: isMobile ? 'none' : 'none'
+      maxWidth: isMobile ? 'calc(100vw - 32px)' : '380px',
+      width: isMobile ? 'calc(100vw - 32px)' : 'auto'
     },
     tooltipTitle: {
       fontSize: isMobile ? '16px' : '20px',

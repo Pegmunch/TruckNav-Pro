@@ -497,6 +497,31 @@ body {
   }
 }
 
+/* Joyride tour guide mobile positioning fix */
+@media (max-width: 768px) {
+  /* Force the floater/tooltip to be centered on mobile */
+  .__floater {
+    left: 16px !important;
+    right: 16px !important;
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    transform: none !important;
+  }
+  
+  .__floater__body {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .react-joyride__tooltip {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
+  }
+}
+
 /* Enhanced responsive design system */
 :root {
   /* HUD and overlay heights for map calculations */
