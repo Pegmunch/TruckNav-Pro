@@ -79,8 +79,8 @@ export function useSpeedLimit() {
 
       const now = Date.now();
       
-      // Only fetch if 5 seconds have passed since last fetch
-      if (now - lastFetchRef.current < 5000) {
+      // Only fetch if 8 seconds have passed since last fetch (reduced frequency for stability)
+      if (now - lastFetchRef.current < 8000) {
         return;
       }
 
@@ -156,8 +156,8 @@ export function useSpeedLimit() {
     // Fetch immediately on location change
     fetchSpeedLimit();
 
-    // Set up interval for periodic updates (every 5 seconds)
-    const intervalId = setInterval(fetchSpeedLimit, 5000);
+    // Set up interval for periodic updates (every 8 seconds for stability)
+    const intervalId = setInterval(fetchSpeedLimit, 8000);
 
     return () => {
       clearInterval(intervalId);
