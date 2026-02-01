@@ -2839,25 +2839,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             [
               'match',
               ['get', 'traffic_level'],
-              0, '#3B82F6',  // Unknown -> blue
-              1, '#3B82F6',  // Free flow -> blue
-              2, '#22C55E',  // Light -> green  
-              3, '#FDE047',  // Moderate -> yellow
-              4, '#DC2626',  // Heavy -> red
-              '#3B82F6'      // Default -> blue
+              0, '#0066FF',  // Unknown -> bright blue
+              1, '#0066FF',  // Free flow -> bright blue
+              2, '#00DD00',  // Light -> bright lime green  
+              3, '#FFCC00',  // Moderate -> bright golden yellow
+              4, '#FF0000',  // Heavy -> pure red
+              '#0066FF'      // Default -> bright blue
             ],
-            // Default fallback: blue (free flow assumed)
-            '#3B82F6'
+            // Default fallback: bright blue (free flow assumed)
+            '#0066FF'
           ],
           'line-width': [
             'interpolate',
             ['linear'],
             ['zoom'],
-            10, 3,  // 3px at zoom 10
-            18, 10   // 10px at zoom 18
+            10, 5,  // 5px at zoom 10 (increased from 3)
+            18, 14   // 14px at zoom 18 (increased from 10)
           ],
-          'line-opacity': 0.85,
-          'line-blur': 0.5
+          'line-opacity': 1.0,
+          'line-blur': 0
         }
       });
       console.log('[TRAFFIC-LAYER] Added traffic flow layer with speed-based coloring');

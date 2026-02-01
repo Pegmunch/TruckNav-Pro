@@ -19,11 +19,11 @@ export interface RouteTrafficData {
 }
 
 const TRAFFIC_COLORS = {
-  free: '#2563EB', // Vivid blue for free-flowing traffic (more saturated)
-  light: '#22C55E', // Green for light traffic (clearer distinction from blue)
-  moderate: '#EAB308', // Bright yellow for moderate (more visible)
-  heavy: '#EA580C', // Vivid orange for heavy traffic
-  standstill: '#DC2626', // Red for standstill
+  free: '#0066FF', // Bold bright blue for free-flowing traffic
+  light: '#00DD00', // Bright lime green for light traffic (highly visible)
+  moderate: '#FFCC00', // Bright golden yellow for moderate (high contrast)
+  heavy: '#FF6600', // Bright orange for heavy traffic
+  standstill: '#FF0000', // Pure red for standstill (maximum visibility)
   unknown: 'transparent', // Transparent so blue route shows through
 };
 
