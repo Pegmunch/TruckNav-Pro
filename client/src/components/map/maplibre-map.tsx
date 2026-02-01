@@ -2809,16 +2809,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (!map.current.getLayer(trafficLayerId)) {
       // TomTom relative flow tiles provide current_speed and free_flow_speed
       // Calculate congestion ratio: current_speed / free_flow_speed
-      // Ratio < 0.3 = standstill, < 0.5 = heavy, < 0.7 = moderate, < 0.85 = light, >= 0.85 = free flow
+      // Ratio < 0.25 = standstill, < 0.4 = heavy, < 0.6 = moderate, < 0.8 = light, >= 0.8 = free flow
+      // ENHANCED: More prominent red for heavy traffic, thicker lines on all roads
       map.current.addLayer({
         id: trafficLayerId,
         type: 'line',
         source: trafficSourceId,
         'source-layer': 'Traffic flow',
+        minzoom: 6, // Show traffic from zoom level 6 (regional view)
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
-          visibility: 'visible' // Controlled by updateLayerVisibility, not here
+          visibility: 'visible'
         },
         paint: {
           'line-color': [
@@ -2828,39 +2830,49 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             [
               'step',
               ['/', ['get', 'current_speed'], ['get', 'free_flow_speed']],
-              '#DC2626',  // 0.0 - 0.3: Red (standstill/heavy)
-              0.3, '#F97316',  // 0.3 - 0.5: Orange (heavy)
-              0.5, '#FDE047',  // 0.5 - 0.7: Yellow (moderate)
-              0.7, '#22C55E',  // 0.7 - 0.85: Green (light)
-              0.85, '#3B82F6'  // 0.85+: Blue (free flow)
+              '#CC0000',  // 0.0 - 0.25: Dark red (standstill) - MORE PROMINENT
+              0.25, '#FF0000',  // 0.25 - 0.4: Bright red (heavy traffic) - VERY PROMINENT
+              0.4, '#FF6600',  // 0.4 - 0.6: Orange-red (slow)
+              0.6, '#FFAA00',  // 0.6 - 0.8: Orange-yellow (moderate)
+              0.8, '#3B82F6'  // 0.8+: Blue (free flow) - normal traffic
             ],
             // Fallback: check for traffic_level property (some tile versions)
             ['has', 'traffic_level'],
             [
               'match',
               ['get', 'traffic_level'],
-              0, '#0066FF',  // Unknown -> bright blue
-              1, '#0066FF',  // Free flow -> bright blue
-              2, '#00DD00',  // Light -> bright lime green  
-              3, '#FFCC00',  // Moderate -> bright golden yellow
-              4, '#FF0000',  // Heavy -> pure red
-              '#0066FF'      // Default -> bright blue
+              0, '#3B82F6',  // Unknown -> blue (assume free flow)
+              1, '#3B82F6',  // Free flow -> blue
+              2, '#66AAFF',  // Light -> light blue  
+              3, '#FFAA00',  // Moderate -> orange-yellow
+              4, '#FF0000',  // Heavy -> bright red
+              5, '#CC0000',  // Standstill -> dark red
+              '#3B82F6'      // Default -> blue
             ],
-            // Default fallback: bright blue (free flow assumed)
-            '#0066FF'
+            // Default fallback: blue (free flow assumed)
+            '#3B82F6'
           ],
           'line-width': [
             'interpolate',
+            ['exponential', 1.5],
+            ['zoom'],
+            6, 2,    // 2px at zoom 6 (regional view)
+            10, 6,   // 6px at zoom 10 (city view)
+            14, 10,  // 10px at zoom 14 (neighborhood)
+            18, 16   // 16px at zoom 18 (street level)
+          ],
+          'line-opacity': [
+            'interpolate',
             ['linear'],
             ['zoom'],
-            10, 5,  // 5px at zoom 10 (increased from 3)
-            18, 14   // 14px at zoom 18 (increased from 10)
+            6, 0.7,   // 70% opacity at regional zoom
+            10, 0.85, // 85% at city level
+            14, 1.0   // 100% at street level
           ],
-          'line-opacity': 1.0,
           'line-blur': 0
         }
       });
-      console.log('[TRAFFIC-LAYER] Added traffic flow layer with speed-based coloring');
+      console.log('[TRAFFIC-LAYER] Added enhanced traffic flow layer - shows all roads with prominent red for congestion');
       // Mark layer as ready after adding
       setIsTrafficLayerReady(true);
     } else {
