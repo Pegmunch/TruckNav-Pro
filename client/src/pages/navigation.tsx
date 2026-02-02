@@ -453,8 +453,9 @@ function NavigationPageContent() {
     // Reset route progress tracking for new route
     routeProgressRef.current = 0;
     // Reset distance and ETA remaining with new route values
+    // Note: route.distance is in MILES from server, convert to METERS for consistency
     if (newRoute.distance) {
-      setDynamicDistanceRemaining(newRoute.distance);
+      setDynamicDistanceRemaining(newRoute.distance * 1609.344);
     }
     if (newRoute.duration) {
       // route.duration is already in MINUTES from the server
@@ -1204,6 +1205,7 @@ function NavigationPageContent() {
       const projectedDistanceAlongRoute = cumulativeDistances[bestSegmentIndex] + segmentLength * bestProjectionT;
 
       // Update dynamic distance remaining during navigation
+      // Note: remainingDistance is in METERS (from route geometry calculation)
       const remainingDistance = totalRouteLength - projectedDistanceAlongRoute;
       if (remainingDistance >= 0) {
         setDynamicDistanceRemaining(remainingDistance);
@@ -1211,10 +1213,10 @@ function NavigationPageContent() {
         // Update dynamic ETA based on proportion of route remaining
         // Use the original route duration and scale it by remaining distance
         // Note: currentRoute.duration is already in MINUTES from the server
+        // CRITICAL: Use totalRouteLength (meters) for proportion, not currentRoute.distance (miles)
         const originalDurationMinutes = currentRoute.duration || 0;
-        const originalDistance = currentRoute.distance || totalRouteLength;
-        if (originalDistance > 0 && originalDurationMinutes > 0) {
-          const proportionRemaining = remainingDistance / originalDistance;
+        if (totalRouteLength > 0 && originalDurationMinutes > 0) {
+          const proportionRemaining = remainingDistance / totalRouteLength;
           const remainingMinutes = originalDurationMinutes * proportionRemaining;
           setDynamicEtaMinutes(Math.ceil(remainingMinutes));
         }
@@ -2442,8 +2444,9 @@ function NavigationPageContent() {
       // Reset route progress tracking for new route
       routeProgressRef.current = 0;
       // Initialize dynamic distance and ETA for new route
+      // Note: route.distance is in MILES from server, convert to METERS for consistency
       if (route.distance) {
-        setDynamicDistanceRemaining(route.distance);
+        setDynamicDistanceRemaining(route.distance * 1609.344);
       }
       if (route.duration) {
         // route.duration is already in MINUTES from the server
@@ -2760,8 +2763,9 @@ function NavigationPageContent() {
       // Reset route progress tracking for new route
       routeProgressRef.current = 0;
       // Initialize dynamic distance and ETA for alternative route
+      // Note: route.distance is in MILES from server, convert to METERS for consistency
       if (newRoute.distance) {
-        setDynamicDistanceRemaining(newRoute.distance);
+        setDynamicDistanceRemaining(newRoute.distance * 1609.344);
       }
       if (newRoute.duration) {
         // route.duration is already in MINUTES from the server
@@ -4097,7 +4101,7 @@ function NavigationPageContent() {
                     currentRoute ? (
                       <CompactTripStrip
                         eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)}
-                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
+                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
                         isOnline={navigator.onLine}
                         gpsStatus={gpsData?.status || 'unavailable'}
                         onPreviewStart={handlePreviewRoute}
@@ -4391,9 +4395,16 @@ function NavigationPageContent() {
                         <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <RouteIcon className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
-                            {measurementSystem === 'imperial'
-                              ? `${((dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)) / 1609.344).toFixed(1)} mi`
-                              : `${((dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)) / 1000).toFixed(1)} km`}
+                            {(() => {
+                              // dynamicDistanceRemaining is in METERS, currentRoute.distance is in MILES
+                              // Use dynamicDistanceRemaining if available, otherwise convert currentRoute.distance to meters
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute.distance || 0) * 1609.344;
+                              return measurementSystem === 'imperial'
+                                ? `${(distanceMeters / 1609.344).toFixed(1)} mi`
+                                : `${(distanceMeters / 1000).toFixed(1)} km`;
+                            })()}
                           </span>
                         </div>
                         <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
@@ -4431,7 +4442,7 @@ function NavigationPageContent() {
                       onStartNavigation={handleStartNavigation}
                       onStopNavigation={handleStopNavigation}
                       timeRemainingSeconds={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute?.duration || 0) * 60}
-                      distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0)}
+                      distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0) * 1609.344}
                     />
                   }
                 />
