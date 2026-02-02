@@ -339,31 +339,7 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Mute All Alerts button - gray/red toggle - hides/shows with double-tap */}
-      {isNavigating && (
-        <Button
-          ref={muteButtonRef}
-          variant="ghost"
-          size="icon"
-          className={`h-10 w-10 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
-            isMuted 
-              ? 'bg-red-500 hover:bg-red-600 active:bg-red-700' 
-              : 'bg-gray-500 hover:bg-gray-600 active:bg-gray-700'
-          } text-white active:scale-95 ${
-            isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
-          }`}
-          style={{ touchAction: 'manipulation' }}
-          data-testid="button-mute-alerts"
-          data-tour-id="mute-button"
-          title={isMuted ? 'Tap to unmute alerts' : 'Tap to mute all alerts'}
-        >
-          {isMuted ? (
-            <VolumeX className="h-5 w-5" />
-          ) : (
-            <Volume2 className="h-5 w-5" />
-          )}
-        </Button>
-      )}
+      {/* Mute button removed - use the one in ETA bar instead to avoid touch conflicts */}
 
       {/* Incident report button - orange - ALWAYS rendered for iOS touch proxy registration */}
       {/* Hidden when not navigating, but ref is always valid for touch interception */}
