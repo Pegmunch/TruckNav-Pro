@@ -565,111 +565,6 @@ function NavigationPageContent() {
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
-  // SIMULATION MODE: For testing voice navigation without GPS
-  const [simulationMode, setSimulationMode] = useState(false);
-  const [simulationProgress, setSimulationProgress] = useState(0);
-  const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Start simulation - advances along route triggering voice announcements
-  const startSimulation = useCallback(() => {
-    if (!currentRoute?.routePath || currentRoute.routePath.length < 2) {
-      console.log('[SIMULATION] No route to simulate');
-      return;
-    }
-    
-    console.log('[SIMULATION] Starting route simulation...');
-    setSimulationMode(true);
-    setSimulationProgress(0);
-    
-    // Start navigation mode for simulation
-    setIsLocalNavActive(true);
-    setIsNavigating(true);
-    
-    // Enable voice and ensure it's initialized
-    navigationVoice.setEnabled(true);
-    console.log('[SIMULATION] Voice enabled:', navigationVoice.isEnabled());
-    
-    // Test voice immediately with a startup announcement
-    console.log('[SIMULATION] Testing voice with startup announcement...');
-    navigationVoice.speak('Starting route simulation', 'normal', true);
-    
-    // Simulate advancing along the route every 3 seconds
-    let progress = 0;
-    const totalPoints = currentRoute.routePath.length;
-    
-    // Distance thresholds for announcements (in meters)
-    const ANNOUNCE_THRESHOLDS = [300, 150, 50];
-    let lastAnnouncedThreshold = 999999;
-    
-    simulationIntervalRef.current = setInterval(() => {
-      progress += 5; // Advance 5 points at a time
-      
-      if (progress >= totalPoints) {
-        // Reached destination
-        console.log('[SIMULATION] Reached destination!');
-        navigationVoice.announceArrival();
-        stopSimulation();
-        return;
-      }
-      
-      setSimulationProgress(progress);
-      
-      // Simulate the next turn based on remaining distance
-      const remainingPoints = totalPoints - progress;
-      const simulatedDistance = remainingPoints * 8; // ~8m per point
-      
-      console.log(`[SIMULATION] Progress: ${progress}/${totalPoints}, Simulated distance to turn: ${simulatedDistance}m`);
-      
-      // Check if we crossed a threshold and should announce
-      for (const threshold of ANNOUNCE_THRESHOLDS) {
-        if (simulatedDistance <= threshold && lastAnnouncedThreshold > threshold) {
-          lastAnnouncedThreshold = threshold;
-          
-          // Determine direction based on progress
-          const directions = ['right', 'left', 'slight-right', 'slight-left'] as const;
-          const direction = directions[Math.floor(progress / 20) % directions.length];
-          
-          console.log(`[SIMULATION] 🔊 Announcing turn: ${direction} in ${simulatedDistance}m`);
-          
-          // DIRECTLY call announceTurn - bypassing the useEffect
-          navigationVoice.announceTurn(
-            direction,
-            simulatedDistance,
-            'Simulated Road',
-            'km' // or 'mi' based on settings
-          );
-          
-          // Also update state for visual indicator
-          setNextTurn({ direction, distance: simulatedDistance, roadName: 'Simulated Road' });
-          break;
-        }
-      }
-    }, 3000);
-  }, [currentRoute]);
-  
-  // Stop simulation
-  const stopSimulation = useCallback(() => {
-    console.log('[SIMULATION] Stopping simulation');
-    if (simulationIntervalRef.current) {
-      clearInterval(simulationIntervalRef.current);
-      simulationIntervalRef.current = null;
-    }
-    setSimulationMode(false);
-    setSimulationProgress(0);
-    setIsLocalNavActive(false);
-    setIsNavigating(false);
-    setNextTurn(null);
-  }, []);
-  
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (simulationIntervalRef.current) {
-        clearInterval(simulationIntervalRef.current);
-      }
-    };
-  }, []);
-  
   // Helper: Check if turn indicator should be visible based on distance thresholds
   // Imperial: Show at 1000ft (305m), 500ft (152m), 100ft (30m) - within these thresholds
   // Metric: Show at 300m, 150m, 30m
@@ -4085,15 +3980,6 @@ function NavigationPageContent() {
                           Start
                         </Button>
                       </div>
-                      {/* DEV: Simulation button for testing voice/turn indicators without GPS */}
-                      <Button
-                        onClick={simulationMode ? stopSimulation : startSimulation}
-                        variant={simulationMode ? "destructive" : "outline"}
-                        className="w-full h-9 mt-2 text-xs"
-                        data-testid="button-simulate-drive"
-                      >
-                        {simulationMode ? `🛑 Stop Sim (${simulationProgress})` : '🧪 Simulate Drive (Test Voice)'}
-                      </Button>
                     </div>
                     
                     {/* Legal Ownership */}
