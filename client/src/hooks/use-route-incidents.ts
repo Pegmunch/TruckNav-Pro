@@ -128,7 +128,7 @@ function isPointNearRoute(
   return { isNear: minDistance <= maxDistanceKm, minDistance };
 }
 
-function getBoundingBox(routePath: Array<{ lat: number; lng: number }>, bufferKm: number = 2) {
+function getBoundingBox(routePath: Array<{ lat: number; lng: number }>, bufferKm: number = 120) {
   if (!routePath || routePath.length === 0) return null;
 
   let minLat = Infinity, maxLat = -Infinity;
@@ -164,7 +164,7 @@ export function useRouteIncidents(
   const abortControllerRef = useRef<AbortController | null>(null);
   const intervalRef = useRef<number | null>(null);
 
-  const boundingBox = routePath && routePath.length >= 2 ? getBoundingBox(routePath, 2) : null;
+  const boundingBox = routePath && routePath.length >= 2 ? getBoundingBox(routePath, 120) : null;
 
   const { data: crowdsourcedData } = useQuery({
     queryKey: ['/api/traffic-incidents', boundingBox?.north, boundingBox?.south, boundingBox?.east, boundingBox?.west],
@@ -197,7 +197,7 @@ export function useRouteIncidents(
       return;
     }
 
-    const bbox = getBoundingBox(path, 2);
+    const bbox = getBoundingBox(path, 120);
     if (!bbox) return;
 
     if (abortControllerRef.current) {
