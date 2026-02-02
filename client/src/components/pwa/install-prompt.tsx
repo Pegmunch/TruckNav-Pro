@@ -163,7 +163,19 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
                 variant="ghost"
                 size="sm"
                 onClick={dismissPrompt}
-                className="ml-auto"
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dismissPrompt();
+                }}
+                onPointerDown={(e) => {
+                  if (e.pointerType === 'touch') {
+                    e.preventDefault();
+                    dismissPrompt();
+                  }
+                }}
+                className="ml-auto touch-manipulation"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                 data-testid="button-dismiss-install-ios"
               >
                 <X className="h-3 w-3 mr-1" />
@@ -228,6 +240,19 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
               variant="ghost"
               size="sm"
               onClick={dismissPrompt}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dismissPrompt();
+              }}
+              onPointerDown={(e) => {
+                if (e.pointerType === 'touch') {
+                  e.preventDefault();
+                  dismissPrompt();
+                }
+              }}
+              className="touch-manipulation"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-dismiss-install"
             >
               <X className="h-3 w-3 mr-1" />

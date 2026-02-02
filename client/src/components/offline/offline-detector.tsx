@@ -98,19 +98,27 @@ export function OfflineDetector({
               You're currently offline. TruckNav Pro will continue working with cached data.
             </span>
             <button 
-              onClick={() => setShowOfflineBanner(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowOfflineBanner(false);
+              }}
               onTouchStart={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setShowOfflineBanner(false);
               }}
-              onPointerDown={(e) => {
-                if (e.pointerType === 'mouse') {
-                  setShowOfflineBanner(false);
-                }
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
               }}
-              className="ml-4 px-2 py-1 text-destructive-foreground/80 hover:text-destructive-foreground active:scale-95 touch-manipulation select-none"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowOfflineBanner(false);
+              }}
+              className="ml-4 px-3 py-2 text-destructive-foreground hover:text-destructive-foreground active:scale-95 touch-manipulation select-none pointer-events-auto cursor-pointer font-bold text-lg"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minWidth: '44px', minHeight: '44px' }}
               data-testid="button-dismiss-offline"
               aria-label="Dismiss offline notice"
             >
