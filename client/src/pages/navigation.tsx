@@ -3206,6 +3206,11 @@ function NavigationPageContent() {
     localStorage.setItem('navigation_ui_active', 'true');
     console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
     
+    // CRITICAL: Prime voice for iOS Safari - must happen during user gesture (button tap)
+    // iOS Safari requires speech synthesis to be "unlocked" during a user interaction
+    navigationVoice.primeForUserGesture();
+    console.log('[NAV-ACTIVATION] ✅ Voice primed for iOS Safari');
+    
     // Enable Smart Traffic Lights Panel during navigation
     setShowSmartTrafficLights(true);
     console.log('[NAV-ACTIVATION] ✅ Smart Traffic Lights enabled');

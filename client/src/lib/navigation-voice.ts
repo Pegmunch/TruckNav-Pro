@@ -832,6 +832,47 @@ export class NavigationVoice {
   }
   
   /**
+   * Prime voice for iOS Safari - must be called during a user gesture (button tap)
+   * iOS Safari requires the first speech to happen during a user interaction to unlock speech synthesis
+   * This speaks an empty/silent utterance to prime the audio system
+   */
+  public primeForUserGesture(): void {
+    if (!this.synthesis) {
+      console.warn('[NavigationVoice] Cannot prime - synthesis not available');
+      return;
+    }
+    
+    // Ensure voice is enabled
+    this.settings.enabled = true;
+    
+    // Reload voices if needed (iOS sometimes needs this)
+    if (this.voices.length === 0) {
+      this.loadVoices();
+    }
+    
+    // Create a silent utterance to prime iOS Safari speech synthesis
+    // Using a single space character instead of empty string (empty strings are ignored)
+    const silentUtterance = new SpeechSynthesisUtterance(' ');
+    silentUtterance.volume = 0; // Silent
+    silentUtterance.rate = 10; // Fast (won't be heard anyway)
+    
+    // Select voice if available
+    if (this.selectedVoice) {
+      silentUtterance.voice = this.selectedVoice;
+    }
+    
+    try {
+      // Cancel any existing speech first
+      this.synthesis.cancel();
+      // Speak silent utterance to prime the system
+      this.synthesis.speak(silentUtterance);
+      console.log('[NavigationVoice] 🔊 Primed for iOS Safari user gesture');
+    } catch (error) {
+      console.warn('[NavigationVoice] Priming failed:', error);
+    }
+  }
+  
+  /**
    * Get available voices
    */
   public getAvailableVoices(): SpeechSynthesisVoice[] {
