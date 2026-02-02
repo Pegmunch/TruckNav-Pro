@@ -4362,17 +4362,17 @@ function NavigationPageContent() {
                   }
                   infoBoxes={
                     currentRoute ? (
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">
-                          <RouteIcon className="w-4 h-4" />
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg min-w-[85px]">
+                          <RouteIcon className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {measurementSystem === 'imperial'
                               ? `${((dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)) / 1609.344).toFixed(1)} mi`
                               : `${((dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)) / 1000).toFixed(1)} km`}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-amber-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
-                          <Clock className="w-4 h-4" />
+                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-3 py-1.5 rounded-lg shadow-lg min-w-[85px]">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
                               const totalSeconds = dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute.duration || 0);
@@ -4385,8 +4385,8 @@ function NavigationPageContent() {
                             })()}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
-                          <Clock className="w-4 h-4" />
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg min-w-[85px]">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 * 1000 : (currentRoute.duration || 0) * 1000)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
