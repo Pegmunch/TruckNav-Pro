@@ -4414,7 +4414,7 @@ function NavigationPageContent() {
                         <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
-                            {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)) * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)) * 60 * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' })}
                           </span>
                         </div>
                       </div>
