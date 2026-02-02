@@ -164,9 +164,9 @@ function useNativeClickHandler(
     // CRITICAL: Fire on touchstart - fires BEFORE WebGL can cancel the event
     const handleTouchStart = (e: TouchEvent) => {
       const now = Date.now();
-      if (now - lastTouchRef.current < 300) {
+      if (now - lastTouchRef.current < 200) {
         console.log(`[NATIVE-${label}-${mode}] ⏳ TouchStart debounced`);
-        return; // Debounce
+        return; // Debounce - reduced to 200ms for faster response
       }
       lastTouchRef.current = now;
       
@@ -294,7 +294,8 @@ export function RightActionStack({
   // Debounce refs to prevent double-firing from multiple event handlers
   const last3DToggleRef = useRef(0);
   const lastTrafficToggleRef = useRef(0);
-  const TOGGLE_DEBOUNCE = 300; // ms
+  const lastMapViewToggleRef = useRef(0);
+  const TOGGLE_DEBOUNCE = 200; // ms - reduced for faster response
   
   // Define helper functions FIRST (before they're used in handlers)
   const handleNavigationZoom = useCallback((direction: 'in' | 'out') => {
@@ -459,6 +460,9 @@ export function RightActionStack({
           size="icon"
           onTouchStart={(e) => {
             if (!onToggleMapView) return;
+            const now = Date.now();
+            if (now - lastMapViewToggleRef.current < TOGGLE_DEBOUNCE) return;
+            lastMapViewToggleRef.current = now;
             e.preventDefault();
             e.stopPropagation();
             console.log('[MAP-VIEW-BTN] 🗺️ Map View Toggle TOUCHSTART');

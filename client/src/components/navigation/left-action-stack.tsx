@@ -34,9 +34,9 @@ function useNativeClickHandler(
     // CRITICAL: Fire on touchstart - fires BEFORE WebGL can cancel the event
     const handleTouchStart = (e: TouchEvent) => {
       const now = Date.now();
-      if (now - lastTouchRef.current < 300) {
+      if (now - lastTouchRef.current < 200) {
         console.log(`[NATIVE-LEFT-${label}-${mode}] ⏳ TouchStart debounced`);
-        return; // Debounce
+        return; // Debounce - reduced to 200ms for faster response
       }
       lastTouchRef.current = now;
       
