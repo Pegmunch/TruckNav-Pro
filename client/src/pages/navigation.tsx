@@ -570,11 +570,11 @@ function NavigationPageContent() {
   // Metric: Show at 300m, 150m, 30m
   const shouldShowTurnIndicator = (distanceMeters: number, isImperial: boolean): boolean => {
     if (isImperial) {
-      // Show when distance is within 1000ft (305m) threshold
-      return distanceMeters <= 305 && distanceMeters >= 0;
+      // Show when distance is within 2000ft (610m) threshold - earlier visibility for better preparation
+      return distanceMeters <= 610 && distanceMeters >= 0;
     } else {
-      // Show when distance is within 300m threshold
-      return distanceMeters <= 300 && distanceMeters >= 0;
+      // Show when distance is within 600m threshold
+      return distanceMeters <= 600 && distanceMeters >= 0;
     }
   };
   
@@ -1331,11 +1331,17 @@ function NavigationPageContent() {
   // Announce turn-by-turn navigation with voice
   useEffect(() => {
     if (!isNavigating || !nextTurn || !professionalVoiceEnabled) {
+      console.log(`[VOICE-NAV] Skipping: isNavigating=${isNavigating}, nextTurn=${!!nextTurn}, voiceEnabled=${professionalVoiceEnabled}`);
       return;
     }
     
+    // Ensure voice is enabled and initialized
+    navigationVoice.setEnabled(true);
+    
     // Get the measurement unit (mi or km)
     const unit = measurementSystem === 'imperial' ? 'mi' : 'km';
+    
+    console.log(`[VOICE-NAV] Announcing turn: ${nextTurn.direction} in ${nextTurn.distance.toFixed(0)}m (${unit}), road: ${nextTurn.roadName || 'unknown'}`);
     
     // Announce the turn based on distance
     navigationVoice.announceTurn(

@@ -623,8 +623,11 @@ export class NavigationVoice {
     const turnKey = `${direction}-${Math.floor(distance / 50)}`;
     if (announcement && turnKey !== this.lastAnnouncedTurn) {
       this.lastAnnouncedTurn = turnKey;
+      console.log(`[NavigationVoice] Announcing: "${announcement}" (level: ${level}, enabled: ${this.isEnabled()})`);
       // Use 'junction' type for motorway junction exits
       this.speak(announcement, level, level === 'critical', 'junction');
+    } else if (!announcement) {
+      console.log(`[NavigationVoice] No announcement for distance ${distance.toFixed(0)}m (${unit})`);
     }
   }
   

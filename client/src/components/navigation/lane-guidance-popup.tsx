@@ -349,7 +349,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   const [lastManeuverStepIndex, setLastManeuverStepIndex] = useState<number | null>(null);
 
   // Distance thresholds for auto-show/hide (in meters)
-  const APPROACH_DISTANCE = 500; // Show when within 500m of maneuver
+  const APPROACH_DISTANCE = 800; // Show when within 800m of maneuver (earlier visibility)
   const COMPLETION_DISTANCE = 30; // Consider completed when within 30m (passed through)
 
   // Detect maneuver completion - when distance decreases to near-zero then we've passed it
