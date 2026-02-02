@@ -127,7 +127,7 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
         className
       )}
       style={{
-        top: 'calc(140px + var(--safe-area-top, 0px))',
+        top: 'calc(190px + var(--safe-area-top, 0px))',
         left: '16px'
       }}
       data-testid="map-turn-lane-indicator"
