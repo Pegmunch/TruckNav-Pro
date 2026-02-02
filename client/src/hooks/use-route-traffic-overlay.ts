@@ -131,13 +131,30 @@ export function useRouteTrafficOverlay(
                 data = await hereResponse.json();
                 console.log(`[ROUTE-TRAFFIC] ✅ HERE fallback successful for segment ${segStart}`);
               } else {
-                console.warn(`[ROUTE-TRAFFIC] HERE fallback also failed: ${hereResponse.status}`);
+                console.warn(`[ROUTE-TRAFFIC] HERE fallback also failed: ${hereResponse.status}, trying Mapbox...`);
+                
+                // Try Mapbox as third fallback
+                try {
+                  const mapboxResponse = await fetch(
+                    `/api/mapbox/traffic-flow?lat=${midPoint.lat.toFixed(6)}&lng=${midPoint.lng.toFixed(6)}`,
+                    { signal: abortControllerRef.current?.signal }
+                  );
+                  
+                  if (mapboxResponse.ok) {
+                    data = await mapboxResponse.json();
+                    console.log(`[ROUTE-TRAFFIC] ✅ Mapbox fallback successful for segment ${segStart}`);
+                  } else {
+                    console.warn(`[ROUTE-TRAFFIC] Mapbox fallback also failed: ${mapboxResponse.status}`);
+                  }
+                } catch (mapboxErr) {
+                  console.warn(`[ROUTE-TRAFFIC] Mapbox fallback error:`, mapboxErr);
+                }
               }
             } catch (hereErr) {
               console.warn(`[ROUTE-TRAFFIC] HERE fallback error:`, hereErr);
             }
             
-            // If both APIs failed, mark as unknown
+            // If all APIs failed, mark as unknown
             if (!data) {
               newSegments.push({
                 startIndex: segStart,

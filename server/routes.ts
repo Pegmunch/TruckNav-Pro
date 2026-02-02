@@ -3445,6 +3445,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch traffic data from HERE" });
     }
   });
+
+  // Mapbox Traffic Flow API - Third fallback after TomTom and HERE
+  // Uses Mapbox Directions API with driving-traffic profile to get traffic conditions
+  const mapboxTrafficCache = new Map<string, { data: any; timestamp: number }>();
+  const MAPBOX_CACHE_TTL_MS = 120000; // 2 minute cache
+  const MAPBOX_CACHE_MAX_ENTRIES = 500;
+  
+  function getMapboxCacheKey(lat: number, lng: number): string {
+    return `${lat.toFixed(4)}_${lng.toFixed(4)}`;
+  }
+  
+  app.get("/api/mapbox/traffic-flow", async (req, res) => {
+    try {
+      const { lat, lng } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "lat and lng query parameters are required" });
+      }
+      
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ message: "Invalid lat or lng values" });
+      }
+      
+      // Check cache first
+      const cacheKey = getMapboxCacheKey(latitude, longitude);
+      const cachedEntry = mapboxTrafficCache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cachedEntry && (now - cachedEntry.timestamp) < MAPBOX_CACHE_TTL_MS) {
+        console.log(`[MAPBOX-CACHE] HIT for ${cacheKey}`);
+        return res.json({
+          ...cachedEntry.data,
+          cached: true,
+        });
+      }
+      
+      const MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
+      
+      if (!MAPBOX_ACCESS_TOKEN) {
+        console.warn('[MAPBOX-TRAFFIC] Access token not found');
+        return res.status(503).json({ message: "Mapbox access token not configured" });
+      }
+      
+      console.log(`[MAPBOX-CACHE] MISS for ${cacheKey} - fetching from API`);
+      
+      // Create a short route segment to get traffic info
+      // We query from the point to a nearby point (about 100m away)
+      const offsetLat = latitude + 0.001;
+      const offsetLng = longitude + 0.001;
+      
+      const mapboxUrl = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${longitude},${latitude};${offsetLng},${offsetLat}?access_token=${MAPBOX_ACCESS_TOKEN}&annotations=speed,duration,congestion_numeric&overview=false`;
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await fetch(mapboxUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[MAPBOX-TRAFFIC] API error:', response.status, errorText);
+        return res.status(response.status).json({ 
+          message: "Mapbox Traffic API error", 
+          status: response.status 
+        });
+      }
+      
+      const data = await response.json();
+      
+      // Transform Mapbox response to our standard format
+      let currentSpeed = 30; // Default speed in mph
+      let freeFlowSpeed = 60; // Assumed free flow speed
+      let speedRatio = 1;
+      
+      if (data.routes && data.routes.length > 0 && data.routes[0].legs && data.routes[0].legs.length > 0) {
+        const leg = data.routes[0].legs[0];
+        
+        // Get speed from annotations if available
+        if (leg.annotation && leg.annotation.speed && leg.annotation.speed.length > 0) {
+          const avgSpeed = leg.annotation.speed.reduce((a: number, b: number) => a + b, 0) / leg.annotation.speed.length;
+          currentSpeed = Math.round(avgSpeed * 2.237); // m/s to mph
+        }
+        
+        // Get congestion level
+        if (leg.annotation && leg.annotation.congestion_numeric && leg.annotation.congestion_numeric.length > 0) {
+          const avgCongestion = leg.annotation.congestion_numeric.reduce((a: number, b: number) => a + b, 0) / leg.annotation.congestion_numeric.length;
+          // Mapbox congestion_numeric: 0-100 where 0 is no congestion, 100 is severe
+          speedRatio = 1 - (avgCongestion / 100);
+          freeFlowSpeed = Math.round(currentSpeed / speedRatio) || 60;
+        } else {
+          // Estimate from duration vs distance
+          const distance = leg.distance || 100;
+          const duration = leg.duration || 10;
+          if (distance > 0 && duration > 0) {
+            currentSpeed = Math.round((distance / duration) * 2.237);
+            freeFlowSpeed = Math.max(currentSpeed, 60);
+            speedRatio = currentSpeed / freeFlowSpeed;
+          }
+        }
+      }
+      
+      const responseData = {
+        flowSegmentData: {
+          currentSpeed: Math.min(currentSpeed, 80),
+          freeFlowSpeed: Math.min(freeFlowSpeed, 80),
+          speedRatio: Math.max(0, Math.min(1, speedRatio)),
+        },
+        source: 'mapbox',
+      };
+      
+      // Store in cache
+      if (mapboxTrafficCache.size >= MAPBOX_CACHE_MAX_ENTRIES) {
+        const oldestKey = mapboxTrafficCache.keys().next().value;
+        if (oldestKey) mapboxTrafficCache.delete(oldestKey);
+      }
+      mapboxTrafficCache.set(cacheKey, { data: responseData, timestamp: now });
+      
+      res.json({ ...responseData, cached: false });
+      
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ message: "Mapbox Traffic API timeout" });
+      }
+      console.error('[MAPBOX-TRAFFIC] Error:', error);
+      res.status(500).json({ message: "Failed to fetch traffic data from Mapbox" });
+    }
+  });
   
   // Cache statistics endpoint for monitoring
   app.get("/api/here/cache-stats", (req, res) => {
