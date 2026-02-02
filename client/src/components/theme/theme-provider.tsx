@@ -357,31 +357,17 @@ export function ThemeProvider({
     } else if (mode === "night") {
       return "night";
     } else {
-      // Auto mode - determine based on time and system preference
-      let result: EffectiveTheme = "day";
-      
-      // Use time-based logic with geolocation if enabled
-      const timeInfo = getCurrentTimeInfo(autoThemeConfig, coordinates || undefined);
-      
-      // Use the time info to determine theme
-      result = timeInfo.currentTheme as EffectiveTheme;
-      
-      // If geolocation is not available, fall back to system preference
-      if (!autoThemeConfig.useGeolocation && !coordinates) {
-        const systemPreference = getSystemPreference();
-        
-        // Combine time-based and system preference
-        // If it's daytime but user prefers dark mode, respect system preference
-        if (timeInfo.isDaytime && systemPreference === "night") {
-          result = "night";
-        } else if (timeInfo.isNighttime && systemPreference === "day") {
-          result = "day";  
-        }
+      // Auto mode - primarily follow the device's system preference
+      // This is what users expect: when their phone switches to dark mode, the app follows
+      if (typeof window !== "undefined") {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        return prefersDark ? "night" : "day";
       }
       
-      return result;
+      // Fallback to day theme if window is not available
+      return "day";
     }
-  }, [autoThemeConfig, coordinates]);
+  }, []);
 
   // Legacy compatibility methods (for existing components)
   const isNightTime = useCallback((): boolean => {
