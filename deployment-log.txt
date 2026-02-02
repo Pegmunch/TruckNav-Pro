@@ -1,17 +1,134 @@
-=== DEPLOYMENT LOG ===
-
-Date: 2026-02-02 19:03:28
-
-Commit: 0aac678aea3ac556cd0458de85807aee7edeae80
-Description: Update arrival time display to show accurate real-time estimates
-
+=== TRUCKNAV PRO DEPLOYMENT LOG ===
+Date: $(date '+%Y-%m-%d %H:%M:%S')
+Commit: 94585550e165a832bbdff1fd921ad594c6d81fd3
 Published Commit: 5207b226014eafac7a5c1fd648b176aa0b330cc5
-Status: Published
+
+=== DEPLOYMENT STATUS ASSESSMENT ===
+Your app is READY for native deployment with all essential components:
+
+✅ Capacitor Configuration (capacitor.config.ts)
+   - App ID: uk.co.bespokemarketingai.trucknavpro
+   - iOS & Android platform configs
+   - Native plugins: SplashScreen, StatusBar, Keyboard, PushNotifications,
+     LocalNotifications, BackgroundRunner, Geolocation, Network, App
+
+✅ PWA Manifest (client/public/manifest.json)
+   - Icons: 512x512, 192x192, 180x180
+   - Splash screens for iOS devices
+   - App shortcuts configured
+   - Offline fallback enabled
+
+✅ Service Worker (client/public/sw.js)
+   - Cache management with size limits
+   - Offline support
+   - Background sync
+   - Mobile network quality detection
+
+✅ Capacitor Plugins Installed:
+   @capacitor/android, @capacitor/ios, @capacitor/app
+   @capacitor/geolocation, @capacitor/haptics
+   @capacitor/keyboard, @capacitor/network
+   @capacitor/local-notifications, @capacitor/push-notifications
+   @capacitor/preferences, @capacitor/splash-screen
+   @capacitor/status-bar, @capacitor/background-runner, @capacitor/browser
+
+=== KEY FILES FOR NATIVE DEPLOYMENT ===
 
 
-=== WAKE LOCK CODE ===
-File: client/src/hooks/use-wake-lock.ts
+--- FILE: capacitor.config.ts ---
+import type { CapacitorConfig } from '@capacitor/cli';
 
+const config: CapacitorConfig = {
+  // App Identity - Bespoke Marketing.Ai Ltd
+  appId: 'uk.co.bespokemarketingai.trucknavpro',
+  appName: 'TruckNav Pro',
+  webDir: 'dist/public',
+  
+  // App Version (update before each App Store submission)
+  // Version format: MAJOR.MINOR.PATCH
+  // Build number: increment for each upload to App Store Connect
+  
+  server: {
+    androidScheme: 'https',
+    iosScheme: 'https',
+    url: undefined,
+    cleartext: false,
+    hostname: 'trucknavpro.app'
+  },
+  
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2500,
+      launchAutoHide: true,
+      backgroundColor: '#1E293B',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: true,
+      androidSpinnerStyle: 'large',
+      iosSpinnerStyle: 'medium',
+      spinnerColor: '#DC2626',
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#1E293B',
+      overlaysWebView: false
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true,
+      style: 'dark'
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert']
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon',
+      iconColor: '#DC2626',
+      sound: 'notification.wav'
+    },
+    BackgroundRunner: {
+      label: 'uk.co.bespokemarketingai.trucknavpro.background',
+      src: 'background.js',
+      event: 'backgroundFetch',
+      repeat: true,
+      interval: 15
+    },
+    Geolocation: {
+      // iOS location permission descriptions
+    },
+    Network: {
+      // Monitor network connectivity
+    },
+    App: {
+      // App lifecycle events
+    }
+  },
+  
+  ios: {
+    contentInset: 'automatic',
+    allowsLinkPreview: false,
+    backgroundColor: '#1E293B',
+    limitsNavigationsToAppBoundDomains: false,
+    preferredContentMode: 'mobile',
+    scheme: 'trucknavpro',
+    // Enable background modes for navigation
+    // Note: Configure in Xcode - Signing & Capabilities
+  },
+  
+  android: {
+    backgroundColor: '#1E293B',
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
+    // Flavor for production builds
+    flavor: 'production'
+  }
+};
+
+export default config;
+--- FILE: client/src/hooks/use-wake-lock.ts ---
 import { useEffect, useRef, useCallback } from 'react';
 
 interface WakeLockSentinel {
@@ -208,4 +325,397 @@ export function useWakeLock() {
     release: releaseWakeLock
   };
 }
-=== END WAKE LOCK CODE ===
+--- FILE: client/src/lib/pwa-registration.ts ---
+/**
+ * PWA Service Worker Registration
+ * TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
+ * 
+ * Handles service worker registration, updates, and lifecycle management
+ * with iOS-specific enhancements for optimal PWA experience
+ */
+
+import { useEffect, useState } from 'react';
+
+/**
+ * Toggle service worker caching for development
+ * Call this in browser console: toggleSWDevMode(true) or toggleSWDevMode(false)
+ */
+export function toggleSWDevMode(enabled: boolean) {
+  if (!navigator.serviceWorker.controller) {
+    console.log('[PWA] No service worker active yet');
+    return;
+  }
+  
+  navigator.serviceWorker.controller.postMessage({
+    type: 'DEV_MODE',
+    enabled
+  });
+  
+  console.log(`[PWA] Service worker caching ${enabled ? 'DISABLED (dev mode)' : 'ENABLED (production mode)'}`);
+  console.log('[PWA] TIP: Run toggleSWDevMode(true) to disable caching during development');
+  console.log('[PWA] TIP: Run toggleSWDevMode(false) to re-enable caching');
+}
+
+// Make it available globally for console access
+if (typeof window !== 'undefined') {
+  (window as any).toggleSWDevMode = toggleSWDevMode;
+}
+
+export interface ServiceWorkerUpdate {
+  type: 'update-available' | 'update-ready' | 'offline-ready' | 'error';
+  message: string;
+  registration?: ServiceWorkerRegistration;
+  worker?: ServiceWorker;
+}
+
+export type ServiceWorkerUpdateCallback = (update: ServiceWorkerUpdate) => void;
+
+/**
+ * Register the service worker with update handling
+ * @param onUpdate Callback for service worker updates
+ * @returns Service worker registration or null
+ */
+export async function registerServiceWorker(
+  onUpdate?: ServiceWorkerUpdateCallback
+): Promise<ServiceWorkerRegistration | null> {
+  // Check if service workers are supported
+  if (!('serviceWorker' in navigator)) {
+    console.warn('[PWA] Service Workers not supported in this browser');
+    return null;
+  }
+
+  try {
+    // CRITICAL: Use dynamic versioned URL to force iOS PWA to download new service worker
+    // iOS caches sw.js URL and won't refetch unless URL changes
+    // Use timestamp to ensure every reload checks for updates
+    const SW_VERSION = `${Math.floor(Date.now() / 60000)}`; // Changes every minute
+    
+    // Register the service worker with version query string
+    const registration = await navigator.serviceWorker.register(`/sw.js?v=${SW_VERSION}`, {
+      scope: '/',
+      updateViaCache: 'none' // Always check for updates
+    });
+
+    console.log('[PWA] Service Worker registered successfully');
+
+    // Check for updates on registration
+    await registration.update();
+
+    // Set up update detection
+    registration.addEventListener('updatefound', () => {
+      const newWorker = registration.installing;
+      if (!newWorker) return;
+
+      console.log('[PWA] New service worker installing');
+      
+      onUpdate?.({
+        type: 'update-available',
+        message: 'A new version is downloading...',
+        registration,
+        worker: newWorker
+      });
+
+      newWorker.addEventListener('statechange', () => {
+        switch (newWorker.state) {
+          case 'installed':
+            if (navigator.serviceWorker.controller) {
+              // New worker installed but old one still controlling
+              console.log('[PWA] New version ready to install');
+              onUpdate?.({
+                type: 'update-ready',
+                message: 'Update ready! Tap to install.',
+                registration,
+                worker: newWorker
+              });
+            } else {
+              // First time installation
+              console.log('[PWA] App cached for offline use');
+              onUpdate?.({
+                type: 'offline-ready',
+                message: 'TruckNav Pro is ready for offline use!',
+                registration
+              });
+            }
+            break;
+          
+          case 'redundant':
+            console.log('[PWA] Service worker became redundant');
+            break;
+        }
+      });
+    });
+
+    // Handle controller change (new service worker activated)
+    // NOTE: Do NOT auto-reload on controllerchange - this causes issues during onboarding
+    // where the reload races with localStorage writes (legal consent acceptance)
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      console.log('[PWA] New service worker activated - update will take effect on next load');
+      // Don't force reload - this prevents race conditions with localStorage writes
+    });
+
+    // Check for updates periodically (every 30 seconds)
+    setInterval(() => {
+      registration.update();
+    }, 30000);
+
+    return registration;
+  } catch (error) {
+    console.error('[PWA] Service Worker registration failed:', error);
+    onUpdate?.({
+      type: 'error',
+      message: 'Failed to register service worker'
+    });
+    return null;
+  }
+}
+
+/**
+ * Unregister all service workers
+ */
+export async function unregisterServiceWorker(): Promise<boolean> {
+  if (!('serviceWorker' in navigator)) {
+    return false;
+  }
+
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    const results = await Promise.all(
+      registrations.map(registration => registration.unregister())
+    );
+    
+    console.log('[PWA] Service Workers unregistered:', results.length);
+    return results.every(result => result);
+  } catch (error) {
+    console.error('[PWA] Failed to unregister service workers:', error);
+    return false;
+  }
+}
+
+/**
+ * Skip waiting and activate new service worker immediately
+ */
+export function skipWaitingAndActivate(worker: ServiceWorker): void {
+  worker.postMessage({ type: 'SKIP_WAITING' });
+}
+
+/**
+ * React hook for service worker registration and update management
+ */
+export function useServiceWorker(autoRegister = true) {
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
+  const [offlineReady, setOfflineReady] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!autoRegister) return;
+
+    const handleUpdate = (update: ServiceWorkerUpdate) => {
+      switch (update.type) {
+        case 'update-available':
+          setUpdateAvailable(true);
+          break;
+        
+        case 'update-ready':
+          setUpdateReady(true);
+          setUpdateAvailable(false);
+          if (update.worker) {
+            setWaitingWorker(update.worker);
+          }
+          break;
+        
+        case 'offline-ready':
+          setOfflineReady(true);
+          setTimeout(() => setOfflineReady(false), 5000);
+          break;
+        
+        case 'error':
+          setError(update.message);
+          break;
+      }
+    };
+
+    registerServiceWorker(handleUpdate).then(reg => {
+      setRegistration(reg);
+    });
+  }, [autoRegister]);
+
+  const applyUpdate = () => {
+    if (waitingWorker) {
+      skipWaitingAndActivate(waitingWorker);
+      setUpdateReady(false);
+    }
+  };
+
+  const dismissUpdate = () => {
+    setUpdateAvailable(false);
+    setUpdateReady(false);
+  };
+
+  return {
+    registration,
+    updateAvailable,
+    updateReady,
+    offlineReady,
+    error,
+    applyUpdate,
+    dismissUpdate
+  };
+}
+
+/**
+ * Check if running as PWA (standalone mode)
+ */
+export function isRunningAsPWA(): boolean {
+  // Check various standalone indicators
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSStandalone = (window.navigator as any).standalone === true;
+  const isAndroidApp = document.referrer.includes('android-app://');
+  
+  return isStandalone || isIOSStandalone || isAndroidApp;
+}
+
+/**
+ * Detect iOS device
+ */
+export function isIOSDevice(): boolean {
+  const userAgent = navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(userAgent);
+}
+
+/**
+ * Get iOS version
+ */
+export function getIOSVersion(): number | null {
+  const match = navigator.userAgent.match(/OS (\d+)_/i);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Check if iOS and can install PWA
+ */
+export function canInstallIOSPWA(): boolean {
+  return isIOSDevice() && !isRunningAsPWA();
+}
+
+--- FILE: client/public/manifest.json ---
+{
+  "name": "TruckNav Pro - Professional Truck Navigation",
+  "short_name": "TruckNav Pro",
+  "description": "Professional truck navigation for HGVs with height restrictions, facility finder, and live traffic updates. Patent-protected technology by Bespoke Marketing.Ai Ltd.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2563eb",
+  "background_color": "#2563eb",
+  "scope": "/",
+  "categories": ["navigation", "travel", "productivity", "business"],
+  "lang": "en",
+  
+  "icons": [
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon.jpg",
+      "sizes": "180x180",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  
+  "related_applications": [],
+  "prefer_related_applications": false,
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+trucknav",
+      "url": "/?route=%s"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Plan Route",
+      "short_name": "Route",
+      "description": "Plan a new truck route",
+      "url": "/navigation?action=plan",
+      "icons": [{ "src": "/app-icon.jpg", "sizes": "180x180" }]
+    },
+    {
+      "name": "Find Facilities",
+      "short_name": "Facilities", 
+      "description": "Find truck stops and facilities",
+      "url": "/navigation?action=facilities",
+      "icons": [{ "src": "/app-icon.jpg", "sizes": "180x180" }]
+    }
+  ],
+  
+  "author": "Bespoke Marketing.Ai Ltd",
+  "copyright": "© 2025 Bespoke Marketing.Ai Ltd. All rights reserved. Patent-protected technology.",
+  
+  "features": [
+    "offline-navigation",
+    "offline-maps", 
+    "gps-tracking",
+    "restriction-awareness",
+    "facility-finder",
+    "voice-guidance",
+    "background-sync"
+  ],
+  
+  "offline": {
+    "enabled": true,
+    "fallback_page": "/offline.html",
+    "cache_strategy": "cache-first",
+    "sync_background": true
+  },
+  
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  
+  "custom": {
+    "legal_notice": "TruckNav Pro is patent-protected intellectual property owned by Bespoke Marketing.Ai Ltd. Any replication of truck navigation features requires compensation.",
+    "trademark": "TruckNav Pro and Professional Navigation are trademarks of Bespoke Marketing.Ai Ltd"
+  },
+  
+  "amazon": {
+    "app_id": "com.bespokemarketing.trucknav.pro",
+    "store_ready": true,
+    "fire_tv_compatible": true,
+    "fire_tablet_compatible": true,
+    "silk_accelerated": true,
+    "content_rating": "Everyone",
+    "tv_navigation": "directional",
+    "input_support": ["remote", "voice", "touch"],
+    "categories": ["navigation", "productivity", "travel", "business"],
+    "required_features": [],
+    "optional_features": ["location", "internet"],
+    "privacy_policy": "https://trucknav.replit.app/privacy",
+    "terms_of_service": "https://trucknav.replit.app/terms",
+    "supported_languages": [
+      "en-US", "en-GB", "de-DE", "fr-FR", "es-ES", "ja-JP",
+      "it-IT", "pt-BR", "nl-NL", "sv-SE", "pl-PL", "tr-TR",
+      "ar-SA", "ar-AE", "hi-IN", "zh-CN", "ko-KR", "th-TH"
+    ],
+    "localization": {
+      "default_language": "en-US",
+      "auto_detect": true,
+      "fallback_language": "en-US"
+    }
+  }
+}
+=== END DEPLOYMENT LOG ===
