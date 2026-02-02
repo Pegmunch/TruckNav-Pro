@@ -204,13 +204,34 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
       const navInstructions = generateTurnByTurnInstructions(currentRoute);
       setInstructions(navInstructions);
       setCurrentInstructionIndex(0);
-      
-      // Calculate estimated arrival time
-      const now = new Date();
-      const arrivalTime = new Date(now.getTime() + (currentRoute.duration || 0) * 60000);
-      setEstimatedArrival(arrivalTime);
     }
   }, [currentRoute, isNavigating]);
+  
+  // Update ETA in real-time every second based on remaining time
+  // Uses device's local time for accurate arrival time display
+  useEffect(() => {
+    if (!isNavigating || !currentRoute) {
+      setEstimatedArrival(null);
+      return;
+    }
+    
+    // Calculate ETA based on remaining time (recalculated every second)
+    const updateETA = () => {
+      const now = new Date();
+      // remainingTime is in minutes, so convert to milliseconds
+      const remainingMs = Math.max((currentRoute.duration || 0) - Math.floor(timeElapsed / 60), 0) * 60000;
+      const arrivalTime = new Date(now.getTime() + remainingMs);
+      setEstimatedArrival(arrivalTime);
+    };
+    
+    // Update immediately
+    updateETA();
+    
+    // Update every second for smooth countdown
+    const interval = setInterval(updateETA, 1000);
+    
+    return () => clearInterval(interval);
+  }, [isNavigating, currentRoute, timeElapsed]);
 
   // Simulate navigation progress timer
   useEffect(() => {
@@ -404,7 +425,7 @@ const ProfessionalNavHUD = memo(function ProfessionalNavHUD({
         <div className="text-center">
           <div className="text-[10px] md:text-xs text-gray-300 leading-tight">Arrival</div>
           <div className="text-base md:text-lg font-bold text-white leading-tight">
-            {estimatedArrival?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) || '--:--'}
+            {estimatedArrival?.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false }) || '--:--'}
           </div>
           <div className="text-[9px] md:text-xs text-gray-400 leading-none">
             {remainingTime}min • {remainingDistance.toFixed(1)}mi
