@@ -132,47 +132,25 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
       }}
       data-testid="map-turn-lane-indicator"
     >
-      {/* Main turn indicator - matches right ETA box style (blue) */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-          <div className="w-4 h-4 flex-shrink-0">
-            {getTurnIcon()}
-          </div>
-          <span className="font-bold text-sm">{value} {displayUnit}</span>
+      {/* Main turn indicator - white pill with blue arrow + distance */}
+      <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200">
+        <div className="text-blue-600 flex-shrink-0">
+          {getTurnIcon()}
         </div>
+        <span className="font-medium text-gray-900 text-base">{value} {displayUnit}</span>
       </div>
       
-      {/* Lane guidance text - matches right ETA box style */}
+      {/* Lane guidance text - white pill style */}
       {laneGuidanceText && (
-        <div className="mt-2 flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-          <span className="font-bold text-sm">{laneGuidanceText}</span>
+        <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200">
+          <span className="font-medium text-gray-900 text-sm">{laneGuidanceText}</span>
         </div>
       )}
       
-      {/* Lane arrows - styled to match */}
-      {laneInfo?.lanes && laneInfo.lanes.length > 0 && (
-        <div className="mt-2 flex gap-1 justify-start bg-blue-600 text-white rounded-lg py-1.5 px-2 shadow-lg">
-          {laneInfo.lanes.map((lane, idx) => (
-            <div 
-              key={idx}
-              className={cn(
-                "flex items-center justify-center",
-                "w-6 h-6 rounded",
-                lane.isRecommended 
-                  ? "bg-white text-blue-600" 
-                  : "bg-blue-500 text-blue-300"
-              )}
-            >
-              {getLaneArrow(lane.direction, lane.isRecommended)}
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Road name - matches right ETA box style */}
+      {/* Road name - white pill style */}
       {turnInfo.roadName && (
-        <div className="mt-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-          <span className="font-bold text-xs truncate">{turnInfo.roadName}</span>
+        <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200">
+          <span className="font-medium text-gray-900 text-sm truncate">{turnInfo.roadName}</span>
         </div>
       )}
     </div>
