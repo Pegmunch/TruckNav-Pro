@@ -372,7 +372,7 @@ function NavigationPageContent() {
   const [liveTrafficPanelTab, setLiveTrafficPanelTab] = useState<'view' | 'report'>('view');
   
   // Smart Traffic Lights Panel state
-  const [showSmartTrafficLights, setShowSmartTrafficLights] = useState(false);
+  const [showSmartTrafficLights, setShowSmartTrafficLights] = useState(true);
   
   // Professional navigation state
   const [currentSpeed, setCurrentSpeed] = useState(0);
@@ -4795,8 +4795,9 @@ function NavigationPageContent() {
       />
 
       {/* Smart Traffic Lights Panel - Green wave optimization for traffic signals */}
-      {showSmartTrafficLights && currentRoute?.routePath && isNavigating && (
-        <div className="fixed top-20 right-4 z-40 w-80 max-w-[calc(100vw-2rem)]">
+      {/* Shows during both preview and navigation when there's a route */}
+      {showSmartTrafficLights && currentRoute?.routePath && (isNavigating || isShowingPreview) && (
+        <div className="fixed top-20 right-4 z-40 w-80 max-w-[calc(100vw-2rem)] hidden sm:block">
           <SmartTrafficLightsPanel
             routeCoordinates={currentRoute.routePath}
             isNavigating={isNavigating}
