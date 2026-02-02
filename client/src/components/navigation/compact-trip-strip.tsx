@@ -77,7 +77,7 @@ export function CompactTripStrip({
 
   const adjustedEta = eta + trafficDelayMinutes;
   const arrivalTime = new Date(Date.now() + adjustedEta * 60000);
-  const arrivalTimeStr = arrivalTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' });
+  const arrivalTimeStr = arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const hasTrafficDelay = trafficDelayMinutes > 0;
 
   // Speed conversion
