@@ -132,35 +132,32 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
       }}
       data-testid="map-turn-lane-indicator"
     >
-      {/* Main turn indicator - matches ETA box style */}
+      {/* Main turn indicator - matches right ETA box style (blue) */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg w-[90px]">
-          <div className="flex-shrink-0">
+        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+          <div className="w-4 h-4 flex-shrink-0">
             {getTurnIcon()}
           </div>
-        </div>
-        <div className="flex items-center justify-center gap-1 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-          <span className="font-bold text-lg">{value}</span>
-          <span className="font-bold text-sm">{displayUnit}</span>
+          <span className="font-bold text-sm">{value} {displayUnit}</span>
         </div>
       </div>
       
-      {/* Lane guidance text - matches ETA box style */}
+      {/* Lane guidance text - matches right ETA box style */}
       {laneGuidanceText && (
-        <div className="mt-2 flex items-center justify-center bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg">
+        <div className="mt-2 flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
           <span className="font-bold text-sm">{laneGuidanceText}</span>
         </div>
       )}
       
       {/* Lane arrows - styled to match */}
       {laneInfo?.lanes && laneInfo.lanes.length > 0 && (
-        <div className="mt-2 flex gap-1 justify-start bg-blue-600 rounded-lg py-1.5 px-3 shadow-lg">
+        <div className="mt-2 flex gap-1 justify-start bg-blue-600 text-white rounded-lg py-1.5 px-2 shadow-lg">
           {laneInfo.lanes.map((lane, idx) => (
             <div 
               key={idx}
               className={cn(
                 "flex items-center justify-center",
-                "w-7 h-7 rounded",
+                "w-6 h-6 rounded",
                 lane.isRecommended 
                   ? "bg-white text-blue-600" 
                   : "bg-blue-500 text-blue-300"
@@ -172,10 +169,10 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
         </div>
       )}
       
-      {/* Road name - matches ETA box style */}
+      {/* Road name - matches right ETA box style */}
       {turnInfo.roadName && (
-        <div className="mt-1 flex items-center justify-center bg-amber-500 text-white px-3 py-1 rounded-lg shadow-lg">
-          <span className="font-semibold text-xs">onto {turnInfo.roadName}</span>
+        <div className="mt-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+          <span className="font-bold text-xs truncate">{turnInfo.roadName}</span>
         </div>
       )}
     </div>
