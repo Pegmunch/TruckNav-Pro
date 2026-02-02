@@ -565,6 +565,88 @@ function NavigationPageContent() {
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
+  // SIMULATION MODE: For testing voice navigation without GPS
+  const [simulationMode, setSimulationMode] = useState(false);
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Start simulation - advances along route triggering voice announcements
+  const startSimulation = useCallback(() => {
+    if (!currentRoute?.routePath || currentRoute.routePath.length < 2) {
+      console.log('[SIMULATION] No route to simulate');
+      return;
+    }
+    
+    console.log('[SIMULATION] Starting route simulation...');
+    setSimulationMode(true);
+    setSimulationProgress(0);
+    
+    // Start navigation mode for simulation
+    setIsLocalNavActive(true);
+    setIsNavigating(true);
+    
+    // Enable voice
+    navigationVoice.setEnabled(true);
+    
+    // Simulate advancing along the route every 2 seconds
+    let progress = 0;
+    const totalPoints = currentRoute.routePath.length;
+    
+    simulationIntervalRef.current = setInterval(() => {
+      progress += 3; // Advance 3 points at a time
+      
+      if (progress >= totalPoints) {
+        // Reached destination
+        console.log('[SIMULATION] Reached destination!');
+        navigationVoice.announceArrival();
+        stopSimulation();
+        return;
+      }
+      
+      setSimulationProgress(progress);
+      
+      // Simulate the next turn based on remaining distance
+      const remainingPoints = totalPoints - progress;
+      const simulatedDistance = remainingPoints * 10; // ~10m per point
+      
+      // Simulate turns at different distances
+      if (simulatedDistance <= 300 && simulatedDistance > 200) {
+        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
+      } else if (simulatedDistance <= 200 && simulatedDistance > 100) {
+        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
+      } else if (simulatedDistance <= 100 && simulatedDistance > 30) {
+        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
+      } else if (simulatedDistance <= 30) {
+        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
+      }
+      
+      console.log(`[SIMULATION] Progress: ${progress}/${totalPoints}, Distance: ${simulatedDistance}m`);
+    }, 2000);
+  }, [currentRoute]);
+  
+  // Stop simulation
+  const stopSimulation = useCallback(() => {
+    console.log('[SIMULATION] Stopping simulation');
+    if (simulationIntervalRef.current) {
+      clearInterval(simulationIntervalRef.current);
+      simulationIntervalRef.current = null;
+    }
+    setSimulationMode(false);
+    setSimulationProgress(0);
+    setIsLocalNavActive(false);
+    setIsNavigating(false);
+    setNextTurn(null);
+  }, []);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (simulationIntervalRef.current) {
+        clearInterval(simulationIntervalRef.current);
+      }
+    };
+  }, []);
+  
   // Helper: Check if turn indicator should be visible based on distance thresholds
   // Imperial: Show at 1000ft (305m), 500ft (152m), 100ft (30m) - within these thresholds
   // Metric: Show at 300m, 150m, 30m
@@ -3980,6 +4062,15 @@ function NavigationPageContent() {
                           Start
                         </Button>
                       </div>
+                      {/* DEV: Simulation button for testing voice/turn indicators without GPS */}
+                      <Button
+                        onClick={simulationMode ? stopSimulation : startSimulation}
+                        variant={simulationMode ? "destructive" : "outline"}
+                        className="w-full h-9 mt-2 text-xs"
+                        data-testid="button-simulate-drive"
+                      >
+                        {simulationMode ? `🛑 Stop Sim (${simulationProgress})` : '🧪 Simulate Drive (Test Voice)'}
+                      </Button>
                     </div>
                     
                     {/* Legal Ownership */}
