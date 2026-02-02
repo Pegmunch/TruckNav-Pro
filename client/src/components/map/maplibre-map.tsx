@@ -1489,6 +1489,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       const TWO_FINGER_DOUBLE_TAP_DELAY = 300; // ms
       
       const handleTouchEnd = (e: TouchEvent) => {
+        // Guard against undefined changedTouches (can happen on some iOS edge cases)
+        if (!e.changedTouches || e.changedTouches.length === 0) {
+          console.log('[MAPLIBRE-TOUCHEND] No changedTouches, ignoring event');
+          return;
+        }
+        
         // UNCONDITIONAL DEBUG - Always log when handler fires
         console.log(`[MAPLIBRE-TOUCHEND] Handler fired! changedTouches: ${e.changedTouches.length}, buttonRegistry.size: ${buttonRegistry.size}`);
         
@@ -1499,6 +1505,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         // ====================================================================
         if (e.changedTouches.length === 1 && buttonRegistry.size > 0) {
           const touch = e.changedTouches[0];
+          if (!touch) return;
           const x = touch.clientX;
           const y = touch.clientY;
           

@@ -3801,7 +3801,7 @@ function NavigationPageContent() {
 
               {/* PLAN MODE - Route calculated indicator removed - user uses GO button in drawer */}
               
-              {/* PLAN MODE CONTROLS - Left Stack - Only Menu and Voice buttons remain here */}
+              {/* PLAN MODE CONTROLS - Left Stack - Only Menu button (voice control moved to ETA bar) */}
               {mobileNavMode === 'plan' && !currentRoute && !isNavUIActive && (
                 <>
                   <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
@@ -3809,24 +3809,6 @@ function NavigationPageContent() {
                       bottom: 'calc(56px + var(--safe-area-bottom))',
                       left: '16px'
                     }}>
-                    {/* Voice Toggle Button - Visual indicator for mute state */}
-                    <Button
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        setProfessionalVoiceEnabled(!professionalVoiceEnabled);
-                      }}
-                      size="icon"
-                      className={`h-10 w-10 rounded-full shadow-lg font-medium touch-none ${
-                        professionalVoiceEnabled 
-                          ? 'bg-green-500 hover:bg-green-600 active:bg-green-700 text-white' 
-                          : 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white'
-                      }`}
-                      data-testid="button-toggle-voice"
-                      aria-label={professionalVoiceEnabled ? "Mute voice navigation" : "Unmute voice navigation"}
-                    >
-                      {professionalVoiceEnabled ? <Speaker className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
-                    </Button>
-                    
                     {/* Menu Button */}
                     <Button
                       onClick={() => {
