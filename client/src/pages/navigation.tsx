@@ -457,7 +457,8 @@ function NavigationPageContent() {
       setDynamicDistanceRemaining(newRoute.distance);
     }
     if (newRoute.duration) {
-      setDynamicEtaMinutes(Math.ceil(newRoute.duration / 60));
+      // route.duration is already in MINUTES from the server
+      setDynamicEtaMinutes(Math.ceil(newRoute.duration));
     }
   }, []);
 
@@ -1209,12 +1210,13 @@ function NavigationPageContent() {
         
         // Update dynamic ETA based on proportion of route remaining
         // Use the original route duration and scale it by remaining distance
-        const originalDuration = currentRoute.duration || 0;
+        // Note: currentRoute.duration is already in MINUTES from the server
+        const originalDurationMinutes = currentRoute.duration || 0;
         const originalDistance = currentRoute.distance || totalRouteLength;
-        if (originalDistance > 0 && originalDuration > 0) {
+        if (originalDistance > 0 && originalDurationMinutes > 0) {
           const proportionRemaining = remainingDistance / originalDistance;
-          const remainingSeconds = originalDuration * proportionRemaining;
-          setDynamicEtaMinutes(Math.ceil(remainingSeconds / 60));
+          const remainingMinutes = originalDurationMinutes * proportionRemaining;
+          setDynamicEtaMinutes(Math.ceil(remainingMinutes));
         }
       }
 
@@ -2444,7 +2446,8 @@ function NavigationPageContent() {
         setDynamicDistanceRemaining(route.distance);
       }
       if (route.duration) {
-        setDynamicEtaMinutes(Math.ceil(route.duration / 60));
+        // route.duration is already in MINUTES from the server
+        setDynamicEtaMinutes(Math.ceil(route.duration));
       }
       // SAFETY: Also store in persistent ref for navigation start resilience
       lastCalculatedRouteRef.current = route;
@@ -2761,7 +2764,8 @@ function NavigationPageContent() {
         setDynamicDistanceRemaining(newRoute.distance);
       }
       if (newRoute.duration) {
-        setDynamicEtaMinutes(Math.ceil(newRoute.duration / 60));
+        // route.duration is already in MINUTES from the server
+        setDynamicEtaMinutes(Math.ceil(newRoute.duration));
       }
       // SAFETY: Store in persistent ref for navigation resilience
       lastCalculatedRouteRef.current = newRoute;
@@ -4092,7 +4096,7 @@ function NavigationPageContent() {
                   topStrip={
                     currentRoute ? (
                       <CompactTripStrip
-                        eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute.duration || 0)}
+                        eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)}
                         distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)}
                         isOnline={navigator.onLine}
                         gpsStatus={gpsData?.status || 'unavailable'}
@@ -4384,7 +4388,7 @@ function NavigationPageContent() {
                   infoBoxes={
                     currentRoute ? (
                       <div className="flex items-center justify-center gap-2">
-                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg min-w-[85px]">
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <RouteIcon className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {measurementSystem === 'imperial'
@@ -4392,24 +4396,25 @@ function NavigationPageContent() {
                               : `${((dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)) / 1000).toFixed(1)} km`}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-3 py-1.5 rounded-lg shadow-lg min-w-[85px]">
+                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
-                              const totalSeconds = dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute.duration || 0);
-                              const hours = Math.floor(totalSeconds / 3600);
-                              const minutes = Math.floor((totalSeconds % 3600) / 60);
+                              // dynamicEtaMinutes is in minutes, currentRoute.duration is also in MINUTES from server
+                              const totalMinutes = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0);
+                              const hours = Math.floor(totalMinutes / 60);
+                              const mins = Math.round(totalMinutes % 60);
                               if (hours > 0) {
-                                return `${hours}h ${minutes}m`;
+                                return `${hours}h ${mins}m`;
                               }
-                              return `${minutes}m`;
+                              return `${mins}m`;
                             })()}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-lg min-w-[85px]">
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
-                            {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 * 1000 : (currentRoute.duration || 0) * 1000)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)) * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>
@@ -4425,7 +4430,7 @@ function NavigationPageContent() {
                       showStopButton={true}
                       onStartNavigation={handleStartNavigation}
                       onStopNavigation={handleStopNavigation}
-                      timeRemainingSeconds={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute?.duration || 0)}
+                      timeRemainingSeconds={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute?.duration || 0) * 60}
                       distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0)}
                     />
                   }
