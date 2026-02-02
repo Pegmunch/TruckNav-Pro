@@ -562,7 +562,7 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
       aria-describedby="lane-guidance-description"
       aria-modal="true"
       className={cn(
-        "fixed z-[5500] transition-all duration-300 ease-in-out lane-guidance-safe professional-nav-interface",
+        "fixed z-[6100] transition-all duration-300 ease-in-out lane-guidance-safe professional-nav-interface",
         isDragging ? "cursor-grabbing" : "cursor-grab",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
         className
