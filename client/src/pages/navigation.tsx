@@ -4371,10 +4371,24 @@ function NavigationPageContent() {
                               : `${((dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0)) / 1000).toFixed(1)} km`}
                           </span>
                         </div>
+                        <div className="flex items-center gap-1.5 bg-amber-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
+                          <Clock className="w-4 h-4" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const totalSeconds = dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute.duration || 0);
+                              const hours = Math.floor(totalSeconds / 3600);
+                              const minutes = Math.floor((totalSeconds % 3600) / 60);
+                              if (hours > 0) {
+                                return `${hours}h ${minutes}m`;
+                              }
+                              return `${minutes}m`;
+                            })()}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-1.5 bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-lg">
                           <Clock className="w-4 h-4" />
                           <span className="font-bold text-sm">
-                            {new Date(Date.now() + (currentRoute.duration || 0) * 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 * 1000 : (currentRoute.duration || 0) * 1000)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>
@@ -4390,6 +4404,8 @@ function NavigationPageContent() {
                       showStopButton={true}
                       onStartNavigation={handleStartNavigation}
                       onStopNavigation={handleStopNavigation}
+                      timeRemainingSeconds={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute?.duration || 0)}
+                      distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0)}
                     />
                   }
                 />

@@ -29,6 +29,8 @@ interface SpeedometerHUDProps {
   onStopNavigation?: () => void;
   showGoButton?: boolean;
   showStopButton?: boolean;
+  timeRemainingSeconds?: number; // Time remaining to destination in seconds (for countdown display)
+  distanceRemainingMeters?: number; // Distance remaining to destination in meters
 }
 
 /**
@@ -44,7 +46,9 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   onStartNavigation,
   onStopNavigation,
   showGoButton = false,
-  showStopButton = false
+  showStopButton = false,
+  timeRemainingSeconds,
+  distanceRemainingMeters
 }: SpeedometerHUDProps) {
   // Get GPS data and measurement preferences
   const gps = useGPS();
@@ -55,6 +59,17 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   // State for smooth speed animation
   const [animatedSpeed, setAnimatedSpeed] = useState(0);
   const [showJunctionInfo, setShowJunctionInfo] = useState(false);
+  
+  // Format time remaining as hours & minutes countdown
+  const formatTimeRemaining = (seconds: number | undefined): string => {
+    if (!seconds || seconds <= 0) return '--';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
   
   // Track speeding state for alert sound
   const wasSpeedingRef = useRef(false);
@@ -415,117 +430,30 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           
           {/* LEFT: Speed Limit Sign (region-specific styling) */}
           <div className="flex items-center gap-3">
-            {/* UK: Circular red border sign */}
-            {region === 'uk' && (
-              <div
-                className={cn(
-                  // Perfect circle shape like traditional UK speed limit sign
-                  'flex items-center justify-center',
-                  'w-12 h-12',
-                  'rounded-full',
-                  // White background with red border (UK standard)
-                  convertedSpeedLimit 
-                    ? 'bg-white dark:bg-white border-[3px] border-red-600' 
-                    : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
-                  'shadow-md',
-                  'transition-all duration-300'
-                )}
-                data-testid="speed-limit-display"
-              >
-                {convertedSpeedLimit ? (
-                  <span className="text-xl font-bold tabular-nums text-gray-900">
-                    {convertedSpeedLimit}
-                  </span>
-                ) : (
-                  <span className="text-base font-medium text-gray-500">--</span>
-                )}
-              </div>
-            )}
-
-            {/* USA: Rectangular white sign with black border */}
-            {region === 'usa' && (
-              <div
-                className={cn(
-                  // Rectangular shape like USA speed limit sign
-                  'flex flex-col items-center justify-center',
-                  'w-12 h-14',
-                  'rounded-sm',
-                  // White background with black border (USA standard)
-                  convertedSpeedLimit 
-                    ? 'bg-white dark:bg-white border-[3px] border-gray-900' 
-                    : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
-                  'shadow-md',
-                  'transition-all duration-300'
-                )}
-                data-testid="speed-limit-display"
-              >
-                {convertedSpeedLimit ? (
-                  <>
-                    <span className="text-[9px] font-bold text-gray-900 leading-none">SPEED</span>
-                    <span className="text-[9px] font-bold text-gray-900 leading-none mb-0.5">LIMIT</span>
-                    <span className="text-xl font-bold tabular-nums text-gray-900 leading-none">
-                      {convertedSpeedLimit}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-base font-medium text-gray-500">--</span>
-                )}
-              </div>
-            )}
-
-            {/* Europe: Circular red border sign (like UK but with KPH) */}
-            {region === 'europe' && (
-              <div
-                className={cn(
-                  // Perfect circle shape like European speed limit sign
-                  'flex items-center justify-center',
-                  'w-12 h-12',
-                  'rounded-full',
-                  // White background with red border (European standard)
-                  convertedSpeedLimit 
-                    ? 'bg-white dark:bg-white border-[3px] border-red-600' 
-                    : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
-                  'shadow-md',
-                  'transition-all duration-300'
-                )}
-                data-testid="speed-limit-display"
-              >
-                {convertedSpeedLimit ? (
-                  <span className="text-xl font-bold tabular-nums text-gray-900">
-                    {convertedSpeedLimit}
-                  </span>
-                ) : (
-                  <span className="text-base font-medium text-gray-500">--</span>
-                )}
-              </div>
-            )}
-
-            {/* Fallback: Default circular sign when region not set or unknown */}
-            {region !== 'uk' && region !== 'usa' && region !== 'europe' && (
-              <div
-                className={cn(
-                  // Default circular shape (international standard)
-                  'flex items-center justify-center',
-                  'w-12 h-12',
-                  'rounded-full',
-                  // White background with red border (most common internationally)
-                  convertedSpeedLimit 
-                    ? 'bg-white dark:bg-white border-[3px] border-red-600' 
-                    : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
-                  'shadow-md',
-                  'transition-all duration-300'
-                )}
-                data-testid="speed-limit-display"
-              >
-                {convertedSpeedLimit ? (
-                  <span className="text-xl font-bold tabular-nums text-gray-900">
-                    {convertedSpeedLimit}
-                  </span>
-                ) : (
-                  <span className="text-base font-medium text-gray-500">--</span>
-                )}
-              </div>
-            )}
+            {/* Speed Limit Circle - UK/Europe style */}
+            <div
+              className={cn(
+                // Perfect circle shape like traditional speed limit sign
+                'flex items-center justify-center',
+                'w-12 h-12',
+                'rounded-full',
+                // White background with red border
+                convertedSpeedLimit 
+                  ? 'bg-white dark:bg-white border-[3px] border-red-600' 
+                  : 'bg-gray-100 dark:bg-gray-200 border-[3px] border-gray-400',
+                'shadow-md',
+                'transition-all duration-300'
+              )}
+              data-testid="speed-limit-display"
+            >
+              {convertedSpeedLimit ? (
+                <span className="text-xl font-bold tabular-nums text-gray-900">
+                  {convertedSpeedLimit}
+                </span>
+              ) : (
+                <span className="text-base font-medium text-gray-500">--</span>
+              )}
+            </div>
             
             {/* Vertical divider */}
             <div className={cn(
