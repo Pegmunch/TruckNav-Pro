@@ -3353,6 +3353,34 @@ function NavigationPageContent() {
 
       console.log('[NAV-ACTIVATION] Step 5: Dispatch secondary events');
       
+      // CRITICAL: Zoom to route start when navigation begins
+      // This ensures the map centers on the route origin with proper zoom
+      if (route.routePath && route.routePath.length >= 2) {
+        const startPoint = route.routePath[0];
+        const secondPoint = route.routePath[1];
+        
+        // Calculate initial bearing from route direction
+        const dLon = (secondPoint.lng - startPoint.lng) * Math.PI / 180;
+        const y = Math.sin(dLon) * Math.cos(secondPoint.lat * Math.PI / 180);
+        const x = Math.cos(startPoint.lat * Math.PI / 180) * Math.sin(secondPoint.lat * Math.PI / 180) -
+                  Math.sin(startPoint.lat * Math.PI / 180) * Math.cos(secondPoint.lat * Math.PI / 180) * Math.cos(dLon);
+        const initialBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        
+        console.log('[NAV-ACTIVATION] 🎯 Zooming to route start:', startPoint, 'bearing:', initialBearing);
+        
+        // Dispatch zoom event to map
+        const zoomToStartEvent = new CustomEvent('zoom_to_navigation_start', {
+          detail: {
+            center: { lat: startPoint.lat, lng: startPoint.lng },
+            zoom: 16.5,
+            pitch: 60,
+            bearing: initialBearing,
+            duration: 1200
+          }
+        });
+        window.dispatchEvent(zoomToStartEvent);
+      }
+      
       // Automatically enable street view in navigation mode when navigation starts
       const streetViewActivationEvent = new CustomEvent('activate_street_view_navigation', {
         detail: { route: route, profile: selectedProfile }

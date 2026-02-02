@@ -4117,6 +4117,55 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       window.removeEventListener('auto_zoom_gps', handleAutoZoom as EventListener);
     };
   }, []);
+  
+  // Listen for navigation start zoom event - zooms to route start with 3D navigation view
+  useEffect(() => {
+    const handleNavigationStartZoom = (event: CustomEvent) => {
+      if (!map.current) return;
+      
+      const { center, zoom, pitch, bearing, duration } = event.detail;
+      
+      // Validate coordinates
+      if (!isValidCoord(center.lat) || !isValidCoord(center.lng)) {
+        console.warn('[NAV-START-ZOOM] Invalid center coordinates - skipping:', center);
+        return;
+      }
+      
+      console.log('[NAV-START-ZOOM] 🎯 Zooming to navigation start:', center, 'bearing:', bearing);
+      
+      // Get container height for padding calculation
+      const containerHeight = map.current.getContainer().clientHeight || 800;
+      
+      try {
+        map.current.easeTo({
+          center: [center.lng, center.lat],
+          zoom: zoom || 16.5,
+          pitch: pitch || 60,
+          bearing: bearing || 0,
+          padding: {
+            top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
+            bottom: 40,
+            left: 0,
+            right: 0
+          },
+          duration: duration || 1200,
+          easing: (t) => 1 - Math.pow(1 - t, 3), // Ease-out cubic
+          essential: true
+        });
+        
+        // Mark initial nav view as set up to prevent double-setup
+        initialNavViewSetupRef.current = true;
+      } catch (e) {
+        console.warn('[NAV-START-ZOOM] easeTo failed:', e);
+      }
+    };
+    
+    window.addEventListener('zoom_to_navigation_start', handleNavigationStartZoom as EventListener);
+    
+    return () => {
+      window.removeEventListener('zoom_to_navigation_start', handleNavigationStartZoom as EventListener);
+    };
+  }, []);
 
   const handleZoomIn = () => {
     if (map.current) {
