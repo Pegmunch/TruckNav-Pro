@@ -585,15 +585,24 @@ function NavigationPageContent() {
     setIsLocalNavActive(true);
     setIsNavigating(true);
     
-    // Enable voice
+    // Enable voice and ensure it's initialized
     navigationVoice.setEnabled(true);
+    console.log('[SIMULATION] Voice enabled:', navigationVoice.isEnabled());
     
-    // Simulate advancing along the route every 2 seconds
+    // Test voice immediately with a startup announcement
+    console.log('[SIMULATION] Testing voice with startup announcement...');
+    navigationVoice.speak('Starting route simulation', 'normal', true);
+    
+    // Simulate advancing along the route every 3 seconds
     let progress = 0;
     const totalPoints = currentRoute.routePath.length;
     
+    // Distance thresholds for announcements (in meters)
+    const ANNOUNCE_THRESHOLDS = [300, 150, 50];
+    let lastAnnouncedThreshold = 999999;
+    
     simulationIntervalRef.current = setInterval(() => {
-      progress += 3; // Advance 3 points at a time
+      progress += 5; // Advance 5 points at a time
       
       if (progress >= totalPoints) {
         // Reached destination
@@ -607,21 +616,35 @@ function NavigationPageContent() {
       
       // Simulate the next turn based on remaining distance
       const remainingPoints = totalPoints - progress;
-      const simulatedDistance = remainingPoints * 10; // ~10m per point
+      const simulatedDistance = remainingPoints * 8; // ~8m per point
       
-      // Simulate turns at different distances
-      if (simulatedDistance <= 300 && simulatedDistance > 200) {
-        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
-      } else if (simulatedDistance <= 200 && simulatedDistance > 100) {
-        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
-      } else if (simulatedDistance <= 100 && simulatedDistance > 30) {
-        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
-      } else if (simulatedDistance <= 30) {
-        setNextTurn({ direction: 'right', distance: simulatedDistance, roadName: 'Test Road' });
+      console.log(`[SIMULATION] Progress: ${progress}/${totalPoints}, Simulated distance to turn: ${simulatedDistance}m`);
+      
+      // Check if we crossed a threshold and should announce
+      for (const threshold of ANNOUNCE_THRESHOLDS) {
+        if (simulatedDistance <= threshold && lastAnnouncedThreshold > threshold) {
+          lastAnnouncedThreshold = threshold;
+          
+          // Determine direction based on progress
+          const directions = ['right', 'left', 'slight-right', 'slight-left'] as const;
+          const direction = directions[Math.floor(progress / 20) % directions.length];
+          
+          console.log(`[SIMULATION] 🔊 Announcing turn: ${direction} in ${simulatedDistance}m`);
+          
+          // DIRECTLY call announceTurn - bypassing the useEffect
+          navigationVoice.announceTurn(
+            direction,
+            simulatedDistance,
+            'Simulated Road',
+            'km' // or 'mi' based on settings
+          );
+          
+          // Also update state for visual indicator
+          setNextTurn({ direction, distance: simulatedDistance, roadName: 'Simulated Road' });
+          break;
+        }
       }
-      
-      console.log(`[SIMULATION] Progress: ${progress}/${totalPoints}, Distance: ${simulatedDistance}m`);
-    }, 2000);
+    }, 3000);
   }, [currentRoute]);
   
   // Stop simulation
