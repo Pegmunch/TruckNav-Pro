@@ -391,12 +391,13 @@ export function LeftActionStack({
       )}
 
       {/* Menu button - blue hamburger at bottom - hides/shows with double-tap */}
+      {/* Mobile: moved up slightly with -mt-4, desktop: normal spacing */}
       {showMenuButton && (
         <Button
           ref={menuButtonRef}
           variant="ghost"
           size="icon"
-          className={`h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+          className={`h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu -mt-4 md:mt-0 ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
           style={{ touchAction: 'manipulation' }}
