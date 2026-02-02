@@ -89,7 +89,7 @@ export function OfflineDetector({
       {/* Offline Banner */}
       {showOfflineBanner && (
         <Alert 
-          className="fixed top-0 left-0 right-0 z-50 bg-destructive text-destructive-foreground border-destructive/20"
+          className="fixed top-0 left-0 right-0 z-[55] bg-destructive text-destructive-foreground border-destructive/20 pointer-events-auto"
           data-testid="offline-banner"
         >
           <WifiOff className="h-4 w-4" />
@@ -98,27 +98,29 @@ export function OfflineDetector({
               You're currently offline. TruckNav Pro will continue working with cached data.
             </span>
             <button 
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setShowOfflineBanner(false);
               }}
               onTouchStart={(e) => {
-                e.preventDefault();
                 e.stopPropagation();
-                setShowOfflineBanner(false);
               }}
               onTouchEnd={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-              }}
-              onPointerDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
                 setShowOfflineBanner(false);
               }}
-              className="ml-4 px-3 py-2 text-destructive-foreground hover:text-destructive-foreground active:scale-95 touch-manipulation select-none pointer-events-auto cursor-pointer font-bold text-lg"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minWidth: '44px', minHeight: '44px' }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                if (e.pointerType === 'touch') {
+                  e.preventDefault();
+                  setShowOfflineBanner(false);
+                }
+              }}
+              className="ml-4 px-4 py-2 rounded-md bg-white/20 hover:bg-white/30 active:bg-white/40 active:scale-95 text-destructive-foreground touch-manipulation select-none pointer-events-auto cursor-pointer font-bold text-base relative z-[60]"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minWidth: '50px', minHeight: '44px' }}
               data-testid="button-dismiss-offline"
               aria-label="Dismiss offline notice"
             >

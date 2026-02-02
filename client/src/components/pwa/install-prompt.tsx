@@ -120,7 +120,7 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
     return (
       <div className={`pwa-install-prompt ios ${className}`} data-testid="pwa-install-prompt-ios">
         <Alert 
-          className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-50 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800"
+          className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-[55] border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 pointer-events-auto"
           data-testid="alert-install-prompt-ios"
         >
           <Smartphone className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -158,29 +158,36 @@ export function PWAInstallPrompt({ className = "", showBadge = true }: PWAInstal
                 </li>
               </ol>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={dismissPrompt}
+            <div className="flex gap-2 pointer-events-auto relative z-[60]">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dismissPrompt();
+                }}
                 onTouchStart={(e) => {
+                  e.stopPropagation();
+                }}
+                onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   dismissPrompt();
                 }}
                 onPointerDown={(e) => {
+                  e.stopPropagation();
                   if (e.pointerType === 'touch') {
                     e.preventDefault();
                     dismissPrompt();
                   }
                 }}
-                className="ml-auto touch-manipulation"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                className="ml-auto px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white text-sm font-medium touch-manipulation select-none pointer-events-auto cursor-pointer flex items-center gap-1"
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', minWidth: '80px', minHeight: '44px' }}
                 data-testid="button-dismiss-install-ios"
               >
-                <X className="h-3 w-3 mr-1" />
+                <X className="h-3 w-3" />
                 Got it
-              </Button>
+              </button>
             </div>
           </AlertDescription>
         </Alert>
