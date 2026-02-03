@@ -51,8 +51,12 @@ import {
   Coffee,
   AlertTriangle,
   Trash2,
-  RotateCcw
+  RotateCcw,
+  Users,
+  Building2
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { type FleetVehicle, type Operator } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useGPS } from "@/contexts/gps-context";
@@ -209,6 +213,63 @@ const SettingsModal = memo(function SettingsModal({
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isNavigating] = useState(false);
   const [notificationCount] = useState(0);
+  
+  // Fleet linkage state - persisted to localStorage
+  const FLEET_VEHICLE_KEY = 'trucknav_active_fleet_vehicle';
+  const FLEET_OPERATOR_KEY = 'trucknav_active_operator';
+  
+  const [selectedFleetVehicleId, setSelectedFleetVehicleId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(FLEET_VEHICLE_KEY);
+    } catch {
+      return null;
+    }
+  });
+  
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(FLEET_OPERATOR_KEY);
+    } catch {
+      return null;
+    }
+  });
+  
+  // Fetch fleet vehicles for dropdown
+  const { data: fleetVehicles = [] } = useQuery<FleetVehicle[]>({
+    queryKey: ['/api/fleet/vehicles/active'],
+    enabled: open && activeTab === 'fleet',
+    staleTime: 60000,
+  });
+  
+  // Fetch operators for dropdown
+  const { data: operators = [] } = useQuery<Operator[]>({
+    queryKey: ['/api/fleet/operators/active'],
+    enabled: open && activeTab === 'fleet',
+    staleTime: 60000,
+  });
+  
+  // Save fleet selections to localStorage
+  const handleFleetVehicleChange = (vehicleId: string) => {
+    const id = vehicleId === 'none' ? null : vehicleId;
+    setSelectedFleetVehicleId(id);
+    if (id) {
+      localStorage.setItem(FLEET_VEHICLE_KEY, id);
+    } else {
+      localStorage.removeItem(FLEET_VEHICLE_KEY);
+    }
+    console.log('[Fleet] Vehicle Reg linked:', id);
+  };
+  
+  const handleOperatorChange = (operatorId: string) => {
+    const id = operatorId === 'none' ? null : operatorId;
+    setSelectedOperatorId(id);
+    if (id) {
+      localStorage.setItem(FLEET_OPERATOR_KEY, id);
+    } else {
+      localStorage.removeItem(FLEET_OPERATOR_KEY);
+    }
+    console.log('[Fleet] Operator linked:', id);
+  };
 
   // Sync voice settings when modal opens - get the actual enabled state from settings
   useEffect(() => {
@@ -302,6 +363,12 @@ const SettingsModal = memo(function SettingsModal({
       label: "Location",
       icon: Crosshair,
       description: "GPS and location mode settings"
+    },
+    {
+      id: "fleet",
+      label: "Fleet",
+      icon: Building2,
+      description: "Link to fleet management system"
     }
   ];
 
@@ -1585,6 +1652,145 @@ const SettingsModal = memo(function SettingsModal({
                                 Go to Offline Settings
                               </Button>
                             </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
+
+                    {/* Fleet Integration Tab */}
+                    <TabsContent value="fleet" className="mt-0">
+                      <div className="space-y-6">
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Building2 className="w-5 h-5" />
+                              Fleet Management Link
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            <p className="text-sm text-muted-foreground">
+                              Link this navigation session to your fleet management system to track journeys, fuel consumption, and driver performance.
+                            </p>
+
+                            {/* Vehicle Registration Selection */}
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Truck className="w-4 h-4 text-blue-600" />
+                                <Label className="text-base font-medium">Vehicle Reg</Label>
+                              </div>
+                              <Select
+                                value={selectedFleetVehicleId || 'none'}
+                                onValueChange={handleFleetVehicleChange}
+                              >
+                                <SelectTrigger className="w-full" data-testid="select-fleet-vehicle">
+                                  <SelectValue placeholder="Select vehicle registration..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none" className="cursor-pointer">
+                                    No vehicle linked
+                                  </SelectItem>
+                                  {fleetVehicles.map((vehicle) => (
+                                    <SelectItem 
+                                      key={vehicle.id} 
+                                      value={vehicle.id}
+                                      className="cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold">{vehicle.registration}</span>
+                                        <span className="text-muted-foreground">
+                                          {vehicle.make} {vehicle.model}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {fleetVehicles.length === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  No vehicles found. Add vehicles in Fleet Management.
+                                </p>
+                              )}
+                              {selectedFleetVehicleId && (
+                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                                    <Truck className="w-4 h-4" />
+                                    <span className="text-sm font-medium">
+                                      Linked to: {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration || selectedFleetVehicleId}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <Separator />
+
+                            {/* Operator Selection */}
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-purple-600" />
+                                <Label className="text-base font-medium">Operator</Label>
+                              </div>
+                              <Select
+                                value={selectedOperatorId || 'none'}
+                                onValueChange={handleOperatorChange}
+                              >
+                                <SelectTrigger className="w-full" data-testid="select-operator">
+                                  <SelectValue placeholder="Select operator..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none" className="cursor-pointer">
+                                    No operator linked
+                                  </SelectItem>
+                                  {operators.map((operator) => (
+                                    <SelectItem 
+                                      key={operator.id} 
+                                      value={operator.id}
+                                      className="cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">
+                                          {operator.firstName} {operator.lastName}
+                                        </span>
+                                        <span className="text-muted-foreground text-xs">
+                                          {operator.licenseNumber}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {operators.length === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  No operators found. Add operators in Fleet Management.
+                                </p>
+                              )}
+                              {selectedOperatorId && (
+                                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                  <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                                    <Users className="w-4 h-4" />
+                                    <span className="text-sm font-medium">
+                                      Logged in as: {operators.find(o => o.id === selectedOperatorId)?.firstName} {operators.find(o => o.id === selectedOperatorId)?.lastName}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <Separator />
+
+                            {/* Info Box */}
+                            <Alert>
+                              <Info className="w-4 h-4" />
+                              <AlertDescription>
+                                Linking to Fleet Management allows automatic tracking of:
+                                <ul className="mt-2 ml-4 list-disc text-sm">
+                                  <li>Journey start and end times</li>
+                                  <li>Distance travelled per vehicle</li>
+                                  <li>Fuel consumption records</li>
+                                  <li>Driver hours and break compliance</li>
+                                </ul>
+                              </AlertDescription>
+                            </Alert>
                           </CardContent>
                         </Card>
                       </div>
