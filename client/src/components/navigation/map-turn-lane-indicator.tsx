@@ -132,24 +132,24 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
       }}
       data-testid="map-turn-lane-indicator"
     >
-      {/* Main turn indicator - white pill with blue arrow + distance */}
-      <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200">
+      {/* Main turn indicator - white pill with blue arrow + distance - high contrast for satellite view */}
+      <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-xl border-2 border-blue-500">
         <div className="text-blue-600 flex-shrink-0">
           {getTurnIcon()}
         </div>
         <span className="font-medium text-gray-900 text-base">{value} {displayUnit}</span>
       </div>
       
-      {/* Lane guidance text - white pill style */}
+      {/* Lane guidance text - white pill style - high contrast for satellite view */}
       {laneGuidanceText && (
-        <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200">
+        <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-xl border-2 border-blue-500">
           <span className="font-medium text-gray-900 text-sm">{laneGuidanceText}</span>
         </div>
       )}
       
-      {/* Road name - white pill style */}
+      {/* Road name - white pill style - high contrast for satellite view */}
       {turnInfo.roadName && (
-        <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-lg border border-gray-200">
+        <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-xl border-2 border-blue-500">
           <span className="font-medium text-gray-900 text-sm truncate">{turnInfo.roadName}</span>
         </div>
       )}
