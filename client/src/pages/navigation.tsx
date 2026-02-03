@@ -3498,6 +3498,37 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(navigationStartedEvent);
       
+      // VOICE: Announce navigation started with first instruction
+      if (professionalVoiceEnabled) {
+        // Ensure voice is enabled and prime Bluetooth audio
+        navigationVoice.setEnabled(true);
+        
+        // Prime Bluetooth/CarPlay audio before speaking
+        import('@/lib/audio-bluetooth-init').then(({ audioBluetoothInit }) => {
+          audioBluetoothInit.initialize();
+        });
+        
+        // Announce navigation started after a brief delay for audio initialization
+        setTimeout(() => {
+          const destination = route.endLocation || 'your destination';
+          const durationMinutes = Math.ceil(route.duration || 0);
+          const distanceMiles = route.distance || 0;
+          
+          let announcement = `Navigation started. `;
+          if (measurementSystem === 'imperial') {
+            announcement += `${distanceMiles.toFixed(1)} miles to ${destination}. `;
+            announcement += `Estimated arrival in ${durationMinutes} minutes.`;
+          } else {
+            const distanceKm = distanceMiles * 1.60934;
+            announcement += `${distanceKm.toFixed(1)} kilometers to ${destination}. `;
+            announcement += `Estimated arrival in ${durationMinutes} minutes.`;
+          }
+          
+          console.log('[VOICE-NAV] 🎤 Announcing navigation start:', announcement);
+          navigationVoice.speak(announcement, 'normal', true, 'general');
+        }, 500);
+      }
+      
       console.log('========================================');
       console.log('[NAV-ACTIVATION] ✅ Navigation activation complete!');
       console.log('[NAV-ACTIVATION] States set - waiting for useEffect to trigger auto-zoom');
