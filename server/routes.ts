@@ -6836,7 +6836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // In-memory store for active driver sessions (in production, use database)
   const activeDriverSessions = new Map<string, {
-    oderId: string;
+    operatorId: string;
     vehicleId: string;
     operatorName: string;
     vehicleRegistration: string;
@@ -6858,7 +6858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const session = {
-        oderId: operatorId,
+        operatorId,
         vehicleId,
         operatorName: operatorName || 'Unknown Driver',
         vehicleRegistration: vehicleRegistration || 'Unknown',

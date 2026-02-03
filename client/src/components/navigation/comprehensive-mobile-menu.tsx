@@ -53,7 +53,7 @@ import {
   HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type Route as RouteType, type Journey, type VehicleProfile } from "@shared/schema";
+import { type Route as RouteType, type Journey, type VehicleProfile, type FleetVehicle, type Operator } from "@shared/schema";
 import { useMeasurement } from "@/components/measurement/measurement-provider";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
@@ -165,6 +165,89 @@ function ComprehensiveMobileMenu({
   const { origins: previousOrigins, removeOrigin } = useOriginHistory();
   const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("plan");
+  
+  // Fleet vehicle and operator selection state
+  const FLEET_VEHICLE_KEY = 'trucknav_active_fleet_vehicle';
+  const FLEET_OPERATOR_KEY = 'trucknav_active_operator';
+  
+  const [selectedFleetVehicleId, setSelectedFleetVehicleId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(FLEET_VEHICLE_KEY);
+    } catch {
+      return null;
+    }
+  });
+  
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(FLEET_OPERATOR_KEY);
+    } catch {
+      return null;
+    }
+  });
+  
+  // Fetch fleet vehicles for dropdown
+  const { data: fleetVehicles = [] } = useQuery<FleetVehicle[]>({
+    queryKey: ['/api/fleet/vehicles/active'],
+    enabled: open && activeTab === 'vehicle',
+    staleTime: 60000,
+  });
+  
+  // Fetch operators for dropdown
+  const { data: operators = [] } = useQuery<Operator[]>({
+    queryKey: ['/api/fleet/operators/active'],
+    enabled: open && activeTab === 'vehicle',
+    staleTime: 60000,
+  });
+  
+  // Sync driver session with server
+  const syncDriverSession = async (vehicleId: string | null, operatorId: string | null) => {
+    try {
+      if (vehicleId && operatorId) {
+        const vehicle = fleetVehicles.find(v => v.id === vehicleId);
+        const operator = operators.find(o => o.id === operatorId);
+        
+        await fetch('/api/fleet/driver-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operatorId,
+            vehicleId,
+            operatorName: operator ? `${operator.firstName} ${operator.lastName}` : 'Unknown',
+            vehicleRegistration: vehicle?.registration || 'Unknown'
+          })
+        });
+        console.log('[Fleet-Mobile] Driver session synced');
+      } else if (!vehicleId && selectedFleetVehicleId) {
+        await fetch(`/api/fleet/driver-session/${selectedFleetVehicleId}`, { method: 'DELETE' });
+        console.log('[Fleet-Mobile] Driver session ended');
+      }
+    } catch (error) {
+      console.error('[Fleet-Mobile] Failed to sync driver session:', error);
+    }
+  };
+  
+  const handleFleetVehicleChange = (vehicleId: string) => {
+    const id = vehicleId === 'none' ? null : vehicleId;
+    setSelectedFleetVehicleId(id);
+    if (id) {
+      localStorage.setItem(FLEET_VEHICLE_KEY, id);
+    } else {
+      localStorage.removeItem(FLEET_VEHICLE_KEY);
+    }
+    syncDriverSession(id, selectedOperatorId);
+  };
+  
+  const handleOperatorChange = (operatorId: string) => {
+    const id = operatorId === 'none' ? null : operatorId;
+    setSelectedOperatorId(id);
+    if (id) {
+      localStorage.setItem(FLEET_OPERATOR_KEY, id);
+    } else {
+      localStorage.removeItem(FLEET_OPERATOR_KEY);
+    }
+    syncDriverSession(selectedFleetVehicleId, id);
+  };
   
   // Track if we've auto-filled "from" with GPS to avoid re-triggering
   const hasAutoFilledFromGPS = useRef(false);
@@ -1511,6 +1594,89 @@ function ComprehensiveMobileMenu({
                           : "Truck mode: Routes avoid low bridges, weight limits and width restrictions."}
                       </p>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Fleet Vehicle & Operator Selection */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Driver Session
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Link your vehicle registration and operator for fleet tracking
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Vehicle Registration Dropdown */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Vehicle Registration</Label>
+                      <Select
+                        value={selectedFleetVehicleId || 'none'}
+                        onValueChange={handleFleetVehicleChange}
+                      >
+                        <SelectTrigger className="w-full" data-testid="select-fleet-vehicle-mobile">
+                          <SelectValue placeholder="Select vehicle..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No vehicle linked</SelectItem>
+                          {fleetVehicles.map((vehicle) => (
+                            <SelectItem key={vehicle.id} value={vehicle.id}>
+                              <span className="font-mono font-bold">{vehicle.registration}</span>
+                              {' - '}
+                              <span className="text-muted-foreground">{vehicle.make} {vehicle.model}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fleetVehicles.length === 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          No vehicles found. Add vehicles in Fleet Management (desktop).
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Operator Dropdown */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Operator / Driver</Label>
+                      <Select
+                        value={selectedOperatorId || 'none'}
+                        onValueChange={handleOperatorChange}
+                      >
+                        <SelectTrigger className="w-full" data-testid="select-operator-mobile">
+                          <SelectValue placeholder="Select operator..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No operator linked</SelectItem>
+                          {operators.map((op) => (
+                            <SelectItem key={op.id} value={op.id}>
+                              {op.firstName} {op.lastName}
+                              {op.licenseNumber && (
+                                <span className="text-muted-foreground ml-2">({op.licenseNumber})</span>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {operators.length === 0 && (
+                        <p className="text-[10px] text-muted-foreground">
+                          No operators found. Add operators in Fleet Management (desktop).
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Session Status */}
+                    {selectedFleetVehicleId && selectedOperatorId && (
+                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                          <Truck className="w-4 h-4" />
+                          <span className="text-xs font-medium">
+                            {operators.find(o => o.id === selectedOperatorId)?.firstName} logged into {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

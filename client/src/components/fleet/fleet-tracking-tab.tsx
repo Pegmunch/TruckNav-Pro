@@ -427,7 +427,7 @@ export function FleetTrackingTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">{t('fleet.tracking.totalVehicles')}</CardTitle>
@@ -491,7 +491,65 @@ export function FleetTrackingTab() {
             </div>
           </CardContent>
         </Card>
+        <Card className={driverSessions.length > 0 ? "ring-2 ring-blue-500" : ""}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Navigation className="w-4 h-4 text-blue-500" />
+              Active Satnav
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600" data-testid="text-satnav-count">{driverSessions.length}</div>
+            <p className="text-xs text-muted-foreground">Mobile drivers</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Active Satnav Sessions Panel */}
+      {driverSessions.length > 0 && (
+        <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Navigation className="w-5 h-5 text-blue-500" />
+              Active Mobile Satnav Sessions
+            </CardTitle>
+            <CardDescription>
+              Drivers currently using TruckNav Pro on their mobile devices
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {driverSessions.map((session) => (
+                <div
+                  key={`${session.vehicleId}-${session.operatorId}`}
+                  className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono font-bold text-lg">{session.vehicleRegistration}</span>
+                    <Badge className="bg-green-500 text-white">Online</Badge>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Truck className="w-3 h-3" />
+                      <span>Driver: <span className="text-foreground font-medium">{session.operatorName}</span></span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="w-3 h-3" />
+                      <span>Started: {new Date(session.sessionStart).toLocaleTimeString()}</span>
+                    </div>
+                    {session.speed !== undefined && session.speed > 0 && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Navigation className="w-3 h-3" />
+                        <span>Speed: <span className="text-foreground font-medium">{Math.round(session.speed)} mph</span></span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
