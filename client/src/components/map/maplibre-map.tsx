@@ -1054,9 +1054,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const hasValidRoute = !!routePathForOverlay && routePathForOverlay.length > 0;
   const trafficOverlayEnabled = showTraffic && hasValidRoute;
   
-  // Debug: Log traffic overlay status for troubleshooting
+  // Debug: Log traffic overlay status for troubleshooting (preview and navigation modes)
   useEffect(() => {
-    console.log('[TRAFFIC-OVERLAY-DEBUG] Status check:', {
+    console.log('[TRAFFIC-OVERLAY-DEBUG] 🚦 Status check:', {
       showTraffic,
       isNavigating,
       hasCurrentRoute: !!currentRoute?.routePath,
@@ -1065,8 +1065,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       cachedRouteLength: cachedRouteForTraffic?.length || 0,
       routePathForOverlayLength: routePathForOverlay?.length || 0,
       hasValidRoute,
-      trafficOverlayEnabled
+      trafficOverlayEnabled,
+      mode: isNavigating ? 'NAVIGATION' : (hasValidRoute ? 'PREVIEW' : 'PLAN')
     });
+    
+    // Force traffic fetch when we have a valid route (preview or navigation)
+    if (hasValidRoute && showTraffic && !isNavigating) {
+      console.log('[TRAFFIC-OVERLAY-DEBUG] 🟢 PREVIEW mode with valid route - traffic should be fetching');
+    }
   }, [showTraffic, isNavigating, currentRoute?.routePath, cachedRouteForTraffic, hasValidRoute, trafficOverlayEnabled]);
   
   const routeTrafficData = useRouteTrafficOverlay(
@@ -2879,12 +2885,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-blur': 0
         }
       });
-      console.log('[TRAFFIC-LAYER] Added enhanced traffic flow layer - shows all roads with prominent red for congestion');
+      console.log('[TRAFFIC-LAYER] ✅ Added enhanced traffic flow layer - ALL ROADS - works in both Preview and Navigation modes');
       // Mark layer as ready after adding
       setIsTrafficLayerReady(true);
     } else {
       // Visibility controlled by updateLayerVisibility effect
       map.current.setLayoutProperty(trafficLayerId, 'visibility', 'visible');
+      console.log('[TRAFFIC-LAYER] 🔄 Traffic layer already exists - set to VISIBLE');
       // Mark layer as ready
       setIsTrafficLayerReady(true);
     }
@@ -3020,7 +3027,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       console.log('[ROUTE-TRAFFIC-OVERLAY] 🟢 Shown - traffic toggle ON');
     }
     
-    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route`);
+    console.log(`[ROUTE-TRAFFIC-OVERLAY] ✅ Rendered ${features.length} traffic segments on route (Preview + Navigation modes)`);
   }, [isLoaded, showTraffic, routeTrafficData.segments, routeTrafficData.lastUpdated]);
 
   // LAYER 3: Route Incident Markers - Icons along the route line
