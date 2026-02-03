@@ -2120,53 +2120,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         data: cachedData
       });
 
-      // Add route outline (white background for visibility)
-      map.current.addLayer({
-        id: 'route-outline',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 3,
-            12, 6,
-            16, 7,
-            20, 8
-          ],
-          'line-opacity': 0.9
-        }
-      });
-
-      // Add thin route line on top (traffic overlay provides main visibility)
-      map.current.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#0067FF',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 2,
-            12, 4,
-            16, 5,
-            20, 6
-          ],
-          'line-opacity': 0.7
-        }
-      });
+      // Route layers removed - traffic overlay provides route visibility
       
       console.log('[ROUTE-ENSURE] ✅ Route layers rebuilt from cache');
       return true;
@@ -2273,53 +2227,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         data: geoJsonData
       });
 
-      // Add route outline (white background for visibility)
-      map.current.addLayer({
-        id: 'route-outline',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 3,
-            12, 6,
-            16, 7,
-            20, 8
-          ],
-          'line-opacity': 0.9
-        }
-      });
-
-      // Add thin route line on top (traffic overlay provides main visibility)
-      map.current.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#0067FF',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            5, 2,
-            12, 4,
-            16, 5,
-            20, 6
-          ],
-          'line-opacity': 0.7
-        }
-      });
+      // Route layers removed - traffic overlay provides route visibility
 
       console.log('[ROUTE-RENDER] ✅ Route layers added successfully (outline + line)');
     } else {

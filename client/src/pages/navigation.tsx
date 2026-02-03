@@ -81,7 +81,6 @@ import { audioBluetoothInit } from "@/lib/audio-bluetooth-init";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
-import { NavigationGuidelineOverlay } from "@/components/navigation/navigation-guideline-overlay";
 import { TrafficPredictionPanel } from "@/components/navigation/traffic-prediction-panel";
 import { SmartTrafficLightsPanel } from "@/components/navigation/smart-traffic-lights-panel";
 import { OnboardingProvider, useOnboarding } from "@/components/onboarding/onboarding-provider";
@@ -4167,21 +4166,6 @@ function NavigationPageContent() {
                     <>
                       {/* Map is already rendered in base layer, add overlays here */}
                       
-                      {/* Navigation Guideline Overlay - Truck-specific visual route guidance */}
-                      {mobileNavMode === 'navigate' && (
-                        <NavigationGuidelineOverlay
-                          isNavigating={isNavigating}
-                          routeDistance={currentRoute?.distance || 0}
-                          heading={gpsData?.position?.heading || 0}
-                          routeCoordinates={currentRoute?.routePath?.map(p => [p.lng, p.lat] as [number, number]) || []}
-                          nextTurn={nextTurn}
-                          laneGuidance={currentRoute?.laneGuidance?.[0] ? {
-                            lanes: currentRoute.laneGuidance[0].laneOptions?.map(l => l.direction) || [],
-                            recommended: currentRoute.laneGuidance[0].laneOptions?.map((l, i) => l.recommended ? i : -1).filter(i => i >= 0) || [],
-                            maneuverType: currentRoute.laneGuidance[0].maneuverType
-                          } : null}
-                        />
-                      )}
                       
                       {/* Map Turn + Lane Indicator - Large bubble at top left with lane guidance */}
                       {/* Only show when distance is within thresholds: 1000ft/500ft/100ft (imperial) or 300m/150m/30m (metric) */}
