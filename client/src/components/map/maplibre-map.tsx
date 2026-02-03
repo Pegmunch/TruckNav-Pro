@@ -4502,10 +4502,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const setRouteVisibility = () => {
       if (!mapInstance.isStyleLoaded()) return;
       
-      // FIX: When useStaticRoute is true AND static overlay is working, hide native MapLibre route layers
-      // If static overlay fails, native layers become the fallback
-      // Fallback chain: 1. Static SVG Overlay → 2. Native MapLibre Layers → 3. Cached Route Data
-      const visibility = (useStaticRoute && staticOverlayWorking) ? 'none' : 'visible';
+      // SIMPLIFIED: SVG overlay is disabled - native MapLibre layers are always the primary renderer
+      // Always keep native route layers visible for consistent rendering in all map modes
+      const visibility = 'visible';
       
       // All possible route layer IDs (excluding route-traffic-overlay-layer which should stay visible for traffic colors)
       const routeLayerIds = [
@@ -4572,20 +4571,24 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       <div className="absolute inset-0 pointer-events-none" data-testid="map-overlays">
         {/* Loading overlay removed to prevent white screen issues */}
         
-        {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
-        {/* Fallback chain: 1. Static SVG Overlay → 2. Native MapLibre Layers → 3. Cached Route Data */}
-        <StaticRouteOverlay
-          map={map.current}
-          routeCoordinates={routeCoordinatesForOverlay}
-          isActive={useStaticRoute && routeCoordinatesForOverlay.length > 0}
-          routeColor="#3b82f6"
-          routeWidth={12}
-          onRenderSuccess={() => setStaticOverlayWorking(true)}
-          onRenderFail={() => {
-            console.warn('[ROUTE-FALLBACK] Static overlay failed, falling back to native layers');
-            setStaticOverlayWorking(false);
-          }}
-        />
+        {/* Static Route Overlay - DISABLED: Using native MapLibre layers only for consistent rendering */}
+        {/* The SVG overlay was causing duplicate route lines in satellite mode */}
+        {/* Native MapLibre layers (route-line, route-outline) are now the primary and only route renderer */}
+        {/* Keeping component reference for potential future use but always inactive */}
+        {false && (
+          <StaticRouteOverlay
+            map={map.current}
+            routeCoordinates={routeCoordinatesForOverlay}
+            isActive={false}
+            routeColor="#3b82f6"
+            routeWidth={12}
+            onRenderSuccess={() => setStaticOverlayWorking(true)}
+            onRenderFail={() => {
+              console.warn('[ROUTE-FALLBACK] Static overlay failed, falling back to native layers');
+              setStaticOverlayWorking(false);
+            }}
+          />
+        )}
         
       
       {/* GPS Status Indicator */}
