@@ -488,9 +488,15 @@ export class NavigationVoice {
   /**
    * Process a single instruction
    * Ensures audio is initialized for Bluetooth/CarPlay/Android Auto before speaking
+   * 
+   * iOS FIXES:
+   * 1. Call cancel() before speak() - iOS 15+ bug workaround
+   * 2. Reload voices if empty - iOS sometimes loses voices
+   * 3. Small delay after cancel on iOS to prevent silent failures
    */
   private async processInstruction(instruction: QueuedInstruction): Promise<void> {
     if (!this.synthesis) {
+      console.warn('[NavigationVoice] ❌ No speech synthesis available');
       return;
     }
     
@@ -499,12 +505,34 @@ export class NavigationVoice {
       await audioBluetoothInit.initialize();
     }
     
+    // iOS FIX: Reload voices if they got lost (common iOS issue)
+    if (this.voices.length === 0 || !this.selectedVoice) {
+      console.log('[NavigationVoice] Reloading voices before speaking...');
+      this.loadVoices();
+      // Wait a tiny bit for voices to load
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    // iOS FIX: ALWAYS cancel before speaking - critical for iOS 15+
+    // This prevents the "silent speech" bug where speak() is silently ignored
+    this.synthesis.cancel();
+    
+    // iOS FIX: Small delay after cancel to ensure iOS processes it
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
     this.isSpeaking = true;
     const utterance = new SpeechSynthesisUtterance(instruction.text);
     
     // Set voice if available
     if (this.selectedVoice) {
       utterance.voice = this.selectedVoice;
+    } else if (this.voices.length > 0) {
+      // Fallback: use first available voice
+      utterance.voice = this.voices[0];
+      console.log('[NavigationVoice] Using fallback voice:', this.voices[0]?.name);
     }
     
     // Set speech parameters based on urgency level
@@ -513,8 +541,20 @@ export class NavigationVoice {
     utterance.pitch = this.settings.pitch;
     utterance.volume = this.settings.volume;
     
+    // iOS FIX: Ensure volume is at least 0.5 (some iOS versions have volume issues)
+    if (isIOS && utterance.volume < 0.5) {
+      utterance.volume = 1.0;
+    }
+    
+    console.log('[NavigationVoice] 🔊 Speaking:', instruction.text.substring(0, 50) + '...', {
+      voice: utterance.voice?.name || 'default',
+      volume: utterance.volume,
+      rate: utterance.rate
+    });
+    
     // Handle completion
     utterance.onend = () => {
+      console.log('[NavigationVoice] ✅ Speech completed');
       this.isSpeaking = false;
       this.currentUtterance = null;
       this.processQueue(); // Process next in queue
@@ -522,14 +562,22 @@ export class NavigationVoice {
     
     // Handle errors
     utterance.onerror = (event) => {
-      console.warn('[NavigationVoice] Speech error:', event);
+      console.warn('[NavigationVoice] ❌ Speech error:', event.error || event);
       this.isSpeaking = false;
       this.currentUtterance = null;
       this.processQueue(); // Try next in queue
     };
     
     this.currentUtterance = utterance;
-    this.synthesis.speak(utterance);
+    
+    // iOS FIX: Try-catch the speak call as iOS can throw errors
+    try {
+      this.synthesis.speak(utterance);
+    } catch (error) {
+      console.error('[NavigationVoice] ❌ Failed to speak:', error);
+      this.isSpeaking = false;
+      this.processQueue();
+    }
   }
   
   /**
@@ -826,8 +874,33 @@ export class NavigationVoice {
   
   /**
    * Test voice with sample message
+   * This is called from user gesture (button tap) so it should work on iOS
    */
-  public testVoice(): void {
+  public async testVoice(): Promise<void> {
+    console.log('[NavigationVoice] 🧪 Test voice triggered by user gesture');
+    
+    // Ensure audio is initialized (this is a user gesture so it should work)
+    await audioBluetoothInit.initialize();
+    
+    // Reload voices on iOS if needed
+    if (this.voices.length === 0 || !this.selectedVoice) {
+      console.log('[NavigationVoice] Loading voices for test...');
+      this.loadVoices();
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // iOS: Cancel any pending speech first
+    if (this.synthesis) {
+      this.synthesis.cancel();
+    }
+    
+    // Small delay for iOS to process the cancel
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Speak the test message
     this.speak(this.t('voice.announcements.voice_ready'), 'normal', true);
   }
   
@@ -836,34 +909,50 @@ export class NavigationVoice {
    * iOS Safari requires the first speech to happen during a user interaction to unlock speech synthesis
    * This speaks an empty/silent utterance to prime the audio system
    */
-  public primeForUserGesture(): void {
+  public async primeForUserGesture(): Promise<void> {
     if (!this.synthesis) {
       console.warn('[NavigationVoice] Cannot prime - synthesis not available');
       return;
     }
     
+    console.log('[NavigationVoice] 🔓 Priming voice for user gesture...');
+    
+    // Ensure audio is initialized first
+    await audioBluetoothInit.initialize();
+    
     // Ensure voice is enabled
     this.settings.enabled = true;
+    this.saveSettings();
     
     // Reload voices if needed (iOS sometimes needs this)
     if (this.voices.length === 0) {
       this.loadVoices();
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     // Create a silent utterance to prime iOS Safari speech synthesis
     // Using a single space character instead of empty string (empty strings are ignored)
     const silentUtterance = new SpeechSynthesisUtterance(' ');
-    silentUtterance.volume = 0; // Silent
+    silentUtterance.volume = 0.01; // Very low volume (0 may be ignored on some devices)
     silentUtterance.rate = 10; // Fast (won't be heard anyway)
     
     // Select voice if available
     if (this.selectedVoice) {
       silentUtterance.voice = this.selectedVoice;
+    } else if (this.voices.length > 0) {
+      silentUtterance.voice = this.voices[0];
     }
     
     try {
       // Cancel any existing speech first
       this.synthesis.cancel();
+      
+      // iOS: Wait a bit after cancel
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       // Speak silent utterance to prime the system
       this.synthesis.speak(silentUtterance);
       console.log('[NavigationVoice] 🔊 Primed for iOS Safari user gesture');
