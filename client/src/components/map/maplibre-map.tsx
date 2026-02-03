@@ -1351,14 +1351,38 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       }
     };
     
+    // Helper to set opacity with smooth transition effect
+    const safeSetOpacity = (layerId: string, opacity: number) => {
+      if (mapInstance.getLayer(layerId)) {
+        try {
+          mapInstance.setPaintProperty(layerId, 'raster-opacity-transition', { duration: 300 });
+          mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
+        } catch (e) {
+          // Layer might not support opacity
+        }
+      }
+    };
+    
     try {
       if (viewMode === 'roads') {
+        // SMOOTH TRANSITION: Fade in roads, fade out satellite
         safeSetVisibility('roads-2d-layer', is3D ? 'none' : 'visible');
         safeSetVisibility('roads-3d-layer', is3D ? 'visible' : 'none');
-        safeSetVisibility('satellite-2d-layer', 'none');
-        safeSetVisibility('satellite-3d-layer', 'none');
+        safeSetOpacity('roads-2d-layer', 1);
+        safeSetOpacity('roads-3d-layer', 1);
+        
+        // Fade out satellite layers smoothly
+        safeSetOpacity('satellite-2d-layer', 0);
+        safeSetOpacity('satellite-3d-layer', 0);
+        setTimeout(() => {
+          safeSetVisibility('satellite-2d-layer', 'none');
+          safeSetVisibility('satellite-3d-layer', 'none');
+        }, 350);
+        
         // Hide labels overlay in roads mode (OSM tiles already have labels)
-        safeSetVisibility('labels-overlay-layer', 'none');
+        safeSetOpacity('labels-overlay-layer', 0);
+        setTimeout(() => safeSetVisibility('labels-overlay-layer', 'none'), 350);
+        
         // Show traffic layer in roads mode if it exists and traffic is enabled
         // NAVIGATION FIX: During active navigation, hide general traffic layer to avoid confusion
         // Only show route-specific traffic overlay (route-traffic-overlay-layer) during navigation
@@ -1367,15 +1391,25 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
         }
       } else {
-        // Satellite mode - hide road layers, show satellite and labels overlay
-        safeSetVisibility('roads-2d-layer', 'none');
-        safeSetVisibility('roads-3d-layer', 'none');
+        // Satellite mode - SMOOTH TRANSITION: Fade in satellite, fade out roads
+        // First make satellite visible at 0 opacity, then fade in
         safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
         safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
+        safeSetOpacity('satellite-2d-layer', 1);
+        safeSetOpacity('satellite-3d-layer', 1);
+        
+        // Fade out road layers smoothly
+        safeSetOpacity('roads-2d-layer', 0);
+        safeSetOpacity('roads-3d-layer', 0);
+        setTimeout(() => {
+          safeSetVisibility('roads-2d-layer', 'none');
+          safeSetVisibility('roads-3d-layer', 'none');
+        }, 350);
         
         // CRITICAL: Ensure labels overlay exists and is on TOP of satellite imagery
         ensureLabelsOverlay();
         safeSetVisibility('labels-overlay-layer', 'visible');
+        safeSetOpacity('labels-overlay-layer', 1);
         
         // Traffic layer is now controlled by showTraffic toggle in both modes
         // Previously hidden in satellite mode, now user can toggle it
@@ -1390,9 +1424,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       // This prevents the blue navigation line from being hidden behind other layers
       ensureRouteLayers();
       
-      // SATELLITE FIX: Double-check route layers are on top after a delay
-      // This handles the case where labels overlay was just added and route needs to be above it
-      setTimeout(() => {
+      // SATELLITE FIX: Move route layers to top with multiple delayed checks for reliability
+      // This handles the case where labels overlay tiles are still loading
+      const moveRouteToTop = () => {
         try {
           if (mapInstance.getLayer('route-outline')) {
             mapInstance.moveLayer('route-outline');
@@ -1404,11 +1438,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           if (mapInstance.getLayer('route-traffic-overlay-layer')) {
             mapInstance.moveLayer('route-traffic-overlay-layer');
           }
-          console.log('[ROUTE-LAYERS] Delayed move - ensured route layers are on top of satellite/labels');
         } catch (e) {
-          // Layers might not exist
+          // Layers might not exist yet
         }
-      }, 200);
+      };
+      
+      // Immediate move
+      moveRouteToTop();
+      
+      // Staggered delayed moves to handle async tile loading in satellite mode
+      setTimeout(moveRouteToTop, 100);
+      setTimeout(moveRouteToTop, 300);
+      setTimeout(moveRouteToTop, 600);
+      console.log('[ROUTE-LAYERS] Smooth transition - route layers moved to top with staggered timing');
     } catch (error) {
       console.warn('Failed to update layer visibility:', error);
     }
