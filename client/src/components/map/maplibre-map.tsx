@@ -2123,7 +2123,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         data: cachedData
       });
 
-      // Add route outline (white background for visibility)
+      // Add route outline (white background for visibility) - THICKER for better visibility
       map.current.addLayer({
         id: 'route-outline',
         type: 'line',
@@ -2138,16 +2138,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 3,
-            12, 6,
-            16, 7,
-            20, 8
+            5, 6,
+            12, 10,
+            16, 14,
+            20, 16
           ],
           'line-opacity': 0.9
         }
       });
 
-      // Add thin route line on top (traffic overlay provides main visibility)
+      // Add thicker route line on top - blue #0067FF
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2162,16 +2162,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 2,
-            12, 4,
-            16, 5,
-            20, 6
+            5, 4,
+            12, 8,
+            16, 10,
+            20, 12
           ],
-          'line-opacity': 0.7
+          'line-opacity': 0.9
         }
       });
       
-      console.log('[ROUTE-ENSURE] ✅ Route layers rebuilt from cache');
+      console.log('[ROUTE-ENSURE] ✅ Route layers rebuilt from cache (thicker widths)');
       return true;
     } catch (error) {
       console.error('[ROUTE-ENSURE] Failed to rebuild route:', error);
@@ -2270,13 +2270,13 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     cachedRouteGeoJsonRef.current = geoJsonData;
 
     if (!map.current.getSource('route')) {
-      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - TomTom Blue #0067FF, width 8px');
+      console.log('[ROUTE-RENDER] ✅ Adding NEW route source and layer - TomTom Blue #0067FF, thicker widths');
       map.current.addSource('route', {
         type: 'geojson',
         data: geoJsonData
       });
 
-      // Add route outline (white background for visibility)
+      // Add route outline (white background for visibility) - THICKER for better visibility
       map.current.addLayer({
         id: 'route-outline',
         type: 'line',
@@ -2291,16 +2291,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 3,
-            12, 6,
-            16, 7,
-            20, 8
+            5, 6,
+            12, 10,
+            16, 14,
+            20, 16
           ],
           'line-opacity': 0.9
         }
       });
 
-      // Add thin route line on top (traffic overlay provides main visibility)
+      // Add thicker route line on top - blue #0067FF
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2315,16 +2315,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 2,
-            12, 4,
-            16, 5,
-            20, 6
+            5, 4,
+            12, 8,
+            16, 10,
+            20, 12
           ],
-          'line-opacity': 0.7
+          'line-opacity': 0.9
         }
       });
 
-      console.log('[ROUTE-RENDER] ✅ Route layers added successfully (outline + line)');
+      console.log('[ROUTE-RENDER] ✅ Route layers added successfully (thicker outline + line)');
     } else {
       console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
@@ -2933,22 +2933,23 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     // FIXED: Handle showTraffic toggle visibility
     // If showTraffic is false, hide the layer but preserve data for quick toggle back
+    // CRITICAL: Never touch the base route layers (route-line, route-outline) - only traffic overlays
     if (!showTraffic) {
       if (mapInstance.getLayer(trafficLayerId)) {
         mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'none');
-        console.log('[ROUTE-TRAFFIC-OVERLAY] 🔴 Hidden - traffic toggle OFF');
+        console.log('[ROUTE-TRAFFIC-OVERLAY] 🔴 Hidden - traffic toggle OFF (base route unaffected)');
       }
+      // DON'T return early - we need the rest of the effect to preserve route layers
       return;
     }
     
-    // If no traffic data, remove traffic overlay
+    // If no traffic data, hide traffic overlay (but preserve source for fast re-toggle)
     // FIXED: No longer requires isNavigating - show traffic during route preview too
+    // CRITICAL: NEVER remove the base route source/layer here
     if (!routeTrafficData.segments || routeTrafficData.segments.length === 0) {
       if (mapInstance.getLayer(trafficLayerId)) {
-        mapInstance.removeLayer(trafficLayerId);
-      }
-      if (mapInstance.getSource(trafficSourceId)) {
-        mapInstance.removeSource(trafficSourceId);
+        mapInstance.setLayoutProperty(trafficLayerId, 'visibility', 'none');
+        console.log('[ROUTE-TRAFFIC-OVERLAY] 🔴 No traffic data - overlay hidden (base route preserved)');
       }
       return;
     }
@@ -4536,7 +4537,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           routeCoordinates={routeCoordinatesForOverlay}
           isActive={useStaticRoute && routeCoordinatesForOverlay.length > 0}
           routeColor="#3b82f6"
-          routeWidth={8}
+          routeWidth={12}
           onRenderSuccess={() => setStaticOverlayWorking(true)}
           onRenderFail={() => {
             console.warn('[ROUTE-FALLBACK] Static overlay failed, falling back to native layers');
