@@ -498,6 +498,7 @@ function NavigationPageContent() {
       lateralThresholdMeters: 50,
       consecutiveFixesRequired: 2,
       minSecondsBetweenReroutes: 15,
+      offRouteDelaySeconds: 10,
     }
   );
   

@@ -16,10 +16,10 @@ interface AutoRerouteConfig {
 const DEFAULT_CONFIG: AutoRerouteConfig = {
   lateralThresholdMeters: 25,
   consecutiveFixesRequired: 2,
-  minSecondsBetweenReroutes: 10,
+  minSecondsBetweenReroutes: 15,
   minProgressMeters: 50,
   headingDeviationDegrees: 45,
-  offRouteDelaySeconds: 2,
+  offRouteDelaySeconds: 10,
 };
 
 interface RerouteState {

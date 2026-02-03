@@ -2175,7 +2175,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         data: cachedData
       });
 
-      // Add route outline (white background for visibility)
+      // Add route outline (white background for visibility) - matches traffic layer widths
       map.current.addLayer({
         id: 'route-outline',
         type: 'line',
@@ -2190,16 +2190,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 4,
-            12, 7,
-            16, 9,
-            20, 11
+            5, 5,
+            12, 8,
+            16, 10,
+            20, 12
           ],
           'line-opacity': 0.9
         }
       });
 
-      // Add route line on top - blue #0067FF
+      // Add route line on top - blue #0067FF - matches traffic layer widths
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2214,10 +2214,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 2,
-            12, 5,
-            16, 7,
-            20, 9
+            5, 3,
+            12, 6,
+            16, 8,
+            20, 10
           ],
           'line-opacity': 0.9
         }
@@ -2328,7 +2328,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         data: geoJsonData
       });
 
-      // Add route outline (white background for visibility)
+      // Add route outline (white background for visibility) - matches traffic layer widths
       map.current.addLayer({
         id: 'route-outline',
         type: 'line',
@@ -2343,16 +2343,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 4,
-            12, 7,
-            16, 9,
-            20, 11
+            5, 5,
+            12, 8,
+            16, 10,
+            20, 12
           ],
           'line-opacity': 0.9
         }
       });
 
-      // Add route line on top - blue #0067FF
+      // Add route line on top - blue #0067FF - matches traffic layer widths
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2367,10 +2367,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 2,
-            12, 5,
-            16, 7,
-            20, 9
+            5, 3,
+            12, 6,
+            16, 8,
+            20, 10
           ],
           'line-opacity': 0.9
         }
