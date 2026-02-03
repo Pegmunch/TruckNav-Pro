@@ -52,7 +52,7 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
   isVisible = true
 }: MapTurnLaneIndicatorProps) {
   
-  if (!turnInfo || turnInfo.direction === 'straight' || !isVisible) {
+  if (!turnInfo || !isVisible) {
     return null;
   }
   

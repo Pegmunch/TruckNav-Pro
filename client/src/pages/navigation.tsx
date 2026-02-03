@@ -4169,7 +4169,7 @@ function NavigationPageContent() {
                       
                       {/* Map Turn + Lane Indicator - Large bubble at top left with lane guidance */}
                       {/* Only show when distance is within thresholds: 1000ft/500ft/100ft (imperial) or 300m/150m/30m (metric) */}
-                      {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
+                      {nextTurn && (
                         <MapTurnLaneIndicator
                           turnInfo={nextTurn}
                           unit={measurementSystem === 'imperial' ? 'mi' : 'km'}

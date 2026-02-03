@@ -1356,8 +1356,14 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const safeSetOpacity = (layerId: string, opacity: number) => {
       if (mapInstance.getLayer(layerId)) {
         try {
-          mapInstance.setPaintProperty(layerId, 'raster-opacity-transition', { duration: 300 });
-          mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
+          const type = mapInstance.getLayer(layerId).type;
+          if (type === 'raster') {
+            mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
+          } else if (type === 'line') {
+            mapInstance.setPaintProperty(layerId, 'line-opacity', opacity);
+          } else if (type === 'fill') {
+            mapInstance.setPaintProperty(layerId, 'fill-opacity', opacity);
+          }
         } catch (e) {
           // Layer might not support opacity
         }
