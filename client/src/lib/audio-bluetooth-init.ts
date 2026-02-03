@@ -215,6 +215,92 @@ class AudioBluetoothInit {
     this.initPromise = null;
     return this.initialize();
   }
+
+  /**
+   * Play a brief silent audio clip to activate Bluetooth audio routing
+   * Call this IMMEDIATELY before speech synthesis to ensure speech routes through Bluetooth
+   * 
+   * On iOS, speech synthesis often doesn't route through Bluetooth by default.
+   * Playing a brief audio clip first "wakes up" the Bluetooth audio session,
+   * causing subsequent speech to route through the connected audio device.
+   */
+  public async activateBluetoothForSpeech(): Promise<void> {
+    console.log('[AudioBluetooth] 🔊 Activating Bluetooth audio route for speech...');
+    
+    try {
+      // Resume AudioContext first
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      
+      // Create a short silent tone using Web Audio API
+      // This is more reliable than HTMLAudioElement for Bluetooth activation
+      const ctx = this.getAudioContext();
+      if (ctx) {
+        // Create a very short, very quiet oscillator to "ping" the Bluetooth connection
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        // Very quiet (nearly silent)
+        gainNode.gain.value = 0.001;
+        oscillator.frequency.value = 440;
+        
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.05); // 50ms ping
+        
+        // Wait for it to complete
+        await new Promise(resolve => setTimeout(resolve, 60));
+        console.log('[AudioBluetooth] ✅ Bluetooth audio route activated');
+      }
+      
+      // Also play silent HTML audio as backup (helps on some devices)
+      const silentMp3 = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYZt2aYpAAAAAAD/+1AEAAP8AABpAAAACAAADSAAAAEAAAGkAAAAIAAANIAAAAR7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7';
+      const audio = new Audio(silentMp3);
+      audio.volume = 0.01;
+      audio.setAttribute('playsinline', 'true');
+      
+      try {
+        await audio.play();
+        setTimeout(() => audio.pause(), 50);
+      } catch (e) {
+        // Ignore - oscillator already handled it
+      }
+      
+    } catch (error) {
+      console.warn('[AudioBluetooth] Bluetooth activation failed:', error);
+    }
+  }
+
+  /**
+   * Keep-alive function to maintain Bluetooth audio connection during navigation
+   * Call this periodically (e.g., every 30 seconds) during active navigation
+   */
+  public async keepBluetoothAlive(): Promise<void> {
+    if (!this.isInitialized) return;
+    
+    try {
+      const ctx = this.getAudioContext();
+      if (ctx && ctx.state === 'running') {
+        // Create a silent ping
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        gainNode.gain.value = 0.0001; // Essentially silent
+        oscillator.frequency.value = 440;
+        
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.01);
+      }
+    } catch (error) {
+      // Silently ignore
+    }
+  }
 }
 
 export const audioBluetoothInit = AudioBluetoothInit.getInstance();

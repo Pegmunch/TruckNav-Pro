@@ -490,9 +490,10 @@ export class NavigationVoice {
    * Ensures audio is initialized for Bluetooth/CarPlay/Android Auto before speaking
    * 
    * iOS FIXES:
-   * 1. Call cancel() before speak() - iOS 15+ bug workaround
-   * 2. Reload voices if empty - iOS sometimes loses voices
-   * 3. Small delay after cancel on iOS to prevent silent failures
+   * 1. Activate Bluetooth audio route before speaking
+   * 2. Call cancel() before speak() - iOS 15+ bug workaround
+   * 3. Reload voices if empty - iOS sometimes loses voices
+   * 4. Small delay after cancel on iOS to prevent silent failures
    */
   private async processInstruction(instruction: QueuedInstruction): Promise<void> {
     if (!this.synthesis) {
@@ -504,6 +505,11 @@ export class NavigationVoice {
     if (!audioBluetoothInit.getIsInitialized()) {
       await audioBluetoothInit.initialize();
     }
+    
+    // CRITICAL: Activate Bluetooth audio route BEFORE speaking
+    // This plays a brief silent audio to "wake up" the Bluetooth connection
+    // Without this, speech often plays through device speaker instead of car audio
+    await audioBluetoothInit.activateBluetoothForSpeech();
     
     // iOS FIX: Reload voices if they got lost (common iOS issue)
     if (this.voices.length === 0 || !this.selectedVoice) {
@@ -875,12 +881,17 @@ export class NavigationVoice {
   /**
    * Test voice with sample message
    * This is called from user gesture (button tap) so it should work on iOS
+   * Also tests Bluetooth routing to ensure voice comes through car speakers
    */
   public async testVoice(): Promise<void> {
     console.log('[NavigationVoice] 🧪 Test voice triggered by user gesture');
     
     // Ensure audio is initialized (this is a user gesture so it should work)
     await audioBluetoothInit.initialize();
+    
+    // CRITICAL: Activate Bluetooth audio route for the test
+    // This ensures the test voice plays through the car speakers, not just the phone
+    await audioBluetoothInit.activateBluetoothForSpeech();
     
     // Reload voices on iOS if needed
     if (this.voices.length === 0 || !this.selectedVoice) {
