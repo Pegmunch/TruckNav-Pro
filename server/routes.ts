@@ -6830,6 +6830,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =============================================================================
 
   // ========================================
+  // DRIVER SESSION ROUTES (/api/fleet/driver-session)
+  // Links satnav users (operators) to vehicles for fleet tracking
+  // ========================================
+  
+  // In-memory store for active driver sessions (in production, use database)
+  const activeDriverSessions = new Map<string, {
+    oderId: string;
+    vehicleId: string;
+    operatorName: string;
+    vehicleRegistration: string;
+    sessionStart: string;
+    lastUpdate: string;
+    latitude?: number;
+    longitude?: number;
+    speed?: number;
+    heading?: number;
+  }>();
+
+  // POST - Driver logs into satnav with vehicle + operator
+  app.post("/api/fleet/driver-session", async (req: Request, res: Response) => {
+    try {
+      const { operatorId, vehicleId, operatorName, vehicleRegistration, latitude, longitude, speed, heading } = req.body;
+      
+      if (!operatorId || !vehicleId) {
+        return res.status(400).json({ message: "Operator ID and Vehicle ID are required" });
+      }
+      
+      const session = {
+        oderId: operatorId,
+        vehicleId,
+        operatorName: operatorName || 'Unknown Driver',
+        vehicleRegistration: vehicleRegistration || 'Unknown',
+        sessionStart: activeDriverSessions.get(vehicleId)?.sessionStart || new Date().toISOString(),
+        lastUpdate: new Date().toISOString(),
+        latitude,
+        longitude,
+        speed,
+        heading
+      };
+      
+      activeDriverSessions.set(vehicleId, session);
+      console.log(`[Driver Session] ${operatorName} logged into vehicle ${vehicleRegistration}`);
+      
+      res.status(200).json({ message: "Session started", session });
+    } catch (error) {
+      console.error('Error creating driver session:', error);
+      res.status(500).json({ message: "Failed to create driver session" });
+    }
+  });
+
+  // DELETE - Driver logs out of satnav
+  app.delete("/api/fleet/driver-session/:vehicleId", async (req: Request, res: Response) => {
+    try {
+      const { vehicleId } = req.params;
+      const session = activeDriverSessions.get(vehicleId);
+      
+      if (session) {
+        activeDriverSessions.delete(vehicleId);
+        console.log(`[Driver Session] Driver logged out of vehicle ${session.vehicleRegistration}`);
+      }
+      
+      res.status(200).json({ message: "Session ended" });
+    } catch (error) {
+      console.error('Error ending driver session:', error);
+      res.status(500).json({ message: "Failed to end driver session" });
+    }
+  });
+
+  // GET - Get all active driver sessions (for fleet tracking)
+  app.get("/api/fleet/driver-sessions", async (req: Request, res: Response) => {
+    try {
+      const sessions = Array.from(activeDriverSessions.values());
+      res.json(sessions);
+    } catch (error) {
+      console.error('Error fetching driver sessions:', error);
+      res.status(500).json({ message: "Failed to fetch driver sessions" });
+    }
+  });
+
+  // PUT - Update driver position (called periodically from satnav)
+  app.put("/api/fleet/driver-session/:vehicleId/position", async (req: Request, res: Response) => {
+    try {
+      const { vehicleId } = req.params;
+      const { latitude, longitude, speed, heading } = req.body;
+      
+      const session = activeDriverSessions.get(vehicleId);
+      if (!session) {
+        return res.status(404).json({ message: "No active session for this vehicle" });
+      }
+      
+      session.latitude = latitude;
+      session.longitude = longitude;
+      session.speed = speed;
+      session.heading = heading;
+      session.lastUpdate = new Date().toISOString();
+      
+      activeDriverSessions.set(vehicleId, session);
+      res.status(200).json({ message: "Position updated" });
+    } catch (error) {
+      console.error('Error updating driver position:', error);
+      res.status(500).json({ message: "Failed to update position" });
+    }
+  });
+
+  // ========================================
   // GPS TRACKING ROUTES (/api/enterprise/gps)
   // ========================================
 

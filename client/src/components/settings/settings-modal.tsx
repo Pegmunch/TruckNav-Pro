@@ -248,7 +248,36 @@ const SettingsModal = memo(function SettingsModal({
     staleTime: 60000,
   });
   
-  // Save fleet selections to localStorage
+  // Sync driver session with server when both vehicle and operator are selected
+  const syncDriverSession = async (vehicleId: string | null, operatorId: string | null) => {
+    try {
+      if (vehicleId && operatorId) {
+        const vehicle = fleetVehicles.find(v => v.id === vehicleId);
+        const operator = operators.find(o => o.id === operatorId);
+        
+        await fetch('/api/fleet/driver-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operatorId,
+            vehicleId,
+            operatorName: operator ? `${operator.firstName} ${operator.lastName}` : 'Unknown',
+            vehicleRegistration: vehicle?.registration || 'Unknown'
+          })
+        });
+        console.log('[Fleet] Driver session synced to server');
+        toast({ title: 'Fleet Linked', description: `${operator?.firstName} logged into ${vehicle?.registration}` });
+      } else if (!vehicleId && selectedFleetVehicleId) {
+        // Driver logging out - end session
+        await fetch(`/api/fleet/driver-session/${selectedFleetVehicleId}`, { method: 'DELETE' });
+        console.log('[Fleet] Driver session ended');
+      }
+    } catch (error) {
+      console.error('[Fleet] Failed to sync driver session:', error);
+    }
+  };
+
+  // Save fleet selections to localStorage and sync with server
   const handleFleetVehicleChange = (vehicleId: string) => {
     const id = vehicleId === 'none' ? null : vehicleId;
     setSelectedFleetVehicleId(id);
@@ -258,6 +287,7 @@ const SettingsModal = memo(function SettingsModal({
       localStorage.removeItem(FLEET_VEHICLE_KEY);
     }
     console.log('[Fleet] Vehicle Reg linked:', id);
+    syncDriverSession(id, selectedOperatorId);
   };
   
   const handleOperatorChange = (operatorId: string) => {
@@ -269,6 +299,7 @@ const SettingsModal = memo(function SettingsModal({
       localStorage.removeItem(FLEET_OPERATOR_KEY);
     }
     console.log('[Fleet] Operator linked:', id);
+    syncDriverSession(selectedFleetVehicleId, id);
   };
 
   // Sync voice settings when modal opens - get the actual enabled state from settings

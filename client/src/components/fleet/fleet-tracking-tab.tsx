@@ -65,20 +65,46 @@ export function FleetTrackingTab() {
   const [showIncidents, setShowIncidents] = useState(true);
   const incidentMarkersRef = useRef<globalThis.Map<string, L.Marker>>(new globalThis.Map());
 
+  // Fetch active driver sessions from satnav users
+  interface DriverSession {
+    operatorId: string;
+    vehicleId: string;
+    operatorName: string;
+    vehicleRegistration: string;
+    sessionStart: string;
+    lastUpdate: string;
+    latitude?: number;
+    longitude?: number;
+    speed?: number;
+    heading?: number;
+  }
+
+  const { data: driverSessions = [] } = useQuery<DriverSession[]>({
+    queryKey: ['/api/fleet/driver-sessions'],
+    queryFn: async () => {
+      const response = await fetch('/api/fleet/driver-sessions');
+      if (!response.ok) return [];
+      return response.json();
+    },
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time tracking
+  });
+
   const { data: fleetData, isLoading, refetch, isFetching, isError: isFleetError } = useQuery<FleetGpsData>({
     queryKey: ['/api/enterprise/gps/fleet'],
     queryFn: async () => {
       const response = await fetch('/api/enterprise/gps/fleet');
       if (!response.ok) {
         if (import.meta.env.DEV) {
-          console.warn('[DEV] Fleet GPS API unavailable, using demo data');
+          console.warn('[DEV] Fleet GPS API unavailable, using demo data with driver sessions');
+          // Merge driver sessions into demo data
+          const sessionMap = new Map(driverSessions.map(s => [s.vehicleRegistration, s]));
           return {
             vehicles: [
-              { id: '1', vehicleId: 'v1', registration: 'AB12 CDE', latitude: 51.5074, longitude: -0.1278, speed: 45, heading: 90, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'A1 Motorway, London', operatorName: 'John Smith' },
-              { id: '2', vehicleId: 'v2', registration: 'FG34 HIJ', latitude: 52.4862, longitude: -1.8904, speed: 0, heading: 0, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 600000).toISOString(), address: 'Birmingham Services', operatorName: 'Jane Doe' },
-              { id: '3', vehicleId: 'v3', registration: 'KL56 MNO', latitude: 53.4808, longitude: -2.2426, speed: 0, heading: 0, status: 'offline' as const, lastUpdate: new Date(Date.now() - 3600000).toISOString(), address: 'Manchester Depot', operatorName: 'Bob Wilson' },
-              { id: '4', vehicleId: 'v4', registration: 'PQ78 RST', latitude: 51.4545, longitude: -2.5879, speed: 62, heading: 180, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'M5 Motorway, Bristol', operatorName: 'Alice Brown' },
-              { id: '5', vehicleId: 'v5', registration: 'UV90 WXY', latitude: 55.9533, longitude: -3.1883, speed: 0, heading: 45, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 300000).toISOString(), address: 'Edinburgh Hub', operatorName: 'Charlie Davis' },
+              { id: '1', vehicleId: 'v1', registration: 'AB12 CDE', latitude: 51.5074, longitude: -0.1278, speed: 45, heading: 90, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'A1 Motorway, London', operatorName: sessionMap.get('AB12 CDE')?.operatorName || 'Unassigned' },
+              { id: '2', vehicleId: 'v2', registration: 'FG34 HIJ', latitude: 52.4862, longitude: -1.8904, speed: 0, heading: 0, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 600000).toISOString(), address: 'Birmingham Services', operatorName: sessionMap.get('FG34 HIJ')?.operatorName || 'Unassigned' },
+              { id: '3', vehicleId: 'v3', registration: 'KL56 MNO', latitude: 53.4808, longitude: -2.2426, speed: 0, heading: 0, status: 'offline' as const, lastUpdate: new Date(Date.now() - 3600000).toISOString(), address: 'Manchester Depot', operatorName: sessionMap.get('KL56 MNO')?.operatorName || 'Unassigned' },
+              { id: '4', vehicleId: 'v4', registration: 'PQ78 RST', latitude: 51.4545, longitude: -2.5879, speed: 62, heading: 180, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'M5 Motorway, Bristol', operatorName: sessionMap.get('PQ78 RST')?.operatorName || 'Unassigned' },
+              { id: '5', vehicleId: 'v5', registration: 'UV90 WXY', latitude: 55.9533, longitude: -3.1883, speed: 0, heading: 45, status: 'stopped' as const, lastUpdate: new Date(Date.now() - 300000).toISOString(), address: 'Edinburgh Hub', operatorName: sessionMap.get('UV90 WXY')?.operatorName || 'Unassigned' },
             ],
             totalVehicles: 5,
             movingCount: 2,
