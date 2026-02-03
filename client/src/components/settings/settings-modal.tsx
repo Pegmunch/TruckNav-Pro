@@ -201,7 +201,7 @@ const SettingsModal = memo(function SettingsModal({
   );
   
   // Voice navigation state - connected to actual NavigationVoice singleton
-  const [voiceNavEnabled, setVoiceNavEnabled] = useState(() => navigationVoice.isEnabled());
+  const [voiceNavEnabled, setVoiceNavEnabled] = useState(() => navigationVoice.getSettings().enabled);
   const [voiceNavVolume, setVoiceNavVolume] = useState(() => navigationVoice.getVolume());
   const [voiceNavRate, setVoiceNavRate] = useState(() => navigationVoice.getSettings().rate);
   
@@ -209,6 +209,17 @@ const SettingsModal = memo(function SettingsModal({
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isNavigating] = useState(false);
   const [notificationCount] = useState(0);
+
+  // Sync voice settings when modal opens - get the actual enabled state from settings
+  useEffect(() => {
+    if (open) {
+      const settings = navigationVoice.getSettings();
+      setVoiceNavEnabled(settings.enabled);
+      setVoiceNavVolume(settings.volume);
+      setVoiceNavRate(settings.rate);
+      console.log('[Settings] Synced voice settings on open:', settings.enabled);
+    }
+  }, [open]);
 
   // Save settings when they change
   useEffect(() => {
@@ -1100,12 +1111,18 @@ const SettingsModal = memo(function SettingsModal({
                               </div>
                               <Switch
                                 checked={voiceNavEnabled}
-                                onCheckedChange={(checked) => {
+                                onCheckedChange={async (checked) => {
+                                  console.log('[Settings] Voice toggle changed to:', checked);
                                   setVoiceNavEnabled(checked);
                                   navigationVoice.setEnabled(checked);
                                   if (checked) {
                                     navigationVoice.forceMaxVolume();
+                                    // Prime the voice system since this is a user gesture
+                                    await navigationVoice.primeForUserGesture();
                                   }
+                                  // Verify the setting was saved
+                                  const settings = navigationVoice.getSettings();
+                                  console.log('[Settings] Voice setting saved:', settings.enabled);
                                 }}
                                 data-testid="switch-voice-navigation"
                               />

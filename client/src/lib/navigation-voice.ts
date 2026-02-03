@@ -352,8 +352,16 @@ export class NavigationVoice {
   
   /**
    * Check if voice guidance is enabled
+   * Returns the setting value directly - don't block on initialization
    */
   public isEnabled(): boolean {
+    return this.settings.enabled;
+  }
+  
+  /**
+   * Check if voice is fully ready (enabled AND initialized)
+   */
+  public isReady(): boolean {
     return this.settings.enabled && this.isInitialized;
   }
   
@@ -433,8 +441,16 @@ export class NavigationVoice {
    * Speak a navigation instruction with type filtering
    */
   public speak(text: string, level: VoiceGuidanceLevel = 'normal', interrupt: boolean = false, type: AnnouncementType = 'general'): void {
-    if (!this.isEnabled()) {
+    if (!this.settings.enabled) {
+      console.log('[NavigationVoice] Voice disabled in settings - not speaking');
       return;
+    }
+    
+    // Attempt late initialization if needed
+    if (!this.isInitialized) {
+      console.log('[NavigationVoice] Late initialization attempt...');
+      this.loadVoices();
+      this.isInitialized = this.voices.length > 0;
     }
     
     // Check if this announcement should be spoken based on motorway-only mode
@@ -885,6 +901,13 @@ export class NavigationVoice {
    */
   public async testVoice(): Promise<void> {
     console.log('[NavigationVoice] 🧪 Test voice triggered by user gesture');
+    console.log('[NavigationVoice] Current settings:', JSON.stringify(this.settings));
+    console.log('[NavigationVoice] Voices loaded:', this.voices.length);
+    console.log('[NavigationVoice] Selected voice:', this.selectedVoice?.name || 'none');
+    
+    // Force enable voice for this test
+    const wasEnabled = this.settings.enabled;
+    this.settings.enabled = true;
     
     // Ensure audio is initialized (this is a user gesture so it should work)
     await audioBluetoothInit.initialize();
@@ -893,11 +916,11 @@ export class NavigationVoice {
     // This ensures the test voice plays through the car speakers, not just the phone
     await audioBluetoothInit.activateBluetoothForSpeech();
     
-    // Reload voices on iOS if needed
+    // Reload voices on iOS if needed (or any platform)
     if (this.voices.length === 0 || !this.selectedVoice) {
       console.log('[NavigationVoice] Loading voices for test...');
       this.loadVoices();
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
     // iOS: Cancel any pending speech first
@@ -908,11 +931,39 @@ export class NavigationVoice {
     // Small delay for iOS to process the cancel
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
     
-    // Speak the test message
-    this.speak(this.t('voice.announcements.voice_ready'), 'normal', true);
+    // Speak the test message directly (bypass the speak method to ensure it works)
+    const testText = this.t('voice.announcements.voice_ready') || 'Voice navigation is ready';
+    console.log('[NavigationVoice] 🔊 Speaking test message:', testText);
+    
+    const utterance = new SpeechSynthesisUtterance(testText);
+    if (this.selectedVoice) {
+      utterance.voice = this.selectedVoice;
+    } else if (this.voices.length > 0) {
+      utterance.voice = this.voices[0];
+    }
+    utterance.rate = this.settings.rate;
+    utterance.pitch = this.settings.pitch;
+    utterance.volume = 1.0; // Maximum volume for test
+    
+    utterance.onend = () => {
+      console.log('[NavigationVoice] ✅ Test voice completed successfully');
+    };
+    
+    utterance.onerror = (event) => {
+      console.error('[NavigationVoice] ❌ Test voice error:', event.error);
+    };
+    
+    try {
+      this.synthesis.speak(utterance);
+    } catch (error) {
+      console.error('[NavigationVoice] ❌ Failed to speak test:', error);
+    }
+    
+    // Restore original enabled state
+    this.settings.enabled = wasEnabled;
   }
   
   /**
