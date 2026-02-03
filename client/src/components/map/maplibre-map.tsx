@@ -1357,8 +1357,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         // Hide labels overlay in roads mode (OSM tiles already have labels)
         safeSetVisibility('labels-overlay-layer', 'none');
         // Show traffic layer in roads mode if it exists and traffic is enabled
-        if (mapInstance.getLayer('traffic-flow-layer') && showTraffic) {
-          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', 'visible');
+        // NAVIGATION FIX: During active navigation, hide general traffic layer to avoid confusion
+        // Only show route-specific traffic overlay (route-traffic-overlay-layer) during navigation
+        if (mapInstance.getLayer('traffic-flow-layer')) {
+          const showGeneralTraffic = showTraffic && !isNavigating;
+          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
         }
       } else {
         // Satellite mode - hide road layers, show satellite and labels overlay
@@ -1373,8 +1376,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         
         // Traffic layer is now controlled by showTraffic toggle in both modes
         // Previously hidden in satellite mode, now user can toggle it
+        // NAVIGATION FIX: During active navigation, hide general traffic layer to avoid confusion
         if (mapInstance.getLayer('traffic-flow-layer')) {
-          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showTraffic ? 'visible' : 'none');
+          const showGeneralTraffic = showTraffic && !isNavigating;
+          mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
         }
       }
       
@@ -1404,7 +1409,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     } catch (error) {
       console.warn('Failed to update layer visibility:', error);
     }
-  }, [showTraffic]);
+  }, [showTraffic, isNavigating]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -3582,7 +3587,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         
         if (!userMarkerRef.current) {
           // Create orange unavailable GPS marker with route bearing if in Navigate mode
-          const markerSize = 48;
+          const markerSize = 16; // Small, unobtrusive marker
           const el = document.createElement('div');
           el.className = 'user-position-marker-unavailable';
           el.innerHTML = `
@@ -3599,7 +3604,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
               animation: no-gps-pulse 2s ease-in-out infinite;
               z-index: 1000;
             ">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
               </svg>
             </div>
@@ -3665,9 +3670,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
     // Create or update user position marker
     if (!userMarkerRef.current) {
-      // COMPACT marker size - matches route line width for clean appearance
-      const markerSize = 22; // Small, compressed to match route line width
-      const borderWidth = 2; // Thin border
+      // VERY COMPACT marker size - tiny indicator on route
+      const markerSize = 12; // Tiny marker per user request
+      const borderWidth = 1; // Thin border
       
       // Determine vehicle icon based on selected profile
       let vehicleIcon = '';
