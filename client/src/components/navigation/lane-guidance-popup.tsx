@@ -223,9 +223,9 @@ function LaneIndicator({ lane, isSelected, isRecommended, isRestricted, compact 
     
     switch (lane.direction) {
       case 'left':
-        return <ArrowUpRight className={`${iconSize} rotate-[-45deg]`} />;
+        return <ArrowUpLeft className={iconSize} />;
       case 'right':
-        return <ArrowUpRight className={`${iconSize} rotate-[45deg]`} />;
+        return <ArrowUpRight className={iconSize} />;
       case 'straight':
         return <ArrowUp className={iconSize} />;
       case 'exit':
@@ -349,8 +349,9 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   const [lastManeuverStepIndex, setLastManeuverStepIndex] = useState<number | null>(null);
 
   // Distance thresholds for auto-show/hide (in meters)
-  const APPROACH_DISTANCE = 800; // Show when within 800m of maneuver (earlier visibility)
-  const COMPLETION_DISTANCE = 30; // Consider completed when within 30m (passed through)
+  // Pre-empt lane guidance well before the turn so driver has time to change lanes
+  const APPROACH_DISTANCE = 1500; // Show when within 1.5km of maneuver (earlier pre-emption)
+  const COMPLETION_DISTANCE = 20; // Consider completed when within 20m (passed through)
 
   // Detect maneuver completion - when distance decreases to near-zero then we've passed it
   useEffect(() => {
