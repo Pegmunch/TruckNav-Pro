@@ -5024,20 +5024,43 @@ function NavigationPageContent() {
         />
       )}
 
-      {/* Destination Reached Dialog - Early return pattern to unmount when closed (iOS Safari overlay fix) */}
+      {/* Destination Reached Dialog - Checkered Flag Design */}
       {showDestinationReached && (
       <AlertDialog open={showDestinationReached} onOpenChange={setShowDestinationReached}>
-        <AlertDialogContent className="max-w-md" data-testid="dialog-destination-reached">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-bold text-center flex items-center justify-center gap-2">
-              <Navigation className="w-6 h-6 text-green-600" />
-              Destination Reached!
+        <AlertDialogContent className="max-w-md bg-gray-900 border-gray-700" data-testid="dialog-destination-reached">
+          <AlertDialogHeader className="space-y-4">
+            {/* Checkered Flag Icon */}
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-white p-2 shadow-lg">
+                <svg viewBox="0 0 64 64" className="w-full h-full">
+                  {/* Checkered flag pattern - 4x4 grid */}
+                  <rect x="0" y="0" width="16" height="16" fill="black"/>
+                  <rect x="16" y="0" width="16" height="16" fill="white"/>
+                  <rect x="32" y="0" width="16" height="16" fill="black"/>
+                  <rect x="48" y="0" width="16" height="16" fill="white"/>
+                  <rect x="0" y="16" width="16" height="16" fill="white"/>
+                  <rect x="16" y="16" width="16" height="16" fill="black"/>
+                  <rect x="32" y="16" width="16" height="16" fill="white"/>
+                  <rect x="48" y="16" width="16" height="16" fill="black"/>
+                  <rect x="0" y="32" width="16" height="16" fill="black"/>
+                  <rect x="16" y="32" width="16" height="16" fill="white"/>
+                  <rect x="32" y="32" width="16" height="16" fill="black"/>
+                  <rect x="48" y="32" width="16" height="16" fill="white"/>
+                  <rect x="0" y="48" width="16" height="16" fill="white"/>
+                  <rect x="16" y="48" width="16" height="16" fill="black"/>
+                  <rect x="32" y="48" width="16" height="16" fill="white"/>
+                  <rect x="48" y="48" width="16" height="16" fill="black"/>
+                </svg>
+              </div>
+            </div>
+            <AlertDialogTitle className="text-2xl font-bold text-center text-white">
+              Arrived at destination
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-lg pt-2">
-              You have arrived at your destination. Safe driving!
+            <AlertDialogDescription className="text-center text-lg pt-2 text-gray-300">
+              You have reached your destination safely.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 mt-4">
             <AlertDialogAction
               onClick={() => {
                 // CRITICAL: Clear all route persistence - fresh start page
@@ -5077,10 +5100,10 @@ function NavigationPageContent() {
                 
                 console.log('[ROUTE-COMPLETE] ✅ Route completed - fresh start page restored');
               }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 text-lg"
               data-testid="button-plan-new-journey"
             >
-              Plan New Journey
+              Finished
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

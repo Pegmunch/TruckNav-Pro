@@ -1,6 +1,111 @@
 import { memo } from 'react';
-import { ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft, Minus } from 'lucide-react';
+import { ArrowUp, ArrowRight, ArrowLeft, ArrowUpRight, ArrowUpLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Curved arrow SVG for left turn (gray when inactive)
+const CurvedArrowLeft = ({ className, isActive }: { className?: string; isActive?: boolean }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path 
+      d="M19 20V10C19 5.58172 15.4183 2 11 2C6.58172 2 3 5.58172 3 10" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path 
+      d="M7 6L3 10L7 14" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+// Curved arrow SVG for right turn (gray when inactive)
+const CurvedArrowRight = ({ className, isActive }: { className?: string; isActive?: boolean }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path 
+      d="M5 20V10C5 5.58172 8.58172 2 13 2C17.4183 2 21 5.58172 21 10" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path 
+      d="M17 6L21 10L17 14" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+// Straight arrow SVG (cyan when active, gray when inactive)
+const StraightArrow = ({ className, isActive }: { className?: string; isActive?: boolean }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path 
+      d="M12 20V4" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path 
+      d="M6 10L12 4L18 10" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+// Slight right arrow SVG
+const SlightRightArrow = ({ className, isActive }: { className?: string; isActive?: boolean }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path 
+      d="M7 20V12C7 8 10 5 14 5H20" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path 
+      d="M16 1L20 5L16 9" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
+
+// Slight left arrow SVG
+const SlightLeftArrow = ({ className, isActive }: { className?: string; isActive?: boolean }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none">
+    <path 
+      d="M17 20V12C17 8 14 5 10 5H4" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round"
+      fill="none"
+    />
+    <path 
+      d="M8 1L4 5L8 9" 
+      stroke={isActive ? "#22D3EE" : "#9CA3AF"} 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </svg>
+);
 
 interface TurnInfo {
   direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left';
@@ -101,18 +206,14 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
   };
   
   const getLaneArrow = (direction: string, isRecommended: boolean) => {
-    const iconClass = "w-5 h-5 stroke-[2.5px]";
-    
-    if (!isRecommended) {
-      return <Minus className={cn(iconClass, "text-gray-400")} />;
-    }
+    const iconClass = "w-6 h-6";
     
     switch (direction) {
-      case 'left': return <ArrowLeft className={cn(iconClass, "text-blue-600")} />;
-      case 'right': return <ArrowRight className={cn(iconClass, "text-blue-600")} />;
-      case 'straight': return <ArrowUp className={cn(iconClass, "text-blue-600")} />;
-      case 'exit': return <ArrowUpRight className={cn(iconClass, "text-blue-600")} />;
-      default: return <ArrowUp className={cn(iconClass, "text-gray-400")} />;
+      case 'left': return <CurvedArrowLeft className={iconClass} isActive={isRecommended} />;
+      case 'right': return <CurvedArrowRight className={iconClass} isActive={isRecommended} />;
+      case 'straight': return <StraightArrow className={iconClass} isActive={isRecommended} />;
+      case 'exit': return <SlightRightArrow className={iconClass} isActive={isRecommended} />;
+      default: return <StraightArrow className={iconClass} isActive={isRecommended} />;
     }
   };
   
