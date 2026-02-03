@@ -7,6 +7,8 @@ interface StaticRouteOverlayProps {
   isActive: boolean;
   routeColor?: string;
   routeWidth?: number;
+  onRenderSuccess?: () => void;
+  onRenderFail?: () => void;
 }
 
 export function StaticRouteOverlay({
@@ -14,12 +16,15 @@ export function StaticRouteOverlay({
   routeCoordinates,
   isActive,
   routeColor = '#3b82f6',
-  routeWidth = 8
+  routeWidth = 8,
+  onRenderSuccess,
+  onRenderFail
 }: StaticRouteOverlayProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [pathData, setPathData] = useState<string>('');
   const animationFrameRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
+  const hasReportedSuccessRef = useRef<boolean>(false);
 
   const projectRouteToScreen = useCallback(() => {
     if (!map || !routeCoordinates.length || !isActive) {
@@ -47,6 +52,10 @@ export function StaticRouteOverlay({
 
       if (screenPoints.length < 2) {
         setPathData('');
+        if (onRenderFail && hasReportedSuccessRef.current) {
+          hasReportedSuccessRef.current = false;
+          onRenderFail();
+        }
         return;
       }
 
@@ -56,10 +65,20 @@ export function StaticRouteOverlay({
       }
       
       setPathData(d);
+      
+      // Report success once per activation
+      if (onRenderSuccess && !hasReportedSuccessRef.current) {
+        hasReportedSuccessRef.current = true;
+        onRenderSuccess();
+      }
     } catch (error) {
       console.warn('[STATIC-ROUTE] Failed to project coordinates:', error);
+      if (onRenderFail) {
+        hasReportedSuccessRef.current = false;
+        onRenderFail();
+      }
     }
-  }, [map, routeCoordinates, isActive]);
+  }, [map, routeCoordinates, isActive, onRenderSuccess, onRenderFail]);
 
   useEffect(() => {
     if (!map || !isActive) return;

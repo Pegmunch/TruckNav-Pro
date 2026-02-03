@@ -245,6 +245,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   
   // Fly-by animation state
   const [isFlyByActive, setIsFlyByActive] = useState(false);
+  
+  // Static route overlay fallback state - if SVG overlay fails, fall back to native layers
+  const [staticOverlayWorking, setStaticOverlayWorking] = useState(true);
   const flyByAnimationRef = useRef<number | null>(null);
   const flyByCancelledRef = useRef(false);
   const flyByCallbacksRef = useRef<{ onComplete?: () => void; onCancel?: () => void }>({});
@@ -4456,9 +4459,10 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const setRouteVisibility = () => {
       if (!mapInstance.isStyleLoaded()) return;
       
-      // FIX: When useStaticRoute is true, hide native MapLibre route layers to prevent duplicate lines
-      // The StaticRouteOverlay (SVG) takes over route rendering
-      const visibility = useStaticRoute ? 'none' : 'visible';
+      // FIX: When useStaticRoute is true AND static overlay is working, hide native MapLibre route layers
+      // If static overlay fails, native layers become the fallback
+      // Fallback chain: 1. Static SVG Overlay → 2. Native MapLibre Layers → 3. Cached Route Data
+      const visibility = (useStaticRoute && staticOverlayWorking) ? 'none' : 'visible';
       
       // All possible route layer IDs (excluding route-traffic-overlay-layer which should stay visible for traffic colors)
       const routeLayerIds = [
@@ -4491,7 +4495,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       mapInstance.off('styledata', setRouteVisibility);
       mapInstance.off('load', setRouteVisibility);
     };
-  }, [useStaticRoute, isLoaded, isNavigating]);
+  }, [useStaticRoute, isLoaded, isNavigating, staticOverlayWorking]);
 
   // Prepare route coordinates for static overlay - with validation (keeping lat/lng object format)
   // CRITICAL: Use persistent cache during navigation to prevent route disappearing
@@ -4526,12 +4530,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         {/* Loading overlay removed to prevent white screen issues */}
         
         {/* Static Route Overlay - renders north-up route when map rotates during navigation */}
+        {/* Fallback chain: 1. Static SVG Overlay → 2. Native MapLibre Layers → 3. Cached Route Data */}
         <StaticRouteOverlay
           map={map.current}
           routeCoordinates={routeCoordinatesForOverlay}
           isActive={useStaticRoute && routeCoordinatesForOverlay.length > 0}
           routeColor="#3b82f6"
           routeWidth={8}
+          onRenderSuccess={() => setStaticOverlayWorking(true)}
+          onRenderFail={() => {
+            console.warn('[ROUTE-FALLBACK] Static overlay failed, falling back to native layers');
+            setStaticOverlayWorking(false);
+          }}
         />
         
       
