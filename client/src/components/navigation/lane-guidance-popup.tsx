@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import {
 import { type LaneSegment, type LaneOption, type Route } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { navigationVoice } from "@/lib/navigation-voice";
 
 // Bendy arrow SVG components for curved turns
 const BendyArrowRight = ({ className }: { className?: string }) => (
@@ -426,6 +427,43 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
     setIsVisible(shouldShow);
   }, [isNavigating, currentRoute, nextManeuver, forceVisible, maneuverCompleted, savedSelections]);
 
+  // Track last announced maneuver to avoid repeating
+  const lastAnnouncedManeuverRef = useRef<number | null>(null);
+
+  // Voice announcement when lane guidance becomes visible
+  useEffect(() => {
+    if (!isVisible || !nextManeuver || forceVisible) return;
+    
+    // Don't repeat announcement for same maneuver
+    if (lastAnnouncedManeuverRef.current === nextManeuver.stepIndex) return;
+    
+    // Find recommended lanes
+    const recommendedLanes = nextManeuver.laneOptions
+      .filter((lane: LaneOption) => lane.recommended)
+      .map((lane: LaneOption) => lane.index + 1);
+    
+    if (recommendedLanes.length > 0) {
+      const laneText = recommendedLanes.length === 1 
+        ? `lane ${recommendedLanes[0]}`
+        : `lanes ${recommendedLanes.join(' and ')}`;
+      
+      const direction = nextManeuver.maneuverType === 'turn-right' ? 'right' :
+                        nextManeuver.maneuverType === 'turn-left' ? 'left' :
+                        nextManeuver.maneuverType === 'exit' ? 'exit' : '';
+      
+      const roadInfo = nextManeuver.roadName ? ` for ${nextManeuver.roadName}` : '';
+      
+      // Announce lane guidance with distance
+      navigationVoice.announceLaneGuidance(
+        `Use ${laneText}${direction ? ` to turn ${direction}` : ''}${roadInfo}`,
+        nextManeuver.distance
+      );
+      
+      lastAnnouncedManeuverRef.current = nextManeuver.stepIndex;
+      console.log('[LANE-VOICE] Announced lane guidance:', laneText, 'at distance:', nextManeuver.distance);
+    }
+  }, [isVisible, nextManeuver, forceVisible]);
+
   // Handle lane selection
   const handleLaneSelection = (laneIndex: number, currentManeuver: any) => {
     const newSelections = {
@@ -505,13 +543,16 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
   // Create demo lane data when forced visible but no real data
   const demoLaneSegment = {
     stepIndex: 0,
-    instruction: "Keep right to continue on highway",
+    advisory: "Keep right to continue on highway",
+    roadName: "Main Highway",
+    maneuverType: 'turn-right' as const,
     distance: 500,
+    totalLanes: 4,
     laneOptions: [
       { index: 0, direction: 'left' as const, recommended: false, restrictions: ['no_trucks'] },
-      { index: 1, direction: 'straight' as const, recommended: true, restrictions: [] },
-      { index: 2, direction: 'straight' as const, recommended: true, restrictions: [] },
-      { index: 3, direction: 'right' as const, recommended: false, restrictions: [] }
+      { index: 1, direction: 'straight' as const, recommended: false, restrictions: [] },
+      { index: 2, direction: 'straight' as const, recommended: false, restrictions: [] },
+      { index: 3, direction: 'right' as const, recommended: true, restrictions: [] }
     ]
   };
 
@@ -546,14 +587,15 @@ const LaneGuidancePopup = memo(function LaneGuidancePopup({
     }
   };
   
-  const directionType = 'maneuverType' in currentManeuver && currentManeuver.maneuverType
-    ? getDirectionFromManeuverType(currentManeuver.maneuverType)
-    : ('instruction' in currentManeuver && currentManeuver.instruction 
-        ? getDirectionFromInstruction(currentManeuver.instruction as string)
+  // Get direction type from maneuver - use maneuverType if available, fall back to advisory text
+  const maneuver = currentManeuver as LaneSegment;
+  const directionType = maneuver.maneuverType
+    ? getDirectionFromManeuverType(maneuver.maneuverType)
+    : (maneuver.advisory 
+        ? getDirectionFromInstruction(maneuver.advisory)
         : 'straight');
   
-  const instructionText = 'roadName' in currentManeuver ? currentManeuver.roadName : 
-    ('instruction' in currentManeuver ? (currentManeuver.instruction as string) : undefined);
+  const instructionText = maneuver.roadName || maneuver.advisory;
 
   return (
     <div 
