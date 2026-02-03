@@ -65,8 +65,8 @@ export function FleetTrackingTab() {
   const [showIncidents, setShowIncidents] = useState(true);
   const incidentMarkersRef = useRef<globalThis.Map<string, L.Marker>>(new globalThis.Map());
 
-  // Fetch active driver sessions from satnav users
-  interface DriverSession {
+  // Driver session type for satnav-to-fleet linking
+  type DriverSessionData = {
     operatorId: string;
     vehicleId: string;
     operatorName: string;
@@ -77,9 +77,10 @@ export function FleetTrackingTab() {
     longitude?: number;
     speed?: number;
     heading?: number;
-  }
+  };
 
-  const { data: driverSessions = [] } = useQuery<DriverSession[]>({
+  // Fetch active driver sessions from satnav users
+  const { data: driverSessions = [] } = useQuery<DriverSessionData[]>({
     queryKey: ['/api/fleet/driver-sessions'],
     queryFn: async () => {
       const response = await fetch('/api/fleet/driver-sessions');
@@ -97,7 +98,7 @@ export function FleetTrackingTab() {
         if (import.meta.env.DEV) {
           console.warn('[DEV] Fleet GPS API unavailable, using demo data with driver sessions');
           // Merge driver sessions into demo data
-          const sessionMap = new Map(driverSessions.map(s => [s.vehicleRegistration, s]));
+          const sessionMap = new globalThis.Map<string, DriverSessionData>(driverSessions.map(s => [s.vehicleRegistration, s]));
           return {
             vehicles: [
               { id: '1', vehicleId: 'v1', registration: 'AB12 CDE', latitude: 51.5074, longitude: -0.1278, speed: 45, heading: 90, status: 'moving' as const, lastUpdate: new Date().toISOString(), address: 'A1 Motorway, London', operatorName: sessionMap.get('AB12 CDE')?.operatorName || 'Unassigned' },
