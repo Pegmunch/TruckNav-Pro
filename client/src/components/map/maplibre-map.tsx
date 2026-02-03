@@ -4456,11 +4456,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     const setRouteVisibility = () => {
       if (!mapInstance.isStyleLoaded()) return;
       
-      // SAFETY: During navigation (isNavigating=true), ALWAYS keep route visible
-      // Only hide native layers if NOT navigating AND useStaticRoute is true (preview mode optimization)
-      const visibility = (isNavigating || !useStaticRoute) ? 'visible' : 'none';
+      // FIX: When useStaticRoute is true, hide native MapLibre route layers to prevent duplicate lines
+      // The StaticRouteOverlay (SVG) takes over route rendering
+      const visibility = useStaticRoute ? 'none' : 'visible';
       
-      // All possible route layer IDs
+      // All possible route layer IDs (excluding route-traffic-overlay-layer which should stay visible for traffic colors)
       const routeLayerIds = [
         'route-line',
         'route-outline',
@@ -4469,8 +4469,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         'route-line-alt',
         'route-line-alt-casing',
         'route-line-alt-background',
-        'route-overlay',
-        'route-traffic-overlay'
+        'route-overlay'
       ];
       
       try {
