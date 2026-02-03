@@ -2135,16 +2135,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 6,
-            12, 16,
-            16, 24,
-            20, 32
+            5, 3,
+            12, 6,
+            16, 7,
+            20, 8
           ],
-          'line-opacity': 1.0
+          'line-opacity': 0.9
         }
       });
 
-      // Add TomTom blue route line on top
+      // Add thin route line on top (traffic overlay provides main visibility)
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2159,12 +2159,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 4,
-            12, 12,
-            16, 18,
-            20, 24
+            5, 2,
+            12, 4,
+            16, 5,
+            20, 6
           ],
-          'line-opacity': 0.95
+          'line-opacity': 0.7
         }
       });
       
@@ -2288,16 +2288,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 6,
-            12, 16,
-            16, 24,
-            20, 32
+            5, 3,
+            12, 6,
+            16, 7,
+            20, 8
           ],
-          'line-opacity': 1.0
+          'line-opacity': 0.9
         }
       });
 
-      // Add TomTom blue route line on top
+      // Add thin route line on top (traffic overlay provides main visibility)
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2312,12 +2312,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 4,
-            12, 12,
-            16, 18,
-            20, 24
+            5, 2,
+            12, 4,
+            16, 5,
+            20, 6
           ],
-          'line-opacity': 0.95
+          'line-opacity': 0.7
         }
       });
 
