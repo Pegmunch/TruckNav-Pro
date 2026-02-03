@@ -1354,15 +1354,18 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     
     // Helper to set opacity with smooth transition effect
     const safeSetOpacity = (layerId: string, opacity: number) => {
-      if (mapInstance.getLayer(layerId)) {
+      if (mapInstance && mapInstance.getLayer(layerId)) {
         try {
-          const type = mapInstance.getLayer(layerId).type;
-          if (type === 'raster') {
-            mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
-          } else if (type === 'line') {
-            mapInstance.setPaintProperty(layerId, 'line-opacity', opacity);
-          } else if (type === 'fill') {
-            mapInstance.setPaintProperty(layerId, 'fill-opacity', opacity);
+          const layer = mapInstance.getLayer(layerId);
+          if (layer) {
+            const type = layer.type;
+            if (type === 'raster') {
+              mapInstance.setPaintProperty(layerId, 'raster-opacity', opacity);
+            } else if (type === 'line') {
+              mapInstance.setPaintProperty(layerId, 'line-opacity', opacity);
+            } else if (type === 'fill') {
+              mapInstance.setPaintProperty(layerId, 'fill-opacity', opacity);
+            }
           }
         } catch (e) {
           // Layer might not support opacity
