@@ -587,8 +587,35 @@ function NavigationPageContent() {
     lng: gpsData.position.longitude
   } : undefined;
   
-  const [professionalVoiceEnabled, setProfessionalVoiceEnabled] = useState(true);
+  const [professionalVoiceEnabled, setProfessionalVoiceEnabled] = useState(() => {
+    // Initialize from NavigationVoice saved settings
+    return navigationVoice.isEnabled();
+  });
   const [isFullscreenNav, setIsFullscreenNav] = useState(false);
+  
+  // Sync professionalVoiceEnabled with NavigationVoice on mount and when settings change
+  useEffect(() => {
+    const syncVoiceState = () => {
+      const voiceEnabled = navigationVoice.isEnabled();
+      setProfessionalVoiceEnabled(voiceEnabled);
+      console.log('[VOICE-SYNC] Synced voice state from NavigationVoice:', voiceEnabled);
+    };
+    
+    // Sync on mount
+    syncVoiceState();
+    
+    // Also sync when visibility changes (user returns to app)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncVoiceState();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
   
   // Mobile navigation mode state - clean 3-mode workflow
   type MobileNavMode = 'plan' | 'preview' | 'navigate';
@@ -1272,9 +1299,12 @@ function NavigationPageContent() {
         const turnMagnitude = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
         
         // Apply sign from cross product:
-        // crossProduct > 0 → RIGHT turn relative to travel direction (positive angle)
-        // crossProduct < 0 → LEFT turn relative to travel direction (negative angle)
-        let turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
+        // In geographic coordinates (lat=Y increases North, lng=X increases East):
+        // When traveling North and turning East (RIGHT), cross = -1 (negative)
+        // When traveling North and turning West (LEFT), cross = +1 (positive)
+        // Therefore: crossProduct < 0 → RIGHT turn, crossProduct > 0 → LEFT turn
+        // This maps correctly for heading-up navigation display
+        let turnAngle = crossProduct < 0 ? turnMagnitude : -turnMagnitude;
         
         // Check if this is a significant turn
         if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
@@ -3266,10 +3296,20 @@ function NavigationPageContent() {
     localStorage.setItem('navigation_ui_active', 'true');
     console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
     
-    // CRITICAL: Prime voice for iOS Safari - must happen during user gesture (button tap)
-    // iOS Safari requires speech synthesis to be "unlocked" during a user interaction
+    // CRITICAL: Prime voice and Bluetooth audio for iOS Safari
+    // Must happen during user gesture (button tap) for iOS audio policy
     navigationVoice.primeForUserGesture();
     console.log('[NAV-ACTIVATION] ✅ Voice primed for iOS Safari');
+    
+    // CRITICAL: Initialize and activate Bluetooth audio for vehicle speakers
+    // This ensures voice navigation routes through connected Bluetooth audio devices
+    try {
+      await audioBluetoothInit.initialize();
+      await audioBluetoothInit.activateBluetoothForSpeech();
+      console.log('[NAV-ACTIVATION] ✅ Bluetooth audio activated for vehicle speakers');
+    } catch (e) {
+      console.warn('[NAV-ACTIVATION] Bluetooth audio activation failed:', e);
+    }
     
     // Enable Smart Traffic Lights Panel during navigation
     setShowSmartTrafficLights(true);
@@ -4178,7 +4218,23 @@ function NavigationPageContent() {
                         onSetLocation={() => setShowManualLocationDialog(true)}
                         isPreviewActive={isFlyByInProgress}
                         voiceEnabled={professionalVoiceEnabled}
-                        onVoiceToggle={() => setProfessionalVoiceEnabled(!professionalVoiceEnabled)}
+                        onVoiceToggle={async () => {
+                          const newState = !professionalVoiceEnabled;
+                          setProfessionalVoiceEnabled(newState);
+                          navigationVoice.setEnabled(newState);
+                          console.log('[VOICE-TOGGLE] Voice navigation:', newState ? 'ENABLED' : 'DISABLED');
+                          
+                          // If enabling voice, prime the audio system for Bluetooth
+                          if (newState) {
+                            try {
+                              await audioBluetoothInit.initialize();
+                              await audioBluetoothInit.activateBluetoothForSpeech();
+                              console.log('[VOICE-TOGGLE] Audio system primed for Bluetooth');
+                            } catch (e) {
+                              console.warn('[VOICE-TOGGLE] Audio priming failed:', e);
+                            }
+                          }
+                        }}
                         roadInfo={roadInfo ? {
                           roadRef: roadInfo.roadRef,
                           junction: roadInfo.junction,
