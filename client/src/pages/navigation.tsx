@@ -77,6 +77,7 @@ import { RightActionStack } from "@/components/navigation/right-action-stack";
 import { IOSTouchProxyLayer } from "@/components/navigation/ios-touch-proxy-layer";
 import { BottomInstrumentationBar } from "@/components/navigation/bottom-instrumentation-bar";
 import { navigationVoice } from "@/lib/navigation-voice";
+import { audioBluetoothInit } from "@/lib/audio-bluetooth-init";
 import { type IncidentType, type NavigationCommandType } from "@/lib/voice-commands";
 import { DesktopHeader } from "@/components/navigation/desktop-header";
 import RestrictionsWarningPanel from "@/components/navigation/restrictions-warning-panel";
@@ -2123,46 +2124,97 @@ function NavigationPageContent() {
     }
   }, []);
   
-  // PWA/Mobile lifecycle management - clean up localStorage properly
-  // NOTE: Navigation state is automatically derived by useNavigationSession hook
+  // PWA/Mobile lifecycle management - PHONE CALL HANDLING
+  // Navigation continues running during phone calls and auto-resumes when returning
   useEffect(() => {
     const clearNavigationState = () => {
-      console.log('[LIFECYCLE] App suspending/closing - clearing localStorage');
+      console.log('[LIFECYCLE] App closing - clearing localStorage');
       localStorage.removeItem('navigation_mode');
       localStorage.removeItem('navigation_timestamp');
       localStorage.removeItem('activeJourneyId');
       localStorage.removeItem('activeRouteId');
-      // NOTE: No need to set state - navSession will auto-derive when journey is cleared
     };
     
     // Handle page hide (mobile browser minimized or PWA closed)
     const handlePageHide = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        // Page is being cached, clear navigation state
+      // Only clear state if page is NOT being cached (actual close)
+      // If persisted is true, page might be coming back (phone call, etc.)
+      if (!event.persisted) {
         clearNavigationState();
+      } else {
+        console.log('[LIFECYCLE] 📱 App backgrounded (phone call/switch) - keeping navigation active');
+        localStorage.setItem('navigation_paused_timestamp', Date.now().toString());
       }
     };
     
-    // Handle visibility change (tab switching, minimize)
-    const handleVisibilityChange = () => {
+    // Handle visibility change (tab switching, phone call, minimize)
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === 'hidden') {
-        // Only clear if navigation is active and app is being hidden for extended time
+        // APP GOING TO BACKGROUND (phone call, switch app, etc.)
+        console.log('[LIFECYCLE] 📱 App hidden - navigation continues in background');
         const navMode = localStorage.getItem('navigation_mode');
-        if (navMode === 'navigate') {
-          // Update timestamp to track when app was hidden
-          localStorage.setItem('navigation_timestamp', Date.now().toString());
+        if (navMode === 'navigate' || isNavigating) {
+          // Save timestamp and keep navigation active
+          localStorage.setItem('navigation_paused_timestamp', Date.now().toString());
+          localStorage.setItem('navigation_was_active', 'true');
+        }
+      } else if (document.visibilityState === 'visible') {
+        // APP RETURNING TO FOREGROUND (after phone call, etc.)
+        console.log('[LIFECYCLE] 📱 App visible again - checking navigation state');
+        
+        const wasActive = localStorage.getItem('navigation_was_active');
+        const pausedTimestamp = localStorage.getItem('navigation_paused_timestamp');
+        
+        if (wasActive === 'true' || isNavigating) {
+          console.log('[LIFECYCLE] ✅ Resuming navigation after phone call/background');
+          
+          // Calculate how long app was in background
+          const pausedTime = pausedTimestamp ? Date.now() - parseInt(pausedTimestamp) : 0;
+          console.log(`[LIFECYCLE] App was backgrounded for ${Math.round(pausedTime / 1000)} seconds`);
+          
+          // Re-acquire wake lock to keep screen on
+          try {
+            await acquireWakeLock();
+            console.log('[LIFECYCLE] ✅ Wake lock re-acquired');
+          } catch (e) {
+            console.warn('[LIFECYCLE] Failed to re-acquire wake lock:', e);
+          }
+          
+          // Reinitialize audio for Bluetooth (phone call may have taken over audio)
+          try {
+            await audioBluetoothInit.reinitialize();
+            console.log('[LIFECYCLE] ✅ Audio/Bluetooth reinitialized');
+          } catch (e) {
+            console.warn('[LIFECYCLE] Failed to reinitialize audio:', e);
+          }
+          
+          // Prime voice navigation for iOS
+          navigationVoice.primeForUserGesture();
+          
+          // Clean up tracking
+          localStorage.removeItem('navigation_paused_timestamp');
+          localStorage.removeItem('navigation_was_active');
+          
+          // Announce return to navigation if was away for more than 30 seconds
+          if (pausedTime > 30000 && isNavigating) {
+            setTimeout(() => {
+              navigationVoice.speak('Navigation resumed', 'normal', false, 'general');
+            }, 1000);
+          }
         }
       }
     };
     
-    // Handle freeze event (modern lifecycle API)
+    // Handle freeze event (modern lifecycle API) - only on actual freeze
     const handleFreeze = () => {
-      clearNavigationState();
+      console.log('[LIFECYCLE] App frozen - saving state');
+      localStorage.setItem('navigation_was_active', isNavigating ? 'true' : 'false');
     };
     
-    // Handle beforeunload (page closing)
+    // Handle beforeunload (page closing - NOT phone call)
     const handleBeforeUnload = () => {
-      // Only clear if in navigation mode
+      // Only clear on actual page close, not on phone call
+      // Phone calls don't trigger beforeunload
       const navMode = localStorage.getItem('navigation_mode');
       if (navMode === 'navigate') {
         clearNavigationState();
@@ -2182,7 +2234,7 @@ function NavigationPageContent() {
       window.removeEventListener('freeze', handleFreeze);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [isNavigating, acquireWakeLock]);
 
   // Android hardware back button handling for professional truck navigation
   useAndroidBackHandlerWithPriority(() => {
