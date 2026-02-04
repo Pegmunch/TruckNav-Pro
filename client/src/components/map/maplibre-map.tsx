@@ -1741,39 +1741,33 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         const mapInstance = map.current;
         if (!mapInstance) return;
 
-        // Add satellite sources for map view toggle with optimized caching
-        // OPTIMIZATION: Multiple CDN endpoints for parallel tile loading + reduced tile size
+        // Add satellite sources for map view toggle
+        // Using Esri World Imagery - no API key required, reliable worldwide coverage
         if (!mapInstance.getSource('satellite-2d')) {
           mapInstance.addSource('satellite-2d', {
             type: 'raster',
             tiles: [
-              // Google satellite tiles - reliable and free for display
-              'https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 20,
-            attribution: '&copy; Google'
+            maxzoom: 19,
+            attribution: '&copy; Esri'
           });
+          console.log('[SATELLITE] Added Esri World Imagery source for 2D');
         }
 
         if (!mapInstance.getSource('satellite-3d')) {
           mapInstance.addSource('satellite-3d', {
             type: 'raster',
             tiles: [
-              // All 4 Google tile servers for maximum parallel loading
-              'https://mt0.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-              'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-              'https://mt2.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-              'https://mt3.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 20
+            maxzoom: 19
           });
+          console.log('[SATELLITE] Added Esri World Imagery source for 3D');
         }
 
         // Add satellite layers (initially hidden)
@@ -4420,9 +4414,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   const toggleMapView = () => {
     const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';
+    console.log('[MAP-VIEW-TOGGLE] Switching:', preferences.mapViewMode, '→', newMode);
     const newPrefs: MapPreferences = { ...preferences, mapViewMode: newMode };
     setPreferences(newPrefs);
     saveMapPreferences(newPrefs);
+    
+    // Force immediate layer visibility update
+    if (map.current && isLoaded) {
+      setTimeout(() => {
+        if (map.current) {
+          updateLayerVisibility(map.current, newMode, currentZoom, viewState);
+          console.log('[MAP-VIEW-TOGGLE] Layer visibility updated');
+        }
+      }, 50);
+    }
   };
 
   const toggle3DMode = () => {
