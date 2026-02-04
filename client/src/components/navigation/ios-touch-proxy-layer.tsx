@@ -100,10 +100,15 @@ export function IOSTouchProxyLayer() {
     const updateProxies = () => {
       if (!containerRef.current) return;
       
-      // Check if a dialog/modal is open - if so, disable all proxy pointer events
+      // Check if any dialog/modal/overlay is open - if so, disable entire proxy container
       const openDialog = document.querySelector('[data-state="open"][role="dialog"]');
       const openSheet = document.querySelector('[data-state="open"][data-vaul-drawer]');
-      const dialogOpen = !!(openDialog || openSheet);
+      const openOverlay = document.querySelector('[data-radix-dialog-overlay]');
+      const openAlertDialog = document.querySelector('[role="alertdialog"]');
+      const dialogOpen = !!(openDialog || openSheet || openOverlay || openAlertDialog);
+      
+      // Hide entire container when any modal is open
+      containerRef.current.style.display = dialogOpen ? 'none' : 'block';
       
       const currentIds = new Set(buttonRegistry.keys());
       const existingIds = new Set(proxyMapRef.current.keys());
