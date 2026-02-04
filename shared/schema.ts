@@ -1611,6 +1611,59 @@ export const dashCamRecordings = pgTable("dash_cam_recordings", {
   startTimeIdx: index("dashcam_start_time_idx").on(table.startTime),
 }));
 
+// Tachograph Infringements - Track driver tachograph violations and compliance scoring
+export const tachographInfringements = pgTable("tachograph_infringements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  operatorId: varchar("operator_id").notNull(), // References operators
+  vehicleId: varchar("vehicle_id"), // References fleet_vehicles (optional)
+  infringementDate: timestamp("infringement_date").notNull(),
+  infringementType: text("infringement_type").notNull(), // See types below
+  severity: text("severity").notNull(), // 'minor', 'serious', 'very_serious'
+  description: text("description"),
+  location: text("location"), // Where the infringement occurred
+  drivingTimeExceeded: integer("driving_time_exceeded"), // Minutes exceeded (for driving time violations)
+  restTimeShortfall: integer("rest_time_shortfall"), // Minutes short (for rest violations)
+  fineAmount: decimal("fine_amount", { precision: 10, scale: 2 }), // Fine if applicable
+  finePaid: boolean("fine_paid").default(false),
+  pointsDeducted: integer("points_deducted").notNull().default(0), // Points deducted from compliance score
+  evidenceNotes: text("evidence_notes"), // Supporting evidence/notes
+  reportedBy: text("reported_by"), // Who reported/detected this
+  enforcementAgency: text("enforcement_agency"), // DVSA, Police, etc.
+  isDisputed: boolean("is_disputed").default(false),
+  disputeNotes: text("dispute_notes"),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  operatorIdx: index("tacho_operator_idx").on(table.operatorId),
+  dateIdx: index("tacho_date_idx").on(table.infringementDate),
+  typeIdx: index("tacho_type_idx").on(table.infringementType),
+}));
+
+// Infringement types:
+// Driving Time Violations:
+// - 'driving_daily_exceeded' - Exceeded 9hr (or 10hr twice weekly) daily driving
+// - 'driving_continuous_exceeded' - Exceeded 4.5hr continuous driving without break
+// - 'driving_weekly_exceeded' - Exceeded 56hr weekly driving
+// - 'driving_fortnightly_exceeded' - Exceeded 90hr fortnightly driving
+// Break Violations:
+// - 'break_insufficient' - Break less than 45 minutes (or split 15+30)
+// - 'break_timing_wrong' - Break taken at wrong time
+// Rest Violations:
+// - 'daily_rest_insufficient' - Less than 11hr daily rest (or 9hr reduced)
+// - 'weekly_rest_insufficient' - Less than 45hr weekly rest (or 24hr reduced)
+// - 'compensation_rest_missed' - Missed compensation rest after reduced rest
+// Card/Recording Violations:
+// - 'card_missing_entry' - Missing tachograph card entries
+// - 'card_wrong_mode' - Wrong activity mode selected
+// - 'card_not_inserted' - Driving without card inserted
+// - 'card_used_multiple' - Using multiple cards fraudulently
+// - 'record_manipulation' - Tampering with tachograph records
+// Other:
+// - 'vehicle_unit_fault' - Fault with vehicle unit not reported
+// - 'printout_missing' - Missing required printouts
+// - 'other' - Other infringement
+
 // Zod schemas for fleet management
 export const insertFleetVehicleSchema = createInsertSchema(fleetVehicles).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertOperatorSchema = createInsertSchema(operators).omit({ id: true, createdAt: true, updatedAt: true });
@@ -1647,6 +1700,9 @@ export const insertFleetBroadcastReadSchema = createInsertSchema(fleetBroadcastR
 
 // Zod schemas for dash cam
 export const insertDashCamRecordingSchema = createInsertSchema(dashCamRecordings).omit({ id: true, createdAt: true });
+
+// Zod schemas for tachograph compliance
+export const insertTachographInfringementSchema = createInsertSchema(tachographInfringements).omit({ id: true, createdAt: true, updatedAt: true });
 
 // Zod schemas for social network
 export const insertDriverConnectionSchema = createInsertSchema(driverConnections).omit({ id: true, requestedAt: true, createdAt: true });
@@ -1755,4 +1811,8 @@ export type InsertVehicleHealthScore = z.infer<typeof insertVehicleHealthScoreSc
 
 export type DashCamRecording = typeof dashCamRecordings.$inferSelect;
 export type InsertDashCamRecording = z.infer<typeof insertDashCamRecordingSchema>;
+
+// Type exports for tachograph compliance
+export type TachographInfringement = typeof tachographInfringements.$inferSelect;
+export type InsertTachographInfringement = z.infer<typeof insertTachographInfringementSchema>;
 

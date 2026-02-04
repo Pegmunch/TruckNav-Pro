@@ -1,4 +1,4 @@
-import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, type HistoricalTrafficData, type InsertHistoricalTrafficData, type TrafficObservation, type InsertTrafficObservation, type TrafficPrediction, type InsertTrafficPrediction, type FleetBroadcast, type InsertFleetBroadcast, type FleetBroadcastRead, type InsertFleetBroadcastRead, type DashCamRecording, type InsertDashCamRecording, historicalTrafficData, trafficObservations, trafficPredictions, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications, fleetBroadcasts, fleetBroadcastReads, dashCamRecordings } from "@shared/schema";
+import { type VehicleProfile, type InsertVehicleProfile, type Restriction, type InsertRestriction, type Facility, type InsertFacility, type Route, type InsertRoute, type TrafficIncident, type InsertTrafficIncident, type User, type InsertUser, type UpsertUser, type SubscriptionPlan, type InsertSubscriptionPlan, type UserSubscription, type InsertUserSubscription, type Location, type InsertLocation, type Journey, type InsertJourney, type LaneSegment, type LaneOption, type RouteMonitoring, type InsertRouteMonitoring, type AlternativeRouteDB, type InsertAlternativeRouteDB, type ReRoutingEventDB, type InsertReRoutingEventDB, type TrafficCondition, type AlternativeRoute, type EntertainmentStation, type InsertEntertainmentStation, type EntertainmentPreset, type InsertEntertainmentPreset, type EntertainmentHistory, type InsertEntertainmentHistory, type EntertainmentPlaybackState, type InsertEntertainmentPlaybackState, type EntertainmentSettings, type FleetVehicle, type InsertFleetVehicle, type Operator, type InsertOperator, type ServiceRecord, type InsertServiceRecord, type FuelLog, type InsertFuelLog, type VehicleAssignment, type InsertVehicleAssignment, type DriverConnection, type InsertDriverConnection, type SharedRoute, type InsertSharedRoute, type RouteComment, type InsertRouteComment, type SavedRoute, type InsertSavedRoute, type VehicleAttachment, type InsertVehicleAttachment, type IncidentLog, type InsertIncidentLog, type CostAnalytics, type InsertCostAnalytics, type TripTracking, type InsertTripTracking, type UserRole, type InsertUserRole, type MaintenancePrediction, type InsertMaintenancePrediction, type ComplianceRecord, type InsertComplianceRecord, type GpsTracking, type InsertGpsTracking, type Geofence, type InsertGeofence, type GeofenceEvent, type InsertGeofenceEvent, type DriverBehavior, type InsertDriverBehavior, type HoursOfService, type InsertHoursOfService, type CustomerBilling, type InsertCustomerBilling, type FleetNotification, type HistoricalTrafficData, type TachographInfringement, type InsertTachographInfringement, type InsertHistoricalTrafficData, type TrafficObservation, type InsertTrafficObservation, type TrafficPrediction, type InsertTrafficPrediction, type FleetBroadcast, type InsertFleetBroadcast, type FleetBroadcastRead, type InsertFleetBroadcastRead, type DashCamRecording, type InsertDashCamRecording, historicalTrafficData, trafficObservations, trafficPredictions, vehicleProfiles, restrictions, facilities, routes, trafficIncidents, users, subscriptionPlans, userSubscriptions, locations, journeys, fleetVehicles, operators, serviceRecords, fuelLogs, vehicleAssignments, driverConnections, sharedRoutes, routeComments, savedRoutes, vehicleAttachments, incidentLogs, costAnalytics, tripTracking, userRoles, maintenancePrediction, complianceRecords, gpsTracking, geofences, geofenceEvents, driverBehavior, hoursOfService, customerBilling, fleetNotifications, fleetBroadcasts, fleetBroadcastReads, dashCamRecordings, tachographInfringements } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, gte, lte, gt, sql, desc, asc, or, ilike } from "drizzle-orm";
@@ -241,6 +241,15 @@ export interface IStorage {
   getIncident(id: string): Promise<IncidentLog | undefined>;
   updateIncident(id: string, updates: Partial<IncidentLog>): Promise<IncidentLog | undefined>;
   deleteIncident(id: string): Promise<boolean>;
+
+  // Fleet Management - Tachograph Compliance
+  createTachographInfringement(infringement: InsertTachographInfringement): Promise<TachographInfringement>;
+  getAllTachographInfringements(): Promise<TachographInfringement[]>;
+  getTachographInfringementsByOperator(operatorId: string): Promise<TachographInfringement[]>;
+  getTachographInfringement(id: string): Promise<TachographInfringement | undefined>;
+  updateTachographInfringement(id: string, updates: Partial<TachographInfringement>): Promise<TachographInfringement | undefined>;
+  deleteTachographInfringement(id: string): Promise<boolean>;
+  getOperatorComplianceScore(operatorId: string): Promise<{ score: number; totalPoints: number; infringementCount: number }>;
 
   // Fleet Management - Cost Analytics
   createCostRecord(cost: InsertCostAnalytics): Promise<CostAnalytics>;
@@ -4695,6 +4704,58 @@ export class DatabaseStorage implements IStorage {
   async deleteIncident(id: string): Promise<boolean> {
     await db.delete(incidentLogs).where(eq(incidentLogs.id, id));
     return true;
+  }
+
+  // Tachograph Compliance
+  async createTachographInfringement(infringement: InsertTachographInfringement): Promise<TachographInfringement> {
+    const result = await db.insert(tachographInfringements).values(infringement).returning();
+    return result[0];
+  }
+
+  async getAllTachographInfringements(): Promise<TachographInfringement[]> {
+    return await db.select().from(tachographInfringements).orderBy(desc(tachographInfringements.infringementDate));
+  }
+
+  async getTachographInfringementsByOperator(operatorId: string): Promise<TachographInfringement[]> {
+    return await db.select().from(tachographInfringements)
+      .where(eq(tachographInfringements.operatorId, operatorId))
+      .orderBy(desc(tachographInfringements.infringementDate));
+  }
+
+  async getTachographInfringement(id: string): Promise<TachographInfringement | undefined> {
+    const result = await db.select().from(tachographInfringements).where(eq(tachographInfringements.id, id)).limit(1);
+    return result[0];
+  }
+
+  async updateTachographInfringement(id: string, updates: Partial<TachographInfringement>): Promise<TachographInfringement | undefined> {
+    const result = await db.update(tachographInfringements).set({...updates, updatedAt: new Date()}).where(eq(tachographInfringements.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteTachographInfringement(id: string): Promise<boolean> {
+    await db.delete(tachographInfringements).where(eq(tachographInfringements.id, id));
+    return true;
+  }
+
+  async getOperatorComplianceScore(operatorId: string): Promise<{ score: number; totalPoints: number; infringementCount: number }> {
+    // Get infringements from the last 12 months for rolling score
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+    
+    const infringements = await db.select().from(tachographInfringements)
+      .where(and(
+        eq(tachographInfringements.operatorId, operatorId),
+        gte(tachographInfringements.infringementDate, twelveMonthsAgo)
+      ));
+    
+    const totalPoints = infringements.reduce((sum, inf) => sum + (inf.pointsDeducted || 0), 0);
+    const infringementCount = infringements.length;
+    
+    // Score starts at 100 and decreases with points
+    // Max 100 points can be deducted before hitting 0
+    const score = Math.max(0, 100 - totalPoints);
+    
+    return { score, totalPoints, infringementCount };
   }
 
   // Cost Analytics

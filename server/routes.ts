@@ -6387,6 +6387,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tachograph Compliance API
+  app.get("/api/fleet/tachograph-infringements", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const infringements = await storage.getAllTachographInfringements();
+      res.json(infringements);
+    } catch (error) {
+      console.error('Error fetching tachograph infringements:', error);
+      res.status(500).json({ message: "Failed to fetch tachograph infringements" });
+    }
+  });
+
+  app.get("/api/fleet/tachograph-infringements/operator/:operatorId", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const infringements = await storage.getTachographInfringementsByOperator(req.params.operatorId);
+      res.json(infringements);
+    } catch (error) {
+      console.error('Error fetching operator infringements:', error);
+      res.status(500).json({ message: "Failed to fetch operator infringements" });
+    }
+  });
+
+  app.get("/api/fleet/tachograph-infringements/:id", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const infringement = await storage.getTachographInfringement(req.params.id);
+      if (!infringement) {
+        return res.status(404).json({ message: "Infringement not found" });
+      }
+      res.json(infringement);
+    } catch (error) {
+      console.error('Error fetching infringement:', error);
+      res.status(500).json({ message: "Failed to fetch infringement" });
+    }
+  });
+
+  app.post("/api/fleet/tachograph-infringements", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const infringement = await storage.createTachographInfringement(req.body);
+      res.status(201).json(infringement);
+    } catch (error) {
+      console.error('Error creating infringement:', error);
+      res.status(500).json({ message: "Failed to create infringement" });
+    }
+  });
+
+  app.put("/api/fleet/tachograph-infringements/:id", requireFleetSubscription, validateRequest, async (req: Request, res: Response) => {
+    try {
+      const infringement = await storage.updateTachographInfringement(req.params.id, req.body);
+      if (!infringement) {
+        return res.status(404).json({ message: "Infringement not found" });
+      }
+      res.json(infringement);
+    } catch (error) {
+      console.error('Error updating infringement:', error);
+      res.status(500).json({ message: "Failed to update infringement" });
+    }
+  });
+
+  app.delete("/api/fleet/tachograph-infringements/:id", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      await storage.deleteTachographInfringement(req.params.id);
+      res.json({ message: "Infringement deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting infringement:', error);
+      res.status(500).json({ message: "Failed to delete infringement" });
+    }
+  });
+
+  app.get("/api/fleet/tachograph-compliance/operator/:operatorId", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const score = await storage.getOperatorComplianceScore(req.params.operatorId);
+      res.json(score);
+    } catch (error) {
+      console.error('Error fetching compliance score:', error);
+      res.status(500).json({ message: "Failed to fetch compliance score" });
+    }
+  });
+
   // Shift Management API - Daily Check-Ins/Check-Outs
   app.get("/api/fleet/shift-checkins", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
