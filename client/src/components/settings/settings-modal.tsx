@@ -1852,26 +1852,10 @@ const SettingsModal = memo(function SettingsModal({
                               )}
                             </div>
 
-                            <Separator />
-
-                            {/* Info Box */}
-                            <Alert>
-                              <Info className="w-4 h-4" />
-                              <AlertDescription>
-                                Linking to Fleet Management allows automatic tracking of:
-                                <ul className="mt-2 ml-4 list-disc text-sm">
-                                  <li>Journey start and end times</li>
-                                  <li>Distance travelled per vehicle</li>
-                                  <li>Fuel consumption records</li>
-                                  <li>Driver hours and break compliance</li>
-                                </ul>
-                              </AlertDescription>
-                            </Alert>
-
                             {/* Next Button - Start Pre-Trip Inspection */}
                             {onStartInspection && (
                               <Button
-                                className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:opacity-50"
+                                className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:opacity-50"
                                 disabled={!selectedFleetVehicleId || !selectedOperatorId}
                                 onClick={() => {
                                   if (!selectedFleetVehicleId || !selectedOperatorId) return;
@@ -1888,8 +1872,8 @@ const SettingsModal = memo(function SettingsModal({
                                   }
                                 }}
                               >
-                                <ClipboardCheck className="w-5 h-5 mr-2" />
-                                Next: Vehicle Inspection
+                                <ClipboardCheck className="w-4 h-4 mr-2" />
+                                Next
                               </Button>
                             )}
                           </CardContent>
