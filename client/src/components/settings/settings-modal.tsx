@@ -817,9 +817,10 @@ const SettingsModal = memo(function SettingsModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           className={cn(
-            "max-w-2xl w-full h-[75vh] max-h-[600px]",
+            "max-w-2xl w-full h-[55vh] sm:h-[75vh] max-h-[600px]",
             "p-0 overflow-hidden flex flex-col",
             "!bg-white dark:!bg-slate-900 border-2 border-gray-300 dark:border-gray-600",
+            "top-[5%] sm:top-[50%] translate-y-0 sm:-translate-y-1/2",
             className
           )}
           data-testid="dialog-settings-modal"
@@ -1731,6 +1732,12 @@ const SettingsModal = memo(function SettingsModal({
                                   placeholder="Type registration e.g. AB12 CDE"
                                   className="w-full font-mono uppercase"
                                   data-testid="input-fleet-vehicle"
+                                  onFocus={(e) => {
+                                    // Scroll input into view when keyboard opens
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
+                                  }}
                                   value={(() => {
                                     const selected = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
                                     return selected?.registration || '';
@@ -1804,6 +1811,12 @@ const SettingsModal = memo(function SettingsModal({
                                   placeholder="Type operator name"
                                   className="w-full"
                                   data-testid="input-operator"
+                                  onFocus={(e) => {
+                                    // Scroll input into view when keyboard opens
+                                    setTimeout(() => {
+                                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }, 300);
+                                  }}
                                   value={(() => {
                                     const selected = operators.find(o => o.id === selectedOperatorId);
                                     return selected ? `${selected.firstName} ${selected.lastName}` : '';
