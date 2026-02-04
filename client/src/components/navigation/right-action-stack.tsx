@@ -287,6 +287,7 @@ export function RightActionStack({
   
   // Zoom handlers with cooldown and navigation mode support
   const zoomInHandler = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] ➕ ZoomIn callback invoked');
     if (zoomCooldownRef.current) return;
     zoomCooldownRef.current = true;
     
@@ -302,6 +303,7 @@ export function RightActionStack({
   }, [isNavigating, onStaggeredZoomIn, onZoomIn]);
   
   const zoomOutHandler = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] ➖ ZoomOut callback invoked');
     if (zoomCooldownRef.current) return;
     zoomCooldownRef.current = true;
     
@@ -318,10 +320,40 @@ export function RightActionStack({
   
   // Stable callback for incidents (handles hideIncidents)
   const incidentsCallback = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] 🔴 Incidents callback invoked');
     if (onViewIncidents && !hideIncidents) {
       onViewIncidents();
     }
   }, [onViewIncidents, hideIncidents]);
+  
+  // Stable callback wrappers with logging for debugging
+  const mapViewCallback = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] 🟢 MapView callback invoked - should toggle satellite view');
+    if (onToggleMapView) {
+      onToggleMapView();
+    }
+  }, [onToggleMapView]);
+  
+  const toggle3DCallback = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] 🔵 Toggle3D callback invoked - should toggle 3D/tilt mode');
+    if (onToggle3D) {
+      onToggle3D();
+    }
+  }, [onToggle3D]);
+  
+  const compassCallback = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] 🧭 Compass callback invoked');
+    if (onCompassClick) {
+      onCompassClick();
+    }
+  }, [onCompassClick]);
+  
+  const trafficCallback = useCallback(() => {
+    console.log('[BUTTON-CALLBACK] 🟠 Traffic callback invoked');
+    if (onToggleTraffic) {
+      onToggleTraffic();
+    }
+  }, [onToggleTraffic]);
   
   // Button visibility states
   const incidentsVisible = Boolean(onViewIncidents && !hideIncidents && isVisible);
@@ -334,14 +366,15 @@ export function RightActionStack({
   const trafficVisible = Boolean(onToggleTraffic && isVisible);
   
   // Register all buttons with unified touch handling (includes visibility)
+  // Using stable callback wrappers with logging for debugging
   const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, 'incidents-btn', incidentsVisible);
-  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, onToggleMapView, 'map-view-btn', mapViewVisible);
+  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, 'map-view-btn', mapViewVisible);
   const recenterHandlers = useUnifiedTouchHandler(recenterRef, onRecenter, 'recenter-btn', recenterVisible);
   const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, 'zoom-in-btn', zoomInVisible);
   const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, 'zoom-out-btn', zoomOutVisible);
-  const compassHandlers = useUnifiedTouchHandler(compassRef, onCompassClick, 'compass-btn', compassVisible);
-  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, onToggle3D, '3d-toggle-btn', toggle3DVisible);
-  const trafficHandlers = useUnifiedTouchHandler(trafficRef, onToggleTraffic, 'traffic-btn', trafficVisible);
+  const compassHandlers = useUnifiedTouchHandler(compassRef, compassCallback, 'compass-btn', compassVisible);
+  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, toggle3DCallback, '3d-toggle-btn', toggle3DVisible);
+  const trafficHandlers = useUnifiedTouchHandler(trafficRef, trafficCallback, 'traffic-btn', trafficVisible);
   
   // Common button styles
   const baseButtonClass = "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-150 transform-gpu";
