@@ -5,221 +5,205 @@ import { cn } from '@/lib/utils';
 import { hapticButtonPress } from '@/hooks/use-haptic-feedback';
 
 // ============================================================================
-// WINDOW-LEVEL TOUCH INTERCEPTOR (Same pattern as working double-tap feature)
+// UNIFIED TOUCH HANDLING SYSTEM FOR iOS SAFARI WEBGL BUG
 // ============================================================================
-// iOS Safari WebGL bug blocks touch events from reaching DOM elements above canvas.
-// The double-tap feature works because it uses window-level listeners.
-// This registry allows buttons to register their bounds and callbacks,
-// then a single window-level listener intercepts touches and triggers callbacks.
+// iOS Safari blocks touch events from reaching DOM elements over WebGL canvas.
+// This system provides three layers of touch handling:
+// 1. Window-level touch interception (primary - works over WebGL on iOS Safari)
+// 2. Native DOM touchstart listeners (secondary - direct element touch)
+// 3. React onClick for keyboard accessibility and desktop mouse
+// All handlers share a debounce timestamp per button to prevent double-firing.
 // ============================================================================
 
 interface ButtonRegistration {
   id: string;
   getRect: () => DOMRect | null;
   callback: () => void;
+  lastFired: number;
+  isVisible: boolean;
 }
 
-// Global registry of buttons that need window-level touch handling
-// EXPORTED so MapLibre can check button bounds in its working touchend handler
+// Global registry of buttons - shared across all touch handling layers
 export const buttonRegistry = new Map<string, ButtonRegistration>();
-
-// Export type for MapLibre
 export type { ButtonRegistration };
 
-// Reference counter for window listener - attached when count > 0
+// Debounce threshold - minimum time between button fires (ms)
+const FIRE_DEBOUNCE = 150;
+
+// Global debounce tracker (backup for handlers outside registry)
+const globalDebounce = new Map<string, number>();
+
+// Check if a button can fire (not debounced)
+function canButtonFire(id: string): boolean {
+  const reg = buttonRegistry.get(id);
+  const lastFired = reg?.lastFired || globalDebounce.get(id) || 0;
+  return Date.now() - lastFired > FIRE_DEBOUNCE;
+}
+
+// Mark button as fired in both registry and global tracker
+function markButtonFired(id: string): void {
+  const now = Date.now();
+  const reg = buttonRegistry.get(id);
+  if (reg) {
+    reg.lastFired = now;
+  }
+  globalDebounce.set(id, now);
+}
+
+// Reference counter for window listener
 let windowListenerRefCount = 0;
 let windowTouchHandler: ((e: TouchEvent) => void) | null = null;
 
-// CRITICAL: Uses touchstart NOT touchend - iOS Safari cancels touchend over WebGL
+// Window-level touch handler - catches ALL touches including over WebGL
 function handleWindowTouchStart(e: TouchEvent) {
-  if (e.touches.length !== 1) return; // Only single-finger taps
+  if (e.touches.length !== 1) return;
   
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
   
-  console.log(`[WINDOW-TOUCH-START-INTERCEPT] Touch at (${x}, ${y}), checking ${buttonRegistry.size} buttons`);
-  
-  // Check if touch landed on any registered button
-  // Use large padding (25px) to compensate for iOS Safari WebGL coordinate offset
-  // Logs show touches at x=324 when buttons are at x=341 - 17px offset
+  // Check all registered buttons (only visible ones)
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
-    const rect = registration.getRect();
-    if (!rect) continue;
+    // Skip hidden buttons
+    if (!registration.isVisible) continue;
     
-    // Check if touch is within button bounds with generous padding for iOS accuracy
-    const padding = 25;
+    const rect = registration.getRect();
+    if (!rect || rect.width === 0 || rect.height === 0) continue;
+    
+    // Generous padding (20px) for touch accuracy on mobile
+    const padding = 20;
     if (
       x >= rect.left - padding &&
       x <= rect.right + padding &&
       y >= rect.top - padding &&
       y <= rect.bottom + padding
     ) {
-      console.log(`[WINDOW-TOUCH-INTERCEPT] ✅ Touch hit button: ${id} at (${x}, ${y}), rect: (${rect.left}, ${rect.top})`);
+      // Check debounce
+      if (!canButtonFire(id)) {
+        console.log(`[TOUCH-UNIFIED] ⏳ Button ${id} debounced`);
+        return;
+      }
+      
+      console.log(`[TOUCH-UNIFIED] ✅ Window touch hit: ${id}`);
       e.preventDefault();
       e.stopPropagation();
+      markButtonFired(id);
       hapticButtonPress();
       registration.callback();
-      return; // Only trigger first matching button
+      return;
     }
   }
 }
 
-// Exported so left-action-stack can also use the same listener
 export function attachWindowTouchListener() {
   windowListenerRefCount++;
   if (windowListenerRefCount === 1) {
-    // CRITICAL: Use touchstart NOT touchend - iOS Safari cancels touchend events over WebGL
-    // touchstart fires BEFORE WebGL can intercept and block the event
     windowTouchHandler = handleWindowTouchStart;
     document.addEventListener('touchstart', windowTouchHandler, { passive: false, capture: true });
-    // Also try window level as backup (like double-tap)
     window.addEventListener('touchstart', windowTouchHandler, { passive: false });
-    console.log('[TOUCH-INTERCEPT] 📎 Document+Window TOUCHSTART interceptor attached (refCount: 1, capture: true)');
-  } else {
-    console.log(`[TOUCH-INTERCEPT] Ref count increased to ${windowListenerRefCount}`);
+    console.log('[TOUCH-UNIFIED] 📎 Window listener attached');
   }
 }
 
-// Exported so left-action-stack can also use the same listener
 export function detachWindowTouchListener() {
   windowListenerRefCount--;
   if (windowListenerRefCount === 0 && windowTouchHandler) {
     document.removeEventListener('touchstart', windowTouchHandler, { capture: true });
     window.removeEventListener('touchstart', windowTouchHandler);
     windowTouchHandler = null;
-    console.log('[TOUCH-INTERCEPT] 🗑️ Document+Window touch interceptor detached');
-  } else if (windowListenerRefCount > 0) {
-    console.log(`[TOUCH-INTERCEPT] Ref count decreased to ${windowListenerRefCount}`);
+    console.log('[TOUCH-UNIFIED] 🗑️ Window listener detached');
   }
 }
 
-// Hook to register a button with the window-level interceptor
-function useWindowTouchInterceptor(
+// Unified hook that registers a button with ALL touch handling layers
+function useUnifiedTouchHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
   id: string,
-  isNavigating: boolean
+  isVisible: boolean = true
 ) {
-  // CRITICAL: Track mount state to re-run effect after refs are populated
   const [mounted, setMounted] = useState(false);
   
-  // Force re-run after first render when refs are populated
   useEffect(() => {
     setMounted(true);
   }, []);
   
   useEffect(() => {
-    // Enable window interceptor in BOTH modes for iOS Safari WebGL bug workaround
-    // This ensures buttons work even when MapLibre blocks touch events
-    if (!callback) {
+    // Only register if visible and has callback
+    if (!callback || !mounted || !isVisible) {
       buttonRegistry.delete(id);
       return;
     }
     
-    // Attach the global listener if not already attached
+    // Attach window listener
     attachWindowTouchListener();
     
-    // Register this button
+    // Register button with callback and visibility
     buttonRegistry.set(id, {
       id,
       getRect: () => ref.current?.getBoundingClientRect() || null,
-      callback
+      callback,
+      lastFired: globalDebounce.get(id) || 0,
+      isVisible
     });
     
-    console.log(`[WINDOW-TOUCH-REGISTER] 📎 Registered button: ${id}`);
+    // Also attach direct DOM listeners as backup
+    const button = ref.current;
+    if (button) {
+      const handleDirectTouch = (e: TouchEvent) => {
+        if (!canButtonFire(id)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`[TOUCH-DIRECT] ✅ Direct touch: ${id}`);
+        markButtonFired(id);
+        hapticButtonPress();
+        callback();
+      };
+      
+      button.addEventListener('touchstart', handleDirectTouch, { passive: false, capture: true });
+      
+      return () => {
+        button.removeEventListener('touchstart', handleDirectTouch, { capture: true });
+        buttonRegistry.delete(id);
+        detachWindowTouchListener();
+      };
+    }
     
     return () => {
       buttonRegistry.delete(id);
       detachWindowTouchListener();
-      console.log(`[WINDOW-TOUCH-REGISTER] 🗑️ Unregistered button: ${id}`);
     };
-  }, [ref, callback, id, isNavigating, mounted]);
-}
-
-// Standard native event handler - uses TOUCHSTART (not touchend) for iOS Safari
-// iOS Safari cancels touchend events over WebGL canvases
-function useNativeClickHandler(
-  ref: React.RefObject<HTMLButtonElement>,
-  callback: (() => void) | undefined,
-  label: string,
-  isNavigating: boolean
-) {
-  // Debounce ref to prevent double-firing
-  const lastTouchRef = useRef(0);
-  // CRITICAL: Track mount state to re-run effect after refs are populated
-  const [mounted, setMounted] = useState(false);
+  }, [ref, callback, id, mounted, isVisible]);
   
-  // Force re-run after first render when refs are populated
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  useEffect(() => {
-    const button = ref.current;
-    if (!button || !callback) return;
+  // Return handlers for React events
+  // onClick preserves keyboard accessibility (Enter/Space keys)
+  // onPointerDown handles mouse clicks with debounce
+  return {
+    onClick: useCallback((e: React.MouseEvent) => {
+      if (!callback) return;
+      // Allow keyboard activation without debounce check (accessibility)
+      // For mouse/touch, check debounce
+      if (e.detail > 0 && !canButtonFire(id)) return;
+      
+      console.log(`[TOUCH-REACT] ✅ Click: ${id} (detail=${e.detail})`);
+      markButtonFired(id);
+      hapticButtonPress();
+      callback();
+    }, [callback, id]),
     
-    const mode = isNavigating ? 'NAV' : 'PREVIEW';
-    
-    // CRITICAL: Fire on touchstart - fires BEFORE WebGL can cancel the event
-    const handleTouchStart = (e: TouchEvent) => {
-      const now = Date.now();
-      if (now - lastTouchRef.current < 200) {
-        console.log(`[NATIVE-${label}-${mode}] ⏳ TouchStart debounced`);
-        return; // Debounce - reduced to 200ms for faster response
-      }
-      lastTouchRef.current = now;
+    onPointerDown: useCallback((e: React.PointerEvent) => {
+      if (!callback) return;
+      // Only handle mouse - touch is handled by native listeners
+      if (e.pointerType === 'touch') return;
+      if (!canButtonFire(id)) return;
       
       e.preventDefault();
-      e.stopPropagation();
-      console.log(`[NATIVE-${label}-${mode}] ✅ TouchStart fired - CALLING CALLBACK`);
+      console.log(`[TOUCH-REACT] ✅ PointerDown (mouse): ${id}`);
+      markButtonFired(id);
       hapticButtonPress();
       callback();
-    };
-    
-    const handlePointerDown = (e: PointerEvent) => {
-      // Only handle mouse events here - touch is handled by touchstart
-      if (e.pointerType === 'mouse') {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log(`[NATIVE-${label}-${mode}] ✅ PointerDown (mouse) - CALLING CALLBACK`);
-        hapticButtonPress();
-        callback();
-      }
-    };
-    
-    const handleClick = (e: MouseEvent) => {
-      // Fallback for desktop
-      e.preventDefault();
-      e.stopPropagation();
-      console.log(`[NATIVE-${label}-${mode}] ✅ Click fired - CALLING CALLBACK`);
-      hapticButtonPress();
-      callback();
-    };
-    
-    // CRITICAL: Use touchstart with passive:false to preventDefault
-    button.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-    button.addEventListener('pointerdown', handlePointerDown, { capture: true });
-    button.addEventListener('click', handleClick, { capture: true });
-    
-    // Log button position and computed styles
-    const rect = button.getBoundingClientRect();
-    const styles = window.getComputedStyle(button);
-    console.log(`[NATIVE-${label}-${mode}] 📎 Listeners attached. Button info:`, {
-      rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
-      pointerEvents: styles.pointerEvents,
-      zIndex: styles.zIndex,
-      visibility: styles.visibility,
-      opacity: styles.opacity,
-      display: styles.display
-    });
-    
-    return () => {
-      button.removeEventListener('touchstart', handleTouchStart, { capture: true });
-      button.removeEventListener('pointerdown', handlePointerDown, { capture: true });
-      button.removeEventListener('click', handleClick, { capture: true });
-    };
-  }, [ref, callback, label, isNavigating, mounted]);
+    }, [callback, id])
+  };
 }
 
 interface RightActionStackProps {
@@ -271,351 +255,221 @@ export function RightActionStack({
   compact = false,
   isNavigating = false
 }: RightActionStackProps) {
-  // Button and icon sizes - compact for mobile navigation
-  // Minimum 44px touch target for accessibility on tablets/touch devices
   const buttonSize = compact ? "h-9 w-9 min-h-[36px] min-w-[36px]" : "h-11 w-11 min-h-[44px] min-w-[44px]";
   const iconSize = compact ? "h-4 w-4" : "h-5 w-5";
+  
+  // Zoom cooldown to prevent excessive rapid zooming
   const zoomCooldownRef = useRef<boolean>(false);
+  const ZOOM_COOLDOWN_MS = 400;
   
-  // Refs for buttons that need native event listeners (iOS Safari fix)
-  const incidentsButtonRef = useRef<HTMLButtonElement>(null);
-  const trafficButtonRef = useRef<HTMLButtonElement>(null);
-  const mapViewButtonRef = useRef<HTMLButtonElement>(null);
-  const recenterButtonRef = useRef<HTMLButtonElement>(null);
-  const zoomInButtonRef = useRef<HTMLButtonElement>(null);
-  const zoomOutButtonRef = useRef<HTMLButtonElement>(null);
-  const compassButtonRef = useRef<HTMLButtonElement>(null);
-  const toggle3DButtonRef = useRef<HTMLButtonElement>(null);
+  // Refs for all buttons
+  const incidentsRef = useRef<HTMLButtonElement>(null);
+  const mapViewRef = useRef<HTMLButtonElement>(null);
+  const recenterRef = useRef<HTMLButtonElement>(null);
+  const zoomInRef = useRef<HTMLButtonElement>(null);
+  const zoomOutRef = useRef<HTMLButtonElement>(null);
+  const compassRef = useRef<HTMLButtonElement>(null);
+  const toggle3DRef = useRef<HTMLButtonElement>(null);
+  const trafficRef = useRef<HTMLButtonElement>(null);
   
-  // Double-tap detection for x2 zoom multiplier during navigation
-  const lastZoomTapRef = useRef<{ direction: 'in' | 'out'; time: number } | null>(null);
-  const DOUBLE_TAP_THRESHOLD = 300; // ms
-  
-  // Debounce refs to prevent double-firing from multiple event handlers
-  const last3DToggleRef = useRef(0);
-  const lastTrafficToggleRef = useRef(0);
-  const lastMapViewToggleRef = useRef(0);
-  const TOGGLE_DEBOUNCE = 200; // ms - reduced for faster response
-  
-  // Define helper functions FIRST (before they're used in handlers)
-  const handleNavigationZoom = useCallback((direction: 'in' | 'out') => {
-    if (zoomCooldownRef.current) return;
-    
-    console.log(`[NAV-ZOOM-${direction.toUpperCase()}] x2 staggered zoom triggered`);
-    
-    // Trigger staggered zoom (x2 per press, max 5 presses = x10 total)
-    if (direction === 'in' && onStaggeredZoomIn) {
-      zoomCooldownRef.current = true;
-      onStaggeredZoomIn();
-      // Short cooldown - allows rapid presses for cumulative zoom
-      setTimeout(() => { zoomCooldownRef.current = false; }, 400);
-    } else if (direction === 'out' && onStaggeredZoomOut) {
-      zoomCooldownRef.current = true;
-      onStaggeredZoomOut();
-      setTimeout(() => { zoomCooldownRef.current = false; }, 400);
-    }
-  }, [onStaggeredZoomIn, onStaggeredZoomOut]);
-  
-  const handleZoomWithCooldown = useCallback((zoomFn: (() => void) | undefined, direction: string) => {
-    if (zoomCooldownRef.current || !zoomFn) return;
-    zoomCooldownRef.current = true;
-    console.log(`[ZOOM-${direction}] Zoom triggered, cooldown active`);
-    zoomFn();
-    setTimeout(() => {
-      zoomCooldownRef.current = false;
-    }, 400);
-  }, []);
-  
-  // Zoom handlers with cooldown - wrapped for native listeners
+  // Zoom handlers with cooldown and navigation mode support
   const zoomInHandler = useCallback(() => {
+    if (zoomCooldownRef.current) return;
+    zoomCooldownRef.current = true;
+    
     if (isNavigating && onStaggeredZoomIn) {
-      handleNavigationZoom('in');
+      console.log('[ZOOM-IN] Staggered navigation zoom');
+      onStaggeredZoomIn();
     } else if (onZoomIn) {
-      handleZoomWithCooldown(onZoomIn, 'IN');
+      console.log('[ZOOM-IN] Standard zoom');
+      onZoomIn();
     }
-  }, [isNavigating, onStaggeredZoomIn, onZoomIn, handleNavigationZoom, handleZoomWithCooldown]);
+    
+    setTimeout(() => { zoomCooldownRef.current = false; }, ZOOM_COOLDOWN_MS);
+  }, [isNavigating, onStaggeredZoomIn, onZoomIn]);
   
   const zoomOutHandler = useCallback(() => {
+    if (zoomCooldownRef.current) return;
+    zoomCooldownRef.current = true;
+    
     if (isNavigating && onStaggeredZoomOut) {
-      handleNavigationZoom('out');
+      console.log('[ZOOM-OUT] Staggered navigation zoom');
+      onStaggeredZoomOut();
     } else if (onZoomOut) {
-      handleZoomWithCooldown(onZoomOut, 'OUT');
+      console.log('[ZOOM-OUT] Standard zoom');
+      onZoomOut();
     }
-  }, [isNavigating, onStaggeredZoomOut, onZoomOut, handleNavigationZoom, handleZoomWithCooldown]);
+    
+    setTimeout(() => { zoomCooldownRef.current = false; }, ZOOM_COOLDOWN_MS);
+  }, [isNavigating, onStaggeredZoomOut, onZoomOut]);
   
-  // CRITICAL: Stable callback wrapper for iOS touch proxy - always defined
-  const stableViewIncidentsCallback = useCallback(() => {
+  // Stable callback for incidents (handles hideIncidents)
+  const incidentsCallback = useCallback(() => {
     if (onViewIncidents && !hideIncidents) {
-      console.log('[RIGHT-STACK] 🔴 Stable incidents callback fired');
       onViewIncidents();
     }
   }, [onViewIncidents, hideIncidents]);
   
-  // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
-  // iOS Safari has issues with React's event delegation on fixed/transformed elements
-  useNativeClickHandler(incidentsButtonRef, onViewIncidents, 'INCIDENTS', isNavigating);
-  useNativeClickHandler(trafficButtonRef, onToggleTraffic, 'TRAFFIC', isNavigating);
-  useNativeClickHandler(mapViewButtonRef, onToggleMapView, 'MAP-VIEW', isNavigating);
-  useNativeClickHandler(recenterButtonRef, onRecenter, 'RECENTER', isNavigating);
-  useNativeClickHandler(compassButtonRef, onCompassClick, 'COMPASS', isNavigating);
-  useNativeClickHandler(toggle3DButtonRef, onToggle3D, '3D-TOGGLE', isNavigating);
-  useNativeClickHandler(zoomInButtonRef, zoomInHandler, 'ZOOM-IN', isNavigating);
-  useNativeClickHandler(zoomOutButtonRef, zoomOutHandler, 'ZOOM-OUT', isNavigating);
+  // Button visibility states
+  const incidentsVisible = Boolean(onViewIncidents && !hideIncidents && isVisible);
+  const mapViewVisible = Boolean(onToggleMapView && isVisible);
+  const recenterVisible = Boolean(onRecenter && isVisible);
+  const zoomInVisible = Boolean(onZoomIn && isVisible);
+  const zoomOutVisible = Boolean(onZoomOut && isVisible);
+  const compassVisible = Boolean(!hideCompass && onCompassClick && isVisible);
+  const toggle3DVisible = Boolean(onToggle3D && !hide3D && isVisible);
+  const trafficVisible = Boolean(onToggleTraffic && isVisible);
   
-  // ============================================================================
-  // DIRECT MANUAL REGISTRATION for incidents-btn - bypasses problematic hook
-  // The useWindowTouchInterceptor hook's effect doesn't run for incidents-btn
-  // for unknown reasons. This direct registration ensures the button works.
-  // ============================================================================
-  useEffect(() => {
-    console.log('[INCIDENTS-DIRECT] Manual registration effect running');
-    if (!stableViewIncidentsCallback) {
-      console.log('[INCIDENTS-DIRECT] ❌ No callback - skipping');
-      return;
-    }
-    
-    attachWindowTouchListener();
-    
-    buttonRegistry.set('incidents-btn', {
-      id: 'incidents-btn',
-      getRect: () => incidentsButtonRef.current?.getBoundingClientRect() || null,
-      callback: stableViewIncidentsCallback
-    });
-    
-    console.log('[INCIDENTS-DIRECT] ✅ Registered incidents-btn directly');
-    
-    return () => {
-      buttonRegistry.delete('incidents-btn');
-      detachWindowTouchListener();
-      console.log('[INCIDENTS-DIRECT] 🗑️ Unregistered incidents-btn');
-    };
-  }, [stableViewIncidentsCallback]);
+  // Register all buttons with unified touch handling (includes visibility)
+  const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, 'incidents-btn', incidentsVisible);
+  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, onToggleMapView, 'map-view-btn', mapViewVisible);
+  const recenterHandlers = useUnifiedTouchHandler(recenterRef, onRecenter, 'recenter-btn', recenterVisible);
+  const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, 'zoom-in-btn', zoomInVisible);
+  const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, 'zoom-out-btn', zoomOutVisible);
+  const compassHandlers = useUnifiedTouchHandler(compassRef, onCompassClick, 'compass-btn', compassVisible);
+  const toggle3DHandlers = useUnifiedTouchHandler(toggle3DRef, onToggle3D, '3d-toggle-btn', toggle3DVisible);
+  const trafficHandlers = useUnifiedTouchHandler(trafficRef, onToggleTraffic, 'traffic-btn', trafficVisible);
   
-  // ============================================================================
-  // WINDOW-LEVEL TOUCH INTERCEPTOR - Critical fix for iOS Safari WebGL bug
-  // This uses the same pattern as the working double-tap feature
-  // Window-level listeners receive ALL touches regardless of WebGL canvas blocking
-  // ============================================================================
-  // Note: incidents-btn is registered directly above, not through this hook
-  useWindowTouchInterceptor(trafficButtonRef, onToggleTraffic, 'traffic-btn', isNavigating);
-  useWindowTouchInterceptor(mapViewButtonRef, onToggleMapView, 'map-view-btn', isNavigating);
-  useWindowTouchInterceptor(recenterButtonRef, onRecenter, 'recenter-btn', isNavigating);
-  useWindowTouchInterceptor(compassButtonRef, onCompassClick, 'compass-btn', isNavigating);
-  useWindowTouchInterceptor(toggle3DButtonRef, onToggle3D, '3d-toggle-btn', isNavigating);
-  useWindowTouchInterceptor(zoomInButtonRef, zoomInHandler, 'zoom-in-btn', isNavigating);
-  useWindowTouchInterceptor(zoomOutButtonRef, zoomOutHandler, 'zoom-out-btn', isNavigating);
+  // Common button styles
+  const baseButtonClass = "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-150 transform-gpu";
+  const visibleClass = "translate-x-0 opacity-100 scale-100 pointer-events-auto";
+  const hiddenClass = "translate-x-20 opacity-0 scale-95 pointer-events-none";
+  const buttonStyle = { touchAction: 'manipulation' as const, WebkitTapHighlightColor: 'transparent' };
   
   return (
     <div 
       className={cn(
-        "flex flex-col transition-all duration-300 transform-gpu pointer-events-auto",
+        "flex flex-col pointer-events-auto",
         compact ? "gap-1" : "gap-1.5"
       )} 
       data-testid="right-action-stack"
-      data-tour-id="right-controls"
-      style={{
-        marginTop: compact ? '24px' : '0px',
-        pointerEvents: 'auto'
-      }}
+      style={{ marginTop: compact ? '24px' : '0px', pointerEvents: 'auto' }}
     >
-      {/* 1. Incidents - Red border - ALWAYS rendered for iOS touch proxy registration */}
+      {/* 1. Incidents - Red border */}
       <Button
-        ref={incidentsButtonRef}
+        ref={incidentsRef}
         variant="ghost"
         size="icon"
-        onTouchStart={(e) => {
-          if (!onViewIncidents || hideIncidents) return;
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('[INCIDENTS-BTN] 🔴 View Incidents TOUCHSTART');
-          hapticButtonPress();
-          onViewIncidents();
-        }}
-        onPointerDown={(e) => {
-          if (!onViewIncidents || hideIncidents) return;
-          if (e.pointerType === 'mouse') {
-            e.preventDefault();
-            console.log('[INCIDENTS-BTN] 🔴 View Incidents POINTERDOWN (mouse)');
-            onViewIncidents();
-          }
-        }}
+        onClick={incidentsHandlers.onClick}
+        onPointerDown={incidentsHandlers.onPointerDown}
         className={cn(
           buttonSize, 
-          "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-red-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
-          onViewIncidents && !hideIncidents && isVisible 
-            ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" 
-            : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+          baseButtonClass,
+          "border-red-500",
+          incidentsVisible ? visibleClass : hiddenClass
         )}
-        style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+        style={buttonStyle}
         data-testid="button-view-incidents"
+        aria-label="View incidents"
       >
         <AlertCircle className={iconSize} />
       </Button>
 
-      {/* 2. Toggle Map View - Green/Gray border - hides/shows with double-tap */}
+      {/* 2. Map View Toggle - Green when satellite */}
       {onToggleMapView && (
         <Button
-          ref={mapViewButtonRef}
+          ref={mapViewRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            if (!onToggleMapView) return;
-            const now = Date.now();
-            if (now - lastMapViewToggleRef.current < TOGGLE_DEBOUNCE) return;
-            lastMapViewToggleRef.current = now;
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[MAP-VIEW-BTN] 🗺️ Map View Toggle TOUCHSTART');
-            hapticButtonPress();
-            onToggleMapView();
-          }}
-          onPointerDown={(e) => {
-            if (!onToggleMapView) return;
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[MAP-VIEW-BTN] 🗺️ Map View Toggle POINTERDOWN (mouse)');
-              onToggleMapView();
-            }
-          }}
+          onClick={mapViewHandlers.onClick}
+          onPointerDown={mapViewHandlers.onPointerDown}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
+            baseButtonClass,
             isSatelliteView ? "border-green-500" : "border-gray-400",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            mapViewVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-toggle-view"
+          aria-label={isSatelliteView ? "Switch to map view" : "Switch to satellite view"}
         >
           <MapIcon className={iconSize} />
         </Button>
       )}
 
-
-      {/* 3. Recenter - Gray border - hides/shows with double-tap */}
+      {/* 3. Recenter */}
       {onRecenter && (
         <Button
-          ref={recenterButtonRef}
+          ref={recenterRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            if (!onRecenter) return;
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[RECENTER-BTN] 📍 Recenter TOUCHSTART');
-            hapticButtonPress();
-            onRecenter();
-          }}
-          onPointerDown={(e) => {
-            if (!onRecenter) return;
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[RECENTER-BTN] 📍 Recenter POINTERDOWN (mouse)');
-              onRecenter();
-            }
-          }}
+          onClick={recenterHandlers.onClick}
+          onPointerDown={recenterHandlers.onPointerDown}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-gray-400 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            baseButtonClass,
+            "border-gray-400",
+            recenterVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-recenter"
+          aria-label="Recenter map"
         >
           <Crosshair className={iconSize} />
         </Button>
       )}
 
-      {/* 4. Zoom In - Blue border during navigation - hides/shows with double-tap */}
+      {/* 4. Zoom In - Blue when navigating */}
       {onZoomIn && (
         <Button
-          ref={zoomInButtonRef}
+          ref={zoomInRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[ZOOM-IN-BTN] ➕ Zoom In TOUCHSTART');
-            hapticButtonPress();
-            zoomInHandler();
-          }}
-          onPointerDown={(e) => {
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[ZOOM-IN-BTN] ➕ Zoom In POINTERDOWN (mouse)');
-              zoomInHandler();
-            }
-          }}
-          className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
+          onClick={zoomInHandlers.onClick}
+          onPointerDown={zoomInHandlers.onPointerDown}
+          className={cn(
+            buttonSize, 
+            baseButtonClass,
             isNavigating ? "border-blue-500" : "border-gray-400",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            zoomInVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-zoom-in"
+          aria-label="Zoom in"
         >
           <Plus className={iconSize} />
         </Button>
       )}
 
-      {/* 5. Zoom Out - Blue border during navigation - hides/shows with double-tap */}
+      {/* 5. Zoom Out - Blue when navigating */}
       {onZoomOut && (
         <Button
-          ref={zoomOutButtonRef}
+          ref={zoomOutRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[ZOOM-OUT-BTN] ➖ Zoom Out TOUCHSTART');
-            hapticButtonPress();
-            zoomOutHandler();
-          }}
-          onPointerDown={(e) => {
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[ZOOM-OUT-BTN] ➖ Zoom Out POINTERDOWN (mouse)');
-              zoomOutHandler();
-            }
-          }}
-          className={cn(buttonSize, "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
+          onClick={zoomOutHandlers.onClick}
+          onPointerDown={zoomOutHandlers.onPointerDown}
+          className={cn(
+            buttonSize, 
+            baseButtonClass,
             isNavigating ? "border-blue-500" : "border-gray-400",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            zoomOutVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-zoom-out"
+          aria-label="Zoom out"
         >
           <Minus className={iconSize} />
         </Button>
       )}
 
-      {/* 6. Compass - Blue border - hides/shows with double-tap */}
+      {/* 6. Compass - Blue border */}
       {!hideCompass && onCompassClick && (
         <Button
-          ref={compassButtonRef}
+          ref={compassRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            if (!onCompassClick) return;
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[COMPASS-BTN] 🧭 Compass TOUCHSTART');
-            hapticButtonPress();
-            onCompassClick();
-          }}
-          onPointerDown={(e) => {
-            if (!onCompassClick) return;
-            if (e.pointerType === 'mouse') {
-              e.preventDefault();
-              console.log('[COMPASS-BTN] 🧭 Compass POINTERDOWN (mouse)');
-              onCompassClick();
-            }
-          }}
+          onClick={compassHandlers.onClick}
+          onPointerDown={compassHandlers.onPointerDown}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 border-blue-500 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            baseButtonClass,
+            "border-blue-500",
+            compassVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-compass-reset"
+          aria-label="Reset compass bearing"
         >
           <Compass 
             className={cn(iconSize, "transition-transform duration-300")}
@@ -624,97 +478,45 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 7. 3D Toggle - Blue/Gray border - cycles: tilted → overhead → normal */}
-      {/* Uses INLINE handlers with debouncing to prevent double-firing */}
+      {/* 7. 3D Toggle - Blue when active */}
       {onToggle3D && !hide3D && (
         <Button
-          ref={toggle3DButtonRef}
+          ref={toggle3DRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            if (!onToggle3D) return;
-            const now = Date.now();
-            if (now - last3DToggleRef.current < TOGGLE_DEBOUNCE) return;
-            last3DToggleRef.current = now;
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[3D-BTN] 🔵 3D Toggle TOUCHSTART - calling callback');
-            hapticButtonPress();
-            onToggle3D();
-          }}
-          onPointerDown={(e) => {
-            if (!onToggle3D) return;
-            if (e.pointerType === 'mouse') {
-              const now = Date.now();
-              if (now - last3DToggleRef.current < TOGGLE_DEBOUNCE) return;
-              last3DToggleRef.current = now;
-              e.preventDefault();
-              console.log('[3D-BTN] 🔵 3D Toggle POINTERDOWN (mouse) - calling callback');
-              hapticButtonPress();
-              onToggle3D();
-            }
-          }}
-          onClick={(e) => {
-            // Skip onClick if already handled by touchstart/pointerdown
-            const now = Date.now();
-            if (now - last3DToggleRef.current < TOGGLE_DEBOUNCE) return;
-          }}
+          onClick={toggle3DHandlers.onClick}
+          onPointerDown={toggle3DHandlers.onPointerDown}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
+            baseButtonClass,
             is3DMode ? "border-blue-500" : "border-gray-400",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            toggle3DVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-toggle-3d"
+          aria-label={is3DMode ? "Switch to 2D view" : "Switch to 3D view"}
         >
           <Box className={iconSize} />
         </Button>
       )}
 
-      {/* 8. Traffic Toggle - Orange/Gray border - toggles traffic layer visibility */}
-      {/* Uses INLINE handlers with debouncing to prevent double-firing */}
+      {/* 8. Traffic Toggle - Orange when active */}
       {onToggleTraffic && (
         <Button
-          ref={trafficButtonRef}
+          ref={trafficRef}
           variant="ghost"
           size="icon"
-          onTouchStart={(e) => {
-            if (!onToggleTraffic) return;
-            const now = Date.now();
-            if (now - lastTrafficToggleRef.current < TOGGLE_DEBOUNCE) return;
-            lastTrafficToggleRef.current = now;
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('[TRAFFIC-BTN] 🟠 Traffic Toggle TOUCHSTART - calling callback');
-            hapticButtonPress();
-            onToggleTraffic();
-          }}
-          onPointerDown={(e) => {
-            if (!onToggleTraffic) return;
-            if (e.pointerType === 'mouse') {
-              const now = Date.now();
-              if (now - lastTrafficToggleRef.current < TOGGLE_DEBOUNCE) return;
-              lastTrafficToggleRef.current = now;
-              e.preventDefault();
-              console.log('[TRAFFIC-BTN] 🟠 Traffic Toggle POINTERDOWN (mouse) - calling callback');
-              hapticButtonPress();
-              onToggleTraffic();
-            }
-          }}
-          onClick={(e) => {
-            // Skip onClick if already handled by touchstart/pointerdown
-            const now = Date.now();
-            if (now - lastTrafficToggleRef.current < TOGGLE_DEBOUNCE) return;
-          }}
+          onClick={trafficHandlers.onClick}
+          onPointerDown={trafficHandlers.onPointerDown}
           className={cn(
             buttonSize, 
-            "rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-black border-2 shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu",
+            baseButtonClass,
             showTraffic ? "border-orange-500" : "border-gray-400",
-            isVisible ? "translate-x-0 opacity-100 scale-100 pointer-events-auto" : "translate-x-20 opacity-0 scale-95 pointer-events-none"
+            trafficVisible ? visibleClass : hiddenClass
           )}
-          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={buttonStyle}
           data-testid="button-toggle-traffic"
+          aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
         >
           <Layers className={iconSize} />
         </Button>
