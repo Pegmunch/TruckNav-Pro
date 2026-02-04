@@ -602,30 +602,65 @@ export class NavigationVoice {
     console.log('[NavigationVoice] 🔊 Speaking:', instruction.text.substring(0, 50) + '...', {
       voice: utterance.voice?.name || 'default',
       volume: utterance.volume,
-      rate: utterance.rate
+      rate: utterance.rate,
+      lang: utterance.lang || 'default'
     });
+    
+    // Handle speech start - confirms audio is actually playing
+    utterance.onstart = () => {
+      console.log('[NavigationVoice] 🎙️ Speech STARTED - audio should now be playing through speakers');
+      console.log('[NavigationVoice] If you see this but hear nothing, the audio route is wrong (device speaker vs Bluetooth)');
+    };
     
     // Handle completion
     utterance.onend = () => {
-      console.log('[NavigationVoice] ✅ Speech completed');
+      console.log('[NavigationVoice] ✅ Speech COMPLETED successfully');
       this.isSpeaking = false;
       this.currentUtterance = null;
       this.processQueue(); // Process next in queue
     };
     
-    // Handle errors
+    // Handle errors with detailed error info
     utterance.onerror = (event) => {
-      console.warn('[NavigationVoice] ❌ Speech error:', event.error || event);
+      const errorType = (event as any).error || 'unknown';
+      console.warn('[NavigationVoice] ❌ Speech error:', errorType);
+      console.warn('[NavigationVoice] Error details:', {
+        error: errorType,
+        charIndex: (event as any).charIndex,
+        elapsedTime: (event as any).elapsedTime,
+        name: (event as any).name
+      });
+      
+      // Specific iOS error handling
+      if (errorType === 'interrupted') {
+        console.log('[NavigationVoice] Speech was interrupted - another audio source took over');
+      } else if (errorType === 'canceled') {
+        console.log('[NavigationVoice] Speech was canceled - this is normal if cancel() was called');
+      } else if (errorType === 'synthesis-failed') {
+        console.log('[NavigationVoice] Synthesis failed - voice engine error, will retry with next instruction');
+      } else if (errorType === 'audio-busy') {
+        console.log('[NavigationVoice] Audio busy - another audio session is active');
+      }
+      
       this.isSpeaking = false;
       this.currentUtterance = null;
       this.processQueue(); // Try next in queue
+    };
+    
+    // Handle boundary events (word/sentence) for debugging
+    utterance.onboundary = (event) => {
+      if (event.name === 'sentence') {
+        console.log('[NavigationVoice] 📍 Sentence boundary reached at char:', event.charIndex);
+      }
     };
     
     this.currentUtterance = utterance;
     
     // iOS FIX: Try-catch the speak call as iOS can throw errors
     try {
+      console.log('[NavigationVoice] Calling speechSynthesis.speak()...');
       this.synthesis.speak(utterance);
+      console.log('[NavigationVoice] speechSynthesis.speak() called - pending:', this.synthesis.pending, 'speaking:', this.synthesis.speaking);
     } catch (error) {
       console.error('[NavigationVoice] ❌ Failed to speak:', error);
       this.isSpeaking = false;

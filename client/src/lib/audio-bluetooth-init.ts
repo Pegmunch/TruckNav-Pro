@@ -233,41 +233,54 @@ class AudioBluetoothInit {
         await this.audioContext.resume();
       }
       
-      // Create a short silent tone using Web Audio API
-      // This is more reliable than HTMLAudioElement for Bluetooth activation
+      // Create a short audible tone using Web Audio API
+      // This tone needs to be AUDIBLE (not silent) to properly activate Bluetooth routing on iOS
+      // iOS speech synthesis uses a different audio category - we need to "wake up" the media channel
       const ctx = this.getAudioContext();
       if (ctx) {
-        // Create a very short, very quiet oscillator to "ping" the Bluetooth connection
+        // Create an oscillator with gentle fade-in/fade-out to avoid clicks
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
         
         oscillator.connect(gainNode);
         gainNode.connect(ctx.destination);
         
-        // Very quiet (nearly silent)
-        gainNode.gain.value = 0.001;
+        // Use audible but soft volume (0.05) for reliable Bluetooth activation
+        // Too quiet won't activate the audio route, too loud is jarring
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.02); // Fade in
+        gainNode.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.15); // Hold
+        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2); // Fade out
+        
         oscillator.frequency.value = 440;
+        oscillator.type = 'sine'; // Smooth tone
         
         oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.05); // 50ms ping
+        oscillator.stop(ctx.currentTime + 0.25); // 250ms total duration
         
-        // Wait for it to complete
-        await new Promise(resolve => setTimeout(resolve, 60));
-        console.log('[AudioBluetooth] ✅ Bluetooth audio route activated');
+        // Wait for it to complete fully
+        await new Promise(resolve => setTimeout(resolve, 300));
+        console.log('[AudioBluetooth] ✅ Bluetooth audio route activated with audible tone');
       }
       
-      // Also play silent HTML audio as backup (helps on some devices)
+      // Also play HTML audio element as backup - this helps on some iOS versions
+      // Use a longer clip with actual audio content
       const silentMp3 = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYZt2aYpAAAAAAD/+1AEAAP8AABpAAAACAAADSAAAAEAAAGkAAAAIAAANIAAAAR7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7';
       const audio = new Audio(silentMp3);
-      audio.volume = 0.01;
+      audio.volume = 0.1; // Higher volume for better Bluetooth activation
       audio.setAttribute('playsinline', 'true');
+      (audio as any).playsInline = true;
       
       try {
         await audio.play();
-        setTimeout(() => audio.pause(), 50);
+        await new Promise(resolve => setTimeout(resolve, 150)); // Let it play longer
+        audio.pause();
       } catch (e) {
         // Ignore - oscillator already handled it
       }
+      
+      // Final delay to ensure audio route is fully established before speech
+      await new Promise(resolve => setTimeout(resolve, 100));
       
     } catch (error) {
       console.warn('[AudioBluetooth] Bluetooth activation failed:', error);
