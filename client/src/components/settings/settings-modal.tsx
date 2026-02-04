@@ -1856,31 +1856,26 @@ const SettingsModal = memo(function SettingsModal({
                             <Button
                               className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white"
                               onClick={() => {
-                                // TEMPORARY: Allow any text input for testing (bypass database matching)
-                                const vehicleReg = vehicleInputText || fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration || '';
-                                const operatorName = operatorInputText || (() => {
-                                  const op = operators.find(o => o.id === selectedOperatorId);
-                                  return op ? `${op.firstName} ${op.lastName}` : '';
-                                })();
-                                
-                                if (!vehicleReg.trim() || !operatorName.trim()) {
+                                if (!selectedFleetVehicleId || !selectedOperatorId) {
                                   toast({
                                     title: "Missing Information",
-                                    description: "Please enter both vehicle registration and operator name.",
+                                    description: "Please enter a vehicle registration and operator name that match entries in Fleet Management.",
                                     variant: "destructive"
                                   });
                                   return;
                                 }
                                 if (!onStartInspection) return;
-                                
-                                // Use text values directly for testing
-                                onOpenChange(false);
-                                onStartInspection(
-                                  selectedFleetVehicleId || 'temp-vehicle',
-                                  selectedOperatorId || 'temp-operator',
-                                  vehicleReg.trim(),
-                                  operatorName.trim()
-                                );
+                                const vehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
+                                const operator = operators.find(o => o.id === selectedOperatorId);
+                                if (vehicle && operator) {
+                                  onOpenChange(false);
+                                  onStartInspection(
+                                    selectedFleetVehicleId,
+                                    selectedOperatorId,
+                                    vehicle.registration,
+                                    `${operator.firstName} ${operator.lastName}`
+                                  );
+                                }
                               }}
                             >
                               <ClipboardCheck className="w-4 h-4 mr-2" />
