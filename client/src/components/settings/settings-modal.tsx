@@ -54,7 +54,8 @@ import {
   Trash2,
   RotateCcw,
   Users,
-  Building2
+  Building2,
+  ClipboardCheck
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { type FleetVehicle, type Operator } from "@shared/schema";
@@ -89,6 +90,8 @@ interface SettingsModalProps {
   defaultTab?: string;
   /** Optional callback to close sidebar when clicking in settings area */
   onCloseSidebar?: () => void;
+  /** Callback to start pre-trip inspection with selected vehicle and operator */
+  onStartInspection?: (vehicleId: string, operatorId: string, vehicleReg: string, operatorName: string) => void;
 }
 
 interface MapPreferences {
@@ -181,7 +184,8 @@ const SettingsModal = memo(function SettingsModal({
   onOpenChange,
   className,
   defaultTab = "map-traffic",
-  onCloseSidebar
+  onCloseSidebar,
+  onStartInspection
 }: SettingsModalProps) {
   const { toast } = useToast();
   const { system, convertDistance } = useMeasurement();
@@ -1899,6 +1903,29 @@ const SettingsModal = memo(function SettingsModal({
                                 </ul>
                               </AlertDescription>
                             </Alert>
+
+                            {/* Next Button - Start Pre-Trip Inspection */}
+                            {selectedFleetVehicleId && selectedOperatorId && onStartInspection && (
+                              <Button
+                                className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => {
+                                  const vehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
+                                  const operator = operators.find(o => o.id === selectedOperatorId);
+                                  if (vehicle && operator) {
+                                    onOpenChange(false);
+                                    onStartInspection(
+                                      selectedFleetVehicleId,
+                                      selectedOperatorId,
+                                      vehicle.registration,
+                                      `${operator.firstName} ${operator.lastName}`
+                                    );
+                                  }
+                                }}
+                              >
+                                <ClipboardCheck className="w-5 h-5 mr-2" />
+                                Next: Vehicle Inspection
+                              </Button>
+                            )}
                           </CardContent>
                         </Card>
                       </div>

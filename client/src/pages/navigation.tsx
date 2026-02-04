@@ -44,6 +44,7 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 import LegalDisclaimerSimple from "@/components/legal/legal-disclaimer-simple";
 import MapLegalOwnership from "@/components/legal/map-legal-ownership";
 import SettingsModal from "@/components/settings/settings-modal";
+import { PreTripInspection } from "@/components/navigation/pre-trip-inspection";
 import LaneGuidancePopup from "@/components/navigation/lane-guidance-popup";
 import { overlayInspector } from "@/lib/overlay-inspector";
 import { useAndroidBackHandlerWithPriority } from "@/hooks/use-android-back-handler";
@@ -292,6 +293,15 @@ function NavigationPageContent() {
   
   // Settings modal state - moved from NavigationSidebar to prevent closure with sidebar/drawer
   const [showVehicleSettings, setShowVehicleSettings] = useState(false);
+  
+  // Pre-trip inspection state
+  const [showPreTripInspection, setShowPreTripInspection] = useState(false);
+  const [inspectionData, setInspectionData] = useState<{
+    vehicleId: string;
+    operatorId: string;
+    vehicleReg: string;
+    operatorName: string;
+  } | null>(null);
   
   // Comprehensive mobile menu state
   const [showComprehensiveMenu, setShowComprehensiveMenu] = useState(false);
@@ -4907,7 +4917,34 @@ function NavigationPageContent() {
           open={showVehicleSettings}
           onOpenChange={setShowVehicleSettings}
           onCloseSidebar={isSidebarOpen ? () => setSidebarState('collapsed') : undefined}
+          onStartInspection={(vehicleId, operatorId, vehicleReg, operatorName) => {
+            setInspectionData({ vehicleId, operatorId, vehicleReg, operatorName });
+            setShowPreTripInspection(true);
+          }}
         />
+      )}
+      
+      {/* Pre-Trip Inspection - Full screen overlay */}
+      {showPreTripInspection && inspectionData && (
+        <div className="fixed inset-0 z-[300000] bg-background">
+          <PreTripInspection
+            vehicleRegistration={inspectionData.vehicleReg}
+            operatorName={inspectionData.operatorName}
+            operatorId={inspectionData.operatorId}
+            vehicleId={inspectionData.vehicleId}
+            onComplete={() => {
+              setShowPreTripInspection(false);
+              setInspectionData(null);
+              // Clear fleet linkage for new entry
+              localStorage.removeItem('trucknav_active_fleet_vehicle');
+              localStorage.removeItem('trucknav_active_operator');
+            }}
+            onBack={() => {
+              setShowPreTripInspection(false);
+              setInspectionData(null);
+            }}
+          />
+        </div>
       )}
 
 

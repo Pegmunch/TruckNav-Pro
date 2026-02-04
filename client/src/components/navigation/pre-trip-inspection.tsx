@@ -422,14 +422,23 @@ export function PreTripInspection({
             )}
           </Button>
         ) : (
-          <div className="text-center py-3">
-            <div className="flex items-center justify-center gap-2 text-green-600">
-              <CheckCircle2 className="w-6 h-6" />
-              <span className="font-bold">Inspection Complete</span>
+          <div className="space-y-3">
+            <div className="text-center py-2">
+              <div className="flex items-center justify-center gap-2 text-green-600">
+                <CheckCircle2 className="w-6 h-6" />
+                <span className="font-bold">Inspection Complete</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Duration: {formatTime(elapsedTime)} | Saved to Fleet Management
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Duration: {formatTime(elapsedTime)} | Saved to Fleet Management
-            </p>
+            <Button
+              className="w-full h-14 text-lg font-bold bg-green-600 hover:bg-green-700"
+              onClick={onBack}
+            >
+              <CheckCircle2 className="w-5 h-5 mr-2" />
+              Finish
+            </Button>
           </div>
         )}
       </div>
