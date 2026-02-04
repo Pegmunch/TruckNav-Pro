@@ -1853,29 +1853,27 @@ const SettingsModal = memo(function SettingsModal({
                             </div>
 
                             {/* Next Button - Start Pre-Trip Inspection */}
-                            {onStartInspection && (
-                              <Button
-                                className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:opacity-50"
-                                disabled={!selectedFleetVehicleId || !selectedOperatorId}
-                                onClick={() => {
-                                  if (!selectedFleetVehicleId || !selectedOperatorId) return;
-                                  const vehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
-                                  const operator = operators.find(o => o.id === selectedOperatorId);
-                                  if (vehicle && operator) {
-                                    onOpenChange(false);
-                                    onStartInspection(
-                                      selectedFleetVehicleId,
-                                      selectedOperatorId,
-                                      vehicle.registration,
-                                      `${operator.firstName} ${operator.lastName}`
-                                    );
-                                  }
-                                }}
-                              >
-                                <ClipboardCheck className="w-4 h-4 mr-2" />
-                                Next
-                              </Button>
-                            )}
+                            <Button
+                              className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:opacity-50"
+                              disabled={!selectedFleetVehicleId || !selectedOperatorId || !onStartInspection}
+                              onClick={() => {
+                                if (!selectedFleetVehicleId || !selectedOperatorId || !onStartInspection) return;
+                                const vehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
+                                const operator = operators.find(o => o.id === selectedOperatorId);
+                                if (vehicle && operator) {
+                                  onOpenChange(false);
+                                  onStartInspection(
+                                    selectedFleetVehicleId,
+                                    selectedOperatorId,
+                                    vehicle.registration,
+                                    `${operator.firstName} ${operator.lastName}`
+                                  );
+                                }
+                              }}
+                            >
+                              <ClipboardCheck className="w-4 h-4 mr-2" />
+                              Next
+                            </Button>
                           </CardContent>
                         </Card>
                       </div>
