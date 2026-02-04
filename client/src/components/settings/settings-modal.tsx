@@ -822,8 +822,13 @@ const SettingsModal = memo(function SettingsModal({
             "!bg-white dark:!bg-slate-900 border-2 border-gray-300 dark:border-gray-600",
             className
           )}
+          style={{ zIndex: 9999 }}
           data-testid="dialog-settings-modal"
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
           onClick={(e) => {
+            e.stopPropagation();
             // Close sidebar when clicking anywhere in the settings area
             // but only if the click is on non-interactive elements
             const target = e.target as HTMLElement;
@@ -855,38 +860,47 @@ const SettingsModal = memo(function SettingsModal({
           <div className="flex-1 overflow-hidden min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               {/* Tab Navigation - Scrollable on mobile */}
-              <div className="px-2 md:px-6 py-3 border-b bg-gray-50 dark:bg-gray-800 relative z-10">
-                <div className="overflow-x-auto scrollbar-thin" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <TabsList className="inline-flex w-max md:grid md:grid-cols-10 md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800">
+              <div 
+                className="px-2 md:px-6 py-3 border-b bg-gray-50 dark:bg-gray-800 relative"
+                style={{ zIndex: 10000 }}
+              >
+                <div 
+                  className="overflow-x-auto scrollbar-thin" 
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
+                  <div className="inline-flex w-max md:grid md:grid-cols-10 md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800 rounded-md">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
                         <button
                           key={tab.id}
                           type="button"
-                          className={`flex flex-col items-center gap-1 px-4 py-2 text-xs min-w-[60px] whitespace-nowrap cursor-pointer rounded-md transition-colors ${
+                          className={`flex flex-col items-center gap-1 px-4 py-3 text-xs min-w-[60px] whitespace-nowrap cursor-pointer rounded-md transition-colors select-none ${
                             activeTab === tab.id 
                               ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' 
                               : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
                           }`}
                           data-testid={`tab-${tab.id}`}
-                          style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                          onTouchEnd={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setActiveTab(tab.id);
+                          style={{ 
+                            touchAction: 'manipulation', 
+                            WebkitTapHighlightColor: 'rgba(0,0,0,0.1)',
+                            WebkitUserSelect: 'none',
+                            userSelect: 'none'
                           }}
-                          onClick={(e) => {
-                            e.preventDefault();
+                          onPointerDown={(e) => {
+                            e.stopPropagation();
+                            console.log('[SETTINGS-TAB] Pointer down on:', tab.id);
                             setActiveTab(tab.id);
                           }}
                         >
-                          <Icon className="w-4 h-4" />
-                          <span className="text-[10px] md:text-xs">{tab.label}</span>
+                          <Icon className="w-4 h-4 pointer-events-none" />
+                          <span className="text-[10px] md:text-xs pointer-events-none">{tab.label}</span>
                         </button>
                       );
                     })}
-                  </TabsList>
+                  </div>
                 </div>
               </div>
 
