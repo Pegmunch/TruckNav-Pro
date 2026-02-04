@@ -333,7 +333,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             
             if (prev === 'normal') {
               newState = 'tilted';
-              mapInstance.easeTo({ pitch: 60, duration: 300 });
+              mapInstance.easeTo({ pitch: 55, duration: 300 });
             } else if (prev === 'tilted') {
               newState = 'overhead';
               // Keep bearing, set pitch to 0 for plan view
@@ -662,7 +662,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       if (viewState === 'normal') {
         newState = 'tilted';
         map.current.easeTo({
-          pitch: 60,
+          pitch: 55,
           duration: 400
         });
       } else if (viewState === 'tilted') {
@@ -714,8 +714,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     zoomToUserLocation: (options) => {
       const {
         forceStreetMode = true,
-        zoom = 16.5, // TomTom GO style street-level navigation zoom
-        pitch = 60, // TomTom GO style steep 3D tilt
+        zoom = 16, // TomTom GO style - slightly pulled back for wider view
+        pitch = 55, // TomTom GO style 3D tilt - slightly lower for more road visibility
         bearing: optionsBearing,
         duration = 2000,
         fallbackCoordinates,
@@ -1129,7 +1129,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     // Navigation started - store previous state and set 3D mode flag
     // NOTE: Actual camera setup is done by GPS heading rotation effect's setupInitialNavigationView()
     if (!wasNavigating && isNowNavigating) {
-      console.log('[NAV-3D] Navigation started - 3D mode enabled (60° pitch, zoom 16.5)');
+      console.log('[NAV-3D] Navigation started - 3D mode enabled (55° pitch, zoom 16)');
       previousPitchRef.current = map.current.getPitch();
       previousBearingRef.current = map.current.getBearing();
       setViewState('tilted');
@@ -2191,16 +2191,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 5,
-            12, 8,
-            16, 10,
-            20, 12
+            5, 6,
+            12, 10,
+            16, 14,
+            20, 18
           ],
           'line-opacity': 0.9
         }
       });
 
-      // Add route line on top - blue #0067FF - matches traffic layer widths
+      // Add route line on top - cyan #00D4FF for TomTom GO style
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2210,21 +2210,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#0067FF',
+          'line-color': '#00D4FF',
           'line-width': [
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 3,
-            12, 6,
-            16, 8,
-            20, 10
+            5, 4,
+            12, 8,
+            16, 12,
+            20, 16
           ],
-          'line-opacity': 0.9
+          'line-opacity': 0.95
         }
       });
       
-      console.log('[ROUTE-ENSURE] ✅ Route layers rebuilt from cache (thicker widths)');
+      console.log('[ROUTE-ENSURE] ✅ Route layers rebuilt from cache (wider TomTom GO style)');
       return true;
     } catch (error) {
       console.error('[ROUTE-ENSURE] Failed to rebuild route:', error);
@@ -2344,16 +2344,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 5,
-            12, 8,
-            16, 10,
-            20, 12
+            5, 6,
+            12, 10,
+            16, 14,
+            20, 18
           ],
           'line-opacity': 0.9
         }
       });
 
-      // Add route line on top - blue #0067FF - matches traffic layer widths
+      // Add route line on top - cyan #00D4FF for TomTom GO style
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2363,21 +2363,21 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#0067FF',
+          'line-color': '#00D4FF',
           'line-width': [
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 3,
-            12, 6,
-            16, 8,
-            20, 10
+            5, 4,
+            12, 8,
+            16, 12,
+            20, 16
           ],
-          'line-opacity': 0.9
+          'line-opacity': 0.95
         }
       });
 
-      console.log('[ROUTE-RENDER] ✅ Route layers added successfully (thicker outline + line)');
+      console.log('[ROUTE-RENDER] ✅ Route layers added (wider TomTom GO style)');
     } else {
       console.log('[ROUTE-RENDER] Updating existing route source with', routeCoordinates.length, 'coordinates');
       const source = map.current.getSource('route') as maplibregl.GeoJSONSource;
@@ -3057,16 +3057,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             'interpolate',
             ['linear'],
             ['zoom'],
-            5, 3,
-            12, 6,
-            16, 8,
-            20, 10
+            5, 4,
+            12, 8,
+            16, 12,
+            20, 16
           ],
           'line-opacity': 0.9,
         },
       });
       
-      // Move route traffic overlay above the blue route line
+      // Move route traffic overlay above the cyan route line
       if (mapInstance.getLayer('route-line')) {
         mapInstance.moveLayer(trafficLayerId);
       } else {
@@ -4209,7 +4209,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         map.current.easeTo({
           center: [center.lng, center.lat],
           zoom: zoom || 16.5,
-          pitch: pitch || 60,
+          pitch: pitch || 55,
           bearing: bearing || 0,
           padding: {
             top: Math.round(containerHeight * 0.55), // Push vehicle to lower 45% of screen
@@ -4439,7 +4439,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
     if (viewState === 'normal') {
       newState = 'tilted';
       map.current.easeTo({
-        pitch: 60,
+        pitch: 55,
         duration: 500
       });
     } else if (viewState === 'tilted') {
