@@ -45,6 +45,7 @@ import { DriverPerformanceTab } from '@/components/fleet/driver-performance-tab'
 import { VehicleHealthTab } from '@/components/fleet/vehicle-health-tab';
 import { FleetBroadcastsTab } from '@/components/fleet/fleet-broadcasts-tab';
 import { DashCamTab } from '@/components/fleet/dash-cam-tab';
+import { VehicleInspectionsTab } from '@/components/fleet/vehicle-inspections-tab';
 import { Link } from 'wouter';
 
 function MobileRestrictionScreen() {
@@ -211,6 +212,11 @@ export default function FleetManagement() {
               <span className="hidden sm:inline">Dash Cam</span>
               <span className="sm:hidden">DC</span>
             </TabsTrigger>
+            <TabsTrigger value="inspections" className="flex items-center gap-2 text-xs sm:text-sm" data-testid="tab-inspections">
+              <ClipboardCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Inspections</span>
+              <span className="sm:hidden">Insp</span>
+            </TabsTrigger>
             <TabsTrigger value="guide" className="flex items-center gap-2 text-xs sm:text-sm bg-blue-100 dark:bg-blue-900/30" data-testid="tab-guide">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">User Guide</span>
@@ -292,6 +298,10 @@ export default function FleetManagement() {
 
           <TabsContent value="dashcam">
             <DashCamTab />
+          </TabsContent>
+
+          <TabsContent value="inspections">
+            <VehicleInspectionsTab />
           </TabsContent>
 
           <TabsContent value="guide">
