@@ -219,6 +219,9 @@ const SettingsModal = memo(function SettingsModal({
   const FLEET_VEHICLE_KEY = 'trucknav_active_fleet_vehicle';
   const FLEET_OPERATOR_KEY = 'trucknav_active_operator';
   
+  const [vehicleInputText, setVehicleInputText] = useState('');
+  const [operatorInputText, setOperatorInputText] = useState('');
+  
   const [selectedFleetVehicleId, setSelectedFleetVehicleId] = useState<string | null>(() => {
     try {
       return localStorage.getItem(FLEET_VEHICLE_KEY);
@@ -1739,17 +1742,19 @@ const SettingsModal = memo(function SettingsModal({
                                       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     }, 300);
                                   }}
-                                  value={(() => {
+                                  value={vehicleInputText || (() => {
                                     const selected = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
                                     return selected?.registration || '';
                                   })()}
                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                     const value = e.target.value.toUpperCase();
+                                    setVehicleInputText(value);
                                     const match = fleetVehicles.find(v => 
                                       v.registration.toUpperCase() === value
                                     );
                                     if (match) {
                                       handleFleetVehicleChange(match.id);
+                                      setVehicleInputText('');
                                     } else if (value === '') {
                                       handleFleetVehicleChange('none');
                                     }
@@ -1818,17 +1823,19 @@ const SettingsModal = memo(function SettingsModal({
                                       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     }, 300);
                                   }}
-                                  value={(() => {
+                                  value={operatorInputText || (() => {
                                     const selected = operators.find(o => o.id === selectedOperatorId);
                                     return selected ? `${selected.firstName} ${selected.lastName}` : '';
                                   })()}
                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    const value = e.target.value.toLowerCase();
+                                    const value = e.target.value;
+                                    setOperatorInputText(value);
                                     const match = operators.find(o => 
-                                      `${o.firstName} ${o.lastName}`.toLowerCase() === value
+                                      `${o.firstName} ${o.lastName}`.toLowerCase() === value.toLowerCase()
                                     );
                                     if (match) {
                                       handleOperatorChange(match.id);
+                                      setOperatorInputText('');
                                     } else if (value === '') {
                                       handleOperatorChange('none');
                                     }
