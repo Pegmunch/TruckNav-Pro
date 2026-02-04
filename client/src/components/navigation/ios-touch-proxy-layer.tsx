@@ -33,6 +33,14 @@ export function IOSTouchProxyLayer() {
     `;
     
     const handleAction = (e: Event, eventType: string) => {
+      // Check if a dialog/modal is open - if so, don't intercept events
+      const openDialog = document.querySelector('[data-state="open"][role="dialog"]');
+      const openSheet = document.querySelector('[data-state="open"][data-vaul-drawer]');
+      if (openDialog || openSheet) {
+        console.log(`[IOS-TOUCH-PROXY] Dialog/modal open - ignoring ${eventType} for: ${id}`);
+        return; // Let the event propagate to the dialog
+      }
+      
       console.log(`[IOS-TOUCH-PROXY] ✅ ${eventType} captured for: ${id}`);
       e.preventDefault();
       e.stopPropagation();
@@ -92,6 +100,11 @@ export function IOSTouchProxyLayer() {
     const updateProxies = () => {
       if (!containerRef.current) return;
       
+      // Check if a dialog/modal is open - if so, disable all proxy pointer events
+      const openDialog = document.querySelector('[data-state="open"][role="dialog"]');
+      const openSheet = document.querySelector('[data-state="open"][data-vaul-drawer]');
+      const dialogOpen = !!(openDialog || openSheet);
+      
       const currentIds = new Set(buttonRegistry.keys());
       const existingIds = new Set(proxyMapRef.current.keys());
       
@@ -119,16 +132,20 @@ export function IOSTouchProxyLayer() {
         const existingProxy = proxyMapRef.current.get(id);
         if (existingProxy) {
           updateProxyPosition(existingProxy, rect);
+          // Disable pointer events when dialog is open
+          existingProxy.style.pointerEvents = dialogOpen ? 'none' : 'auto';
         } else {
           const newProxy = createProxyButton(id, registration);
           if (newProxy) {
+            // Disable pointer events when dialog is open
+            newProxy.style.pointerEvents = dialogOpen ? 'none' : 'auto';
             containerRef.current!.appendChild(newProxy);
             proxyMapRef.current.set(id, newProxy);
           }
         }
       });
       
-      console.log(`[IOS-TOUCH-PROXY] Synced ${proxyMapRef.current.size} proxy buttons`);
+      console.log(`[IOS-TOUCH-PROXY] Synced ${proxyMapRef.current.size} proxy buttons${dialogOpen ? ' (DISABLED - dialog open)' : ''}`);
     };
     
     updateProxies();
