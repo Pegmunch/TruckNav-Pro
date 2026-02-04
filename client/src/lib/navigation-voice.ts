@@ -438,9 +438,26 @@ export class NavigationVoice {
   }
   
   /**
+   * Check if global mute (Mute All Alerts) is enabled
+   */
+  private isGlobalMuted(): boolean {
+    try {
+      return localStorage.getItem('trucknav_mute_all_alerts') === 'true';
+    } catch {
+      return false;
+    }
+  }
+  
+  /**
    * Speak a navigation instruction with type filtering
    */
   public speak(text: string, level: VoiceGuidanceLevel = 'normal', interrupt: boolean = false, type: AnnouncementType = 'general'): void {
+    // Check global mute first (Mute All Alerts button)
+    if (this.isGlobalMuted()) {
+      console.log('[NavigationVoice] Global mute active (Mute All Alerts) - not speaking');
+      return;
+    }
+    
     if (!this.settings.enabled) {
       console.log('[NavigationVoice] Voice disabled in settings - not speaking');
       return;
@@ -451,6 +468,9 @@ export class NavigationVoice {
       console.log('[NavigationVoice] Late initialization attempt...');
       this.loadVoices();
       this.isInitialized = this.voices.length > 0;
+      if (!this.isInitialized) {
+        console.warn('[NavigationVoice] No voices available - speech synthesis may not work');
+      }
     }
     
     // Check if this announcement should be spoken based on motorway-only mode
@@ -458,6 +478,8 @@ export class NavigationVoice {
       console.log(`[NavigationVoice] Muted ${type} announcement (motorway-only mode, road: ${this.currentRoadType})`);
       return;
     }
+    
+    console.log(`[NavigationVoice] 🔊 Speaking: "${text.substring(0, 50)}..." (type: ${type}, level: ${level})`);
     
     const instruction: QueuedInstruction = {
       text,
@@ -512,13 +534,22 @@ export class NavigationVoice {
    * 4. Small delay after cancel on iOS to prevent silent failures
    */
   private async processInstruction(instruction: QueuedInstruction): Promise<void> {
+    console.log(`[NavigationVoice] Processing instruction: "${instruction.text.substring(0, 40)}..."`);
+    
     if (!this.synthesis) {
-      console.warn('[NavigationVoice] ❌ No speech synthesis available');
+      console.warn('[NavigationVoice] ❌ No speech synthesis available - window.speechSynthesis is undefined');
+      return;
+    }
+    
+    // Check if speech synthesis is supported and working
+    if (typeof this.synthesis.speak !== 'function') {
+      console.warn('[NavigationVoice] ❌ Speech synthesis speak method not available');
       return;
     }
     
     // Ensure audio is initialized for Bluetooth/CarPlay/Android Auto
     if (!audioBluetoothInit.getIsInitialized()) {
+      console.log('[NavigationVoice] Initializing audio for Bluetooth/CarPlay...');
       await audioBluetoothInit.initialize();
     }
     
