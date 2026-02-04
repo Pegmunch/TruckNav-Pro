@@ -58,8 +58,8 @@ export function useWorkingTimeTracker() {
   const [showWarning, setShowWarning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   
-  const WORKING_TIME_LIMIT = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
-  const WARNING_THRESHOLD = 4 * 60 * 60 * 1000; // Show warning at 4 hours (1 hour before limit)
+  const WORKING_TIME_LIMIT = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+  const WARNING_THRESHOLD = 5 * 60 * 60 * 1000; // Show warning at 5 hours (1 hour before limit)
   
   const checkWorkingTime = useCallback(() => {
     const startTimeStr = localStorage.getItem('workingTimeStart');
@@ -76,7 +76,7 @@ export function useWorkingTimeTracker() {
     
     setTimeRemaining(remaining);
     
-    // Show warning when 4 hours have passed (1 hour before the 5-hour limit)
+    // Show warning when 5 hours have passed (1 hour before the 6-hour limit)
     if (elapsed >= WARNING_THRESHOLD && remaining > 0) {
       const warningDismissed = localStorage.getItem('workingTimeWarningDismissed');
       const dismissedAt = warningDismissed ? new Date(warningDismissed).getTime() : 0;
