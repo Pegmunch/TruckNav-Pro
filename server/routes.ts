@@ -6935,6 +6935,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================================
+  // VEHICLE INSPECTION ROUTES (/api/fleet/vehicle-inspections)
+  // Stores pre-trip vehicle inspection records for archival
+  // ========================================
+  
+  // In-memory store for vehicle inspections (in production, use database)
+  const vehicleInspections: Array<{
+    id: string;
+    vehicleId: string;
+    operatorId: string;
+    vehicleRegistration: string;
+    operatorName: string;
+    startTime: string;
+    completedAt: string;
+    durationSeconds: number;
+    checklistItems: Array<{
+      id: string;
+      label: string;
+      category: string;
+      checked: boolean;
+    }>;
+    notes: string;
+    allItemsPassed: boolean;
+  }> = [];
+
+  // POST - Create new vehicle inspection record
+  app.post("/api/fleet/vehicle-inspections", async (req: Request, res: Response) => {
+    try {
+      const inspection = {
+        id: `insp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        ...req.body
+      };
+      
+      vehicleInspections.push(inspection);
+      console.log(`[Vehicle Inspection] ${inspection.operatorName} completed inspection for ${inspection.vehicleRegistration} in ${inspection.durationSeconds}s`);
+      
+      res.status(201).json({ message: "Inspection saved", inspection });
+    } catch (error) {
+      console.error('Error saving vehicle inspection:', error);
+      res.status(500).json({ message: "Failed to save inspection" });
+    }
+  });
+
+  // GET - Get all vehicle inspections (for fleet management archive)
+  app.get("/api/fleet/vehicle-inspections", async (req: Request, res: Response) => {
+    try {
+      const { vehicleId, operatorId, startDate, endDate } = req.query;
+      
+      let filtered = [...vehicleInspections];
+      
+      if (vehicleId) {
+        filtered = filtered.filter(i => i.vehicleId === vehicleId);
+      }
+      if (operatorId) {
+        filtered = filtered.filter(i => i.operatorId === operatorId);
+      }
+      if (startDate) {
+        const start = new Date(startDate as string);
+        filtered = filtered.filter(i => new Date(i.completedAt) >= start);
+      }
+      if (endDate) {
+        const end = new Date(endDate as string);
+        filtered = filtered.filter(i => new Date(i.completedAt) <= end);
+      }
+      
+      // Sort by most recent first
+      filtered.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+      
+      res.json(filtered);
+    } catch (error) {
+      console.error('Error fetching vehicle inspections:', error);
+      res.status(500).json({ message: "Failed to fetch inspections" });
+    }
+  });
+
+  // GET - Get single inspection by ID
+  app.get("/api/fleet/vehicle-inspections/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const inspection = vehicleInspections.find(i => i.id === id);
+      
+      if (!inspection) {
+        return res.status(404).json({ message: "Inspection not found" });
+      }
+      
+      res.json(inspection);
+    } catch (error) {
+      console.error('Error fetching vehicle inspection:', error);
+      res.status(500).json({ message: "Failed to fetch inspection" });
+    }
+  });
+
+  // ========================================
   // GPS TRACKING ROUTES (/api/enterprise/gps)
   // ========================================
 

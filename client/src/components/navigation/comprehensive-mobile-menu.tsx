@@ -92,6 +92,9 @@ import { useTranslation } from 'react-i18next';
 import { NavigationVoice } from "@/lib/navigation-voice";
 import { getVoiceCommandSystem } from "@/lib/voice-commands";
 import { reverseGeocode } from "@/lib/reverse-geocode";
+import { PreTripInspection } from "@/components/navigation/pre-trip-inspection";
+import { WorkingTimeWarning, useWorkingTimeTracker } from "@/components/navigation/working-time-warning";
+import { FileCheck, ClipboardCheck } from "lucide-react";
 
 interface ComprehensiveMobileMenuProps {
   open: boolean;
@@ -248,6 +251,16 @@ function ComprehensiveMobileMenu({
     }
     syncDriverSession(selectedFleetVehicleId, id);
   };
+  
+  // Pre-trip inspection state
+  const [showInspection, setShowInspection] = useState(false);
+  
+  // Working time tracker
+  const { showWarning: showWorkingTimeWarning, dismissWarning } = useWorkingTimeTracker();
+  
+  // Get selected vehicle and operator names for inspection
+  const selectedVehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
+  const selectedOperator = operators.find(o => o.id === selectedOperatorId);
   
   // Track if we've auto-filled "from" with GPS to avoid re-triggering
   const hasAutoFilledFromGPS = useRef(false);
@@ -1668,13 +1681,25 @@ function ComprehensiveMobileMenu({
 
                     {/* Session Status */}
                     {selectedFleetVehicleId && selectedOperatorId && (
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                        <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                          <Truck className="w-4 h-4" />
-                          <span className="text-xs font-medium">
-                            {operators.find(o => o.id === selectedOperatorId)?.firstName} logged into {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration}
-                          </span>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                          <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                            <Truck className="w-4 h-4" />
+                            <span className="text-xs font-medium">
+                              {operators.find(o => o.id === selectedOperatorId)?.firstName} logged into {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration}
+                            </span>
+                          </div>
                         </div>
+                        
+                        {/* Pre-Trip Inspection Button */}
+                        <Button
+                          className="w-full h-12 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+                          onClick={() => setShowInspection(true)}
+                        >
+                          <ClipboardCheck className="w-5 h-5 mr-2" />
+                          Next - Vehicle Inspection
+                          <ChevronRight className="w-5 h-5 ml-auto" />
+                        </Button>
                       </div>
                     )}
                   </CardContent>
@@ -2031,6 +2056,28 @@ function ComprehensiveMobileMenu({
           />
         </DialogContent>
       </Dialog>
+
+      {/* Pre-Trip Inspection Overlay */}
+      {showInspection && selectedVehicle && selectedOperator && (
+        <div className="fixed inset-0 z-[300000] bg-background">
+          <PreTripInspection
+            vehicleRegistration={selectedVehicle.registration}
+            operatorName={`${selectedOperator.firstName} ${selectedOperator.lastName}`}
+            operatorId={selectedOperatorId!}
+            vehicleId={selectedFleetVehicleId!}
+            onComplete={() => {
+              setShowInspection(false);
+              onOpenChange(false); // Close the menu after inspection complete
+            }}
+            onBack={() => setShowInspection(false)}
+          />
+        </div>
+      )}
+
+      {/* Working Time Warning */}
+      {showWorkingTimeWarning && (
+        <WorkingTimeWarning onDismiss={dismissWarning} />
+      )}
     </>
   );
 }
