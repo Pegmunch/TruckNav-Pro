@@ -379,7 +379,7 @@ export function RightActionStack({
         <AlertCircle className={iconSize} />
       </Button>
 
-      {/* 2. Map View Toggle - Green when satellite */}
+      {/* 2. Map View Toggle (Satellite) - Green when satellite */}
       {onToggleMapView && (
         <Button
           ref={mapViewRef}
@@ -402,76 +402,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 3. Recenter */}
-      {onRecenter && (
-        <Button
-          ref={recenterRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={recenterHandlers.onTouchStart}
-          onClick={recenterHandlers.onClick}
-          onPointerDown={recenterHandlers.onPointerDown}
-          className={cn(
-            buttonSize, 
-            baseButtonClass,
-            "border-gray-400",
-            recenterVisible ? visibleClass : hiddenClass
-          )}
-          style={buttonStyle}
-          data-testid="button-recenter"
-          aria-label="Recenter map"
-        >
-          <Crosshair className={iconSize} />
-        </Button>
-      )}
-
-      {/* 4. Zoom In - Blue when navigating */}
-      {onZoomIn && (
-        <Button
-          ref={zoomInRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={zoomInHandlers.onTouchStart}
-          onClick={zoomInHandlers.onClick}
-          onPointerDown={zoomInHandlers.onPointerDown}
-          className={cn(
-            buttonSize, 
-            baseButtonClass,
-            isNavigating ? "border-blue-500" : "border-gray-400",
-            zoomInVisible ? visibleClass : hiddenClass
-          )}
-          style={buttonStyle}
-          data-testid="button-zoom-in"
-          aria-label="Zoom in"
-        >
-          <Plus className={iconSize} />
-        </Button>
-      )}
-
-      {/* 5. Zoom Out - Blue when navigating */}
-      {onZoomOut && (
-        <Button
-          ref={zoomOutRef}
-          variant="ghost"
-          size="icon"
-          onTouchStart={zoomOutHandlers.onTouchStart}
-          onClick={zoomOutHandlers.onClick}
-          onPointerDown={zoomOutHandlers.onPointerDown}
-          className={cn(
-            buttonSize, 
-            baseButtonClass,
-            isNavigating ? "border-blue-500" : "border-gray-400",
-            zoomOutVisible ? visibleClass : hiddenClass
-          )}
-          style={buttonStyle}
-          data-testid="button-zoom-out"
-          aria-label="Zoom out"
-        >
-          <Minus className={iconSize} />
-        </Button>
-      )}
-
-      {/* 6. Compass - Blue border */}
+      {/* 3. Compass - Blue border */}
       {!hideCompass && onCompassClick && (
         <Button
           ref={compassRef}
@@ -497,7 +428,53 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 7. 3D Toggle - Blue when active */}
+      {/* 4. Zoom In (Plus) - Blue when navigating */}
+      {onZoomIn && (
+        <Button
+          ref={zoomInRef}
+          variant="ghost"
+          size="icon"
+          onTouchStart={zoomInHandlers.onTouchStart}
+          onClick={zoomInHandlers.onClick}
+          onPointerDown={zoomInHandlers.onPointerDown}
+          className={cn(
+            buttonSize, 
+            baseButtonClass,
+            isNavigating ? "border-blue-500" : "border-gray-400",
+            zoomInVisible ? visibleClass : hiddenClass
+          )}
+          style={buttonStyle}
+          data-testid="button-zoom-in"
+          aria-label="Zoom in"
+        >
+          <Plus className={iconSize} />
+        </Button>
+      )}
+
+      {/* 5. Zoom Out (Minus) - Blue when navigating */}
+      {onZoomOut && (
+        <Button
+          ref={zoomOutRef}
+          variant="ghost"
+          size="icon"
+          onTouchStart={zoomOutHandlers.onTouchStart}
+          onClick={zoomOutHandlers.onClick}
+          onPointerDown={zoomOutHandlers.onPointerDown}
+          className={cn(
+            buttonSize, 
+            baseButtonClass,
+            isNavigating ? "border-blue-500" : "border-gray-400",
+            zoomOutVisible ? visibleClass : hiddenClass
+          )}
+          style={buttonStyle}
+          data-testid="button-zoom-out"
+          aria-label="Zoom out"
+        >
+          <Minus className={iconSize} />
+        </Button>
+      )}
+
+      {/* 6. Tilt (3D Toggle) - Blue when active */}
       {onToggle3D && !hide3D && (
         <Button
           ref={toggle3DRef}
@@ -520,7 +497,7 @@ export function RightActionStack({
         </Button>
       )}
 
-      {/* 8. Traffic Toggle - Orange when active */}
+      {/* 7. Traffic Layer Toggle - Orange when active */}
       {onToggleTraffic && (
         <Button
           ref={trafficRef}
@@ -540,6 +517,29 @@ export function RightActionStack({
           aria-label={showTraffic ? "Hide traffic" : "Show traffic"}
         >
           <Layers className={iconSize} />
+        </Button>
+      )}
+
+      {/* 8. Recenter (hidden from main stack, only shown when needed) */}
+      {onRecenter && (
+        <Button
+          ref={recenterRef}
+          variant="ghost"
+          size="icon"
+          onTouchStart={recenterHandlers.onTouchStart}
+          onClick={recenterHandlers.onClick}
+          onPointerDown={recenterHandlers.onPointerDown}
+          className={cn(
+            buttonSize, 
+            baseButtonClass,
+            "border-gray-400",
+            "hidden" // Hidden by default - not in user's 7-button list
+          )}
+          style={buttonStyle}
+          data-testid="button-recenter"
+          aria-label="Recenter map"
+        >
+          <Crosshair className={iconSize} />
         </Button>
       )}
     </div>
