@@ -4577,6 +4577,7 @@ function NavigationPageContent() {
                       onStopNavigation={handleStopNavigation}
                       timeRemainingSeconds={dynamicEtaMinutes > 0 ? dynamicEtaMinutes * 60 : (currentRoute?.duration || 0) * 60}
                       distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0) * 1609.344}
+                      vehicleType={vehicleType}
                     />
                   }
                 />
@@ -4857,6 +4858,8 @@ function NavigationPageContent() {
                         showStopButton={true}
                         onStartNavigation={handleStartNavigation}
                         onStopNavigation={handleStopNavigation}
+                        distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0) * 1609.344}
+                        vehicleType={vehicleType}
                       />
                     </div>
 

@@ -31,6 +31,7 @@ interface SpeedometerHUDProps {
   showStopButton?: boolean;
   timeRemainingSeconds?: number; // Time remaining to destination in seconds (for countdown display)
   distanceRemainingMeters?: number; // Distance remaining to destination in meters
+  vehicleType?: string; // Vehicle type for speed-based travel time calculation
 }
 
 /**
@@ -48,7 +49,8 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   showGoButton = false,
   showStopButton = false,
   timeRemainingSeconds,
-  distanceRemainingMeters
+  distanceRemainingMeters,
+  vehicleType
 }: SpeedometerHUDProps) {
   // Get GPS data and measurement preferences
   const gps = useGPS();
@@ -113,6 +115,37 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   
   // Determine speed status - simpler logic
   const isSpeeding = convertedSpeedLimit && convertedSpeed > convertedSpeedLimit;
+  
+  // Live travel time calculation based on vehicle type max speed
+  // Class 1 Lorry: max 56 MPH (90 km/h), Car: max 70 MPH (112.65 km/h)
+  const isCarMode = vehicleType === 'car';
+  const maxSpeedMph = isCarMode ? 70 : 56; // Car 70 MPH, Truck 56 MPH
+  const maxSpeedMs = maxSpeedMph * 0.44704; // Convert MPH to m/s
+  
+  // Calculate estimated travel time based on remaining distance and max speed
+  const calculateLiveTravelTime = (): { hours: number; minutes: number; seconds: number; totalSeconds: number } | null => {
+    if (!distanceRemainingMeters || distanceRemainingMeters <= 0) return null;
+    
+    // Time = Distance / Speed (in seconds)
+    const timeSeconds = distanceRemainingMeters / maxSpeedMs;
+    const hours = Math.floor(timeSeconds / 3600);
+    const minutes = Math.floor((timeSeconds % 3600) / 60);
+    const seconds = Math.floor(timeSeconds % 60);
+    
+    return { hours, minutes, seconds, totalSeconds: timeSeconds };
+  };
+  
+  const liveTravelTime = calculateLiveTravelTime();
+  
+  // Format live travel time for display
+  const formatLiveTravelTime = (): string => {
+    if (!liveTravelTime) return '--';
+    const { hours, minutes } = liveTravelTime;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
   
   // Play speed limit alert sound when starting to speed
   useEffect(() => {
@@ -333,12 +366,46 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
   return (
     <div
       className={cn(
-        'relative flex justify-center items-center w-full',
+        'relative flex flex-col items-center w-full',
         className
       )}
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
+      {/* Live Travel Time Display - Above Speedometer */}
+      {isNavigating && liveTravelTime && (
+        <div className="flex items-center justify-center gap-2 mb-1.5">
+          <div className={cn(
+            "px-3 py-1 rounded-full",
+            "bg-black/80 backdrop-blur-sm",
+            "shadow-lg",
+            "flex items-center gap-2"
+          )}>
+            {/* Vehicle type indicator */}
+            <span className={cn(
+              "text-xs font-medium px-1.5 py-0.5 rounded",
+              isCarMode 
+                ? "bg-blue-500 text-white" 
+                : "bg-amber-500 text-black"
+            )}>
+              {isCarMode ? 'CAR' : 'HGV'}
+            </span>
+            
+            {/* Max speed indicator */}
+            <span className="text-gray-400 text-xs">
+              @{maxSpeedMph} {usesMPH ? 'MPH' : 'KM/H'}
+            </span>
+            
+            {/* Estimated time */}
+            <span className="text-white font-bold text-sm tabular-nums">
+              {formatLiveTravelTime()}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Main speedometer row */}
+      <div className="flex justify-center items-center w-full">
 
       {/* GO BUTTON - Left crescent hugging speedometer's left edge */}
       {showGoButton && onStartNavigation && (
@@ -691,6 +758,7 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 });
