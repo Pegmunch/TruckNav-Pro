@@ -27,8 +27,8 @@ interface ButtonRegistration {
 export const buttonRegistry = new Map<string, ButtonRegistration>();
 export type { ButtonRegistration };
 
-// Debounce threshold - minimum time between button fires (ms)
-const FIRE_DEBOUNCE = 150;
+// Debounce threshold - reduced to 100ms for faster response
+const FIRE_DEBOUNCE = 100;
 
 // Global debounce tracker (backup for handlers outside registry)
 const globalDebounce = new Map<string, number>();
@@ -70,8 +70,8 @@ function handleWindowTouchStart(e: TouchEvent) {
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) continue;
     
-    // Generous padding (20px) for touch accuracy on mobile
-    const padding = 20;
+    // Extra generous padding (30px) for iOS Safari touch accuracy
+    const padding = 30;
     if (
       x >= rect.left - padding &&
       x <= rect.right + padding &&
@@ -176,9 +176,22 @@ function useUnifiedTouchHandler(
   }, [ref, callback, id, mounted, isVisible]);
   
   // Return handlers for React events
+  // onTouchStart fires IMMEDIATELY on touch (most reliable for iOS)
   // onClick preserves keyboard accessibility (Enter/Space keys)
   // onPointerDown handles mouse clicks with debounce
   return {
+    onTouchStart: useCallback((e: React.TouchEvent) => {
+      if (!callback) return;
+      if (!canButtonFire(id)) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      console.log(`[TOUCH-REACT] ✅ TouchStart: ${id}`);
+      markButtonFired(id);
+      hapticButtonPress();
+      callback();
+    }, [callback, id]),
+    
     onClick: useCallback((e: React.MouseEvent) => {
       if (!callback) return;
       // Allow keyboard activation without debounce check (accessibility)
@@ -193,7 +206,7 @@ function useUnifiedTouchHandler(
     
     onPointerDown: useCallback((e: React.PointerEvent) => {
       if (!callback) return;
-      // Only handle mouse - touch is handled by native listeners
+      // Only handle mouse - touch is handled by touchstart
       if (e.pointerType === 'touch') return;
       if (!canButtonFire(id)) return;
       
@@ -350,6 +363,7 @@ export function RightActionStack({
         ref={incidentsRef}
         variant="ghost"
         size="icon"
+        onTouchStart={incidentsHandlers.onTouchStart}
         onClick={incidentsHandlers.onClick}
         onPointerDown={incidentsHandlers.onPointerDown}
         className={cn(
@@ -371,6 +385,7 @@ export function RightActionStack({
           ref={mapViewRef}
           variant="ghost"
           size="icon"
+          onTouchStart={mapViewHandlers.onTouchStart}
           onClick={mapViewHandlers.onClick}
           onPointerDown={mapViewHandlers.onPointerDown}
           className={cn(
@@ -393,6 +408,7 @@ export function RightActionStack({
           ref={recenterRef}
           variant="ghost"
           size="icon"
+          onTouchStart={recenterHandlers.onTouchStart}
           onClick={recenterHandlers.onClick}
           onPointerDown={recenterHandlers.onPointerDown}
           className={cn(
@@ -415,6 +431,7 @@ export function RightActionStack({
           ref={zoomInRef}
           variant="ghost"
           size="icon"
+          onTouchStart={zoomInHandlers.onTouchStart}
           onClick={zoomInHandlers.onClick}
           onPointerDown={zoomInHandlers.onPointerDown}
           className={cn(
@@ -437,6 +454,7 @@ export function RightActionStack({
           ref={zoomOutRef}
           variant="ghost"
           size="icon"
+          onTouchStart={zoomOutHandlers.onTouchStart}
           onClick={zoomOutHandlers.onClick}
           onPointerDown={zoomOutHandlers.onPointerDown}
           className={cn(
@@ -459,6 +477,7 @@ export function RightActionStack({
           ref={compassRef}
           variant="ghost"
           size="icon"
+          onTouchStart={compassHandlers.onTouchStart}
           onClick={compassHandlers.onClick}
           onPointerDown={compassHandlers.onPointerDown}
           className={cn(
@@ -484,6 +503,7 @@ export function RightActionStack({
           ref={toggle3DRef}
           variant="ghost"
           size="icon"
+          onTouchStart={toggle3DHandlers.onTouchStart}
           onClick={toggle3DHandlers.onClick}
           onPointerDown={toggle3DHandlers.onPointerDown}
           className={cn(
@@ -506,6 +526,7 @@ export function RightActionStack({
           ref={trafficRef}
           variant="ghost"
           size="icon"
+          onTouchStart={trafficHandlers.onTouchStart}
           onClick={trafficHandlers.onClick}
           onPointerDown={trafficHandlers.onPointerDown}
           className={cn(
