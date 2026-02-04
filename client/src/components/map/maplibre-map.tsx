@@ -1577,7 +1577,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           
           console.log(`[IOS-BUTTON-INTERCEPT] Touch at (${x.toFixed(0)}, ${y.toFixed(0)}), checking ${buttonRegistry.size} registered buttons`);
           
-          for (const [id, registration] of buttonRegistry) {
+          for (const [id, registration] of Array.from(buttonRegistry.entries())) {
             const rect = registration.getRect();
             if (!rect) continue;
             
@@ -1747,15 +1747,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           mapInstance.addSource('satellite-2d', {
             type: 'raster',
             tiles: [
-              // Multiple Esri CDN endpoints for faster parallel loading
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-              'https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              // Google satellite tiles - reliable and free for display
+              'https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 19,
-            attribution: '&copy; Esri'
+            maxzoom: 20,
+            attribution: '&copy; Google'
           });
         }
 
