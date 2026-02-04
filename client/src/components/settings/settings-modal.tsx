@@ -1905,10 +1905,12 @@ const SettingsModal = memo(function SettingsModal({
                             </Alert>
 
                             {/* Next Button - Start Pre-Trip Inspection */}
-                            {selectedFleetVehicleId && selectedOperatorId && onStartInspection && (
+                            {onStartInspection && (
                               <Button
-                                className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white"
+                                className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:opacity-50"
+                                disabled={!selectedFleetVehicleId || !selectedOperatorId}
                                 onClick={() => {
+                                  if (!selectedFleetVehicleId || !selectedOperatorId) return;
                                   const vehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
                                   const operator = operators.find(o => o.id === selectedOperatorId);
                                   if (vehicle && operator) {
