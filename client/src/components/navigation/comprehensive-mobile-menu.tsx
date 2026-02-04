@@ -77,6 +77,7 @@ import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
 import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
 import SettingsModal from "@/components/settings/settings-modal";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OfflineDownloadsPanel } from "@/components/navigation/offline-downloads-panel";
 import { FuelPriceComparison } from "@/components/fuel/fuel-price-comparison";
@@ -1618,31 +1619,77 @@ function ComprehensiveMobileMenu({
                       Driver Session
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Link your vehicle registration and operator for fleet tracking
+                      Enter your vehicle registration and select operator for fleet tracking
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Vehicle Registration Dropdown */}
+                    {/* Vehicle Registration Input with Autocomplete */}
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Vehicle Registration</Label>
-                      <Select
-                        value={selectedFleetVehicleId || 'none'}
-                        onValueChange={handleFleetVehicleChange}
-                      >
-                        <SelectTrigger className="w-full" data-testid="select-fleet-vehicle-mobile">
-                          <SelectValue placeholder="Select vehicle..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No vehicle linked</SelectItem>
-                          {fleetVehicles.map((vehicle) => (
-                            <SelectItem key={vehicle.id} value={vehicle.id}>
-                              <span className="font-mono font-bold">{vehicle.registration}</span>
-                              {' - '}
-                              <span className="text-muted-foreground">{vehicle.make} {vehicle.model}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          inputMode="text"
+                          autoComplete="off"
+                          autoCapitalize="characters"
+                          placeholder="Type registration e.g. AB12 CDE"
+                          className="w-full font-mono uppercase"
+                          data-testid="input-fleet-vehicle-mobile"
+                          value={(() => {
+                            const selected = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
+                            return selected?.registration || '';
+                          })()}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const value = e.target.value.toUpperCase();
+                            const match = fleetVehicles.find(v => 
+                              v.registration.toUpperCase() === value
+                            );
+                            if (match) {
+                              handleFleetVehicleChange(match.id);
+                            } else if (value === '') {
+                              handleFleetVehicleChange('none');
+                            }
+                          }}
+                          onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                            e.target.setAttribute('data-show-suggestions', 'true');
+                          }}
+                          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                            setTimeout(() => {
+                              e.target.removeAttribute('data-show-suggestions');
+                            }, 200);
+                          }}
+                        />
+                        {fleetVehicles.length > 0 && !selectedFleetVehicleId && (
+                          <div className="mt-2 max-h-32 overflow-y-auto border rounded-md bg-background">
+                            {fleetVehicles.map((vehicle) => (
+                              <button
+                                key={vehicle.id}
+                                type="button"
+                                className="w-full px-3 py-2 text-left hover:bg-muted/50 active:bg-muted border-b last:border-b-0 flex items-center justify-between"
+                                onClick={() => handleFleetVehicleChange(vehicle.id)}
+                              >
+                                <span className="font-mono font-bold">{vehicle.registration}</span>
+                                <span className="text-xs text-muted-foreground">{vehicle.make} {vehicle.model}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {selectedFleetVehicleId && (
+                          <div className="mt-1 flex items-center justify-between">
+                            <span className="text-xs text-green-600 dark:text-green-400">
+                              ✓ {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.make} {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.model}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs"
+                              onClick={() => handleFleetVehicleChange('none')}
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                       {fleetVehicles.length === 0 && (
                         <p className="text-[10px] text-muted-foreground">
                           No vehicles found. Add vehicles in Fleet Management (desktop).
@@ -1650,28 +1697,66 @@ function ComprehensiveMobileMenu({
                       )}
                     </div>
 
-                    {/* Operator Dropdown */}
+                    {/* Operator Input with Autocomplete */}
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Operator / Driver</Label>
-                      <Select
-                        value={selectedOperatorId || 'none'}
-                        onValueChange={handleOperatorChange}
-                      >
-                        <SelectTrigger className="w-full" data-testid="select-operator-mobile">
-                          <SelectValue placeholder="Select operator..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No operator linked</SelectItem>
-                          {operators.map((op) => (
-                            <SelectItem key={op.id} value={op.id}>
-                              {op.firstName} {op.lastName}
-                              {op.licenseNumber && (
-                                <span className="text-muted-foreground ml-2">({op.licenseNumber})</span>
-                              )}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          inputMode="text"
+                          autoComplete="off"
+                          placeholder="Type operator name"
+                          className="w-full"
+                          data-testid="input-operator-mobile"
+                          value={(() => {
+                            const selected = operators.find(o => o.id === selectedOperatorId);
+                            return selected ? `${selected.firstName} ${selected.lastName}` : '';
+                          })()}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const value = e.target.value.toLowerCase();
+                            const match = operators.find(o => 
+                              `${o.firstName} ${o.lastName}`.toLowerCase() === value
+                            );
+                            if (match) {
+                              handleOperatorChange(match.id);
+                            } else if (value === '') {
+                              handleOperatorChange('none');
+                            }
+                          }}
+                        />
+                        {operators.length > 0 && !selectedOperatorId && (
+                          <div className="mt-2 max-h-32 overflow-y-auto border rounded-md bg-background">
+                            {operators.map((op) => (
+                              <button
+                                key={op.id}
+                                type="button"
+                                className="w-full px-3 py-2 text-left hover:bg-muted/50 active:bg-muted border-b last:border-b-0 flex items-center justify-between"
+                                onClick={() => handleOperatorChange(op.id)}
+                              >
+                                <span className="font-medium">{op.firstName} {op.lastName}</span>
+                                {op.licenseNumber && (
+                                  <span className="text-xs text-muted-foreground">{op.licenseNumber}</span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {selectedOperatorId && (
+                          <div className="mt-1 flex items-center justify-between">
+                            <span className="text-xs text-green-600 dark:text-green-400">
+                              ✓ Operator selected
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-xs"
+                              onClick={() => handleOperatorChange('none')}
+                            >
+                              Clear
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                       {operators.length === 0 && (
                         <p className="text-[10px] text-muted-foreground">
                           No operators found. Add operators in Fleet Management (desktop).
