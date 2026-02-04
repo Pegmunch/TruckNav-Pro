@@ -62,7 +62,10 @@ function handleWindowTouchStart(e: TouchEvent) {
   const x = touch.clientX;
   const y = touch.clientY;
   
-  // Check all registered buttons (only visible ones)
+  // Find the CLOSEST button to touch point (not first match) to avoid overlap issues
+  let closestButton: { id: string; registration: ButtonRegistration; distance: number } | null = null;
+  const padding = 30;
+  
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     // Skip hidden buttons
     if (!registration.isVisible) continue;
@@ -70,28 +73,40 @@ function handleWindowTouchStart(e: TouchEvent) {
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) continue;
     
-    // Extra generous padding (30px) for iOS Safari touch accuracy
-    const padding = 30;
+    // Check if touch is within padded bounds
     if (
       x >= rect.left - padding &&
       x <= rect.right + padding &&
       y >= rect.top - padding &&
       y <= rect.bottom + padding
     ) {
-      // Check debounce
-      if (!canButtonFire(id)) {
-        console.log(`[TOUCH-UNIFIED] ⏳ Button ${id} debounced`);
-        return;
-      }
+      // Calculate distance from touch point to button center
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
       
-      console.log(`[TOUCH-UNIFIED] ✅ Window touch hit: ${id}`);
-      e.preventDefault();
-      e.stopPropagation();
-      markButtonFired(id);
-      hapticButtonPress();
-      registration.callback();
+      if (!closestButton || distance < closestButton.distance) {
+        closestButton = { id, registration, distance };
+      }
+    }
+  }
+  
+  // Fire the closest button if found
+  if (closestButton) {
+    const { id, registration } = closestButton;
+    
+    // Check debounce
+    if (!canButtonFire(id)) {
+      console.log(`[TOUCH-UNIFIED] ⏳ Button ${id} debounced`);
       return;
     }
+    
+    console.log(`[TOUCH-UNIFIED] ✅ Window touch hit: ${id} (closest match)`);
+    e.preventDefault();
+    e.stopPropagation();
+    markButtonFired(id);
+    hapticButtonPress();
+    registration.callback();
   }
 }
 
@@ -386,7 +401,7 @@ export function RightActionStack({
     <div 
       className={cn(
         "flex flex-col pointer-events-auto",
-        compact ? "gap-1" : "gap-1.5"
+        compact ? "gap-3" : "gap-4"
       )} 
       data-testid="right-action-stack"
       style={{ marginTop: compact ? '24px' : '0px', pointerEvents: 'auto' }}
