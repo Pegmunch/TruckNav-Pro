@@ -817,10 +817,11 @@ const SettingsModal = memo(function SettingsModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           className={cn(
-            "max-w-2xl w-full h-[40vh] sm:h-[75vh] max-h-[600px]",
+            "max-w-2xl w-full h-[85vh] sm:h-[75vh] max-h-[600px]",
             "p-0 overflow-hidden flex flex-col",
             "!bg-white dark:!bg-slate-900 border-2 border-gray-300 dark:border-gray-600",
-            "fixed top-2 sm:top-[50%] left-[50%] -translate-x-1/2 translate-y-0 sm:-translate-y-1/2",
+            "fixed bottom-0 sm:bottom-auto sm:top-[50%] left-[50%] -translate-x-1/2 sm:-translate-y-1/2",
+            "rounded-t-xl sm:rounded-xl",
             className
           )}
           data-testid="dialog-settings-modal"
