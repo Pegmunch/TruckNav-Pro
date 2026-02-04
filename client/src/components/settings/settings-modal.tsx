@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -856,7 +857,7 @@ const SettingsModal = memo(function SettingsModal({
               {/* Tab Navigation - Scrollable on mobile */}
               <div className="px-2 md:px-6 py-3 border-b bg-gray-50 dark:bg-gray-800">
                 <div className="overflow-x-auto scrollbar-thin">
-                  <TabsList className="inline-flex w-max md:grid md:grid-cols-8 md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800">
+                  <TabsList className="inline-flex w-max md:grid md:grid-cols-10 md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
@@ -1703,106 +1704,149 @@ const SettingsModal = memo(function SettingsModal({
                               Link this navigation session to your fleet management system to track journeys, fuel consumption, and driver performance.
                             </p>
 
-                            {/* Vehicle Registration Selection */}
+                            {/* Vehicle Registration Input */}
                             <div className="space-y-3">
                               <div className="flex items-center gap-2">
                                 <Truck className="w-4 h-4 text-blue-600" />
                                 <Label className="text-base font-medium">Vehicle Reg</Label>
                               </div>
-                              <Select
-                                value={selectedFleetVehicleId || 'none'}
-                                onValueChange={handleFleetVehicleChange}
-                              >
-                                <SelectTrigger className="w-full" data-testid="select-fleet-vehicle">
-                                  <SelectValue placeholder="Select vehicle registration..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none" className="cursor-pointer">
-                                    No vehicle linked
-                                  </SelectItem>
-                                  {fleetVehicles.map((vehicle) => (
-                                    <SelectItem 
-                                      key={vehicle.id} 
-                                      value={vehicle.id}
-                                      className="cursor-pointer"
-                                    >
-                                      <div className="flex items-center gap-2">
+                              <div className="relative">
+                                <Input
+                                  type="text"
+                                  inputMode="text"
+                                  autoComplete="off"
+                                  autoCapitalize="characters"
+                                  placeholder="Type registration e.g. AB12 CDE"
+                                  className="w-full font-mono uppercase"
+                                  data-testid="input-fleet-vehicle"
+                                  value={(() => {
+                                    const selected = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
+                                    return selected?.registration || '';
+                                  })()}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const value = e.target.value.toUpperCase();
+                                    const match = fleetVehicles.find(v => 
+                                      v.registration.toUpperCase() === value
+                                    );
+                                    if (match) {
+                                      handleFleetVehicleChange(match.id);
+                                    } else if (value === '') {
+                                      handleFleetVehicleChange('none');
+                                    }
+                                  }}
+                                />
+                                {fleetVehicles.length > 0 && !selectedFleetVehicleId && (
+                                  <div className="mt-2 max-h-32 overflow-y-auto border rounded-md bg-background">
+                                    {fleetVehicles.map((vehicle) => (
+                                      <button
+                                        key={vehicle.id}
+                                        type="button"
+                                        className="w-full px-3 py-2 text-left hover:bg-muted/50 active:bg-muted border-b last:border-b-0 flex items-center justify-between"
+                                        onClick={() => handleFleetVehicleChange(vehicle.id)}
+                                      >
                                         <span className="font-mono font-bold">{vehicle.registration}</span>
-                                        <span className="text-muted-foreground">
-                                          {vehicle.make} {vehicle.model}
-                                        </span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                        <span className="text-xs text-muted-foreground">{vehicle.make} {vehicle.model}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                               {fleetVehicles.length === 0 && (
                                 <p className="text-xs text-muted-foreground">
                                   No vehicles found. Add vehicles in Fleet Management.
                                 </p>
                               )}
                               {selectedFleetVehicleId && (
-                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 flex items-center justify-between">
                                   <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
                                     <Truck className="w-4 h-4" />
                                     <span className="text-sm font-medium">
-                                      Linked to: {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration || selectedFleetVehicleId}
+                                      Linked to: {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration}
                                     </span>
                                   </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={() => handleFleetVehicleChange('none')}
+                                  >
+                                    Clear
+                                  </Button>
                                 </div>
                               )}
                             </div>
 
                             <Separator />
 
-                            {/* Operator Selection */}
+                            {/* Operator Input */}
                             <div className="space-y-3">
                               <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-purple-600" />
                                 <Label className="text-base font-medium">Operator</Label>
                               </div>
-                              <Select
-                                value={selectedOperatorId || 'none'}
-                                onValueChange={handleOperatorChange}
-                              >
-                                <SelectTrigger className="w-full" data-testid="select-operator">
-                                  <SelectValue placeholder="Select operator..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none" className="cursor-pointer">
-                                    No operator linked
-                                  </SelectItem>
-                                  {operators.map((operator) => (
-                                    <SelectItem 
-                                      key={operator.id} 
-                                      value={operator.id}
-                                      className="cursor-pointer"
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-medium">
-                                          {operator.firstName} {operator.lastName}
-                                        </span>
-                                        <span className="text-muted-foreground text-xs">
-                                          {operator.licenseNumber}
-                                        </span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <div className="relative">
+                                <Input
+                                  type="text"
+                                  inputMode="text"
+                                  autoComplete="off"
+                                  placeholder="Type operator name"
+                                  className="w-full"
+                                  data-testid="input-operator"
+                                  value={(() => {
+                                    const selected = operators.find(o => o.id === selectedOperatorId);
+                                    return selected ? `${selected.firstName} ${selected.lastName}` : '';
+                                  })()}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    const value = e.target.value.toLowerCase();
+                                    const match = operators.find(o => 
+                                      `${o.firstName} ${o.lastName}`.toLowerCase() === value
+                                    );
+                                    if (match) {
+                                      handleOperatorChange(match.id);
+                                    } else if (value === '') {
+                                      handleOperatorChange('none');
+                                    }
+                                  }}
+                                />
+                                {operators.length > 0 && !selectedOperatorId && (
+                                  <div className="mt-2 max-h-32 overflow-y-auto border rounded-md bg-background">
+                                    {operators.map((operator) => (
+                                      <button
+                                        key={operator.id}
+                                        type="button"
+                                        className="w-full px-3 py-2 text-left hover:bg-muted/50 active:bg-muted border-b last:border-b-0 flex items-center justify-between"
+                                        onClick={() => handleOperatorChange(operator.id)}
+                                      >
+                                        <span className="font-medium">{operator.firstName} {operator.lastName}</span>
+                                        {operator.licenseNumber && (
+                                          <span className="text-xs text-muted-foreground">{operator.licenseNumber}</span>
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                               {operators.length === 0 && (
                                 <p className="text-xs text-muted-foreground">
                                   No operators found. Add operators in Fleet Management.
                                 </p>
                               )}
                               {selectedOperatorId && (
-                                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 flex items-center justify-between">
                                   <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
                                     <Users className="w-4 h-4" />
                                     <span className="text-sm font-medium">
                                       Logged in as: {operators.find(o => o.id === selectedOperatorId)?.firstName} {operators.find(o => o.id === selectedOperatorId)?.lastName}
                                     </span>
                                   </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={() => handleOperatorChange('none')}
+                                  >
+                                    Clear
+                                  </Button>
                                 </div>
                               )}
                             </div>
