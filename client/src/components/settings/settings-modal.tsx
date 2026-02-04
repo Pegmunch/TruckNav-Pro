@@ -1785,24 +1785,6 @@ const SettingsModal = memo(function SettingsModal({
                                   No vehicles found. Add vehicles in Fleet Management.
                                 </p>
                               )}
-                              {selectedFleetVehicleId && (
-                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                                    <Truck className="w-4 h-4" />
-                                    <span className="text-sm font-medium">
-                                      Linked to: {fleetVehicles.find(v => v.id === selectedFleetVehicleId)?.registration}
-                                    </span>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs"
-                                    onClick={() => handleFleetVehicleChange('none')}
-                                  >
-                                    Clear
-                                  </Button>
-                                </div>
-                              )}
                             </div>
 
                             <Separator />
@@ -1867,24 +1849,6 @@ const SettingsModal = memo(function SettingsModal({
                                 <p className="text-xs text-muted-foreground">
                                   No operators found. Add operators in Fleet Management.
                                 </p>
-                              )}
-                              {selectedOperatorId && (
-                                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                                    <Users className="w-4 h-4" />
-                                    <span className="text-sm font-medium">
-                                      Logged in as: {operators.find(o => o.id === selectedOperatorId)?.firstName} {operators.find(o => o.id === selectedOperatorId)?.lastName}
-                                    </span>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 text-xs"
-                                    onClick={() => handleOperatorChange('none')}
-                                  >
-                                    Clear
-                                  </Button>
-                                </div>
                               )}
                             </div>
 
