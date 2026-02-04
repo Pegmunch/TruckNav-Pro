@@ -1919,6 +1919,10 @@ function ComprehensiveMobileMenu({
         <SettingsModal
           open={showSettings}
           onOpenChange={setShowSettings}
+          onStartInspection={(vehicleId, operatorId, vehicleReg, operatorName) => {
+            setShowSettings(false);
+            setShowInspection(true);
+          }}
         />
       )}
 

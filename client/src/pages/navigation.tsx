@@ -5300,6 +5300,10 @@ function NavigationPageContent() {
         <SettingsModal
           open={showMapSettingsTool}
           onOpenChange={setShowMapSettingsTool}
+          onStartInspection={(vehicleId, operatorId, vehicleReg, operatorName) => {
+            setInspectionData({ vehicleId, operatorId, vehicleReg, operatorName });
+            setShowPreTripInspection(true);
+          }}
         />
       )}
 
