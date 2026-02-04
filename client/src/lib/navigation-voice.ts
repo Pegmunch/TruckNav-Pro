@@ -57,13 +57,23 @@ export class NavigationVoice {
   private maxVoiceLoadRetries: number = 10;
   private currentRoadType: RoadType = 'unknown'; // Track current road type
   
-  // Distance thresholds for announcements (in feet)
+  // Distance thresholds for announcements (in feet) - EXPANDED for better coverage
   private readonly DISTANCE_THRESHOLDS = {
+    VERY_FAR: 2000, // "In 2000 feet..." - early warning
     FAR: 1000,      // "In 1000 feet..."
     MEDIUM: 500,    // "In 500 feet..."
-    NEAR: 100,      // "In 100 feet, turn..."
+    NEAR: 200,      // "In 200 feet..." - added for smoother transitions
+    CLOSE: 100,     // "In 100 feet, turn..."
     IMMEDIATE: 50   // "Turn now"
   };
+  
+  // Retry configuration for speech failures
+  private speechRetryCount: number = 0;
+  private readonly MAX_SPEECH_RETRIES = 3;
+  private lastFailedText: string | null = null;
+  
+  // Voice announcement event emitter for visual feedback
+  private voiceAnnouncementCallbacks: ((text: string, isPlaying: boolean) => void)[] = [];
   
   // Speech rate - slower for clarity (base rate, not urgency multipliers)
   private readonly SPEECH_RATES = {
@@ -610,6 +620,8 @@ export class NavigationVoice {
     utterance.onstart = () => {
       console.log('[NavigationVoice] 🎙️ Speech STARTED - audio should now be playing through speakers');
       console.log('[NavigationVoice] If you see this but hear nothing, the audio route is wrong (device speaker vs Bluetooth)');
+      this.speechRetryCount = 0; // Reset retry count on successful start
+      this.emitVoiceAnnouncement(instruction.text, true);
     };
     
     // Handle completion
@@ -617,6 +629,7 @@ export class NavigationVoice {
       console.log('[NavigationVoice] ✅ Speech COMPLETED successfully');
       this.isSpeaking = false;
       this.currentUtterance = null;
+      this.emitVoiceAnnouncement(instruction.text, false);
       this.processQueue(); // Process next in queue
     };
     
@@ -631,19 +644,29 @@ export class NavigationVoice {
         name: (event as any).name
       });
       
-      // Specific iOS error handling
+      // Specific iOS error handling with retry logic
       if (errorType === 'interrupted') {
         console.log('[NavigationVoice] Speech was interrupted - another audio source took over');
       } else if (errorType === 'canceled') {
         console.log('[NavigationVoice] Speech was canceled - this is normal if cancel() was called');
       } else if (errorType === 'synthesis-failed') {
-        console.log('[NavigationVoice] Synthesis failed - voice engine error, will retry with next instruction');
+        console.log('[NavigationVoice] Synthesis failed - voice engine error, will retry');
+        // Retry on synthesis failure
+        this.lastFailedText = instruction.text;
+        this.retrySpeech(instruction.text, instruction.level, instruction.type);
       } else if (errorType === 'audio-busy') {
-        console.log('[NavigationVoice] Audio busy - another audio session is active');
+        console.log('[NavigationVoice] Audio busy - another audio session is active, will retry');
+        this.lastFailedText = instruction.text;
+        this.retrySpeech(instruction.text, instruction.level, instruction.type);
+      } else if (errorType === 'not-allowed') {
+        console.log('[NavigationVoice] Not allowed - user interaction required, will retry');
+        this.lastFailedText = instruction.text;
+        this.retrySpeech(instruction.text, instruction.level, instruction.type);
       }
       
       this.isSpeaking = false;
       this.currentUtterance = null;
+      this.emitVoiceAnnouncement(instruction.text, false);
       this.processQueue(); // Try next in queue
     };
     
@@ -710,16 +733,20 @@ export class NavigationVoice {
     // Format direction for speech
     const formattedDirection = this.formatDirection(direction);
     
-    // Check if we should announce based on distance thresholds
-    // Imperial: 1000ft, 500ft, 100ft, now
-    // Metric: 300m, 150m, 30m, now
+    // Check if we should announce based on distance thresholds (EXPANDED for better coverage)
+    // Imperial: 2000ft, 1000ft, 500ft, 200ft, 100ft, now
+    // Metric: 600m, 300m, 150m, 60m, 30m, now
     if (unit === 'mi') {
       if (distanceInFeet <= this.DISTANCE_THRESHOLDS.IMMEDIATE) {
         announcement = this.t('voice.distances.now', { direction: formattedDirection });
         level = 'critical';
-      } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.NEAR) {
+      } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.CLOSE) {
         // 100 feet - urgent turn warning
         announcement = this.t('voice.distances.in_100_feet', { direction: formattedDirection });
+        level = 'urgent';
+      } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.NEAR) {
+        // 200 feet - prepare (NEW threshold)
+        announcement = `In 200 feet, ${formattedDirection}`;
         level = 'urgent';
       } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.MEDIUM) {
         // 500 feet - prepare
@@ -729,15 +756,23 @@ export class NavigationVoice {
         // 1000 feet - advance notice
         announcement = this.t('voice.distances.in_1000_feet', { direction: formattedDirection });
         level = 'normal';
+      } else if (distanceInFeet <= this.DISTANCE_THRESHOLDS.VERY_FAR) {
+        // 2000 feet - early warning (NEW threshold)
+        announcement = `In 2000 feet, ${formattedDirection}`;
+        level = 'normal';
       }
     } else {
-      // Metric system: 300m, 150m, 30m, now
+      // Metric system: 600m, 300m, 150m, 60m, 30m, now (EXPANDED)
       if (distanceInMeters <= 15) {
         announcement = this.t('voice.distances.now', { direction: formattedDirection });
         level = 'critical';
       } else if (distanceInMeters <= 30) {
         // 30 meters - urgent
         announcement = this.t('voice.distances.in_30_meters', { direction: formattedDirection });
+        level = 'urgent';
+      } else if (distanceInMeters <= 60) {
+        // 60 meters - prepare (NEW threshold)
+        announcement = `In 60 metres, ${formattedDirection}`;
         level = 'urgent';
       } else if (distanceInMeters <= 150) {
         // 150 meters - prepare
@@ -746,6 +781,10 @@ export class NavigationVoice {
       } else if (distanceInMeters <= 300) {
         // 300 meters - advance notice
         announcement = this.t('voice.distances.in_300_meters', { direction: formattedDirection });
+        level = 'normal';
+      } else if (distanceInMeters <= 600) {
+        // 600 meters - early warning (NEW threshold)
+        announcement = `In 600 metres, ${formattedDirection}`;
         level = 'normal';
       }
     }
@@ -1101,6 +1140,119 @@ export class NavigationVoice {
    */
   public isSpeakingNow(): boolean {
     return this.isSpeaking;
+  }
+  
+  /**
+   * Subscribe to voice announcement events for visual feedback
+   */
+  public onVoiceAnnouncement(callback: (text: string, isPlaying: boolean) => void): () => void {
+    this.voiceAnnouncementCallbacks.push(callback);
+    return () => {
+      const index = this.voiceAnnouncementCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.voiceAnnouncementCallbacks.splice(index, 1);
+      }
+    };
+  }
+  
+  /**
+   * Emit voice announcement event to all subscribers
+   */
+  private emitVoiceAnnouncement(text: string, isPlaying: boolean): void {
+    this.voiceAnnouncementCallbacks.forEach(cb => {
+      try {
+        cb(text, isPlaying);
+      } catch (e) {
+        console.warn('[NavigationVoice] Callback error:', e);
+      }
+    });
+  }
+  
+  /**
+   * Retry failed speech with exponential backoff
+   */
+  private async retrySpeech(text: string, level: VoiceGuidanceLevel, type: AnnouncementType): Promise<void> {
+    if (this.speechRetryCount >= this.MAX_SPEECH_RETRIES) {
+      console.warn('[NavigationVoice] Max retries reached, giving up on:', text.substring(0, 30));
+      this.speechRetryCount = 0;
+      this.lastFailedText = null;
+      return;
+    }
+    
+    const delay = Math.pow(2, this.speechRetryCount) * 200; // 200ms, 400ms, 800ms
+    console.log(`[NavigationVoice] Retrying speech in ${delay}ms (attempt ${this.speechRetryCount + 1})`);
+    
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
+    // Re-initialize audio before retry
+    await audioBluetoothInit.reinitialize();
+    
+    this.speechRetryCount++;
+    this.speak(text, level, true, type);
+  }
+  
+  /**
+   * Force speak with maximum reliability (for critical announcements)
+   * Uses multiple fallback strategies
+   */
+  public async forceSpeakReliable(text: string): Promise<boolean> {
+    console.log('[NavigationVoice] 🔊 Force speak with maximum reliability:', text);
+    
+    // Reset any mute state for this critical announcement
+    const wasMuted = this.isGlobalMuted();
+    
+    // Step 1: Ensure audio is fully initialized
+    await audioBluetoothInit.reinitialize();
+    await audioBluetoothInit.activateBluetoothForSpeech();
+    
+    // Step 2: Cancel any pending speech
+    this.synthesis.cancel();
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    // Step 3: Reload voices
+    this.loadVoices();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Step 4: Create utterance with maximum volume
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.volume = 1.0;
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    
+    if (this.selectedVoice) {
+      utterance.voice = this.selectedVoice;
+    } else if (this.voices.length > 0) {
+      utterance.voice = this.voices[0];
+    }
+    
+    return new Promise((resolve) => {
+      utterance.onend = () => {
+        console.log('[NavigationVoice] ✅ Force speak completed');
+        this.emitVoiceAnnouncement(text, false);
+        resolve(true);
+      };
+      
+      utterance.onerror = (e) => {
+        console.warn('[NavigationVoice] Force speak error:', (e as any).error);
+        this.emitVoiceAnnouncement(text, false);
+        resolve(false);
+      };
+      
+      utterance.onstart = () => {
+        console.log('[NavigationVoice] 🎙️ Force speak started');
+        this.emitVoiceAnnouncement(text, true);
+      };
+      
+      try {
+        this.synthesis.speak(utterance);
+      } catch (e) {
+        console.error('[NavigationVoice] Force speak exception:', e);
+        resolve(false);
+      }
+      
+      // Timeout fallback
+      setTimeout(() => resolve(false), 10000);
+    });
   }
 }
 
