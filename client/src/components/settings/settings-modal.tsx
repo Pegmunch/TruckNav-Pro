@@ -1854,10 +1854,17 @@ const SettingsModal = memo(function SettingsModal({
 
                             {/* Next Button - Start Pre-Trip Inspection */}
                             <Button
-                              className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:opacity-50"
-                              disabled={!selectedFleetVehicleId || !selectedOperatorId || !onStartInspection}
+                              className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white"
                               onClick={() => {
-                                if (!selectedFleetVehicleId || !selectedOperatorId || !onStartInspection) return;
+                                if (!selectedFleetVehicleId || !selectedOperatorId) {
+                                  toast({
+                                    title: "Missing Information",
+                                    description: "Please enter both vehicle registration and operator name.",
+                                    variant: "destructive"
+                                  });
+                                  return;
+                                }
+                                if (!onStartInspection) return;
                                 const vehicle = fleetVehicles.find(v => v.id === selectedFleetVehicleId);
                                 const operator = operators.find(o => o.id === selectedOperatorId);
                                 if (vehicle && operator) {
