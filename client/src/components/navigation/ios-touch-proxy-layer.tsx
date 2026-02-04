@@ -41,14 +41,44 @@ export function IOSTouchProxyLayer() {
         return; // Let the event propagate to the dialog
       }
       
-      console.log(`[IOS-TOUCH-PROXY] ✅ ${eventType} captured for: ${id}`);
+      // Get touch coordinates
+      let touchX = 0, touchY = 0;
+      if (e instanceof TouchEvent && e.touches.length > 0) {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+      } else if (e instanceof PointerEvent || e instanceof MouseEvent) {
+        touchX = e.clientX;
+        touchY = e.clientY;
+      }
+      
+      // Find the CLOSEST button to the touch point (not just the hit proxy)
+      // This handles overlapping proxy areas correctly
+      let closestId = id;
+      let closestDistance = Infinity;
+      
+      for (const [btnId, btnReg] of buttonRegistry.entries()) {
+        const btnRect = btnReg.getRect();
+        if (!btnRect || btnRect.width === 0) continue;
+        
+        // Calculate center of button
+        const centerX = btnRect.left + btnRect.width / 2;
+        const centerY = btnRect.top + btnRect.height / 2;
+        const distance = Math.sqrt(Math.pow(touchX - centerX, 2) + Math.pow(touchY - centerY, 2));
+        
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestId = btnId;
+        }
+      }
+      
+      console.log(`[IOS-TOUCH-PROXY] ✅ ${eventType} captured - hit proxy: ${id}, closest button: ${closestId}`);
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       
       if (navigator.vibrate) navigator.vibrate(10);
       
-      const currentReg = buttonRegistry.get(id);
+      const currentReg = buttonRegistry.get(closestId);
       if (currentReg) {
         currentReg.callback();
       }

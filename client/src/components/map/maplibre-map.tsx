@@ -94,6 +94,7 @@ export interface MapLibreMapRef {
     onError?: (error: GeolocationPositionError | Error, usedFallback: boolean) => void;
     onRetry?: (attemptNumber: number, maxAttempts: number) => void;
   }) => void;
+  resetNavigationCamera: () => void;
 }
 
 interface MapLibreMapProps {
@@ -1013,8 +1014,50 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         flyByCallbacksRef.current.onCancel?.();
       }
     },
-    isFlyByActive: () => isFlyByActive
-  }), [bearing, is3DMode, preferences.mapViewMode, isLoaded, isFlyByActive]);
+    isFlyByActive: () => isFlyByActive,
+    resetNavigationCamera: () => {
+      if (!map.current || !isLoaded) {
+        console.warn('[RESET-NAV-CAMERA] Map not ready');
+        return;
+      }
+      
+      console.log('[RESET-NAV-CAMERA] Resetting to navigation defaults: zoom 16, pitch 55°');
+      
+      // Reset view state to tilted (3D navigation view)
+      setViewState('tilted');
+      
+      // Get GPS position for centering and bearing
+      const gps = gpsPosition;
+      const containerHeight = map.current.getContainer().clientHeight || 800;
+      
+      if (gps && isValidCoord(gps.latitude) && isValidCoord(gps.longitude)) {
+        // Use GPS heading for bearing, default to 0 if not available
+        const bearing = typeof gps.heading === 'number' && !isNaN(gps.heading) ? gps.heading : 0;
+        
+        map.current.flyTo({
+          center: [gps.longitude, gps.latitude],
+          zoom: 16,
+          pitch: 55,
+          bearing: bearing,
+          padding: {
+            top: Math.round(containerHeight * 0.55),
+            bottom: 40,
+            left: 0,
+            right: 0
+          },
+          duration: 1000,
+          essential: true
+        });
+      } else {
+        // No GPS - just reset pitch and zoom at current location
+        map.current.easeTo({
+          zoom: 16,
+          pitch: 55,
+          duration: 1000
+        });
+      }
+    }
+  }), [bearing, is3DMode, preferences.mapViewMode, isLoaded, isFlyByActive, gpsPosition]);
   
   // Fetch traffic incidents with 2-minute refresh
   const { data: incidents = [] } = useQuery<TrafficIncident[]>({

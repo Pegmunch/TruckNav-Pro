@@ -4006,7 +4006,7 @@ function NavigationPageContent() {
                     <RightActionStack
                       onZoomIn={() => mapRef.current?.zoomIn()}
                       onZoomOut={() => mapRef.current?.zoomOut()}
-                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onRecenter={() => mapRef.current?.resetNavigationCamera()}
                       onToggle3D={() => {
                         mapRef.current?.toggle3DMode();
                         setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
@@ -4492,7 +4492,7 @@ function NavigationPageContent() {
                       onZoomOut={() => mapRef.current?.zoomOut()}
                       onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
                       onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
-                      onRecenter={() => mapRef.current?.zoomToUserLocation()}
+                      onRecenter={() => mapRef.current?.resetNavigationCamera()}
                       onToggleMapView={() => {
                         console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
                         mapRef.current?.toggleMapView();
