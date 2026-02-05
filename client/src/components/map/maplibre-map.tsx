@@ -4723,8 +4723,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         </div>
       )}
       
-      {/* Traffic Legend - Shows when traffic overlay is active with data */}
-      {showTraffic && hasValidRoute && routeTrafficData.segments.length > 0 && (
+      {/* Traffic Legend - Shows when traffic overlay is active with data, hidden during navigation */}
+      {showTraffic && hasValidRoute && routeTrafficData.segments.length > 0 && !isNavigating && (
         <div 
           className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto"
           data-testid="traffic-legend"
