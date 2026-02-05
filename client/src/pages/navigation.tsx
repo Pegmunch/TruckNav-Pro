@@ -4546,8 +4546,14 @@ function NavigationPageContent() {
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
                             {(() => {
-                              // dynamicEtaMinutes is in minutes, currentRoute.duration is also in MINUTES from server
-                              const totalMinutes = dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0);
+                              // Calculate ETA based on vehicle-specific max speed
+                              // Class 1/HGV: 56 MPH (25 m/s), Car: 70 MPH (31.3 m/s)
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute.distance || 0) * 1609.344;
+                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272; // 70 MPH or 56 MPH in m/s
+                              const totalSeconds = distanceMeters / maxSpeedMs;
+                              const totalMinutes = totalSeconds / 60;
                               const hours = Math.floor(totalMinutes / 60);
                               const mins = Math.round(totalMinutes % 60);
                               if (hours > 0) {
@@ -4560,7 +4566,15 @@ function NavigationPageContent() {
                         <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <Clock className="w-4 h-4 flex-shrink-0" />
                           <span className="font-bold text-sm">
-                            {new Date(Date.now() + (dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)) * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            {(() => {
+                              // Calculate arrival time based on vehicle-specific max speed
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute.distance || 0) * 1609.344;
+                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272; // 70 MPH or 56 MPH in m/s
+                              const totalSeconds = distanceMeters / maxSpeedMs;
+                              return new Date(Date.now() + totalSeconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                            })()}
                           </span>
                         </div>
                       </div>
