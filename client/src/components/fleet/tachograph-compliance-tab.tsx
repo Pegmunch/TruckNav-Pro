@@ -179,6 +179,21 @@ export function TachographComplianceTab() {
 
   return (
     <div className="space-y-6">
+      {/* ELD/Tachograph Compliance Disclaimer */}
+      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Important:</strong> This tracking system is a driver aid only and is NOT a certified 
+              ELD (Electronic Logging Device) under FMCSA regulations or a certified digital tachograph. 
+              For legal compliance, you must use certified equipment registered with the appropriate 
+              regulatory authority (FMCSA, DVSA, or equivalent).
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">

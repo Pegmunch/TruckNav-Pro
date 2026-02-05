@@ -122,6 +122,22 @@ export default function LegalDisclaimerSimple({ onAccept }: LegalDisclaimerSimpl
             </p>
           </div>
 
+          {/* ELD/Tachograph Compliance Notice */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <h3 className="text-base sm:text-lg font-semibold">ELD & Tachograph Compliance</h3>
+            </div>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              <strong>Important:</strong> TruckNav Pro is NOT a certified Electronic Logging Device (ELD) 
+              under FMCSA regulations, nor is it a certified digital tachograph. The Working Time Directive 
+              warnings and Hours of Service tracking features are driver aids only and do NOT replace 
+              official ELD devices, digital tachographs, or driver cards required by law. For legal 
+              compliance, you must use certified equipment registered with the appropriate regulatory 
+              authority (FMCSA, DVSA, or equivalent).
+            </p>
+          </div>
+
           {/* Data & Privacy */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">

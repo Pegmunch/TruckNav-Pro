@@ -126,6 +126,21 @@ export function HoursOfServiceTab() {
 
   return (
     <div className="space-y-6">
+      {/* ELD/HoS Compliance Disclaimer */}
+      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Important:</strong> This Hours of Service tracking is a driver aid only and is NOT a 
+              certified ELD (Electronic Logging Device) under FMCSA regulations. For legal compliance in the 
+              US, you must use certified equipment from the FMCSA-approved list. In the EU/UK, official 
+              digital tachograph equipment is required.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
