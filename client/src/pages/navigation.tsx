@@ -4041,7 +4041,7 @@ function NavigationPageContent() {
                 <>
                   <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                     style={{
-                      bottom: 'calc(56px + var(--safe-area-bottom))',
+                      bottom: 'calc(80px + var(--safe-area-bottom))',
                       left: '16px'
                     }}>
                     {/* Menu Button */}
@@ -4051,7 +4051,7 @@ function NavigationPageContent() {
                         setShowComprehensiveMenu(true);
                       }}
                       size="icon"
-                      className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium"
+                      className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium md:hidden"
                       data-testid="button-open-menu-plan"
                     >
                       <Menu className="w-6 h-6" />
