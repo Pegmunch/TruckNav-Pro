@@ -1555,11 +1555,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             }
           ]
         } as any,
-        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [-1.5, 52.5],
-        zoom: gpsPosition ? preferences.zoomLevel : 6,
+        center: gpsPosition ? [gpsPosition.longitude, gpsPosition.latitude] : [10, 30],
+        zoom: gpsPosition ? preferences.zoomLevel : 2,
         pitch: 0,
         bearing: 0,
-        minZoom: 3,
+        minZoom: 2,
         maxZoom: 19,
         minPitch: 0,
         maxPitch: 67,
