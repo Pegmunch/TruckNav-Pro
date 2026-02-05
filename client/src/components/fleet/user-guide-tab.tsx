@@ -9,7 +9,7 @@ import {
   Clock, CreditCard, MapPinned, Menu, Mic, X, AlertCircle,
   Compass, Layers, Mountain, Car, ChevronRight, CheckCircle2,
   Smartphone, Monitor, Globe, Zap, Lock, Bell, Route, Search,
-  Video, Camera, HardDrive, Gauge
+  Video, Camera, HardDrive, Gauge, ClipboardCheck, Timer
 } from 'lucide-react';
 
 interface GuideSection {
@@ -1708,8 +1708,511 @@ export function UserGuideTab() {
                 <Badge>Driver Behavior</Badge>
                 <Badge>Hours of Service</Badge>
                 <Badge>Customer Billing</Badge>
+                <Badge>Tachograph Compliance</Badge>
+                <Badge>Vehicle Checklist</Badge>
                 <Badge>Dash Cam</Badge>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    },
+    {
+      id: 'tachograph',
+      title: 'Tachograph Compliance',
+      icon: <Gauge className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Gauge className="w-6 h-6 text-blue-600" />
+            Tachograph Compliance Guide
+          </h2>
+
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800 dark:text-amber-200">
+                <strong>Important Disclaimer:</strong> This tracking system is a driver aid only and is NOT a certified ELD (Electronic Logging Device) under FMCSA regulations or a certified digital tachograph. For legal compliance, you must use certified equipment registered with the appropriate regulatory authority (FMCSA, DVSA, or equivalent).
+              </div>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Purpose & Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>The Tachograph Compliance tab helps fleet managers track and manage EU/UK drivers' hours infringements. It provides a centralised record of all tachograph-related violations across your fleet.</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Track infringements per driver with severity ratings</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Rolling 12-month compliance scoring for each driver</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Record fines and track payment status</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Export records to CSV for auditing and reporting</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Dashboard Overview Cards
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>Four summary cards at the top provide an instant fleet compliance snapshot:</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <Shield className="w-4 h-4 text-green-500 mt-0.5" />
+                  <div><strong>Fleet Compliance Score:</strong> Average score across all drivers. Green (80%+) = Excellent, Yellow (60-79%) = Needs attention, Orange (40-59%) = At risk, Red (below 40%) = Critical.</div>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <AlertTriangle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <div><strong>Total Infringements:</strong> Total number of recorded infringements in the rolling 12-month window.</div>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5" />
+                  <div><strong>Serious / Very Serious:</strong> Count of higher severity violations that require immediate management attention.</div>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CreditCard className="w-4 h-4 text-red-500 mt-0.5" />
+                  <div><strong>Total Fines:</strong> Cumulative fine amount across all recorded infringements.</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Driver Compliance Scores
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>Each driver starts at 100% and loses points for each infringement recorded in the past 12 months. Drivers are ranked from highest to lowest score.</p>
+              <div className="space-y-2">
+                <p className="font-medium">Score Calculation:</p>
+                <ul className="space-y-1 pl-4">
+                  <li>Each driver begins at 100 points</li>
+                  <li>Points are deducted based on infringement severity</li>
+                  <li>Only infringements from the last 12 months count</li>
+                  <li>Score cannot go below 0%</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Infringement Types & Categories
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>Infringements are organised into categories with associated penalty points:</p>
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">Driving Time Violations</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Daily Driving Exceeded (9hr/10hr) - 15 points</li>
+                    <li>Continuous Driving Exceeded (4.5hr) - 10 points</li>
+                    <li>Weekly Driving Exceeded (56hr) - 20 points</li>
+                    <li>Fortnightly Driving Exceeded (90hr) - 25 points</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">Break Violations</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Insufficient Break (less than 45min) - 8 points</li>
+                    <li>Break at Wrong Time - 5 points</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">Rest Period Violations</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Insufficient Daily Rest (less than 11hr) - 12 points</li>
+                    <li>Insufficient Weekly Rest (less than 45hr) - 18 points</li>
+                    <li>Missed Compensation Rest - 15 points</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">Card / Recording Violations</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Missing Card Entries - 8 points</li>
+                    <li>Wrong Activity Mode - 5 points</li>
+                    <li>Driving Without Card - 20 points</li>
+                    <li>Fraudulent Multiple Cards - 50 points</li>
+                    <li>Record Tampering - 50 points</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">Other Violations</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Unreported Vehicle Unit Fault - 10 points</li>
+                    <li>Missing Required Printouts - 5 points</li>
+                    <li>Other Infringement - 5 points</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Severity Levels
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <p>Each infringement is classified by severity for prioritisation:</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-yellow-100 text-yellow-800">Minor</Badge>
+                  <span>Low-impact violations, typically procedural oversights</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-orange-100 text-orange-800">Serious</Badge>
+                  <span>Significant violations requiring corrective action</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-red-100 text-red-800">Very Serious</Badge>
+                  <span>Critical violations with potential legal consequences</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">How to Use</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">1</div>
+                  <div>
+                    <p className="font-medium">Record an Infringement</p>
+                    <p className="text-muted-foreground">Click "Record Infringement" to log a new violation. Select the driver, infringement type, date, severity, and optionally enter fine amount and notes.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">2</div>
+                  <div>
+                    <p className="font-medium">Filter by Driver</p>
+                    <p className="text-muted-foreground">Use the driver dropdown filter above the records table to view infringements for a specific driver or all drivers.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">3</div>
+                  <div>
+                    <p className="font-medium">Edit or Delete Records</p>
+                    <p className="text-muted-foreground">Use the edit (pencil) icon to update infringement details or the delete (bin) icon to remove a record. Deletion requires confirmation.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">4</div>
+                  <div>
+                    <p className="font-medium">Export to CSV</p>
+                    <p className="text-muted-foreground">Click "Export" to download all filtered infringement records as a CSV file for external auditing, reporting, or sharing with authorities.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Infringement Record Fields</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <p className="mb-2">Each record in the infringement table shows:</p>
+              <ul className="space-y-1 pl-4">
+                <li><strong>Date:</strong> When the infringement occurred</li>
+                <li><strong>Driver:</strong> The operator who committed the violation</li>
+                <li><strong>Infringement Type:</strong> Category and description of the violation</li>
+                <li><strong>Severity:</strong> Minor, Serious, or Very Serious</li>
+                <li><strong>Points:</strong> Penalty points deducted from the driver's compliance score</li>
+                <li><strong>Fine:</strong> Financial penalty amount (if applicable) with paid/unpaid status</li>
+                <li><strong>Reported By:</strong> Person who recorded the infringement</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    },
+    {
+      id: 'vehicle-checklist',
+      title: 'Vehicle Checklist',
+      icon: <ClipboardCheck className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <ClipboardCheck className="w-6 h-6 text-blue-600" />
+            Pre-Trip Vehicle Inspection Checklist
+          </h2>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Purpose & Legal Requirement</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>Under UK and EU law, drivers of HGVs must carry out a daily walk-around check before driving. The Pre-Trip Inspection Checklist in TruckNav Pro provides a structured, digital way to complete and record these checks.</p>
+              <div className="grid gap-2 md:grid-cols-2">
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Meets DVSA daily walk-around check requirements</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Digital records with timestamps for audit trail</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Linked to specific vehicle and driver</span>
+                </div>
+                <div className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span>Time-tracked inspections with duration recording</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Truck className="w-5 h-5" />
+                Inspection Categories
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>The checklist is organised into 8 inspection categories covering all critical vehicle areas:</p>
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">1. Exterior Checks</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>All mirrors clean and properly adjusted</li>
+                    <li>Windscreen clean, no cracks or damage</li>
+                    <li>Windscreen wipers and washers working</li>
+                    <li>Bodywork - no damage or sharp edges</li>
+                    <li>Number plates clean and visible</li>
+                    <li>Fuel cap secure</li>
+                    <li>Exhaust system secure, no leaks</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">2. Cab & Controls</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Seat belt functioning correctly</li>
+                    <li>Seat and steering adjustment working</li>
+                    <li>Horn working</li>
+                    <li>Heater and demister working</li>
+                    <li>Dashboard warning lights checked</li>
+                    <li>Speedometer and tachograph working</li>
+                    <li>Steering - no excessive play</li>
+                    <li>Clutch and brake pedals operating correctly</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">3. Lights & Signals</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Headlights (dipped and main beam), side lights, rear lights</li>
+                    <li>Brake lights, all indicators (front, side, rear)</li>
+                    <li>Hazard warning lights, reverse lights, fog lights</li>
+                    <li>Marker lights and reflectors clean and working</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">4. Tyres & Wheels</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Tyre pressures checked (visual inspection)</li>
+                    <li>Tyre condition - no cuts, bulges or damage</li>
+                    <li>Tyre tread depth adequate (minimum 1mm)</li>
+                    <li>Wheel nuts secure, spare wheel serviceable</li>
+                    <li>Mudflaps and spray suppression fitted</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">5. Brakes & Safety</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Service brake operation checked</li>
+                    <li>Parking brake holding</li>
+                    <li>Air pressure building correctly</li>
+                    <li>ABS warning light functioning</li>
+                    <li>Brake lines - no visible leaks or damage</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">6. Trailer Checks</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Trailer coupling secure</li>
+                    <li>Trailer brakes connected and working</li>
+                    <li>Trailer lights all working</li>
+                    <li>Landing legs raised and secure</li>
+                    <li>Trailer tyres - condition and pressure</li>
+                    <li>Load secure and within weight limits</li>
+                    <li>Doors and curtains/body secure</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">7. Tail Lift</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Tail lift operating correctly</li>
+                    <li>Tail lift controls working</li>
+                    <li>Tail lift safety devices working</li>
+                    <li>Tail lift stowed and secured</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-600 mb-1">8. Documents & Equipment</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Driving licence carried</li>
+                    <li>Vehicle documents (V5, insurance, MOT)</li>
+                    <li>Tachograph card inserted</li>
+                    <li>Warning triangle, hi-visibility vest present</li>
+                    <li>Fire extinguisher present and in date</li>
+                    <li>First aid kit present</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">How to Complete an Inspection</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">1</div>
+                  <div>
+                    <p className="font-medium">Access the Checklist</p>
+                    <p className="text-muted-foreground">On mobile, open the menu and go to Settings. Select a vehicle and driver, then tap "Start Inspection" to begin. You must have both a vehicle and driver selected.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">2</div>
+                  <div>
+                    <p className="font-medium">Walk Around the Vehicle</p>
+                    <p className="text-muted-foreground">Work through each category systematically. Tap each checkbox as you inspect that item. Categories can be expanded or collapsed for easy navigation.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">3</div>
+                  <div>
+                    <p className="font-medium">Add Notes</p>
+                    <p className="text-muted-foreground">Use the notes field at the bottom to record any defects, issues, or observations that need attention or follow-up.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-sm font-medium">4</div>
+                  <div>
+                    <p className="font-medium">Submit Inspection</p>
+                    <p className="text-muted-foreground">Once all items are checked, tap "Submit Inspection". The system records the time taken, all checked items, and any notes. The inspection is linked to the vehicle and driver.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Timer className="w-5 h-5" />
+                Inspection Timer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <p>A built-in timer starts when you open the checklist and records the total duration of your inspection. This provides:</p>
+              <ul className="space-y-1 pl-4">
+                <li>Evidence that a thorough inspection was completed (not rushed)</li>
+                <li>Duration records visible in the fleet management inspection history</li>
+                <li>Helps fleet managers identify unusually quick inspections that may need review</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Fleet Manager: Inspection History
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <p>Fleet managers can review all completed inspections in the Vehicle Inspections tab within Fleet Management:</p>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Filter:</strong> Search by vehicle, driver, or date to find specific inspections</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>View Details:</strong> Expand any inspection to see the full checklist with pass/fail for each item</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Pass/Fail Status:</strong> Green badge for all items passed, amber warning if any items were left unchecked</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Duration:</strong> How long the driver took to complete the inspection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Notes:</strong> Any defects or observations recorded by the driver</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                  <span><strong>Audit Trail:</strong> Complete timestamped records stored for compliance audits</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Best Practices</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Complete the inspection BEFORE starting your journey - never while driving</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Physically check each item - do not just tick boxes from the cab</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Report any defects immediately to your transport manager</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Do not drive with serious defects - use the notes to record and report</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <span>Allow adequate time (typically 10-15 minutes for a thorough check)</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </div>
