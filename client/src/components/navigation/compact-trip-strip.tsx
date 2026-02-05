@@ -219,6 +219,15 @@ export function CompactTripStrip({
             {isOnline ? <Wifi className="w-3 h-3 md:w-4 md:h-4" /> : <WifiOff className="w-3 h-3 md:w-4 md:h-4" />}
             <span className="text-[10px] md:text-sm font-bold">{isOnline ? 'Net' : 'Off'}</span>
           </div>
+          <button
+            onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
+            className="flex items-center gap-0.5 text-white px-1.5 md:px-2 py-1 md:py-2 rounded shadow-sm flex-shrink-0"
+            style={{ backgroundColor: isGpsReady ? '#22c55e' : isGpsAcquiring ? '#3b82f6' : '#ef4444' }}
+            disabled={isGpsReady || isGpsAcquiring}
+          >
+            {isGpsReady ? <Navigation className="w-3 h-3 md:w-4 md:h-4" /> : <MapPin className="w-3 h-3 md:w-4 md:h-4" />}
+            <span className="text-[10px] md:text-sm font-bold">{isGpsReady ? 'GPS' : isGpsAcquiring ? '...' : 'Set'}</span>
+          </button>
         </div>
         
         {/* Center: Speed limit + Current speed (unpacked) - larger on tablet */}
@@ -293,23 +302,6 @@ export function CompactTripStrip({
           >
             {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-4 md:h-4" /> : <VolumeX className="w-3 h-3 md:w-4 md:h-4" />}
             {voiceEnabled ? 'On' : 'Off'}
-          </button>
-          <button
-            onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
-            aria-label={isGpsReady ? "GPS ready" : isGpsAcquiring ? "Acquiring GPS" : "Set GPS location"}
-            className={cn(
-              'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full transition-colors shadow-sm text-[10px] md:text-sm font-bold',
-              isGpsReady 
-                ? 'bg-green-500 text-white cursor-default'
-                : isGpsAcquiring
-                  ? 'bg-blue-500 text-white cursor-default animate-pulse'
-                  : 'bg-red-500 text-white cursor-pointer'
-            )}
-            disabled={isGpsReady || isGpsAcquiring}
-            data-testid="gps-status-button"
-          >
-            {isGpsReady ? <Navigation className="w-3 h-3 md:w-4 md:h-4" /> : <MapPin className="w-3 h-3 md:w-4 md:h-4" />}
-            {isGpsReady ? 'GPS' : isGpsAcquiring ? '...' : 'Set'}
           </button>
         </div>
         

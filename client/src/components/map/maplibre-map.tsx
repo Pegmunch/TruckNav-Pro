@@ -4678,39 +4678,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         />
         
       
-      {/* GPS Status Indicator */}
-      {(gpsStatus === 'acquiring' || gpsStatus === 'unavailable' || gpsStatus === 'error') && (
-        <div 
-          className="absolute top-28 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
-          data-testid="gps-status-indicator"
-        >
-          <div className={cn(
-            "px-2 py-1 rounded-full shadow-lg backdrop-blur-sm flex items-center gap-1.5",
-            gpsStatus === 'acquiring' && "bg-transparent text-foreground border border-orange-500",
-            gpsStatus === 'unavailable' && "bg-red-500/90 text-white",
-            gpsStatus === 'error' && "bg-red-600/90 text-white"
-          )}>
-            {gpsStatus === 'acquiring' && (
-              <>
-                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
-                <span className="text-xs font-medium">Acquiring GPS</span>
-              </>
-            )}
-            {gpsStatus === 'unavailable' && (
-              <>
-                <Crosshair className="w-3 h-3" />
-                <span className="text-xs font-medium">GPS unavailable</span>
-              </>
-            )}
-            {gpsStatus === 'error' && (
-              <>
-                <Crosshair className="w-3 h-3" />
-                <span className="text-xs font-medium">GPS error</span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* GPS Status Indicator - REMOVED: Now integrated into compact-trip-strip ETA row */}
       
       {/* GPS/Cache selection moved to Settings modal - Online/Offline tab */}
       
