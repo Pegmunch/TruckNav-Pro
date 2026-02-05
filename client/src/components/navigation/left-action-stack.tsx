@@ -1,4 +1,4 @@
-import { AlertCircle, Menu, Navigation, X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { AlertCircle, Truck, Navigation, X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { getVoiceCommandSystem, type IncidentType, type NavigationCommandType } from '@/lib/voice-commands';
@@ -397,14 +397,14 @@ export function LeftActionStack({
           ref={menuButtonRef}
           variant="ghost"
           size="icon"
-          className={`h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu -mt-12 md:mt-0 ${
+          className={`h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-blue-600 shadow-lg border-t-[3px] border-b-[3px] border-blue-500 select-none touch-manipulation transition-all duration-300 transform-gpu -mt-12 md:mt-0 ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
           style={{ touchAction: 'manipulation' }}
           data-testid="button-menu"
           data-tour-id="menu-button"
         >
-          <Menu className="h-5 w-5" />
+          <Truck className="h-5 w-5" />
         </Button>
       )}
     </div>

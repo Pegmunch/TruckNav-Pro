@@ -118,21 +118,18 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
       >
         <Button
           onClick={onToggle}
-          variant="default"
+          variant="ghost"
           className={cn(
             "h-16 w-8 rounded-l-lg rounded-r-none px-0 py-0",
-            "bg-primary hover:bg-primary/90 text-primary-foreground",
-            "border-l border-t border-b border-border shadow-lg",
+            "bg-white hover:bg-gray-50 text-blue-600",
+            "border-l border-gray-200 border-t-[3px] border-b-[3px] border-t-blue-500 border-b-blue-500 shadow-lg",
             "automotive-touch-target flex flex-col items-center justify-center gap-1",
             "transform transition-all duration-300 ease-in-out",
             !isOpen && "hover:translate-x-[-4px]"
           )}
           data-testid="button-toggle-features-sidebar-tab"
         >
-          <Star className="w-4 h-4" />
-          <div className="text-xs font-medium leading-none">
-            F
-          </div>
+          <Truck className="w-4 h-4" />
         </Button>
       </div>
 
