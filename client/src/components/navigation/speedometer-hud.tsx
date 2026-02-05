@@ -372,9 +372,10 @@ const SpeedometerHUD = memo(function SpeedometerHUD({
       data-testid="speedometer-hud"
       data-tour-id="speedometer"
     >
-      {/* Live Travel Time Display - Above Speedometer */}
+      {/* Live Travel Time Display - Positioned above the info boxes and action buttons */}
       {isNavigating && liveTravelTime && (
-        <div className="flex items-center justify-center gap-2 mb-1.5">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-2"
+          style={{ bottom: 'calc(100% + 50px)' }}>
           <div className={cn(
             "px-3 py-1 rounded-full",
             "bg-black/80 backdrop-blur-sm",
