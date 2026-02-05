@@ -193,10 +193,24 @@ const SettingsModal = memo(function SettingsModal({
   const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState(defaultTab);
   
-  // Settings state
-  const [mapPreferences, setMapPreferences] = useState<MapPreferences>(() => 
-    loadSettings(MAP_PREFERENCES_KEY, defaultMapPreferences)
-  );
+  // Settings state - sync mapViewMode from maplibre preferences on initial load
+  const [mapPreferences, setMapPreferences] = useState<MapPreferences>(() => {
+    const prefs = loadSettings(MAP_PREFERENCES_KEY, defaultMapPreferences);
+    // Sync mapViewMode from maplibre preferences (the actual map uses this key)
+    try {
+      const maplibreKey = 'trucknav_maplibre_preferences';
+      const maplibreData = localStorage.getItem(maplibreKey);
+      if (maplibreData) {
+        const maplibrePrefs = JSON.parse(maplibreData);
+        if (maplibrePrefs.mapViewMode) {
+          prefs.mapViewMode = maplibrePrefs.mapViewMode;
+        }
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+    return prefs;
+  });
   const [dndState, setDndState] = useState<DoNotDisturbState>(() => 
     loadSettings(DND_SETTINGS_KEY, defaultDndState)
   );
@@ -321,9 +335,26 @@ const SettingsModal = memo(function SettingsModal({
     }
   }, [open]);
 
-  // Save settings when they change
+  // Save settings when they change - sync with BOTH storage keys for map preferences
   useEffect(() => {
     saveSettings(MAP_PREFERENCES_KEY, mapPreferences);
+    
+    // CRITICAL: Also sync mapViewMode to the maplibre preferences storage key
+    // This ensures the actual map component receives the updated setting
+    try {
+      const maplibreKey = 'trucknav_maplibre_preferences';
+      const existingMaplibre = localStorage.getItem(maplibreKey);
+      const maplibrePrefs = existingMaplibre ? JSON.parse(existingMaplibre) : {};
+      
+      // Sync the mapViewMode setting
+      if (maplibrePrefs.mapViewMode !== mapPreferences.mapViewMode) {
+        maplibrePrefs.mapViewMode = mapPreferences.mapViewMode;
+        localStorage.setItem(maplibreKey, JSON.stringify(maplibrePrefs));
+        console.log('[Settings] Synced mapViewMode to maplibre preferences:', mapPreferences.mapViewMode);
+      }
+    } catch (error) {
+      console.warn('[Settings] Failed to sync maplibre preferences:', error);
+    }
   }, [mapPreferences]);
 
   useEffect(() => {
