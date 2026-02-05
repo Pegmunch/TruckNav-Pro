@@ -55,6 +55,33 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastCommand, setLastCommand] = useState('');
   const [recognition, setRecognition] = useState<any>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentAnnouncement, setCurrentAnnouncement] = useState('');
+
+  // Subscribe to voice announcements for visual feedback
+  useEffect(() => {
+    let clearTimer: ReturnType<typeof setTimeout> | null = null;
+    
+    const unsubscribe = navigationVoice.onVoiceAnnouncement((text, isPlaying) => {
+      // Clear any pending timer
+      if (clearTimer) {
+        clearTimeout(clearTimer);
+        clearTimer = null;
+      }
+      
+      setIsSpeaking(isPlaying);
+      if (isPlaying) {
+        setCurrentAnnouncement(text);
+      } else {
+        clearTimer = setTimeout(() => setCurrentAnnouncement(''), 1000);
+      }
+    });
+    
+    return () => {
+      if (clearTimer) clearTimeout(clearTimer);
+      unsubscribe();
+    };
+  }, []);
 
   // Voice intent handlers for navigation commands
   const intentHandlers: IntentHandlers = {
@@ -205,12 +232,33 @@ const VoiceNavigationPanel = memo(function VoiceNavigationPanel({
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4" />
             Voice Navigation
+            {isSpeaking && (
+              <span className="ml-1 flex items-center gap-1 animate-pulse text-green-600 dark:text-green-400">
+                <Volume2 className="w-4 h-4" />
+              </span>
+            )}
           </div>
-          <Badge variant="secondary" className="text-xs">
-            {voiceIntents.isProcessing ? "Processing..." : isListening ? "Listening" : "Ready"}
+          <Badge 
+            variant={isSpeaking ? "default" : "secondary"} 
+            className={cn(
+              "text-xs transition-colors",
+              isSpeaking && "bg-green-600 text-white"
+            )}
+          >
+            {isSpeaking ? "Speaking..." : voiceIntents.isProcessing ? "Processing..." : isListening ? "Listening" : "Ready"}
           </Badge>
         </CardTitle>
       </CardHeader>
+      
+      {/* Voice Speaking Indicator */}
+      {isSpeaking && currentAnnouncement && (
+        <div className="mx-4 mb-2 p-2 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-700">
+          <p className="text-xs text-green-800 dark:text-green-200 flex items-center gap-2">
+            <Volume2 className="w-3 h-3 animate-pulse" />
+            <span className="truncate">{currentAnnouncement}</span>
+          </p>
+        </div>
+      )}
       
       <CardContent className="space-y-3">
         {/* Voice Input Controls */}
