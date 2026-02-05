@@ -1009,13 +1009,23 @@ export class NavigationVoice {
     console.log('[NavigationVoice] Current settings:', JSON.stringify(this.settings));
     console.log('[NavigationVoice] Voices loaded:', this.voices.length);
     console.log('[NavigationVoice] Selected voice:', this.selectedVoice?.name || 'none');
+    console.log('[NavigationVoice] Global mute state:', this.isGlobalMuted());
     
-    // Force enable voice for this test
+    // Force enable voice for this test (bypass all settings including global mute)
     const wasEnabled = this.settings.enabled;
     this.settings.enabled = true;
     
+    // Temporarily clear global mute for test
+    const wasMuted = localStorage.getItem('trucknav_mute_all_alerts');
+    if (wasMuted === 'true') {
+      console.log('[NavigationVoice] Temporarily bypassing global mute for test');
+    }
+    
     // Ensure audio is initialized (this is a user gesture so it should work)
     await audioBluetoothInit.initialize();
+    
+    // CRITICAL: Full reinitialization for iOS
+    await audioBluetoothInit.reinitialize();
     
     // CRITICAL: Activate Bluetooth audio route for the test
     // This ensures the test voice plays through the car speakers, not just the phone
@@ -1053,22 +1063,46 @@ export class NavigationVoice {
     utterance.pitch = this.settings.pitch;
     utterance.volume = 1.0; // Maximum volume for test
     
+    utterance.onstart = () => {
+      console.log('[NavigationVoice] 🎙️ Test voice STARTED - audio playing');
+      this.emitVoiceAnnouncement(testText, true);
+    };
+    
     utterance.onend = () => {
       console.log('[NavigationVoice] ✅ Test voice completed successfully');
+      this.emitVoiceAnnouncement(testText, false);
+      // Restore original enabled state after completion
+      this.settings.enabled = wasEnabled;
     };
     
     utterance.onerror = (event) => {
-      console.error('[NavigationVoice] ❌ Test voice error:', event.error);
+      const errorType = (event as any).error || 'unknown';
+      console.error('[NavigationVoice] ❌ Test voice error:', errorType);
+      this.emitVoiceAnnouncement(testText, false);
+      // Restore original enabled state on error
+      this.settings.enabled = wasEnabled;
+      
+      // On iOS, if we get 'not-allowed', try priming first then retry
+      if (errorType === 'not-allowed' || errorType === 'synthesis-failed') {
+        console.log('[NavigationVoice] Attempting recovery via primeForUserGesture...');
+        this.primeForUserGesture().then(() => {
+          // Retry after priming
+          setTimeout(() => {
+            console.log('[NavigationVoice] Retrying test voice after priming...');
+            this.settings.enabled = true;
+            this.synthesis.speak(utterance);
+          }, 200);
+        });
+      }
     };
     
     try {
+      console.log('[NavigationVoice] 📢 Calling synthesis.speak() for test...');
       this.synthesis.speak(utterance);
     } catch (error) {
       console.error('[NavigationVoice] ❌ Failed to speak test:', error);
+      this.settings.enabled = wasEnabled;
     }
-    
-    // Restore original enabled state
-    this.settings.enabled = wasEnabled;
   }
   
   /**
