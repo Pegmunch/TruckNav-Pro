@@ -4044,17 +4044,18 @@ function NavigationPageContent() {
                       bottom: 'calc(80px + var(--safe-area-bottom))',
                       left: '16px'
                     }}>
-                    {/* Menu Button */}
+                    {/* Menu Button - matches settings icon in preview header */}
                     <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => {
                         console.log('[MENU-BUTTON] Hamburger menu button pressed');
                         setShowComprehensiveMenu(true);
                       }}
-                      size="icon"
-                      className="h-10 w-10 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium md:hidden"
+                      className="h-6 w-6 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md md:hidden"
                       data-testid="button-open-menu-plan"
                     >
-                      <Menu className="w-6 h-6" />
+                      <Menu className="w-3 h-3" />
                     </Button>
                   </div>
                   
