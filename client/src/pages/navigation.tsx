@@ -579,6 +579,35 @@ function NavigationPageContent() {
   // Route progress tracking - prevents snapping backwards to earlier segments
   const routeProgressRef = useRef<number>(0);
   
+  // Helper: Generate fallback lane guidance based on turn direction
+  const getFallbackLaneInfo = (direction: string) => {
+    if (direction === 'left' || direction === 'sharp_left' || direction === 'slight_left') {
+      return {
+        lanes: [
+          { direction: 'left' as const, isRecommended: true },
+          { direction: 'straight' as const, isRecommended: false },
+          { direction: 'straight' as const, isRecommended: false }
+        ]
+      };
+    } else if (direction === 'right' || direction === 'sharp_right' || direction === 'slight_right') {
+      return {
+        lanes: [
+          { direction: 'straight' as const, isRecommended: false },
+          { direction: 'straight' as const, isRecommended: false },
+          { direction: 'right' as const, isRecommended: true }
+        ]
+      };
+    } else {
+      return {
+        lanes: [
+          { direction: 'straight' as const, isRecommended: false },
+          { direction: 'straight' as const, isRecommended: true },
+          { direction: 'straight' as const, isRecommended: false }
+        ]
+      };
+    }
+  };
+
   // Helper: Check if turn indicator should be visible based on distance thresholds
   // Imperial: Show at 1000ft (305m), 500ft (152m), 100ft (30m) - within these thresholds
   // Metric: Show at 300m, 150m, 30m
@@ -4190,35 +4219,7 @@ function NavigationPageContent() {
                               direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
                               isRecommended: l.recommended || false
                             }))
-                          } : (() => {
-                            // Generate fallback lane guidance based on turn direction
-                            const dir = nextTurn.direction;
-                            if (dir === 'left' || dir === 'sharp_left' || dir === 'slight_left') {
-                              return {
-                                lanes: [
-                                  { direction: 'left' as const, isRecommended: true },
-                                  { direction: 'straight' as const, isRecommended: false },
-                                  { direction: 'straight' as const, isRecommended: false }
-                                ]
-                              };
-                            } else if (dir === 'right' || dir === 'sharp_right' || dir === 'slight_right') {
-                              return {
-                                lanes: [
-                                  { direction: 'straight' as const, isRecommended: false },
-                                  { direction: 'straight' as const, isRecommended: false },
-                                  { direction: 'right' as const, isRecommended: true }
-                                ]
-                              };
-                            } else {
-                              return {
-                                lanes: [
-                                  { direction: 'straight' as const, isRecommended: false },
-                                  { direction: 'straight' as const, isRecommended: true },
-                                  { direction: 'straight' as const, isRecommended: false }
-                                ]
-                              };
-                            }
-                          })()}
+                          } : getFallbackLaneInfo(nextTurn.direction)}
                           isVisible={true}
                         />
                       )}
@@ -4858,35 +4859,7 @@ function NavigationPageContent() {
                             direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
                             isRecommended: l.recommended || false
                           }))
-                        } : (() => {
-                          // Generate fallback lane guidance based on turn direction
-                          const dir = nextTurn.direction;
-                          if (dir === 'left' || dir === 'sharp_left' || dir === 'slight_left') {
-                            return {
-                              lanes: [
-                                { direction: 'left' as const, isRecommended: true },
-                                { direction: 'straight' as const, isRecommended: false },
-                                { direction: 'straight' as const, isRecommended: false }
-                              ]
-                            };
-                          } else if (dir === 'right' || dir === 'sharp_right' || dir === 'slight_right') {
-                            return {
-                              lanes: [
-                                { direction: 'straight' as const, isRecommended: false },
-                                { direction: 'straight' as const, isRecommended: false },
-                                { direction: 'right' as const, isRecommended: true }
-                              ]
-                            };
-                          } else {
-                            return {
-                              lanes: [
-                                { direction: 'straight' as const, isRecommended: false },
-                                { direction: 'straight' as const, isRecommended: true },
-                                { direction: 'straight' as const, isRecommended: false }
-                              ]
-                            };
-                          }
-                        })()}
+                        } : getFallbackLaneInfo(nextTurn.direction)}
                         isVisible={true}
                       />
                     )}
