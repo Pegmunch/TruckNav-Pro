@@ -344,10 +344,26 @@ function NavigationPageContent() {
   const [showIncidents, setShowIncidents] = useState(true);
   
   // Map control state for RightActionStack (rendered outside map container)
-  const [mapControlState, setMapControlState] = useState({
-    is3DMode: false,
-    isSatelliteView: false,
-    bearing: 0
+  // Initialize from localStorage to stay in sync with MapLibreMap preferences
+  const [mapControlState, setMapControlState] = useState(() => {
+    try {
+      const stored = localStorage.getItem('trucknav_maplibre_preferences');
+      if (stored) {
+        const prefs = JSON.parse(stored);
+        return {
+          is3DMode: false,
+          isSatelliteView: prefs.mapViewMode === 'satellite',
+          bearing: 0
+        };
+      }
+    } catch (e) {
+      console.warn('[MAP-CONTROL-STATE] Failed to read preferences:', e);
+    }
+    return {
+      is3DMode: false,
+      isSatelliteView: false,
+      bearing: 0
+    };
   });
   
   // Toggle visibility of navigation controls stack (right-side 8 buttons)
@@ -366,6 +382,21 @@ function NavigationPageContent() {
     if (isLocalNavActive && !wasNavigatingRef.current) {
       setShowTrafficLayer(true);
       console.log('[TRAFFIC] Initial traffic layer ON when navigation started (user can toggle)');
+      
+      // Sync map control state from MapLibreMap when navigation starts
+      // This ensures button states match actual map state
+      setTimeout(() => {
+        if (mapRef.current) {
+          const actualMode = mapRef.current.getMapViewMode();
+          const actual3D = mapRef.current.is3DMode();
+          console.log('[MAP-SYNC] Syncing map control state on navigation start:', { actualMode, actual3D });
+          setMapControlState(prev => ({
+            ...prev,
+            isSatelliteView: actualMode === 'satellite',
+            is3DMode: actual3D
+          }));
+        }
+      }, 100);
     }
     wasNavigatingRef.current = isLocalNavActive;
   }, [isLocalNavActive]);
@@ -4048,11 +4079,12 @@ function NavigationPageContent() {
                       onToggleMapView={() => {
                         console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
                         mapRef.current?.toggleMapView();
-                        setMapControlState(prev => {
-                          const newSatelliteState = !prev.isSatelliteView;
-                          console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
-                          return { ...prev, isSatelliteView: newSatelliteState };
-                        });
+                        // Sync state FROM MapLibreMap after toggle completes
+                        setTimeout(() => {
+                          const actualMode = mapRef.current?.getMapViewMode();
+                          console.log('[MAP-VIEW-TOGGLE] Syncing state from MapLibreMap:', actualMode);
+                          setMapControlState(prev => ({ ...prev, isSatelliteView: actualMode === 'satellite' }));
+                        }, 50);
                       }}
                       onViewIncidents={handleViewIncidents}
                       onCompassClick={() => {
@@ -4526,11 +4558,12 @@ function NavigationPageContent() {
                       onToggleMapView={() => {
                         console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
                         mapRef.current?.toggleMapView();
-                        setMapControlState(prev => {
-                          const newSatelliteState = !prev.isSatelliteView;
-                          console.log('[MAP-VIEW-TOGGLE] Toggling satellite view to:', newSatelliteState);
-                          return { ...prev, isSatelliteView: newSatelliteState };
-                        });
+                        // Sync state FROM MapLibreMap after toggle completes
+                        setTimeout(() => {
+                          const actualMode = mapRef.current?.getMapViewMode();
+                          console.log('[MAP-VIEW-TOGGLE] Syncing state from MapLibreMap:', actualMode);
+                          setMapControlState(prev => ({ ...prev, isSatelliteView: actualMode === 'satellite' }));
+                        }, 50);
                       }}
                       onToggleTraffic={() => {
                         console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
