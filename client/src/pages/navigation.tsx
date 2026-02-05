@@ -1311,11 +1311,11 @@ function NavigationPageContent() {
         
         // Apply sign from cross product:
         // In geographic coordinates (lat=Y increases North, lng=X increases East):
-        // When traveling North and turning East (RIGHT), cross = -1 (negative)
-        // When traveling North and turning West (LEFT), cross = +1 (positive)
-        // Therefore: crossProduct < 0 → RIGHT turn, crossProduct > 0 → LEFT turn
-        // This maps correctly for heading-up navigation display
-        let turnAngle = crossProduct < 0 ? turnMagnitude : -turnMagnitude;
+        // The cross product formula inX * outY - inY * outX gives:
+        // POSITIVE cross = turning LEFT (counterclockwise when viewed from above)
+        // NEGATIVE cross = turning RIGHT (clockwise when viewed from above)
+        // For heading-up navigation display: positive angle = LEFT, negative angle = RIGHT
+        let turnAngle = crossProduct > 0 ? turnMagnitude : -turnMagnitude;
         
         // Check if this is a significant turn
         if (Math.abs(turnAngle) >= TURN_THRESHOLD) {
@@ -1339,20 +1339,20 @@ function NavigationPageContent() {
         let direction: 'straight' | 'right' | 'left' | 'slight_right' | 'slight_left' | 'sharp_right' | 'sharp_left' = 'straight';
         
         // Turn angle thresholds: 25-50° slight, 50-115° regular, >115° sharp
-        // Positive = right turn, Negative = left turn
+        // Positive angle = LEFT turn, Negative angle = RIGHT turn
         if (Math.abs(turnAngleAtPoint) < 25) {
           direction = 'straight';
-        } else if (turnAngleAtPoint <= -115) {
-          direction = 'sharp_left';
-        } else if (turnAngleAtPoint <= -50) {
-          direction = 'left';
-        } else if (turnAngleAtPoint < -25) {
-          direction = 'slight_left';
         } else if (turnAngleAtPoint >= 115) {
-          direction = 'sharp_right';
+          direction = 'sharp_left';
         } else if (turnAngleAtPoint >= 50) {
-          direction = 'right';
+          direction = 'left';
         } else if (turnAngleAtPoint > 25) {
+          direction = 'slight_left';
+        } else if (turnAngleAtPoint <= -115) {
+          direction = 'sharp_right';
+        } else if (turnAngleAtPoint <= -50) {
+          direction = 'right';
+        } else if (turnAngleAtPoint < -25) {
           direction = 'slight_right';
         }
 
@@ -4185,12 +4185,40 @@ function NavigationPageContent() {
                         <MapTurnLaneIndicator
                           turnInfo={nextTurn}
                           unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                          laneInfo={currentRoute?.laneGuidance?.[0] ? {
-                            lanes: currentRoute.laneGuidance[0].laneOptions?.map(l => ({
+                          laneInfo={currentRoute?.laneGuidance?.[0]?.laneOptions ? {
+                            lanes: currentRoute.laneGuidance[0].laneOptions.map(l => ({
                               direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
                               isRecommended: l.recommended || false
-                            })) || []
-                          } : null}
+                            }))
+                          } : (() => {
+                            // Generate fallback lane guidance based on turn direction
+                            const dir = nextTurn.direction;
+                            if (dir === 'left' || dir === 'sharp_left' || dir === 'slight_left') {
+                              return {
+                                lanes: [
+                                  { direction: 'left' as const, isRecommended: true },
+                                  { direction: 'straight' as const, isRecommended: false },
+                                  { direction: 'straight' as const, isRecommended: false }
+                                ]
+                              };
+                            } else if (dir === 'right' || dir === 'sharp_right' || dir === 'slight_right') {
+                              return {
+                                lanes: [
+                                  { direction: 'straight' as const, isRecommended: false },
+                                  { direction: 'straight' as const, isRecommended: false },
+                                  { direction: 'right' as const, isRecommended: true }
+                                ]
+                              };
+                            } else {
+                              return {
+                                lanes: [
+                                  { direction: 'straight' as const, isRecommended: false },
+                                  { direction: 'straight' as const, isRecommended: true },
+                                  { direction: 'straight' as const, isRecommended: false }
+                                ]
+                              };
+                            }
+                          })()}
                           isVisible={true}
                         />
                       )}
@@ -4825,12 +4853,40 @@ function NavigationPageContent() {
                       <MapTurnLaneIndicator
                         turnInfo={nextTurn}
                         unit={measurementSystem === 'imperial' ? 'mi' : 'km'}
-                        laneInfo={currentRoute?.laneGuidance?.[0] ? {
-                          lanes: currentRoute.laneGuidance[0].laneOptions?.map(l => ({
+                        laneInfo={currentRoute?.laneGuidance?.[0]?.laneOptions ? {
+                          lanes: currentRoute.laneGuidance[0].laneOptions.map(l => ({
                             direction: l.direction as 'left' | 'right' | 'straight' | 'exit',
                             isRecommended: l.recommended || false
-                          })) || []
-                        } : null}
+                          }))
+                        } : (() => {
+                          // Generate fallback lane guidance based on turn direction
+                          const dir = nextTurn.direction;
+                          if (dir === 'left' || dir === 'sharp_left' || dir === 'slight_left') {
+                            return {
+                              lanes: [
+                                { direction: 'left' as const, isRecommended: true },
+                                { direction: 'straight' as const, isRecommended: false },
+                                { direction: 'straight' as const, isRecommended: false }
+                              ]
+                            };
+                          } else if (dir === 'right' || dir === 'sharp_right' || dir === 'slight_right') {
+                            return {
+                              lanes: [
+                                { direction: 'straight' as const, isRecommended: false },
+                                { direction: 'straight' as const, isRecommended: false },
+                                { direction: 'right' as const, isRecommended: true }
+                              ]
+                            };
+                          } else {
+                            return {
+                              lanes: [
+                                { direction: 'straight' as const, isRecommended: false },
+                                { direction: 'straight' as const, isRecommended: true },
+                                { direction: 'straight' as const, isRecommended: false }
+                              ]
+                            };
+                          }
+                        })()}
                         isVisible={true}
                       />
                     )}

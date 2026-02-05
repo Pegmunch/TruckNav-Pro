@@ -241,6 +241,23 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
         <span className="font-medium text-gray-900 text-base">{value} {displayUnit}</span>
       </div>
       
+      {/* Lane arrows visual indicator - shows all lanes with recommended highlighted */}
+      {laneInfo && laneInfo.lanes && laneInfo.lanes.length > 0 && (
+        <div className="mt-2 flex items-center justify-center gap-1 bg-gray-800 rounded-lg px-3 py-2 shadow-xl border-2 border-gray-600">
+          {laneInfo.lanes.map((lane, idx) => (
+            <div 
+              key={idx} 
+              className={cn(
+                "flex items-center justify-center w-8 h-8 rounded",
+                lane.isRecommended ? "bg-cyan-500" : "bg-gray-600"
+              )}
+            >
+              {getLaneArrow(lane.direction, lane.isRecommended)}
+            </div>
+          ))}
+        </div>
+      )}
+      
       {/* Lane guidance text - white pill style - high contrast for satellite view */}
       {laneGuidanceText && (
         <div className="mt-2 flex items-center justify-center bg-white rounded-full px-4 py-2 shadow-xl border-2 border-blue-500">
