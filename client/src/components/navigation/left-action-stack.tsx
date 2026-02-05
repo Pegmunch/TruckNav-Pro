@@ -394,22 +394,28 @@ export function LeftActionStack({
         </Button>
       )}
 
-      {/* Menu button - blue hamburger at bottom - hides/shows with double-tap */}
-      {/* Mobile: moved up slightly with -mt-4, desktop: normal spacing */}
+      {/* Menu button - white with blue top/bottom borders and truck icon */}
+      {/* Mobile: moved up slightly with -mt-12, desktop: normal spacing */}
       {showMenuButton && (
-        <Button
+        <button
           ref={menuButtonRef}
-          variant="ghost"
-          size="icon"
-          className={`h-10 w-10 rounded-xl bg-white hover:bg-gray-50 active:bg-gray-100 active:scale-95 text-blue-600 shadow-lg border-t-[3px] border-b-[3px] border-blue-500 select-none touch-manipulation transition-all duration-300 transform-gpu -mt-12 md:mt-0 ${
+          className={`h-10 w-10 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu -mt-12 md:mt-0 flex items-center justify-center ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
-          style={{ touchAction: 'manipulation' }}
+          style={{ 
+            touchAction: 'manipulation',
+            backgroundColor: '#ffffff',
+            borderTop: '3px solid #3b82f6',
+            borderBottom: '3px solid #3b82f6',
+            borderLeft: '1px solid #e5e7eb',
+            borderRight: '1px solid #e5e7eb',
+            color: '#2563eb',
+          }}
           data-testid="button-menu"
           data-tour-id="menu-button"
         >
-          <Truck className="h-5 w-5" />
-        </Button>
+          <Truck className="h-5 w-5" style={{ color: '#2563eb' }} />
+        </button>
       )}
     </div>
   );

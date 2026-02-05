@@ -116,21 +116,27 @@ const FeaturesSidebar = memo(function FeaturesSidebar({
             : "right-0"
         )}
       >
-        <Button
+        <button
           onClick={onToggle}
-          variant="ghost"
           className={cn(
             "h-16 w-8 rounded-l-lg rounded-r-none px-0 py-0",
-            "bg-white hover:bg-gray-50 text-blue-600",
-            "border-l border-gray-200 border-t-[3px] border-b-[3px] border-t-blue-500 border-b-blue-500 shadow-lg",
+            "shadow-lg",
             "automotive-touch-target flex flex-col items-center justify-center gap-1",
             "transform transition-all duration-300 ease-in-out",
             !isOpen && "hover:translate-x-[-4px]"
           )}
+          style={{
+            backgroundColor: '#ffffff',
+            borderTop: '3px solid #3b82f6',
+            borderBottom: '3px solid #3b82f6',
+            borderLeft: '1px solid #e5e7eb',
+            borderRight: 'none',
+            color: '#2563eb',
+          }}
           data-testid="button-toggle-features-sidebar-tab"
         >
-          <Truck className="w-4 h-4" />
-        </Button>
+          <Truck className="w-4 h-4" style={{ color: '#2563eb' }} />
+        </button>
       </div>
 
       {/* Sidebar Panel */}
