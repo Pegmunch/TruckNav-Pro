@@ -2237,7 +2237,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       });
 
-      // Add route line on top - cyan #00D4FF for TomTom GO style
+      // Add route line on top - darker blue #0067FF for professional appearance
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2247,7 +2247,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#00D4FF',
+          'line-color': '#0067FF',
           'line-width': [
             'interpolate',
             ['linear'],
@@ -2390,7 +2390,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         }
       });
 
-      // Add route line on top - cyan #00D4FF for TomTom GO style
+      // Add route line on top - darker blue #0067FF for professional appearance
       map.current.addLayer({
         id: 'route-line',
         type: 'line',
@@ -2400,7 +2400,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#00D4FF',
+          'line-color': '#0067FF',
           'line-width': [
             'interpolate',
             ['linear'],
