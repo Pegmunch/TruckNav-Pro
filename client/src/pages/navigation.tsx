@@ -4070,7 +4070,7 @@ function NavigationPageContent() {
                       className="md:hidden"
                       data-testid="button-open-menu-plan"
                     >
-                      <Truck className="w-10 h-10" style={{ color: '#2563eb' }} />
+                      <Truck style={{ color: '#2563eb', width: '40px', height: '40px' }} />
                     </button>
                   </div>
                   
