@@ -1785,35 +1785,44 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         if (!mapInstance) return;
 
         // Add satellite sources for map view toggle
-        // Using Esri World Imagery - no API key required, reliable worldwide coverage
+        // Using Google Maps satellite tiles - reliable worldwide coverage
         if (!mapInstance.getSource('satellite-2d')) {
           mapInstance.addSource('satellite-2d', {
             type: 'raster',
             tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              'https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 19,
-            attribution: '&copy; Esri'
+            maxzoom: 20,
+            attribution: '&copy; Google'
           });
-          console.log('[SATELLITE] Added Esri World Imagery source for 2D');
+          console.log('[SATELLITE] Added Google satellite source for 2D');
         }
 
         if (!mapInstance.getSource('satellite-3d')) {
           mapInstance.addSource('satellite-3d', {
             type: 'raster',
             tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+              'https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+              'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 19
+            maxzoom: 20
           });
-          console.log('[SATELLITE] Added Esri World Imagery source for 3D');
+          console.log('[SATELLITE] Added Google satellite source for 3D');
         }
 
-        // Add satellite layers (initially hidden)
+        // Add satellite layers (initially hidden) - add BEFORE roads layers so they render below
+        // Find the first layer to insert satellite below it
+        const firstLayerId = mapInstance.getStyle().layers?.[0]?.id;
+        
         if (!mapInstance.getLayer('satellite-2d-layer')) {
           mapInstance.addLayer({
             id: 'satellite-2d-layer',
@@ -1822,7 +1831,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             layout: {
               visibility: 'none'
             }
-          });
+          }, firstLayerId); // Insert before first layer (so it's at bottom)
+          console.log('[SATELLITE] Added satellite-2d-layer below roads');
         }
 
         if (!mapInstance.getLayer('satellite-3d-layer')) {
@@ -1833,7 +1843,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
             layout: {
               visibility: 'none'
             }
-          });
+          }, firstLayerId); // Insert before first layer
+          console.log('[SATELLITE] Added satellite-3d-layer below roads');
         }
 
         // Add labels overlay source (CartoDB Dark Matter labels-only layer)

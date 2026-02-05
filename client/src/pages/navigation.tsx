@@ -4549,42 +4549,63 @@ function NavigationPageContent() {
                   }
                   topRightStack={null}
                   rightStack={
-                    <RightActionStack
-                      onZoomIn={() => mapRef.current?.zoomIn()}
-                      onZoomOut={() => mapRef.current?.zoomOut()}
-                      onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
-                      onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
-                      onRecenter={() => mapRef.current?.resetNavigationCamera()}
-                      onToggleMapView={() => {
-                        console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
-                        mapRef.current?.toggleMapView();
-                        // Sync state FROM MapLibreMap after toggle completes
-                        setTimeout(() => {
-                          const actualMode = mapRef.current?.getMapViewMode();
-                          console.log('[MAP-VIEW-TOGGLE] Syncing state from MapLibreMap:', actualMode);
-                          setMapControlState(prev => ({ ...prev, isSatelliteView: actualMode === 'satellite' }));
-                        }, 50);
-                      }}
-                      onToggleTraffic={() => {
-                        console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
-                        setShowTrafficLayer(prev => !prev);
-                      }}
-                      onViewIncidents={handleViewIncidents}
-                      showTraffic={showTrafficLayer}
-                      isSatelliteView={mapControlState.isSatelliteView}
-                      isVisible={showNavControls}
-                      hideIncidents={false}
-                      hideCompass={true}
-                      hide3D={false}
-                      onToggle3D={() => {
-                        mapRef.current?.toggle3DMode();
-                        setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
-                      }}
-                      is3DMode={mapControlState.is3DMode}
-                      isNavigating={true}
-                      compact={true}
-                      bearing={mapControlState.bearing}
-                    />
+                    <div className="flex flex-col items-end gap-2">
+                      {/* Vehicle Type Pill - shows HGV or Car calculation mode */}
+                      <div className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg",
+                        vehicleType === 'car' 
+                          ? "bg-blue-500 text-white" 
+                          : "bg-orange-500 text-white"
+                      )}>
+                        {vehicleType === 'car' ? (
+                          <span className="flex items-center gap-1">
+                            <Car className="w-3.5 h-3.5" />
+                            Car
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Truck className="w-3.5 h-3.5" />
+                            HGV
+                          </span>
+                        )}
+                      </div>
+                      <RightActionStack
+                        onZoomIn={() => mapRef.current?.zoomIn()}
+                        onZoomOut={() => mapRef.current?.zoomOut()}
+                        onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
+                        onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
+                        onRecenter={() => mapRef.current?.resetNavigationCamera()}
+                        onToggleMapView={() => {
+                          console.log('[MAP-VIEW-TOGGLE] Button pressed, calling toggleMapView');
+                          mapRef.current?.toggleMapView();
+                          // Sync state FROM MapLibreMap after toggle completes
+                          setTimeout(() => {
+                            const actualMode = mapRef.current?.getMapViewMode();
+                            console.log('[MAP-VIEW-TOGGLE] Syncing state from MapLibreMap:', actualMode);
+                            setMapControlState(prev => ({ ...prev, isSatelliteView: actualMode === 'satellite' }));
+                          }, 50);
+                        }}
+                        onToggleTraffic={() => {
+                          console.log('[TRAFFIC-TOGGLE] 🟠 Traffic button pressed in NAVIGATION mode - toggling from:', showTrafficLayer);
+                          setShowTrafficLayer(prev => !prev);
+                        }}
+                        onViewIncidents={handleViewIncidents}
+                        showTraffic={showTrafficLayer}
+                        isSatelliteView={mapControlState.isSatelliteView}
+                        isVisible={showNavControls}
+                        hideIncidents={false}
+                        hideCompass={true}
+                        hide3D={false}
+                        onToggle3D={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                        }}
+                        is3DMode={mapControlState.is3DMode}
+                        isNavigating={true}
+                        compact={true}
+                        bearing={mapControlState.bearing}
+                      />
+                    </div>
                   }
                   infoBoxes={
                     currentRoute ? (
