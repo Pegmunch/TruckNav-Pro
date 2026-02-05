@@ -498,6 +498,7 @@ function NavigationPageContent() {
   }, [currentRoute?.id]);
   
   // Auto-reroute hook - detects off-route and automatically recalculates via TomTom API
+  // Triggers automatic rerouting after 3 seconds off-route without pressing Go button
   const { isOffRoute, isRerouting, distanceFromRoute, resetRerouteState } = useAutoReroute(
     currentRoute,
     isNavigating,
@@ -507,8 +508,8 @@ function NavigationPageContent() {
     {
       lateralThresholdMeters: 50,
       consecutiveFixesRequired: 2,
-      minSecondsBetweenReroutes: 15,
-      offRouteDelaySeconds: 10,
+      minSecondsBetweenReroutes: 10,
+      offRouteDelaySeconds: 3, // Trigger reroute after 3 seconds off-route
     }
   );
   
