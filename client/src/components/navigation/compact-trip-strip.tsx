@@ -287,36 +287,33 @@ export function CompactTripStrip({
             {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-4 md:h-4" /> : <VolumeX className="w-3 h-3 md:w-4 md:h-4" />}
             {voiceEnabled ? 'On' : 'Off'}
           </button>
-          <div className="flex items-center rounded-full overflow-hidden shadow-sm ml-1 md:ml-0">
-            <div 
-              aria-label={isOnline ? "Online" : "Offline"}
-              className={cn(
-                'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-sm font-bold',
-                isOnline ? 'bg-green-500 text-white' : 'bg-slate-400 text-white'
-              )}
-            >
-              {isOnline ? <Wifi className="w-3 h-3 md:w-4 md:h-4" /> : <WifiOff className="w-3 h-3 md:w-4 md:h-4" />}
-              {isOnline ? 'Net' : 'Off'}
-            </div>
-            <div style={{width:'1px',backgroundColor:'rgba(255,255,255,0.4)',alignSelf:'stretch'}} />
-            <button
-              onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
-              aria-label={isGpsReady ? "GPS ready" : isGpsAcquiring ? "Acquiring GPS" : "Set GPS location"}
-              className={cn(
-                'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 transition-colors text-[10px] md:text-sm font-bold',
-                isGpsReady 
-                  ? 'bg-green-500 text-white cursor-default'
-                  : isGpsAcquiring
-                    ? 'bg-blue-500 text-white cursor-default animate-pulse'
-                    : 'bg-amber-500 text-white cursor-pointer'
-              )}
-              disabled={isGpsReady || isGpsAcquiring}
-              data-testid="gps-status-button"
-            >
-              {isGpsReady ? <Navigation className="w-3 h-3 md:w-4 md:h-4" /> : <MapPin className="w-3 h-3 md:w-4 md:h-4" />}
-              {isGpsReady ? 'GPS' : isGpsAcquiring ? '...' : 'Set'}
-            </button>
+          <div 
+            aria-label={isOnline ? "Online" : "Offline"}
+            className={cn(
+              'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-sm text-[10px] md:text-sm font-bold ml-1 md:ml-0',
+              isOnline ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            )}
+          >
+            {isOnline ? <Wifi className="w-3 h-3 md:w-4 md:h-4" /> : <WifiOff className="w-3 h-3 md:w-4 md:h-4" />}
+            {isOnline ? 'Net' : 'Off'}
           </div>
+          <button
+            onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
+            aria-label={isGpsReady ? "GPS ready" : isGpsAcquiring ? "Acquiring GPS" : "Set GPS location"}
+            className={cn(
+              'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full transition-colors shadow-sm text-[10px] md:text-sm font-bold',
+              isGpsReady 
+                ? 'bg-green-500 text-white cursor-default'
+                : isGpsAcquiring
+                  ? 'bg-blue-500 text-white cursor-default animate-pulse'
+                  : 'bg-red-500 text-white cursor-pointer'
+            )}
+            disabled={isGpsReady || isGpsAcquiring}
+            data-testid="gps-status-button"
+          >
+            {isGpsReady ? <Navigation className="w-3 h-3 md:w-4 md:h-4" /> : <MapPin className="w-3 h-3 md:w-4 md:h-4" />}
+            {isGpsReady ? 'GPS' : isGpsAcquiring ? '...' : 'Set'}
+          </button>
         </div>
         
         {/* Center: Road badge + Turn + Lane - larger on tablet */}
