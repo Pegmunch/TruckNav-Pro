@@ -4052,10 +4052,10 @@ function NavigationPageContent() {
                         console.log('[MENU-BUTTON] Hamburger menu button pressed');
                         setShowComprehensiveMenu(true);
                       }}
-                      className="h-8 w-8 rounded-full bg-white hover:bg-gray-100 text-primary shadow-md md:hidden"
+                      className="h-10 w-10 rounded-full bg-white hover:bg-gray-100 text-primary shadow-md md:hidden"
                       data-testid="button-open-menu-plan"
                     >
-                      <Truck className="w-5 h-5" />
+                      <Truck className="w-6 h-6" />
                     </Button>
                   </div>
                   
