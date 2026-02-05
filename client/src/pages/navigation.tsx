@@ -4051,8 +4051,8 @@ function NavigationPageContent() {
                         setShowComprehensiveMenu(true);
                       }}
                       style={{
-                        width: '52px',
-                        height: '52px',
+                        width: '40px',
+                        height: '40px',
                         borderRadius: '8px',
                         backgroundColor: '#ffffff',
                         borderTop: '3px solid #3b82f6',
@@ -4070,7 +4070,7 @@ function NavigationPageContent() {
                       className="md:hidden"
                       data-testid="button-open-menu-plan"
                     >
-                      <Truck className="w-11 h-11" style={{ color: '#2563eb' }} />
+                      <Truck className="w-10 h-10" style={{ color: '#2563eb' }} />
                     </button>
                   </div>
                   
