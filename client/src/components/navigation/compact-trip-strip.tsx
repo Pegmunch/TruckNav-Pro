@@ -212,6 +212,13 @@ export function CompactTripStrip({
             <span className="text-[11px] md:text-base font-bold whitespace-nowrap">{arrivalTimeStr}</span>
             {hasTrafficDelay && <span className="text-[9px] md:text-xs opacity-80">+{Math.round(trafficDelayMinutes)}m</span>}
           </div>
+          <div 
+            className="flex items-center gap-0.5 text-white px-1.5 md:px-2 py-1 md:py-2 rounded shadow-sm flex-shrink-0"
+            style={{ backgroundColor: isOnline ? '#22c55e' : '#ef4444' }}
+          >
+            {isOnline ? <Wifi className="w-3 h-3 md:w-4 md:h-4" /> : <WifiOff className="w-3 h-3 md:w-4 md:h-4" />}
+            <span className="text-[10px] md:text-sm font-bold">{isOnline ? 'Net' : 'Off'}</span>
+          </div>
         </div>
         
         {/* Center: Speed limit + Current speed (unpacked) - larger on tablet */}
@@ -287,16 +294,6 @@ export function CompactTripStrip({
             {voiceEnabled ? <Volume2 className="w-3 h-3 md:w-4 md:h-4" /> : <VolumeX className="w-3 h-3 md:w-4 md:h-4" />}
             {voiceEnabled ? 'On' : 'Off'}
           </button>
-          <div 
-            aria-label={isOnline ? "Online" : "Offline"}
-            className={cn(
-              'flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full shadow-sm text-[10px] md:text-sm font-bold ml-1 md:ml-0',
-              isOnline ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-            )}
-          >
-            {isOnline ? <Wifi className="w-3 h-3 md:w-4 md:h-4" /> : <WifiOff className="w-3 h-3 md:w-4 md:h-4" />}
-            {isOnline ? 'Net' : 'Off'}
-          </div>
           <button
             onClick={!isGpsReady && !isGpsAcquiring ? onSetLocation : undefined}
             aria-label={isGpsReady ? "GPS ready" : isGpsAcquiring ? "Acquiring GPS" : "Set GPS location"}

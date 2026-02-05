@@ -130,30 +130,7 @@ export function OfflineDetector({
         </Alert>
       )}
 
-      {/* Persistent Connection Indicator - HIDDEN IN PWA MODE */}
-      {showPersistentIndicator && !isStandalone && (
-        <div className="fixed top-[72px] right-[140px] sm:top-14 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40" data-testid="connection-indicator">
-          <div 
-            className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full shadow-sm text-white"
-            style={{ backgroundColor: isOnline ? '#22c55e' : '#ef4444' }}
-          >
-            {isOnline ? (
-              <>
-                <Wifi className="h-3 w-3" />
-                <span>Online</span>
-                {connectionType && (
-                  <span className="text-xs opacity-75">({connectionType})</span>
-                )}
-              </>
-            ) : (
-              <>
-                <CloudOff className="h-3 w-3" />
-                <span>Offline</span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Persistent Connection Indicator - REMOVED: Now integrated into compact-trip-strip ETA row */}
 
       {/* Main Content */}
       {children}
