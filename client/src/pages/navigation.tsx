@@ -4044,7 +4044,7 @@ function NavigationPageContent() {
                       bottom: 'calc(80px + var(--safe-area-bottom))',
                       left: '16px'
                     }}>
-                    {/* Menu Button - matches settings icon in preview header */}
+                    {/* Menu Button - matches truck icon in desktop header */}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -4052,10 +4052,10 @@ function NavigationPageContent() {
                         console.log('[MENU-BUTTON] Hamburger menu button pressed');
                         setShowComprehensiveMenu(true);
                       }}
-                      className="h-6 w-6 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md md:hidden"
+                      className="h-8 w-8 rounded-full bg-white hover:bg-gray-100 text-primary shadow-md md:hidden"
                       data-testid="button-open-menu-plan"
                     >
-                      <Menu className="w-3 h-3" />
+                      <Truck className="w-5 h-5" />
                     </Button>
                   </div>
                   
@@ -4757,7 +4757,7 @@ function NavigationPageContent() {
               className="fixed top-[72px] left-4 z-40 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 p-1.5 hidden md:flex"
               data-testid="button-menu-desktop"
             >
-              <Menu className="w-3.5 h-3.5" />
+              <Truck className="w-5 h-5" />
             </Button>
           )}
           
