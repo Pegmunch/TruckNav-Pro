@@ -17,7 +17,7 @@ self.addEventListener('message', (event) => {
 
 // Force cache update by incrementing version (fixes PWA multi-version issue)
 // Using timestamp to ensure caches update on every server restart
-const CACHE_VERSION = new Date().toISOString().split('T')[0]; // Daily rotation (YYYY-MM-DD)
+const CACHE_VERSION = '3.5.1-' + Date.now(); // Force unique cache on every load
 const CACHE_NAME = `trucknav-pro-v${CACHE_VERSION}`;
 const STATIC_CACHE = `trucknav-static-v${CACHE_VERSION}`;
 const API_CACHE = `trucknav-api-v${CACHE_VERSION}`;
