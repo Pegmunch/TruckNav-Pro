@@ -357,13 +357,13 @@ const SettingsModal = memo(function SettingsModal({
     },
     {
       id: "map-traffic",
-      label: "Map & Traffic",
+      label: "Map",
       icon: Map,
       description: "Map layers and traffic settings"
     },
     {
       id: "language",
-      label: "Language & Country",
+      label: "Language",
       icon: Globe,
       description: "Language and region preferences"
     },
@@ -375,13 +375,13 @@ const SettingsModal = memo(function SettingsModal({
     },
     {
       id: "notifications",
-      label: "Notifications",
+      label: "Alerts",
       icon: Bell,
       description: "Notification and Do Not Disturb settings"
     },
     {
       id: "alert-sounds",
-      label: "Alert Sounds",
+      label: "Sounds",
       icon: Volume2,
       description: "Customize audio alerts for warnings"
     },
@@ -393,13 +393,13 @@ const SettingsModal = memo(function SettingsModal({
     },
     {
       id: "entertainment",
-      label: "Entertainment",
+      label: "Media",
       icon: Music,
       description: "Entertainment system preferences"
     },
     {
       id: "location",
-      label: "Location",
+      label: "GPS",
       icon: Crosshair,
       description: "GPS and location mode settings"
     },
@@ -863,24 +863,27 @@ const SettingsModal = memo(function SettingsModal({
           {/* Content */}
           <div className="flex-1 overflow-hidden min-h-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-              {/* Tab Navigation - Scrollable on mobile */}
-              <div className="px-2 md:px-6 py-3 border-b bg-gray-50 dark:bg-gray-800">
+              {/* Tab Navigation - Scrollable on mobile, clean grid on desktop */}
+              <div className="px-2 md:px-4 py-3 border-b bg-gray-50 dark:bg-gray-900/50">
                 <div 
-                  className="overflow-x-auto scrollbar-thin" 
+                  className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600" 
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  <div className="inline-flex w-max md:grid md:grid-cols-10 md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800 rounded-md">
+                  <div className="inline-flex w-max md:flex md:flex-wrap md:w-full h-auto p-1 gap-1 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
+                      const isActive = activeTab === tab.id;
                       return (
                         <button
                           key={tab.id}
                           type="button"
-                          className={`flex flex-col items-center gap-1 px-4 py-3 text-xs min-w-[60px] whitespace-nowrap cursor-pointer rounded-md transition-colors select-none ${
-                            activeTab === tab.id 
-                              ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' 
-                              : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
-                          }`}
+                          className={cn(
+                            "flex flex-col items-center justify-center gap-0.5 px-3 py-2 min-w-[56px] cursor-pointer rounded-md transition-all duration-150 select-none",
+                            "font-medium tracking-tight",
+                            isActive 
+                              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-gray-200 dark:ring-gray-600' 
+                              : 'hover:bg-gray-200/70 dark:hover:bg-gray-700/70 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                          )}
                           data-testid={`tab-${tab.id}`}
                           style={{ 
                             touchAction: 'manipulation', 
@@ -888,8 +891,14 @@ const SettingsModal = memo(function SettingsModal({
                           }}
                           onPointerDown={() => setActiveTab(tab.id)}
                         >
-                          <Icon className="w-4 h-4 pointer-events-none" />
-                          <span className="text-[10px] md:text-xs pointer-events-none">{tab.label}</span>
+                          <Icon className={cn(
+                            "w-4 h-4 pointer-events-none",
+                            isActive && "text-blue-600 dark:text-blue-400"
+                          )} />
+                          <span className={cn(
+                            "text-[10px] leading-tight pointer-events-none",
+                            isActive ? "font-semibold" : "font-medium"
+                          )}>{tab.label}</span>
                         </button>
                       );
                     })}

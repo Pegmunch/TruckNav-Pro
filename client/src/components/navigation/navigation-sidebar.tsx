@@ -654,343 +654,322 @@ const NavigationSidebar = memo(function NavigationSidebar({
         {/* Sidebar Content */}
         {!isCollapsed && (
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-scroll">
-            <div className="flex flex-col space-y-4 p-4">
+            <div className="flex flex-col space-y-3 p-3">
             
-            {/* 1. Location Search Section */}
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  <Search className="w-4 h-4 mr-2 text-primary" />
-                  Location Search
+            {/* Plan Your Route - Consolidated input section matching mobile design */}
+            <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
+              <CardHeader className="pb-2 pt-3 px-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Navigation className="w-4 h-4 text-blue-500" />
+                  Plan Your Route
                 </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {isCalculating ? "Calculating your route..." : 
+                   currentRoute ? "Route ready - tap Start to begin" : 
+                   "Enter start and destination"}
+                </p>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Current Location Input */}
-                <div>
-                  <AddressAutocomplete
-                    value={fromLocation}
-                    onChange={onFromLocationChange}
-                    onCoordinatesChange={handleFromCoordinatesUpdate}
-                    placeholder="Enter your current location..."
-                    id="current-location-input"
-                    testId="input-current-location"
-                    className="automotive-input"
-                    showSearchTypeToggles={false}
-                  />
-                </div>
-
-                {/* Destination Input */}
-                <div>
-                  <AddressAutocomplete
-                    value={toLocation}
-                    onChange={onToLocationChange}
-                    onCoordinatesChange={onToCoordinatesChange}
-                    placeholder="Enter your destination..."
-                    id="destination-input"
-                    testId="input-destination"
-                    className="automotive-input"
-                  />
-                </div>
-
-                {/* Location Status */}
-                {fromLocation && (
-                  <div className="flex items-center justify-between p-2 bg-background rounded border">
-                    <span className="text-xs text-muted-foreground">From: {fromLocation}</span>
+              <CardContent className="space-y-3 px-4 pb-4">
+                {/* From Location */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">From</Label>
+                  <div className="relative">
+                    <AddressAutocomplete
+                      value={fromLocation}
+                      onChange={onFromLocationChange}
+                      onCoordinatesChange={handleFromCoordinatesUpdate}
+                      placeholder="Search address, postcode, or POI..."
+                      id="current-location-input"
+                      testId="input-current-location"
+                      className="h-10 text-sm"
+                      showSearchTypeToggles={false}
+                    />
+                    {fromLocation && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onFromLocationChange('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        data-testid="button-clear-from-location"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                  {/* Use Current Location button */}
+                  {!fromLocation && (
                     <Button
+                      onClick={handleUseCurrentLocation}
                       variant="ghost"
                       size="sm"
-                      onClick={() => onFromLocationChange('')}
-                      className="h-6 w-6 p-0"
-                      data-testid="button-clear-from-location"
+                      className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-2"
+                      disabled={isReverseGeocoding}
+                      data-testid="button-use-current-location"
                     >
-                      <X className="w-3 h-3" />
+                      {isReverseGeocoding ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Finding address...
+                        </>
+                      ) : (
+                        <>
+                          <Crosshair className="w-3 h-3 mr-1" />
+                          Use Current Location
+                        </>
+                      )}
                     </Button>
-                  </div>
-                )}
-                {toLocation && (
-                  <div className="flex items-center justify-between p-2 bg-background rounded border">
-                    <span className="text-xs text-muted-foreground">To: {toLocation}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onToLocationChange('')}
-                      className="h-6 w-6 p-0"
-                      data-testid="button-clear-to-location"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* 2. GPS Location Section */}
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  <Crosshair className="w-4 h-4 mr-2 text-green-600" />
-                  GPS Location
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={handleUseCurrentLocation}
-                  variant="outline"
-                  size="sm"
-                  className="w-full automotive-button"
-                  disabled={isReverseGeocoding}
-                  data-testid="button-use-current-location"
-                >
-                  {isReverseGeocoding ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Getting address...
-                    </>
-                  ) : (
-                    <>
-                      <Crosshair className="w-4 h-4 mr-2" />
-                      Use GPS Location
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* 3. Route Status Information */}
-            <Card className="bg-muted/30">
-              <CardContent className="p-4">
-                <div className="text-center text-sm text-muted-foreground">
-                  {isCalculating ? (
-                    <div className="flex items-center justify-center" data-testid="status-route-calculating">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-Calculating route...
-                    </div>
-                  ) : currentRoute ? (
-                    <div className="flex items-center justify-center text-green-600" data-testid="status-route-ready">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Route ready - Use green button above to start
-                    </div>
-                  ) : (
-                    <div data-testid="status-route-awaiting">
-                      Set both locations to plan route
-                    </div>
                   )}
                 </div>
+
+                {/* To Location */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">To</Label>
+                  <div className="relative">
+                    <AddressAutocomplete
+                      value={toLocation}
+                      onChange={onToLocationChange}
+                      onCoordinatesChange={onToCoordinatesChange}
+                      placeholder="Search destination..."
+                      id="destination-input"
+                      testId="input-destination"
+                      className="h-10 text-sm"
+                    />
+                    {toLocation && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToLocationChange('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        data-testid="button-clear-to-location"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Route Status - Inline indicator */}
+                {(isCalculating || currentRoute) && (
+                  <div className={cn(
+                    "flex items-center gap-2 p-2 rounded-md text-xs",
+                    currentRoute ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400" : "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                  )}>
+                    {isCalculating ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Calculating route...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-3 h-3" />
+                        <span>Route ready</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* AR Navigation Toggle - Desktop */}
             {arSupported && isNavigating && onToggleAR && (
-              <Card className="bg-muted/30">
-                <CardContent className="p-4">
-                  <Button
-                    onClick={onToggleAR}
-                    variant={isARMode ? "default" : "outline"}
-                    size="lg"
-                    className={cn(
-                      "w-full automotive-button h-12",
-                      isARMode 
-                        ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-                        : "hover:bg-primary/10"
-                    )}
-                    data-testid="button-ar-toggle-desktop"
-                  >
-                    <Camera className="w-5 h-5 mr-2" />
-                    {isARMode ? "Exit AR Mode" : "AR Navigation"}
-                  </Button>
-                </CardContent>
-              </Card>
+              <Button
+                onClick={onToggleAR}
+                variant={isARMode ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "w-full h-9",
+                  isARMode 
+                    ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+                    : "hover:bg-primary/10"
+                )}
+                data-testid="button-ar-toggle-desktop"
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                {isARMode ? "Exit AR Mode" : "AR Navigation"}
+              </Button>
             )}
 
-            {/* 4. Quick Picks Section */}
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  <Menu className="w-4 h-4 mr-2 text-primary" />
-                  Quick Picks
+            {/* Quick Actions - Simplified grid */}
+            <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
+              <CardHeader className="pb-2 pt-3 px-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Search className="w-4 h-4 text-purple-500" />
+                  Find Nearby
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
+              <CardContent className="px-4 pb-4">
+                <div className="grid grid-cols-3 gap-2">
                   <Button
-                    onClick={handleVehicleTypeClick}
-                    variant="outline"
+                    onClick={handleTruckStopsClick}
+                    variant={selectedPOICategory === 'truck_stop' ? "default" : "ghost"}
                     size="sm"
-                    className="flex flex-col h-20 p-3 gap-1 text-xs min-h-fit bg-blue-50 hover:bg-blue-100 border-blue-200 dark:bg-blue-950/30 dark:hover:bg-blue-950/50 dark:border-blue-800"
-                    data-testid="button-vehicle-type"
+                    className={cn(
+                      "flex flex-col h-14 p-2 gap-1 text-xs",
+                      selectedPOICategory !== 'truck_stop' && "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="button-truck-stops"
                   >
-                    <div className="text-2xl">🚛</div>
-                    <span className="text-center leading-tight font-semibold text-blue-700 dark:text-blue-300">Lane Guide</span>
+                    <Truck className="w-4 h-4" />
+                    <span className="text-[10px]">Truck Stops</span>
                   </Button>
                   
                   <Button
-                    onClick={handleVehicleSettingsClick}
-                    variant="outline"
+                    onClick={handleFuelStationsClick}
+                    variant={selectedPOICategory === 'fuel' ? "default" : "ghost"}
                     size="sm"
-                    className="flex flex-col h-20 p-3 gap-1 text-xs min-h-fit"
-                    data-testid="button-vehicle-settings"
+                    className={cn(
+                      "flex flex-col h-14 p-2 gap-1 text-xs",
+                      selectedPOICategory !== 'fuel' && "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="button-fuel-stations"
                   >
-                    <Settings className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-center leading-tight">Vehicle Settings</span>
+                    <Fuel className="w-4 h-4" />
+                    <span className="text-[10px]">Fuel</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleParkingClick}
+                    variant={selectedPOICategory === 'parking' ? "default" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "flex flex-col h-14 p-2 gap-1 text-xs",
+                      selectedPOICategory !== 'parking' && "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="button-parking"
+                  >
+                    <CircleParking className="w-4 h-4" />
+                    <span className="text-[10px]">Parking</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleRestaurantsClick}
+                    variant={selectedPOICategory === 'restaurant' ? "default" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "flex flex-col h-14 p-2 gap-1 text-xs",
+                      selectedPOICategory !== 'restaurant' && "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="button-restaurants"
+                  >
+                    <Utensils className="w-4 h-4" />
+                    <span className="text-[10px]">Food</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleShopsClick}
+                    variant={selectedPOICategory === 'shop' ? "default" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "flex flex-col h-14 p-2 gap-1 text-xs",
+                      selectedPOICategory !== 'shop' && "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="button-shops"
+                  >
+                    <Store className="w-4 h-4" />
+                    <span className="text-[10px]">Shops</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleSupermarketsClick}
+                    variant={selectedPOICategory === 'supermarket' ? "default" : "ghost"}
+                    size="sm"
+                    className={cn(
+                      "flex flex-col h-14 p-2 gap-1 text-xs",
+                      selectedPOICategory !== 'supermarket' && "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="button-supermarkets"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    <span className="text-[10px]">Markets</span>
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 5. Tools & Widgets Section */}
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center">
-                  <Search className="w-4 h-4 mr-2 text-purple-600" />
-                  Tools & Widgets
+            {/* Tools Card - Simplified */}
+            <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
+              <CardHeader className="pb-2 pt-3 px-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-gray-500" />
+                  Tools
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Search & POI Section */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">POI Search</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      onClick={handleTruckStopsClick}
-                      variant={selectedPOICategory === 'truck_stop' ? "default" : "outline"}
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-truck-stops"
-                    >
-                      <Truck className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Truck Stops</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleFuelStationsClick}
-                      variant={selectedPOICategory === 'fuel' ? "default" : "outline"}
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-fuel-stations"
-                    >
-                      <Fuel className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Fuel Stations</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleParkingClick}
-                      variant={selectedPOICategory === 'parking' ? "default" : "outline"}
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-parking"
-                    >
-                      <CircleParking className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Parking</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleRestaurantsClick}
-                      variant={selectedPOICategory === 'restaurant' ? "default" : "outline"}
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-restaurants"
-                    >
-                      <Utensils className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Restaurants</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleShopsClick}
-                      variant={selectedPOICategory === 'shop' ? "default" : "outline"}
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-shops"
-                    >
-                      <Store className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Shops</span>
-                    </Button>
-
-                    <Button
-                      onClick={handleSupermarketsClick}
-                      variant={selectedPOICategory === 'supermarket' ? "default" : "outline"}
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-supermarkets"
-                    >
-                      <ShoppingCart className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Markets</span>
-                    </Button>
-                  </div>
+              <CardContent className="px-4 pb-4">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    onClick={handleWeatherClick}
+                    variant="ghost"
+                    size="sm"
+                    className="flex flex-col h-14 p-2 gap-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-testid="button-weather-widget"
+                  >
+                    <Cloud className="w-4 h-4" />
+                    <span className="text-[10px]">Weather</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleEntertainmentClick}
+                    variant="ghost"
+                    size="sm"
+                    className="flex flex-col h-14 p-2 gap-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-testid="button-entertainment-widget"
+                  >
+                    <Music className="w-4 h-4" />
+                    <span className="text-[10px]">Media</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleThemeClick}
+                    variant="ghost"
+                    size="sm"
+                    className="flex flex-col h-14 p-2 gap-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-testid="button-theme-widget"
+                  >
+                    <Palette className="w-4 h-4" />
+                    <span className="text-[10px]">Theme</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleVehicleSettingsClick}
+                    variant="ghost"
+                    size="sm"
+                    className="flex flex-col h-14 p-2 gap-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-testid="button-settings-widget"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span className="text-[10px]">Settings</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleIncidentReportClick}
+                    variant="ghost"
+                    size="sm"
+                    className="flex flex-col h-14 p-2 gap-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-testid="button-report-incident"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    <span className="text-[10px]">Report</span>
+                  </Button>
+                  
+                  <Button
+                    onClick={handleVehicleTypeClick}
+                    variant="ghost"
+                    size="sm"
+                    className="flex flex-col h-14 p-2 gap-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+                    data-testid="button-vehicle-type"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    <span className="text-[10px]">Lanes</span>
+                  </Button>
                 </div>
 
-                <Separator />
-
-                {/* Widget Access Buttons */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Quick Access</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      onClick={handleWeatherClick}
-                      variant="outline"
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-weather-widget"
-                    >
-                      <Cloud className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Weather</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleEntertainmentClick}
-                      variant="outline"
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-entertainment-widget"
-                    >
-                      <Music className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Entertainment</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleThemeClick}
-                      variant="outline"
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-theme-widget"
-                    >
-                      <Palette className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Themes</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleVehicleSettingsClick}
-                      variant="outline"
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-settings-widget"
-                    >
-                      <Settings className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Settings</span>
-                    </Button>
-                    
-                    <Button
-                      onClick={handleIncidentReportClick}
-                      variant="outline"
-                      size="sm"
-                      className="flex flex-col h-16 p-2 gap-1 text-xs min-h-fit"
-                      data-testid="button-report-incident"
-                    >
-                      <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                      <span className="text-center leading-tight">Report</span>
-                    </Button>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Advanced Search */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Advanced Search</Label>
-                  <div className="flex space-x-2">
+                {/* Advanced Search - Text search for facilities */}
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex gap-2">
                     <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <Input
-                        placeholder="Search facilities, locations..."
+                        placeholder="Search facilities..."
                         value={facilitySearchInput}
                         onChange={(e) => setFacilitySearchInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -999,7 +978,7 @@ Calculating route...
                             handleFacilitySearch();
                           }
                         }}
-                        className="pl-10 automotive-input text-sm"
+                        className="h-8 pl-8 text-xs"
                         data-testid="input-facility-search"
                       />
                     </div>
@@ -1007,10 +986,10 @@ Calculating route...
                       onClick={handleFacilitySearch}
                       disabled={!facilitySearchInput.trim()}
                       size="sm"
-                      className="automotive-button shrink-0"
+                      className="h-8 px-2.5"
                       data-testid="button-search-facilities"
                     >
-                      <Search className="w-4 h-4" />
+                      <Search className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
