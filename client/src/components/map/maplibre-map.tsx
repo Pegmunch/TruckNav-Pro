@@ -1785,38 +1785,32 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         if (!mapInstance) return;
 
         // Add satellite sources for map view toggle
-        // Using Google Maps satellite tiles - reliable worldwide coverage
+        // Using Esri World Imagery satellite tiles - free, reliable worldwide coverage
         if (!mapInstance.getSource('satellite-2d')) {
           mapInstance.addSource('satellite-2d', {
             type: 'raster',
             tiles: [
-              'https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 20,
-            attribution: '&copy; Google'
+            maxzoom: 19,
+            attribution: '&copy; Esri, Maxar, Earthstar Geographics'
           });
-          console.log('[SATELLITE] Added Google satellite source for 2D');
+          console.log('[SATELLITE] Added Esri satellite source for 2D');
         }
 
         if (!mapInstance.getSource('satellite-3d')) {
           mapInstance.addSource('satellite-3d', {
             type: 'raster',
             tiles: [
-              'https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt2.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-              'https://mt3.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
             ],
             tileSize: 256,
             minzoom: 1,
-            maxzoom: 20
+            maxzoom: 19
           });
-          console.log('[SATELLITE] Added Google satellite source for 3D');
+          console.log('[SATELLITE] Added Esri satellite source for 3D');
         }
 
         // Add satellite layers (initially hidden) - add BEFORE roads layers so they render below
