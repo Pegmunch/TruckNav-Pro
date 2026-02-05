@@ -122,7 +122,9 @@ function useWindowTouchInterceptor(
     buttonRegistry.set(id, {
       id,
       getRect: () => ref.current?.getBoundingClientRect() || null,
-      callback
+      callback,
+      lastFired: 0,
+      isVisible: true
     });
     
     console.log(`[WINDOW-TOUCH-REGISTER-LEFT] 📎 Registered button: ${id} (navigating: ${isNavigating})`);
@@ -274,7 +276,9 @@ export function LeftActionStack({
     buttonRegistry.set('left-incident-btn', {
       id: 'left-incident-btn',
       getRect: () => incidentButtonRef.current?.getBoundingClientRect() || null,
-      callback: stableIncidentCallback
+      callback: stableIncidentCallback,
+      lastFired: 0,
+      isVisible: true
     });
     
     console.log('[LEFT-INCIDENT-DIRECT] ✅ Registered left-incident-btn directly');
