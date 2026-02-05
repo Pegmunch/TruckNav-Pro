@@ -124,6 +124,35 @@ export function VehicleInspectionsTab() {
     { key: 'documents', label: 'Documents & Equipment' }
   ];
 
+  const exportToCSV = () => {
+    const headers = ['Date', 'Time', 'Vehicle', 'Driver', 'Duration', 'Items Checked', 'Total Items', 'Status', 'Notes'];
+    const rows = filteredInspections.map(inspection => {
+      const completedDate = new Date(inspection.completedAt);
+      const checkedCount = inspection.checklistItems.filter(i => i.checked).length;
+      const totalCount = inspection.checklistItems.length;
+      return [
+        completedDate.toLocaleDateString('en-GB'),
+        completedDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        `"${inspection.vehicleRegistration}"`,
+        `"${inspection.operatorName}"`,
+        formatDuration(inspection.durationSeconds),
+        checkedCount,
+        totalCount,
+        inspection.allItemsPassed ? 'PASSED' : 'ISSUES FOUND',
+        `"${(inspection.notes || '').replace(/"/g, '""')}"`,
+      ];
+    });
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vehicle-inspections-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const todayCount = inspections.filter(i => {
     const today = new Date().toISOString().split('T')[0];
     return new Date(i.completedAt).toISOString().split('T')[0] === today;
@@ -258,13 +287,23 @@ export function VehicleInspectionsTab() {
       {/* Inspections List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Inspection Records
-          </CardTitle>
-          <CardDescription>
-            {filteredInspections.length} inspection{filteredInspections.length !== 1 ? 's' : ''} found
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Inspection Records
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {filteredInspections.length} inspection{filteredInspections.length !== 1 ? 's' : ''} found
+              </CardDescription>
+            </div>
+            {filteredInspections.length > 0 && (
+              <Button variant="outline" size="sm" onClick={exportToCSV} className="flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

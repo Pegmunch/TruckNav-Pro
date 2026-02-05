@@ -1714,6 +1714,260 @@ export function UserGuideTab() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-purple-500" />
+                Key Features - Native / Capacitor App Export
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+              <p className="text-muted-foreground">Complete feature manifest for packaging TruckNav Pro as a native mobile application via Capacitor or equivalent framework. All features listed are implemented and production-ready.</p>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Navigation className="w-4 h-4" />
+                    Navigation & Routing
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>TomTom Truck Routing API with HGV-specific parameters (height, width, weight, length, axle count)</li>
+                    <li>GraphHopper fallback routing engine for redundancy</li>
+                    <li>Dynamic Car vs HGV route calculation mode switching</li>
+                    <li>Turn-by-turn voice navigation with 17+ language support</li>
+                    <li>Lane guidance with visual turn indicators and voice announcements</li>
+                    <li>Automatic off-route rerouting with restriction avoidance</li>
+                    <li>Dynamic alternative route suggestions during navigation</li>
+                    <li>3-mode workflow: Plan, Preview, Navigate</li>
+                    <li>Route preview with trip summary (distance, time, fuel estimate)</li>
+                    <li>Smart Traffic Light Integration with green wave optimisation</li>
+                    <li>Customisable dashboard widgets for real-time navigation data</li>
+                    <li>Staggered zoom system with zoom lock during navigation</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Layers className="w-4 h-4" />
+                    Mapping & Visualisation
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>MapLibre GL JS GPU-accelerated vector map engine</li>
+                    <li>Leaflet fallback map rendering</li>
+                    <li>Google Maps satellite imagery tiles</li>
+                    <li>OpenStreetMap standard tiles</li>
+                    <li>3D building extrusions at zoom level 14+</li>
+                    <li>3D navigation mode with pitch camera</li>
+                    <li>Day / Night / Auto theme modes</li>
+                    <li>Persistent tile sources with multi-CDN optimisation</li>
+                    <li>AR Navigation Overlay (camera-based augmented reality view)</li>
+                    <li>Interactive 3D map controls with compass bearing</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Real-Time Traffic
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Triple-stream traffic data: TomTom Live + HERE API + Mapbox fallback</li>
+                    <li>3-layer route traffic visualisation (base line, colour overlay, incident icons)</li>
+                    <li>TomTom Traffic Incidents API for verified incident data</li>
+                    <li>Crowdsourced incident reporting with voice commands</li>
+                    <li>Traffic colour scheme: Blue (free flow), Green (light), Yellow (moderate), Orange (heavy), Red (standstill)</li>
+                    <li>Dynamic travel time recalculation based on traffic conditions</li>
+                    <li>In-memory caching system for traffic data efficiency</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Mic className="w-4 h-4" />
+                    Voice & Audio System
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Unified NavigationVoice singleton for all announcements</li>
+                    <li>Female English voice default with 17 language support</li>
+                    <li>Modes: Motorway-Only, Junction & Lane Guidance, Emergency Traffic</li>
+                    <li>Bluetooth / CarPlay / Android Auto audio routing</li>
+                    <li>Silent audio warmup and AudioContext resumption</li>
+                    <li>Speech synthesis priming for vehicle connectivity</li>
+                    <li>Customisable alert sounds via Web Audio API</li>
+                    <li>Mute All Alerts quick-access button with state persistence</li>
+                    <li>Voice commands for hands-free incident reporting</li>
+                    <li>Dynamic language switching matching i18n settings</li>
+                    <li>Haptic feedback via Vibration API</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Search className="w-4 h-4" />
+                    Search & POI Discovery
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>TomTom Search API for worldwide address autocomplete</li>
+                    <li>Truck-specific POI search with fuzzy matching</li>
+                    <li>Robust geocoding and reverse geocoding</li>
+                    <li>Recent destinations history</li>
+                    <li>Fuel price comparison from nearby stations</li>
+                    <li>Truck-friendly facility discovery (truck stops, rest areas, parking)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Truck className="w-4 h-4" />
+                    Vehicle Management
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Class 1 Truck and Car vehicle profile switching</li>
+                    <li>Custom vehicle dimensions (height, width, weight, length)</li>
+                    <li>Intelligent restriction avoidance based on vehicle parameters</li>
+                    <li>Critical violation detection and dimensional checking</li>
+                    <li>Pre-trip vehicle inspection checklist (8 categories, DVSA-aligned)</li>
+                    <li>Inspection timer with duration recording</li>
+                    <li>Digital inspection records with audit trail</li>
+                    <li>CSV export of inspection records</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Safety & Compliance
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Working Time Directive compliance warnings</li>
+                    <li>Tachograph compliance tracking (infringements, scoring, severity)</li>
+                    <li>Driver hours monitoring with break reminders</li>
+                    <li>Speed limit display with customisable alerts</li>
+                    <li>Restriction warning system for bridges, tunnels, weight limits</li>
+                    <li>Fatigue/break reminder notifications</li>
+                    <li>Dash cam integration support</li>
+                    <li>Disclaimer: NOT a certified ELD or digital tachograph</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Fleet Management (Desktop)
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>17-tab enterprise management system</li>
+                    <li>Vehicle Registry with full specifications tracking</li>
+                    <li>Operator Management with licence and qualification tracking</li>
+                    <li>Service Records with cost tracking and scheduling</li>
+                    <li>Fuel Consumption analytics and logging</li>
+                    <li>Document Management with expiry tracking</li>
+                    <li>Cost Analytics with trend charts</li>
+                    <li>Incident Logging and investigation tracking</li>
+                    <li>Trip Tracking with route history</li>
+                    <li>Compliance & Regulatory Tracking</li>
+                    <li>Real-Time Fleet Tracking on map</li>
+                    <li>Geofencing with entry/exit alerts</li>
+                    <li>Driver Behaviour Analytics with scoring</li>
+                    <li>Hours of Service (HoS) compliance monitoring</li>
+                    <li>Customer Billing Portal</li>
+                    <li>Tachograph Compliance with CSV export</li>
+                    <li>Vehicle Inspections history with CSV export</li>
+                    <li>Dash Cam management</li>
+                    <li>Fleet Broadcast Messaging (Critical/Important/Info priorities)</li>
+                    <li>Shift Management (check-in/out, handover notes, performance scoring)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    Mobile & PWA Features
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Progressive Web App with offline support</li>
+                    <li>iOS enhancements and safe area handling</li>
+                    <li>Automatic update detection</li>
+                    <li>Offline cached routes, restrictions, and facilities</li>
+                    <li>Mobile-first design with touch-optimised targets</li>
+                    <li>MobileFAB for one-handed operation</li>
+                    <li>Full-screen route planner</li>
+                    <li>Compact trip strip display</li>
+                    <li>Responsive CSS clamp() density tokens</li>
+                    <li>Device orientation support for AR view</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Internationalisation
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>19 languages supported (10 full, 9 core coverage)</li>
+                    <li>13 translation categories per language</li>
+                    <li>Dynamic voice language switching</li>
+                    <li>Multilingual user guide</li>
+                    <li>RTL support for Arabic</li>
+                    <li>Locale-aware date, time, and number formatting</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Subscription & Authentication
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Stripe-powered subscription management (£69/12 months)</li>
+                    <li>Replit Auth (OIDC) authentication with session management</li>
+                    <li>Access control with subscription verification</li>
+                    <li>PostgreSQL session storage</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-blue-600 mb-2 flex items-center gap-2">
+                    <HardDrive className="w-4 h-4" />
+                    Data & Backend
+                  </h4>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>Node.js + Express.js backend with TypeScript</li>
+                    <li>PostgreSQL (Neon serverless) with Drizzle ORM</li>
+                    <li>Full REST API with Zod validation</li>
+                    <li>TanStack React Query for server state management</li>
+                    <li>React Context for local UI state</li>
+                    <li>React Hook Form with Zod resolver for forms</li>
+                    <li>Wouter for client-side routing</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-purple-600 mb-2 flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    Capacitor / Native App Migration Notes
+                  </h4>
+                  <p className="text-xs text-muted-foreground mb-1">The following are recommendations when converting to a native app. These are NOT current features but suggested plugins for enhanced native capabilities.</p>
+                  <ul className="space-y-1 pl-4 text-xs">
+                    <li>All UI rendering is web-based (React + MapLibre GL) - fully Capacitor-compatible</li>
+                    <li>Geolocation via Browser API (replace with Capacitor Geolocation plugin for native accuracy)</li>
+                    <li>Camera access for AR overlay (replace with Capacitor Camera plugin if needed)</li>
+                    <li>Speech synthesis via Web Speech API (works in native WebView)</li>
+                    <li>Speech recognition via Web Speech API (may need native plugin on iOS)</li>
+                    <li>Vibration API for haptic feedback (replace with Capacitor Haptics plugin)</li>
+                    <li>Device Orientation for AR (replace with Capacitor Motion plugin)</li>
+                    <li>Local Storage / IndexedDB for offline caching (replace with Capacitor Preferences/Filesystem)</li>
+                    <li>Push notifications: Add Capacitor Push Notifications plugin</li>
+                    <li>Background location tracking: Add Capacitor Background Geolocation plugin</li>
+                    <li>Keep screen awake during navigation: Add Capacitor Keep Awake plugin</li>
+                    <li>Bluetooth audio: Native WebView handles audio routing automatically</li>
+                    <li>App store metadata: Use features list above for store description</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )
     },
@@ -2180,7 +2434,7 @@ export function UserGuideTab() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
-                  <span><strong>Audit Trail:</strong> Complete timestamped records stored for compliance audits</span>
+                  <span><strong>Export CSV:</strong> Download filtered inspection records as CSV for compliance audits and external reporting</span>
                 </li>
               </ul>
             </CardContent>
