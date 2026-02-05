@@ -4044,19 +4044,34 @@ function NavigationPageContent() {
                       bottom: 'calc(80px + var(--safe-area-bottom))',
                       left: '16px'
                     }}>
-                    {/* Menu Button - matches truck icon in desktop header */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                    {/* Menu Button - white with blue truck icon and blue top/bottom borders */}
+                    <button
                       onClick={() => {
                         console.log('[MENU-BUTTON] Hamburger menu button pressed');
                         setShowComprehensiveMenu(true);
                       }}
-                      className="h-10 w-10 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg md:hidden"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        backgroundColor: '#ffffff',
+                        borderTop: '3px solid #3b82f6',
+                        borderBottom: '3px solid #3b82f6',
+                        borderLeft: '1px solid #e5e7eb',
+                        borderRight: '1px solid #e5e7eb',
+                        color: '#2563eb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)',
+                        cursor: 'pointer',
+                        touchAction: 'manipulation',
+                      }}
+                      className="md:hidden"
                       data-testid="button-open-menu-plan"
                     >
-                      <Truck className="w-6 h-6" />
-                    </Button>
+                      <Truck className="w-6 h-6" style={{ color: '#2563eb' }} />
+                    </button>
                   </div>
                   
                   {/* PLAN MODE CONTROLS - Right Stack - Map control buttons (controlled by showNavControls toggle) */}
