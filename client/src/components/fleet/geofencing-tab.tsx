@@ -94,7 +94,6 @@ export function GeofencingTab() {
             mostActiveZone: { name: 'London Depot', eventCount: 8 },
           };
         }
-        toast({ title: t('fleet.geofencing.toast.loadFailed'), description: t('fleet.geofencing.toast.loadFailedDesc'), variant: 'destructive' });
         throw new Error('Failed to load geofences');
       }
       return response.json();

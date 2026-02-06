@@ -5816,7 +5816,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Service Records
+  // Service Records - Get All
+  app.get("/api/fleet/service-records", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const vehicles = await storage.getAllFleetVehicles();
+      const allRecords: any[] = [];
+      for (const vehicle of vehicles) {
+        const records = await storage.getServiceRecordsByVehicle(vehicle.id);
+        allRecords.push(...records.map(r => ({ ...r, vehicleName: `${vehicle.make || ''} ${vehicle.model || ''} (${vehicle.registration || ''})`.trim() })));
+      }
+      allRecords.sort((a, b) => new Date(b.serviceDate || b.createdAt).getTime() - new Date(a.serviceDate || a.createdAt).getTime());
+      res.json(allRecords);
+    } catch (error) {
+      console.error('Error getting all service records:', error);
+      res.status(500).json({ message: "Failed to get service records" });
+    }
+  });
+
+  // Service Records - Get by Vehicle
   app.get("/api/fleet/service-records/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const records = await storage.getServiceRecordsByVehicle(req.params.vehicleId);
@@ -5871,7 +5888,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Fuel Logs
+  // Fuel Logs - Get All
+  app.get("/api/fleet/fuel-logs", requireFleetSubscription, async (req: Request, res: Response) => {
+    try {
+      const vehicles = await storage.getAllFleetVehicles();
+      const allLogs: any[] = [];
+      for (const vehicle of vehicles) {
+        const logs = await storage.getFuelLogsByVehicle(vehicle.id);
+        allLogs.push(...logs.map(l => ({ ...l, vehicleName: `${vehicle.make || ''} ${vehicle.model || ''} (${vehicle.registration || ''})`.trim() })));
+      }
+      allLogs.sort((a, b) => new Date(b.fuelDate || b.createdAt).getTime() - new Date(a.fuelDate || a.createdAt).getTime());
+      res.json(allLogs);
+    } catch (error) {
+      console.error('Error getting all fuel logs:', error);
+      res.status(500).json({ message: "Failed to get fuel logs" });
+    }
+  });
+
+  // Fuel Logs - Get by Vehicle
   app.get("/api/fleet/fuel-logs/vehicle/:vehicleId", requireFleetSubscription, async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;

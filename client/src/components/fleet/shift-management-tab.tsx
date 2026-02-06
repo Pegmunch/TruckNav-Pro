@@ -10,8 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { 
   ClipboardCheck, 
   LogIn, 
@@ -25,7 +26,10 @@ import {
   History,
   ArrowRightLeft,
   Search,
-  Calendar
+  Calendar,
+  Navigation,
+  Shield,
+  Wifi
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import type { ShiftCheckin as BaseShiftCheckin, ShiftHandover as BaseShiftHandover } from '@shared/schema';
@@ -50,12 +54,31 @@ interface ShiftHandoverDisplay extends Omit<BaseShiftHandover, 'handoverTime' | 
 interface Vehicle {
   id: string;
   name: string;
+  registration?: string;
   registrationNumber?: string;
+  make?: string;
+  model?: string;
 }
 
 interface Operator {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  licenceNumber?: string;
+}
+
+interface DriverSession {
+  operatorId: string;
+  vehicleId: string;
+  operatorName: string;
+  vehicleRegistration: string;
+  sessionStart: string;
+  lastUpdate: string;
+  latitude?: number;
+  longitude?: number;
+  speed?: number;
+  heading?: number;
 }
 
 interface CheckinFormData {
@@ -94,19 +117,25 @@ interface HandoverFormData {
 }
 
 const demoVehicles: Vehicle[] = [
-  { id: 'v1', name: 'Volvo FH16 #101', registrationNumber: 'AB12 CDE' },
-  { id: 'v2', name: 'Mercedes Actros #102', registrationNumber: 'FG34 HIJ' },
-  { id: 'v3', name: 'DAF XF #103', registrationNumber: 'KL56 MNO' },
-  { id: 'v4', name: 'Scania R500 #104', registrationNumber: 'PQ78 RST' },
-  { id: 'v5', name: 'MAN TGX #105', registrationNumber: 'UV90 WXY' },
+  { id: 'v1', name: 'Volvo FH16 #101', registration: 'AB12 CDE', make: 'Volvo', model: 'FH16' },
+  { id: 'v2', name: 'Mercedes Actros #102', registration: 'FG34 HIJ', make: 'Mercedes', model: 'Actros' },
+  { id: 'v3', name: 'DAF XF #103', registration: 'KL56 MNO', make: 'DAF', model: 'XF' },
+  { id: 'v4', name: 'Scania R500 #104', registration: 'PQ78 RST', make: 'Scania', model: 'R500' },
+  { id: 'v5', name: 'MAN TGX #105', registration: 'UV90 WXY', make: 'MAN', model: 'TGX' },
+  { id: 'v6', name: 'Volvo FH #106', registration: 'WX11 ABC', make: 'Volvo', model: 'FH' },
+  { id: 'v7', name: 'Mercedes Actros MP5 #107', registration: 'DE22 FGH', make: 'Mercedes', model: 'Actros MP5' },
+  { id: 'v8', name: 'DAF XG+ #108', registration: 'IJ33 KLM', make: 'DAF', model: 'XG+' },
 ];
 
 const demoOperators: Operator[] = [
-  { id: 'op1', name: 'John Smith' },
-  { id: 'op2', name: 'Jane Doe' },
-  { id: 'op3', name: 'Bob Wilson' },
-  { id: 'op4', name: 'Alice Brown' },
-  { id: 'op5', name: 'Charlie Davis' },
+  { id: 'op1', name: 'John Smith', firstName: 'John', lastName: 'Smith', licenceNumber: 'SMITH801156JN9AA' },
+  { id: 'op2', name: 'Jane Doe', firstName: 'Jane', lastName: 'Doe', licenceNumber: 'DOE9X780115JA9BC' },
+  { id: 'op3', name: 'Bob Wilson', firstName: 'Bob', lastName: 'Wilson', licenceNumber: 'WILSO706206BW3DE' },
+  { id: 'op4', name: 'Alice Brown', firstName: 'Alice', lastName: 'Brown', licenceNumber: 'BROWN809155AB7FG' },
+  { id: 'op5', name: 'Charlie Davis', firstName: 'Charlie', lastName: 'Davis', licenceNumber: 'DAVIS701127CD1HJ' },
+  { id: 'op6', name: 'Emma Thompson', firstName: 'Emma', lastName: 'Thompson', licenceNumber: 'THOMP808225ET5KL' },
+  { id: 'op7', name: 'Michael Harris', firstName: 'Michael', lastName: 'Harris', licenceNumber: 'HARRI703189MH2MN' },
+  { id: 'op8', name: 'Sarah Jenkins', firstName: 'Sarah', lastName: 'Jenkins', licenceNumber: 'JENKI811045SJ6PQ' },
 ];
 
 const demoCheckins: ShiftCheckinDisplay[] = [
@@ -114,7 +143,7 @@ const demoCheckins: ShiftCheckinDisplay[] = [
     id: 'c1',
     userId: 'u1',
     vehicleId: 'v1',
-    vehicleName: 'Volvo FH16 #101',
+    vehicleName: 'Volvo FH16 #101 (AB12 CDE)',
     operatorId: 'op1',
     operatorName: 'John Smith',
     checkInTime: new Date(Date.now() - 4 * 3600000).toISOString(),
@@ -144,11 +173,73 @@ const demoCheckins: ShiftCheckinDisplay[] = [
   {
     id: 'c2',
     userId: 'u1',
+    vehicleId: 'v3',
+    vehicleName: 'DAF XF #103 (KL56 MNO)',
+    operatorId: 'op3',
+    operatorName: 'Bob Wilson',
+    checkInTime: new Date(Date.now() - 2.5 * 3600000).toISOString(),
+    checkInOdometer: 312456,
+    checkInFuelLevel: 92,
+    preTripInspection: true,
+    tiresOk: true,
+    lightsOk: true,
+    brakesOk: true,
+    fluidsOk: true,
+    mirrorsOk: true,
+    hornOk: true,
+    wipersOk: true,
+    safetyEquipmentOk: true,
+    vehicleClean: true,
+    defectsNoted: null,
+    checkOutTime: null,
+    checkOutOdometer: null,
+    checkOutFuelLevel: null,
+    milesDriven: null,
+    fuelUsed: null,
+    postTripNotes: null,
+    issuesReported: null,
+    status: 'checked_in',
+    createdAt: new Date(Date.now() - 2.5 * 3600000).toISOString(),
+  },
+  {
+    id: 'c3',
+    userId: 'u1',
+    vehicleId: 'v6',
+    vehicleName: 'Volvo FH #106 (WX11 ABC)',
+    operatorId: 'op6',
+    operatorName: 'Emma Thompson',
+    checkInTime: new Date(Date.now() - 1.5 * 3600000).toISOString(),
+    checkInOdometer: 189234,
+    checkInFuelLevel: 78,
+    preTripInspection: true,
+    tiresOk: true,
+    lightsOk: true,
+    brakesOk: true,
+    fluidsOk: true,
+    mirrorsOk: true,
+    hornOk: true,
+    wipersOk: true,
+    safetyEquipmentOk: true,
+    vehicleClean: false,
+    defectsNoted: 'Minor scratch on nearside panel - existing damage noted',
+    checkOutTime: null,
+    checkOutOdometer: null,
+    checkOutFuelLevel: null,
+    milesDriven: null,
+    fuelUsed: null,
+    postTripNotes: null,
+    issuesReported: null,
+    status: 'checked_in',
+    createdAt: new Date(Date.now() - 1.5 * 3600000).toISOString(),
+  },
+  {
+    id: 'c4',
+    userId: 'u1',
     vehicleId: 'v2',
-    vehicleName: 'Mercedes Actros #102',
+    vehicleName: 'Mercedes Actros #102 (FG34 HIJ)',
     operatorId: 'op2',
     operatorName: 'Jane Doe',
-    checkInTime: new Date(Date.now() - 8 * 3600000).toISOString(),
+    checkInTime: new Date(Date.now() - 10 * 3600000).toISOString(),
     checkInOdometer: 189456,
     checkInFuelLevel: 92,
     preTripInspection: true,
@@ -160,17 +251,79 @@ const demoCheckins: ShiftCheckinDisplay[] = [
     hornOk: true,
     wipersOk: true,
     safetyEquipmentOk: true,
-    vehicleClean: false,
-    defectsNoted: 'Minor scratch on rear bumper',
+    vehicleClean: true,
+    defectsNoted: null,
     checkOutTime: new Date(Date.now() - 2 * 3600000).toISOString(),
     checkOutOdometer: 189612,
     checkOutFuelLevel: 45,
     milesDriven: 156,
     fuelUsed: 47,
-    postTripNotes: 'Completed delivery to Birmingham depot',
+    postTripNotes: 'Completed delivery run: Birmingham depot → Manchester distribution centre → Leeds warehouse. All deliveries on time. M6 roadworks caused 20 min delay.',
     issuesReported: null,
     status: 'checked_out',
-    createdAt: new Date(Date.now() - 8 * 3600000).toISOString(),
+    createdAt: new Date(Date.now() - 10 * 3600000).toISOString(),
+  },
+  {
+    id: 'c5',
+    userId: 'u1',
+    vehicleId: 'v4',
+    vehicleName: 'Scania R500 #104 (PQ78 RST)',
+    operatorId: 'op5',
+    operatorName: 'Charlie Davis',
+    checkInTime: new Date(Date.now() - 14 * 3600000).toISOString(),
+    checkInOdometer: 278100,
+    checkInFuelLevel: 95,
+    preTripInspection: true,
+    tiresOk: true,
+    lightsOk: true,
+    brakesOk: true,
+    fluidsOk: true,
+    mirrorsOk: true,
+    hornOk: true,
+    wipersOk: true,
+    safetyEquipmentOk: true,
+    vehicleClean: true,
+    defectsNoted: null,
+    checkOutTime: new Date(Date.now() - 5 * 3600000).toISOString(),
+    checkOutOdometer: 278456,
+    checkOutFuelLevel: 35,
+    milesDriven: 356,
+    fuelUsed: 82,
+    postTripNotes: 'Long haul: London depot → Edinburgh distribution. Overnight rest at Scotch Corner services. All tachograph records compliant.',
+    issuesReported: 'Brake warning light illuminated briefly on A1(M) - self-cleared. Recommend inspection at next service.',
+    status: 'checked_out',
+    createdAt: new Date(Date.now() - 14 * 3600000).toISOString(),
+  },
+  {
+    id: 'c6',
+    userId: 'u1',
+    vehicleId: 'v7',
+    vehicleName: 'Mercedes Actros MP5 #107 (DE22 FGH)',
+    operatorId: 'op7',
+    operatorName: 'Michael Harris',
+    checkInTime: new Date(Date.now() - 9 * 3600000).toISOString(),
+    checkInOdometer: 156789,
+    checkInFuelLevel: 88,
+    preTripInspection: true,
+    tiresOk: true,
+    lightsOk: true,
+    brakesOk: true,
+    fluidsOk: true,
+    mirrorsOk: true,
+    hornOk: true,
+    wipersOk: true,
+    safetyEquipmentOk: true,
+    vehicleClean: true,
+    defectsNoted: null,
+    checkOutTime: new Date(Date.now() - 1 * 3600000).toISOString(),
+    checkOutOdometer: 156998,
+    checkOutFuelLevel: 52,
+    milesDriven: 209,
+    fuelUsed: 56,
+    postTripNotes: 'Multi-drop route: Southampton port → Basingstoke → Reading → Slough. 6 drops completed, all PODs collected.',
+    issuesReported: null,
+    status: 'checked_out',
+    createdAt: new Date(Date.now() - 9 * 3600000).toISOString(),
   },
 ];
 
@@ -179,7 +332,7 @@ const demoHandovers: ShiftHandoverDisplay[] = [
     id: 'h1',
     userId: 'u1',
     vehicleId: 'v3',
-    vehicleName: 'DAF XF #103',
+    vehicleName: 'DAF XF #103 (KL56 MNO)',
     outgoingOperatorId: 'op3',
     outgoingOperatorName: 'Bob Wilson',
     outgoingCheckinId: 'c3',
@@ -190,9 +343,9 @@ const demoHandovers: ShiftHandoverDisplay[] = [
     vehicleCondition: 'good',
     fuelLevel: 65,
     currentOdometer: 312789,
-    handoverNotes: 'Vehicle running well, AC needs checking',
+    handoverNotes: 'Vehicle running well. AdBlue level at 60%. Tyre pressures checked at last service stop - all within limits. AC working intermittently - appears to be thermostat related.',
     urgentIssues: null,
-    recommendedActions: 'Schedule AC service this week',
+    recommendedActions: 'Schedule AC thermostat inspection. AdBlue top-up at next available depot.',
     acknowledged: true,
     acknowledgedAt: new Date(Date.now() - 0.5 * 3600000).toISOString(),
     acknowledgedBy: 'op4',
@@ -202,29 +355,53 @@ const demoHandovers: ShiftHandoverDisplay[] = [
     id: 'h2',
     userId: 'u1',
     vehicleId: 'v4',
-    vehicleName: 'Scania R500 #104',
+    vehicleName: 'Scania R500 #104 (PQ78 RST)',
     outgoingOperatorId: 'op5',
     outgoingOperatorName: 'Charlie Davis',
-    outgoingCheckinId: 'c4',
-    incomingOperatorId: null,
-    incomingOperatorName: undefined,
+    outgoingCheckinId: 'c5',
+    incomingOperatorId: 'op8',
+    incomingOperatorName: 'Sarah Jenkins',
     incomingCheckinId: null,
     handoverTime: new Date(Date.now() - 0.25 * 3600000).toISOString(),
     vehicleCondition: 'fair',
     fuelLevel: 35,
     currentOdometer: 278456,
-    handoverNotes: 'Low fuel, needs refueling before next trip',
-    urgentIssues: 'Brake warning light came on during last mile',
-    recommendedActions: 'Urgent brake inspection required before next use',
+    handoverNotes: 'Low fuel - needs refuelling before next trip. Vehicle has completed Edinburgh long haul. Recommend minimum 45-minute rest for engine cooling.',
+    urgentIssues: 'Brake warning light came on briefly during A1(M) section. Self-cleared but requires urgent inspection before next journey. DO NOT operate until brakes inspected.',
+    recommendedActions: 'PRIORITY: Brake system inspection required immediately. Refuel vehicle. Check coolant level after engine cool-down period.',
     acknowledged: false,
     acknowledgedAt: null,
     acknowledgedBy: null,
     createdAt: new Date(Date.now() - 0.25 * 3600000).toISOString(),
   },
+  {
+    id: 'h3',
+    userId: 'u1',
+    vehicleId: 'v7',
+    vehicleName: 'Mercedes Actros MP5 #107 (DE22 FGH)',
+    outgoingOperatorId: 'op7',
+    outgoingOperatorName: 'Michael Harris',
+    outgoingCheckinId: 'c6',
+    incomingOperatorId: 'op1',
+    incomingOperatorName: 'John Smith',
+    incomingCheckinId: null,
+    handoverTime: new Date(Date.now() - 0.75 * 3600000).toISOString(),
+    vehicleCondition: 'excellent',
+    fuelLevel: 52,
+    currentOdometer: 156998,
+    handoverNotes: 'Vehicle in excellent condition after multi-drop route. All PODs collected and scanned. Tail lift operating perfectly. Trailer clean and secure.',
+    urgentIssues: null,
+    recommendedActions: 'Standard refuel before next run. Next MOT due in 3 weeks - schedule with workshop.',
+    acknowledged: true,
+    acknowledgedAt: new Date(Date.now() - 0.5 * 3600000).toISOString(),
+    acknowledgedBy: 'op1',
+    createdAt: new Date(Date.now() - 0.75 * 3600000).toISOString(),
+  },
 ];
 
 export function ShiftManagementTab() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeSubTab, setActiveSubTab] = useState('active');
   const [showCheckinDialog, setShowCheckinDialog] = useState(false);
@@ -275,7 +452,6 @@ export function ShiftManagementTab() {
       const response = await fetch('/api/fleet/shift-checkins');
       if (!response.ok) {
         if (import.meta.env.DEV) {
-          console.warn('[DEV] Shift checkins API unavailable, using demo data');
           return demoCheckins;
         }
         throw new Error('Failed to load shift check-ins');
@@ -291,7 +467,6 @@ export function ShiftManagementTab() {
       const response = await fetch('/api/fleet/shift-handovers');
       if (!response.ok) {
         if (import.meta.env.DEV) {
-          console.warn('[DEV] Shift handovers API unavailable, using demo data');
           return demoHandovers;
         }
         throw new Error('Failed to load shift handovers');
@@ -329,6 +504,16 @@ export function ShiftManagementTab() {
     },
   });
 
+  const { data: driverSessions = [] } = useQuery<DriverSession[]>({
+    queryKey: ['/api/fleet/driver-sessions'],
+    queryFn: async () => {
+      const response = await fetch('/api/fleet/driver-sessions');
+      if (!response.ok) return [];
+      return response.json();
+    },
+    refetchInterval: 15000,
+  });
+
   const checkins: ShiftCheckinDisplay[] = checkinsData || demoCheckins;
   const handovers: ShiftHandoverDisplay[] = handoversData || demoHandovers;
   const vehicles: Vehicle[] = vehiclesData || demoVehicles;
@@ -338,7 +523,266 @@ export function ShiftManagementTab() {
   const completedCheckins = checkins.filter(c => c.status === 'checked_out');
   const pendingHandovers = handovers.filter(h => !h.acknowledged);
 
-  const getConditionBadge = (condition: 'excellent' | 'good' | 'fair' | 'poor' | 'critical') => {
+  const getVehicleDisplayName = (v: Vehicle) => {
+    const reg = v.registration || v.registrationNumber || '';
+    if (v.make && v.model) return `${v.make} ${v.model} ${reg ? `(${reg})` : ''}`.trim();
+    return v.name || reg;
+  };
+
+  const getOperatorDisplayName = (o: Operator) => {
+    if (o.firstName && o.lastName) return `${o.firstName} ${o.lastName}`;
+    return o.name;
+  };
+
+  const checkinMutation = useMutation({
+    mutationFn: async (data: CheckinFormData) => {
+      const vehicle = vehicles.find(v => v.id === data.vehicleId);
+      const operator = operators.find(o => o.id === data.operatorId);
+      const response = await fetch('/api/fleet/shift-checkins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicleId: data.vehicleId,
+          operatorId: data.operatorId,
+          checkInOdometer: parseInt(data.odometer) || 0,
+          checkInFuelLevel: parseInt(data.fuelLevel) || 0,
+          tiresOk: data.tiresOk,
+          lightsOk: data.lightsOk,
+          brakesOk: data.brakesOk,
+          fluidsOk: data.fluidsOk,
+          mirrorsOk: data.mirrorsOk,
+          hornOk: data.hornOk,
+          wipersOk: data.wipersOk,
+          safetyEquipmentOk: data.safetyEquipmentOk,
+          vehicleClean: data.vehicleClean,
+          defectsNoted: data.defectsNoted || null,
+          vehicleName: vehicle ? getVehicleDisplayName(vehicle) : '',
+          operatorName: operator ? getOperatorDisplayName(operator) : '',
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to create check-in');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/shift-checkins'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/driver-sessions'] });
+      toast({ title: 'Shift check-in recorded', description: 'Pre-trip inspection saved to fleet management system' });
+      setShowCheckinDialog(false);
+      setCheckinForm({
+        vehicleId: '', operatorId: '', odometer: '', fuelLevel: '',
+        tiresOk: true, lightsOk: true, brakesOk: true, fluidsOk: true,
+        mirrorsOk: true, hornOk: true, wipersOk: true, safetyEquipmentOk: true,
+        vehicleClean: true, defectsNoted: '',
+      });
+    },
+    onError: (error: Error) => {
+      if (import.meta.env.DEV) {
+        const vehicle = vehicles.find(v => v.id === checkinForm.vehicleId);
+        const operator = operators.find(o => o.id === checkinForm.operatorId);
+        const newCheckin: ShiftCheckinDisplay = {
+          id: `c${Date.now()}`,
+          userId: 'local',
+          vehicleId: checkinForm.vehicleId,
+          vehicleName: vehicle ? getVehicleDisplayName(vehicle) : 'Unknown Vehicle',
+          operatorId: checkinForm.operatorId,
+          operatorName: operator ? getOperatorDisplayName(operator) : 'Unknown Operator',
+          checkInTime: new Date().toISOString(),
+          checkInOdometer: parseInt(checkinForm.odometer) || 0,
+          checkInFuelLevel: parseInt(checkinForm.fuelLevel) || 0,
+          preTripInspection: true,
+          tiresOk: checkinForm.tiresOk,
+          lightsOk: checkinForm.lightsOk,
+          brakesOk: checkinForm.brakesOk,
+          fluidsOk: checkinForm.fluidsOk,
+          mirrorsOk: checkinForm.mirrorsOk,
+          hornOk: checkinForm.hornOk,
+          wipersOk: checkinForm.wipersOk,
+          safetyEquipmentOk: checkinForm.safetyEquipmentOk,
+          vehicleClean: checkinForm.vehicleClean,
+          defectsNoted: checkinForm.defectsNoted || null,
+          checkOutTime: null, checkOutOdometer: null, checkOutFuelLevel: null,
+          milesDriven: null, fuelUsed: null, postTripNotes: null, issuesReported: null,
+          status: 'checked_in',
+          createdAt: new Date().toISOString(),
+        };
+        queryClient.setQueryData(['/api/fleet/shift-checkins'], (old: ShiftCheckinDisplay[] | undefined) => 
+          [...(old || demoCheckins), newCheckin]
+        );
+        toast({ title: 'Shift check-in recorded', description: 'Saved locally (demo mode)' });
+        setShowCheckinDialog(false);
+        setCheckinForm({
+          vehicleId: '', operatorId: '', odometer: '', fuelLevel: '',
+          tiresOk: true, lightsOk: true, brakesOk: true, fluidsOk: true,
+          mirrorsOk: true, hornOk: true, wipersOk: true, safetyEquipmentOk: true,
+          vehicleClean: true, defectsNoted: '',
+        });
+        return;
+      }
+      toast({ title: 'Check-in failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: async ({ checkinId, data }: { checkinId: string; data: CheckoutFormData }) => {
+      const response = await fetch(`/api/fleet/shift-checkins/${checkinId}/checkout`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          odometer: parseInt(data.odometer) || 0,
+          fuelLevel: parseInt(data.fuelLevel) || 0,
+          postTripNotes: data.postTripNotes || null,
+          issuesReported: data.issuesReported || null,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to process check-out');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/shift-checkins'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/driver-sessions'] });
+      toast({ title: 'Shift check-out completed', description: 'Post-trip report saved successfully' });
+      setShowCheckoutDialog(false);
+      setSelectedCheckin(null);
+      setCheckoutForm({ odometer: '', fuelLevel: '', postTripNotes: '', issuesReported: '' });
+    },
+    onError: (error: Error) => {
+      if (import.meta.env.DEV && selectedCheckin) {
+        queryClient.setQueryData(['/api/fleet/shift-checkins'], (old: ShiftCheckinDisplay[] | undefined) =>
+          (old || demoCheckins).map(c => c.id === selectedCheckin.id ? {
+            ...c,
+            status: 'checked_out',
+            checkOutTime: new Date().toISOString(),
+            checkOutOdometer: parseInt(checkoutForm.odometer) || 0,
+            checkOutFuelLevel: parseInt(checkoutForm.fuelLevel) || 0,
+            milesDriven: (parseInt(checkoutForm.odometer) || 0) - (c.checkInOdometer || 0),
+            postTripNotes: checkoutForm.postTripNotes || null,
+            issuesReported: checkoutForm.issuesReported || null,
+          } : c)
+        );
+        toast({ title: 'Shift check-out completed', description: 'Saved locally (demo mode)' });
+        setShowCheckoutDialog(false);
+        setSelectedCheckin(null);
+        setCheckoutForm({ odometer: '', fuelLevel: '', postTripNotes: '', issuesReported: '' });
+        return;
+      }
+      toast({ title: 'Check-out failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const handoverMutation = useMutation({
+    mutationFn: async (data: HandoverFormData) => {
+      const vehicle = vehicles.find(v => v.id === data.vehicleId);
+      const currentOperator = activeCheckins.find(c => c.vehicleId === data.vehicleId);
+      const incomingOperator = operators.find(o => o.id === data.incomingOperatorId);
+      const response = await fetch('/api/fleet/shift-handovers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicleId: data.vehicleId,
+          outgoingOperatorId: currentOperator?.operatorId || '',
+          outgoingCheckinId: currentOperator?.id || '',
+          incomingOperatorId: data.incomingOperatorId || null,
+          vehicleCondition: data.vehicleCondition,
+          fuelLevel: parseInt(data.fuelLevel) || 0,
+          currentOdometer: parseInt(data.currentOdometer) || 0,
+          handoverNotes: data.handoverNotes || null,
+          urgentIssues: data.urgentIssues || null,
+          recommendedActions: data.recommendedActions || null,
+          vehicleName: vehicle ? getVehicleDisplayName(vehicle) : '',
+          outgoingOperatorName: currentOperator?.operatorName || 'Unknown',
+          incomingOperatorName: incomingOperator ? getOperatorDisplayName(incomingOperator) : undefined,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to create handover');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/shift-handovers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/shift-checkins'] });
+      toast({ title: 'Handover record created', description: 'Incoming driver will be notified to acknowledge' });
+      setShowHandoverDialog(false);
+      setHandoverForm({
+        vehicleId: '', incomingOperatorId: '', vehicleCondition: 'good',
+        fuelLevel: '', currentOdometer: '', handoverNotes: '',
+        urgentIssues: '', recommendedActions: '',
+      });
+    },
+    onError: (error: Error) => {
+      if (import.meta.env.DEV) {
+        const vehicle = vehicles.find(v => v.id === handoverForm.vehicleId);
+        const currentOperator = activeCheckins.find(c => c.vehicleId === handoverForm.vehicleId);
+        const incomingOp = operators.find(o => o.id === handoverForm.incomingOperatorId);
+        const newHandover: ShiftHandoverDisplay = {
+          id: `h${Date.now()}`,
+          userId: 'local',
+          vehicleId: handoverForm.vehicleId,
+          vehicleName: vehicle ? getVehicleDisplayName(vehicle) : 'Unknown Vehicle',
+          outgoingOperatorId: currentOperator?.operatorId || '',
+          outgoingOperatorName: currentOperator?.operatorName || 'Unknown',
+          outgoingCheckinId: currentOperator?.id || '',
+          incomingOperatorId: handoverForm.incomingOperatorId || null,
+          incomingOperatorName: incomingOp ? getOperatorDisplayName(incomingOp) : undefined,
+          incomingCheckinId: null,
+          handoverTime: new Date().toISOString(),
+          vehicleCondition: handoverForm.vehicleCondition,
+          fuelLevel: parseInt(handoverForm.fuelLevel) || 0,
+          currentOdometer: parseInt(handoverForm.currentOdometer) || 0,
+          handoverNotes: handoverForm.handoverNotes || null,
+          urgentIssues: handoverForm.urgentIssues || null,
+          recommendedActions: handoverForm.recommendedActions || null,
+          acknowledged: false,
+          acknowledgedAt: null,
+          acknowledgedBy: null,
+          createdAt: new Date().toISOString(),
+        };
+        queryClient.setQueryData(['/api/fleet/shift-handovers'], (old: ShiftHandoverDisplay[] | undefined) =>
+          [...(old || demoHandovers), newHandover]
+        );
+        toast({ title: 'Handover record created', description: 'Saved locally (demo mode)' });
+        setShowHandoverDialog(false);
+        setHandoverForm({
+          vehicleId: '', incomingOperatorId: '', vehicleCondition: 'good',
+          fuelLevel: '', currentOdometer: '', handoverNotes: '',
+          urgentIssues: '', recommendedActions: '',
+        });
+        return;
+      }
+      toast({ title: 'Handover failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const acknowledgeMutation = useMutation({
+    mutationFn: async (handoverId: string) => {
+      const response = await fetch(`/api/fleet/shift-handovers/${handoverId}/acknowledge`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Failed to acknowledge handover');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/fleet/shift-handovers'] });
+      toast({ title: 'Handover acknowledged' });
+    },
+    onError: (error: Error) => {
+      if (import.meta.env.DEV) {
+        toast({ title: 'Handover acknowledged', description: 'Saved locally (demo mode)' });
+        return;
+      }
+      toast({ title: 'Failed to acknowledge', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const getConditionBadge = (condition: string) => {
     const config: Record<string, { label: string; class: string }> = {
       excellent: { label: 'Excellent', class: 'bg-green-100 text-green-800' },
       good: { label: 'Good', class: 'bg-blue-100 text-blue-800' },
@@ -346,7 +790,7 @@ export function ShiftManagementTab() {
       poor: { label: 'Poor', class: 'bg-orange-100 text-orange-800' },
       critical: { label: 'Critical', class: 'bg-red-100 text-red-800' },
     };
-    const c = config[condition];
+    const c = config[condition] || config.good;
     return <Badge className={c.class}>{c.label}</Badge>;
   };
 
@@ -361,51 +805,44 @@ export function ShiftManagementTab() {
   };
 
   const handleCheckin = () => {
-    console.log('Check-in form submitted:', checkinForm);
-    setShowCheckinDialog(false);
-    setCheckinForm({
-      vehicleId: '',
-      operatorId: '',
-      odometer: '',
-      fuelLevel: '',
-      tiresOk: true,
-      lightsOk: true,
-      brakesOk: true,
-      fluidsOk: true,
-      mirrorsOk: true,
-      hornOk: true,
-      wipersOk: true,
-      safetyEquipmentOk: true,
-      vehicleClean: true,
-      defectsNoted: '',
-    });
+    if (!checkinForm.vehicleId || !checkinForm.operatorId) {
+      toast({ title: 'Please select a vehicle and driver', variant: 'destructive' });
+      return;
+    }
+    if (!checkinForm.odometer || !checkinForm.fuelLevel) {
+      toast({ title: 'Please enter odometer reading and fuel level', variant: 'destructive' });
+      return;
+    }
+    checkinMutation.mutate(checkinForm);
   };
 
   const handleCheckout = () => {
-    console.log('Check-out form submitted:', checkoutForm, 'for checkin:', selectedCheckin?.id);
-    setShowCheckoutDialog(false);
-    setSelectedCheckin(null);
-    setCheckoutForm({
-      odometer: '',
-      fuelLevel: '',
-      postTripNotes: '',
-      issuesReported: '',
-    });
+    if (!selectedCheckin) return;
+    if (!checkoutForm.odometer || !checkoutForm.fuelLevel) {
+      toast({ title: 'Please enter end odometer and fuel level', variant: 'destructive' });
+      return;
+    }
+    checkoutMutation.mutate({ checkinId: selectedCheckin.id, data: checkoutForm });
   };
 
   const handleHandover = () => {
-    console.log('Handover form submitted:', handoverForm);
-    setShowHandoverDialog(false);
-    setHandoverForm({
-      vehicleId: '',
-      incomingOperatorId: '',
-      vehicleCondition: 'good',
-      fuelLevel: '',
-      currentOdometer: '',
-      handoverNotes: '',
-      urgentIssues: '',
-      recommendedActions: '',
-    });
+    if (!handoverForm.vehicleId) {
+      toast({ title: 'Please select a vehicle', variant: 'destructive' });
+      return;
+    }
+    if (!handoverForm.fuelLevel || !handoverForm.currentOdometer) {
+      toast({ title: 'Please enter fuel level and odometer reading', variant: 'destructive' });
+      return;
+    }
+    handoverMutation.mutate(handoverForm);
+  };
+
+  const isDriverOnSatnav = (operatorId: string) => {
+    return driverSessions.some(s => s.operatorId === operatorId);
+  };
+
+  const getDriverSession = (operatorId: string) => {
+    return driverSessions.find(s => s.operatorId === operatorId);
   };
 
   return (
@@ -414,7 +851,7 @@ export function ShiftManagementTab() {
         <div>
           <h2 className="text-2xl font-bold">{t('fleet.shiftManagement.title', 'Shift Management')}</h2>
           <p className="text-muted-foreground">
-            {t('fleet.shiftManagement.description', 'Daily check-ins, check-outs, and shift handovers for fleet drivers')}
+            {t('fleet.shiftManagement.description', 'Daily check-ins, check-outs, and shift handovers linked to satnav driver sessions')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -425,45 +862,46 @@ export function ShiftManagementTab() {
                 {t('fleet.shiftManagement.checkIn', 'Check In')}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <ClipboardCheck className="w-5 h-5" />
                   {t('fleet.shiftManagement.newCheckIn', 'New Shift Check-In')}
                 </DialogTitle>
                 <DialogDescription>
-                  {t('fleet.shiftManagement.checkInDesc', 'Complete pre-trip inspection and record vehicle condition')}
+                  {t('fleet.shiftManagement.checkInDesc', 'Complete pre-trip inspection and record vehicle condition. This links to the driver\'s satnav session.')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{t('fleet.shiftManagement.vehicle', 'Vehicle')}</Label>
-                    <Select value={checkinForm.vehicleId} onValueChange={(v) => setCheckinForm({...checkinForm, vehicleId: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select vehicle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicles.map(v => (
-                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect value={checkinForm.vehicleId} onValueChange={(v) => setCheckinForm({...checkinForm, vehicleId: v})} placeholder="Select vehicle">
+                      {vehicles.map(v => (
+                        <NativeSelectItem key={v.id} value={v.id}>{getVehicleDisplayName(v)}</NativeSelectItem>
+                      ))}
+                    </NativeSelect>
                   </div>
                   <div className="space-y-2">
                     <Label>{t('fleet.shiftManagement.driver', 'Driver')}</Label>
-                    <Select value={checkinForm.operatorId} onValueChange={(v) => setCheckinForm({...checkinForm, operatorId: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select driver" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {operators.map(o => (
-                          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect value={checkinForm.operatorId} onValueChange={(v) => setCheckinForm({...checkinForm, operatorId: v})} placeholder="Select driver">
+                      {operators.map(o => (
+                        <NativeSelectItem key={o.id} value={o.id}>
+                          {getOperatorDisplayName(o)}{isDriverOnSatnav(o.id) ? ' (On Satnav)' : ''}
+                        </NativeSelectItem>
+                      ))}
+                    </NativeSelect>
                   </div>
                 </div>
+
+                {checkinForm.operatorId && isDriverOnSatnav(checkinForm.operatorId) && (
+                  <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <Navigation className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 dark:text-green-400 font-medium">
+                      Driver is currently active on TruckNav satnav - session will be linked automatically
+                    </span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -489,55 +927,63 @@ export function ShiftManagementTab() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">
+                  <Label className="text-base font-semibold flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-blue-600" />
                     {t('fleet.shiftManagement.preTripInspection', 'Pre-Trip Inspection Checklist')}
                   </Label>
+                  <p className="text-xs text-muted-foreground">All items must pass before vehicle operation. Defects must be reported to fleet manager immediately.</p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { key: 'tiresOk', label: 'Tires & Wheels' },
-                      { key: 'lightsOk', label: 'Lights & Signals' },
-                      { key: 'brakesOk', label: 'Brakes' },
-                      { key: 'fluidsOk', label: 'Fluids (Oil, Coolant)' },
-                      { key: 'mirrorsOk', label: 'Mirrors' },
-                      { key: 'hornOk', label: 'Horn' },
-                      { key: 'wipersOk', label: 'Wipers & Washers' },
-                      { key: 'safetyEquipmentOk', label: 'Safety Equipment' },
+                      { key: 'tiresOk', label: 'Tyres & Wheels - condition, pressure, tread depth' },
+                      { key: 'lightsOk', label: 'Lights & Signals - all working, clean lenses' },
+                      { key: 'brakesOk', label: 'Brakes - service brake, parking brake, air pressure' },
+                      { key: 'fluidsOk', label: 'Fluids - oil, coolant, AdBlue, washer fluid' },
+                      { key: 'mirrorsOk', label: 'Mirrors - clean, adjusted, no damage' },
+                      { key: 'hornOk', label: 'Horn - operational' },
+                      { key: 'wipersOk', label: 'Wipers & Washers - blades, fluid, operation' },
+                      { key: 'safetyEquipmentOk', label: 'Safety Equipment - triangle, hi-vis, extinguisher, first aid' },
                     ].map(item => (
-                      <div key={item.key} className="flex items-center gap-2">
+                      <div key={item.key} className="flex items-start gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                         <Checkbox 
                           id={item.key}
                           checked={checkinForm[item.key as keyof CheckinFormData] as boolean}
                           onCheckedChange={(checked) => setCheckinForm({...checkinForm, [item.key]: checked})}
                         />
-                        <Label htmlFor={item.key} className="cursor-pointer">{item.label}</Label>
+                        <Label htmlFor={item.key} className="cursor-pointer text-sm leading-tight">{item.label}</Label>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                   <Checkbox 
                     id="vehicleClean"
                     checked={checkinForm.vehicleClean}
                     onCheckedChange={(checked) => setCheckinForm({...checkinForm, vehicleClean: checked as boolean})}
                   />
-                  <Label htmlFor="vehicleClean" className="cursor-pointer">
+                  <Label htmlFor="vehicleClean" className="cursor-pointer text-sm">
                     {t('fleet.shiftManagement.vehicleClean', 'Vehicle is clean and presentable')}
                   </Label>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('fleet.shiftManagement.defectsNoted', 'Defects or Issues Noted')}</Label>
+                  <Label className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    {t('fleet.shiftManagement.defectsNoted', 'Defects or Issues Noted')}
+                  </Label>
                   <Textarea 
-                    placeholder="Describe any defects or issues found during inspection..."
+                    placeholder="Describe any defects or issues found during inspection. Critical defects must be reported before vehicle operation."
                     value={checkinForm.defectsNoted}
                     onChange={(e) => setCheckinForm({...checkinForm, defectsNoted: e.target.value})}
                   />
                 </div>
 
-                <Button onClick={handleCheckin} className="w-full gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  {t('fleet.shiftManagement.confirmCheckIn', 'Confirm Check-In')}
+                <Button onClick={handleCheckin} disabled={checkinMutation.isPending} className="w-full gap-2">
+                  {checkinMutation.isPending ? (
+                    <><Clock className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><CheckCircle className="w-4 h-4" /> {t('fleet.shiftManagement.confirmCheckIn', 'Confirm Check-In')}</>
+                  )}
                 </Button>
               </div>
             </DialogContent>
@@ -550,61 +996,46 @@ export function ShiftManagementTab() {
                 {t('fleet.shiftManagement.handover', 'Handover')}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <ArrowRightLeft className="w-5 h-5" />
                   {t('fleet.shiftManagement.newHandover', 'Create Shift Handover')}
                 </DialogTitle>
                 <DialogDescription>
-                  {t('fleet.shiftManagement.handoverDesc', 'Document vehicle condition and notes for the next driver')}
+                  {t('fleet.shiftManagement.handoverDesc', 'Document vehicle condition and notes for the next driver. Safety-critical issues must be flagged.')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{t('fleet.shiftManagement.vehicle', 'Vehicle')}</Label>
-                    <Select value={handoverForm.vehicleId} onValueChange={(v) => setHandoverForm({...handoverForm, vehicleId: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select vehicle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {vehicles.map(v => (
-                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect value={handoverForm.vehicleId} onValueChange={(v) => setHandoverForm({...handoverForm, vehicleId: v})} placeholder="Select vehicle">
+                      {vehicles.map(v => (
+                        <NativeSelectItem key={v.id} value={v.id}>{getVehicleDisplayName(v)}</NativeSelectItem>
+                      ))}
+                    </NativeSelect>
                   </div>
                   <div className="space-y-2">
                     <Label>{t('fleet.shiftManagement.incomingDriver', 'Incoming Driver (Optional)')}</Label>
-                    <Select value={handoverForm.incomingOperatorId} onValueChange={(v) => setHandoverForm({...handoverForm, incomingOperatorId: v})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select driver" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {operators.map(o => (
-                          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect value={handoverForm.incomingOperatorId} onValueChange={(v) => setHandoverForm({...handoverForm, incomingOperatorId: v})} placeholder="Select driver">
+                      {operators.map(o => (
+                        <NativeSelectItem key={o.id} value={o.id}>{getOperatorDisplayName(o)}</NativeSelectItem>
+                      ))}
+                    </NativeSelect>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>{t('fleet.shiftManagement.condition', 'Vehicle Condition')}</Label>
-                    <Select value={handoverForm.vehicleCondition} onValueChange={(v) => setHandoverForm({...handoverForm, vehicleCondition: v})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="excellent">Excellent</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                        <SelectItem value="poor">Poor</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect value={handoverForm.vehicleCondition} onValueChange={(v) => setHandoverForm({...handoverForm, vehicleCondition: v})}>
+                      <NativeSelectItem value="excellent">Excellent</NativeSelectItem>
+                      <NativeSelectItem value="good">Good</NativeSelectItem>
+                      <NativeSelectItem value="fair">Fair</NativeSelectItem>
+                      <NativeSelectItem value="poor">Poor</NativeSelectItem>
+                      <NativeSelectItem value="critical">Critical - Do Not Operate</NativeSelectItem>
+                    </NativeSelect>
                   </div>
                   <div className="space-y-2">
                     <Label>{t('fleet.shiftManagement.fuelLevel', 'Fuel Level (%)')}</Label>
@@ -631,7 +1062,7 @@ export function ShiftManagementTab() {
                 <div className="space-y-2">
                   <Label>{t('fleet.shiftManagement.handoverNotes', 'Handover Notes')}</Label>
                   <Textarea 
-                    placeholder="General notes about the vehicle and shift..."
+                    placeholder="General notes about the vehicle and shift. Include tyre pressure status, AdBlue level, trailer condition, any route information for next driver."
                     value={handoverForm.handoverNotes}
                     onChange={(e) => setHandoverForm({...handoverForm, handoverNotes: e.target.value})}
                   />
@@ -640,11 +1071,11 @@ export function ShiftManagementTab() {
                 <div className="space-y-2">
                   <Label className="text-red-600 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" />
-                    {t('fleet.shiftManagement.urgentIssues', 'Urgent Issues')}
+                    {t('fleet.shiftManagement.urgentIssues', 'Urgent Safety Issues')}
                   </Label>
                   <Textarea 
-                    placeholder="Any urgent safety or mechanical issues..."
-                    className="border-red-200"
+                    placeholder="ANY safety or mechanical issues that require immediate attention before next journey. If critical, vehicle must be taken out of service."
+                    className="border-red-200 dark:border-red-800"
                     value={handoverForm.urgentIssues}
                     onChange={(e) => setHandoverForm({...handoverForm, urgentIssues: e.target.value})}
                   />
@@ -653,21 +1084,48 @@ export function ShiftManagementTab() {
                 <div className="space-y-2">
                   <Label>{t('fleet.shiftManagement.recommendedActions', 'Recommended Actions')}</Label>
                   <Textarea 
-                    placeholder="Suggestions for next driver or maintenance team..."
+                    placeholder="Suggestions for next driver, fleet manager, or maintenance team. Include service due dates, workshop bookings needed, etc."
                     value={handoverForm.recommendedActions}
                     onChange={(e) => setHandoverForm({...handoverForm, recommendedActions: e.target.value})}
                   />
                 </div>
 
-                <Button onClick={handleHandover} className="w-full gap-2">
-                  <ArrowRightLeft className="w-4 h-4" />
-                  {t('fleet.shiftManagement.confirmHandover', 'Create Handover Record')}
+                <Button onClick={handleHandover} disabled={handoverMutation.isPending} className="w-full gap-2">
+                  {handoverMutation.isPending ? (
+                    <><Clock className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><ArrowRightLeft className="w-4 h-4" /> {t('fleet.shiftManagement.confirmHandover', 'Create Handover Record')}</>
+                  )}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
       </div>
+
+      {driverSessions.length > 0 && (
+        <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Wifi className="w-4 h-4 text-green-600 animate-pulse" />
+              Live Satnav Sessions ({driverSessions.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 pb-3">
+            <div className="flex flex-wrap gap-2">
+              {driverSessions.map(session => (
+                <Badge key={session.operatorId} variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 gap-1">
+                  <Navigation className="w-3 h-3" />
+                  {session.operatorName} - {session.vehicleRegistration}
+                  {session.speed !== undefined && session.speed > 0 && (
+                    <span className="ml-1 text-xs">({Math.round(session.speed)} mph)</span>
+                  )}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-4 gap-4">
         <Card>
@@ -739,7 +1197,7 @@ export function ShiftManagementTab() {
           <Card>
             <CardHeader>
               <CardTitle>{t('fleet.shiftManagement.currentlyActive', 'Currently Active Shifts')}</CardTitle>
-              <CardDescription>{t('fleet.shiftManagement.currentlyActiveDesc', 'Drivers currently checked in with their assigned vehicles')}</CardDescription>
+              <CardDescription>{t('fleet.shiftManagement.currentlyActiveDesc', 'Drivers currently checked in with their assigned vehicles. Green indicator shows live satnav connection.')}</CardDescription>
             </CardHeader>
             <CardContent>
               {activeCheckins.length === 0 ? (
@@ -752,15 +1210,22 @@ export function ShiftManagementTab() {
                   <div className="space-y-4">
                     {activeCheckins.map(checkin => {
                       const inspection = getInspectionStatus(checkin);
+                      const satnavSession = checkin.operatorId ? getDriverSession(checkin.operatorId) : null;
                       return (
-                        <Card key={checkin.id} className="border-l-4 border-l-green-500">
+                        <Card key={checkin.id} className={`border-l-4 ${satnavSession ? 'border-l-green-500' : 'border-l-blue-500'}`}>
                           <CardContent className="pt-4">
                             <div className="flex items-start justify-between">
                               <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                   <User className="w-5 h-5 text-blue-600" />
                                   <span className="font-semibold">{checkin.operatorName}</span>
-                                  <Badge variant="outline" className="bg-green-50">Active</Badge>
+                                  <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20">Active</Badge>
+                                  {satnavSession && (
+                                    <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
+                                      <Navigation className="w-3 h-3" />
+                                      On Satnav
+                                    </Badge>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                   <Truck className="w-4 h-4" />
@@ -773,14 +1238,25 @@ export function ShiftManagementTab() {
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm">
-                                  <span>Odometer: {checkin.checkInOdometer.toLocaleString()} mi</span>
+                                  <span>Odometer: {checkin.checkInOdometer?.toLocaleString()} mi</span>
                                   <span>Fuel: {checkin.checkInFuelLevel}%</span>
                                   <span className={inspection.allPassed ? 'text-green-600' : 'text-orange-600'}>
                                     Inspection: {inspection.passed}/{inspection.total} passed
                                   </span>
                                 </div>
+                                {satnavSession && satnavSession.speed !== undefined && (
+                                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                                    <Navigation className="w-4 h-4" />
+                                    <span>Current speed: {Math.round(satnavSession.speed)} mph</span>
+                                    {satnavSession.latitude && (
+                                      <span className="text-xs text-muted-foreground ml-2">
+                                        ({satnavSession.latitude.toFixed(4)}, {satnavSession.longitude?.toFixed(4)})
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                                 {checkin.defectsNoted && (
-                                  <div className="flex items-start gap-2 text-sm text-orange-600 bg-orange-50 p-2 rounded">
+                                  <div className="flex items-start gap-2 text-sm text-orange-600 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
                                     <AlertTriangle className="w-4 h-4 mt-0.5" />
                                     <span>{checkin.defectsNoted}</span>
                                   </div>
@@ -827,25 +1303,24 @@ export function ShiftManagementTab() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-                  <Select value={dateFilter} onValueChange={setDateFilter}>
-                    <SelectTrigger className="w-[130px]">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                      <SelectItem value="all">All Time</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <NativeSelect value={dateFilter} onValueChange={setDateFilter} className="w-[140px]">
+                    <NativeSelectItem value="today">Today</NativeSelectItem>
+                    <NativeSelectItem value="week">This Week</NativeSelectItem>
+                    <NativeSelectItem value="month">This Month</NativeSelectItem>
+                    <NativeSelectItem value="all">All Time</NativeSelectItem>
+                  </NativeSelect>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 <div className="space-y-4">
-                  {completedCheckins.map(checkin => (
+                  {completedCheckins.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No completed shifts found</p>
+                    </div>
+                  ) : completedCheckins.map(checkin => (
                     <Card key={checkin.id} className="border-l-4 border-l-blue-500">
                       <CardContent className="pt-4">
                         <div className="flex items-start justify-between">
@@ -863,7 +1338,7 @@ export function ShiftManagementTab() {
                               <div>
                                 <p className="text-muted-foreground">Check-in</p>
                                 <p>{format(new Date(checkin.checkInTime), 'MMM d, yyyy h:mm a')}</p>
-                                <p className="text-xs">Odometer: {checkin.checkInOdometer.toLocaleString()} mi</p>
+                                <p className="text-xs">Odometer: {checkin.checkInOdometer?.toLocaleString()} mi</p>
                               </div>
                               {checkin.checkOutTime && (
                                 <div>
@@ -874,15 +1349,21 @@ export function ShiftManagementTab() {
                               )}
                             </div>
                             {checkin.milesDriven && (
-                              <div className="flex items-center gap-4 text-sm bg-slate-50 p-2 rounded">
+                              <div className="flex items-center gap-4 text-sm bg-slate-50 dark:bg-slate-800/50 p-2 rounded">
                                 <span>Miles Driven: {checkin.milesDriven.toLocaleString()}</span>
-                                {checkin.fuelUsed && <span>Fuel Used: {checkin.fuelUsed.toFixed(1)} gal</span>}
+                                {checkin.fuelUsed && <span>Fuel Used: {checkin.fuelUsed.toFixed(1)} litres</span>}
                               </div>
                             )}
                             {checkin.postTripNotes && (
                               <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                                <FileText className="w-4 h-4 mt-0.5" />
+                                <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <span>{checkin.postTripNotes}</span>
+                              </div>
+                            )}
+                            {checkin.issuesReported && (
+                              <div className="flex items-start gap-2 text-sm text-orange-600 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>{checkin.issuesReported}</span>
                               </div>
                             )}
                           </div>
@@ -900,12 +1381,17 @@ export function ShiftManagementTab() {
           <Card>
             <CardHeader>
               <CardTitle>{t('fleet.shiftManagement.shiftHandovers', 'Shift Handovers')}</CardTitle>
-              <CardDescription>{t('fleet.shiftManagement.shiftHandoversDesc', 'Vehicle handover records and pending acknowledgments')}</CardDescription>
+              <CardDescription>{t('fleet.shiftManagement.shiftHandoversDesc', 'Vehicle handover records and pending acknowledgments. Unacknowledged handovers require incoming driver confirmation.')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 <div className="space-y-4">
-                  {handovers.map(handover => (
+                  {handovers.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ArrowRightLeft className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No handover records found</p>
+                    </div>
+                  ) : handovers.map(handover => (
                     <Card key={handover.id} className={`border-l-4 ${handover.acknowledged ? 'border-l-green-500' : 'border-l-orange-500'}`}>
                       <CardContent className="pt-4">
                         <div className="flex items-start justify-between">
@@ -915,7 +1401,7 @@ export function ShiftManagementTab() {
                               <span className="font-semibold">{handover.vehicleName}</span>
                               {getConditionBadge(handover.vehicleCondition)}
                               {!handover.acknowledged && (
-                                <Badge variant="outline" className="bg-orange-50 text-orange-700">Pending Acknowledgment</Badge>
+                                <Badge variant="outline" className="bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400">Pending Acknowledgment</Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-4 text-sm">
@@ -937,26 +1423,34 @@ export function ShiftManagementTab() {
                               {handover.currentOdometer && <span>Odometer: {handover.currentOdometer.toLocaleString()} mi</span>}
                             </div>
                             {handover.handoverNotes && (
-                              <div className="flex items-start gap-2 text-sm bg-slate-50 p-2 rounded">
-                                <FileText className="w-4 h-4 mt-0.5" />
+                              <div className="flex items-start gap-2 text-sm bg-slate-50 dark:bg-slate-800/50 p-2 rounded">
+                                <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <span>{handover.handoverNotes}</span>
                               </div>
                             )}
                             {handover.urgentIssues && (
-                              <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-2 rounded">
-                                <AlertTriangle className="w-4 h-4 mt-0.5" />
-                                <span>{handover.urgentIssues}</span>
+                              <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <span className="font-semibold">URGENT: </span>
+                                  <span>{handover.urgentIssues}</span>
+                                </div>
                               </div>
                             )}
                             {handover.recommendedActions && (
-                              <div className="flex items-start gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded">
-                                <CheckCircle className="w-4 h-4 mt-0.5" />
+                              <div className="flex items-start gap-2 text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                                <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                                 <span>{handover.recommendedActions}</span>
                               </div>
                             )}
                           </div>
                           {!handover.acknowledged && (
-                            <Button variant="outline" className="gap-2">
+                            <Button 
+                              variant="outline" 
+                              className="gap-2"
+                              disabled={acknowledgeMutation.isPending}
+                              onClick={() => acknowledgeMutation.mutate(handover.id)}
+                            >
                               <CheckCircle className="w-4 h-4" />
                               {t('fleet.shiftManagement.acknowledge', 'Acknowledge')}
                             </Button>
@@ -973,7 +1467,7 @@ export function ShiftManagementTab() {
       </Tabs>
 
       <Dialog open={showCheckoutDialog} onOpenChange={setShowCheckoutDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <LogOut className="w-5 h-5" />
@@ -981,7 +1475,7 @@ export function ShiftManagementTab() {
             </DialogTitle>
             <DialogDescription>
               {selectedCheckin && (
-                <>Complete post-trip inspection for {selectedCheckin.vehicleName}</>
+                <>Complete post-trip report for {selectedCheckin.vehicleName} - {selectedCheckin.operatorName}</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -1012,7 +1506,7 @@ export function ShiftManagementTab() {
             <div className="space-y-2">
               <Label>{t('fleet.shiftManagement.tripNotes', 'Trip Notes')}</Label>
               <Textarea 
-                placeholder="Summary of your shift..."
+                placeholder="Summary of your shift: route taken, deliveries completed, PODs collected, tachograph compliance notes..."
                 value={checkoutForm.postTripNotes}
                 onChange={(e) => setCheckoutForm({...checkoutForm, postTripNotes: e.target.value})}
               />
@@ -1024,16 +1518,19 @@ export function ShiftManagementTab() {
                 {t('fleet.shiftManagement.issuesReported', 'Issues to Report')}
               </Label>
               <Textarea 
-                placeholder="Any issues encountered during shift..."
-                className="border-orange-200"
+                placeholder="Any issues encountered during shift: mechanical problems, near misses, damaged goods, road incidents, tachograph warnings..."
+                className="border-orange-200 dark:border-orange-800"
                 value={checkoutForm.issuesReported}
                 onChange={(e) => setCheckoutForm({...checkoutForm, issuesReported: e.target.value})}
               />
             </div>
 
-            <Button onClick={handleCheckout} className="w-full gap-2">
-              <CheckCircle className="w-4 h-4" />
-              {t('fleet.shiftManagement.confirmCheckOut', 'Confirm Check-Out')}
+            <Button onClick={handleCheckout} disabled={checkoutMutation.isPending} className="w-full gap-2">
+              {checkoutMutation.isPending ? (
+                <><Clock className="w-4 h-4 animate-spin" /> Saving...</>
+              ) : (
+                <><CheckCircle className="w-4 h-4" /> {t('fleet.shiftManagement.confirmCheckOut', 'Confirm Check-Out')}</>
+              )}
             </Button>
           </div>
         </DialogContent>

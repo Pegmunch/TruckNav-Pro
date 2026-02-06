@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { Activity, AlertTriangle, Award, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { useToast } from '@/hooks/use-toast';
 
 interface DriverBehavior {
   operatorId: string;
@@ -40,7 +39,6 @@ const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
 export function DriverBehaviorTab() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [dateRange, setDateRange] = useState('7d');
   const [selectedOperator, setSelectedOperator] = useState('all');
 
@@ -71,7 +69,6 @@ export function DriverBehaviorTab() {
             },
           };
         }
-        toast({ title: t('fleet.behavior.toast.loadFailed'), description: t('fleet.behavior.toast.loadFailedDesc'), variant: 'destructive' });
         throw new Error(t('fleet.behavior.toast.loadFailed'));
       }
       return response.json();

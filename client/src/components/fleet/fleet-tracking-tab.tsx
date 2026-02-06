@@ -113,7 +113,6 @@ export function FleetTrackingTab() {
             offlineCount: 1,
           };
         }
-        toast({ title: t('fleet.tracking.toast.loadFailed'), description: t('fleet.tracking.toast.loadFailedDesc'), variant: 'destructive' });
         throw new Error(t('fleet.tracking.toast.loadFailed'));
       }
       return response.json();
