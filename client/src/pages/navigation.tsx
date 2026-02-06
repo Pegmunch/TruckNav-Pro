@@ -4097,7 +4097,8 @@ function NavigationPageContent() {
                 <>
                   <div className="fixed flex flex-col gap-3 z-[200] pointer-events-auto"
                     style={{
-                      bottom: 'calc(80px + var(--safe-area-bottom))',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
                       left: '16px'
                     }}>
                     {/* Menu Button - white with blue truck icon and blue top/bottom borders */}
