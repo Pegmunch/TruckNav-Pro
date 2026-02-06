@@ -5244,9 +5244,9 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Info Boxes - Distance, ETA, Arrival Time - positioned above buttons */}
+                    {/* Info Boxes - Distance, ETA, Arrival Time + Stop Preview - positioned at bottom of map */}
                     <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(118px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      style={{ bottom: 'calc(16px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
                       <div className="flex items-center justify-center gap-1.5">
                         <div className="flex items-center justify-center gap-1 bg-blue-600 text-white px-2 py-1 rounded-lg shadow-lg">
                           <RouteIcon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -5291,84 +5291,35 @@ function NavigationPageContent() {
                             })()}
                           </span>
                         </div>
+                        {isFlyByInProgress && (
+                          <button
+                            onClick={() => {
+                              if (mapRef.current) {
+                                mapRef.current.cancelFlyBy();
+                              }
+                              setIsFlyByInProgress(false);
+                              setIsShowingPreview(false);
+                              if (currentRoute?.routePath) {
+                                const lats = currentRoute.routePath.map((p: any) => p.lat);
+                                const lngs = currentRoute.routePath.map((p: any) => p.lng);
+                                window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
+                                  detail: {
+                                    bounds: { north: Math.max(...lats), south: Math.min(...lats), east: Math.max(...lngs), west: Math.min(...lngs) },
+                                    padding: 50
+                                  }
+                                }));
+                              }
+                            }}
+                            className="h-7 px-3 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white font-semibold text-xs rounded-lg shadow-lg transition-all active:scale-95 flex items-center justify-center select-none"
+                            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+                            data-testid="button-stop-preview-desktop"
+                          >
+                            Stop
+                          </button>
+                        )}
                       </div>
                     </div>
 
-                    {/* Preview/Start action buttons - positioned above speedometer */}
-                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(80px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          onClick={() => setShowIncidentReportDialog(true)}
-                          variant="outline"
-                          className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg rounded-lg"
-                          data-testid="button-report-incident-desktop-preview"
-                        >
-                          <AlertCircle className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleViewIncidents()}
-                          variant="outline"
-                          className="h-8 w-8 p-0 bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-lg rounded-lg"
-                          data-testid="button-view-incidents-desktop-preview"
-                        >
-                          <AlertCircle className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={handlePreviewRoute}
-                          disabled={isFlyByInProgress}
-                          variant="outline"
-                          className="h-8 px-4 text-xs font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
-                          data-testid="button-preview-route-desktop"
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1.5" />
-                          Preview
-                        </Button>
-                        <Button
-                          onClick={handleStartNavigation}
-                          className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg"
-                          data-testid="button-start-navigation-desktop"
-                        >
-                          <Navigation className="w-3.5 h-3.5 mr-1.5" />
-                          Start
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Speedometer HUD - at bottom */}
-                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(2px + var(--safe-area-bottom, 0px))', zIndex: 500000 }}>
-                      <SpeedometerHUD
-                        currentSpeed={gpsData?.position?.speed || 0}
-                        speedLimit={currentSpeedLimit || undefined}
-                        roadInfo={roadInfo}
-                        isNavigating={false}
-                        showGoButton={false}
-                        showStopButton={false}
-                        distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
-                        vehicleType={vehicleType}
-                      />
-                    </div>
-
-                    {/* Route Mask for clean background behind bottom controls */}
-                    <div 
-                      className="fixed left-0 right-0 pointer-events-none"
-                      style={{
-                        bottom: '0px',
-                        height: 'calc(70px + var(--safe-area-bottom, 0px))',
-                        background: 'white',
-                        zIndex: 499998
-                      }}
-                    />
-                    <div 
-                      className="fixed left-0 right-0 pointer-events-none"
-                      style={{
-                        bottom: 'calc(70px + var(--safe-area-bottom, 0px))',
-                        height: '40px',
-                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)',
-                        zIndex: 499997
-                      }}
-                    />
                   </>
                 )}
                 
