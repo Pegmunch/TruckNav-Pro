@@ -39,7 +39,9 @@ import {
   CheckCircle,
   Eye,
   Mic,
-  MessageCircle
+  MessageCircle,
+  History,
+  MapPinned
 } from "lucide-react";
 import VehicleProfileSetup from "@/components/vehicle/vehicle-profile-setup";
 import EntertainmentPanel from "@/components/entertainment/entertainment-panel";
@@ -49,10 +51,13 @@ import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel
 import { type VehicleProfile, type Route, type Journey, type Facility } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import IncidentReportingForm from "@/components/traffic/incident-reporting-form";
 import { useGPS } from "@/contexts/gps-context";
 import { reverseGeocode, formatCoordinatesAsAddress } from "@/lib/reverse-geocode";
+import { useDestinationHistory } from "@/hooks/use-destination-history";
+import { useOriginHistory } from "@/hooks/use-origin-history";
 
 interface NavigationSidebarProps {
   // Route planning props
@@ -160,6 +165,10 @@ const NavigationSidebar = memo(function NavigationSidebar({
   
   // Route preference selection
   const [routePreference, setRoutePreference] = useState<'fastest' | 'eco' | 'avoid_tolls'>('fastest');
+  
+  // Recent destinations and origins
+  const { destinations: previousDestinations } = useDestinationHistory();
+  const { origins: previousOrigins } = useOriginHistory();
   
   // Track the coordinates from the "From" field for POI searches
   const handleFromCoordinatesUpdate = (coords: {lat: number, lng: number} | null) => {
@@ -696,34 +705,68 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       </Button>
                     )}
                   </div>
-                  {/* Use Current Location button */}
-                  {!fromLocation && (
-                    <Button
-                      onClick={handleUseCurrentLocation}
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-2"
-                      disabled={isReverseGeocoding}
-                      data-testid="button-use-current-location"
-                    >
-                      {isReverseGeocoding ? (
-                        <>
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                          Finding address...
-                        </>
-                      ) : (
-                        <>
-                          <Crosshair className="w-3 h-3 mr-1" />
-                          Use Current Location
-                        </>
-                      )}
-                    </Button>
-                  )}
+                  {/* Use Current Location button + Recent Origins */}
+                  <div className="flex items-center gap-2">
+                    {!fromLocation && (
+                      <Button
+                        onClick={handleUseCurrentLocation}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs border-blue-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-2"
+                        disabled={isReverseGeocoding}
+                        data-testid="button-use-current-location"
+                      >
+                        {isReverseGeocoding ? (
+                          <>
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            Finding address...
+                          </>
+                        ) : (
+                          <>
+                            <Crosshair className="w-3 h-3 mr-1" />
+                            Use Current Location
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {previousOrigins.length > 0 && !fromLocation && (
+                      <div className="flex items-center gap-1 overflow-x-auto">
+                        {previousOrigins.slice(0, 2).map((origin) => (
+                          <Button
+                            key={origin.id}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              onFromLocationChange(origin.formattedAddress);
+                              handleFromCoordinatesUpdate(origin.coordinates);
+                            }}
+                            className="h-7 text-xs px-2 bg-muted/30 hover:bg-muted/50 whitespace-nowrap max-w-[120px] truncate"
+                          >
+                            <MapPinned className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{origin.label}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* To Location */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-muted-foreground">To</Label>
+                  <Label className="text-xs font-medium text-muted-foreground flex items-center justify-between">
+                    <span>To</span>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => onPlanRoute(routePreference)}
+                      disabled={!fromLocation || !toLocation || !selectedProfile || isCalculating}
+                      className="h-7 px-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
+                      data-testid="button-preview-route-desktop"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Preview
+                    </Button>
+                  </Label>
                   <div className="relative">
                     <AddressAutocomplete
                       value={toLocation}
@@ -747,6 +790,54 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     )}
                   </div>
                 </div>
+
+                {/* Route Preferences - Fastest/Eco/No Tolls */}
+                <Tabs
+                  value={routePreference}
+                  onValueChange={(value) => setRoutePreference(value as 'fastest' | 'eco' | 'avoid_tolls')}
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-3 h-9">
+                    <TabsTrigger value="fastest" className="text-xs" data-testid="tab-fastest-desktop">
+                      Fastest
+                    </TabsTrigger>
+                    <TabsTrigger value="eco" className="text-xs" data-testid="tab-eco-desktop">
+                      Eco
+                    </TabsTrigger>
+                    <TabsTrigger value="avoid_tolls" className="text-xs" data-testid="tab-avoid-tolls-desktop">
+                      No Tolls
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {/* Recent Destinations - Quick Access */}
+                {previousDestinations.length > 0 && !toLocation && (
+                  <div className="space-y-2 pt-1">
+                    <Label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                      <History className="h-3 w-3 text-purple-500" />
+                      Recent Destinations
+                    </Label>
+                    <div className="space-y-1 max-h-[100px] overflow-y-auto">
+                      {previousDestinations.slice(0, 3).map((dest) => (
+                        <div
+                          key={dest.id}
+                          className="flex items-center gap-2 p-2 rounded-md bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all"
+                          onClick={() => {
+                            onToLocationChange(dest.formattedAddress);
+                            onToCoordinatesChange?.(dest.coordinates);
+                          }}
+                        >
+                          <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">{dest.label}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{dest.formattedAddress}</div>
+                          </div>
+                          <ChevronRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Route Status - Inline indicator */}
                 {(isCalculating || currentRoute) && (
