@@ -2751,6 +2751,18 @@ function NavigationPageContent() {
         return;
       }
       
+      // Desktop: also enter preview mode when route is calculated
+      // This ensures ETA bar, stack buttons, and preview controls appear on desktop
+      if (!isMobile && route) {
+        setIsShowingPreview(true);
+        setShowNavControls(true);
+        // Collapse sidebar to show full map with route
+        if (sidebarState === 'open') {
+          setSidebarState('collapsed');
+          localStorage.setItem('navigationSidebarState', 'collapsed');
+        }
+      }
+      
       // Reset auto-navigation flag now that route calculation is complete
       // This allows watchdog to work normally for future navigation cancellations
       setShouldAutoNavigateOnMobile(false);
@@ -4155,8 +4167,8 @@ function NavigationPageContent() {
               {/* PREVIEW MODE OVERLAY (z-10+) - Visible only when showing preview, overlays on top of stable map */}
               {isShowingPreview && currentRoute && !isNavigating && (
                 <>
-                  {/* Clean Header with Title and Settings */}
-                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm" 
+                  {/* Clean Header with Title and Settings - Hidden on desktop (desktop header already visible) */}
+                  <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm lg:hidden" 
                        style={{ paddingTop: 'calc(12px + var(--safe-area-top))' }}>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-semibold text-gray-900">TruckNav Pro</span>

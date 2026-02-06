@@ -572,17 +572,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           className="h-10 text-sm"
                           showSearchTypeToggles={false}
                         />
-                        {fromLocation && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onFromLocationChange('')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            data-testid="button-clear-from-location"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         {!fromLocation && (
