@@ -705,6 +705,36 @@ function NavigationPageContent() {
   // OR showing preview mode with a valid route (route-ready state)
   const isNavUIActive = isLocalNavActive || mobileNavMode === 'navigate' || shouldAutoNavigateOnMobile || (isShowingPreview && currentRoute !== null);
   
+  // Camera reset button state - tracks whether camera is at the saved navigation angles
+  const [isCameraAtNavDefault, setIsCameraAtNavDefault] = useState(true);
+  
+  // Poll camera state during navigation to detect zoom/pitch/bearing changes
+  useEffect(() => {
+    if (!isNavUIActive || !mapRef.current) return;
+    
+    const checkCamera = () => {
+      if (mapRef.current) {
+        const isAtDefault = mapRef.current.isAtNavigationCamera();
+        setIsCameraAtNavDefault(isAtDefault);
+      }
+    };
+    
+    // Check every 500ms
+    const interval = setInterval(checkCamera, 500);
+    // Also check immediately
+    checkCamera();
+    
+    return () => clearInterval(interval);
+  }, [isNavUIActive]);
+  
+  const handleResetCamera = useCallback(() => {
+    if (mapRef.current) {
+      mapRef.current.resetToSavedNavigationCamera();
+      // After reset animation, mark as at default
+      setTimeout(() => setIsCameraAtNavDefault(true), 900);
+    }
+  }, []);
+  
   // CRITICAL FIX: Only show GPS truck marker during ACTIVE navigation
   // Hide in plan and preview modes across all platforms for consistency
   const showUserMarker = useMemo(() => {
@@ -3550,6 +3580,9 @@ function NavigationPageContent() {
           }
         });
         window.dispatchEvent(zoomToStartEvent);
+        
+        // Reset camera tracking state - camera is at default since we just set it
+        setIsCameraAtNavDefault(true);
       }
       
       // Automatically enable street view in navigation mode when navigation starts
@@ -4367,6 +4400,8 @@ function NavigationPageContent() {
                       isNavigating={isNavUIActive}
                       currentLocation={currentGPSLocation}
                       showMenuButton={false}
+                      isCameraAtNavDefault={isCameraAtNavDefault}
+                      onResetCamera={handleResetCamera}
                       onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
                         if (currentGPSLocation) {
                           const incidentLabels: Record<IncidentType, string> = {

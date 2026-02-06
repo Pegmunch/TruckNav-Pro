@@ -148,6 +148,8 @@ interface LeftActionStackProps {
   onVoiceNavigationCommand?: (command: NavigationCommandType) => void;
   showMenuButton?: boolean;
   isVisible?: boolean;
+  isCameraAtNavDefault?: boolean;
+  onResetCamera?: () => void;
 }
 
 const MUTE_STATE_KEY = "trucknav_mute_all_alerts";
@@ -162,7 +164,9 @@ export function LeftActionStack({
   onVoiceIncidentReport,
   onVoiceNavigationCommand,
   showMenuButton = true,
-  isVisible = true
+  isVisible = true,
+  isCameraAtNavDefault = true,
+  onResetCamera
 }: LeftActionStackProps) {
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [isMuted, setIsMuted] = useState<boolean>(() => {
@@ -252,7 +256,16 @@ export function LeftActionStack({
 
   // Use native event listeners for ALL buttons to bypass React's synthetic event delegation
   // iOS Safari has issues with React's event delegation on fixed/transformed elements
-  useNativeClickHandler(navButtonRef, onNavigate, 'NAV', isNavigating);
+  const handleNavButtonPress = useCallback(() => {
+    if (onResetCamera && !isCameraAtNavDefault) {
+      console.log('[LEFT-STACK] Camera reset button pressed - resetting to navigation camera');
+      onResetCamera();
+    } else if (onNavigate) {
+      onNavigate();
+    }
+  }, [onResetCamera, onNavigate, isCameraAtNavDefault]);
+  
+  useNativeClickHandler(navButtonRef, handleNavButtonPress, 'NAV', isNavigating);
   useNativeClickHandler(voiceButtonRef, isVoiceSupported ? toggleVoiceListening : undefined, 'VOICE', isNavigating);
   useNativeClickHandler(muteButtonRef, toggleMute, 'MUTE', isNavigating);
   useNativeClickHandler(incidentButtonRef, onReportIncident, 'INCIDENT', isNavigating);
@@ -297,13 +310,17 @@ export function LeftActionStack({
   
   return (
     <div className={`flex flex-col gap-2 ${hasVisibleButtons ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      {/* Navigation button - red navigation arrow - hides/shows with double-tap */}
+      {/* Camera reset button - green when at nav default angles, red when camera has moved */}
       {isNavigating && (
         <Button
           ref={navButtonRef}
           variant="ghost"
           size="icon"
-          className={`h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+          className={`h-10 w-10 rounded-xl active:scale-95 text-white shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu ${
+            isCameraAtNavDefault
+              ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
+              : 'bg-red-500 hover:bg-red-600 active:bg-red-700'
+          } ${
             isVisible ? 'translate-x-0 opacity-100 scale-100 pointer-events-auto' : '-translate-x-20 opacity-0 scale-95 pointer-events-none'
           }`}
           style={{ touchAction: 'manipulation' }}

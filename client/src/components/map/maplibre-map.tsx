@@ -95,6 +95,10 @@ export interface MapLibreMapRef {
     onRetry?: (attemptNumber: number, maxAttempts: number) => void;
   }) => void;
   resetNavigationCamera: () => void;
+  saveNavigationCamera: () => void;
+  isAtNavigationCamera: () => boolean;
+  resetToSavedNavigationCamera: () => void;
+  getCameraState: () => { zoom: number; pitch: number; bearing: number } | null;
 }
 
 interface MapLibreMapProps {
@@ -234,6 +238,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const previousPitchRef = useRef(0);
   const previousBearingRef = useRef(0);
   const initialNavViewSetupRef = useRef(false); // Track if initial 3D nav view has been set up
+  const savedNavigationCameraRef = useRef<{ zoom: number; pitch: number; bearing: number } | null>(null);
   const userPreferredZoomRef = useRef(16.5); // User's preferred zoom level (respects manual zoom changes)
   const zoomAnimationInProgressRef = useRef(false); // Prevents GPS tracking from overriding zoom during button animations
   const touchEndHandlerRef = useRef<((e: TouchEvent) => void) | null>(null);
@@ -1065,6 +1070,63 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           duration: 1000
         });
       }
+    },
+    saveNavigationCamera: () => {
+      if (!map.current) return;
+      const cam = {
+        zoom: map.current.getZoom(),
+        pitch: map.current.getPitch(),
+        bearing: map.current.getBearing()
+      };
+      savedNavigationCameraRef.current = cam;
+      console.log('[NAV-CAMERA] Saved navigation camera state:', cam);
+    },
+    isAtNavigationCamera: () => {
+      if (!map.current || !savedNavigationCameraRef.current) return true;
+      const saved = savedNavigationCameraRef.current;
+      const currentZoom = map.current.getZoom();
+      const currentPitch = map.current.getPitch();
+      const currentBearing = map.current.getBearing();
+      const zoomDiff = Math.abs(currentZoom - saved.zoom);
+      const pitchDiff = Math.abs(currentPitch - saved.pitch);
+      let bearingDiff = Math.abs(currentBearing - saved.bearing);
+      if (bearingDiff > 180) bearingDiff = 360 - bearingDiff;
+      return zoomDiff < 0.5 && pitchDiff < 3 && bearingDiff < 5;
+    },
+    resetToSavedNavigationCamera: () => {
+      if (!map.current || !savedNavigationCameraRef.current) {
+        console.warn('[NAV-CAMERA] No saved camera state to reset to');
+        return;
+      }
+      const saved = savedNavigationCameraRef.current;
+      const containerHeight = map.current.getContainer().clientHeight || 800;
+      const gps = gpsPosition;
+      const center = (gps && isValidCoord(gps.latitude) && isValidCoord(gps.longitude))
+        ? [gps.longitude, gps.latitude] as [number, number]
+        : map.current.getCenter().toArray() as [number, number];
+      console.log('[NAV-CAMERA] Resetting to saved camera:', saved, 'center:', center);
+      map.current.easeTo({
+        center,
+        zoom: saved.zoom,
+        pitch: saved.pitch,
+        bearing: saved.bearing,
+        padding: {
+          top: Math.round(containerHeight * 0.55),
+          bottom: 40,
+          left: 0,
+          right: 0
+        },
+        duration: 800,
+        essential: true
+      });
+    },
+    getCameraState: () => {
+      if (!map.current) return null;
+      return {
+        zoom: map.current.getZoom(),
+        pitch: map.current.getPitch(),
+        bearing: map.current.getBearing()
+      };
     }
   }), [bearing, is3DMode, preferences.mapViewMode, isLoaded, isFlyByActive, gpsPosition]);
   
@@ -4233,6 +4295,19 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         
         // Mark initial nav view as set up to prevent double-setup
         initialNavViewSetupRef.current = true;
+        
+        // Save the navigation camera state after animation completes
+        const animDuration = duration || 1200;
+        setTimeout(() => {
+          if (map.current) {
+            savedNavigationCameraRef.current = {
+              zoom: map.current.getZoom(),
+              pitch: map.current.getPitch(),
+              bearing: map.current.getBearing()
+            };
+            console.log('[NAV-CAMERA] Auto-saved actual camera state after Go animation:', savedNavigationCameraRef.current);
+          }
+        }, animDuration + 100);
       } catch (e) {
         console.warn('[NAV-START-ZOOM] easeTo failed:', e);
       }
