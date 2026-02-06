@@ -461,7 +461,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
           onClick={(e) => {
             onToggle();
           }}
-          className="h-11 w-11 rounded-xl shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
+          className="h-10 w-10 rounded-lg shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
           style={{
             backgroundColor: '#ffffff',
             borderTop: '3px solid #3b82f6',
@@ -486,69 +486,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
         )}
         data-testid="navigation-sidebar-panel"
       >
-        <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30 shrink-0">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2 min-w-0 flex-1">
-              <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
-              <h2 className="font-semibold text-foreground truncate">Navigation</h2>
-            </div>
-          )}
-        </div>
-
-        {!isCollapsed && !isNavigating && (
-          <div className="sticky top-0 z-20 bg-card px-3 pt-3 pb-2 border-b border-border/50">
-            <Button
-              onClick={() => {
-                if (currentRoute && selectedProfile) {
-                  onStartNavigation();
-                }
-              }}
-              disabled={!currentRoute || !selectedProfile || isStartingJourney}
-              aria-label="Start turn-by-turn navigation with selected route"
-              aria-busy={isStartingJourney}
-              size="lg"
-              className={cn(
-                "w-full h-11 text-sm font-bold rounded-lg shadow-xl transition-all duration-200",
-                "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white",
-                "border-2 border-blue-400/50 hover:scale-105 active:scale-95",
-                "focus-visible:ring-4 focus-visible:ring-blue-500",
-                currentRoute && selectedProfile && "ring-4 ring-blue-400/60 shadow-2xl shadow-blue-500/50"
-              )}
-              data-testid="button-start-navigation-top"
-            >
-              {isStartingJourney ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Starting Navigation...
-                </>
-              ) : (
-                <>
-                  <Navigation className="w-5 h-5 mr-2" />
-                  Start Navigation
-                </>
-              )}
-            </Button>
-            
-            {isNavigating && typeof onRoutePreviewToggle === 'function' && (
-              <div className="mt-3 px-3 pb-2">
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Eye className="w-4 h-4 text-muted-foreground" />
-                    <Label htmlFor="route-preview-toggle" className="text-sm font-medium">
-                      Route Preview
-                    </Label>
-                  </div>
-                  <Switch
-                    id="route-preview-toggle"
-                    checked={showRoutePreview || false}
-                    onCheckedChange={(checked) => onRoutePreviewToggle?.(checked)}
-                    data-testid="switch-route-preview"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {!isCollapsed && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
@@ -1230,7 +1167,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                             className="p-2 rounded-md bg-muted/30"
                           >
                             <div className="text-sm font-medium truncate">
-                              {journey.startLocation || 'Unknown'} → {journey.endLocation || 'Unknown'}
+                              Journey #{journey.id}
                             </div>
                             <div className="text-xs text-muted-foreground mt-1">
                               {journey.status === 'completed' && (
