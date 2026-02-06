@@ -140,7 +140,9 @@ const loadMapPreferences = (): MapPreferences => {
   try {
     const stored = localStorage.getItem('trucknav_maplibre_preferences');
     if (stored) {
-      return { ...defaultPreferences, ...JSON.parse(stored) };
+      const parsed = { ...defaultPreferences, ...JSON.parse(stored) };
+      parsed.mapViewMode = 'roads';
+      return parsed;
     }
   } catch (error) {
     console.warn('Failed to load MapLibre preferences:', error);
@@ -1447,8 +1449,12 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
           mapInstance.setLayoutProperty('traffic-flow-layer', 'visibility', showGeneralTraffic ? 'visible' : 'none');
         }
       } else {
-        // Satellite mode - SMOOTH TRANSITION: Fade in satellite, fade out roads
-        // First make satellite visible at 0 opacity, then fade in
+        // Satellite mode - check sources exist first
+        if (!mapInstance.getSource('satellite-2d')) {
+          console.warn('[SATELLITE] Sources not ready yet - staying in roads mode');
+          return;
+        }
+        
         safeSetVisibility('satellite-2d-layer', is3D ? 'none' : 'visible');
         safeSetVisibility('satellite-3d-layer', is3D ? 'visible' : 'none');
         safeSetOpacity('satellite-2d-layer', 1);
@@ -2088,9 +2094,11 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
 
   useEffect(() => {
     if (!map.current || !isLoaded) return;
-    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', preferences.mapViewMode, 'viewState:', viewState, 'zoom:', currentZoom);
-    updateLayerVisibility(map.current, preferences.mapViewMode, currentZoom, viewState);
-  }, [preferences.mapViewMode, isLoaded, updateLayerVisibility, currentZoom, viewState, showTraffic]);
+    const mode = preferencesRef.current.mapViewMode;
+    const zoom = currentZoomRef.current;
+    console.log('[MAP-VIEW-UPDATE] Layer visibility updating for mode:', mode, 'viewState:', viewState, 'zoom:', zoom);
+    updateLayerVisibility(map.current, mode, zoom, viewState);
+  }, [preferences.mapViewMode, isLoaded, showTraffic]);
 
   // Dynamically control map rotation gestures during navigation
   useEffect(() => {
@@ -4464,18 +4472,20 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   };
 
   const toggleMapView = () => {
-    const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';
-    console.log('[MAP-VIEW-TOGGLE] Switching:', preferences.mapViewMode, '→', newMode);
-    const newPrefs: MapPreferences = { ...preferences, mapViewMode: newMode };
+    const currentPrefs = preferencesRef.current;
+    const currentMode = currentPrefs.mapViewMode;
+    const newMode: 'roads' | 'satellite' = currentMode === 'roads' ? 'satellite' : 'roads';
+    console.log('[MAP-VIEW-TOGGLE-INTERNAL] Switching:', currentMode, '→', newMode);
+    const newPrefs: MapPreferences = { ...currentPrefs, mapViewMode: newMode };
+    preferencesRef.current = newPrefs;
     setPreferences(newPrefs);
     saveMapPreferences(newPrefs);
     
-    // Force immediate layer visibility update
     if (map.current && isLoaded) {
       setTimeout(() => {
         if (map.current) {
-          updateLayerVisibility(map.current, newMode, currentZoom, viewState);
-          console.log('[MAP-VIEW-TOGGLE] Layer visibility updated');
+          updateLayerVisibility(map.current, newMode, currentZoomRef.current, viewState);
+          console.log('[MAP-VIEW-TOGGLE-INTERNAL] Layer visibility updated');
         }
       }, 50);
     }
