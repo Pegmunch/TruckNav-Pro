@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { 
   User, 
   TrendingUp, 
@@ -254,26 +254,16 @@ export function DriverPerformanceTab() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="score">Score</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="miles">Miles</SelectItem>
-            </SelectContent>
-          </Select>
+          <NativeSelect value={periodFilter} onValueChange={setPeriodFilter} className="w-[130px]">
+            <NativeSelectItem value="daily">Daily</NativeSelectItem>
+            <NativeSelectItem value="weekly">Weekly</NativeSelectItem>
+            <NativeSelectItem value="monthly">Monthly</NativeSelectItem>
+          </NativeSelect>
+          <NativeSelect value={sortBy} onValueChange={setSortBy} className="w-[130px]">
+            <NativeSelectItem value="score">Score</NativeSelectItem>
+            <NativeSelectItem value="name">Name</NativeSelectItem>
+            <NativeSelectItem value="miles">Miles</NativeSelectItem>
+          </NativeSelect>
         </div>
       </div>
 

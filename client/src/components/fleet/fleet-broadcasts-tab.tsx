@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -219,55 +219,49 @@ export function FleetBroadcastsTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Priority</Label>
-                  <Select
+                  <NativeSelect
                     value={newBroadcast.priority}
-                    onValueChange={(value: 'critical' | 'important' | 'info') =>
-                      setNewBroadcast({ ...newBroadcast, priority: value })
+                    onValueChange={(value) =>
+                      setNewBroadcast({ ...newBroadcast, priority: value as 'critical' | 'important' | 'info' })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="info">
-                        <span className="flex items-center gap-2">
-                          <Info className="w-4 h-4 text-blue-500" /> Info
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="important">
-                        <span className="flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-orange-500" /> Important
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="critical">
-                        <span className="flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-red-500" /> Critical
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <NativeSelectItem value="info">Info</NativeSelectItem>
+                    <NativeSelectItem value="important">Important</NativeSelectItem>
+                    <NativeSelectItem value="critical">Critical</NativeSelectItem>
+                  </NativeSelect>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select
+                  <NativeSelect
                     value={newBroadcast.category}
-                    onValueChange={(value: 'general' | 'safety' | 'traffic' | 'operations' | 'emergency') =>
-                      setNewBroadcast({ ...newBroadcast, category: value })
+                    onValueChange={(value) =>
+                      setNewBroadcast({ ...newBroadcast, category: value as 'general' | 'safety' | 'traffic' | 'operations' | 'emergency' })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="safety">Safety</SelectItem>
-                      <SelectItem value="traffic">Traffic</SelectItem>
-                      <SelectItem value="operations">Operations</SelectItem>
-                      <SelectItem value="emergency">Emergency</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <NativeSelectItem value="general">General</NativeSelectItem>
+                    <NativeSelectItem value="safety">Safety</NativeSelectItem>
+                    <NativeSelectItem value="traffic">Traffic</NativeSelectItem>
+                    <NativeSelectItem value="operations">Operations</NativeSelectItem>
+                    <NativeSelectItem value="emergency">Emergency</NativeSelectItem>
+                  </NativeSelect>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Target Audience</Label>
+                <NativeSelect
+                  value={newBroadcast.targetAudience}
+                  onValueChange={(value) =>
+                    setNewBroadcast({ ...newBroadcast, targetAudience: value })
+                  }
+                >
+                  <NativeSelectItem value="all">All Drivers</NativeSelectItem>
+                  <NativeSelectItem value="active">Active Drivers Only</NativeSelectItem>
+                  <NativeSelectItem value="managers">Fleet Managers</NativeSelectItem>
+                  <NativeSelectItem value="long_haul">Long Haul Drivers</NativeSelectItem>
+                  <NativeSelectItem value="local">Local Delivery Drivers</NativeSelectItem>
+                </NativeSelect>
               </div>
 
               <div className="space-y-2">

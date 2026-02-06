@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect, NativeSelectItem } from '@/components/ui/native-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
@@ -246,31 +246,21 @@ export function VehicleInspectionsTab() {
             </div>
             <div>
               <Label className="text-xs">Vehicle</Label>
-              <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All vehicles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Vehicles</SelectItem>
-                  {fleetVehicles.map(v => (
-                    <SelectItem key={v.id} value={v.id}>{v.registration}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect value={vehicleFilter} onValueChange={setVehicleFilter}>
+                <NativeSelectItem value="all">All Vehicles</NativeSelectItem>
+                {fleetVehicles.map(v => (
+                  <NativeSelectItem key={v.id} value={v.id}>{v.registration}</NativeSelectItem>
+                ))}
+              </NativeSelect>
             </div>
             <div>
               <Label className="text-xs">Driver</Label>
-              <Select value={operatorFilter} onValueChange={setOperatorFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All drivers" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Drivers</SelectItem>
-                  {operators.map(o => (
-                    <SelectItem key={o.id} value={o.id}>{o.firstName} {o.lastName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect value={operatorFilter} onValueChange={setOperatorFilter}>
+                <NativeSelectItem value="all">All Drivers</NativeSelectItem>
+                {operators.map(o => (
+                  <NativeSelectItem key={o.id} value={o.id}>{o.firstName} {o.lastName}</NativeSelectItem>
+                ))}
+              </NativeSelect>
             </div>
             <div>
               <Label className="text-xs">Date</Label>
