@@ -451,7 +451,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
     <>
       <div
         className={cn(
-          "fixed top-1/3 -translate-y-1/2 z-[45] transition-all duration-300 ease-in-out",
+          "fixed top-1/2 -translate-y-1/2 z-[45] transition-all duration-300 ease-in-out",
           isOpen 
             ? (isCollapsed ? "left-[72px]" : "left-[324px]") 
             : "left-3"
@@ -483,7 +483,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
           }}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
             <path d="M15 18H9" />
             <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
