@@ -62,13 +62,11 @@ export default function MapLegalOwnership({
         /* Compact Layout - Centered */
         <div className="flex flex-row items-center justify-center gap-3 text-xs">
           {/* Main Ownership Info */}
-          <div className="flex items-center gap-2 group cursor-pointer" title="Company info">
+          <div className="flex items-center gap-2">
             <span className="text-muted-foreground">
               Owned and made by Bespoke Marketing LTD @ Trucknavpro.com
             </span>
-            <span className="text-muted-foreground/0 group-hover:text-muted-foreground group-active:text-muted-foreground transition-colors duration-500 text-[9px] select-none">
-              CEO Mr C Berry
-            </span>
+            <span className="text-[0px] leading-[0] overflow-hidden opacity-0 pointer-events-none select-none" aria-hidden="true">CEO Mr C Berry</span>
           </div>
           
           {/* User Guide Button */}
@@ -143,13 +141,11 @@ export default function MapLegalOwnership({
           </div>
           
           {/* Main Ownership */}
-          <div className="text-center group cursor-pointer">
+          <div className="text-center">
             <p className="text-sm font-semibold text-primary">
               TruckNav Pro is owned and operated by <strong>Bespoke Marketing. Ai Ltd</strong>
             </p>
-            <p className="text-[9px] text-muted-foreground/0 group-hover:text-muted-foreground group-active:text-muted-foreground transition-colors duration-500 select-none mt-0.5">
-              CEO Mr C Berry
-            </p>
+            <span className="text-[0px] leading-[0] overflow-hidden opacity-0 pointer-events-none select-none" aria-hidden="true">CEO Mr C Berry</span>
           </div>
           
           {/* Legal Protections Grid */}
