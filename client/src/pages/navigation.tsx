@@ -367,8 +367,9 @@ function NavigationPageContent() {
   });
   
   // Toggle visibility of navigation controls stack (right-side 8 buttons)
-  // Default to visible (true) so buttons show on entry, double-tap toggles
-  const [showNavControls, setShowNavControls] = useState(true);
+  // Desktop: default to hidden (clean map), buttons appear on hamburger press
+  // Mobile: default to visible so buttons show on entry
+  const [showNavControls, setShowNavControls] = useState(isMobile);
   
   // Debug: Log whenever showNavControls changes
   useEffect(() => {
@@ -573,12 +574,13 @@ function NavigationPageContent() {
     }
 
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
-      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Toggling controls');
+      console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Desktop: hide, Mobile: toggle');
       
-      // Toggle visibility on double tap
+      // Desktop: double-tap always hides controls (clean map)
+      // Mobile: double-tap toggles controls
       setShowNavControls(prev => {
-        const newValue = !prev;
-        console.log('[MAP-CLICK] State toggle:', prev, '->', newValue);
+        const newValue = isMobile ? !prev : false;
+        console.log('[MAP-CLICK] State:', prev, '->', newValue, '(isMobile:', isMobile, ')');
         return newValue;
       });
       
@@ -749,11 +751,14 @@ function NavigationPageContent() {
     console.log('[NAV-MODE-STATE] isNavigating:', isNavigating);
   }, [mobileNavMode, isNavigating]);
   
-  // CRITICAL FIX: Ensure HUD is ALWAYS visible when UI is active
+  // CRITICAL FIX: Ensure HUD is ALWAYS visible when UI is active on MOBILE
+  // Desktop: keep map clean, controls only appear on hamburger press
   useEffect(() => {
     if (isNavUIActive) {
-      console.log('[NAV-UI] Forcing HUD controls visibility for active mode:', isNavUIActive);
-      setShowNavControls(true);
+      console.log('[NAV-UI] NavUI active. Mobile:', isMobile);
+      if (isMobile) {
+        setShowNavControls(true);
+      }
       
       // Also ensure the map is expanded/visible
       if (isMobile && !isMapExpanded) {
@@ -2751,11 +2756,10 @@ function NavigationPageContent() {
         return;
       }
       
-      // Desktop: also enter preview mode when route is calculated
-      // This ensures ETA bar, stack buttons, and preview controls appear on desktop
+      // Desktop: enter preview mode when route is calculated
+      // Desktop clean map: don't auto-show controls - user opens via hamburger
       if (!isMobile && route) {
         setIsShowingPreview(true);
-        setShowNavControls(true);
         // Collapse sidebar to show full map with route
         if (sidebarState === 'open') {
           setSidebarState('collapsed');
@@ -3406,6 +3410,7 @@ function NavigationPageContent() {
     // This prevents the route/traffic layers from being cleared during async operations
     // Must happen BEFORE any async calls (ensureRouteReady) or state changes (setIsShowingPreview)
     setIsLocalNavActive(true);
+    setShowNavControls(true);
     localStorage.setItem('navigation_ui_active', 'true');
     console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
     
@@ -3862,6 +3867,12 @@ function NavigationPageContent() {
     // Apply the state change
     setSidebarState(nextState);
     
+    // Desktop clean map: when sidebar opens, show map controls (buttons, ETA)
+    // When sidebar collapses, keep controls visible until user double-taps map
+    if (!isMobile && nextState === 'open') {
+      setShowNavControls(true);
+    }
+    
     // Persist user preference
     localStorage.setItem('navigationSidebarState', nextState);
     
@@ -4003,8 +4014,8 @@ function NavigationPageContent() {
                     hideCompass={false}
                     onMapClick={handleMapClick}
                     onDoubleTap={() => {
-                      console.log('[DOUBLE-TAP] Toggling nav controls visibility');
-                      setShowNavControls(prev => !prev);
+                      console.log('[DOUBLE-TAP] Desktop: hide, Mobile: toggle');
+                      setShowNavControls(prev => isMobile ? !prev : false);
                     }}
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
@@ -4165,7 +4176,8 @@ function NavigationPageContent() {
               )}
 
               {/* PREVIEW MODE OVERLAY (z-10+) - Visible only when showing preview, overlays on top of stable map */}
-              {isShowingPreview && currentRoute && !isNavigating && (
+              {/* Desktop clean map: preview overlay buttons only show when showNavControls is true */}
+              {isShowingPreview && currentRoute && !isNavigating && (isMobile || showNavControls) && (
                 <>
                   {/* Clean Header with Title and Settings - Hidden on desktop (desktop header already visible) */}
                   <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between py-3 px-4 bg-white/95 backdrop-blur-sm lg:hidden" 
@@ -4294,7 +4306,7 @@ function NavigationPageContent() {
                 <NavigationLayout
                   isNavigating={isNavigating}
                   isNavUIActive={isNavUIActive}
-                  showBottomBar={!!currentRoute}
+                  showBottomBar={!!currentRoute && (isMobile || showNavControls)}
                   rightStackVisible={showNavControls}
                   mapContent={
                     <>
@@ -4339,7 +4351,7 @@ function NavigationPageContent() {
                     </>
                   }
                   topStrip={
-                    currentRoute ? (
+                    currentRoute && (isMobile || showNavControls) ? (
                       <CompactTripStrip
                         eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)}
                         distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
@@ -4935,8 +4947,8 @@ function NavigationPageContent() {
                     hideCompass={false}
                     onMapClick={handleMapClick}
                     onDoubleTap={() => {
-                      console.log('[DOUBLE-TAP] Toggling nav controls visibility');
-                      setShowNavControls(prev => !prev);
+                      console.log('[DOUBLE-TAP] Desktop: hide, Mobile: toggle');
+                      setShowNavControls(prev => isMobile ? !prev : false);
                     }}
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
