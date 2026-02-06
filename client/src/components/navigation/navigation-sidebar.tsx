@@ -493,30 +493,34 @@ const NavigationSidebar = memo(function NavigationSidebar({
       >
 
         {!isCollapsed && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
-            <TabsList className="grid grid-cols-6 rounded-none border-b bg-white dark:bg-slate-900 h-8 p-0 shrink-0">
-              <TabsTrigger value="plan" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-plan">
-                Plan
-              </TabsTrigger>
-              <TabsTrigger value="recent" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-recent">
-                Recent
-              </TabsTrigger>
-              <TabsTrigger value="vehicle" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-vehicle">
-                Vehicle
-              </TabsTrigger>
-              <TabsTrigger value="theme" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-theme">
-                Theme
-              </TabsTrigger>
-              <TabsTrigger value="tools" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-tools">
-                Tools
-              </TabsTrigger>
-              <TabsTrigger value="offline" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-offline">
-                Offline
-              </TabsTrigger>
-            </TabsList>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <div className="grid grid-cols-6 shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              {[
+                { key: 'plan', label: 'Plan' },
+                { key: 'recent', label: 'Recent' },
+                { key: 'vehicle', label: 'Vehicle' },
+                { key: 'theme', label: 'Theme' },
+                { key: 'tools', label: 'Tools' },
+                { key: 'offline', label: 'Offline' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "py-2.5 text-[11px] font-semibold text-center transition-colors cursor-pointer",
+                    activeTab === tab.key
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  )}
+                  data-testid={`sidebar-tab-${tab.key}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-scroll">
-              <TabsContent value="plan" className="mt-0 p-3 space-y-3">
+              {activeTab === 'plan' && <div className="p-3 space-y-3">
                 <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1050,9 +1054,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
+              </div>}
 
-              <TabsContent value="recent" className="mt-0 p-3 space-y-3">
+              {activeTab === 'recent' && <div className="p-3 space-y-3">
                 <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1186,9 +1190,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </div>}
 
-              <TabsContent value="vehicle" className="mt-0 p-3 space-y-3">
+              {activeTab === 'vehicle' && <div className="p-3 space-y-3">
                 <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1302,9 +1306,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
+              </div>}
 
-              <TabsContent value="theme" className="mt-0 p-3 space-y-3">
+              {activeTab === 'theme' && <div className="p-3 space-y-3">
                 <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1346,9 +1350,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     <GrayscaleSelector />
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </div>}
 
-              <TabsContent value="tools" className="mt-0 p-3 space-y-3">
+              {activeTab === 'tools' && <div className="p-3 space-y-3">
                 <Card className="border-0 shadow-sm bg-white dark:bg-gray-900">
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -1455,13 +1459,13 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     <LanguageSelector />
                   </CardContent>
                 </Card>
-              </TabsContent>
+              </div>}
 
-              <TabsContent value="offline" className="mt-0 p-3 space-y-3">
+              {activeTab === 'offline' && <div className="p-3 space-y-3">
                 <OfflineDownloadsPanel />
-              </TabsContent>
+              </div>}
             </div>
-          </Tabs>
+          </div>
         )}
 
         {isCollapsed && (
