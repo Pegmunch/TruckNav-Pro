@@ -668,23 +668,38 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       </div>
                     </div>
 
-                    <Tabs
-                      value={routePreference}
-                      onValueChange={(value) => setRoutePreference(value as 'fastest' | 'eco' | 'avoid_tolls')}
-                      className="w-full"
-                    >
-                      <TabsList className="grid w-full grid-cols-3 h-7 p-0.5">
-                        <TabsTrigger value="fastest" className="text-[10px] h-6 px-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="tab-fastest-desktop">
-                          Fast
-                        </TabsTrigger>
-                        <TabsTrigger value="eco" className="text-[10px] h-6 px-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="tab-eco-desktop">
-                          Eco
-                        </TabsTrigger>
-                        <TabsTrigger value="avoid_tolls" className="text-[10px] h-6 px-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="tab-avoid-tolls-desktop">
-                          No Tolls
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', width: '100%', boxSizing: 'border-box' }}>
+                      {[
+                        { key: 'fastest', label: 'Fast' },
+                        { key: 'eco', label: 'Eco' },
+                        { key: 'avoid_tolls', label: 'No Tolls' },
+                      ].map((pref) => (
+                        <button
+                          key={pref.key}
+                          onClick={() => setRoutePreference(pref.key as 'fastest' | 'eco' | 'avoid_tolls')}
+                          style={{
+                            height: '30px',
+                            minWidth: 0,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            borderRadius: '3px',
+                            border: routePreference === pref.key ? '2px solid #2563eb' : '1px solid #d1d5db',
+                            backgroundColor: routePreference === pref.key ? '#3b82f6' : '#ffffff',
+                            color: routePreference === pref.key ? '#ffffff' : '#4b5563',
+                            transition: 'all 0.15s ease',
+                            padding: '0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxSizing: 'border-box',
+                          }}
+                          data-testid={`tab-${pref.key}-desktop`}
+                        >
+                          {pref.label}
+                        </button>
+                      ))}
+                    </div>
 
                     {previousDestinations.length > 0 && !toLocation && (
                       <div className="space-y-2 pt-1">
