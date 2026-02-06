@@ -381,9 +381,8 @@ function NavigationPageContent() {
   });
   
   // Toggle visibility of navigation controls stack (right-side 8 buttons)
-  // Desktop: default to hidden (clean map), buttons appear on hamburger press
-  // Mobile: default to visible so buttons show on entry
-  const [showNavControls, setShowNavControls] = useState(isMobile);
+  // Both desktop and mobile: default to visible so all controls show during navigation
+  const [showNavControls, setShowNavControls] = useState(true);
   
   // Debug: Log whenever showNavControls changes
   useEffect(() => {
@@ -613,10 +612,9 @@ function NavigationPageContent() {
     if (timeSinceLastTap < DOUBLE_TAP_THRESHOLD && timeSinceLastTap > 0) {
       console.log('[MAP-CLICK] DOUBLE-TAP CONFIRMED - Desktop: hide, Mobile: toggle');
       
-      // Desktop: double-tap always hides controls (clean map)
-      // Mobile: double-tap toggles controls
+      // Double-tap toggles controls on both desktop and mobile
       setShowNavControls(prev => {
-        const newValue = isMobile ? !prev : false;
+        const newValue = !prev;
         console.log('[MAP-CLICK] State:', prev, '->', newValue, '(isMobile:', isMobile, ')');
         return newValue;
       });
@@ -4067,8 +4065,8 @@ function NavigationPageContent() {
                     hideCompass={false}
                     onMapClick={handleMapClick}
                     onDoubleTap={() => {
-                      console.log('[DOUBLE-TAP] Desktop: hide, Mobile: toggle');
-                      setShowNavControls(prev => isMobile ? !prev : false);
+                      console.log('[DOUBLE-TAP] Toggle nav controls');
+                      setShowNavControls(prev => !prev);
                     }}
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
@@ -4997,8 +4995,8 @@ function NavigationPageContent() {
                     hideCompass={false}
                     onMapClick={handleMapClick}
                     onDoubleTap={() => {
-                      console.log('[DOUBLE-TAP] Desktop: hide, Mobile: toggle');
-                      setShowNavControls(prev => isMobile ? !prev : false);
+                      console.log('[DOUBLE-TAP] Toggle nav controls');
+                      setShowNavControls(prev => !prev);
                     }}
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}

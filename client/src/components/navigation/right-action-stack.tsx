@@ -64,7 +64,7 @@ function handleWindowTouchStart(e: TouchEvent) {
   
   // Find the CLOSEST button to touch point (not first match) to avoid overlap issues
   let closestButton: { id: string; registration: ButtonRegistration; distance: number } | null = null;
-  const padding = 30;
+  const padding = 16;
   
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     // Skip hidden buttons
@@ -401,7 +401,7 @@ export function RightActionStack({
     <div 
       className={cn(
         "flex flex-col pointer-events-auto",
-        compact ? "gap-3" : "gap-4"
+        compact ? "gap-[14px]" : "gap-4"
       )} 
       data-testid="right-action-stack"
       style={{ marginTop: compact ? '24px' : '0px', pointerEvents: 'auto' }}

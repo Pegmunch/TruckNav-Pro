@@ -144,10 +144,10 @@ export function NavigationLayout({
       {/* Top navigation strip - ETA header (CompactTripStrip) - ALWAYS visible when route exists */}
       {topStrip && topStrip}
 
-      {/* Top-left stack - Mobile only: Map/Recenter buttons below ETA */}
+      {/* Top-left stack - Compass/3D buttons below ETA strip */}
       {topLeftStack && (
         <div 
-          className="fixed left-4 z-[99999] flex flex-col gap-2 lg:hidden pointer-events-auto"
+          className="fixed left-4 z-[99999] flex flex-col gap-2 pointer-events-auto"
           onTouchStartCapture={handleStackTouchCapture}
           onTouchEndCapture={handleStackTouchCapture}
           data-nav-controls="top-left-stack"
