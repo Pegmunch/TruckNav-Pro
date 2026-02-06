@@ -726,62 +726,62 @@ function ComprehensiveMobileMenu({
           {/* Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
             {!hideTabsInInputMode && (
-              <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 flex-shrink-0" tabIndex={-1}>
+              <TabsList className="w-full grid grid-cols-7 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-0.5 flex-shrink-0 gap-px" tabIndex={-1}>
                 <TabsTrigger 
                   value="plan" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-plan"
                 >
-                  <MapPinned className="h-4 w-4" />
-                  <span className="text-xs">Plan</span>
+                  <MapPinned className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Plan</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="destinations" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-destinations"
                 >
-                  <History className="h-4 w-4" />
-                  <span className="text-xs">Recent</span>
+                  <History className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Recent</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="vehicle" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-vehicle"
                 >
-                  <Truck className="h-4 w-4" />
-                  <span className="text-xs">Vehicle</span>
+                  <Truck className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Vehicle</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="social" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-social"
                 >
-                  <Users className="h-4 w-4" />
-                  <span className="text-xs">Social</span>
+                  <Users className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Social</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="theme" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-theme"
                 >
-                  <Palette className="h-4 w-4" />
-                  <span className="text-xs">Theme</span>
+                  <Palette className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Theme</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="tools" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-tools"
                 >
-                  <Settings className="h-4 w-4" />
-                  <span className="text-xs">Tools</span>
+                  <Settings className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Tools</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="offline" 
-                  className="flex flex-col gap-1 py-2 data-[state=active]:bg-background"
+                  className="flex flex-col gap-0.5 !py-1.5 !px-1 data-[state=active]:bg-background min-w-0 !whitespace-normal"
                   data-testid="tab-offline"
                 >
-                  <Download className="h-4 w-4" />
-                  <span className="text-xs">Offline</span>
+                  <Download className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-[9px] leading-tight truncate w-full text-center">Offline</span>
                 </TabsTrigger>
               </TabsList>
             )}
