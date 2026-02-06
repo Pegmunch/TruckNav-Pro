@@ -461,29 +461,28 @@ const NavigationSidebar = memo(function NavigationSidebar({
           onClick={(e) => {
             onToggle();
           }}
-          className="rounded-md shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
+          className="rounded-lg shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
           style={{
-            width: '32px',
-            height: '32px',
-            minWidth: '32px',
-            minHeight: '32px',
+            width: '40px',
+            height: '40px',
+            minWidth: '40px',
+            minHeight: '40px',
             backgroundColor: '#ffffff',
-            borderTop: '2px solid #3b82f6',
-            borderBottom: '2px solid #3b82f6',
+            borderTop: '3px solid #3b82f6',
+            borderBottom: '3px solid #3b82f6',
             borderLeft: '1px solid #e5e7eb',
             borderRight: '1px solid #e5e7eb',
-            color: '#2563eb',
             boxSizing: 'border-box',
           }}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
-          <Truck className="w-4 h-4" style={{ color: '#2563eb' }} />
+          <Truck className="w-5 h-5" style={{ color: '#2563eb' }} />
         </button>
       </div>
 
       <div
         className={cn(
-          "fixed left-0 lg:top-[60px] top-0 lg:h-[calc(100vh-60px)] h-screen bg-white dark:bg-slate-900 border-r border-border z-[40] shadow-lg",
+          "fixed left-0 lg:top-[57px] top-0 lg:h-[calc(100vh-57px)] h-screen bg-white dark:bg-slate-900 border-r border-border z-[40] shadow-lg",
           "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
@@ -494,7 +493,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {!isCollapsed && (
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className="grid grid-cols-6 shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div className="flex shrink-0 px-1 py-1 gap-1 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700">
               {[
                 { key: 'plan', label: 'Plan' },
                 { key: 'recent', label: 'Recent' },
@@ -507,10 +506,10 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    "py-2.5 text-[11px] font-semibold text-center transition-colors cursor-pointer",
+                    "flex-1 py-1.5 text-[10px] font-semibold text-center rounded border transition-colors cursor-pointer",
                     activeTab === tab.key
-                      ? "bg-blue-500 text-white"
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-blue-500 text-white border-blue-600"
+                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                   )}
                   data-testid={`sidebar-tab-${tab.key}`}
                 >
