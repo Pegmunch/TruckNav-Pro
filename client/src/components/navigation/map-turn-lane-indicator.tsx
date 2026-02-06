@@ -222,14 +222,15 @@ const MapTurnLaneIndicator = memo(function MapTurnLaneIndicator({
   return (
     <div 
       className={cn(
-        "fixed z-[6100] pointer-events-none",
+        "fixed pointer-events-none",
         "transition-all duration-300 ease-out",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4",
         className
       )}
       style={{
         top: 'calc(190px + var(--safe-area-top, 0px))',
-        left: '16px'
+        left: '16px',
+        zIndex: 500001,
       }}
       data-testid="map-turn-lane-indicator"
     >

@@ -227,6 +227,8 @@ const SettingsModal = memo(function SettingsModal({
   const [voiceNavEnabled, setVoiceNavEnabled] = useState(() => navigationVoice.getSettings().enabled);
   const [voiceNavVolume, setVoiceNavVolume] = useState(() => navigationVoice.getVolume());
   const [voiceNavRate, setVoiceNavRate] = useState(() => navigationVoice.getSettings().rate);
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>(() => navigationVoice.getSelectedVoiceName() || 'auto');
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   
   // Mock state for demonstration - in real app these would come from context/hooks
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -331,7 +333,29 @@ const SettingsModal = memo(function SettingsModal({
       setVoiceNavEnabled(settings.enabled);
       setVoiceNavVolume(settings.volume);
       setVoiceNavRate(settings.rate);
+      setSelectedVoiceName(navigationVoice.getSelectedVoiceName() || 'auto');
+      
+      const refreshVoices = () => {
+        const v = navigationVoice.getAvailableVoices();
+        if (v.length > 0) {
+          setAvailableVoices(v);
+          setSelectedVoiceName(navigationVoice.getSelectedVoiceName() || 'auto');
+        }
+      };
+      refreshVoices();
+      
+      const onVoicesChanged = () => refreshVoices();
+      window.speechSynthesis?.addEventListener?.('voiceschanged', onVoicesChanged);
+      
+      const pollTimer = setInterval(refreshVoices, 300);
+      const pollTimeout = setTimeout(() => clearInterval(pollTimer), 5000);
+      
       console.log('[Settings] Synced voice settings on open:', settings.enabled);
+      return () => {
+        window.speechSynthesis?.removeEventListener?.('voiceschanged', onVoicesChanged);
+        clearInterval(pollTimer);
+        clearTimeout(pollTimeout);
+      };
     }
   }, [open]);
 
@@ -1285,6 +1309,68 @@ const SettingsModal = memo(function SettingsModal({
                                 }}
                                 data-testid="switch-voice-navigation"
                               />
+                            </div>
+
+                            <Separator />
+
+                            <div className="space-y-3">
+                              <Label className="text-base font-medium">Voice Selection</Label>
+                              <p className="text-sm text-muted-foreground">
+                                Choose a specific voice for navigation
+                              </p>
+                              <Select
+                                value={selectedVoiceName}
+                                onValueChange={(value) => {
+                                  setSelectedVoiceName(value);
+                                  if (value === 'auto') {
+                                    navigationVoice.resetToAuto();
+                                  } else {
+                                    navigationVoice.setVoice(value);
+                                  }
+                                }}
+                                disabled={!voiceNavEnabled}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select a voice" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  <SelectItem value="auto">Auto (Female preferred)</SelectItem>
+                                  {availableVoices
+                                    .filter(v => v.lang.startsWith('en'))
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map((voice) => (
+                                      <SelectItem key={voice.name} value={voice.name}>
+                                        {voice.name} ({voice.lang})
+                                      </SelectItem>
+                                    ))}
+                                  {availableVoices.filter(v => !v.lang.startsWith('en')).length > 0 && (
+                                    <>
+                                      <Separator className="my-1" />
+                                      {availableVoices
+                                        .filter(v => !v.lang.startsWith('en'))
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map((voice) => (
+                                          <SelectItem key={voice.name} value={voice.name}>
+                                            {voice.name} ({voice.lang})
+                                          </SelectItem>
+                                        ))}
+                                    </>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                              {selectedVoiceName !== 'auto' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-xs text-muted-foreground"
+                                  onClick={() => {
+                                    setSelectedVoiceName('auto');
+                                    navigationVoice.resetToAuto();
+                                  }}
+                                >
+                                  Reset to auto
+                                </Button>
+                              )}
                             </div>
 
                             <Separator />

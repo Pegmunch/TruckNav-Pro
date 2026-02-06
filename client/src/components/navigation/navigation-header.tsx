@@ -68,7 +68,7 @@ export function NavigationHeader({
   return (
     <div
       className={cn(
-        "fixed left-0 right-0 z-[5000]",
+        "fixed left-0 right-0",
         "bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700",
         "h-16 px-4",
         "flex items-center justify-between",
@@ -79,6 +79,7 @@ export function NavigationHeader({
       )}
       style={{
         top: "max(env(safe-area-inset-top, 0px), 0px)",
+        zIndex: 500002,
       }}
       data-testid="navigation-header"
     >
@@ -121,9 +122,10 @@ export function NavigationHeader({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-64 p-0 z-[6000]"
+          className="w-64 p-0"
           align="end"
           sideOffset={8}
+          style={{ zIndex: 500003 }}
         >
           <ScrollArea className="max-h-[50vh] overflow-y-auto" type="always">
             <div className="p-2">

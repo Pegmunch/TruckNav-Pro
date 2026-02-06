@@ -1043,6 +1043,39 @@ export class NavigationVoice {
   public getAvailableVoices(): SpeechSynthesisVoice[] {
     return this.voices;
   }
+
+  /**
+   * Get the name of the currently selected voice
+   */
+  public getSelectedVoiceName(): string | null {
+    return this.selectedVoice?.name || null;
+  }
+
+  /**
+   * Set a specific voice by name and persist the choice
+   */
+  public setVoice(voiceName: string): void {
+    this.settings.voice = voiceName;
+    this.settings.preferFemaleVoice = false;
+    this.saveSettings();
+    const voice = this.voices.find(v => v.name === voiceName);
+    if (voice) {
+      this.selectedVoice = voice;
+    }
+    console.log(`[NavigationVoice] Voice manually set to: ${voiceName}`);
+  }
+
+  /**
+   * Reset voice to auto-selection (female preferred)
+   */
+  public resetToAuto(): void {
+    this.settings.voice = null;
+    this.settings.preferFemaleVoice = true;
+    this.selectedVoice = null;
+    this.saveSettings();
+    this.selectVoiceForLanguage(this.settings.language);
+    console.log(`[NavigationVoice] Voice reset to auto, selected: ${this.selectedVoice?.name || 'pending'}`);
+  }
   
   /**
    * Check if currently speaking
