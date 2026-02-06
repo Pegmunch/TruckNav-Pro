@@ -5158,21 +5158,7 @@ function NavigationPageContent() {
         defaultTab={liveTrafficPanelTab}
       />
 
-      {/* Smart Traffic Lights Panel - Green wave optimization for traffic signals */}
-      {/* Shows during both preview and navigation when there's a route */}
-      {showSmartTrafficLights && currentRoute?.routePath && (isNavigating || isShowingPreview) && (
-        <div className="fixed top-20 right-4 z-40 w-80 max-w-[calc(100vw-2rem)] hidden sm:block">
-          <SmartTrafficLightsPanel
-            routeCoordinates={currentRoute.routePath}
-            isNavigating={isNavigating}
-            currentSpeed={currentSpeed}
-            onSpeedRecommendation={(speed, action) => {
-              console.log(`[SMART-TRAFFIC] Speed recommendation: ${speed} km/h, action: ${action}`);
-            }}
-            className="shadow-lg"
-          />
-        </div>
-      )}
+      {/* Smart Traffic Lights Panel removed - was showing as transparent toast in tablet/PWA mode */}
 
       {/* Comprehensive Mobile Menu - Uses internal early return for iOS Safari fix */}
       <ComprehensiveMobileMenu
