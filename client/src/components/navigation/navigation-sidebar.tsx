@@ -461,24 +461,24 @@ const NavigationSidebar = memo(function NavigationSidebar({
           onClick={(e) => {
             onToggle();
           }}
-          className="h-10 w-10 rounded-lg shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
+          className="h-8 w-8 rounded-md shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
           style={{
             backgroundColor: '#ffffff',
-            borderTop: '3px solid #3b82f6',
-            borderBottom: '3px solid #3b82f6',
+            borderTop: '2px solid #3b82f6',
+            borderBottom: '2px solid #3b82f6',
             borderLeft: '1px solid #e5e7eb',
             borderRight: '1px solid #e5e7eb',
             color: '#2563eb',
           }}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
-          <Truck className="w-5 h-5" style={{ color: '#2563eb' }} />
+          <Truck className="w-4 h-4" style={{ color: '#2563eb' }} />
         </button>
       </div>
 
       <div
         className={cn(
-          "fixed left-0 top-0 h-screen bg-white border-r border-border z-[40] shadow-lg",
+          "fixed left-0 lg:top-[56px] top-0 lg:h-[calc(100vh-56px)] h-screen bg-white border-r border-border z-[40] shadow-lg",
           "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
