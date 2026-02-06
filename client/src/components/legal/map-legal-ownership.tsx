@@ -38,6 +38,7 @@ export default function MapLegalOwnership({
   const { t } = useTranslation();
   const [guideOpen, setGuideOpen] = useState(false);
   const [legalOpen, setLegalOpen] = useState(false);
+  const [showCeo, setShowCeo] = useState(false);
   
   return (
     <div 
@@ -62,11 +63,15 @@ export default function MapLegalOwnership({
         /* Compact Layout - Centered */
         <div className="flex flex-row items-center justify-center gap-3 text-xs">
           {/* Main Ownership Info */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer pointer-events-auto" onClick={() => setShowCeo(prev => !prev)}>
             <span className="text-muted-foreground">
               Owned and made by Bespoke Marketing LTD @ Trucknavpro.com
             </span>
-            <span className="text-[0px] leading-[0] overflow-hidden opacity-0 pointer-events-none select-none" aria-hidden="true">CEO Mr C Berry</span>
+            {showCeo ? (
+              <span className="text-[9px] text-muted-foreground transition-opacity duration-500 select-none">CEO Mr C Berry</span>
+            ) : (
+              <span className="text-[0px] leading-[0] overflow-hidden opacity-0 pointer-events-none select-none" aria-hidden="true">CEO Mr C Berry</span>
+            )}
           </div>
           
           {/* User Guide Button */}
@@ -141,11 +146,15 @@ export default function MapLegalOwnership({
           </div>
           
           {/* Main Ownership */}
-          <div className="text-center">
+          <div className="text-center cursor-pointer" onClick={() => setShowCeo(prev => !prev)}>
             <p className="text-sm font-semibold text-primary">
               TruckNav Pro is owned and operated by <strong>Bespoke Marketing. Ai Ltd</strong>
             </p>
-            <span className="text-[0px] leading-[0] overflow-hidden opacity-0 pointer-events-none select-none" aria-hidden="true">CEO Mr C Berry</span>
+            {showCeo ? (
+              <p className="text-[9px] text-muted-foreground transition-opacity duration-500 select-none mt-0.5">CEO Mr C Berry</p>
+            ) : (
+              <span className="text-[0px] leading-[0] overflow-hidden opacity-0 pointer-events-none select-none" aria-hidden="true">CEO Mr C Berry</span>
+            )}
           </div>
           
           {/* Legal Protections Grid */}
