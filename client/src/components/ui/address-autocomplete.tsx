@@ -898,33 +898,7 @@ export function AddressAutocomplete({
       </div>
     )}
     
-    {/* Country Detection Status */}
-    {gps?.position && countryCode && (
-      <div className="flex items-center gap-1 px-2 text-xs text-muted-foreground" data-testid="country-detection-status">
-        <Globe className="w-3 h-3" />
-        <span>Searching {countryCode === 'GB' ? 'UK' : 'worldwide'} addresses</span>
-      </div>
-    )}
     
-    {/* GPS Error Hint */}
-    {gps?.errorType && gps.errorType !== 'NOT_SUPPORTED' && (
-      <div className="flex items-start gap-2 px-2 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-700 dark:text-yellow-400" data-testid="gps-error-hint">
-        <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
-        <div className="flex-1">
-          <span>{gps.errorMessage}</span>
-          {gps.canRetry && (
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => gps.retryGPS()}
-              className="h-auto p-0 ml-1 text-xs text-yellow-700 dark:text-yellow-400 underline"
-            >
-              Retry
-            </Button>
-          )}
-        </div>
-      </div>
-    )}
   </div>
   );
 }

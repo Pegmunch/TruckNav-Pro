@@ -571,6 +571,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           testId="input-current-location"
                           className="h-10 text-sm"
                           showSearchTypeToggles={false}
+                          hideGPSButton={true}
                         />
                       </div>
                       <div className="flex items-center gap-2">
@@ -642,6 +643,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
                           id="destination-input"
                           testId="input-destination"
                           className="h-10 text-sm"
+                          showSearchTypeToggles={false}
+                          hideGPSButton={true}
                         />
                         {toLocation && (
                           <Button
@@ -690,14 +693,14 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       ))}
                     </div>
 
-                    {previousDestinations.length > 0 && !toLocation && (
-                      <div className="space-y-2 pt-1">
+                    {previousDestinations.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-border">
                         <Label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                           <History className="h-3 w-3 text-purple-500" />
                           Recent Destinations
                         </Label>
-                        <div className="space-y-1 max-h-[100px] overflow-y-auto">
-                          {previousDestinations.slice(0, 3).map((dest) => (
+                        <div className="space-y-1 max-h-[160px] overflow-y-auto">
+                          {previousDestinations.slice(0, 5).map((dest) => (
                             <div
                               key={dest.id}
                               className="flex items-center gap-2 p-2 rounded-md bg-muted/30 cursor-pointer hover:bg-muted/50 transition-all"
@@ -706,7 +709,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
                                 onToCoordinatesChange?.(dest.coordinates);
                               }}
                             >
-                              <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs font-medium truncate">{dest.label}</div>
                                 <div className="text-[10px] text-muted-foreground truncate">{dest.formattedAddress}</div>
