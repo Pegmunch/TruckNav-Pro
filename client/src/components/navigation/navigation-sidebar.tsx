@@ -506,7 +506,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {!isCollapsed && (
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className="shrink-0 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', padding: '4px' }}>
+            <div style={{ width: '320px', maxWidth: '100%', boxSizing: 'border-box', display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '3px', padding: '4px', overflow: 'hidden', borderBottom: '1px solid #e5e7eb', backgroundColor: '#ffffff', flexShrink: 0 }}>
               {[
                 { key: 'plan', label: 'Plan' },
                 { key: 'recent', label: 'Recent' },
@@ -520,9 +520,9 @@ const NavigationSidebar = memo(function NavigationSidebar({
                   onClick={() => setActiveTab(tab.key)}
                   style={{
                     height: '32px',
+                    minWidth: 0,
                     fontSize: '10px',
                     fontWeight: 600,
-                    textAlign: 'center',
                     cursor: 'pointer',
                     borderRadius: '3px',
                     border: activeTab === tab.key ? '2px solid #2563eb' : '1px solid #d1d5db',
@@ -534,6 +534,8 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    overflow: 'hidden',
+                    boxSizing: 'border-box',
                   }}
                   data-testid={`sidebar-tab-${tab.key}`}
                 >
