@@ -4,7 +4,7 @@
  * Displays at the very top of the screen during navigation
  */
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -59,11 +59,16 @@ export function NavigationHeader({
   className,
 }: NavigationHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const touchHandledRef = useRef(false);
 
   const handleItemClick = (callback?: () => void) => {
     setIsOpen(false);
     callback?.();
   };
+
+  const handleToggle = useCallback(() => {
+    setIsOpen(prev => !prev);
+  }, []);
 
   return (
     <div
@@ -105,16 +110,18 @@ export function NavigationHeader({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setIsOpen(!isOpen);
-            }}
-            onTouchStart={(e) => {
-              // iOS Safari fix - use touchstart since touchend may be blocked
-              e.stopPropagation();
+              if (touchHandledRef.current) {
+                touchHandledRef.current = false;
+                return;
+              }
+              handleToggle();
             }}
             onTouchEnd={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setIsOpen(!isOpen);
+              touchHandledRef.current = true;
+              handleToggle();
+              setTimeout(() => { touchHandledRef.current = false; }, 300);
             }}
             style={{ touchAction: 'manipulation' }}
           >

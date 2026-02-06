@@ -4020,7 +4020,7 @@ function NavigationPageContent() {
         <>
         {/* Navigation Header - OUTSIDE mobile-layout for proper z-index stacking */}
         {/* Green gear opens the quick settings panel (vehicle, language, theme) */}
-        {!isARMode && (
+        {!isARMode && !showComprehensiveMenu && (
           <NavigationHeader 
             onSettingsClick={() => setShowVehicleSettings(true)}
             onWeatherClick={() => setShowWeatherTool(true)}
