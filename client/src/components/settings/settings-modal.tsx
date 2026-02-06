@@ -11,7 +11,7 @@
  * - Entertainment: Entertainment system preferences and opt-in settings
  */
 
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -176,9 +176,159 @@ function saveSettings<T>(key: string, settings: T): void {
   }
 }
 
-/**
- * Consolidated Settings Modal Component
- */
+function VoiceWheelPicker({ voices, selectedVoiceName, disabled, onSelect }: {
+  voices: SpeechSynthesisVoice[];
+  selectedVoiceName: string;
+  disabled: boolean;
+  onSelect: (value: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const itemHeight = 44;
+  const visibleItems = 5;
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const voiceOptions = [
+    { value: 'auto', label: 'Auto (Female preferred)', lang: '' },
+    ...voices
+      .filter(v => v.lang.startsWith('en'))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(v => ({ value: v.name, label: v.name, lang: v.lang })),
+    ...voices
+      .filter(v => !v.lang.startsWith('en'))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(v => ({ value: v.name, label: v.name, lang: v.lang })),
+  ];
+
+  const selectedIndex = voiceOptions.findIndex(v => v.value === selectedVoiceName);
+  const activeIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const targetScroll = activeIndex * itemHeight;
+    el.scrollTop = targetScroll;
+  }, [activeIndex, voiceOptions.length]);
+
+  const handleScroll = useCallback(() => {
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    isScrollingRef.current = true;
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+      const el = scrollRef.current;
+      if (!el) return;
+      const scrollPos = el.scrollTop;
+      const snappedIndex = Math.round(scrollPos / itemHeight);
+      const clampedIndex = Math.max(0, Math.min(snappedIndex, voiceOptions.length - 1));
+      el.scrollTo({ top: clampedIndex * itemHeight, behavior: 'smooth' });
+      if (voiceOptions[clampedIndex] && voiceOptions[clampedIndex].value !== selectedVoiceName) {
+        onSelect(voiceOptions[clampedIndex].value);
+      }
+    }, 120);
+  }, [voiceOptions, selectedVoiceName, onSelect, itemHeight]);
+
+  const handleItemClick = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
+    if (voiceOptions[index]) {
+      onSelect(voiceOptions[index].value);
+    }
+  }, [voiceOptions, onSelect, itemHeight]);
+
+  const wheelHeight = itemHeight * visibleItems;
+  const paddingItems = Math.floor(visibleItems / 2);
+
+  return (
+    <div className="space-y-3">
+      <Label className="text-base font-medium">Voice Selection</Label>
+      <p className="text-sm text-muted-foreground">
+        Scroll to choose a voice for navigation
+      </p>
+      <div
+        className={cn(
+          "relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden",
+          disabled && "opacity-50 pointer-events-none"
+        )}
+        style={{ height: wheelHeight }}
+      >
+        <div
+          className="absolute left-0 right-0 pointer-events-none z-10 border-y-2 border-blue-500 bg-blue-50/30 dark:bg-blue-900/20"
+          style={{
+            top: paddingItems * itemHeight,
+            height: itemHeight,
+          }}
+        />
+        <div
+          className="absolute left-0 right-0 top-0 pointer-events-none z-10"
+          style={{
+            height: paddingItems * itemHeight,
+            background: 'linear-gradient(to bottom, hsl(var(--background)) 0%, transparent 100%)',
+          }}
+        />
+        <div
+          className="absolute left-0 right-0 bottom-0 pointer-events-none z-10"
+          style={{
+            height: paddingItems * itemHeight,
+            background: 'linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%)',
+          }}
+        />
+        <div
+          ref={scrollRef}
+          className="h-full overflow-y-auto"
+          onScroll={handleScroll}
+          style={{
+            scrollSnapType: 'y mandatory',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          {Array.from({ length: paddingItems }).map((_, i) => (
+            <div key={`pad-top-${i}`} style={{ height: itemHeight }} />
+          ))}
+          {voiceOptions.map((voice, index) => (
+            <div
+              key={voice.value}
+              onClick={() => handleItemClick(index)}
+              className={cn(
+                "flex items-center justify-between px-4 cursor-pointer transition-all duration-150 select-none",
+                index === activeIndex
+                  ? "text-foreground font-semibold scale-100"
+                  : "text-muted-foreground font-normal scale-95 opacity-70"
+              )}
+              style={{
+                height: itemHeight,
+                scrollSnapAlign: 'start',
+              }}
+            >
+              <span className="truncate text-sm">{voice.label}</span>
+              {voice.lang && (
+                <span className="text-xs text-muted-foreground ml-2 shrink-0">
+                  {voice.lang}
+                </span>
+              )}
+            </div>
+          ))}
+          {Array.from({ length: paddingItems }).map((_, i) => (
+            <div key={`pad-bot-${i}`} style={{ height: itemHeight }} />
+          ))}
+        </div>
+      </div>
+      {selectedVoiceName !== 'auto' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground"
+          onClick={() => onSelect('auto')}
+        >
+          Reset to auto
+        </Button>
+      )}
+    </div>
+  );
+}
+
 const SettingsModal = memo(function SettingsModal({
   open,
   onOpenChange,
@@ -1313,65 +1463,19 @@ const SettingsModal = memo(function SettingsModal({
 
                             <Separator />
 
-                            <div className="space-y-3">
-                              <Label className="text-base font-medium">Voice Selection</Label>
-                              <p className="text-sm text-muted-foreground">
-                                Choose a specific voice for navigation
-                              </p>
-                              <Select
-                                value={selectedVoiceName}
-                                onValueChange={(value) => {
-                                  setSelectedVoiceName(value);
-                                  if (value === 'auto') {
-                                    navigationVoice.resetToAuto();
-                                  } else {
-                                    navigationVoice.setVoice(value);
-                                  }
-                                }}
-                                disabled={!voiceNavEnabled}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select a voice" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                  <SelectItem value="auto">Auto (Female preferred)</SelectItem>
-                                  {availableVoices
-                                    .filter(v => v.lang.startsWith('en'))
-                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                    .map((voice) => (
-                                      <SelectItem key={voice.name} value={voice.name}>
-                                        {voice.name} ({voice.lang})
-                                      </SelectItem>
-                                    ))}
-                                  {availableVoices.filter(v => !v.lang.startsWith('en')).length > 0 && (
-                                    <>
-                                      <Separator className="my-1" />
-                                      {availableVoices
-                                        .filter(v => !v.lang.startsWith('en'))
-                                        .sort((a, b) => a.name.localeCompare(b.name))
-                                        .map((voice) => (
-                                          <SelectItem key={voice.name} value={voice.name}>
-                                            {voice.name} ({voice.lang})
-                                          </SelectItem>
-                                        ))}
-                                    </>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              {selectedVoiceName !== 'auto' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-xs text-muted-foreground"
-                                  onClick={() => {
-                                    setSelectedVoiceName('auto');
-                                    navigationVoice.resetToAuto();
-                                  }}
-                                >
-                                  Reset to auto
-                                </Button>
-                              )}
-                            </div>
+                            <VoiceWheelPicker
+                              voices={availableVoices}
+                              selectedVoiceName={selectedVoiceName}
+                              disabled={!voiceNavEnabled}
+                              onSelect={(value) => {
+                                setSelectedVoiceName(value);
+                                if (value === 'auto') {
+                                  navigationVoice.resetToAuto();
+                                } else {
+                                  navigationVoice.setVoice(value);
+                                }
+                              }}
+                            />
 
                             <Separator />
 

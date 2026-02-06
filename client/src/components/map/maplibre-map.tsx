@@ -247,6 +247,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const touchContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingStyleListenerRef = useRef<(() => void) | null>(null);
   const onDoubleTapRef = useRef<(() => void) | undefined>(onDoubleTap);
+  const viewStateRef = useRef<ViewState>(viewState);
+  const updateLayerVisibilityRef = useRef<typeof updateLayerVisibility | null>(null);
   
   // MapLibre custom controls for iOS Safari WebGL touch fix
   const incidentControlRef = useRef<IncidentControl | null>(null);
@@ -867,9 +869,40 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       preferencesRef.current = newPrefs;
       setPreferences(newPrefs);
       saveMapPreferences(newPrefs);
-      if (map.current && isLoaded) {
-        updateLayerVisibility(map.current, newMode, currentZoomRef.current, viewState);
-        console.log('[MAP-VIEW-TOGGLE] Layer visibility updated immediately from imperative handle');
+      const mapInstance = map.current;
+      if (mapInstance && mapInstance.getCanvas()) {
+        if (newMode === 'satellite' && !mapInstance.getSource('satellite-2d') && mapInstance.isStyleLoaded()) {
+          console.log('[MAP-VIEW-TOGGLE] Satellite sources missing - re-adding them');
+          try {
+            mapInstance.addSource('satellite-2d', {
+              type: 'raster',
+              tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+              tileSize: 256, minzoom: 1, maxzoom: 19,
+              attribution: '&copy; Esri, Maxar, Earthstar Geographics'
+            });
+            mapInstance.addSource('satellite-3d', {
+              type: 'raster',
+              tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+              tileSize: 256, minzoom: 1, maxzoom: 19
+            });
+            const firstLayerId = mapInstance.getStyle().layers?.[0]?.id;
+            if (!mapInstance.getLayer('satellite-2d-layer')) {
+              mapInstance.addLayer({ id: 'satellite-2d-layer', type: 'raster', source: 'satellite-2d', layout: { visibility: 'none' } }, firstLayerId);
+            }
+            if (!mapInstance.getLayer('satellite-3d-layer')) {
+              mapInstance.addLayer({ id: 'satellite-3d-layer', type: 'raster', source: 'satellite-3d', layout: { visibility: 'none' } }, firstLayerId);
+            }
+            console.log('[MAP-VIEW-TOGGLE] Satellite sources and layers re-added successfully');
+          } catch (e) {
+            console.warn('[MAP-VIEW-TOGGLE] Failed to re-add satellite sources:', e);
+          }
+        }
+        const freshViewState = viewStateRef.current;
+        const freshUpdateFn = updateLayerVisibilityRef.current;
+        if (freshUpdateFn) {
+          freshUpdateFn(mapInstance, newMode, currentZoomRef.current, freshViewState);
+          console.log('[MAP-VIEW-TOGGLE] Layer visibility updated via ref (fresh viewState:', freshViewState, ')');
+        }
       }
     },
     getMapViewMode: () => preferencesRef.current.mapViewMode,
@@ -1538,6 +1571,9 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       doUpdate();
     }
   }, [showTraffic, isNavigating]);
+
+  viewStateRef.current = viewState;
+  updateLayerVisibilityRef.current = updateLayerVisibility;
 
   useEffect(() => {
     if (!mapContainer.current) return;
