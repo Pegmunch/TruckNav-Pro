@@ -5046,8 +5046,92 @@ function NavigationPageContent() {
                 {/* DESKTOP PREVIEW MODE - Full navigation UI overlay when route calculated but not yet navigating */}
                 {currentRoute && !isNavigating && showNavControls && (
                   <>
+                    {/* Left Action Stack - Desktop Preview Mode */}
+                    <div 
+                      className="fixed left-4 flex flex-col gap-3"
+                      data-nav-controls="desktop-left-stack-preview"
+                      style={{ 
+                        bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+                        zIndex: 500000,
+                        pointerEvents: 'auto',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <LeftActionStack
+                        onNavigate={() => mapRef.current?.zoomToUserLocation()}
+                        onCancel={handleStopNavigation}
+                        onReportIncident={handleReportIncident}
+                        onOpenMenu={() => setShowComprehensiveMenu(true)}
+                        isNavigating={false}
+                        currentLocation={currentGPSLocation}
+                        showMenuButton={false}
+                        isCameraAtNavDefault={isCameraAtNavDefault}
+                        onResetCamera={handleResetCamera}
+                        onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
+                          if (currentGPSLocation) {
+                            const incidentLabels: Record<IncidentType, string> = {
+                              'traffic_jam': 'Traffic Jam',
+                              'accident': 'Accident',
+                              'road_hazard': 'Road Hazard',
+                              'road_closure': 'Road Closure',
+                              'police': 'Police Activity',
+                              'speed_camera': 'Speed Camera',
+                              'construction': 'Construction',
+                              'weather_hazard': 'Weather Hazard',
+                            };
+                            apiRequest('POST', '/api/traffic-incidents', {
+                              type: type,
+                              title: incidentLabels[type] || type,
+                              severity,
+                              coordinates: currentGPSLocation,
+                            }).then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/traffic-incidents'] });
+                              toast({
+                                title: 'Incident Reported',
+                                description: `${incidentLabels[type] || type} reported via voice command.`,
+                              });
+                            }).catch(err => {
+                              console.error('[VOICE-REPORT] ❌ Failed to report incident:', err);
+                              toast({
+                                title: 'Report Failed',
+                                description: 'Could not submit the incident report.',
+                                variant: 'destructive',
+                              });
+                            });
+                          }
+                        }}
+                        isVisible={showNavControls}
+                        onVoiceNavigationCommand={(command: NavigationCommandType) => {
+                          switch (command) {
+                            case 'zoom_in': mapRef.current?.zoomIn(); break;
+                            case 'zoom_out': mapRef.current?.zoomOut(); break;
+                            case 'recenter': mapRef.current?.zoomToUserLocation(); break;
+                            case 'start_navigation':
+                              if (currentRoute && !isNavUIActive) handleStartNavigation();
+                              break;
+                            case 'toggle_3d':
+                              mapRef.current?.toggle3DMode();
+                              setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                              break;
+                            case 'toggle_satellite':
+                              mapRef.current?.toggleMapView();
+                              setMapControlState(prev => ({ ...prev, isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite' }));
+                              break;
+                            case 'mute':
+                              navigationVoice.setEnabled(false);
+                              toast({ title: 'Voice Muted', description: 'Voice guidance has been muted.' });
+                              break;
+                            case 'unmute':
+                              navigationVoice.setEnabled(true);
+                              toast({ title: 'Voice Unmuted', description: 'Voice guidance is now active.' });
+                              break;
+                          }
+                        }}
+                      />
+                    </div>
+
                     {/* CompactTripStrip - ETA, distance, voice toggle - top of screen */}
-                    <div className="fixed top-14 left-0 right-0 z-[200] pointer-events-auto">
+                    <div className="fixed top-14 left-0 right-0 pointer-events-auto" style={{ zIndex: 500000 }}>
                       <CompactTripStrip
                         eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)}
                         distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
@@ -5103,10 +5187,11 @@ function NavigationPageContent() {
                     </div>
 
                     {/* Right Action Stack - Map controls */}
-                    <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                    <div className="fixed flex flex-col gap-1 pointer-events-auto"
                       style={{
                         bottom: 'calc(140px + var(--safe-area-bottom, 0px))',
-                        right: '16px'
+                        right: '16px',
+                        zIndex: 500000
                       }}>
                       <div className={cn(
                         "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg mb-2",
@@ -5159,13 +5244,13 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Info Boxes - Distance, ETA, Arrival Time */}
-                    <div className="fixed left-1/2 -translate-x-1/2 z-[200] pointer-events-auto"
-                      style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))' }}>
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-                          <RouteIcon className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-bold text-sm">
+                    {/* Info Boxes - Distance, ETA, Arrival Time - positioned above buttons */}
+                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      style={{ bottom: 'calc(118px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1 bg-blue-600 text-white px-2 py-1 rounded-lg shadow-lg">
+                          <RouteIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="font-bold text-xs">
                             {(() => {
                               const distanceMeters = dynamicDistanceRemaining > 0 
                                 ? dynamicDistanceRemaining 
@@ -5176,9 +5261,9 @@ function NavigationPageContent() {
                             })()}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-bold text-sm">
+                        <div className="flex items-center justify-center gap-1 bg-amber-500 text-white px-2 py-1 rounded-lg shadow-lg">
+                          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="font-bold text-xs">
                             {(() => {
                               const distanceMeters = dynamicDistanceRemaining > 0 
                                 ? dynamicDistanceRemaining 
@@ -5193,9 +5278,9 @@ function NavigationPageContent() {
                             })()}
                           </span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span className="font-bold text-sm">
+                        <div className="flex items-center justify-center gap-1 bg-blue-600 text-white px-2 py-1 rounded-lg shadow-lg">
+                          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="font-bold text-xs">
                             {(() => {
                               const distanceMeters = dynamicDistanceRemaining > 0 
                                 ? dynamicDistanceRemaining 
@@ -5209,76 +5294,79 @@ function NavigationPageContent() {
                       </div>
                     </div>
 
-                    {/* Speedometer HUD with Preview/Start buttons */}
-                    <div className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
-                      style={{ bottom: 'calc(0px + var(--safe-area-bottom, 0px))' }}>
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => {
-                              setShowIncidentReportDialog(true);
-                            }}
-                            variant="outline"
-                            className="h-11 w-11 p-0 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg"
-                            data-testid="button-report-incident-desktop-preview"
-                          >
-                            <AlertCircle className="w-5 h-5" />
-                          </Button>
-                          <Button
-                            onClick={() => handleViewIncidents()}
-                            variant="outline"
-                            className="h-11 w-11 p-0 bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-lg"
-                            data-testid="button-view-incidents-desktop-preview"
-                          >
-                            <AlertCircle className="w-5 h-5" />
-                          </Button>
-                          <Button
-                            onClick={handlePreviewRoute}
-                            disabled={isFlyByInProgress}
-                            variant="outline"
-                            className="h-11 px-6 font-semibold bg-white/90 backdrop-blur-sm"
-                            data-testid="button-preview-route-desktop"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            Preview
-                          </Button>
-                          <Button
-                            onClick={handleStartNavigation}
-                            className="h-11 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold"
-                            data-testid="button-start-navigation-desktop"
-                          >
-                            <Navigation className="w-4 h-4 mr-2" />
-                            Start
-                          </Button>
-                        </div>
-                        <SpeedometerHUD
-                          currentSpeed={gpsData?.position?.speed || 0}
-                          speedLimit={currentSpeedLimit || undefined}
-                          roadInfo={roadInfo}
-                          isNavigating={false}
-                          showGoButton={false}
-                          showStopButton={false}
-                          distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
-                          vehicleType={vehicleType}
-                        />
+                    {/* Preview/Start action buttons - positioned above speedometer */}
+                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      style={{ bottom: 'calc(80px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          onClick={() => setShowIncidentReportDialog(true)}
+                          variant="outline"
+                          className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg rounded-lg"
+                          data-testid="button-report-incident-desktop-preview"
+                        >
+                          <AlertCircle className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => handleViewIncidents()}
+                          variant="outline"
+                          className="h-8 w-8 p-0 bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-lg rounded-lg"
+                          data-testid="button-view-incidents-desktop-preview"
+                        >
+                          <AlertCircle className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={handlePreviewRoute}
+                          disabled={isFlyByInProgress}
+                          variant="outline"
+                          className="h-8 px-4 text-xs font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
+                          data-testid="button-preview-route-desktop"
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1.5" />
+                          Preview
+                        </Button>
+                        <Button
+                          onClick={handleStartNavigation}
+                          className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg"
+                          data-testid="button-start-navigation-desktop"
+                        >
+                          <Navigation className="w-3.5 h-3.5 mr-1.5" />
+                          Start
+                        </Button>
                       </div>
+                    </div>
+
+                    {/* Speedometer HUD - at bottom */}
+                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      style={{ bottom: 'calc(2px + var(--safe-area-bottom, 0px))', zIndex: 500000 }}>
+                      <SpeedometerHUD
+                        currentSpeed={gpsData?.position?.speed || 0}
+                        speedLimit={currentSpeedLimit || undefined}
+                        roadInfo={roadInfo}
+                        isNavigating={false}
+                        showGoButton={false}
+                        showStopButton={false}
+                        distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
+                        vehicleType={vehicleType}
+                      />
                     </div>
 
                     {/* Route Mask for clean background behind bottom controls */}
                     <div 
-                      className="fixed left-0 right-0 z-[160] pointer-events-none"
+                      className="fixed left-0 right-0 pointer-events-none"
                       style={{
                         bottom: '0px',
                         height: 'calc(70px + var(--safe-area-bottom, 0px))',
-                        background: 'white'
+                        background: 'white',
+                        zIndex: 499998
                       }}
                     />
                     <div 
-                      className="fixed left-0 right-0 z-[159] pointer-events-none"
+                      className="fixed left-0 right-0 pointer-events-none"
                       style={{
                         bottom: 'calc(70px + var(--safe-area-bottom, 0px))',
                         height: '40px',
-                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)'
+                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)',
+                        zIndex: 499997
                       }}
                     />
                   </>
@@ -5287,8 +5375,90 @@ function NavigationPageContent() {
                       {/* NAVIGATE MODE OVERLAYS - Desktop ONLY when ACTIVELY NAVIGATING */}
                       {isNavigating && (
                   <>
+                    {/* Left Action Stack - Desktop Navigate Mode */}
+                    <div 
+                      className="fixed left-4 flex flex-col gap-3"
+                      data-nav-controls="desktop-left-stack-navigate"
+                      style={{ 
+                        bottom: 'calc(100px + var(--safe-area-bottom, 0px))',
+                        zIndex: 500000,
+                        pointerEvents: 'auto',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <LeftActionStack
+                        onNavigate={() => mapRef.current?.zoomToUserLocation()}
+                        onCancel={handleStopNavigation}
+                        onReportIncident={handleReportIncident}
+                        onOpenMenu={() => setShowComprehensiveMenu(true)}
+                        isNavigating={true}
+                        currentLocation={currentGPSLocation}
+                        showMenuButton={false}
+                        isCameraAtNavDefault={isCameraAtNavDefault}
+                        onResetCamera={handleResetCamera}
+                        onVoiceIncidentReport={(type: IncidentType, severity: 'low' | 'medium' | 'high') => {
+                          if (currentGPSLocation) {
+                            const incidentLabels: Record<IncidentType, string> = {
+                              'traffic_jam': 'Traffic Jam',
+                              'accident': 'Accident',
+                              'road_hazard': 'Road Hazard',
+                              'road_closure': 'Road Closure',
+                              'police': 'Police Activity',
+                              'speed_camera': 'Speed Camera',
+                              'construction': 'Construction',
+                              'weather_hazard': 'Weather Hazard',
+                            };
+                            apiRequest('POST', '/api/traffic-incidents', {
+                              type: type,
+                              title: incidentLabels[type] || type,
+                              severity,
+                              coordinates: currentGPSLocation,
+                            }).then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/traffic-incidents'] });
+                              toast({
+                                title: 'Incident Reported',
+                                description: `${incidentLabels[type] || type} reported via voice command.`,
+                              });
+                            }).catch(err => {
+                              console.error('[VOICE-REPORT] ❌ Failed to report incident:', err);
+                              toast({
+                                title: 'Report Failed',
+                                description: 'Could not submit the incident report.',
+                                variant: 'destructive',
+                              });
+                            });
+                          }
+                        }}
+                        isVisible={showNavControls}
+                        onVoiceNavigationCommand={(command: NavigationCommandType) => {
+                          switch (command) {
+                            case 'zoom_in': mapRef.current?.zoomIn(); break;
+                            case 'zoom_out': mapRef.current?.zoomOut(); break;
+                            case 'recenter': mapRef.current?.zoomToUserLocation(); break;
+                            case 'stop_navigation': handleStopNavigation(); break;
+                            case 'toggle_3d':
+                              mapRef.current?.toggle3DMode();
+                              setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                              break;
+                            case 'toggle_satellite':
+                              mapRef.current?.toggleMapView();
+                              setMapControlState(prev => ({ ...prev, isSatelliteView: mapRef.current?.getMapViewMode() === 'satellite' }));
+                              break;
+                            case 'mute':
+                              navigationVoice.setEnabled(false);
+                              toast({ title: 'Voice Muted', description: 'Voice guidance has been muted.' });
+                              break;
+                            case 'unmute':
+                              navigationVoice.setEnabled(true);
+                              toast({ title: 'Voice Unmuted', description: 'Voice guidance is now active.' });
+                              break;
+                          }
+                        }}
+                      />
+                    </div>
+
                     {/* CompactTripStrip - ETA header during desktop navigation */}
-                    <div className="fixed top-14 left-0 right-0 z-[200] pointer-events-auto">
+                    <div className="fixed top-14 left-0 right-0 pointer-events-auto" style={{ zIndex: 500000 }}>
                       <CompactTripStrip
                         eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0)}
                         distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0) * 1609.344}
@@ -5332,10 +5502,11 @@ function NavigationPageContent() {
                     </div>
 
                     {/* Right Action Stack - Desktop navigation controls */}
-                    <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                    <div className="fixed flex flex-col gap-1 pointer-events-auto"
                       style={{
                         bottom: 'calc(140px + var(--safe-area-bottom, 0px))',
-                        right: '16px'
+                        right: '16px',
+                        zIndex: 500000
                       }}>
                       <div className={cn(
                         "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg mb-2",
@@ -5390,8 +5561,8 @@ function NavigationPageContent() {
                     </div>
 
                     {/* Info Boxes - Distance, ETA, Arrival during navigation */}
-                    <div className="fixed left-1/2 -translate-x-1/2 z-[200] pointer-events-auto"
-                      style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))' }}>
+                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
                       <div className="flex items-center justify-center gap-2">
                         <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <RouteIcon className="w-4 h-4 flex-shrink-0" />
@@ -5456,29 +5627,32 @@ function NavigationPageContent() {
 
                     {/* Route Mask - Solid white mask covering bottom area behind speedometer */}
                     <div 
-                      className="fixed left-0 right-0 z-[160] pointer-events-none"
+                      className="fixed left-0 right-0 pointer-events-none"
                       style={{
                         bottom: '0px',
                         height: 'calc(70px + var(--safe-area-bottom, 0px))',
-                        background: 'white'
+                        background: 'white',
+                        zIndex: 499998
                       }}
                       data-testid="route-mask-bottom"
                     />
                     <div 
-                      className="fixed left-0 right-0 z-[159] pointer-events-none"
+                      className="fixed left-0 right-0 pointer-events-none"
                       style={{
                         bottom: 'calc(70px + var(--safe-area-bottom, 0px))',
                         height: '40px',
-                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)'
+                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)',
+                        zIndex: 499997
                       }}
                       data-testid="route-mask-gradient"
                     />
 
                     {/* Professional Oval Speedometer HUD */}
                     <div 
-                      className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                      className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
                       style={{
-                        bottom: 'calc(0px + var(--safe-area-bottom, 0px))'
+                        bottom: 'calc(0px + var(--safe-area-bottom, 0px))',
+                        zIndex: 500000
                       }}
                       data-testid="speedometer-hud-navigate"
                     >
