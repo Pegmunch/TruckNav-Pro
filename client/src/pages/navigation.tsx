@@ -3463,10 +3463,13 @@ function NavigationPageContent() {
     navigationStartTimeRef.current = Date.now();
     navSpeedSamplesRef.current = [];
     
+    navigationVoice.setEnabled(true);
+    setProfessionalVoiceEnabled(true);
+    localStorage.removeItem('trucknav_mute_all_alerts');
     navigationVoice.primeForUserGesture();
     audioBluetoothInit.primeSpeechFromGesture();
     audioBluetoothInit.activateBluetoothForSpeech().catch(() => {});
-    console.log('[NAV-ACTIVATION] Voice primed for iOS Safari');
+    console.log('[NAV-ACTIVATION] Voice enabled, unmuted, and primed for navigation');
     
     // Enable Smart Traffic Lights Panel during navigation
     setShowSmartTrafficLights(true);
@@ -3658,28 +3661,27 @@ function NavigationPageContent() {
       });
       window.dispatchEvent(navigationStartedEvent);
       
-      if (professionalVoiceEnabled) {
-        navigationVoice.setEnabled(true);
+      navigationVoice.setEnabled(true);
+      navigationVoice.forceMaxVolume();
+      
+      setTimeout(() => {
+        const destination = route.endLocation || 'your destination';
+        const durationMinutes = Math.ceil(route.duration || 0);
+        const distanceMiles = route.distance || 0;
         
-        setTimeout(() => {
-          const destination = route.endLocation || 'your destination';
-          const durationMinutes = Math.ceil(route.duration || 0);
-          const distanceMiles = route.distance || 0;
-          
-          let announcement = `Navigation started. `;
-          if (measurementSystem === 'imperial') {
-            announcement += `${distanceMiles.toFixed(1)} miles to ${destination}. `;
-            announcement += `Estimated arrival in ${durationMinutes} minutes.`;
-          } else {
-            const distanceKm = distanceMiles * 1.60934;
-            announcement += `${distanceKm.toFixed(1)} kilometers to ${destination}. `;
-            announcement += `Estimated arrival in ${durationMinutes} minutes.`;
-          }
-          
-          console.log('[VOICE-NAV] 🎤 Announcing navigation start:', announcement);
-          navigationVoice.speak(announcement, 'normal', true, 'general');
-        }, 500);
-      }
+        let announcement = `Navigation started. `;
+        if (measurementSystem === 'imperial') {
+          announcement += `${distanceMiles.toFixed(1)} miles to ${destination}. `;
+          announcement += `Estimated arrival in ${durationMinutes} minutes.`;
+        } else {
+          const distanceKm = distanceMiles * 1.60934;
+          announcement += `${distanceKm.toFixed(1)} kilometers to ${destination}. `;
+          announcement += `Estimated arrival in ${durationMinutes} minutes.`;
+        }
+        
+        console.log('[VOICE-NAV] 🎤 Announcing navigation start:', announcement);
+        navigationVoice.speak(announcement, 'normal', true, 'general');
+      }, 500);
       
       console.log('========================================');
       console.log('[NAV-ACTIVATION] ✅ Navigation activation complete!');
