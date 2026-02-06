@@ -4841,6 +4841,12 @@ function NavigationPageContent() {
             
             // Lane guidance props
             onShowLaneGuidance={() => setShowLaneGuidance(true)}
+            
+            // Vehicle type props
+            vehicleType={vehicleType}
+            onVehicleTypeChange={(type) => {
+              setVehicleType(type);
+            }}
           />
 
           {/* Desktop Map Area with Responsive Design */}
