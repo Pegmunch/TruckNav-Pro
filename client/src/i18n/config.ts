@@ -30,7 +30,7 @@ export const amazonRegions = {
 };
 
 // TruckNav Pro Translation Configuration - Optimized for Mobile Performance
-// Patent-protected by Bespoke Marketing.Ai Ltd
+// Patent-protected by Bespoke Marketing. Ai Ltd
 // Languages are now loaded dynamically to reduce initial bundle size
 
 i18n

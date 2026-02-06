@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "Profesyonel Kamyon Navigasyonu",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "Yasal Anlaşma Gerekli - TruckNav Pro",
     "description": "TruckNav Pro'yu kullanmak için bu yasal koşulları kabul etmelisiniz",
-    "patent_notice": "TruckNav Pro, Bespoke Marketing.Ai Ltd'ye ait patentli teknoloji içerir",
+    "patent_notice": "TruckNav Pro, Bespoke Marketing. Ai Ltd'ye ait patentli teknoloji içerir",
     "trademark_notice": "TruckNav Pro ve Professional Navigation tescilli ticari markalardır",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Tüm hakları saklıdır",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. Tüm hakları saklıdır",
     "accept": "Bu Koşulları Kabul Ediyorum",
     "decline": "Kabul Etmiyorum",
     "terms_of_service": "Hizmet Koşulları",
@@ -101,7 +101,7 @@
   "userGuide": {
     "title": "TruckNav Pro Kullanım Kılavuzu",
     "subtitle": "Tüm özelliklerin ve nasıl kullanılacağının tam kılavuzu",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "Başlarken",
       "planMode": "Planlama Modu",

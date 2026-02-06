@@ -1,5 +1,5 @@
 // TruckNav Pro - Input Validation Security
-// Patent-protected by Bespoke Marketing.Ai Ltd
+// Patent-protected by Bespoke Marketing. Ai Ltd
 
 import { body, param, query } from 'express-validator';
 import { planningRequestSchema } from '@shared/schema';

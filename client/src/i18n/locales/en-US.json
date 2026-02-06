@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "Professional Truck Navigation",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "Legal Agreement Required - TruckNav Pro",
     "description": "You must accept these legal terms to use TruckNav Pro",
-    "patent_notice": "TruckNav Pro contains patented technology owned by Bespoke Marketing.Ai Ltd",
+    "patent_notice": "TruckNav Pro contains patented technology owned by Bespoke Marketing. Ai Ltd",
     "trademark_notice": "TruckNav Pro and Professional Navigation are registered trademarks",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. All rights reserved",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. All rights reserved",
     "accept": "I Accept These Terms",
     "decline": "I Do Not Accept",
     "terms_of_service": "Terms of Service",
@@ -637,7 +637,7 @@
   "userGuide": {
     "title": "TruckNav Pro User Guide",
     "subtitle": "Complete guide to all features and how to use them",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "Getting Started",
       "planMode": "Plan Mode",

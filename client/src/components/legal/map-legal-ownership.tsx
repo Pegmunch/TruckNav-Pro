@@ -142,7 +142,7 @@ export default function MapLegalOwnership({
           {/* Main Ownership */}
           <div className="text-center">
             <p className="text-sm font-semibold text-primary">
-              TruckNav Pro is owned and operated by <strong>Bespoke Marketing.Ai Ltd</strong>
+              TruckNav Pro is owned and operated by <strong>Bespoke Marketing. Ai Ltd</strong>
             </p>
           </div>
           
@@ -155,7 +155,7 @@ export default function MapLegalOwnership({
                 <h4 className="font-semibold">Copyright</h4>
               </div>
               <p className="text-muted-foreground">
-                © 2024-2025 <strong>Bespoke Marketing.Ai Ltd</strong>
+                © 2024-2025 <strong>Bespoke Marketing. Ai Ltd</strong>
               </p>
             </div>
             

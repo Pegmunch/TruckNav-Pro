@@ -1,6 +1,6 @@
 /**
  * Flag Icon Component for TruckNav Pro
- * Patent-protected by Bespoke Marketing.Ai Ltd
+ * Patent-protected by Bespoke Marketing. Ai Ltd
  * Displays country flags with fallback support
  */
 

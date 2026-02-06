@@ -1,6 +1,6 @@
 /**
  * Country Utilities for TruckNav Pro
- * Patent-protected by Bespoke Marketing.Ai Ltd
+ * Patent-protected by Bespoke Marketing. Ai Ltd
  * Helper functions for country and language management
  */
 

@@ -1,6 +1,6 @@
 /**
  * PWA Service Worker Registration
- * TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
+ * TruckNav Pro - Patent-protected by Bespoke Marketing. Ai Ltd
  * 
  * Handles service worker registration, updates, and lifecycle management
  * with iOS-specific enhancements for optimal PWA experience

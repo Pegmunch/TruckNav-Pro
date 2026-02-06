@@ -16,7 +16,7 @@ export default function TermsOfService() {
             TruckNav Pro - Professional Navigation System
           </p>
           <p className="text-sm font-semibold text-primary">
-            Owned and Operated by Bespoke Marketing.Ai Ltd
+            Owned and Operated by Bespoke Marketing. Ai Ltd
           </p>
         </CardHeader>
         
@@ -63,7 +63,7 @@ export default function TermsOfService() {
                     <strong>PATENTED TECHNOLOGY:</strong>
                   </p>
                   <ul className="text-sm text-red-700 dark:text-red-300 space-y-2">
-                    <li>• TruckNav Pro and its truck navigation algorithms are protected by patents owned by <strong>Bespoke Marketing.Ai Ltd</strong></li>
+                    <li>• TruckNav Pro and its truck navigation algorithms are protected by patents owned by <strong>Bespoke Marketing. Ai Ltd</strong></li>
                     <li>• Patent applications pending for specialized routing algorithms for commercial vehicles</li>
                     <li>• Proprietary height, width, and weight restriction detection technology</li>
                     <li>• Advanced truck-specific facility search and recommendation systems</li>
@@ -88,14 +88,14 @@ export default function TermsOfService() {
                     <strong>PROTECTED TRADEMARKS:</strong>
                   </p>
                   <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <li>• <strong>"TruckNav Pro"</strong> ™ - Registered trademark of Bespoke Marketing.Ai Ltd</li>
+                    <li>• <strong>"TruckNav Pro"</strong> ™ - Registered trademark of Bespoke Marketing. Ai Ltd</li>
                     <li>• <strong>"Professional Navigation"</strong> ™ - In connection with truck navigation services</li>
                     <li>• All associated logos, graphics, and user interface designs</li>
                     <li>• Distinctive color schemes and branding elements</li>
                     <li>• Marketing slogans and promotional materials</li>
                   </ul>
                   <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mt-3">
-                    Use of these trademarks without written permission from Bespoke Marketing.Ai Ltd is strictly prohibited.
+                    Use of these trademarks without written permission from Bespoke Marketing. Ai Ltd is strictly prohibited.
                   </p>
                 </div>
               </section>
@@ -115,7 +115,7 @@ export default function TermsOfService() {
                     <p>
                       Any individual, company, or entity that creates, develops, or distributes software, applications, 
                       or systems that replicate, copy, or substantially similar to TruckNav Pro's truck-specific 
-                      satellite navigation features shall be liable for compensation to Bespoke Marketing.Ai Ltd.
+                      satellite navigation features shall be liable for compensation to Bespoke Marketing. Ai Ltd.
                     </p>
                     <p className="font-semibold">This includes but is not limited to:</p>
                     <ul className="ml-4 space-y-1">
@@ -127,7 +127,7 @@ export default function TermsOfService() {
                     </ul>
                     <p className="font-bold text-purple-900 dark:text-purple-100 mt-3 bg-purple-100 dark:bg-purple-900/30 p-2 rounded">
                       COMPENSATION REQUIREMENT: Any unauthorized replication requires payment of licensing fees 
-                      and ongoing royalties to Bespoke Marketing.Ai Ltd, as determined by independent valuation.
+                      and ongoing royalties to Bespoke Marketing. Ai Ltd, as determined by independent valuation.
                     </p>
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export default function TermsOfService() {
                   <div className="text-sm text-orange-700 dark:text-orange-300 space-y-2">
                     <p>
                       All source code, algorithms, user interface designs, database structures, and documentation 
-                      related to TruckNav Pro are the exclusive intellectual property of <strong>Bespoke Marketing.Ai Ltd</strong>.
+                      related to TruckNav Pro are the exclusive intellectual property of <strong>Bespoke Marketing. Ai Ltd</strong>.
                     </p>
                     <p className="font-semibold">Prohibited Activities:</p>
                     <ul className="ml-4 space-y-1">
@@ -160,7 +160,7 @@ export default function TermsOfService() {
                     <p className="font-bold text-orange-900 dark:text-orange-100 mt-3 bg-orange-100 dark:bg-orange-900/30 p-2 rounded">
                       COMPENSATION FOR PLAGIARISM: Any detected plagiarism or unauthorized use will result in 
                       immediate legal action and claims for damages, including but not limited to lost profits, 
-                      statutory damages, and attorney fees, all payable to Bespoke Marketing.Ai Ltd.
+                      statutory damages, and attorney fees, all payable to Bespoke Marketing. Ai Ltd.
                     </p>
                   </div>
                 </div>
@@ -176,13 +176,13 @@ export default function TermsOfService() {
                 </h3>
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <p>
-                    <strong>Owner:</strong> Bespoke Marketing.Ai Ltd, a company incorporated under the laws of England and Wales.
+                    <strong>Owner:</strong> Bespoke Marketing. Ai Ltd, a company incorporated under the laws of England and Wales.
                   </p>
                   <p>
-                    <strong>Copyright:</strong> © 2024-2025 Bespoke Marketing.Ai Ltd. All rights reserved worldwide.
+                    <strong>Copyright:</strong> © 2024-2025 Bespoke Marketing. Ai Ltd. All rights reserved worldwide.
                   </p>
                   <p>
-                    <strong>Exclusive Rights:</strong> Bespoke Marketing.Ai Ltd retains all rights, title, and interest 
+                    <strong>Exclusive Rights:</strong> Bespoke Marketing. Ai Ltd retains all rights, title, and interest 
                     in and to TruckNav Pro, including all intellectual property rights embodied therein.
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default function TermsOfService() {
                       </p>
                       
                       <p>
-                        <strong>Bespoke Marketing.Ai Ltd</strong> and <strong>TruckNav Pro</strong> expressly disclaim all liability 
+                        <strong>Bespoke Marketing. Ai Ltd</strong> and <strong>TruckNav Pro</strong> expressly disclaim all liability 
                         and responsibility for any and all accidents, incidents, damages, injuries, losses, or claims arising 
                         from or related to the use of this navigation application.
                       </p>
@@ -266,7 +266,7 @@ export default function TermsOfService() {
                           MAXIMUM LIABILITY LIMITATION
                         </p>
                         <p className="text-xs text-center mt-1">
-                          In no event shall Bespoke Marketing.Ai Ltd's total liability exceed the amount paid by you for 
+                          In no event shall Bespoke Marketing. Ai Ltd's total liability exceed the amount paid by you for 
                           TruckNav Pro services in the 12 months preceding any claim. This limitation applies regardless 
                           of the legal theory of liability.
                         </p>
@@ -322,7 +322,7 @@ export default function TermsOfService() {
                 <div className="text-sm text-muted-foreground">
                   <p><strong>Legal Inquiries:</strong> legal@bespokemarketing.ai</p>
                   <p><strong>Licensing Requests:</strong> licensing@bespokemarketing.ai</p>
-                  <p><strong>Company:</strong> Bespoke Marketing.Ai Ltd</p>
+                  <p><strong>Company:</strong> Bespoke Marketing. Ai Ltd</p>
                   <p><strong>Last Updated:</strong> September 16, 2025</p>
                 </div>
               </section>

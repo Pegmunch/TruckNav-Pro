@@ -1,6 +1,6 @@
 /**
  * Country-based Map and Font Configuration Utilities
- * Patent-protected by Bespoke Marketing.Ai Ltd
+ * Patent-protected by Bespoke Marketing. Ai Ltd
  * Provides automatic map provider and font selection based on selected country
  */
 

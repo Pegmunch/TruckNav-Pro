@@ -1,6 +1,6 @@
 /**
  * Comprehensive Country-Language Selector for TruckNav Pro
- * Patent-protected by Bespoke Marketing.Ai Ltd
+ * Patent-protected by Bespoke Marketing. Ai Ltd
  * Provides integrated country and language selection with visual flags
  */
 

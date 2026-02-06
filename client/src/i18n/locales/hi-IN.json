@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "पेशेवर ट्रक नेवीगेशन",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "कानूनी समझौता आवश्यक - TruckNav Pro",
     "description": "TruckNav Pro का उपयोग करने के लिए आपको इन कानूनी शर्तों को स्वीकार करना होगा",
-    "patent_notice": "TruckNav Pro में Bespoke Marketing.Ai Ltd के स्वामित्व की पेटेंट तकनीक है",
+    "patent_notice": "TruckNav Pro में Bespoke Marketing. Ai Ltd के स्वामित्व की पेटेंट तकनीक है",
     "trademark_notice": "TruckNav Pro और Professional Navigation पंजीकृत ट्रेडमार्क हैं",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. सभी अधिकार सुरक्षित",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. सभी अधिकार सुरक्षित",
     "accept": "मैं इन शर्तों को स्वीकार करता हूं",
     "decline": "मैं स्वीकार नहीं करता",
     "terms_of_service": "सेवा की शर्तें",
@@ -101,7 +101,7 @@
   "userGuide": {
     "title": "TruckNav Pro उपयोगकर्ता गाइड",
     "subtitle": "सभी सुविधाओं और उनके उपयोग की पूर्ण गाइड",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "शुरुआत करें",
       "planMode": "प्लान मोड",

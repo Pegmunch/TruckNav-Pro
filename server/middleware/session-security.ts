@@ -1,5 +1,5 @@
 // TruckNav Pro - Enhanced Session Security
-// Patent-protected by Bespoke Marketing.Ai Ltd
+// Patent-protected by Bespoke Marketing. Ai Ltd
 
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';

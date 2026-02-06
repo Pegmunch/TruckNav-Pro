@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "전문 트럭 내비게이션",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "법적 동의 필요 - TruckNav Pro",
     "description": "TruckNav Pro를 사용하려면 이러한 법적 조건에 동의해야 합니다",
-    "patent_notice": "TruckNav Pro는 Bespoke Marketing.Ai Ltd가 소유한 특허 기술을 포함합니다",
+    "patent_notice": "TruckNav Pro는 Bespoke Marketing. Ai Ltd가 소유한 특허 기술을 포함합니다",
     "trademark_notice": "TruckNav Pro와 Professional Navigation은 등록 상표입니다",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. 모든 권리 보유",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. 모든 권리 보유",
     "accept": "이 조건에 동의합니다",
     "decline": "동의하지 않습니다",
     "terms_of_service": "서비스 이용약관",
@@ -101,7 +101,7 @@
   "userGuide": {
     "title": "TruckNav Pro 사용자 가이드",
     "subtitle": "모든 기능과 사용 방법에 대한 완전한 가이드",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "시작하기",
       "planMode": "계획 모드",

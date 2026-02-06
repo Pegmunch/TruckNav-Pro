@@ -62,7 +62,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
               Complete Terms of Service
             </DialogTitle>
             <DialogDescription>
-              Full legal terms and conditions for TruckNav Pro usage, including patent protections and intellectual property rights owned by Bespoke Marketing.Ai Ltd.
+              Full legal terms and conditions for TruckNav Pro usage, including patent protections and intellectual property rights owned by Bespoke Marketing. Ai Ltd.
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 max-h-[70vh] pr-4 scroll-smooth touch-scroll">
@@ -96,7 +96,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
             Legal Agreement Required - TruckNav Pro
           </DialogTitle>
           <DialogDescription className="text-sm">
-            You must accept these legal terms to use TruckNav Pro. This includes acknowledgment of patent protections, trademarks, and intellectual property rights owned by Bespoke Marketing.Ai Ltd.
+            You must accept these legal terms to use TruckNav Pro. This includes acknowledgment of patent protections, trademarks, and intellectual property rights owned by Bespoke Marketing. Ai Ltd.
           </DialogDescription>
         </DialogHeader>
 
@@ -115,7 +115,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                     </h3>
                     <p className="text-red-700 dark:text-red-300 text-sm">
                       You must read and agree to these legally binding terms before using TruckNav Pro. 
-                      This application contains patented technology owned by <strong>Bespoke Marketing.Ai Ltd</strong> 
+                      This application contains patented technology owned by <strong>Bespoke Marketing. Ai Ltd</strong> 
                       and is protected by intellectual property laws.
                     </p>
                   </div>
@@ -135,7 +135,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                   </div>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
                     TruckNav Pro's truck navigation algorithms, vehicle restriction routing, and facility search 
-                    features are protected by patents owned by Bespoke Marketing.Ai Ltd.
+                    features are protected by patents owned by Bespoke Marketing. Ai Ltd.
                   </p>
                 </CardContent>
               </Card>
@@ -163,7 +163,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                   </div>
                   <p className="text-sm text-purple-700 dark:text-purple-300">
                     Any replication of truck-specific navigation features requires mandatory 
-                    compensation to Bespoke Marketing.Ai Ltd through licensing fees and royalties.
+                    compensation to Bespoke Marketing. Ai Ltd through licensing fees and royalties.
                   </p>
                 </CardContent>
               </Card>
@@ -177,7 +177,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                   </div>
                   <p className="text-sm text-orange-700 dark:text-orange-300">
                     All source code, algorithms, and designs are the exclusive property of 
-                    Bespoke Marketing.Ai Ltd. Unauthorized use will result in legal action.
+                    Bespoke Marketing. Ai Ltd. Unauthorized use will result in legal action.
                   </p>
                 </CardContent>
               </Card>
@@ -247,7 +247,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                 data-testid="checkbox-acknowledge-patents"
               />
               <label htmlFor="acknowledge-patents" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                I acknowledge that TruckNav Pro contains patented technology owned by Bespoke Marketing.Ai Ltd
+                I acknowledge that TruckNav Pro contains patented technology owned by Bespoke Marketing. Ai Ltd
                 <span className="text-red-500 ml-1">*</span>
               </label>
             </div>
@@ -273,7 +273,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                 data-testid="checkbox-acknowledge-liability"
               />
               <label htmlFor="acknowledge-liability" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                <span className="text-red-600 font-semibold">I understand and accept that Bespoke Marketing.Ai Ltd is not liable for any accidents, incidents, or damages resulting from using TruckNav Pro</span>
+                <span className="text-red-600 font-semibold">I understand and accept that Bespoke Marketing. Ai Ltd is not liable for any accidents, incidents, or damages resulting from using TruckNav Pro</span>
                 <span className="text-red-500 ml-1">*</span>
               </label>
             </div>
@@ -286,7 +286,7 @@ export default function UserAgreement({ isOpen, onAccept, onDecline }: UserAgree
                 data-testid="checkbox-acknowledge-replication"
               />
               <label htmlFor="acknowledge-replication" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                I understand that replication of truck navigation features requires compensation to Bespoke Marketing.Ai Ltd
+                I understand that replication of truck navigation features requires compensation to Bespoke Marketing. Ai Ltd
                 <span className="text-red-500 ml-1">*</span>
               </label>
             </div>

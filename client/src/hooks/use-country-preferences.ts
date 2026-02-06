@@ -1,6 +1,6 @@
 /**
  * Country-based Preferences Hook
- * Patent-protected by Bespoke Marketing.Ai Ltd
+ * Patent-protected by Bespoke Marketing. Ai Ltd
  * Manages automatic map and font selection based on selected country
  */
 

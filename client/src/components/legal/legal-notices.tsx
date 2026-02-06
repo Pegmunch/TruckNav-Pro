@@ -15,7 +15,7 @@ export default function LegalNotices() {
                 <h3 className="text-lg font-bold text-foreground">Legal Protections & Ownership</h3>
               </div>
               <p className="text-sm font-semibold text-primary">
-                TruckNav Pro is owned and operated by <strong>Bespoke Marketing.Ai Ltd</strong>
+                TruckNav Pro is owned and operated by <strong>Bespoke Marketing. Ai Ltd</strong>
               </p>
             </div>
 
@@ -31,7 +31,7 @@ export default function LegalNotices() {
                   <h4 className="font-semibold text-foreground">Copyright Notice</h4>
                 </div>
                 <div className="space-y-1 text-muted-foreground">
-                  <p>© 2024-2025 <strong>Bespoke Marketing.Ai Ltd</strong></p>
+                  <p>© 2024-2025 <strong>Bespoke Marketing. Ai Ltd</strong></p>
                   <p>All rights reserved worldwide</p>
                   <p>Unauthorized reproduction prohibited</p>
                 </div>
@@ -75,7 +75,7 @@ export default function LegalNotices() {
                 <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
                   Any replication of truck-specific satellite navigation features requires 
                   <strong className="mx-1">MANDATORY COMPENSATION</strong>
-                  to Bespoke Marketing.Ai Ltd through licensing fees and royalties. 
+                  to Bespoke Marketing. Ai Ltd through licensing fees and royalties. 
                   This includes but is not limited to height/width/weight restriction routing, 
                   commercial vehicle facility search, and truck-specific traffic systems.
                 </p>
@@ -88,7 +88,7 @@ export default function LegalNotices() {
               {/* Company Info */}
               <div className="text-center sm:text-left">
                 <p className="text-xs text-muted-foreground">
-                  <strong>Owner:</strong> Bespoke Marketing.Ai Ltd
+                  <strong>Owner:</strong> Bespoke Marketing. Ai Ltd
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Company incorporated in England and Wales

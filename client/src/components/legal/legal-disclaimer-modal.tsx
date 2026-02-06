@@ -212,7 +212,7 @@ export default function LegalDisclaimerModal({ isOpen, onAccept, onDecline }: Le
               <CardContent className="text-sm space-y-3">
                 <p className="text-muted-foreground">
                   <strong>Service Agreement:</strong> By using TruckNav Pro, you agree to our complete Terms of Service, 
-                  including intellectual property protections and usage restrictions managed by Bespoke Marketing.Ai Ltd.
+                  including intellectual property protections and usage restrictions managed by Bespoke Marketing. Ai Ltd.
                 </p>
                 <p className="text-muted-foreground">
                   <strong>Legal Jurisdiction:</strong> These disclaimers are governed by applicable laws. 

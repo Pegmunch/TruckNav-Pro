@@ -1,5 +1,5 @@
 // TruckNav Pro - Comprehensive Anti-Hacking Security Middleware
-// Patent-protected by Bespoke Marketing.Ai Ltd
+// Patent-protected by Bespoke Marketing. Ai Ltd
 
 import express from 'express';
 import rateLimit from 'express-rate-limit';

@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "专业卡车导航",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "需要法律协议 - TruckNav Pro",
     "description": "您必须接受这些法律条款才能使用TruckNav Pro",
-    "patent_notice": "TruckNav Pro包含Bespoke Marketing.Ai Ltd拥有的专利技术",
+    "patent_notice": "TruckNav Pro包含Bespoke Marketing. Ai Ltd拥有的专利技术",
     "trademark_notice": "TruckNav Pro和Professional Navigation是注册商标",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. 保留所有权利",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. 保留所有权利",
     "accept": "我接受这些条款",
     "decline": "我不接受",
     "terms_of_service": "服务条款",
@@ -472,7 +472,7 @@
   "userGuide": {
     "title": "TruckNav Pro 用户指南",
     "subtitle": "所有功能及其使用方法的完整指南",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "开始使用",
       "planMode": "规划模式",

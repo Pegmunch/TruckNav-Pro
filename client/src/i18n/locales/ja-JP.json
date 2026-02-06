@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "プロフェッショナルトラックナビゲーション",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "法的合意が必要 - TruckNav Pro",
     "description": "TruckNav Proを使用するには、これらの法的条件に同意する必要があります",
-    "patent_notice": "TruckNav ProにはBespoke Marketing.Ai Ltdが所有する特許技術が含まれています",
+    "patent_notice": "TruckNav ProにはBespoke Marketing. Ai Ltdが所有する特許技術が含まれています",
     "trademark_notice": "TruckNav ProとProfessional Navigationは登録商標です",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. 全著作権所有",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. 全著作権所有",
     "accept": "これらの条件に同意します",
     "decline": "同意しません",
     "terms_of_service": "利用規約",
@@ -472,7 +472,7 @@
   "userGuide": {
     "title": "TruckNav Pro ユーザーガイド",
     "subtitle": "すべての機能とその使用方法の完全ガイド",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "はじめに",
       "planMode": "プランモード",

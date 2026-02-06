@@ -1661,7 +1661,7 @@ const SettingsModal = memo(function SettingsModal({
                             <div className="space-y-2">
                               <Label className="text-base font-medium">Legal Notices</Label>
                               <div className="text-sm text-muted-foreground space-y-1">
-                                <p>© 2024-2025 Bespoke Marketing.Ai Ltd</p>
+                                <p>© 2024-2025 Bespoke Marketing. Ai Ltd</p>
                                 <p>TruckNav Pro is a patented technology</p>
                                 <p>All rights reserved worldwide</p>
                               </div>

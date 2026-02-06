@@ -1,5 +1,5 @@
 // Mobile Performance Monitoring for TruckNav Pro
-// Patent-protected by Bespoke Marketing.Ai Ltd
+// Patent-protected by Bespoke Marketing. Ai Ltd
 
 import { useEffect, useRef } from 'react';
 

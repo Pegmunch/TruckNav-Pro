@@ -238,7 +238,7 @@ export default function UserGuide() {
 
         <div className="mt-8 p-4 bg-gray-100 rounded-lg text-center">
           <p className="text-xs text-gray-600">
-            {t('userGuide.footer', '© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro')}
+            {t('userGuide.footer', '© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro')}
           </p>
         </div>
       </div>

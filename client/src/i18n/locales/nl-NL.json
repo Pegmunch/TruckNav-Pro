@@ -2,7 +2,7 @@
   "app": {
     "name": "TruckNav Pro",
     "tagline": "Professionele Vrachtwagen Navigatie",
-    "owner": "Bespoke Marketing.Ai Ltd"
+    "owner": "Bespoke Marketing. Ai Ltd"
   },
   "navigation": {
     "title": "TruckNav Pro",
@@ -51,9 +51,9 @@
   "legal": {
     "title": "Juridische Overeenkomst Vereist - TruckNav Pro",
     "description": "U moet deze juridische voorwaarden accepteren om TruckNav Pro te gebruiken",
-    "patent_notice": "TruckNav Pro bevat gepatenteerde technologie eigendom van Bespoke Marketing.Ai Ltd",
+    "patent_notice": "TruckNav Pro bevat gepatenteerde technologie eigendom van Bespoke Marketing. Ai Ltd",
     "trademark_notice": "TruckNav Pro en Professional Navigation zijn geregistreerde handelsmerken",
-    "copyright": "© 2025 Bespoke Marketing.Ai Ltd. Alle rechten voorbehouden",
+    "copyright": "© 2025 Bespoke Marketing. Ai Ltd. Alle rechten voorbehouden",
     "accept": "Ik Accepteer Deze Voorwaarden",
     "decline": "Ik Accepteer Niet",
     "terms_of_service": "Servicevoorwaarden",
@@ -101,7 +101,7 @@
   "userGuide": {
     "title": "TruckNav Pro Gebruikershandleiding",
     "subtitle": "Complete gids voor alle functies en hoe ze te gebruiken",
-    "footer": "© 2025 Bespoke Marketing.Ai Ltd - TruckNav Pro",
+    "footer": "© 2025 Bespoke Marketing. Ai Ltd - TruckNav Pro",
     "gettingStarted": {
       "title": "Aan de Slag",
       "planMode": "Planmodus",

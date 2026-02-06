@@ -42,7 +42,7 @@ async function initializeCSRF() {
 }
 
 // Register Service Worker for PWA functionality 
-// TruckNav Pro - Patent-protected by Bespoke Marketing.Ai Ltd
+// TruckNav Pro - Patent-protected by Bespoke Marketing. Ai Ltd
 // SIMPLIFIED: Only register/update SW, don't aggressively clear on every load
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {

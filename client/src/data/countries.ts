@@ -1,6 +1,6 @@
 /**
  * Comprehensive Country Database for TruckNav Pro
- * Patent-protected by Bespoke Marketing.Ai Ltd
+ * Patent-protected by Bespoke Marketing. Ai Ltd
  * Supports international trucking navigation and localization
  */
 

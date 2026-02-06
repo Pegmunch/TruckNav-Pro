@@ -103,7 +103,7 @@ export default function LegalDisclaimerSimple({ onAccept }: LegalDisclaimerSimpl
               <h3 className="text-base sm:text-lg font-semibold">Limitation of Liability</h3>
             </div>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              TruckNav Pro and Bespoke Marketing.Ai Ltd accept no liability for damages, fines, 
+              TruckNav Pro and Bespoke Marketing. Ai Ltd accept no liability for damages, fines, 
               accidents, or losses arising from use of this navigation system. This includes but is 
               not limited to property damage, personal injury, traffic violations, or commercial losses.
             </p>
@@ -158,7 +158,7 @@ export default function LegalDisclaimerSimple({ onAccept }: LegalDisclaimerSimpl
               <h3 className="text-base sm:text-lg font-semibold">Copyright & Ownership</h3>
             </div>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              © 2024-2025 Bespoke Marketing.Ai Ltd. All rights reserved. TruckNav Pro™ is a 
+              © 2024-2025 Bespoke Marketing. Ai Ltd. All rights reserved. TruckNav Pro™ is a 
               registered trademark. Unauthorized reproduction, distribution, or commercial use 
               is strictly prohibited.
             </p>
