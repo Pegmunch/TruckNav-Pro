@@ -850,13 +850,16 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
       attemptGPS();
     },
     toggleMapView: () => {
-      const newMode: 'roads' | 'satellite' = preferences.mapViewMode === 'roads' ? 'satellite' : 'roads';
-      console.log('[MAP-VIEW-TOGGLE] Switching view mode:', preferences.mapViewMode, '→', newMode);
-      const newPrefs: MapPreferences = { ...preferences, mapViewMode: newMode };
+      const currentPrefs = preferencesRef.current;
+      const currentMode = currentPrefs.mapViewMode;
+      const newMode: 'roads' | 'satellite' = currentMode === 'roads' ? 'satellite' : 'roads';
+      console.log('[MAP-VIEW-TOGGLE] Switching view mode:', currentMode, '→', newMode, '(using ref for fresh state)');
+      const newPrefs: MapPreferences = { ...currentPrefs, mapViewMode: newMode };
+      preferencesRef.current = newPrefs;
       setPreferences(newPrefs);
       saveMapPreferences(newPrefs);
     },
-    getMapViewMode: () => preferences.mapViewMode,
+    getMapViewMode: () => preferencesRef.current.mapViewMode,
     flyByRoute: (routeCoordinates, options = {}) => {
       const { speedMultiplier = 10, onComplete, onCancel } = options;
       
