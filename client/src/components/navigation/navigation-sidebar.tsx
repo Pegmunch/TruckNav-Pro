@@ -463,12 +463,12 @@ const NavigationSidebar = memo(function NavigationSidebar({
           }}
           className="rounded-lg shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu cursor-pointer hover:scale-105 active:scale-95"
           style={{
-            width: '40px',
-            height: '40px',
-            minWidth: '40px',
-            minHeight: '40px',
-            maxWidth: '40px',
-            maxHeight: '40px',
+            width: '80px',
+            height: '80px',
+            minWidth: '80px',
+            minHeight: '80px',
+            maxWidth: '80px',
+            maxHeight: '80px',
             backgroundColor: '#ffffff',
             borderTop: '3px solid #3b82f6',
             borderBottom: '3px solid #3b82f6',
@@ -483,7 +483,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
           }}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
             <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
             <path d="M15 18H9" />
             <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
