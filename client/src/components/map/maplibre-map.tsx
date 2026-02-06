@@ -2545,22 +2545,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
         startMarkerRef.current = null;
       }
       
-      // Add destination flag at end of route (only when not navigating)
-      if (!isNavigating && lastCoord && lastCoord[0] !== 0 && lastCoord[1] !== 0) {
-        if (destinationMarkerRef.current) {
-          destinationMarkerRef.current.remove();
-        }
-        const flagEl = document.createElement('div');
-        flagEl.innerHTML = `
-          <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
-            <rect x="6" y="2" width="20" height="14" fill="#ef4444" stroke="white" stroke-width="1.5" rx="2"/>
-            <path d="M16 16 L16 38 M14 38 L18 38" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        `;
-        destinationMarkerRef.current = new maplibregl.Marker({ element: flagEl, anchor: 'bottom' })
-          .setLngLat(lastCoord as [number, number])
-          .addTo(map.current);
-      } else if (isNavigating && destinationMarkerRef.current) {
+      if (destinationMarkerRef.current) {
         destinationMarkerRef.current.remove();
         destinationMarkerRef.current = null;
       }
