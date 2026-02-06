@@ -452,8 +452,10 @@ self.addEventListener('activate', (event) => {
 function getCachingStrategy(request) {
   const url = new URL(request.url);
   
-  // CRITICAL FIX: JS and CSS files MUST use network-first to prevent stale UI
-  // This ensures new code is always loaded when available
+  if (url.pathname === '/app-version.json' || url.pathname === '/sw.js') {
+    return 'network-only';
+  }
+  
   if (request.url.match(/\.(js|css)$/)) {
     return 'network-first';
   }
@@ -705,7 +707,9 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     (async () => {
       try {
-        if (!DEV_MODE_NO_CACHE && (strategy === 'cache-first' || strategy === 'cache-first-maps')) {
+        if (strategy === 'network-only') {
+          return await fetch(request);
+        } else if (!DEV_MODE_NO_CACHE && (strategy === 'cache-first' || strategy === 'cache-first-maps')) {
           return await cacheFirstStrategy(request, cacheName);
         } else {
           return await networkFirstStrategy(request, cacheName);

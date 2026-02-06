@@ -984,6 +984,15 @@ const validateVoiceTranscription = [
 ];
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.use((req, res, next) => {
+    if (req.path === '/sw.js' || req.path === '/app-version.json') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    next();
+  });
+
   // Setup authentication
   await setupAuth(app);
   
