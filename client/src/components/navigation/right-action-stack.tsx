@@ -21,6 +21,7 @@ interface ButtonRegistration {
   callback: () => void;
   lastFired: number;
   isVisible: boolean;
+  touchPadding?: number;
 }
 
 // Global registry of buttons - shared across all touch handling layers
@@ -64,7 +65,7 @@ function handleWindowTouchStart(e: TouchEvent) {
   
   // Find the CLOSEST button to touch point (not first match) to avoid overlap issues
   let closestButton: { id: string; registration: ButtonRegistration; distance: number } | null = null;
-  const padding = 16;
+  const defaultPadding = 16;
   
   for (const [id, registration] of Array.from(buttonRegistry.entries())) {
     // Skip hidden buttons
@@ -72,6 +73,9 @@ function handleWindowTouchStart(e: TouchEvent) {
     
     const rect = registration.getRect();
     if (!rect || rect.width === 0 || rect.height === 0) continue;
+    
+    // Use per-button padding if set, otherwise default
+    const padding = registration.touchPadding ?? defaultPadding;
     
     // Check if touch is within padded bounds
     if (
@@ -135,7 +139,8 @@ function useUnifiedTouchHandler(
   ref: React.RefObject<HTMLButtonElement>,
   callback: (() => void) | undefined,
   id: string,
-  isVisible: boolean = true
+  isVisible: boolean = true,
+  touchPadding?: number
 ) {
   const [mounted, setMounted] = useState(false);
   
@@ -159,7 +164,8 @@ function useUnifiedTouchHandler(
       getRect: () => ref.current?.getBoundingClientRect() || null,
       callback,
       lastFired: globalDebounce.get(id) || 0,
-      isVisible
+      isVisible,
+      touchPadding
     });
     
     // Also attach direct DOM listeners as backup
@@ -188,7 +194,7 @@ function useUnifiedTouchHandler(
       buttonRegistry.delete(id);
       detachWindowTouchListener();
     };
-  }, [ref, callback, id, mounted, isVisible]);
+  }, [ref, callback, id, mounted, isVisible, touchPadding]);
   
   // Return handlers for React events
   // onTouchStart fires IMMEDIATELY on touch (most reliable for iOS)
@@ -342,12 +348,16 @@ export function RightActionStack({
   }, [onViewIncidents, hideIncidents]);
   
   // Stable callback wrappers with logging for debugging
+  // MapView uses a ref-based callback to prevent re-registration churn
+  // (onToggleMapView is an inline arrow that changes every render)
+  const mapViewCallbackRef = useRef(onToggleMapView);
+  mapViewCallbackRef.current = onToggleMapView;
   const mapViewCallback = useCallback(() => {
     console.log('[BUTTON-CALLBACK] 🟢 MapView callback invoked - should toggle satellite view');
-    if (onToggleMapView) {
-      onToggleMapView();
+    if (mapViewCallbackRef.current) {
+      mapViewCallbackRef.current();
     }
-  }, [onToggleMapView]);
+  }, []);
   
   const toggle3DCallback = useCallback(() => {
     console.log('[BUTTON-CALLBACK] 🔵 Toggle3D callback invoked - should toggle 3D/tilt mode');
@@ -383,7 +393,7 @@ export function RightActionStack({
   // Register all buttons with unified touch handling (includes visibility)
   // Using stable callback wrappers with logging for debugging
   const incidentsHandlers = useUnifiedTouchHandler(incidentsRef, incidentsCallback, 'incidents-btn', incidentsVisible);
-  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, 'map-view-btn', mapViewVisible);
+  const mapViewHandlers = useUnifiedTouchHandler(mapViewRef, mapViewCallback, 'map-view-btn', mapViewVisible, 24);
   const recenterHandlers = useUnifiedTouchHandler(recenterRef, onRecenter, 'recenter-btn', recenterVisible);
   const zoomInHandlers = useUnifiedTouchHandler(zoomInRef, zoomInHandler, 'zoom-in-btn', zoomInVisible);
   const zoomOutHandlers = useUnifiedTouchHandler(zoomOutRef, zoomOutHandler, 'zoom-out-btn', zoomOutVisible);
