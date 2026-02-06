@@ -461,22 +461,35 @@ const NavigationSidebar = memo(function NavigationSidebar({
           onClick={(e) => {
             onToggle();
           }}
-          className="rounded-lg shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
+          className="rounded-lg shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu cursor-pointer hover:scale-105 active:scale-95"
           style={{
             width: '40px',
             height: '40px',
             minWidth: '40px',
             minHeight: '40px',
+            maxWidth: '40px',
+            maxHeight: '40px',
             backgroundColor: '#ffffff',
             borderTop: '3px solid #3b82f6',
             borderBottom: '3px solid #3b82f6',
             borderLeft: '1px solid #e5e7eb',
             borderRight: '1px solid #e5e7eb',
             boxSizing: 'border-box',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0',
+            overflow: 'visible',
           }}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
-          <Truck className="w-5 h-5" style={{ color: '#2563eb' }} />
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+            <path d="M15 18H9" />
+            <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+            <circle cx="17" cy="18" r="2" />
+            <circle cx="7" cy="18" r="2" />
+          </svg>
         </button>
       </div>
 
@@ -493,7 +506,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {!isCollapsed && (
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex shrink-0 px-1 py-1 gap-1 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700">
+            <div className="shrink-0 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', padding: '4px' }}>
               {[
                 { key: 'plan', label: 'Plan' },
                 { key: 'recent', label: 'Recent' },
@@ -505,12 +518,23 @@ const NavigationSidebar = memo(function NavigationSidebar({
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "flex-1 py-1.5 text-[10px] font-semibold text-center rounded border transition-colors cursor-pointer",
-                    activeTab === tab.key
-                      ? "bg-blue-500 text-white border-blue-600"
-                      : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  )}
+                  style={{
+                    height: '32px',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '3px',
+                    border: activeTab === tab.key ? '2px solid #2563eb' : '1px solid #d1d5db',
+                    backgroundColor: activeTab === tab.key ? '#3b82f6' : '#ffffff',
+                    color: activeTab === tab.key ? '#ffffff' : '#4b5563',
+                    transition: 'all 0.15s ease',
+                    padding: '0',
+                    lineHeight: '1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                   data-testid={`sidebar-tab-${tab.key}`}
                 >
                   {tab.label}
