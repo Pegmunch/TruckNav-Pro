@@ -5042,12 +5042,404 @@ function NavigationPageContent() {
                     isRouteAllowed={currentRoute.isRouteAllowed ?? true}
                   />
                 )}
+
+                {/* DESKTOP PREVIEW MODE - Full navigation UI overlay when route calculated but not yet navigating */}
+                {currentRoute && !isNavigating && showNavControls && (
+                  <>
+                    {/* CompactTripStrip - ETA, distance, voice toggle - top of screen */}
+                    <div className="fixed top-14 left-0 right-0 z-[200] pointer-events-auto">
+                      <CompactTripStrip
+                        eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute.duration || 0)}
+                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
+                        isOnline={navigator.onLine}
+                        gpsStatus={gpsData?.status || 'unavailable'}
+                        onPreviewStart={handlePreviewRoute}
+                        onPreviewStop={() => {
+                          if (mapRef.current) {
+                            mapRef.current.cancelFlyBy();
+                          }
+                          setIsFlyByInProgress(false);
+                          setIsShowingPreview(false);
+                          if (currentRoute?.routePath) {
+                            const lats = currentRoute.routePath.map((p: any) => p.lat);
+                            const lngs = currentRoute.routePath.map((p: any) => p.lng);
+                            window.dispatchEvent(new CustomEvent('zoom_to_bounds', {
+                              detail: {
+                                bounds: { north: Math.max(...lats), south: Math.min(...lats), east: Math.max(...lngs), west: Math.min(...lngs) },
+                                padding: 50
+                              }
+                            }));
+                          }
+                        }}
+                        onSetLocation={() => setShowManualLocationDialog(true)}
+                        isPreviewActive={isFlyByInProgress}
+                        voiceEnabled={professionalVoiceEnabled}
+                        onVoiceToggle={async () => {
+                          const newState = !professionalVoiceEnabled;
+                          setProfessionalVoiceEnabled(newState);
+                          navigationVoice.setEnabled(newState);
+                          if (newState) {
+                            navigationVoice.primeForUserGesture();
+                            audioBluetoothInit.primeSpeechFromGesture();
+                          }
+                        }}
+                        roadInfo={roadInfo ? {
+                          roadRef: roadInfo.roadRef,
+                          junction: roadInfo.junction,
+                          destination: roadInfo.destination
+                        } : null}
+                        turnInfo={nextTurn ? {
+                          direction: nextTurn.direction,
+                          distance: nextTurn.distance,
+                          roadName: nextTurn.roadName
+                        } : null}
+                        currentSpeed={gpsData?.position?.speed || 0}
+                        speedLimit={currentSpeedLimit || undefined}
+                        isNavigating={false}
+                        onCancelNavigation={handleStopNavigation}
+                        isCancellingNavigation={completeJourneyMutation.isPending}
+                        trafficDelayMinutes={predictedTrafficDelay}
+                      />
+                    </div>
+
+                    {/* Right Action Stack - Map controls */}
+                    <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                      style={{
+                        bottom: 'calc(140px + var(--safe-area-bottom, 0px))',
+                        right: '16px'
+                      }}>
+                      <div className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg mb-2",
+                        vehicleType === 'car' 
+                          ? "bg-blue-500 text-white" 
+                          : "bg-orange-500 text-white"
+                      )}>
+                        {vehicleType === 'car' ? (
+                          <span className="flex items-center gap-1">
+                            <Car className="w-3.5 h-3.5" />
+                            Car
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Truck className="w-3.5 h-3.5" />
+                            HGV
+                          </span>
+                        )}
+                      </div>
+                      <RightActionStack
+                        onZoomIn={() => mapRef.current?.zoomIn()}
+                        onZoomOut={() => mapRef.current?.zoomOut()}
+                        onRecenter={() => mapRef.current?.resetNavigationCamera()}
+                        onToggle3D={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                        }}
+                        onToggleTraffic={() => {
+                          setShowTrafficLayer(prev => !prev);
+                        }}
+                        onToggleMapView={() => {
+                          mapRef.current?.toggleMapView();
+                          setTimeout(() => {
+                            const actualMode = mapRef.current?.getMapViewMode();
+                            setMapControlState(prev => ({ ...prev, isSatelliteView: actualMode === 'satellite' }));
+                          }, 50);
+                        }}
+                        onViewIncidents={handleViewIncidents}
+                        onCompassClick={() => {
+                          mapRef.current?.resetBearing();
+                          mapRef.current?.zoomToUserLocation({ bearing: 0, pitch: 0 });
+                        }}
+                        is3DMode={mapControlState.is3DMode}
+                        showTraffic={showTrafficLayer}
+                        isSatelliteView={mapControlState.isSatelliteView}
+                        bearing={mapControlState.bearing}
+                        isVisible={showNavControls}
+                        hideIncidents={false}
+                        compact={true}
+                      />
+                    </div>
+
+                    {/* Info Boxes - Distance, ETA, Arrival Time */}
+                    <div className="fixed left-1/2 -translate-x-1/2 z-[200] pointer-events-auto"
+                      style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))' }}>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+                          <RouteIcon className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute.distance || 0) * 1609.344;
+                              return measurementSystem === 'imperial'
+                                ? `${(distanceMeters / 1609.344).toFixed(1)} mi`
+                                : `${(distanceMeters / 1000).toFixed(1)} km`;
+                            })()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute.distance || 0) * 1609.344;
+                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
+                              const totalSeconds = distanceMeters / maxSpeedMs;
+                              const totalMinutes = totalSeconds / 60;
+                              const hours = Math.floor(totalMinutes / 60);
+                              const mins = Math.round(totalMinutes % 60);
+                              if (hours > 0) return `${hours}h ${mins}m`;
+                              return `${mins}m`;
+                            })()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute.distance || 0) * 1609.344;
+                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
+                              const totalSeconds = distanceMeters / maxSpeedMs;
+                              return new Date(Date.now() + totalSeconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Speedometer HUD with Preview/Start buttons */}
+                    <div className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
+                      style={{ bottom: 'calc(0px + var(--safe-area-bottom, 0px))' }}>
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              setShowIncidentReportDialog(true);
+                            }}
+                            variant="outline"
+                            className="h-11 w-11 p-0 bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg"
+                            data-testid="button-report-incident-desktop-preview"
+                          >
+                            <AlertCircle className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            onClick={() => handleViewIncidents()}
+                            variant="outline"
+                            className="h-11 w-11 p-0 bg-white hover:bg-gray-50 text-black border-2 border-red-500 shadow-lg"
+                            data-testid="button-view-incidents-desktop-preview"
+                          >
+                            <AlertCircle className="w-5 h-5" />
+                          </Button>
+                          <Button
+                            onClick={handlePreviewRoute}
+                            disabled={isFlyByInProgress}
+                            variant="outline"
+                            className="h-11 px-6 font-semibold bg-white/90 backdrop-blur-sm"
+                            data-testid="button-preview-route-desktop"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            Preview
+                          </Button>
+                          <Button
+                            onClick={handleStartNavigation}
+                            className="h-11 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                            data-testid="button-start-navigation-desktop"
+                          >
+                            <Navigation className="w-4 h-4 mr-2" />
+                            Start
+                          </Button>
+                        </div>
+                        <SpeedometerHUD
+                          currentSpeed={gpsData?.position?.speed || 0}
+                          speedLimit={currentSpeedLimit || undefined}
+                          roadInfo={roadInfo}
+                          isNavigating={false}
+                          showGoButton={false}
+                          showStopButton={false}
+                          distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
+                          vehicleType={vehicleType}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Route Mask for clean background behind bottom controls */}
+                    <div 
+                      className="fixed left-0 right-0 z-[160] pointer-events-none"
+                      style={{
+                        bottom: '0px',
+                        height: 'calc(70px + var(--safe-area-bottom, 0px))',
+                        background: 'white'
+                      }}
+                    />
+                    <div 
+                      className="fixed left-0 right-0 z-[159] pointer-events-none"
+                      style={{
+                        bottom: 'calc(70px + var(--safe-area-bottom, 0px))',
+                        height: '40px',
+                        background: 'linear-gradient(to top, white 0%, rgba(255,255,255,0.8) 40%, rgba(255,255,255,0) 100%)'
+                      }}
+                    />
+                  </>
+                )}
                 
                       {/* NAVIGATE MODE OVERLAYS - Desktop ONLY when ACTIVELY NAVIGATING */}
-                      {/* CRITICAL: Use isNavigating instead of isNavUIActive to prevent HUD showing during preview mode */}
                       {isNavigating && (
                   <>
-                    {/* 3. Map Turn + Lane Indicator - Only show at 1000ft/500ft/100ft thresholds */}
+                    {/* CompactTripStrip - ETA header during desktop navigation */}
+                    <div className="fixed top-14 left-0 right-0 z-[200] pointer-events-auto">
+                      <CompactTripStrip
+                        eta={dynamicEtaMinutes > 0 ? dynamicEtaMinutes : (currentRoute?.duration || 0)}
+                        distanceRemaining={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute?.distance || 0) * 1609.344}
+                        isOnline={navigator.onLine}
+                        gpsStatus={gpsData?.status || 'unavailable'}
+                        onPreviewStart={handlePreviewRoute}
+                        onPreviewStop={() => {
+                          if (mapRef.current) mapRef.current.cancelFlyBy();
+                          setIsFlyByInProgress(false);
+                          setIsShowingPreview(false);
+                        }}
+                        onSetLocation={() => setShowManualLocationDialog(true)}
+                        isPreviewActive={isFlyByInProgress}
+                        voiceEnabled={professionalVoiceEnabled}
+                        onVoiceToggle={async () => {
+                          const newState = !professionalVoiceEnabled;
+                          setProfessionalVoiceEnabled(newState);
+                          navigationVoice.setEnabled(newState);
+                          if (newState) {
+                            navigationVoice.primeForUserGesture();
+                            audioBluetoothInit.primeSpeechFromGesture();
+                          }
+                        }}
+                        roadInfo={roadInfo ? {
+                          roadRef: roadInfo.roadRef,
+                          junction: roadInfo.junction,
+                          destination: roadInfo.destination
+                        } : null}
+                        turnInfo={nextTurn ? {
+                          direction: nextTurn.direction,
+                          distance: nextTurn.distance,
+                          roadName: nextTurn.roadName
+                        } : null}
+                        currentSpeed={gpsData?.position?.speed || 0}
+                        speedLimit={currentSpeedLimit || undefined}
+                        isNavigating={true}
+                        onCancelNavigation={handleStopNavigation}
+                        isCancellingNavigation={completeJourneyMutation.isPending}
+                        trafficDelayMinutes={predictedTrafficDelay}
+                      />
+                    </div>
+
+                    {/* Right Action Stack - Desktop navigation controls */}
+                    <div className="fixed flex flex-col gap-1 z-[200] pointer-events-auto"
+                      style={{
+                        bottom: 'calc(140px + var(--safe-area-bottom, 0px))',
+                        right: '16px'
+                      }}>
+                      <div className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg mb-2",
+                        vehicleType === 'car' 
+                          ? "bg-blue-500 text-white" 
+                          : "bg-orange-500 text-white"
+                      )}>
+                        {vehicleType === 'car' ? (
+                          <span className="flex items-center gap-1">
+                            <Car className="w-3.5 h-3.5" />
+                            Car
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Truck className="w-3.5 h-3.5" />
+                            HGV
+                          </span>
+                        )}
+                      </div>
+                      <RightActionStack
+                        onZoomIn={() => mapRef.current?.zoomIn()}
+                        onZoomOut={() => mapRef.current?.zoomOut()}
+                        onStaggeredZoomIn={() => mapRef.current?.staggeredZoomIn()}
+                        onStaggeredZoomOut={() => mapRef.current?.staggeredZoomOut()}
+                        onRecenter={() => mapRef.current?.resetNavigationCamera()}
+                        onToggleMapView={() => {
+                          mapRef.current?.toggleMapView();
+                          setTimeout(() => {
+                            const actualMode = mapRef.current?.getMapViewMode();
+                            setMapControlState(prev => ({ ...prev, isSatelliteView: actualMode === 'satellite' }));
+                          }, 50);
+                        }}
+                        onToggleTraffic={() => {
+                          setShowTrafficLayer(prev => !prev);
+                        }}
+                        onViewIncidents={handleViewIncidents}
+                        showTraffic={showTrafficLayer}
+                        isSatelliteView={mapControlState.isSatelliteView}
+                        isVisible={showNavControls}
+                        hideIncidents={false}
+                        hideCompass={true}
+                        hide3D={false}
+                        onToggle3D={() => {
+                          mapRef.current?.toggle3DMode();
+                          setMapControlState(prev => ({ ...prev, is3DMode: mapRef.current?.is3DMode() || false }));
+                        }}
+                        is3DMode={mapControlState.is3DMode}
+                        isNavigating={true}
+                        compact={true}
+                        bearing={mapControlState.bearing}
+                      />
+                    </div>
+
+                    {/* Info Boxes - Distance, ETA, Arrival during navigation */}
+                    <div className="fixed left-1/2 -translate-x-1/2 z-[200] pointer-events-auto"
+                      style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))' }}>
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+                          <RouteIcon className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute?.distance || 0) * 1609.344;
+                              return measurementSystem === 'imperial'
+                                ? `${(distanceMeters / 1609.344).toFixed(1)} mi`
+                                : `${(distanceMeters / 1000).toFixed(1)} km`;
+                            })()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center gap-1.5 bg-amber-500 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute?.distance || 0) * 1609.344;
+                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
+                              const totalSeconds = distanceMeters / maxSpeedMs;
+                              const totalMinutes = totalSeconds / 60;
+                              const hours = Math.floor(totalMinutes / 60);
+                              const mins = Math.round(totalMinutes % 60);
+                              if (hours > 0) return `${hours}h ${mins}m`;
+                              return `${mins}m`;
+                            })()}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          <span className="font-bold text-sm">
+                            {(() => {
+                              const distanceMeters = dynamicDistanceRemaining > 0 
+                                ? dynamicDistanceRemaining 
+                                : (currentRoute?.distance || 0) * 1609.344;
+                              const maxSpeedMs = vehicleType === 'car' ? 31.2928 : 25.0272;
+                              const totalSeconds = distanceMeters / maxSpeedMs;
+                              return new Date(Date.now() + totalSeconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Map Turn + Lane Indicator */}
                     {nextTurn && shouldShowTurnIndicator(nextTurn.distance, measurementSystem === 'imperial') && (
                       <MapTurnLaneIndicator
                         turnInfo={nextTurn}
@@ -5072,7 +5464,6 @@ function NavigationPageContent() {
                       }}
                       data-testid="route-mask-bottom"
                     />
-                    {/* Gradient fade above the solid mask for smoother transition */}
                     <div 
                       className="fixed left-0 right-0 z-[159] pointer-events-none"
                       style={{
@@ -5083,7 +5474,7 @@ function NavigationPageContent() {
                       data-testid="route-mask-gradient"
                     />
 
-                    {/* Professional Oval Speedometer HUD - Fixed position next to cancel button */}
+                    {/* Professional Oval Speedometer HUD */}
                     <div 
                       className="fixed left-1/2 -translate-x-1/2 z-[180] pointer-events-auto"
                       style={{
@@ -5104,8 +5495,6 @@ function NavigationPageContent() {
                         vehicleType={vehicleType}
                       />
                     </div>
-
-                    {/* Cancel button removed - users use STOP button on speedometer */}
 
                     {/* Legal Ownership - Bottom of screen during navigation */}
                     <MapLegalOwnership compact={true} className="!z-[200]" />
