@@ -50,7 +50,6 @@ import WeatherWidget from "@/components/weather/weather-widget";
 import VoiceNavigationPanel from "@/components/navigation/voice-navigation-panel";
 import { type VehicleProfile, type Route, type Journey, type Facility } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import IncidentReportingForm from "@/components/traffic/incident-reporting-form";
@@ -1258,45 +1257,6 @@ const NavigationSidebar = memo(function NavigationSidebar({
                     </div>
                   </div>
 
-                  {/* Route Preferences */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      Route Preference
-                    </Label>
-                    <ToggleGroup 
-                      type="single" 
-                      value={routePreference} 
-                      onValueChange={(value) => {
-                        if (value && (value === 'fastest' || value === 'eco' || value === 'avoid_tolls')) {
-                          setRoutePreference(value);
-                        }
-                      }}
-                      className="grid grid-cols-3 gap-1"
-                      data-testid="toggle-route-preferences"
-                    >
-                      <ToggleGroupItem 
-                        value="fastest" 
-                        className="text-xs py-1 px-2 h-8"
-                        data-testid="toggle-fastest"
-                      >
-                        Fastest
-                      </ToggleGroupItem>
-                      <ToggleGroupItem 
-                        value="eco" 
-                        className="text-xs py-1 px-2 h-8"
-                        data-testid="toggle-eco"
-                      >
-                        Eco
-                      </ToggleGroupItem>
-                      <ToggleGroupItem 
-                        value="avoid_tolls" 
-                        className="text-xs py-1 px-2 h-8"
-                        data-testid="toggle-avoid-tolls"
-                      >
-                        No Tolls
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
                 </CardContent>
               </Card>
             )}
