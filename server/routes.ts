@@ -5192,11 +5192,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PREDICTIVE TRAFFIC ANALYSIS API ROUTES
   // =============================================================================
 
-  // Get traffic prediction for a route
+  // Get traffic prediction for a route (with optional driver behavior adjustments)
   app.get("/api/traffic/predict/:routeId", async (req: Request, res: Response) => {
     try {
       const { routeId } = req.params;
-      const { departureTime } = req.query;
+      const { departureTime, sessionId } = req.query;
       
       const route = await storage.getRoute(routeId);
       if (!route) {
@@ -5210,7 +5210,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         routeId,
         routePath,
         targetTime,
-        route.duration ? route.duration / 60 : undefined
+        route.duration ? route.duration / 60 : undefined,
+        sessionId as string | undefined
       );
 
       res.json({
@@ -5221,6 +5222,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error getting traffic prediction:', error);
       res.status(500).json({ message: "Failed to get traffic prediction" });
+    }
+  });
+
+  // Update driver behavior profile after trip completion
+  app.post("/api/traffic/driver-behavior", validateRequest, async (req: Request, res: Response) => {
+    try {
+      const { sessionId, averageSpeedKmh, tripDurationMinutes, expectedDurationMinutes, breaksTaken, totalBreakMinutes } = req.body;
+      
+      if (!sessionId || !averageSpeedKmh || !tripDurationMinutes) {
+        return res.status(400).json({ message: "Missing required fields: sessionId, averageSpeedKmh, tripDurationMinutes" });
+      }
+
+      await predictiveTrafficService.updateDriverBehavior(sessionId, {
+        averageSpeedKmh,
+        tripDurationMinutes,
+        expectedDurationMinutes: expectedDurationMinutes || tripDurationMinutes,
+        breaksTaken: breaksTaken || 0,
+        totalBreakMinutes: totalBreakMinutes || 0,
+      });
+
+      res.json({ success: true, message: "Driver behavior profile updated" });
+    } catch (error) {
+      console.error('Error updating driver behavior:', error);
+      res.status(500).json({ message: "Failed to update driver behavior" });
     }
   });
 

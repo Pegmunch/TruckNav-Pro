@@ -1,10 +1,13 @@
 import { storage } from "../storage";
-import { type TrafficPredictionResponse, type TrafficSegmentPrediction, type HistoricalTrafficData } from "@shared/schema";
+import { type TrafficPredictionResponse, type TrafficSegmentPrediction, type HistoricalTrafficData, type DriverBehaviorProfile } from "@shared/schema";
 
 interface PredictionResult {
   predictedDuration: number;
   baselineDuration: number;
   predictedDelay: number;
+  predictedDelayMinutes: number;
+  driverBehaviorAdjustment: number;
+  driverSpeedFactor: number;
   congestionScore: number;
   confidence: number;
   segmentAnalysis: TrafficSegmentPrediction[];
@@ -49,22 +52,123 @@ export class PredictiveTrafficService {
     });
   }
 
+  async getDriverBehaviorProfile(sessionId?: string): Promise<DriverBehaviorProfile | null> {
+    if (!sessionId) return null;
+    try {
+      const profile = await storage.getDriverBehaviorProfile(sessionId);
+      return profile || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async updateDriverBehavior(
+    sessionId: string,
+    tripData: {
+      averageSpeedKmh: number;
+      tripDurationMinutes: number;
+      expectedDurationMinutes: number;
+      breaksTaken: number;
+      totalBreakMinutes: number;
+    }
+  ): Promise<void> {
+    const existing = await storage.getDriverBehaviorProfile(sessionId);
+    const speedFactor = tripData.expectedDurationMinutes > 0
+      ? tripData.expectedDurationMinutes / Math.max(1, tripData.tripDurationMinutes - tripData.totalBreakMinutes)
+      : 1.0;
+
+    const clampedSpeedFactor = Math.max(0.7, Math.min(1.4, speedFactor));
+
+    if (existing) {
+      const trips = existing.tripsCompleted + 1;
+      const weight = Math.min(0.3, 1 / trips);
+      const blendedSpeedFactor = existing.averageSpeedFactor * (1 - weight) + clampedSpeedFactor * weight;
+      const blendedAvgSpeed = existing.averageSpeedKmh
+        ? existing.averageSpeedKmh * (1 - weight) + tripData.averageSpeedKmh * weight
+        : tripData.averageSpeedKmh;
+      const totalMinutes = (existing.totalDrivingMinutes || 0) + tripData.tripDurationMinutes;
+      const drivingHours = totalMinutes / 60;
+      const totalBreaks = (existing.breakFrequencyPerHour || 0) * ((existing.totalDrivingMinutes || 0) / 60) + tripData.breaksTaken;
+      const breakFreq = drivingHours > 0 ? totalBreaks / drivingHours : 0;
+      const avgBreakDur = tripData.breaksTaken > 0
+        ? Math.round(((existing.averageBreakDuration || 0) + tripData.totalBreakMinutes / tripData.breaksTaken) / 2)
+        : existing.averageBreakDuration || 0;
+
+      await storage.upsertDriverBehaviorProfile({
+        sessionId,
+        averageSpeedFactor: Math.round(blendedSpeedFactor * 1000) / 1000,
+        breakFrequencyPerHour: Math.round(breakFreq * 100) / 100,
+        averageBreakDuration: avgBreakDur,
+        tripsCompleted: trips,
+        totalDrivingMinutes: totalMinutes,
+        averageSpeedKmh: Math.round(blendedAvgSpeed * 10) / 10,
+        lastTripSpeedFactor: clampedSpeedFactor,
+      });
+    } else {
+      await storage.upsertDriverBehaviorProfile({
+        sessionId,
+        averageSpeedFactor: clampedSpeedFactor,
+        breakFrequencyPerHour: tripData.breaksTaken > 0 ? tripData.breaksTaken / Math.max(0.1, tripData.tripDurationMinutes / 60) : 0,
+        averageBreakDuration: tripData.breaksTaken > 0 ? Math.round(tripData.totalBreakMinutes / tripData.breaksTaken) : 0,
+        tripsCompleted: 1,
+        totalDrivingMinutes: tripData.tripDurationMinutes,
+        averageSpeedKmh: tripData.averageSpeedKmh,
+        lastTripSpeedFactor: clampedSpeedFactor,
+      });
+    }
+  }
+
+  private calculateBehaviorAdjustment(
+    baselineDuration: number,
+    trafficDelay: number,
+    driverProfile: DriverBehaviorProfile | null
+  ): { adjustment: number; speedFactor: number } {
+    if (!driverProfile || driverProfile.tripsCompleted < 1) {
+      return { adjustment: 0, speedFactor: 1.0 };
+    }
+
+    const speedFactor = driverProfile.averageSpeedFactor || 1.0;
+    const drivingTime = baselineDuration + trafficDelay;
+    const adjustedDrivingTime = drivingTime / speedFactor;
+    let behaviorAdjustment = adjustedDrivingTime - drivingTime;
+
+    if (driverProfile.breakFrequencyPerHour && driverProfile.breakFrequencyPerHour > 0 && drivingTime > 60) {
+      const estimatedBreaks = Math.floor((drivingTime / 60) * driverProfile.breakFrequencyPerHour);
+      const breakTime = estimatedBreaks * (driverProfile.averageBreakDuration || 15);
+      behaviorAdjustment += breakTime;
+    }
+
+    return {
+      adjustment: Math.round(behaviorAdjustment),
+      speedFactor: Math.round(speedFactor * 1000) / 1000,
+    };
+  }
+
   async predictTrafficForRoute(
     routeId: string,
     routePath: Array<{ lat: number; lng: number }>,
     departureTime?: Date,
-    baselineDurationMinutes?: number
+    baselineDurationMinutes?: number,
+    sessionId?: string
   ): Promise<PredictionResult> {
     const targetTime = departureTime || new Date();
     const dayOfWeek = targetTime.getDay();
     const hourOfDay = targetTime.getHours();
 
+    const driverProfile = await this.getDriverBehaviorProfile(sessionId);
+
     const cached = await storage.getTrafficPrediction(routeId, targetTime);
     if (cached) {
+      const { adjustment, speedFactor } = this.calculateBehaviorAdjustment(
+        cached.baselineDuration, cached.predictedDelay, driverProfile
+      );
       return {
-        predictedDuration: cached.predictedDuration,
+        predictedDuration: cached.predictedDuration + adjustment,
         baselineDuration: cached.baselineDuration,
         predictedDelay: cached.predictedDelay,
+        predictedDelayMinutes: cached.predictedDelay + adjustment,
+        driverBehaviorAdjustment: adjustment,
+        driverSpeedFactor: speedFactor,
         congestionScore: cached.congestionScore,
         confidence: cached.confidence,
         segmentAnalysis: cached.segmentPredictions || [],
@@ -106,9 +210,9 @@ export class PredictiveTrafficService {
           roadName: null,
           latitude: point.lat,
           longitude: point.lng,
-          predictedSpeed: 50, // Default speed assumption
+          predictedSpeed: 50,
           freeFlowSpeed: 60,
-          congestionLevel: 0.2, // Assume light congestion by default
+          congestionLevel: 0.2,
           predictedDelay: 0.5,
           confidence: 0.1,
         });
@@ -119,7 +223,9 @@ export class PredictiveTrafficService {
     const avgConfidence = routePath.length > 0 ? totalConfidence / routePath.length : 0;
     const congestionScore = this.calculateOverallCongestion(segmentPredictions);
     const baseline = baselineDurationMinutes || this.estimateBaselineDuration(routePath);
-    const predictedDuration = baseline + totalDelay;
+
+    const { adjustment, speedFactor } = this.calculateBehaviorAdjustment(baseline, totalDelay, driverProfile);
+    const predictedDuration = baseline + totalDelay + adjustment;
 
     const alternativeTimes = await this.calculateAlternativeDepartureTimes(
       routePath,
@@ -133,6 +239,9 @@ export class PredictiveTrafficService {
       predictedDuration: Math.round(predictedDuration),
       baselineDuration: Math.round(baseline),
       predictedDelay: Math.round(totalDelay),
+      predictedDelayMinutes: Math.round(totalDelay + adjustment),
+      driverBehaviorAdjustment: adjustment,
+      driverSpeedFactor: speedFactor,
       congestionScore: Math.round(congestionScore * 100) / 100,
       confidence: Math.round(avgConfidence * 100) / 100,
       segmentAnalysis: segmentPredictions,

@@ -12,7 +12,7 @@ import { getIncidentIcon } from "@shared/incident-icons";
 import { useMapLibreErrorReporting } from "@/hooks/use-map-engine";
 import { useGPS } from "@/contexts/gps-context";
 import { StaticRouteOverlay } from "@/components/map/static-route-overlay";
-import { useRouteTrafficOverlay, type TrafficSegment } from "@/hooks/use-route-traffic-overlay";
+import { useRouteTrafficOverlay, type TrafficSegment, type PredictiveSegment } from "@/hooks/use-route-traffic-overlay";
 import { useRouteIncidents, type RouteIncident } from "@/hooks/use-route-incidents";
 import { TrafficStatusIndicator, TrafficLegend, type TrafficStatus } from "@/components/navigation/traffic-status-indicator";
 import { buttonRegistry } from "@/components/navigation/right-action-stack";
@@ -116,6 +116,7 @@ interface MapLibreMapProps {
   useStaticRoute?: boolean;
   onToggleTraffic?: () => void;
   onViewIncidents?: () => void;
+  predictiveSegments?: PredictiveSegment[] | null;
   restrictionViolations?: Array<{
     restriction: {
       id: string;
@@ -206,6 +207,7 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   useStaticRoute = false,
   onToggleTraffic,
   onViewIncidents,
+  predictiveSegments,
   restrictionViolations
 }, ref) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -1196,7 +1198,8 @@ const MapLibreMap = memo(forwardRef<MapLibreMapRef, MapLibreMapProps>(function M
   const routeTrafficData = useRouteTrafficOverlay(
     routePathForOverlay,
     trafficOverlayEnabled,
-    2 * 60 * 1000 // 2 minute refresh
+    2 * 60 * 1000, // 2 minute refresh
+    predictiveSegments
   );
   
   // Route-specific incidents (Layer 3)

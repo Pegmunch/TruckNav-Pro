@@ -9,6 +9,16 @@ export interface TrafficSegment {
   flowLevel: 'free' | 'light' | 'moderate' | 'heavy' | 'standstill' | 'unknown';
   currentSpeed?: number;
   freeFlowSpeed?: number;
+  isPredictive?: boolean;
+}
+
+export interface PredictiveSegment {
+  latitude: number;
+  longitude: number;
+  predictedSpeed: number;
+  freeFlowSpeed: number;
+  congestionLevel: number;
+  confidence: number;
 }
 
 export interface RouteTrafficData {
@@ -44,7 +54,8 @@ function getTrafficColor(speedRatio: number): string {
 export function useRouteTrafficOverlay(
   routePath: Array<{ lat: number; lng: number }> | null | undefined,
   enabled: boolean = true,
-  refreshIntervalMs: number = 2 * 60 * 1000
+  refreshIntervalMs: number = 2 * 60 * 1000,
+  predictiveSegments?: PredictiveSegment[] | null
 ): RouteTrafficData {
   const [segments, setSegments] = useState<TrafficSegment[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -228,6 +239,53 @@ export function useRouteTrafficOverlay(
     }
   }, []);
 
+  const blendWithPredictive = useCallback((
+    realTimeSegments: TrafficSegment[],
+    predictions: PredictiveSegment[] | null | undefined,
+    routePoints: Array<{ lat: number; lng: number }> | null | undefined
+  ): TrafficSegment[] => {
+    if (!predictions || predictions.length === 0 || !routePoints || routePoints.length < 2) {
+      return realTimeSegments;
+    }
+
+    return realTimeSegments.map(seg => {
+      if (seg.flowLevel !== 'unknown') return seg;
+
+      const midCoordIdx = Math.floor((seg.startIndex + seg.endIndex) / 2);
+      const midPoint = routePoints[Math.min(midCoordIdx, routePoints.length - 1)];
+      if (!midPoint) return seg;
+
+      let closest: PredictiveSegment | null = null;
+      let closestDist = Infinity;
+      for (const pred of predictions) {
+        const dlat = pred.latitude - midPoint.lat;
+        const dlng = pred.longitude - midPoint.lng;
+        const dist = dlat * dlat + dlng * dlng;
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = pred;
+        }
+      }
+
+      if (!closest || closestDist > 0.001) return seg;
+
+      const speedRatio = closest.freeFlowSpeed > 0
+        ? closest.predictedSpeed / closest.freeFlowSpeed
+        : 1;
+      const clampedRatio = Math.max(0, Math.min(1, speedRatio));
+
+      return {
+        ...seg,
+        speedRatio: clampedRatio,
+        color: getTrafficColor(clampedRatio),
+        flowLevel: getFlowLevel(clampedRatio),
+        currentSpeed: closest.predictedSpeed,
+        freeFlowSpeed: closest.freeFlowSpeed,
+        isPredictive: true,
+      };
+    });
+  }, []);
+
   useEffect(() => {
     console.log('[ROUTE-TRAFFIC-HOOK] Effect triggered:', { 
       enabled, 
@@ -285,8 +343,10 @@ export function useRouteTrafficOverlay(
     };
   }, [routePath, enabled, refreshIntervalMs, fetchTrafficForRoute, hashRoute]);
 
+  const blendedSegments = blendWithPredictive(segments, predictiveSegments, routePath);
+
   return {
-    segments,
+    segments: blendedSegments,
     lastUpdated,
     isLoading,
     error,

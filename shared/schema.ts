@@ -639,6 +639,29 @@ export type InsertTrafficObservation = z.infer<typeof insertTrafficObservationSc
 export type TrafficPrediction = typeof trafficPredictions.$inferSelect;
 export type InsertTrafficPrediction = z.infer<typeof insertTrafficPredictionSchema>;
 
+// Driver behavior profiles for predictive ETA
+export const driverBehaviorProfiles = pgTable("driver_behavior_profiles", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id").notNull(),
+  averageSpeedFactor: doublePrecision("average_speed_factor").notNull().default(1.0),
+  breakFrequencyPerHour: doublePrecision("break_frequency_per_hour").default(0),
+  averageBreakDuration: integer("average_break_duration").default(0),
+  tripsCompleted: integer("trips_completed").notNull().default(0),
+  totalDrivingMinutes: integer("total_driving_minutes").default(0),
+  averageSpeedKmh: doublePrecision("average_speed_kmh").default(50),
+  lastTripSpeedFactor: doublePrecision("last_trip_speed_factor").default(1.0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDriverBehaviorProfileSchema = createInsertSchema(driverBehaviorProfiles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type DriverBehaviorProfile = typeof driverBehaviorProfiles.$inferSelect;
+export type InsertDriverBehaviorProfile = z.infer<typeof insertDriverBehaviorProfileSchema>;
+
 // Predictive analysis request/response schemas
 export const trafficPredictionRequestSchema = z.object({
   routeId: z.string(),
@@ -654,7 +677,10 @@ export const trafficPredictionResponseSchema = z.object({
   departureTime: z.string(),
   predictedDuration: z.number(), // minutes
   baselineDuration: z.number(), // minutes without traffic
-  predictedDelay: z.number(), // minutes
+  predictedDelay: z.number(), // minutes (traffic only)
+  predictedDelayMinutes: z.number(), // total delay including behavior adjustments
+  driverBehaviorAdjustment: z.number().default(0), // minutes added/removed based on driver profile
+  driverSpeedFactor: z.number().default(1.0), // driver's speed tendency (< 1 = slower, > 1 = faster)
   congestionScore: z.number(), // 0-1
   confidence: z.number(), // 0-1
   bestDepartureTime: z.string().nullable(), // ISO datetime of optimal departure

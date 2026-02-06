@@ -214,6 +214,20 @@ function NavigationPageContent() {
   
   // Traffic prediction for ETA adjustment
   const [predictedTrafficDelay, setPredictedTrafficDelay] = useState<number>(0);
+  const [predictiveSegments, setPredictiveSegments] = useState<Array<{latitude: number; longitude: number; predictedSpeed: number; freeFlowSpeed: number; congestionLevel: number; confidence: number}> | null>(null);
+  const [predictionConfidence, setPredictionConfidence] = useState<number>(0);
+  const [driverSpeedFactor, setDriverSpeedFactor] = useState<number>(1.0);
+  const navigationStartTimeRef = useRef<number>(0);
+  const navSpeedSamplesRef = useRef<number[]>([]);
+
+  const getSessionId = useCallback(() => {
+    let sid = localStorage.getItem('trucknav_session_id');
+    if (!sid) {
+      sid = 'ses_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('trucknav_session_id', sid);
+    }
+    return sid;
+  }, []);
   
   // CRITICAL: Memoize violations to prevent re-renders from new array references
   // Using useMemo ensures same empty array reference when there are no violations
@@ -505,29 +519,52 @@ function NavigationPageContent() {
     }
   }, []);
 
-  // Fetch traffic prediction when route changes
+  // Fetch traffic prediction when route changes (includes driver behavior adjustments)
+  const fetchTrafficPrediction = useCallback(async (routeId: string) => {
+    try {
+      const sid = getSessionId();
+      const response = await apiRequest('GET', `/api/traffic/predict/${routeId}?sessionId=${encodeURIComponent(sid)}`);
+      const prediction = await response.json();
+      if (prediction?.predictedDelayMinutes && prediction.dataQuality !== 'insufficient') {
+        setPredictedTrafficDelay(prediction.predictedDelayMinutes);
+      } else if (prediction?.predictedDelay && prediction.dataQuality !== 'insufficient') {
+        setPredictedTrafficDelay(prediction.predictedDelay);
+      } else {
+        setPredictedTrafficDelay(0);
+      }
+      if (prediction?.segmentAnalysis && prediction.segmentAnalysis.length > 0) {
+        setPredictiveSegments(prediction.segmentAnalysis);
+      }
+      if (prediction?.confidence !== undefined) {
+        setPredictionConfidence(prediction.confidence);
+      }
+      if (prediction?.driverSpeedFactor !== undefined) {
+        setDriverSpeedFactor(prediction.driverSpeedFactor);
+      }
+    } catch (error) {
+      setPredictedTrafficDelay(0);
+    }
+  }, [getSessionId]);
+
   useEffect(() => {
     if (!currentRoute?.id) {
       setPredictedTrafficDelay(0);
+      setPredictiveSegments(null);
+      setPredictionConfidence(0);
+      setDriverSpeedFactor(1.0);
       return;
     }
     
-    const fetchTrafficPrediction = async () => {
-      try {
-        const response = await apiRequest('GET', `/api/traffic/predict/${currentRoute.id}`);
-        const prediction = await response.json();
-        if (prediction?.predictedDelayMinutes && prediction.dataQuality !== 'insufficient') {
-          setPredictedTrafficDelay(prediction.predictedDelayMinutes);
-        } else {
-          setPredictedTrafficDelay(0);
-        }
-      } catch (error) {
-        setPredictedTrafficDelay(0);
+    fetchTrafficPrediction(currentRoute.id);
+
+    const interval = setInterval(() => {
+      if (currentRoute?.id) {
+        fetchTrafficPrediction(currentRoute.id);
       }
-    };
-    
-    fetchTrafficPrediction();
-  }, [currentRoute?.id]);
+    }, 3 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [currentRoute?.id, fetchTrafficPrediction]);
   
   // Auto-reroute hook - detects off-route and automatically recalculates via TomTom API
   // Triggers automatic rerouting after 3 seconds off-route without pressing Go button
@@ -1100,6 +1137,17 @@ function NavigationPageContent() {
     
     return () => clearInterval(intervalId);
   }, [gpsData?.position?.latitude, gpsData?.position?.longitude]);
+  
+  useEffect(() => {
+    if (!isNavigating || !gpsData?.position?.speed) return;
+    const speed = gpsData.position.speed;
+    if (speed > 0.5) {
+      navSpeedSamplesRef.current.push(speed);
+      if (navSpeedSamplesRef.current.length > 500) {
+        navSpeedSamplesRef.current = navSpeedSamplesRef.current.slice(-300);
+      }
+    }
+  }, [isNavigating, gpsData?.position?.speed]);
   
   // Calculate next turn from route and GPS position
   // Runs in both Navigation mode AND Preview mode so turn indicators appear in both
@@ -3414,6 +3462,9 @@ function NavigationPageContent() {
     localStorage.setItem('navigation_ui_active', 'true');
     console.log('[NAV-ACTIVATION] ✅ Navigation UI state set VERY EARLY to prevent layer clearing');
     
+    navigationStartTimeRef.current = Date.now();
+    navSpeedSamplesRef.current = [];
+    
     navigationVoice.primeForUserGesture();
     audioBluetoothInit.primeSpeechFromGesture();
     audioBluetoothInit.activateBluetoothForSpeech().catch(() => {});
@@ -3662,6 +3713,26 @@ function NavigationPageContent() {
 
   const handleStopNavigation = () => {
     console.log('[NAV-STOP] 🔴 Cancel button pressed!');
+    
+    if (navigationStartTimeRef.current > 0 && navSpeedSamplesRef.current.length > 0) {
+      const tripDurationMinutes = Math.round((Date.now() - navigationStartTimeRef.current) / 60000);
+      const avgSpeedMs = navSpeedSamplesRef.current.reduce((a, b) => a + b, 0) / navSpeedSamplesRef.current.length;
+      const avgSpeedKmh = Math.round(avgSpeedMs * 3.6 * 10) / 10;
+      const expectedDuration = currentRoute?.duration ? Math.round(currentRoute.duration) : tripDurationMinutes;
+      
+      if (tripDurationMinutes > 1 && avgSpeedKmh > 0) {
+        apiRequest('POST', '/api/traffic/driver-behavior', {
+          sessionId: getSessionId(),
+          averageSpeedKmh: avgSpeedKmh,
+          tripDurationMinutes,
+          expectedDurationMinutes: expectedDuration,
+          breaksTaken: 0,
+          totalBreakMinutes: 0,
+        }).catch(() => {});
+      }
+      navigationStartTimeRef.current = 0;
+      navSpeedSamplesRef.current = [];
+    }
     
     // Reset route calculation counter to 0 if user cancels (abort all pending calculations)
     routeCalculationCountRef.current = 0;
@@ -4002,6 +4073,7 @@ function NavigationPageContent() {
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating || isLocalNavActive}
+                    predictiveSegments={predictiveSegments}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                     onViewIncidents={handleViewIncidents}
@@ -4931,6 +5003,7 @@ function NavigationPageContent() {
                     isNavigating={isNavigating || isLocalNavActive}
                     showUserMarker={showUserMarker}
                     useStaticRoute={isNavigating || isLocalNavActive}
+                    predictiveSegments={predictiveSegments}
                     restrictionViolations={restrictionViolations}
                     onToggleTraffic={() => setShowTrafficLayer(prev => !prev)}
                     onViewIncidents={handleViewIncidents}
