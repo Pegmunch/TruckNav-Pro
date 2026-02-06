@@ -4189,7 +4189,7 @@ function NavigationPageContent() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowVehicleSettings(true)}
-                      className="h-6 w-6 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-md"
+                      className="h-6 w-6 rounded-lg bg-green-500 hover:bg-green-600 text-white shadow-md"
                       data-testid="button-settings-preview"
                     >
                       <Settings className="w-3 h-3" />

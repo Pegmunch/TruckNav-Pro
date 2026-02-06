@@ -98,7 +98,7 @@ export function NavigationHeader({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full bg-white hover:bg-green-50 active:bg-green-100 text-green-500 border-2 border-green-500 shadow-md"
+            className="h-10 w-10 rounded-lg bg-white hover:bg-green-50 active:bg-green-100 text-green-500 border-2 border-green-500 shadow-md"
             data-testid="button-header-settings"
             data-tour-id="header-settings"
             onClick={(e) => {
