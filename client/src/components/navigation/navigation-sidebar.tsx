@@ -461,14 +461,19 @@ const NavigationSidebar = memo(function NavigationSidebar({
           onClick={(e) => {
             onToggle();
           }}
-          className="h-8 w-8 rounded-md shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
+          className="rounded-md shadow-lg select-none touch-manipulation transition-all duration-300 transform-gpu flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95"
           style={{
+            width: '32px',
+            height: '32px',
+            minWidth: '32px',
+            minHeight: '32px',
             backgroundColor: '#ffffff',
             borderTop: '2px solid #3b82f6',
             borderBottom: '2px solid #3b82f6',
             borderLeft: '1px solid #e5e7eb',
             borderRight: '1px solid #e5e7eb',
             color: '#2563eb',
+            boxSizing: 'border-box',
           }}
           data-testid="button-toggle-navigation-sidebar-tab"
         >
@@ -478,7 +483,7 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
       <div
         className={cn(
-          "fixed left-0 lg:top-[56px] top-0 lg:h-[calc(100vh-56px)] h-screen bg-white border-r border-border z-[40] shadow-lg",
+          "fixed left-0 lg:top-[60px] top-0 lg:h-[calc(100vh-60px)] h-screen bg-white dark:bg-slate-900 border-r border-border z-[40] shadow-lg",
           "sidebar-transition",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
           isCollapsed ? "w-16" : "w-80",
@@ -489,29 +494,23 @@ const NavigationSidebar = memo(function NavigationSidebar({
 
         {!isCollapsed && (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-h-0 flex flex-col">
-            <TabsList className="grid grid-cols-6 rounded-none border-b bg-gray-100 dark:bg-gray-900 h-auto p-1 shrink-0">
-              <TabsTrigger value="plan" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background text-[10px]">
-                <MapPinned className="w-4 h-4" />
+            <TabsList className="grid grid-cols-6 rounded-none border-b bg-white dark:bg-slate-900 h-8 p-0 shrink-0">
+              <TabsTrigger value="plan" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-plan">
                 Plan
               </TabsTrigger>
-              <TabsTrigger value="recent" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background text-[10px]">
-                <History className="w-4 h-4" />
+              <TabsTrigger value="recent" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-recent">
                 Recent
               </TabsTrigger>
-              <TabsTrigger value="vehicle" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background text-[10px]">
-                <Truck className="w-4 h-4" />
+              <TabsTrigger value="vehicle" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-vehicle">
                 Vehicle
               </TabsTrigger>
-              <TabsTrigger value="theme" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background text-[10px]">
-                <Palette className="w-4 h-4" />
+              <TabsTrigger value="theme" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-theme">
                 Theme
               </TabsTrigger>
-              <TabsTrigger value="tools" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background text-[10px]">
-                <Settings className="w-4 h-4" />
+              <TabsTrigger value="tools" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-tools">
                 Tools
               </TabsTrigger>
-              <TabsTrigger value="offline" className="flex flex-col gap-1 py-2 data-[state=active]:bg-background text-[10px]">
-                <Download className="w-4 h-4" />
+              <TabsTrigger value="offline" className="h-8 px-1 rounded-none text-[10px] font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="sidebar-tab-offline">
                 Offline
               </TabsTrigger>
             </TabsList>
@@ -645,14 +644,14 @@ const NavigationSidebar = memo(function NavigationSidebar({
                       onValueChange={(value) => setRoutePreference(value as 'fastest' | 'eco' | 'avoid_tolls')}
                       className="w-full"
                     >
-                      <TabsList className="grid w-full grid-cols-3 h-9">
-                        <TabsTrigger value="fastest" className="text-xs" data-testid="tab-fastest-desktop">
-                          Fastest
+                      <TabsList className="grid w-full grid-cols-3 h-7 p-0.5">
+                        <TabsTrigger value="fastest" className="text-[10px] h-6 px-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="tab-fastest-desktop">
+                          Fast
                         </TabsTrigger>
-                        <TabsTrigger value="eco" className="text-xs" data-testid="tab-eco-desktop">
+                        <TabsTrigger value="eco" className="text-[10px] h-6 px-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="tab-eco-desktop">
                           Eco
                         </TabsTrigger>
-                        <TabsTrigger value="avoid_tolls" className="text-xs" data-testid="tab-avoid-tolls-desktop">
+                        <TabsTrigger value="avoid_tolls" className="text-[10px] h-6 px-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-none" data-testid="tab-avoid-tolls-desktop">
                           No Tolls
                         </TabsTrigger>
                       </TabsList>
