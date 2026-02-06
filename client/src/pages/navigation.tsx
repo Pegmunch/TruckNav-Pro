@@ -5244,9 +5244,9 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Info Boxes - Distance, ETA, Arrival Time + Stop Preview - positioned at bottom of map */}
+                    {/* Info Boxes - Distance, ETA, Arrival Time + Stop Preview - positioned above speedometer */}
                     <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(16px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      style={{ bottom: 'calc(118px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
                       <div className="flex items-center justify-center gap-1.5">
                         <div className="flex items-center justify-center gap-1 bg-blue-600 text-white px-2 py-1 rounded-lg shadow-lg">
                           <RouteIcon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -5318,6 +5318,46 @@ function NavigationPageContent() {
                           </button>
                         )}
                       </div>
+                    </div>
+
+                    {/* Preview/Start action buttons - positioned above speedometer */}
+                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      style={{ bottom: 'calc(80px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          onClick={handlePreviewRoute}
+                          disabled={isFlyByInProgress}
+                          variant="outline"
+                          className="h-8 px-4 text-xs font-semibold bg-white/90 backdrop-blur-sm rounded-lg shadow-lg"
+                          data-testid="button-preview-route-desktop"
+                        >
+                          <Eye className="w-3.5 h-3.5 mr-1.5" />
+                          Preview
+                        </Button>
+                        <Button
+                          onClick={handleStartNavigation}
+                          className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg"
+                          data-testid="button-start-navigation-desktop"
+                        >
+                          <Navigation className="w-3.5 h-3.5 mr-1.5" />
+                          Start
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Speedometer HUD - at bottom */}
+                    <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
+                      style={{ bottom: 'calc(2px + var(--safe-area-bottom, 0px))', zIndex: 500000 }}>
+                      <SpeedometerHUD
+                        currentSpeed={gpsData?.position?.speed || 0}
+                        speedLimit={currentSpeedLimit || undefined}
+                        roadInfo={roadInfo}
+                        isNavigating={false}
+                        showGoButton={false}
+                        showStopButton={false}
+                        distanceRemainingMeters={dynamicDistanceRemaining > 0 ? dynamicDistanceRemaining : (currentRoute.distance || 0) * 1609.344}
+                        vehicleType={vehicleType}
+                      />
                     </div>
 
                   </>
