@@ -3784,7 +3784,7 @@ function NavigationPageContent() {
     setIsShowingPreview(false); // CRITICAL: Reset preview mode so isNavUIActive becomes false
     setShowComprehensiveMenu(false); // Reset menu state to allow fresh opening
     setShouldAutoNavigateOnMobile(false); // CRITICAL: Reset auto-nav flag to ensure isNavUIActive becomes false
-    setSidebarState(isMobile ? 'closed' : 'open'); // CRITICAL: Reset sidebar to prevent full-screen overlay blocking map
+    setSidebarState(isMobile ? 'closed' : 'collapsed'); // CRITICAL: Reset sidebar - collapsed on desktop (slim white strip), closed on mobile
     resetRerouteState(); // Reset auto-reroute state for next navigation session
     setShowSmartTrafficLights(false); // Hide Smart Traffic Lights Panel when navigation stops
     // CRITICAL: Clear the persistent route ref on explicit stop to prevent restoration
@@ -5553,9 +5553,9 @@ function NavigationPageContent() {
                       />
                     </div>
 
-                    {/* Info Boxes - Distance, ETA, Arrival during navigation */}
+                    {/* Info Boxes - Distance, ETA, Arrival during navigation - positioned above white mask (110px) */}
                     <div className="fixed left-1/2 -translate-x-1/2 pointer-events-auto"
-                      style={{ bottom: 'calc(85px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
+                      style={{ bottom: 'calc(120px + var(--safe-area-bottom, 0px))', zIndex: 500001 }}>
                       <div className="flex items-center justify-center gap-2">
                         <div className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 py-1.5 rounded-lg shadow-lg w-[90px]">
                           <RouteIcon className="w-4 h-4 flex-shrink-0" />
