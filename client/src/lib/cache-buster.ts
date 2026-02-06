@@ -1,25 +1,18 @@
-// Cache Buster - Forces PWA update when version changes
+// Cache Buster - Smart version detection
+// DUAL-TIER: Only clears APP CODE caches on version change
+// Navigation/map data is preserved for offline backup
 const STORAGE_KEY = 'trucknav_app_version';
-const VERSION_CHECK_INTERVAL = 5 * 60 * 1000; // Check every 5 minutes (slower to avoid disruption)
-let isOnboarding = false; // Flag to disable cache-buster during legal acceptance
+const VERSION_CHECK_INTERVAL = 60 * 1000;
+let isOnboarding = false;
 
-/**
- * Temporarily disable cache-buster during critical onboarding
- */
 export function pauseCacheBusterDuringOnboarding(isPaused: boolean): void {
   isOnboarding = isPaused;
-  console.log(`[CACHE-BUSTER] Onboarding mode: ${isPaused}`);
 }
 
 export async function checkAppVersion(): Promise<void> {
-  // CRITICAL: Skip version checks during legal onboarding to prevent localStorage wipes
-  if (isOnboarding) {
-    console.log('[CACHE-BUSTER] Skipping version check during onboarding');
-    return;
-  }
+  if (isOnboarding) return;
 
   try {
-    // Fetch the current version from server with aggressive no-cache headers
     const response = await fetch('/app-version.json?t=' + Date.now(), {
       cache: 'no-store',
       headers: {
@@ -27,45 +20,51 @@ export async function checkAppVersion(): Promise<void> {
         'Pragma': 'no-cache'
       }
     });
-    if (!response.ok) {
-      console.warn('[CACHE-BUSTER] Could not fetch version file');
-      return;
-    }
-    
+    if (!response.ok) return;
+
     const versionData = await response.json();
     const storedVersion = localStorage.getItem(STORAGE_KEY);
-    
+
     console.log('[CACHE-BUSTER] Version check:', {
       current: storedVersion,
       server: versionData.version,
       forceRefresh: versionData.forceRefresh
     });
-    
-    // FIX: On first load (storedVersion is null), DON'T clear - just store the version
-    // Only clear if there's an actual version mismatch
+
     if (storedVersion === null) {
-      console.log('[CACHE-BUSTER] First app load - initializing version:', versionData.version);
+      console.log('[CACHE-BUSTER] First load - storing version:', versionData.version);
       localStorage.setItem(STORAGE_KEY, versionData.version);
       return;
     }
-    
-    // Only clear cache if versions actually mismatch
+
     if (storedVersion !== versionData.version) {
-      console.log('[CACHE-BUSTER] Version mismatch detected - Old:', storedVersion, 'New:', versionData.version, 'clearing cache...');
-      
-      // Clear all caches
+      console.log('[CACHE-BUSTER] New version detected:', storedVersion, '→', versionData.version);
+
       if ('caches' in window) {
         const cacheNames = await caches.keys();
+        const navCachesToKeep = ['trucknav-maps-v1', 'trucknav-api-v1'];
+
         await Promise.all(
           cacheNames.map(cacheName => {
-            console.log('[CACHE-BUSTER] Deleting cache:', cacheName);
+            const isNavCache = navCachesToKeep.includes(cacheName);
+            if (isNavCache) {
+              console.log('[CACHE-BUSTER] Keeping navigation cache:', cacheName);
+              return Promise.resolve();
+            }
+            console.log('[CACHE-BUSTER] Clearing app cache:', cacheName);
             return caches.delete(cacheName);
           })
         );
       }
-      
-      // Clear local storage except for critical user data AND the version key itself
-      const preserveKeys = ['trucknav_session', 'trucknav_user_id', 'trucknav_legal_consent', 'trucknav_legal_accepted', 'pwa-install-dismissed', STORAGE_KEY];
+
+      const preserveKeys = [
+        'trucknav_session', 'trucknav_user_id',
+        'trucknav_legal_consent', 'trucknav_legal_accepted',
+        'pwa-install-dismissed', 'trucknav_country',
+        'trucknav_language', 'measurement-system',
+        'measurement-region', 'trucknav_cookie_status',
+        STORAGE_KEY
+      ];
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -74,24 +73,20 @@ export async function checkAppVersion(): Promise<void> {
         }
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
-      
-      // Clear session storage
+
       sessionStorage.clear();
-      
-      // Unregister all service workers
+
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const registration of registrations) {
-          console.log('[CACHE-BUSTER] Unregistering service worker:', registration.scope);
-          await registration.unregister();
+          console.log('[CACHE-BUSTER] Updating service worker');
+          await registration.update();
         }
       }
-      
-      // Store the new version
+
       localStorage.setItem(STORAGE_KEY, versionData.version);
-      
-      // Force reload the page
-      console.log('[CACHE-BUSTER] Forcing page reload...');
+
+      console.log('[CACHE-BUSTER] App code refreshed, navigation data preserved. Reloading...');
       setTimeout(() => {
         window.location.reload();
       }, 100);
@@ -101,15 +96,9 @@ export async function checkAppVersion(): Promise<void> {
   }
 }
 
-// Start periodic version checks
 export function startVersionMonitoring(): void {
-  // Check immediately (but don't clear on first load - fixed above)
   checkAppVersion();
-  
-  // Check periodically (5 minutes instead of 30 seconds)
   setInterval(checkAppVersion, VERSION_CHECK_INTERVAL);
-  
-  // Also check on visibility change (when app comes to foreground)
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && !isOnboarding) {
       checkAppVersion();
@@ -117,38 +106,23 @@ export function startVersionMonitoring(): void {
   });
 }
 
-// Manual cache clear function for troubleshooting
 export async function forceClearAllCaches(): Promise<void> {
-  console.log('[CACHE-BUSTER] Force clearing all caches...');
-  
-  // Clear all browser caches
+  console.log('[CACHE-BUSTER] Force clearing ALL caches including navigation...');
   if ('caches' in window) {
     const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames.map(cacheName => {
-        console.log('[CACHE-BUSTER] Deleting cache:', cacheName);
-        return caches.delete(cacheName);
-      })
-    );
+    await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
   }
-  
-  // Clear storage
   localStorage.clear();
   sessionStorage.clear();
-  
-  // Unregister service workers
   if ('serviceWorker' in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (const registration of registrations) {
       await registration.unregister();
     }
   }
-  
-  // Reload
   window.location.reload();
 }
 
-// Export for console access
 if (typeof window !== 'undefined') {
   (window as any).forceClearAllCaches = forceClearAllCaches;
 }
