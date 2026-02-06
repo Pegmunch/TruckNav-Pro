@@ -4765,15 +4765,29 @@ function NavigationPageContent() {
           
           {/* Desktop Hamburger Menu - Hidden during navigation mode and on mobile - positioned below header */}
           {!isSidebarOpen && !isNavigating && !isMobile && (
-            <Button
-              variant="default"
-              size="icon"
+            <button
               onClick={() => setSidebarState('open')}
-              className="fixed top-[72px] left-4 z-40 hamburger-menu-button bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg h-10 w-10 rounded-lg p-1.5 hidden md:flex"
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '8px',
+                backgroundColor: '#ffffff',
+                borderTop: '3px solid #3b82f6',
+                borderBottom: '3px solid #3b82f6',
+                borderLeft: '1px solid #e5e7eb',
+                borderRight: '1px solid #e5e7eb',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)',
+                cursor: 'pointer',
+              }}
+              className="fixed top-[72px] left-4 z-40 hamburger-menu-button hidden md:flex"
               data-testid="button-menu-desktop"
             >
-              <Truck className="w-5 h-5" />
-            </Button>
+              <Truck className="w-6 h-6" />
+            </button>
           )}
           
           {/* Desktop Navigation Sidebar */}
